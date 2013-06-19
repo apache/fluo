@@ -16,21 +16,39 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+
+import org.apache.accumulo.core.security.ColumnVisibility;
+
 /**
  * 
  */
 public class Column {
-  public String family;
-  public String qualifier;
   
+  private static final ColumnVisibility EMPTY_VIS = new ColumnVisibility(new byte[0]);
+
+  private byte[] family;
+  private byte[] qualifier;
+  private ColumnVisibility visibility = EMPTY_VIS;
+  
+  private static byte[] toBytes(String s) {
+    try {
+      return s.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public int hashCode() {
-    return family.hashCode() + qualifier.hashCode();
+    return Arrays.hashCode(family) + Arrays.hashCode(qualifier) + visibility.hashCode();
   }
   
   public boolean equals(Object o) {
     if (o instanceof Column) {
       Column oc = (Column) o;
-      return family.equals(oc.family) && qualifier.equals(oc.qualifier);
+      
+      return Arrays.equals(family, oc.family) && Arrays.equals(qualifier, oc.qualifier) && visibility.equals(oc.visibility);
     }
     
     return false;
@@ -41,11 +59,38 @@ public class Column {
     if (family.contains(Constants.SEP) || qualifier.contains(Constants.SEP)) {
       throw new IllegalArgumentException("columns can not contain : in prototype");
     }
+    
+    this.family = toBytes(family);
+    this.qualifier = toBytes(qualifier);
+  }
+  
+  public Column(byte[] family, byte[] qualifier) {
     this.family = family;
     this.qualifier = qualifier;
   }
+
+  public byte[] getFamily() {
+    return family;
+  }
   
+  public byte[] getQualifier() {
+    return qualifier;
+  }
+
+  public Column setVisibility(ColumnVisibility cv) {
+    this.visibility = cv;
+    return this;
+  }
+  
+  public ColumnVisibility getVisibility() {
+    return visibility;
+  }
+
   public String toString() {
-    return family + " " + qualifier;
+    try {
+      return new String(family, "UTF-8") + " " + new String(qualifier, "UTF-8") + " " + visibility;
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

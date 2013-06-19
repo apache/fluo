@@ -57,8 +57,6 @@ public class Worker {
       String ca[] = entry.getKey().getColumnQualifier().toString().split("\\|\\|", 2);
       Column col = new Column(ca[0], ca[1]);
       
-      System.out.println(col);
-      
       Observer observer = colObservers.get(col);
       if (observer == null) {
         // TODO do something

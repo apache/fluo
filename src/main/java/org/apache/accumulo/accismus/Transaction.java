@@ -1,5 +1,7 @@
 package org.apache.accumulo.accismus;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.io.Text;
 
@@ -36,6 +39,7 @@ public class Transaction {
   
   private static final String SEP = Constants.SEP;
   private static final ColumnSet EMPTY_SET = new ColumnSet();
+  private static final byte[] EMPTY = new byte[0];
   
   private static final String DELETE = new String("special delete object");
   
@@ -48,6 +52,39 @@ public class Transaction {
   private Column triggerColumn;
   private ColumnSet observedColumns;
   
+  private static byte[] toBytes(String s) {
+    try {
+      return s.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private byte[] concat(byte[]... byteArrays) {
+    int total = 0;
+    
+    for (byte[] ds : byteArrays)
+      total += ds.length;
+    
+    ByteBuffer bb = ByteBuffer.allocate(total);
+    
+    for (byte[] ds : byteArrays)
+      bb.put(ds);
+    
+    bb.compact(); // no need if backing array is sized appropriately to being with
+    return bb.array();
+  }
+  
+  private byte[] concat(Column c) {
+    byte[] sb = toBytes(SEP);
+    return concat(c.getFamily(), sb, c.getQualifier());
+  }
+  
+  private byte[] concat(String row, Column c) {
+    byte[] sb = toBytes(SEP);
+    return concat(toBytes(row), sb, c.getFamily(), sb, c.getQualifier(), sb, c.getVisibility().getExpression());
+  }
+
   public Transaction(String table, Connector conn) {
     this(table, conn, null, null, EMPTY_SET);
   }
@@ -83,13 +120,13 @@ public class Transaction {
   public Map<Column,String> get(String row, Column start, Column end) throws Exception {
     Scanner scanner = conn.createScanner(table, new Authorizations());
     
-    // TODO optimize with iterator
     // TODO only re-read columns that were locked instead of all columns
     // TODO cache row:col vals?
     
     mloop: while (true) {
       
-      Range range = new Range(new Key(row, start.family, start.qualifier), true, new Key(row, end.family, end.qualifier), false);
+      Range range = new Range(new Key(toBytes(row), start.getFamily(), start.getQualifier(), start.getVisibility().getExpression(), Long.MAX_VALUE), true,
+          new Key(toBytes(row), end.getFamily(), end.getQualifier(), end.getVisibility().getExpression(), Long.MAX_VALUE), false);
       scanner.setRange(range);
       scanner.clearColumns();
       
@@ -101,8 +138,10 @@ public class Transaction {
       Map<Column,String> ret = new HashMap<Column,String>();
       
       for (Entry<Key,Value> entry : scanner) {
-        String cf = entry.getKey().getColumnFamilyData().toString();
-        String cq = entry.getKey().getColumnQualifierData().toString();
+        byte[] cf = entry.getKey().getColumnFamilyData().toArray();
+        byte[] cq = entry.getKey().getColumnQualifierData().toArray();
+        // TODO cache colvis
+        ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
         long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
         
         if (colType == ColumnUtil.LOCK_PREFIX) {
@@ -110,7 +149,7 @@ public class Transaction {
           UtilWaitThread.sleep(1000);
           continue mloop;
         } else if (colType == ColumnUtil.DATA_PREFIX) {
-          ret.put(new Column(cf, cq), entry.getValue().toString());
+          ret.put(new Column(cf, cq).setVisibility(cv), entry.getValue().toString());
         } else {
           throw new IllegalArgumentException();
         }
@@ -123,17 +162,15 @@ public class Transaction {
   public Map<Column,String> get(String row, Set<Column> columns) throws Exception {
     Scanner scanner = conn.createScanner(table, new Authorizations());
     
-    // TODO optimize with iterator
     // TODO only re-read columns that were locked instead of all columns
     // TODO cache row:col vals?
     
     mloop: while (true) {
       scanner.setRange(new Range(row));
       scanner.clearColumns();
+      // TODO this does not support colvis
       for (Column column : columns) {
-        scanner.fetchColumn(new Text(column.family), new Text(column.qualifier));
-        scanner.fetchColumn(new Text(column.family), new Text(column.qualifier));
-        scanner.fetchColumn(new Text(column.family), new Text(column.qualifier));
+        scanner.fetchColumn(new Text(column.getFamily()), new Text(column.getQualifier()));
       }
       
       scanner.clearScanIterators();
@@ -144,8 +181,10 @@ public class Transaction {
       Map<Column,String> ret = new HashMap<Column,String>();
       
       for (Entry<Key,Value> entry : scanner) {
-        String cf = entry.getKey().getColumnFamilyData().toString();
-        String cq = entry.getKey().getColumnQualifierData().toString();
+        byte[] cf = entry.getKey().getColumnFamilyData().toArray();
+        byte[] cq = entry.getKey().getColumnQualifierData().toArray();
+        // TODO cache colvis
+        ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
         long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
         
         if (colType == ColumnUtil.LOCK_PREFIX) {
@@ -153,7 +192,7 @@ public class Transaction {
           UtilWaitThread.sleep(1000);
           continue mloop;
         } else if (colType == ColumnUtil.DATA_PREFIX) {
-          ret.put(new Column(cf, cq), entry.getValue().toString());
+          ret.put(new Column(cf, cq).setVisibility(cv), entry.getValue().toString());
         } else {
           throw new IllegalArgumentException();
         }
@@ -193,21 +232,22 @@ public class Transaction {
     ba[7] = (byte) (v >>> 0);
     return ba;
   }
-  
+
   private void releaseLock(boolean isTriggerRow, Column col, String val, long commitTs, Mutation m) {
     if (val != null) {
-      m.put(new Text(col.family), new Text(col.qualifier), ColumnUtil.WRITE_PREFIX | commitTs, new Value(val == DELETE ? "D".getBytes() : encode(startTs)));
+      m.put(new Text(col.getFamily()), new Text(col.getQualifier()), col.getVisibility(), ColumnUtil.WRITE_PREFIX | commitTs, new Value(
+          val == DELETE ? toBytes("D") : encode(startTs)));
     } else {
-      m.put(col.family, col.qualifier, ColumnUtil.DEL_LOCK_PREFIX | commitTs, "");
+      m.put(col.getFamily(), col.getQualifier(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | commitTs, EMPTY);
     }
     
     if (isTriggerRow && col.equals(triggerColumn)) {
-      m.put(triggerColumn.family, triggerColumn.qualifier, ColumnUtil.ACK_PREFIX | startTs, "");
-      m.putDelete(Constants.NOTIFY_CF, triggerColumn.family + SEP + triggerColumn.qualifier, startTs);
+      m.put(triggerColumn.getFamily(), triggerColumn.getQualifier(), triggerColumn.getVisibility(), ColumnUtil.ACK_PREFIX | startTs, EMPTY);
+      m.putDelete(toBytes(Constants.NOTIFY_CF), concat(triggerColumn), triggerColumn.getVisibility(), startTs);
     }
     
     if (observedColumns.contains(col)) {
-      m.put(Constants.NOTIFY_CF, col.family + SEP + col.qualifier, commitTs, "");
+      m.put(toBytes(Constants.NOTIFY_CF), concat(col), col.getVisibility(), commitTs, EMPTY);
     }
   }
   
@@ -218,11 +258,12 @@ public class Transaction {
       PrewriteIterator.enableAckCheck(iterConf);
     }
     
-    cm.addCondition(new Condition(col.family, col.qualifier).setIterators(iterConf));
+    cm.addCondition(new Condition(col.getFamily(), col.getQualifier()).setIterators(iterConf).setVisibility(col.getVisibility()));
     
     if (val != null && val != DELETE)
-      cm.put(col.family, col.qualifier, ColumnUtil.DATA_PREFIX | startTs, val);
-    cm.put(col.family, col.qualifier, ColumnUtil.LOCK_PREFIX | startTs, primaryRow + SEP + primaryColumn.family + SEP + primaryColumn.qualifier);
+      cm.put(col.getFamily(), col.getQualifier(), col.getVisibility(), ColumnUtil.DATA_PREFIX | startTs, toBytes(val));
+
+    cm.put(col.getFamily(), col.getQualifier(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs, concat(primaryRow, primaryColumn));
   }
   
   public boolean commit() throws Exception {
@@ -276,8 +317,8 @@ public class Transaction {
       
       // try to delete lock and add write for primary column
       ConditionalMutation delLockMutation = new ConditionalMutation(primaryRow);
-      delLockMutation.addCondition(new Condition(primaryColumn.family, primaryColumn.qualifier).setTimestamp(ColumnUtil.LOCK_PREFIX | startTs).setValue(
-          primaryRow + SEP + primaryColumn.family + SEP + primaryColumn.qualifier));
+      delLockMutation.addCondition(new Condition(primaryColumn.getFamily(), primaryColumn.getQualifier()).setTimestamp(ColumnUtil.LOCK_PREFIX | startTs)
+          .setVisibility(primaryColumn.getVisibility()).setValue(concat(primaryRow, primaryColumn)));
       releaseLock(primaryRow.equals(triggerRow), primaryColumn, primaryValue, commitTs, delLockMutation);
       
       if (cw.write(delLockMutation).getStatus() != Status.ACCEPTED) {
@@ -308,13 +349,13 @@ public class Transaction {
       
       Mutation m = new Mutation(primaryRow);
       // TODO timestamp?
-      m.put(primaryColumn.family, primaryColumn.qualifier, ColumnUtil.DEL_LOCK_PREFIX | startTs, "");
+      m.put(primaryColumn.getFamily(), primaryColumn.getQualifier(), primaryColumn.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs, toBytes(""));
       bw.addMutation(m);
       
       for (String row : acceptedRows) {
         m = new Mutation(row);
         for (Column col : updates.get(row).keySet()) {
-          m.put(col.family, col.qualifier, ColumnUtil.DEL_LOCK_PREFIX | startTs, "");
+          m.put(col.getFamily(), col.getQualifier(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs, toBytes(""));
         }
         bw.addMutation(m);
       }
