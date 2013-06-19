@@ -27,7 +27,7 @@ import org.apache.accumulo.core.util.format.Formatter;
 /**
  * 
  */
-public class AvalancheFormatter implements Formatter {
+public class AccismusFormatter implements Formatter {
   
   private Iterator<Entry<Key,Value>> scanner;
   

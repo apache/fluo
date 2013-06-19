@@ -25,7 +25,7 @@ import org.apache.accumulo.accismus.Observer;
 import org.apache.accumulo.accismus.Operations;
 import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.accismus.Worker;
-import org.apache.accumulo.accismus.format.AvalancheFormatter;
+import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -137,7 +137,7 @@ public class WorkerTest {
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")));
     
     Scanner scanner = conn.createScanner("graph", new Authorizations());
-    AvalancheFormatter formatter = new AvalancheFormatter();
+    AccismusFormatter formatter = new AccismusFormatter();
     formatter.initialize(scanner, true);
     while (formatter.hasNext()) {
       System.out.println(formatter.next());
