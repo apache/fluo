@@ -1,7 +1,7 @@
 Accismus
 ========
 
-A [Percolator][1] prototype  for [Accumulo][2].  This prototype relies on the
+A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
 [ACCUMULO-1000][3] [prototype][4].
 
 [1]: http://accumulo.apache.org
