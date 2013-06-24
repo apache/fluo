@@ -1,7 +1,6 @@
 package org.apache.accumulo.accismus;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.accismus.impl.SnapshotScanner;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
@@ -36,7 +36,6 @@ import core.data.ConditionalMutation;
 
 public class Transaction {
   
-  private static final ByteSequence SEP = new ArrayByteSequence(toBytes(Constants.SEP));
   private static final ColumnSet EMPTY_SET = new ColumnSet();
   private static final byte[] EMPTY = new byte[0];
   
@@ -69,28 +68,12 @@ public class Transaction {
     }
   }
 
-  private byte[] concat(ByteSequence... byteArrays) {
-    int total = 0;
-    
-    for (ByteSequence ds : byteArrays)
-      total += ds.length();
-    
-    ByteBuffer bb = ByteBuffer.allocate(total);
-    
-    for (ByteSequence ds : byteArrays) {
-      bb.put(ds.toArray());
-    }
-    
-    bb.compact(); // no need if backing array is sized appropriately to being with
-    return bb.array();
-  }
-  
   private byte[] concat(Column c) {
-    return concat(c.getFamily(), SEP, c.getQualifier());
+    return ByteUtil.concat(c.getFamily(), c.getQualifier());
   }
   
   private byte[] concat(ByteSequence row, Column c) {
-    return concat(row, SEP, c.getFamily(), SEP, c.getQualifier(), SEP, new ArrayByteSequence(c.getVisibility().getExpression()));
+    return ByteUtil.concat(row, c.getFamily(), c.getQualifier(), new ArrayByteSequence(c.getVisibility().getExpression()));
   }
 
   public Transaction(String table, Connector conn) {
@@ -170,7 +153,7 @@ public class Transaction {
   }
 
   public RowIterator get(ScannerConfiguration config) throws Exception {
-    return new RowIterator(new SnapshotScanner(conn.createScanner(table, new Authorizations()), config, startTs));
+    return new RowIterator(new SnapshotScanner(conn, table, config, startTs));
   }
   
   public void set(String row, Column col, String value) {
@@ -309,8 +292,10 @@ public class Transaction {
       
       // try to delete lock and add write for primary column
       ConditionalMutation delLockMutation = new ConditionalMutation(primaryRow.toArray());
+      IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
+      PrewriteIterator.setSnaptime(iterConf, startTs);
       delLockMutation.addCondition(new Condition(primaryColumn.getFamily(), primaryColumn.getQualifier()).setTimestamp(ColumnUtil.LOCK_PREFIX | startTs)
-          .setVisibility(primaryColumn.getVisibility()).setValue(concat(primaryRow, primaryColumn)));
+          .setIterators(iterConf).setVisibility(primaryColumn.getVisibility()).setValue(concat(primaryRow, primaryColumn)));
       releaseLock(primaryRow.equals(triggerRow), primaryColumn, primaryValue, commitTs, delLockMutation);
       
       if (cw.write(delLockMutation).getStatus() != Status.ACCEPTED) {

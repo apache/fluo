@@ -28,6 +28,7 @@ import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
+import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
@@ -71,6 +72,8 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
   }
   
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+    IteratorUtil.maximizeStartKeyTimeStamp(range);
+
     source.seek(range, columnFamilies, inclusive);
     
     Key curCol = new Key();

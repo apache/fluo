@@ -20,7 +20,6 @@ package org.apache.accumulo.accismus;
  * 
  */
 public class Constants {
-  public static final String SEP = "||";
   public static final String NOTIFY_CF = "ntfy";
   
 }

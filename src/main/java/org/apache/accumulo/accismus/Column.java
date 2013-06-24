@@ -56,11 +56,6 @@ public class Column {
   }
   
   public Column(String family, String qualifier) {
-    // TODO a limitation of this prototype...
-    if (family.contains(Constants.SEP) || qualifier.contains(Constants.SEP)) {
-      throw new IllegalArgumentException("columns can not contain : in prototype");
-    }
-    
     this.family = new ArrayByteSequence(toBytes(family));
     this.qualifier = new ArrayByteSequence(toBytes(qualifier));
   }

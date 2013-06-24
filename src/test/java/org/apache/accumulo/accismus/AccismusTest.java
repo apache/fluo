@@ -256,6 +256,11 @@ public class AccismusTest {
   }
   
   @Test
+  public void testVisibility() {
+    // TODO test col vis
+  }
+
+  @Test
   public void testRange() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());

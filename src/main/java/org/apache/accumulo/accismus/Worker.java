@@ -16,9 +16,11 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -55,8 +57,8 @@ public class Worker {
     scanner.fetchColumnFamily(new Text(Constants.NOTIFY_CF));
     
     for (Entry<Key,Value> entry : scanner) {
-      String ca[] = entry.getKey().getColumnQualifier().toString().split("\\|\\|", 2);
-      Column col = new Column(ca[0], ca[1]);
+      List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());
+      Column col = new Column(ca.get(0), ca.get(1));
       
       Observer observer = colObservers.get(col);
       if (observer == null) {

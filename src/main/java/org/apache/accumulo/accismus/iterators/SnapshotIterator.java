@@ -77,7 +77,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
           if (ts > invalidationTime)
             invalidationTime = ts;
         } else if (colType == ColumnUtil.LOCK_PREFIX) {
-          if (ts > invalidationTime) {
+          if (ts > invalidationTime && ts <= snaptime) {
             // nothing supersedes this lock, therefore the column is locked
             return;
           }
