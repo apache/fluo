@@ -1,14 +1,12 @@
 package org.apache.accumulo.accismus;
 
 import java.util.HashSet;
-import java.util.Map;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.Operations;
-import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.junit.AfterClass;
@@ -57,8 +55,8 @@ public class AccismusTest {
     
     tx = new Transaction("bank", conn);
     
-    String bal1 = tx.get("bob", balanceCol);
-    String bal2 = tx.get("joe", balanceCol);
+    String bal1 = tx.get("bob", balanceCol).toString();
+    String bal2 = tx.get("joe", balanceCol).toString();
     Assert.assertEquals("10", bal1);
     Assert.assertEquals("20", bal2);
     
@@ -67,8 +65,8 @@ public class AccismusTest {
     
     Transaction tx2 = new Transaction("bank", conn);
     
-    String bal3 = tx2.get("bob", balanceCol);
-    String bal4 = tx2.get("jill", balanceCol);
+    String bal3 = tx2.get("bob", balanceCol).toString();
+    String bal4 = tx2.get("jill", balanceCol).toString();
     Assert.assertEquals("10", bal3);
     Assert.assertEquals("60", bal4);
     
@@ -80,9 +78,9 @@ public class AccismusTest {
     
     Transaction tx3 = new Transaction("bank", conn);
     
-    Assert.assertEquals("5", tx3.get("bob", balanceCol));
-    Assert.assertEquals("20", tx3.get("joe", balanceCol));
-    Assert.assertEquals("65", tx3.get("jill", balanceCol));
+    Assert.assertEquals("5", tx3.get("bob", balanceCol).toString());
+    Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
+    Assert.assertEquals("65", tx3.get("jill", balanceCol).toString());
   }
   
   @Test
@@ -113,11 +111,11 @@ public class AccismusTest {
     Transaction tx1 = new Transaction("bank2", conn);
     
     Transaction tx2 = new Transaction("bank2", conn);
-    tx2.set("bob", balanceCol, (Long.parseLong(tx2.get("bob", balanceCol)) - 5) + "");
-    tx2.set("joe", balanceCol, (Long.parseLong(tx2.get("joe", balanceCol)) - 5) + "");
-    tx2.set("jill", balanceCol, (Long.parseLong(tx2.get("jill", balanceCol)) + 10) + "");
+    tx2.set("bob", balanceCol, (Long.parseLong(tx2.get("bob", balanceCol).toString()) - 5) + "");
+    tx2.set("joe", balanceCol, (Long.parseLong(tx2.get("joe", balanceCol).toString()) - 5) + "");
+    tx2.set("jill", balanceCol, (Long.parseLong(tx2.get("jill", balanceCol).toString()) + 10) + "");
     
-    String bal1 = tx1.get("bob", balanceCol);
+    String bal1 = tx1.get("bob", balanceCol).toString();
     
     Assert.assertTrue(tx2.commit());
     
@@ -125,9 +123,9 @@ public class AccismusTest {
     txd.delete("jane", balanceCol);
     txd.commit();
     
-    String bal2 = tx1.get("joe", balanceCol);
-    String bal3 = tx1.get("jill", balanceCol);
-    String bal4 = tx1.get("jane", balanceCol);
+    String bal2 = tx1.get("joe", balanceCol).toString();
+    String bal3 = tx1.get("jill", balanceCol).toString();
+    String bal4 = tx1.get("jane", balanceCol).toString();
     
     Assert.assertEquals("10", bal1);
     Assert.assertEquals("20", bal2);
@@ -145,17 +143,17 @@ public class AccismusTest {
     tx4.set("jane", balanceCol, "3");
     tx4.commit();
     
-    Assert.assertEquals("5", tx3.get("bob", balanceCol));
-    Assert.assertEquals("15", tx3.get("joe", balanceCol));
-    Assert.assertEquals("70", tx3.get("jill", balanceCol));
+    Assert.assertEquals("5", tx3.get("bob", balanceCol).toString());
+    Assert.assertEquals("15", tx3.get("joe", balanceCol).toString());
+    Assert.assertEquals("70", tx3.get("jill", balanceCol).toString());
     Assert.assertNull(tx3.get("jane", balanceCol));
     
     Transaction tx5 = new Transaction("bank2", conn);
     
-    Assert.assertEquals("5", tx5.get("bob", balanceCol));
-    Assert.assertEquals("15", tx5.get("joe", balanceCol));
-    Assert.assertEquals("70", tx5.get("jill", balanceCol));
-    Assert.assertEquals("3", tx5.get("jane", balanceCol));
+    Assert.assertEquals("5", tx5.get("bob", balanceCol).toString());
+    Assert.assertEquals("15", tx5.get("joe", balanceCol).toString());
+    Assert.assertEquals("70", tx5.get("jill", balanceCol).toString());
+    Assert.assertEquals("3", tx5.get("jane", balanceCol).toString());
   }
   
   @Test
@@ -177,11 +175,11 @@ public class AccismusTest {
     
     Assert.assertTrue(tx.commit());
     
-    Transaction tx1 = new Transaction("ackTest", conn, "joe", balanceCol);
+    Transaction tx1 = new Transaction("ackTest", conn, new ArrayByteSequence("joe"), balanceCol);
     tx1.get("joe", balanceCol);
     tx1.set("jill", balanceCol, "61");
     
-    Transaction tx2 = new Transaction("ackTest", conn, "joe", balanceCol);
+    Transaction tx2 = new Transaction("ackTest", conn, new ArrayByteSequence("joe"), balanceCol);
     tx2.get("joe", balanceCol);
     tx2.set("bob", balanceCol, "11");
     
@@ -190,20 +188,20 @@ public class AccismusTest {
     
     Transaction tx3 = new Transaction("ackTest", conn);
     
-    Assert.assertEquals("10", tx3.get("bob", balanceCol));
-    Assert.assertEquals("20", tx3.get("joe", balanceCol));
-    Assert.assertEquals("61", tx3.get("jill", balanceCol));
+    Assert.assertEquals("10", tx3.get("bob", balanceCol).toString());
+    Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
+    Assert.assertEquals("61", tx3.get("jill", balanceCol).toString());
     
     // update joe, so it can be acknowledged again
     tx3.set("joe", balanceCol, "21");
     
     Assert.assertTrue(tx3.commit());
     
-    Transaction tx4 = new Transaction("ackTest", conn, "joe", balanceCol);
+    Transaction tx4 = new Transaction("ackTest", conn, new ArrayByteSequence("joe"), balanceCol);
     tx4.get("joe", balanceCol);
     tx4.set("jill", balanceCol, "62");
     
-    Transaction tx5 = new Transaction("ackTest", conn, "joe", balanceCol);
+    Transaction tx5 = new Transaction("ackTest", conn, new ArrayByteSequence("joe"), balanceCol);
     tx5.get("joe", balanceCol);
     tx5.set("bob", balanceCol, "11");
     
@@ -213,9 +211,9 @@ public class AccismusTest {
     
     Transaction tx6 = new Transaction("ackTest", conn);
     
-    Assert.assertEquals("11", tx6.get("bob", balanceCol));
-    Assert.assertEquals("21", tx6.get("joe", balanceCol));
-    Assert.assertEquals("61", tx6.get("jill", balanceCol));
+    Assert.assertEquals("11", tx6.get("bob", balanceCol).toString());
+    Assert.assertEquals("21", tx6.get("joe", balanceCol).toString());
+    Assert.assertEquals("61", tx6.get("jill", balanceCol).toString());
     
   }
   
@@ -237,12 +235,12 @@ public class AccismusTest {
     
     Assert.assertTrue(tx.commit());
     
-    Transaction tx2 = new Transaction("ackTest2", conn, "joe", balanceCol);
+    Transaction tx2 = new Transaction("ackTest2", conn, new ArrayByteSequence("joe"), balanceCol);
     tx2.get("joe", balanceCol);
     tx2.set("joe", balanceCol, "21");
     tx2.set("bob", balanceCol, "11");
     
-    Transaction tx1 = new Transaction("ackTest2", conn, "joe", balanceCol);
+    Transaction tx1 = new Transaction("ackTest2", conn, new ArrayByteSequence("joe"), balanceCol);
     tx1.get("joe", balanceCol);
     tx1.set("jill", balanceCol, "61");
     
@@ -251,9 +249,9 @@ public class AccismusTest {
     
     Transaction tx3 = new Transaction("ackTest2", conn);
     
-    Assert.assertEquals("10", tx3.get("bob", balanceCol));
-    Assert.assertEquals("20", tx3.get("joe", balanceCol));
-    Assert.assertEquals("61", tx3.get("jill", balanceCol));
+    Assert.assertEquals("10", tx3.get("bob", balanceCol).toString());
+    Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
+    Assert.assertEquals("61", tx3.get("jill", balanceCol).toString());
     
   }
   
@@ -290,20 +288,34 @@ public class AccismusTest {
     
     tx3.commit();
     
-    Map<Column,String> columns = tx2.get("d00001", new Column("outlink", ""), new Column("outlink!", ""));
+    HashSet<Column> columns = new HashSet<Column>();
+    RowIterator riter = tx2.get(new ScannerConfiguration().setRange(Range.exact("d00001", "outlink")));
+    while (riter.hasNext()) {
+      ColumnIterator citer = riter.next().getValue();
+      while (citer.hasNext()) {
+        columns.add(citer.next().getKey());
+      }
+    }
     
     HashSet<Column> expected = new HashSet<Column>();
     expected.add(new Column("outlink", "http://a.com"));
     expected.add(new Column("outlink", "http://b.com"));
     expected.add(new Column("outlink", "http://c.com"));
     
-    Assert.assertEquals(expected, columns.keySet());
+    Assert.assertEquals(expected, columns);
     
     Transaction tx4 = new Transaction("rangeTest", conn);
-    columns = tx4.get("d00001", new Column("outlink", ""), new Column("outlink!", ""));
+    columns.clear();
+    riter = tx4.get(new ScannerConfiguration().setRange(Range.exact("d00001", "outlink")));
+    while (riter.hasNext()) {
+      ColumnIterator citer = riter.next().getValue();
+      while (citer.hasNext()) {
+        columns.add(citer.next().getKey());
+      }
+    }
     expected.add(new Column("outlink", "http://z.com"));
     expected.remove(new Column("outlink", "http://b.com"));
-    Assert.assertEquals(expected, columns.keySet());
+    Assert.assertEquals(expected, columns);
     
   }
   

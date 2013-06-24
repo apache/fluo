@@ -17,8 +17,9 @@
 package org.apache.accumulo.accismus;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
@@ -28,8 +29,8 @@ public class Column {
   
   private static final ColumnVisibility EMPTY_VIS = new ColumnVisibility(new byte[0]);
 
-  private byte[] family;
-  private byte[] qualifier;
+  private ByteSequence family;
+  private ByteSequence qualifier;
   private ColumnVisibility visibility = EMPTY_VIS;
   
   private static byte[] toBytes(String s) {
@@ -41,39 +42,44 @@ public class Column {
   }
 
   public int hashCode() {
-    return Arrays.hashCode(family) + Arrays.hashCode(qualifier) + visibility.hashCode();
+    return family.hashCode() + qualifier.hashCode() + visibility.hashCode();
   }
   
   public boolean equals(Object o) {
     if (o instanceof Column) {
       Column oc = (Column) o;
       
-      return Arrays.equals(family, oc.family) && Arrays.equals(qualifier, oc.qualifier) && visibility.equals(oc.visibility);
+      return family.equals(oc.family) && qualifier.equals(oc.qualifier) && visibility.equals(oc.visibility);
     }
     
     return false;
   }
   
   public Column(String family, String qualifier) {
-    // a limitation of this prototype...
+    // TODO a limitation of this prototype...
     if (family.contains(Constants.SEP) || qualifier.contains(Constants.SEP)) {
       throw new IllegalArgumentException("columns can not contain : in prototype");
     }
     
-    this.family = toBytes(family);
-    this.qualifier = toBytes(qualifier);
+    this.family = new ArrayByteSequence(toBytes(family));
+    this.qualifier = new ArrayByteSequence(toBytes(qualifier));
   }
   
   public Column(byte[] family, byte[] qualifier) {
+    this.family = new ArrayByteSequence(family);
+    this.qualifier = new ArrayByteSequence(qualifier);
+  }
+
+  public Column(ByteSequence family, ByteSequence qualifier) {
     this.family = family;
     this.qualifier = qualifier;
   }
-
-  public byte[] getFamily() {
+  
+  public ByteSequence getFamily() {
     return family;
   }
   
-  public byte[] getQualifier() {
+  public ByteSequence getQualifier() {
     return qualifier;
   }
 
@@ -87,10 +93,6 @@ public class Column {
   }
 
   public String toString() {
-    try {
-      return new String(family, "UTF-8") + " " + new String(qualifier, "UTF-8") + " " + visibility;
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return family + " " + qualifier + " " + visibility;
   }
 }

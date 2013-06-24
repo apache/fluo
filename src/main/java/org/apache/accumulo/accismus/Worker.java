@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
@@ -62,7 +63,7 @@ public class Worker {
         // TODO do something
       }
       
-      String row = entry.getKey().getRowData().toString();
+      ByteSequence row = entry.getKey().getRowData();
       
       Transaction tx = new Transaction(table, conn, row, col, observedColumns);
       

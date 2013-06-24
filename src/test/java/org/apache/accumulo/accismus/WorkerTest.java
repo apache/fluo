@@ -19,20 +19,18 @@ package org.apache.accumulo.accismus;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.ColumnSet;
-import org.apache.accumulo.accismus.Observer;
-import org.apache.accumulo.accismus.Operations;
-import org.apache.accumulo.accismus.Transaction;
-import org.apache.accumulo.accismus.Worker;
 import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
+import org.apache.hadoop.io.Text;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -44,26 +42,37 @@ import org.junit.rules.TemporaryFolder;
  */
 public class WorkerTest {
   
+  private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
+
   static class DegreeIndexer implements Observer {
     
-    public void process(Transaction tx, String row, Column col) throws Exception {
+    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
       // get previously calculated degree
-      String degree = tx.get(row, new Column("attr", "degree"));
       
+      ByteSequence degree = tx.get(row, new Column("attr", "degree"));
+
       // calculate new degree
-      Map<Column,String> links = tx.get(row, new Column("link", ""), new Column("link!", ""));
-      String degree2 = links.size() + "";
+      int count = 0;
+      RowIterator riter = tx.get(new ScannerConfiguration().setRange(Range.exact(new Text(row.toArray()), new Text("link"))));
+      while (riter.hasNext()) {
+        ColumnIterator citer = riter.next().getValue();
+        while (citer.hasNext()) {
+          citer.next();
+          count++;
+        }
+      }
+      String degree2 = "" + count;
       
-      if (degree == null || !degree.equals(degree2)) {
-        tx.set(row, new Column("attr", "degree"), degree2);
+      if (degree == null || !degree.toString().equals(degree2)) {
+        tx.set(row, new Column("attr", "degree"), new ArrayByteSequence(degree2));
         
         // put new entry in degree index
-        tx.set("IDEG" + degree2, new Column("node", row), "");
+        tx.set("IDEG" + degree2, new Column(NODE_CF, row), "");
       }
       
       if (degree != null) {
         // delete old degree in index
-        tx.delete("IDEG" + degree, new Column("node", row));
+        tx.delete("IDEG" + degree, new Column(NODE_CF, row));
       }
       
       // TODO maybe commit should be done externally
@@ -122,8 +131,8 @@ public class WorkerTest {
     worker.processUpdates();
     
     Transaction tx3 = new Transaction("graph", conn);
-    Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")));
-    Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")));
+    Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
+    Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")).toString());
     
     tx3.set("N0003", new Column("link", "N0010"), "");
     tx3.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
@@ -132,9 +141,9 @@ public class WorkerTest {
     worker.processUpdates();
     
     Transaction tx4 = new Transaction("graph", conn);
-    Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")));
+    Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
-    Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")));
+    Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
     
     Scanner scanner = conn.createScanner("graph", new Authorizations());
     AccismusFormatter formatter = new AccismusFormatter();

@@ -16,9 +16,11 @@
  */
 package org.apache.accumulo.accismus;
 
+import org.apache.accumulo.core.data.ByteSequence;
+
 /**
  * 
  */
 public interface Observer {
-  public void process(Transaction tx, String row, Column col) throws Exception;
+  public void process(Transaction tx, ByteSequence row, Column col) throws Exception;
 }
