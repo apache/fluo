@@ -19,7 +19,11 @@ package org.apache.accumulo.accismus.format;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.DelLockValue;
+import org.apache.accumulo.accismus.impl.LockValue;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.format.Formatter;
@@ -37,7 +41,10 @@ public class AccismusFormatter implements Formatter {
   
   public String next() {
     Entry<Key,Value> entry = scanner.next();
-    
+    return toString(entry);
+  }
+
+  public static String toString(Entry<Key,Value> entry) {
     Key key = entry.getKey();
     
     long ts = key.getTimestamp();
@@ -57,22 +64,20 @@ public class AccismusFormatter implements Formatter {
     String val;
     if (type.equals("WRITE")) {
       byte ba[] = entry.getValue().get();
-      if (ba.length == 1) {
-        val = new String(ba);
-      } else {
-        val = ((((long) ba[0] << 56) + ((long) (ba[1] & 255) << 48) + ((long) (ba[2] & 255) << 40) + ((long) (ba[3] & 255) << 32)
-            + ((long) (ba[4] & 255) << 24) + ((ba[5] & 255) << 16) + ((ba[6] & 255) << 8) + ((ba[7] & 255) << 0)))
-            + "";
-      }
+      val = ByteUtil.decodeLong(ba) + "";
+    } else if (type.equals("DEL_LOCK")) {
+      val = new DelLockValue(entry.getValue().get()).toString();
+    } else if (type.equals("LOCK")) {
+      // TODO can Value be made to extend bytesequence w/o breaking API?
+      val = new LockValue(new ArrayByteSequence(entry.getValue().get())).toString();
     } else {
       val = entry.getValue().toString();
     }
     
     return key.getRow() + " " + key.getColumnFamily() + " " + key.getColumnQualifier() + " " + key.getColumnVisibility() + " " + type + " "
         + (ts & ColumnUtil.TIMESTAMP_MASK) + " " + val;
-    
   }
-  
+
   public void remove() {
     scanner.remove();
   }

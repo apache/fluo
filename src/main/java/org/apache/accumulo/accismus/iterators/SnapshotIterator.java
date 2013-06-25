@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -62,16 +63,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
           }
           
           if (dataPointer == -1 && ts <= snaptime) {
-            byte[] val = source.getTopValue().get();
-            if (val.length == 1 && val[0] == 'D') {
-              // found a delete marker, ignore any data for this column
-              dataPointer = -2;
-            } else if (val.length == 8) {
-              dataPointer = (((long) val[0] << 56) + ((long) (val[1] & 255) << 48) + ((long) (val[2] & 255) << 40) + ((long) (val[3] & 255) << 32)
-                  + ((long) (val[4] & 255) << 24) + ((val[5] & 255) << 16) + ((val[6] & 255) << 8) + ((val[7] & 255) << 0));
-            } else {
-              throw new IllegalArgumentException();
-            }
+            dataPointer = ByteUtil.decodeLong(source.getTopValue().get());
           }
         } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
           if (ts > invalidationTime)
@@ -86,6 +78,8 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
             // found data for this column
             return;
           }
+          
+          // TODO could possibly seek to next col when ts < dataPointer
         } else if (colType == ColumnUtil.ACK_PREFIX) {
           
         } else {

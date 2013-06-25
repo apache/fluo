@@ -20,8 +20,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.accismus.Column;
+import org.apache.accumulo.accismus.ColumnSet;
 import org.apache.accumulo.accismus.ScannerConfiguration;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
+import org.apache.accumulo.accismus.iterators.RollbackCheckIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
@@ -51,13 +54,13 @@ import core.data.ConditionalMutation;
  */
 public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   
+  private static final byte[] EMPTY = new byte[0];
+
   private long startTs;
   private Iterator<Entry<Key,Value>> iterator;
   private ScannerConfiguration config;
   private Connector conn;
   private String table;
-  
-  private static final byte[] EMPTY = new byte[0];
 
   private static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -101,11 +104,11 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
     mloop: while (true) {
       Entry<Key,Value> entry = iterator.next();
-      
+
       byte[] cf = entry.getKey().getColumnFamilyData().toArray();
       byte[] cq = entry.getKey().getColumnQualifierData().toArray();
       long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
-      
+
       if (colType == ColumnUtil.LOCK_PREFIX) {
         // TODO exponential back off and eventually do lock recovery
         // TODO do read ahead while waiting for the lock
@@ -115,6 +118,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         UtilWaitThread.sleep(waitTime);
         waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
         
+        // TODO if its not the primary, could scan and check the primary instead of waiting
         if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
           attemptRollback(entry);
         }
@@ -142,52 +146,124 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   }
   
   private void attemptRollback(Entry<Key,Value> entry) {
-    // TODO sanity check on lock timestamp
-
-    List<ByteSequence> fields = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
+    List<ByteSequence> primary = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
     
-    ByteSequence row = fields.get(0);
-    ByteSequence fam = fields.get(1);
-    ByteSequence qual = fields.get(2);
-    ByteSequence vis = fields.get(3);
+    ByteSequence prow = primary.get(0);
+    ByteSequence pfam = primary.get(1);
+    ByteSequence pqual = primary.get(2);
+    ByteSequence pvis = primary.get(3);
 
-    ColumnVisibility cv = new ColumnVisibility(vis.toArray());
+    boolean isPrimary = entry.getKey().getRowData().equals(prow) && entry.getKey().getColumnFamilyData().equals(pfam)
+        && entry.getKey().getColumnQualifierData().equals(pqual) && entry.getKey().getColumnVisibilityData().equals(pvis);
+
+    ColumnVisibility cv = new ColumnVisibility(pvis.toArray());
 
     // TODO avoid conversions to arrays
-    ConditionalMutation delLockMutation = new ConditionalMutation(row.toArray());
+    // TODO review use of PrewriteIter here
+    ConditionalMutation delLockMutation = new ConditionalMutation(prow.toArray());
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     // TODO cache col vis?
-    delLockMutation.addCondition(new Condition(fam, qual).setTimestamp(entry.getKey().getTimestamp()).setIterators(iterConf).setVisibility(cv)
-        .setValue(entry.getValue().get()));
+    delLockMutation.addCondition(new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(entry.getValue().get()));
 
-    delLockMutation.put(fam.toArray(), qual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, EMPTY);
+    //TODO maybe do scan 1st and conditional write 2nd.... for a tx w/ many columns, the conditional write will only succeed once... could check if its the primary or not
+    // TODO sanity check on lockTs vs startTs
+    long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
 
+    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true));
 
+    // TODO make auths configurable
     ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
+    // TODO handle other conditional writer cases
     if (cw.write(delLockMutation).getStatus() == Status.ACCEPTED) {
-      Key k = entry.getKey();
-      if (!k.getRowData().equals(row) || !k.getColumnFamilyData().equals(fam) || !k.getColumnQualifierData().equals(qual)
-          || !k.getColumnVisibilityData().equals(vis)) {
+      if (!isPrimary)
+        rollback(entry.getKey(), lockTs);
+    } else if (!isPrimary) {
+
+      // TODO make auths configurable
+      // TODO ensure primary is visible
+      // TODO reususe scanner?
+      try {
+        Scanner scanner = conn.createScanner(table, new Authorizations());
+        IteratorSetting is = new IteratorSetting(1, RollbackCheckIterator.class);
+        RollbackCheckIterator.setLocktime(is, lockTs);
+        scanner.addScanIterator(is);
+        scanner.setRange(Range.exact(ByteUtil.toText(prow), ByteUtil.toText(pfam), ByteUtil.toText(pqual), ByteUtil.toText(pvis)));
         
-        Mutation mut = new Mutation(k.getRowData().toArray());
-        mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-            EMPTY);
+        Iterator<Entry<Key,Value>> iter = scanner.iterator();
         
-        try {
-          BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
-          bw.addMutation(mut);
-          bw.close();
-        } catch (TableNotFoundException e) {
-          throw new RuntimeException(e);
-        } catch (MutationsRejectedException e) {
-          throw new RuntimeException(e);
+        if (iter.hasNext()) {
+          // TODO verify what comes back from iterator
+          Entry<Key,Value> entry2 = iter.next();
+          long colType = entry2.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
+          if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
+            if(new DelLockValue(entry2.getValue().get()).isRollback()){ 
+              rollback(entry.getKey(), lockTs);
+            } else {
+              long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+              commitColumn(entry, lockTs, commitTs);
+            }
+          } else if (colType == ColumnUtil.WRITE_PREFIX) {
+            // TODO ensure value == lockTs
+            long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+            commitColumn(entry, lockTs, commitTs);
+          } else if (colType == ColumnUtil.LOCK_PREFIX) {
+            // TODO
+          } else {
+            // TODO
+          }
+        } else {
+          // TODO no info about the stats of this tx
         }
+
+      } catch (Exception e) {
+        // TODO proper exception handling
+        throw new RuntimeException(e);
       }
-    } else {
-      // TODO check if it was commited
+
     }
 
+  }
+
+  private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
+    LockValue lv = new LockValue(new ArrayByteSequence(entry.getValue().get()));
+    boolean isTrigger = lv.getObserver().length() > 0;
+    // TODO cache col vis
+    Column col = new Column(entry.getKey().getColumnFamilyData(), entry.getKey().getColumnQualifierData()).setVisibility(entry.getKey()
+        .getColumnVisibilityParsed());
+    Mutation m = new Mutation(entry.getKey().getRowData().toArray());
+    
+    // TODO pass observed cols
+    ColumnSet observedColumns = new ColumnSet();
+    ColumnUtil.commitColumn(isTrigger, col, lv.isWrite(), lockTs, commitTs, observedColumns, m);
+    
+    try {
+      // TODO use conditional writer?
+      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+      bw.addMutation(m);
+      bw.close();
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (MutationsRejectedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void rollback(Key k, long lockTs) {
+    Mutation mut = new Mutation(k.getRowData().toArray());
+    mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encode(lockTs, true));
+    
+    try {
+      // TODO use conditional writer?
+      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+      bw.addMutation(mut);
+      bw.close();
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (MutationsRejectedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void remove() {

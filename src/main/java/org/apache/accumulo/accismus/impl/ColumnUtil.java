@@ -16,8 +16,13 @@
  */
 package org.apache.accumulo.accismus.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import org.apache.accumulo.accismus.Column;
+import org.apache.accumulo.accismus.ColumnSet;
+import org.apache.accumulo.accismus.Constants;
+import org.apache.accumulo.accismus.Transaction;
+import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Value;
+
 
 /**
  * 
@@ -31,31 +36,24 @@ public class ColumnUtil {
   public static final long DATA_PREFIX = 0xa000000000000000l;
   
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
-  
-  public static void main(String[] args) {
-    ArrayList<Long> list = new ArrayList<Long>();
-    
-    list.add(DEL_LOCK_PREFIX);
-    list.add(LOCK_PREFIX);
-    list.add(WRITE_PREFIX);
-    list.add(DATA_PREFIX);
-    list.add(ACK_PREFIX);
-    
-    Collections.sort(list, Collections.reverseOrder());
-    
-    for (Long l : list) {
-      if ((l & PREFIX_MASK) == DEL_LOCK_PREFIX)
-        System.out.println("DEL_LOCK_PREFIX");
-      if ((l & PREFIX_MASK) == LOCK_PREFIX)
-        System.out.println("LOCK_PREFIX");
-      if ((l & PREFIX_MASK) == DATA_PREFIX)
-        System.out.println("DATA_PREFIX");
-      if ((l & PREFIX_MASK) == WRITE_PREFIX)
-        System.out.println("WRITE_PREFIX");
-      if ((l & PREFIX_MASK) == ACK_PREFIX)
-        System.out.println("ACK_PREFIX");
+
+  public static void commitColumn(boolean isTrigger, Column col, boolean isWrite, long startTs, long commitTs, ColumnSet observedColumns, Mutation m) {
+    if (isWrite) {
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibility(), WRITE_PREFIX | commitTs,
+          new Value(ByteUtil.encode(startTs)));
+    } else {
+      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, false));
     }
     
+    if (isTrigger) {
+      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, Transaction.EMPTY);
+      m.putDelete(Transaction.toBytes(Constants.NOTIFY_CF), Transaction.concat(col), col.getVisibility(), startTs);
+    }
+    
+    if (observedColumns.contains(col)) {
+      m.put(Transaction.toBytes(Constants.NOTIFY_CF), Transaction.concat(col), col.getVisibility(), commitTs, Transaction.EMPTY);
+    }
   }
   
+
 }

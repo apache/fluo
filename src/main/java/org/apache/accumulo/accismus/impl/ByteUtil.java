@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.hadoop.io.Text;
 
 /**
  * 
@@ -36,10 +38,12 @@ public class ByteUtil {
   public static byte[] concat(ByteSequence... byteArrays) {
     
     try {
+      // TODO calculate exact array size needed
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(baos);
       
       for (ByteSequence bs : byteArrays) {
+        // TODO use var len int
         dos.writeInt(bs.length());
         if (bs.isBackedByArray()) {
           dos.write(bs.getBackingArray(), bs.offset(), bs.length());
@@ -85,5 +89,54 @@ public class ByteUtil {
     
     return ret;
   }
+
+  public static byte[] encode(long v) {
+    byte ba[] = new byte[8];
+    encode(ba, 0, v);
+    return ba;
+  }
+
+  public static byte[] encode(byte[] ba, int offset, long v) {
+    ba[offset + 0] = (byte) (v >>> 56);
+    ba[offset + 1] = (byte) (v >>> 48);
+    ba[offset + 2] = (byte) (v >>> 40);
+    ba[offset + 3] = (byte) (v >>> 32);
+    ba[offset + 4] = (byte) (v >>> 24);
+    ba[offset + 5] = (byte) (v >>> 16);
+    ba[offset + 6] = (byte) (v >>> 8);
+    ba[offset + 7] = (byte) (v >>> 0);
+    return ba;
+  }
+
+  public static long decodeLong(byte[] ba, int offset) {
+    return ((((long) ba[offset + 0] << 56) + ((long) (ba[offset + 1] & 255) << 48) + ((long) (ba[offset + 2] & 255) << 40)
+        + ((long) (ba[offset + 3] & 255) << 32) + ((long) (ba[offset + 4] & 255) << 24) + ((ba[offset + 5] & 255) << 16) + ((ba[offset + 6] & 255) << 8) + ((ba[offset + 7] & 255) << 0)));
+  }
+
+  public static long decodeLong(byte[] ba) {
+    return ((((long) ba[0] << 56) + ((long) (ba[1] & 255) << 48) + ((long) (ba[2] & 255) << 40) + ((long) (ba[3] & 255) << 32) + ((long) (ba[4] & 255) << 24)
+        + ((ba[5] & 255) << 16) + ((ba[6] & 255) << 8) + ((ba[7] & 255) << 0)));
+  
+  }
+
+  public static byte[] concat(byte[]... byteArrays) {
+    ByteSequence[] bs = new ByteSequence[byteArrays.length];
+    for (int i = 0; i < byteArrays.length; i++) {
+      bs[i] = new ArrayByteSequence(byteArrays[i]);
+    }
+    
+    return concat(bs);
+  }
+
+  public static Text toText(ByteSequence bs) {
+    if (bs.isBackedByArray()) {
+      Text t = new Text(Transaction.EMPTY);
+      t.set(bs.getBackingArray(), bs.offset(), bs.length());
+      return t;
+    } else {
+      return new Text(bs.toArray());
+    }
+  }
+
 
 }

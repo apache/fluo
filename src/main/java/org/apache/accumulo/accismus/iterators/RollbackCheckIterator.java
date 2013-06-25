@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -34,33 +36,25 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 /**
  * 
  */
-public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
+public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
-  private static final String CHECK_ACK_OPT = "checkAckOpt";
   
   private SortedKeyValueIterator<Key,Value> source;
-  private long snaptime;
+  private long lockTime;
   
   boolean hasTop = false;
   boolean checkAck = false;
   
-  public static void setSnaptime(IteratorSetting cfg, long time) {
+  public static void setLocktime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnUtil.PREFIX_MASK & time) != 0) {
       throw new IllegalArgumentException();
     }
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
   
-  public static void enableAckCheck(IteratorSetting cfg) {
-    cfg.addOption(CHECK_ACK_OPT, "true");
-  }
-  
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
-    this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
-    if (options.containsKey(CHECK_ACK_OPT)) {
-      this.checkAck = Boolean.parseBoolean(options.get(CHECK_ACK_OPT));
-    }
+    this.lockTime = Long.parseLong(options.get(TIMESTAMP_OPT));
   }
   
   public boolean hasTop() {
@@ -86,34 +80,33 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
         return;
       }
     }
-    
+
     long invalidationTime = -1;
-    long firstWrite = -1;
-    
+
     hasTop = false;
     while (source.hasTop() && curCol.equals(getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
       
       if (colType == ColumnUtil.WRITE_PREFIX) {
-        
         if (invalidationTime == -1) {
           invalidationTime = ts;
         }
         
-        if (firstWrite == -1) {
-          firstWrite = ts;
-        }
-        
-        if (ts >= snaptime) {
-          
+        if (lockTime == ByteUtil.decodeLong(source.getTopValue().get())) {
           hasTop = true;
           return;
         }
-        
       } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
         if (ts > invalidationTime)
           invalidationTime = ts;
+        
+        DelLockValue dlv = new DelLockValue(source.getTopValue().get());
+        if (dlv.getLockTime() == lockTime) {
+          hasTop = true;
+          return;
+        }
+
       } else if (colType == ColumnUtil.LOCK_PREFIX) {
         if (ts > invalidationTime) {
           // nothing supersedes this lock, therefore the column is locked
@@ -124,10 +117,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
         // can stop looking
         return;
       } else if (colType == ColumnUtil.ACK_PREFIX) {
-        if (checkAck && ts >= firstWrite) {
-          hasTop = true;
-          return;
-        }
+
       } else {
         throw new IllegalArgumentException();
       }

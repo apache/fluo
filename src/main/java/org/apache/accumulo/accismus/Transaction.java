@@ -12,20 +12,22 @@ import java.util.Set;
 
 import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.DelLockValue;
+import org.apache.accumulo.accismus.impl.LockValue;
 import org.apache.accumulo.accismus.impl.SnapshotScanner;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.ArgumentChecker;
-import org.apache.hadoop.io.Text;
 
 import core.client.ConditionalWriter;
 import core.client.ConditionalWriter.Result;
@@ -37,7 +39,8 @@ import core.data.ConditionalMutation;
 public class Transaction {
   
   private static final ColumnSet EMPTY_SET = new ColumnSet();
-  private static final byte[] EMPTY = new byte[0];
+  public static final byte[] EMPTY = new byte[0];
+  public static final ByteSequence EMPTY_BS = new ArrayByteSequence(EMPTY);
   
   private static final ByteSequence DELETE = new ArrayByteSequence("special delete object");
   
@@ -46,11 +49,13 @@ public class Transaction {
   private String table;
   
   private Map<ByteSequence,Map<Column,ByteSequence>> updates;
+  private ByteSequence observer;
   private ByteSequence triggerRow;
   private Column triggerColumn;
   private ColumnSet observedColumns;
+  private boolean commitStarted = false;
   
-  private static byte[] toBytes(String s) {
+  public static byte[] toBytes(String s) {
     try {
       return s.getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
@@ -58,22 +63,8 @@ public class Transaction {
     }
   }
 
-  private static Text toText(ByteSequence bs) {
-    if (bs.isBackedByArray()) {
-      Text t = new Text(EMPTY);
-      t.set(bs.getBackingArray(), bs.offset(), bs.length());
-      return t;
-    } else {
-      return new Text(bs.toArray());
-    }
-  }
-
-  private byte[] concat(Column c) {
+  public static byte[] concat(Column c) {
     return ByteUtil.concat(c.getFamily(), c.getQualifier());
-  }
-  
-  private byte[] concat(ByteSequence row, Column c) {
-    return ByteUtil.concat(row, c.getFamily(), c.getQualifier(), new ArrayByteSequence(c.getVisibility().getExpression()));
   }
 
   public Transaction(String table, Connector conn) {
@@ -101,6 +92,7 @@ public class Transaction {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
       colUpdates.put(tiggerColumn, null);
       updates.put(triggerRow, colUpdates);
+      observer = new ArrayByteSequence("oid");
     }
   }
   
@@ -129,7 +121,7 @@ public class Transaction {
     // TODO push visibility filtering to server side?
 
     ScannerConfiguration config = new ScannerConfiguration();
-    config.setRange(new Range(toText(row)));
+    config.setRange(new Range(ByteUtil.toText(row)));
     for (Column column : columns) {
       config.fetchColumn(column.getFamily(), column.getQualifier());
     }
@@ -153,6 +145,9 @@ public class Transaction {
   }
 
   public RowIterator get(ScannerConfiguration config) throws Exception {
+    if (commitStarted)
+      throw new IllegalStateException();
+
     return new RowIterator(new SnapshotScanner(conn, table, config, startTs));
   }
   
@@ -167,6 +162,9 @@ public class Transaction {
   }
   
   public void set(ByteSequence row, Column col, ByteSequence value) {
+    if (commitStarted)
+      throw new IllegalStateException();
+
     ArgumentChecker.notNull(row, col, value);
     
     // TODO copy?
@@ -195,70 +193,63 @@ public class Transaction {
     set(row, col, DELETE);
   }
   
-  private byte[] encode(long v) {
-    byte ba[] = new byte[8];
-    ba[0] = (byte) (v >>> 56);
-    ba[1] = (byte) (v >>> 48);
-    ba[2] = (byte) (v >>> 40);
-    ba[3] = (byte) (v >>> 32);
-    ba[4] = (byte) (v >>> 24);
-    ba[5] = (byte) (v >>> 16);
-    ba[6] = (byte) (v >>> 8);
-    ba[7] = (byte) (v >>> 0);
-    return ba;
-  }
-
-  private void releaseLock(boolean isTriggerRow, Column col, ByteSequence val, long commitTs, Mutation m) {
-    if (val != null) {
-      m.put(toText(col.getFamily()), toText(col.getQualifier()), col.getVisibility(), ColumnUtil.WRITE_PREFIX | commitTs, new Value(
-          val == DELETE ? toBytes("D") : encode(startTs)));
-    } else {
-      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | commitTs, EMPTY);
-    }
-    
-    if (isTriggerRow && col.equals(triggerColumn)) {
-      m.put(triggerColumn.getFamily().toArray(), triggerColumn.getQualifier().toArray(), triggerColumn.getVisibility(), ColumnUtil.ACK_PREFIX | startTs, EMPTY);
-      m.putDelete(toBytes(Constants.NOTIFY_CF), concat(triggerColumn), triggerColumn.getVisibility(), startTs);
-    }
-    
-    if (observedColumns.contains(col)) {
-      m.put(toBytes(Constants.NOTIFY_CF), concat(col), col.getVisibility(), commitTs, EMPTY);
-    }
-  }
-  
   private void prewrite(ConditionalMutation cm, Column col, ByteSequence val, ByteSequence primaryRow, Column primaryColumn, boolean isTriggerRow) {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
-    if (isTriggerRow && col.equals(triggerColumn)) {
+    boolean isTrigger = isTriggerRow && col.equals(triggerColumn);
+    if (isTrigger)
       PrewriteIterator.enableAckCheck(iterConf);
-    }
     
+
     cm.addCondition(new Condition(col.getFamily(), col.getQualifier()).setIterators(iterConf).setVisibility(col.getVisibility()));
     
     if (val != null && val != DELETE)
       cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DATA_PREFIX | startTs, val.toArray());
-
-    cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs, concat(primaryRow, primaryColumn));
+    
+    cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs,
+        LockValue.encode(primaryRow, primaryColumn, val != null, isTrigger ? observer : EMPTY_BS));
   }
-  
-  public boolean commit() throws Exception {
-    ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
+
+
+  static class CommitData {
+    private ConditionalWriter cw;
+    private ByteSequence prow;
+    private Column pcol;
+    private ByteSequence pval;
+    private int rejectedCount;
+    private HashSet<ByteSequence> acceptedRows;
+    
+    public String toString() {
+      return prow + " " + pcol + " " + pval + " " + rejectedCount;
+    }
+
+  }
+
+  CommitData preCommit() {
+    if (commitStarted)
+      throw new IllegalStateException();
+
+    commitStarted = true;
+
+    CommitData cd = new CommitData();
+    
+    cd.cw = new ConditionalWriterImpl(table, conn, new Authorizations());
     
     // get a primary column
-    ByteSequence primaryRow = updates.keySet().iterator().next();
-    Map<Column,ByteSequence> colSet = updates.get(primaryRow);
-    Column primaryColumn = colSet.keySet().iterator().next();
-    ByteSequence primaryValue = colSet.remove(primaryColumn);
+    cd.prow = updates.keySet().iterator().next();
+    Map<Column,ByteSequence> colSet = updates.get(cd.prow);
+    cd.pcol = colSet.keySet().iterator().next();
+    cd.pval = colSet.remove(cd.pcol);
     if (colSet.size() == 0)
-      updates.remove(primaryRow);
+      updates.remove(cd.prow);
     
     // try to lock primary column
-    ConditionalMutation pcm = new ConditionalMutation(primaryRow.toArray());
-    prewrite(pcm, primaryColumn, primaryValue, primaryRow, primaryColumn, primaryRow.equals(triggerRow));
+    ConditionalMutation pcm = new ConditionalMutation(cd.prow.toArray());
+    prewrite(pcm, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
     
     // TODO handle unknown
-    if (cw.write(pcm).getStatus() != Status.ACCEPTED) {
-      return false;
+    if (cd.cw.write(pcm).getStatus() != Status.ACCEPTED) {
+      return null;
     }
     
     // try to lock other columns
@@ -269,80 +260,109 @@ public class Transaction {
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       
       for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
-        prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), primaryRow, primaryColumn, isTriggerRow);
+        prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
       }
       
       mutations.add(cm);
     }
     
-    HashSet<ByteSequence> acceptedRows = new HashSet<ByteSequence>();
-    int rejectedCount = 0;
+    cd.acceptedRows = new HashSet<ByteSequence>();
+    cd.rejectedCount = 0;
     
-    Iterator<Result> resultsIter = cw.write(mutations.iterator());
+    Iterator<Result> resultsIter = cd.cw.write(mutations.iterator());
     while (resultsIter.hasNext()) {
       Result result = resultsIter.next();
       if (result.getStatus() == Status.ACCEPTED)
-        acceptedRows.add(new ArrayByteSequence(result.getMutation().getRow()));
+        cd.acceptedRows.add(new ArrayByteSequence(result.getMutation().getRow()));
       else
-        rejectedCount++;
+        cd.rejectedCount++;
+    }
+    return cd;
+  }
+
+  boolean commitPrimaryColumn(CommitData cd, long commitTs) {
+    // try to delete lock and add write for primary column
+    ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow.toArray());
+    IteratorSetting iterConf = new IteratorSetting(1, PrewriteIterator.class);
+    PrewriteIterator.setSnaptime(iterConf, startTs);
+    boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
+    delLockMutation.addCondition(new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
+        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS)));
+    ColumnUtil.commitColumn(isTrigger, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
+    
+    Status status = cd.cw.write(delLockMutation).getStatus();
+    // TODO handle unknown
+    if (status != Status.ACCEPTED) {
+      // TODO rollback
+      return false;
     }
     
-    if (rejectedCount == 0) {
+    return true;
+  }
+  
+  boolean rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
+    // roll back locks
+    
+    // TODO let rollback be done lazily?
+    
+    BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+    // TODO does order matter, should primary be deleted last?
+    
+    Mutation m = new Mutation(cd.prow.toArray());
+    // TODO timestamp?
+    // TODO writing the primary column with a batch writer is iffy
+    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX
+        | startTs, DelLockValue.encode(startTs, true));
+    bw.addMutation(m);
+    
+    for (ByteSequence row : cd.acceptedRows) {
+      m = new Mutation(row.toArray());
+      for (Column col : updates.get(row).keySet()) {
+        m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+            DelLockValue.encode(startTs, true));
+      }
+      bw.addMutation(m);
+    }
+    
+    bw.close();
+    
+    return false;
+  }
+  
+  boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
+    // delete locks and add writes for other columns
+    BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+    for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
+      Mutation m = new Mutation(rowUpdates.getKey().toArray());
+      boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
+      for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
+        ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), colUpdates.getKey(), colUpdates.getValue() != null, startTs,
+            commitTs, observedColumns, m);
+      }
+      
+      bw.addMutation(m);
+    }
+    
+    bw.close();
+    
+    return true;
+  }
+
+  public boolean commit() throws Exception {
+    // TODO throw exception instead of return boolean
+    CommitData cd = preCommit();
+    
+    if (cd == null)
+      return false;
+    if (cd.rejectedCount == 0) {
       long commitTs = Oracle.getInstance().getTimestamp();
-      
-      // try to delete lock and add write for primary column
-      ConditionalMutation delLockMutation = new ConditionalMutation(primaryRow.toArray());
-      IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
-      PrewriteIterator.setSnaptime(iterConf, startTs);
-      delLockMutation.addCondition(new Condition(primaryColumn.getFamily(), primaryColumn.getQualifier()).setTimestamp(ColumnUtil.LOCK_PREFIX | startTs)
-          .setIterators(iterConf).setVisibility(primaryColumn.getVisibility()).setValue(concat(primaryRow, primaryColumn)));
-      releaseLock(primaryRow.equals(triggerRow), primaryColumn, primaryValue, commitTs, delLockMutation);
-      
-      if (cw.write(delLockMutation).getStatus() != Status.ACCEPTED) {
-        // TODO rollback
+      if (commitPrimaryColumn(cd, commitTs)) {
+        return finishCommit(cd, commitTs);
+      } else {
         return false;
       }
-      
-      // delete locks and add writes for other columns
-      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
-      for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
-        Mutation m = new Mutation(rowUpdates.getKey().toArray());
-        boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
-        for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
-          releaseLock(isTriggerRow, colUpdates.getKey(), colUpdates.getValue(), commitTs, m);
-        }
-        
-        bw.addMutation(m);
-      }
-      
-      bw.close();
-      
-      return true;
     } else {
-      // roll back locks
-      
-      // TODO let rollback be done lazily?
-
-      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
-      // TODO does order matter, should primary be deleted last?
-      
-      Mutation m = new Mutation(primaryRow.toArray());
-      // TODO timestamp?
-      m.put(primaryColumn.getFamily().toArray(), primaryColumn.getQualifier().toArray(), primaryColumn.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-          toBytes(""));
-      bw.addMutation(m);
-      
-      for (ByteSequence row : acceptedRows) {
-        m = new Mutation(row.toArray());
-        for (Column col : updates.get(row).keySet()) {
-          m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs, toBytes(""));
-        }
-        bw.addMutation(m);
-      }
-      
-      bw.close();
-      
-      return false;
+      return rollback(cd);
     }
   }
 }
