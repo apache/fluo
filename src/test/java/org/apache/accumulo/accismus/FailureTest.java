@@ -178,4 +178,47 @@ public class FailureTest {
   public void testAcks() {
     // TODO test that acks are properly handled in rollback and rollforward
   }
+  
+  @Test
+  public void testStaleScan() throws Exception {
+    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
+    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
+    
+    try {
+      conn.tableOperations().delete("bank");
+    } catch (TableNotFoundException e) {}
+    
+    Operations.createTable("bank", conn);
+    
+    Transaction tx = new Transaction("bank", conn);
+    
+    tx.set("bob", balanceCol, "10");
+    tx.set("joe", balanceCol, "20");
+    tx.set("jill", balanceCol, "60");
+    
+    tx.commit();
+    
+    Transaction tx2 = new Transaction("bank", conn);
+    Assert.assertEquals("10", tx2.get("bob", balanceCol).toString());
+    
+    transfer(conn, "joe", "jill", 1);
+    transfer(conn, "joe", "bob", 1);
+    transfer(conn, "bob", "joe", 2);
+    transfer(conn, "jill", "joe", 2);
+    
+    conn.tableOperations().flush("bank", null, null, true);
+    
+    try {
+      tx2.get("joe", balanceCol);
+      Assert.assertFalse(true);
+    } catch (StaleScanException sse) {
+      
+    }
+    
+    Transaction tx3 = new Transaction("bank", conn);
+    
+    Assert.assertEquals("9", tx3.get("bob", balanceCol).toString());
+    Assert.assertEquals("22", tx3.get("joe", balanceCol).toString());
+    Assert.assertEquals("59", tx3.get("jill", balanceCol).toString());
+  }
 }
