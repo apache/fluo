@@ -42,7 +42,7 @@ public class Operations {
     conn.tableOperations().setLocalityGroups(tableName, groups);
     
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setNumVersions(gcIter, 3);
+    GarbageCollectionIterator.setNumVersions(gcIter, 2);
     
     conn.tableOperations().attachIterator(tableName, gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
     
