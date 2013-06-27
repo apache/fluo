@@ -16,13 +16,9 @@
  */
 package org.apache.accumulo.accismus;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
-
 /**
  * 
  */
-public class Constants {
-  public static final ByteSequence NOTIFY_CF = new ArrayByteSequence("ntfy");
+public class StaleScanException extends RuntimeException {
   
 }

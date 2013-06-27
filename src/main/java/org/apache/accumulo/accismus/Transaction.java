@@ -167,6 +167,10 @@ public class Transaction {
 
     ArgumentChecker.notNull(row, col, value);
     
+    if (col.getFamily().equals(Constants.NOTIFY_CF)) {
+      throw new IllegalArgumentException(Constants.NOTIFY_CF + " is a reserved family");
+    }
+
     // TODO copy?
 
     Map<Column,ByteSequence> colUpdates = updates.get(row);
@@ -175,6 +179,9 @@ public class Transaction {
       updates.put(row, colUpdates);
     }
     
+    if (colUpdates.get(col) != null) {
+      throw new IllegalStateException("Value already set " + row + " " + col);
+    }
     colUpdates.put(col, value);
   }
   
@@ -283,12 +290,12 @@ public class Transaction {
   boolean commitPrimaryColumn(CommitData cd, long commitTs) {
     // try to delete lock and add write for primary column
     ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow.toArray());
-    IteratorSetting iterConf = new IteratorSetting(1, PrewriteIterator.class);
+    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
     delLockMutation.addCondition(new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
         .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS)));
-    ColumnUtil.commitColumn(isTrigger, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
+    ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
     
     Status status = cd.cw.write(delLockMutation).getStatus();
     // TODO handle unknown
@@ -303,7 +310,7 @@ public class Transaction {
   boolean rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
     // roll back locks
     
-    // TODO let rollback be done lazily?
+    // TODO let rollback be done lazily? this makes GC more difficult
     
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
     // TODO does order matter, should primary be deleted last?
@@ -311,19 +318,26 @@ public class Transaction {
     Mutation m = new Mutation(cd.prow.toArray());
     // TODO timestamp?
     // TODO writing the primary column with a batch writer is iffy
-    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX
-        | startTs, DelLockValue.encode(startTs, true));
+    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encode(startTs, false, true));
     bw.addMutation(m);
     
     for (ByteSequence row : cd.acceptedRows) {
       m = new Mutation(row.toArray());
       for (Column col : updates.get(row).keySet()) {
         m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-            DelLockValue.encode(startTs, true));
+            DelLockValue.encode(startTs, false, true));
       }
       bw.addMutation(m);
     }
     
+    bw.flush();
+    
+    // mark transaction as complete for garbage collection purposes
+    m = new Mutation(cd.prow.toArray());
+    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | startTs, EMPTY);
+    bw.addMutation(m);
+
     bw.close();
     
     return false;
@@ -331,18 +345,26 @@ public class Transaction {
   
   boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
     // delete locks and add writes for other columns
+    // TODO use shared batch writer
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
     for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
       Mutation m = new Mutation(rowUpdates.getKey().toArray());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
-        ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), colUpdates.getKey(), colUpdates.getValue() != null, startTs,
+        ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null, startTs,
             commitTs, observedColumns, m);
       }
       
       bw.addMutation(m);
     }
     
+    bw.flush();
+    
+    // mark transaction as complete for garbage collection purposes
+    Mutation m = new Mutation(cd.prow.toArray());
+    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | commitTs, EMPTY);
+    bw.addMutation(m);
+
     bw.close();
     
     return true;

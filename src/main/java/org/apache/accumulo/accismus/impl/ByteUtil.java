@@ -29,6 +29,7 @@ import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableUtils;
 
 /**
  * 
@@ -43,8 +44,7 @@ public class ByteUtil {
       DataOutputStream dos = new DataOutputStream(baos);
       
       for (ByteSequence bs : byteArrays) {
-        // TODO use var len int
-        dos.writeInt(bs.length());
+        WritableUtils.writeVInt(dos, bs.length());
         if (bs.isBackedByArray()) {
           dos.write(bs.getBackingArray(), bs.offset(), bs.length());
         } else {
@@ -73,7 +73,7 @@ public class ByteUtil {
     
     try {
       while (true) {
-        int len = dis.readInt();
+        int len = WritableUtils.readVInt(dis);
         
         // TODO could get pointers into original byte seq
         byte field[] = new byte[len];

@@ -21,7 +21,6 @@ import org.apache.accumulo.accismus.ColumnSet;
 import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Value;
 
 
 /**
@@ -29,29 +28,32 @@ import org.apache.accumulo.core.data.Value;
  */
 public class ColumnUtil {
   public static final long PREFIX_MASK = 0xe000000000000000l;
-  public static final long WRITE_PREFIX = 0x6000000000000000l;
-  public static final long DEL_LOCK_PREFIX = 0x4000000000000000l;
-  public static final long LOCK_PREFIX = 0x2000000000000000l;
+  public static final long TX_DONE_PREFIX = 0x6000000000000000l;
+  public static final long WRITE_PREFIX = 0x4000000000000000l;
+  public static final long DEL_LOCK_PREFIX = 0x2000000000000000l;
+  public static final long LOCK_PREFIX = 0xe000000000000000l;
   public static final long ACK_PREFIX = 0xc000000000000000l;
   public static final long DATA_PREFIX = 0xa000000000000000l;
   
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
 
-  public static void commitColumn(boolean isTrigger, Column col, boolean isWrite, long startTs, long commitTs, ColumnSet observedColumns, Mutation m) {
+
+  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, long startTs, long commitTs, ColumnSet observedColumns,
+      Mutation m) {
     if (isWrite) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibility(), WRITE_PREFIX | commitTs,
-          new Value(ByteUtil.encode(startTs)));
+      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
     } else {
-      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, false));
+      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), DEL_LOCK_PREFIX | commitTs,
+          DelLockValue.encode(startTs, isPrimary, false));
     }
     
     if (isTrigger) {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, Transaction.EMPTY);
-      m.putDelete(Transaction.toBytes(Constants.NOTIFY_CF), Transaction.concat(col), col.getVisibility(), startTs);
+      m.putDelete(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), startTs);
     }
     
     if (observedColumns.contains(col)) {
-      m.put(Transaction.toBytes(Constants.NOTIFY_CF), Transaction.concat(col), col.getVisibility(), commitTs, Transaction.EMPTY);
+      m.put(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), commitTs, Transaction.EMPTY);
     }
   }
   

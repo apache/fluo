@@ -57,11 +57,11 @@ public class FailureTest {
   private void transfer(Connector conn, String from, String to, int amount) throws Exception {
     Transaction tx = new Transaction("bank", conn);
     
-    int bal5 = Integer.parseInt(tx.get(from, balanceCol).toString());
-    int bal6 = Integer.parseInt(tx.get(to, balanceCol).toString());
+    int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
+    int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
     
-    tx.set(from, balanceCol, "" + (bal5 - amount));
-    tx.set(to, balanceCol, "" + (bal6 + amount));
+    tx.set(from, balanceCol, "" + (bal1 - amount));
+    tx.set(to, balanceCol, "" + (bal2 + amount));
     
     tx.commit();
   }
@@ -99,6 +99,8 @@ public class FailureTest {
     CommitData cd = tx2.preCommit();
     Assert.assertNotNull(cd);
     
+    // TODO test rolling back primary and non-primary columns
+
     transfer(conn, "joe", "jill", 7);
     
     Transaction tx4 = new Transaction("bank", conn);
@@ -121,7 +123,7 @@ public class FailureTest {
 
   @Test
   public void testRollfoward() throws Exception {
-    // test the case where a scan encounters a stuck lock and rolls it back
+    // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward
     
     ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
     Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
@@ -154,6 +156,7 @@ public class FailureTest {
     long commitTs = Oracle.getInstance().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
+    // TODO test rolling forward primary and non-primary columns
     transfer(conn, "joe", "jill", 7);
     
     Transaction tx4 = new Transaction("bank", conn);
@@ -169,5 +172,10 @@ public class FailureTest {
     Assert.assertEquals("3", tx5.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx5.get("joe", balanceCol).toString());
     Assert.assertEquals("67", tx5.get("jill", balanceCol).toString());
+  }
+  
+  @Test
+  public void testAcks() {
+    // TODO test that acks are properly handled in rollback and rollforward
   }
 }

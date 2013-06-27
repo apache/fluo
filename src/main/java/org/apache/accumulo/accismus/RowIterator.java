@@ -38,6 +38,7 @@ public class RowIterator implements Iterator<Entry<ByteSequence,ColumnIterator>>
     return rowIter.hasNext();
   }
   
+  // TODO create custom class to return instead of entry
   public Entry<ByteSequence,ColumnIterator> next() {
     Iterator<Entry<Key,Value>> cols = rowIter.next();
     

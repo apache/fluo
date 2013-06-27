@@ -27,7 +27,6 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.hadoop.io.Text;
 
 /**
  * A service that looks for updated columns to process
@@ -54,7 +53,7 @@ public class Worker {
   
   public void processUpdates() throws Exception {
     Scanner scanner = conn.createScanner(table, new Authorizations());
-    scanner.fetchColumnFamily(new Text(Constants.NOTIFY_CF));
+    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     
     for (Entry<Key,Value> entry : scanner) {
       List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());

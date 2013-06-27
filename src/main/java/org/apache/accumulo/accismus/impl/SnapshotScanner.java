@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import org.apache.accumulo.accismus.Column;
 import org.apache.accumulo.accismus.ColumnSet;
 import org.apache.accumulo.accismus.ScannerConfiguration;
+import org.apache.accumulo.accismus.StaleScanException;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.accismus.iterators.RollbackCheckIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
@@ -86,7 +87,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
     config.configure(scanner);
     
-    IteratorSetting iterConf = new IteratorSetting(1, SnapshotIterator.class);
+    IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);
     scanner.addScanIterator(iterConf);
     
@@ -120,7 +121,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         
         // TODO if its not the primary, could scan and check the primary instead of waiting
         if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
-          attemptRollback(entry);
+          releaseLock(entry);
         }
 
         Key k = entry.getKey();
@@ -139,13 +140,17 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         waitTime = INITIAL_WAIT_TIME;
         firstSeen = -1;
         return entry;
+      } else if (colType == ColumnUtil.WRITE_PREFIX) {
+        if (WriteValue.isTruncated(entry.getValue().get())) {
+          throw new StaleScanException();
+        }
       } else {
         throw new IllegalArgumentException();
       }
     }
   }
   
-  private void attemptRollback(Entry<Key,Value> entry) {
+  private void releaseLock(Entry<Key,Value> entry) {
     List<ByteSequence> primary = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
     
     ByteSequence prow = primary.get(0);
@@ -170,7 +175,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     // TODO sanity check on lockTs vs startTs
     long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
 
-    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true));
+    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
 
     // TODO make auths configurable
     ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
@@ -185,7 +190,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       // TODO reususe scanner?
       try {
         Scanner scanner = conn.createScanner(table, new Authorizations());
-        IteratorSetting is = new IteratorSetting(1, RollbackCheckIterator.class);
+        IteratorSetting is = new IteratorSetting(10, RollbackCheckIterator.class);
         RollbackCheckIterator.setLocktime(is, lockTs);
         scanner.addScanIterator(is);
         scanner.setRange(Range.exact(ByteUtil.toText(prow), ByteUtil.toText(pfam), ByteUtil.toText(pqual), ByteUtil.toText(pvis)));
@@ -213,7 +218,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
             // TODO
           }
         } else {
-          // TODO no info about the stats of this tx
+          // TODO no info about the status of this tx
         }
 
       } catch (Exception e) {
@@ -226,7 +231,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   }
 
   private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
-    LockValue lv = new LockValue(new ArrayByteSequence(entry.getValue().get()));
+    LockValue lv = new LockValue(entry.getValue().get());
     boolean isTrigger = lv.getObserver().length() > 0;
     // TODO cache col vis
     Column col = new Column(entry.getKey().getColumnFamilyData(), entry.getKey().getColumnQualifierData()).setVisibility(entry.getKey()
@@ -235,7 +240,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     // TODO pass observed cols
     ColumnSet observedColumns = new ColumnSet();
-    ColumnUtil.commitColumn(isTrigger, col, lv.isWrite(), lockTs, commitTs, observedColumns, m);
+    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, observedColumns, m);
     
     try {
       // TODO use conditional writer?
@@ -252,7 +257,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   private void rollback(Key k, long lockTs) {
     Mutation mut = new Mutation(k.getRowData().toArray());
     mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(lockTs, true));
+        DelLockValue.encode(lockTs, false, true));
     
     try {
       // TODO use conditional writer?

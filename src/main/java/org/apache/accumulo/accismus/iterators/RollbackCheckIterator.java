@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.accismus.impl.DelLockValue;
+import org.apache.accumulo.accismus.impl.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -84,16 +84,18 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
     long invalidationTime = -1;
 
     hasTop = false;
-    while (source.hasTop() && curCol.equals(getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
       
-      if (colType == ColumnUtil.WRITE_PREFIX) {
+      if (colType == ColumnUtil.TX_DONE_PREFIX) {
+        
+      } else if (colType == ColumnUtil.WRITE_PREFIX) {
         if (invalidationTime == -1) {
           invalidationTime = ts;
         }
         
-        if (lockTime == ByteUtil.decodeLong(source.getTopValue().get())) {
+        if (lockTime == new WriteValue(source.getTopValue().get()).getTimestamp()) {
           hasTop = true;
           return;
         }

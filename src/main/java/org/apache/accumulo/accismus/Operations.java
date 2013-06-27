@@ -17,11 +17,18 @@
 package org.apache.accumulo.accismus;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.accumulo.accismus.format.AccismusFormatter;
+import org.apache.accumulo.accismus.impl.ByteUtil;
+import org.apache.accumulo.accismus.iterators.GarbageCollectionIterator;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.conf.Property;
+import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.hadoop.io.Text;
 
 /**
@@ -31,7 +38,14 @@ public class Operations {
   public static void createTable(String tableName, Connector conn) throws Exception {
     conn.tableOperations().create(tableName, false);
     Map<String,Set<Text>> groups = new HashMap<String,Set<Text>>();
-    groups.put("notify", Collections.singleton(new Text(Constants.NOTIFY_CF)));
+    groups.put("notify", Collections.singleton(ByteUtil.toText(Constants.NOTIFY_CF)));
     conn.tableOperations().setLocalityGroups(tableName, groups);
+    
+    IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
+    GarbageCollectionIterator.setNumVersions(gcIter, 3);
+    
+    conn.tableOperations().attachIterator(tableName, gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
+    
+    conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), AccismusFormatter.class.getName());
   }
 }

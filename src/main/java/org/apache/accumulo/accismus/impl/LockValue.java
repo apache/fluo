@@ -36,8 +36,8 @@ public class LockValue {
   private boolean isWrite;
   private ByteSequence observer;
 
-  public LockValue(ByteSequence enc) {
-    List<ByteSequence> fields = ByteUtil.split(enc);
+  public LockValue(byte[] enc) {
+    List<ByteSequence> fields = ByteUtil.split(new ArrayByteSequence(enc));
     
     if (fields.size() != 6)
       throw new IllegalArgumentException("more fields than expected");
@@ -70,6 +70,6 @@ public class LockValue {
   }
   
   public String toString() {
-    return prow + " " + pcol + " " + isWrite + " " + observer;
+    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + observer;
   }
 }

@@ -91,11 +91,13 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
     long firstWrite = -1;
     
     hasTop = false;
-    while (source.hasTop() && curCol.equals(getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
       
-      if (colType == ColumnUtil.WRITE_PREFIX) {
+      if (colType == ColumnUtil.TX_DONE_PREFIX) {
+        
+      } else if (colType == ColumnUtil.WRITE_PREFIX) {
         
         if (invalidationTime == -1) {
           invalidationTime = ts;
@@ -106,7 +108,6 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
         }
         
         if (ts >= snaptime) {
-          
           hasTop = true;
           return;
         }

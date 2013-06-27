@@ -46,6 +46,7 @@ public class ColumnIterator implements Iterator<Entry<Column,ByteSequence>> {
     return firstEntry != null || scanner.hasNext();
   }
   
+  // TODO create custom class to return instead of entry
   public Entry<Column,ByteSequence> next() {
     Entry<Key,Value> entry;
     if (firstEntry != null) {

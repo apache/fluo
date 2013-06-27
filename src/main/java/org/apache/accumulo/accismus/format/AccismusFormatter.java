@@ -19,11 +19,10 @@ package org.apache.accumulo.accismus.format;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.accismus.impl.LockValue;
-import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.accismus.impl.WriteValue;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.format.Formatter;
@@ -50,6 +49,8 @@ public class AccismusFormatter implements Formatter {
     long ts = key.getTimestamp();
     String type = "";
     
+    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.TX_DONE_PREFIX)
+      type = "TX_DONE";
     if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.DEL_LOCK_PREFIX)
       type = "DEL_LOCK";
     if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.LOCK_PREFIX)
@@ -63,13 +64,12 @@ public class AccismusFormatter implements Formatter {
     
     String val;
     if (type.equals("WRITE")) {
-      byte ba[] = entry.getValue().get();
-      val = ByteUtil.decodeLong(ba) + "";
+      val = new WriteValue(entry.getValue().get()).toString();
     } else if (type.equals("DEL_LOCK")) {
       val = new DelLockValue(entry.getValue().get()).toString();
     } else if (type.equals("LOCK")) {
       // TODO can Value be made to extend bytesequence w/o breaking API?
-      val = new LockValue(new ArrayByteSequence(entry.getValue().get())).toString();
+      val = new LockValue(entry.getValue().get()).toString();
     } else {
       val = entry.getValue().toString();
     }

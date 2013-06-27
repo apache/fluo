@@ -145,8 +145,18 @@ public class WorkerTest {
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
     
+    // TODO remove these prints
     Scanner scanner = conn.createScanner("graph", new Authorizations());
     AccismusFormatter formatter = new AccismusFormatter();
+    formatter.initialize(scanner, true);
+    while (formatter.hasNext()) {
+      System.out.println(formatter.next());
+    }
+    
+    conn.tableOperations().flush("graph", null, null, true);
+
+    System.out.println();
+    
     formatter.initialize(scanner, true);
     while (formatter.hasNext()) {
       System.out.println(formatter.next());
