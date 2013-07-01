@@ -111,17 +111,25 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
 
       if (colType == ColumnUtil.LOCK_PREFIX) {
-        // TODO exponential back off and eventually do lock recovery
         // TODO do read ahead while waiting for the lock
-        if (firstSeen == -1)
-          firstSeen = System.currentTimeMillis();
-
-        UtilWaitThread.sleep(waitTime);
-        waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
         
-        // TODO if its not the primary, could scan and check the primary instead of waiting
-        if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
-          releaseLock(entry);
+        boolean resolvedLock = false;
+
+        if (firstSeen == -1) {
+          firstSeen = System.currentTimeMillis();
+          
+          // the first time a lock is seen, try to resolve in case the transaction is complete, but this column is still locked.
+          resolvedLock = resolveLock(entry, false);
+        }
+
+        if (!resolvedLock) {
+          UtilWaitThread.sleep(waitTime);
+          waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
+        
+          if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
+            // try to abort the transaction
+            resolveLock(entry, true);
+          }
         }
 
         Key k = entry.getKey();
@@ -143,6 +151,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       } else if (colType == ColumnUtil.WRITE_PREFIX) {
         if (WriteValue.isTruncated(entry.getValue().get())) {
           throw new StaleScanException();
+        } else {
+          throw new IllegalArgumentException();
         }
       } else {
         throw new IllegalArgumentException();
@@ -150,7 +160,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
   }
   
-  private void releaseLock(Entry<Key,Value> entry) {
+  private boolean resolveLock(Entry<Key,Value> entry, boolean abort) {
     List<ByteSequence> primary = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
     
     ByteSequence prow = primary.get(0);
@@ -161,29 +171,16 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     boolean isPrimary = entry.getKey().getRowData().equals(prow) && entry.getKey().getColumnFamilyData().equals(pfam)
         && entry.getKey().getColumnQualifierData().equals(pqual) && entry.getKey().getColumnVisibilityData().equals(pvis);
 
-    ColumnVisibility cv = new ColumnVisibility(pvis.toArray());
-
-    // TODO avoid conversions to arrays
-    // TODO review use of PrewriteIter here
-    ConditionalMutation delLockMutation = new ConditionalMutation(prow.toArray());
-    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
-    PrewriteIterator.setSnaptime(iterConf, startTs);
-    // TODO cache col vis?
-    delLockMutation.addCondition(new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(entry.getValue().get()));
-
-    //TODO maybe do scan 1st and conditional write 2nd.... for a tx w/ many columns, the conditional write will only succeed once... could check if its the primary or not
-    // TODO sanity check on lockTs vs startTs
     long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+    
+    boolean resolvedLock = false;
 
-    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
-
-    // TODO make auths configurable
-    ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
-    // TODO handle other conditional writer cases
-    if (cw.write(delLockMutation).getStatus() == Status.ACCEPTED) {
-      if (!isPrimary)
-        rollback(entry.getKey(), lockTs);
-    } else if (!isPrimary) {
+    if (isPrimary) {
+      if (abort) {
+        rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get());
+        resolvedLock = true;
+      }
+    } else {
 
       // TODO make auths configurable
       // TODO ensure primary is visible
@@ -204,30 +201,40 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
           if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
             if(new DelLockValue(entry2.getValue().get()).isRollback()){ 
               rollback(entry.getKey(), lockTs);
+              resolvedLock = true;
             } else {
               long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
               commitColumn(entry, lockTs, commitTs);
+              resolvedLock = true;
             }
           } else if (colType == ColumnUtil.WRITE_PREFIX) {
             // TODO ensure value == lockTs
             long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
             commitColumn(entry, lockTs, commitTs);
+            resolvedLock = true;
           } else if (colType == ColumnUtil.LOCK_PREFIX) {
-            // TODO
+            if (abort) {
+              if (rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get())) {
+                rollback(entry.getKey(), lockTs);
+                resolvedLock = true;
+              }
+            }
           } else {
             // TODO
+            throw new IllegalStateException();
           }
         } else {
           // TODO no info about the status of this tx
+          throw new IllegalStateException();
         }
 
       } catch (Exception e) {
         // TODO proper exception handling
         throw new RuntimeException(e);
       }
-
     }
-
+    
+    return resolvedLock;
   }
 
   private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
@@ -269,6 +276,31 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     } catch (MutationsRejectedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  boolean rollbackPrimary(ByteSequence prow, ByteSequence pfam, ByteSequence pqual, ByteSequence pvis, long lockTs, byte[] val) {
+    // TODO use cached CV
+    ColumnVisibility cv = new ColumnVisibility(pvis.toArray());
+    
+    // TODO avoid conversions to arrays
+    // TODO review use of PrewriteIter here
+    ConditionalMutation delLockMutation = new ConditionalMutation(prow.toArray());
+    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
+    PrewriteIterator.setSnaptime(iterConf, startTs);
+    // TODO cache col vis?
+    delLockMutation.addCondition(new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(val));
+    
+    // TODO maybe do scan 1st and conditional write 2nd.... for a tx w/ many columns, the conditional write will only succeed once... could check if its the
+    // primary or not
+    // TODO sanity check on lockTs vs startTs
+    
+    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
+    
+    // TODO make auths configurable
+    ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
+    
+    // TODO handle other conditional writer cases
+    return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
   }
 
   public void remove() {

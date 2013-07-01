@@ -16,6 +16,8 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.util.Random;
+
 import org.apache.accumulo.accismus.Transaction.CommitData;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -67,6 +69,111 @@ public class FailureTest {
   }
 
   @Test
+  public void testRollbackMany() throws Exception {
+    // test writing lots of columns that need to be rolled back
+    
+    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
+    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
+    
+    try {
+      conn.tableOperations().delete("trbm");
+    } catch (TableNotFoundException e) {}
+    
+    Operations.createTable("trbm", conn);
+    
+    Column col1 = new Column("fam1", "q1");
+    Column col2 = new Column("fam1", "q2");
+    
+    Transaction tx = new Transaction("trbm", conn);
+    
+    for (int r = 0; r < 10; r++) {
+      tx.set(r + "", col1, "0" + r + "0");
+      tx.set(r + "", col2, "0" + r + "1");
+    }
+    
+    tx.commit();
+    
+    Transaction tx2 = new Transaction("trbm", conn);
+    
+    for (int r = 0; r < 10; r++) {
+      tx2.set(r + "", col1, "1" + r + "0");
+      tx2.set(r + "", col2, "1" + r + "1");
+    }
+    
+    CommitData cd = tx2.preCommit();
+    Assert.assertNotNull(cd);
+    
+    Transaction tx3 = new Transaction("trbm", conn);
+    for (int r = 0; r < 10; r++) {
+      Assert.assertEquals("0" + r + "0", tx3.get(r + "", col1).toString());
+      Assert.assertEquals("0" + r + "1", tx3.get(r + "", col2).toString());
+    }
+    
+    long commitTs = Oracle.getInstance().getTimestamp();
+    Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
+    
+    Transaction tx4 = new Transaction("trbm", conn);
+    for (int r = 0; r < 10; r++) {
+      Assert.assertEquals("0" + r + "0", tx4.get(r + "", col1).toString());
+      Assert.assertEquals("0" + r + "1", tx4.get(r + "", col2).toString());
+    }
+
+  }
+
+  @Test
+  public void testRollforwardMany() throws Exception {
+    // test writing lots of columns that need to be rolled forward
+    
+    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
+    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
+    
+    try {
+      conn.tableOperations().delete("trfm");
+    } catch (TableNotFoundException e) {}
+    
+    Operations.createTable("trfm", conn);
+    
+    Column col1 = new Column("fam1", "q1");
+    Column col2 = new Column("fam1", "q2");
+    
+    Transaction tx = new Transaction("trfm", conn);
+    
+    for (int r = 0; r < 10; r++) {
+      tx.set(r + "", col1, "0" + r + "0");
+      tx.set(r + "", col2, "0" + r + "1");
+    }
+    
+    tx.commit();
+    
+    Transaction tx2 = new Transaction("trfm", conn);
+    
+    for (int r = 0; r < 10; r++) {
+      tx2.set(r + "", col1, "1" + r + "0");
+      tx2.set(r + "", col2, "1" + r + "1");
+    }
+    
+    CommitData cd = tx2.preCommit();
+    Assert.assertNotNull(cd);
+    long commitTs = Oracle.getInstance().getTimestamp();
+    Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
+    
+    Transaction tx3 = new Transaction("trfm", conn);
+    for (int r = 0; r < 10; r++) {
+      Assert.assertEquals("1" + r + "0", tx3.get(r + "", col1).toString());
+      Assert.assertEquals("1" + r + "1", tx3.get(r + "", col2).toString());
+    }
+    
+    tx2.finishCommit(cd, commitTs);
+    
+    Transaction tx4 = new Transaction("trfm", conn);
+    for (int r = 0; r < 10; r++) {
+      Assert.assertEquals("1" + r + "0", tx4.get(r + "", col1).toString());
+      Assert.assertEquals("1" + r + "1", tx4.get(r + "", col2).toString());
+    }
+    
+  }
+  
+  @Test
   public void testRollback() throws Exception {
     // test the case where a scan encounters a stuck lock and rolls it back
     
@@ -99,25 +206,35 @@ public class FailureTest {
     CommitData cd = tx2.preCommit();
     Assert.assertNotNull(cd);
     
-    // TODO test rolling back primary and non-primary columns
+    // test rolling back primary and non-primary columns
 
-    transfer(conn, "joe", "jill", 7);
+    int bobBal = 10;
+    int joeBal = 20;
+    if ((new Random()).nextBoolean()) {
+      transfer(conn, "joe", "jill", 7);
+      joeBal -= 7;
+    } else {
+      transfer(conn, "bob", "jill", 7);
+      bobBal -= 7;
+    }
     
     Transaction tx4 = new Transaction("bank", conn);
     
-    Assert.assertEquals("10", tx4.get("bob", balanceCol).toString());
-    Assert.assertEquals("13", tx4.get("joe", balanceCol).toString());
+    Assert.assertEquals(bobBal + "", tx4.get("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal + "", tx4.get("joe", balanceCol).toString());
     Assert.assertEquals("67", tx4.get("jill", balanceCol).toString());
     
     long commitTs = Oracle.getInstance().getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
-    transfer(conn, "bob", "joe", 7);
+    transfer(conn, "bob", "joe", 2);
+    bobBal -= 2;
+    joeBal += 2;
     
     Transaction tx6 = new Transaction("bank", conn);
     
-    Assert.assertEquals("3", tx6.get("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx6.get("joe", balanceCol).toString());
+    Assert.assertEquals(bobBal + "", tx6.get("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal + "", tx6.get("joe", balanceCol).toString());
     Assert.assertEquals("67", tx6.get("jill", balanceCol).toString());
   }
 
@@ -156,22 +273,30 @@ public class FailureTest {
     long commitTs = Oracle.getInstance().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
-    // TODO test rolling forward primary and non-primary columns
-    transfer(conn, "joe", "jill", 7);
+    // test rolling forward primary and non-primary columns
+    String bobBal = "3";
+    String joeBal = "27";
+    if ((new Random()).nextBoolean()) {
+      transfer(conn, "joe", "jill", 2);
+      joeBal = "25";
+    } else {
+      transfer(conn, "bob", "jill", 2);
+      bobBal = "1";
+    }
     
     Transaction tx4 = new Transaction("bank", conn);
     
-    Assert.assertEquals("3", tx4.get("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx4.get("joe", balanceCol).toString());
-    Assert.assertEquals("67", tx4.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal, tx4.get("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal, tx4.get("joe", balanceCol).toString());
+    Assert.assertEquals("62", tx4.get("jill", balanceCol).toString());
 
     tx2.finishCommit(cd, commitTs);
     
     Transaction tx5 = new Transaction("bank", conn);
     
-    Assert.assertEquals("3", tx5.get("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx5.get("joe", balanceCol).toString());
-    Assert.assertEquals("67", tx5.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal, tx5.get("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal, tx5.get("joe", balanceCol).toString());
+    Assert.assertEquals("62", tx5.get("jill", balanceCol).toString());
   }
   
   @Test

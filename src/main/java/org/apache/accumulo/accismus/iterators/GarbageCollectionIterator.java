@@ -42,6 +42,8 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
   
+  // TODO this iterator should support the concept of oldest running scan, and have the ability to gather this from an external source.
+
   private static final String VERSION_OPT = "numVersions";
   private int numVersions;
   private SortedKeyValueIterator<Key,Value> source;
