@@ -16,43 +16,41 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.accumulo.accismus.impl.ByteUtil;
-import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 
 /**
  * A service that looks for updated columns to process
  */
 public class Worker {
-  private ColumnSet observedColumns;
-  private String table;
-  private Connector conn;
-  private Map<Column,Observer> colObservers;
+  private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+  private Configuration config;
   
-  public Worker(String table, Connector connector, Map<Column,Observer> colObservers) {
-    this.table = table;
-    this.conn = connector;
+  public Worker(Configuration config) throws Exception {
+
+    this.config = config;
     
-    this.observedColumns = new ColumnSet();
-    
-    for (Column col : colObservers.keySet()) {
-      observedColumns.add(col);
+    Set<Entry<Column,String>> es = config.getObservers().entrySet();
+    for (Entry<Column,String> entry : es) {
+      Column col = entry.getKey();
+      
+      colObservers.put(col, Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance());
     }
     
-    this.colObservers = colObservers;
     
   }
   
   public void processUpdates() throws Exception {
-    Scanner scanner = conn.createScanner(table, new Authorizations());
+    Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     
     for (Entry<Key,Value> entry : scanner) {
@@ -66,7 +64,7 @@ public class Worker {
       
       ByteSequence row = entry.getKey().getRowData();
       
-      Transaction tx = new Transaction(table, conn, row, col, observedColumns);
+      Transaction tx = new Transaction(config, row, col);
       
       try {
         // TODO check ack to see if observer should run

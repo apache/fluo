@@ -26,7 +26,6 @@ import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.util.ArgumentChecker;
 
 import core.client.ConditionalWriter;
@@ -38,7 +37,6 @@ import core.data.ConditionalMutation;
 
 public class Transaction {
   
-  private static final ColumnSet EMPTY_SET = new ColumnSet();
   public static final byte[] EMPTY = new byte[0];
   public static final ByteSequence EMPTY_BS = new ArrayByteSequence(EMPTY);
   
@@ -52,8 +50,9 @@ public class Transaction {
   private ByteSequence observer;
   private ByteSequence triggerRow;
   private Column triggerColumn;
-  private ColumnSet observedColumns;
+  private Set<Column> observedColumns;
   private boolean commitStarted = false;
+  private Configuration config;
   
   public static byte[] toBytes(String s) {
     try {
@@ -67,26 +66,17 @@ public class Transaction {
     return ByteUtil.concat(c.getFamily(), c.getQualifier());
   }
 
-  public Transaction(String table, Connector conn) {
-    this(table, conn, null, null, EMPTY_SET);
-  }
-  
-  public Transaction(String table, Connector conn, ColumnSet observedColumns) {
-    this(table, conn, null, null, observedColumns);
-  }
-  
-  public Transaction(String table, Connector conn, ByteSequence triggerRow, Column tiggerColumn) {
-    this(table, conn, triggerRow, tiggerColumn, EMPTY_SET);
-  }
-  
-  public Transaction(String table, Connector conn, ByteSequence triggerRow, Column tiggerColumn, ColumnSet observedColumns) {
-    this.startTs = Oracle.getInstance().getTimestamp();
-    this.conn = conn;
-    this.table = table;
+  Transaction(Configuration config, ByteSequence triggerRow, Column tiggerColumn) {
+    this.config = config;
+    this.table = config.getTable();
+    this.conn = config.getConnector();
+    this.observedColumns = config.getObservers().keySet();
     this.updates = new HashMap<ByteSequence,Map<Column,ByteSequence>>();
+    
     this.triggerRow = triggerRow;
     this.triggerColumn = tiggerColumn;
-    this.observedColumns = observedColumns;
+    
+    this.startTs = Oracle.getInstance().getTimestamp();
     
     if (triggerRow != null) {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
@@ -96,6 +86,11 @@ public class Transaction {
     }
   }
   
+  public Transaction(Configuration config) {
+    this(config, null, null);
+  }
+  
+
   public ByteSequence get(String row, Column column) throws Exception {
     return get(new ArrayByteSequence(toBytes(row)), column);
   }
@@ -144,11 +139,13 @@ public class Transaction {
     return ret;
   }
 
+  // TODO add a get that uses the batch scanner
+
   public RowIterator get(ScannerConfiguration config) throws Exception {
     if (commitStarted)
-      throw new IllegalStateException();
+      throw new IllegalStateException("transaction committed");
 
-    return new RowIterator(new SnapshotScanner(conn, table, config, startTs));
+    return new RowIterator(new SnapshotScanner(this.config, config, startTs));
   }
   
   public void set(String row, Column col, String value) {
@@ -163,7 +160,7 @@ public class Transaction {
   
   public void set(ByteSequence row, Column col, ByteSequence value) {
     if (commitStarted)
-      throw new IllegalStateException();
+      throw new IllegalStateException("transaction committed");
 
     ArgumentChecker.notNull(row, col, value);
     
@@ -240,7 +237,7 @@ public class Transaction {
 
     CommitData cd = new CommitData();
     
-    cd.cw = new ConditionalWriterImpl(table, conn, new Authorizations());
+    cd.cw = new ConditionalWriterImpl(table, conn, config.getAuthorizations());
     
     // get a primary column
     cd.prow = updates.keySet().iterator().next();

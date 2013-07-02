@@ -16,16 +16,22 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
 
 /**
  * 
  */
-public class Column {
+public class Column implements Writable {
   
   private static final ColumnVisibility EMPTY_VIS = new ColumnVisibility(new byte[0]);
 
@@ -55,6 +61,8 @@ public class Column {
     return false;
   }
   
+  public Column() {}
+
   public Column(String family, String qualifier) {
     this.family = new ArrayByteSequence(toBytes(family));
     this.qualifier = new ArrayByteSequence(toBytes(qualifier));
@@ -89,5 +97,27 @@ public class Column {
 
   public String toString() {
     return family + " " + qualifier + " " + visibility;
+  }
+  
+  public void write(DataOutput out) throws IOException {
+    ByteUtil.write(out, family);
+    ByteUtil.write(out, qualifier);
+    
+    WritableUtils.writeVInt(out, visibility.getExpression().length);
+    out.write(visibility.getExpression());
+    
+  }
+  
+  public void readFields(DataInput in) throws IOException {
+    family = ByteUtil.read(in);
+    qualifier = ByteUtil.read(in);
+    
+    int len = WritableUtils.readVInt(in);
+    byte[] cv = new byte[len];
+    in.readFully(cv);
+    
+    // TODO use cv cache?
+    visibility = new ColumnVisibility(cv);
+    
   }
 }

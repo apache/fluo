@@ -33,6 +33,7 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.util.Stat;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -48,13 +49,18 @@ public class StochasticBank {
   private static String secret = "superSecret";
   public static TemporaryFolder folder = new TemporaryFolder();
   public static MiniAccumuloCluster cluster;
+  private static ZooKeeper zk;
   
+  private static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
+
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     folder.create();
     MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
     cluster = new MiniAccumuloCluster(cfg);
     cluster.start();
+    
+    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
   }
   
   @AfterClass
@@ -70,7 +76,8 @@ public class StochasticBank {
     ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
     Connector conn = zki.getConnector("root", new PasswordToken(secret));
     
-    Operations.createTable("bank", conn);
+    Operations.initialize(conn, "/test1", "bank", EMPTY_OBSERVERS);
+    Configuration config = new Configuration(zk, "/test1", conn);
     
     conn.tableOperations().setProperty("bank", Property.TABLE_MAJC_RATIO.getKey(), "1");
     
@@ -78,11 +85,11 @@ public class StochasticBank {
     
     AtomicBoolean runFlag = new AtomicBoolean(true);
     
-    populate(conn, "bank", numAccounts);
+    populate(config, numAccounts);
     
-    List<Thread> threads = startTransfers(conn, "bank", numAccounts, 20, runFlag);
+    List<Thread> threads = startTransfers(config, numAccounts, 20, runFlag);
     
-    runVerifier(conn, "bank", numAccounts, 100);
+    runVerifier(config, numAccounts, 100);
     
     runFlag.set(false);
     
@@ -92,13 +99,13 @@ public class StochasticBank {
     
     System.out.println("txCount : " + txCount.get());
     
-    runVerifier(conn, "bank", numAccounts, 1);
+    runVerifier(config, numAccounts, 1);
   }
 
   private static Column balanceCol = new Column("data", "balance");
 
-  private static void populate(Connector conn, String table, int numAccounts) throws Exception {
-    Transaction tx = new Transaction(table, conn);
+  private static void populate(Configuration config, int numAccounts) throws Exception {
+    Transaction tx = new Transaction(config);
     
     for(int i = 0; i < numAccounts; i++){
       tx.set(fmtAcct(i), balanceCol, "1000");
@@ -111,7 +118,7 @@ public class StochasticBank {
     return String.format("%09d", i);
   }
 
-  private static List<Thread> startTransfers(final Connector conn, final String table, final int numAccounts, int numThreads, final AtomicBoolean runFlag) {
+  private static List<Thread> startTransfers(final Configuration config, final int numAccounts, int numThreads, final AtomicBoolean runFlag) {
     
     ArrayList<Thread> threads = new ArrayList<Thread>();
     
@@ -127,7 +134,7 @@ public class StochasticBank {
               acct2 = rand.nextInt(numAccounts);
             int amt = rand.nextInt(100);
             
-            transfer(table, conn, fmtAcct(acct1), fmtAcct(acct2), amt);
+            transfer(config, fmtAcct(acct1), fmtAcct(acct2), amt);
           }
           
         }
@@ -141,14 +148,14 @@ public class StochasticBank {
     return threads;
   }
   
-  private static void transfer(String table, Connector conn, String from, String to, int amt) {
+  private static void transfer(Configuration config, String from, String to, int amt) {
     try {
       
       boolean commited = false;
       
       while (!commited) {
         try {
-          Transaction tx = new Transaction(table, conn);
+          Transaction tx = new Transaction(config);
           int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
           int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
           
@@ -171,7 +178,7 @@ public class StochasticBank {
     }
   }
 
-  private static void runVerifier(Connector conn, String table, int numAccounts, int num) {
+  private static void runVerifier(Configuration config, int numAccounts, int num) {
     Transaction lastTx = null;
 
     try {
@@ -179,12 +186,12 @@ public class StochasticBank {
       for (int i = 0; i < num; i++) {
         
         if (i == num / 2) {
-          conn.tableOperations().compact(table, null, null, true, false);
+          config.getConnector().tableOperations().compact(config.getTable(), null, null, true, false);
         }
 
         long t1 = System.currentTimeMillis();
 
-        Transaction tx = new Transaction(table, conn);
+        Transaction tx = new Transaction(config);
         RowIterator iter = tx.get(new ScannerConfiguration());
         
         Stat stat = new Stat();

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.ColumnSet;
+import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.ScannerConfiguration;
 import org.apache.accumulo.accismus.StaleScanException;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
@@ -29,7 +29,6 @@ import org.apache.accumulo.accismus.iterators.RollbackCheckIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
@@ -40,7 +39,6 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.UtilWaitThread;
 
@@ -54,23 +52,20 @@ import core.data.ConditionalMutation;
  * 
  */
 public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
-  
-  private static final byte[] EMPTY = new byte[0];
 
   private long startTs;
   private Iterator<Entry<Key,Value>> iterator;
   private ScannerConfiguration config;
-  private Connector conn;
-  private String table;
+
+  private Configuration aconfig;
 
   private static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
   private static final long ROLLBACK_TIME = 5000;
   private static final long MAX_WAIT_TIME = 60000;
 
-  public SnapshotScanner(Connector conn, String table, ScannerConfiguration config, long startTs) {
-    this.table = table;
-    this.conn = conn;
+  public SnapshotScanner(Configuration aconfig, ScannerConfiguration config, long startTs) {
+    this.aconfig = aconfig;
     this.config = config;
     this.startTs = startTs;
     
@@ -78,10 +73,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   }
   
   private void setUpIterator() {
-    // TODO make auths configurable
     Scanner scanner;
     try {
-      scanner = conn.createScanner(table, new Authorizations());
+      scanner = aconfig.getConnector().createScanner(aconfig.getTable(), aconfig.getAuthorizations());
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -182,11 +176,10 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       }
     } else {
 
-      // TODO make auths configurable
       // TODO ensure primary is visible
       // TODO reususe scanner?
       try {
-        Scanner scanner = conn.createScanner(table, new Authorizations());
+        Scanner scanner = aconfig.getConnector().createScanner(aconfig.getTable(), aconfig.getAuthorizations());
         IteratorSetting is = new IteratorSetting(10, RollbackCheckIterator.class);
         RollbackCheckIterator.setLocktime(is, lockTs);
         scanner.addScanIterator(is);
@@ -245,13 +238,12 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         .getColumnVisibilityParsed());
     Mutation m = new Mutation(entry.getKey().getRowData().toArray());
     
-    // TODO pass observed cols
-    ColumnSet observedColumns = new ColumnSet();
-    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, observedColumns, m);
+    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
     
     try {
       // TODO use conditional writer?
-      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+      // TODO use shared batch writer
+      BatchWriter bw = aconfig.getConnector().createBatchWriter(aconfig.getTable(), new BatchWriterConfig());
       bw.addMutation(m);
       bw.close();
     } catch (TableNotFoundException e) {
@@ -268,7 +260,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     try {
       // TODO use conditional writer?
-      BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+      // TODO use shared batch writer
+      BatchWriter bw = aconfig.getConnector().createBatchWriter(aconfig.getTable(), new BatchWriterConfig());
       bw.addMutation(mut);
       bw.close();
     } catch (TableNotFoundException e) {
@@ -297,7 +290,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
     // TODO make auths configurable
-    ConditionalWriter cw = new ConditionalWriterImpl(table, conn, new Authorizations());
+    ConditionalWriter cw = new ConditionalWriterImpl(aconfig.getTable(), aconfig.getConnector(), aconfig.getAuthorizations());
     
     // TODO handle other conditional writer cases
     return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;

@@ -18,7 +18,9 @@ package org.apache.accumulo.accismus.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
 import java.io.DataInputStream;
+import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -138,5 +140,25 @@ public class ByteUtil {
     }
   }
 
+  public static void write(DataOutput out, ByteSequence sequence) throws IOException {
+    WritableUtils.writeVInt(out, sequence.length());
+    if (sequence.isBackedByArray()) {
+      out.write(sequence.getBackingArray(), sequence.offset(), sequence.length());
+    } else {
+      for (int i = 0; i < sequence.length(); i++) {
+        out.write(sequence.byteAt(i) & 0xff);
+      }
+    }
+    
+  }
+  
+  public static ByteSequence read(DataInput in) throws IOException {
+    int len = WritableUtils.readVInt(in);
+    byte b[] = new byte[len];
+    
+    in.readFully(b);
+    
+    return new ArrayByteSequence(b);
+  }
 
 }

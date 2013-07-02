@@ -16,8 +16,9 @@
  */
 package org.apache.accumulo.accismus.impl;
 
+import java.util.Set;
+
 import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.ColumnSet;
 import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.data.Mutation;
@@ -38,7 +39,7 @@ public class ColumnUtil {
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
 
 
-  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, long startTs, long commitTs, ColumnSet observedColumns,
+  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, long startTs, long commitTs, Set<Column> observedColumns,
       Mutation m) {
     if (isWrite) {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));

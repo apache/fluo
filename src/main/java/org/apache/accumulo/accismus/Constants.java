@@ -25,4 +25,10 @@ import org.apache.accumulo.core.data.ByteSequence;
 public class Constants {
   public static final ByteSequence NOTIFY_CF = new ArrayByteSequence("ntfy");
   
+  public static class Zookeeper {
+    public static final String TABLE = "/table";
+    public static final String ACCUMULO_INSTANCE = "/accumulo";
+    public static final String OBSERVERS = "/observers";
+  }
+  
 }

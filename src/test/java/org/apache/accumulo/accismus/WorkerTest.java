@@ -31,6 +31,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.hadoop.io.Text;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -83,6 +84,7 @@ public class WorkerTest {
   private static String secret = "superSecret";
   public static TemporaryFolder folder = new TemporaryFolder();
   public static MiniAccumuloCluster cluster;
+  private static ZooKeeper zk;
   
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -90,6 +92,8 @@ public class WorkerTest {
     MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
     cluster = new MiniAccumuloCluster(cfg);
     cluster.start();
+    
+    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
   }
   
   @AfterClass
@@ -104,19 +108,20 @@ public class WorkerTest {
     ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
     Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
     
-    Operations.createTable("graph", conn);
+    Map<Column,Class<? extends Observer>> observed = new HashMap<Column,Class<? extends Observer>>();
+    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class);
     
-    ColumnSet observed = new ColumnSet();
-    observed.add(new Column("attr", "lastupdate"));
+    Operations.initialize(conn, "/test1", "graph", observed);
+    Configuration config = new Configuration(zk, "/test1", conn);
     
-    Transaction tx1 = new Transaction("graph", conn, observed);
+    Transaction tx1 = new Transaction(config);
     
     tx1.set("N0003", new Column("link", "N0040"), "");
     tx1.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     
     Assert.assertTrue(tx1.commit());
     
-    Transaction tx2 = new Transaction("graph", conn, observed);
+    Transaction tx2 = new Transaction(config);
     
     tx2.set("N0003", new Column("link", "N0020"), "");
     tx2.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
@@ -126,11 +131,11 @@ public class WorkerTest {
     Map<Column,Observer> observers = new HashMap<Column,Observer>();
     observers.put(new Column("attr", "lastupdate"), new DegreeIndexer());
     
-    Worker worker = new Worker("graph", conn, observers);
+    Worker worker = new Worker(config);
     
     worker.processUpdates();
     
-    Transaction tx3 = new Transaction("graph", conn);
+    Transaction tx3 = new Transaction(config);
     Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")).toString());
     
@@ -140,7 +145,7 @@ public class WorkerTest {
     
     worker.processUpdates();
     
-    Transaction tx4 = new Transaction("graph", conn);
+    Transaction tx4 = new Transaction(config);
     Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
