@@ -14,6 +14,7 @@ import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.accismus.impl.LockValue;
+import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.accismus.impl.SnapshotScanner;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -66,7 +67,7 @@ public class Transaction {
     return ByteUtil.concat(c.getFamily(), c.getQualifier());
   }
 
-  Transaction(Configuration config, ByteSequence triggerRow, Column tiggerColumn) {
+  Transaction(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
     this.config = config;
     this.table = config.getTable();
     this.conn = config.getConnector();
@@ -76,7 +77,7 @@ public class Transaction {
     this.triggerRow = triggerRow;
     this.triggerColumn = tiggerColumn;
     
-    this.startTs = Oracle.getInstance().getTimestamp();
+    this.startTs = OracleClient.getInstance(config).getTimestamp();
     
     if (triggerRow != null) {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
@@ -86,7 +87,7 @@ public class Transaction {
     }
   }
   
-  public Transaction(Configuration config) {
+  public Transaction(Configuration config) throws Exception {
     this(config, null, null);
   }
   
@@ -374,7 +375,7 @@ public class Transaction {
     if (cd == null)
       return false;
     if (cd.rejectedCount == 0) {
-      long commitTs = Oracle.getInstance().getTimestamp();
+      long commitTs = OracleClient.getInstance(config).getTimestamp();
       if (commitPrimaryColumn(cd, commitTs)) {
         return finishCommit(cd, commitTs);
       } else {

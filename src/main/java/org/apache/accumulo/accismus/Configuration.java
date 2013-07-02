@@ -101,4 +101,8 @@ public class Configuration {
   public Connector getConnector() {
     return conn;
   }
+  
+  public String getZookeeperRoot() {
+    return zoodir;
+  }
 }

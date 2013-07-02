@@ -56,6 +56,8 @@ public class Worker {
     for (Entry<Key,Value> entry : scanner) {
       List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());
       Column col = new Column(ca.get(0), ca.get(1));
+      // TODO cache col vis
+      col.setVisibility(entry.getKey().getColumnVisibilityParsed());
       
       Observer observer = colObservers.get(col);
       if (observer == null) {

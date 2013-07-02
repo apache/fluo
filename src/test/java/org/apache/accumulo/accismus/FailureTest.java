@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.accumulo.accismus.Transaction.CommitData;
+import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -119,7 +120,7 @@ public class FailureTest {
       Assert.assertEquals("0" + r + "1", tx3.get(r + "", col2).toString());
     }
     
-    long commitTs = Oracle.getInstance().getTimestamp();
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
     Transaction tx4 = new Transaction(config);
@@ -165,7 +166,7 @@ public class FailureTest {
     
     CommitData cd = tx2.preCommit();
     Assert.assertNotNull(cd);
-    long commitTs = Oracle.getInstance().getTimestamp();
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
     Transaction tx3 = new Transaction(config);
@@ -236,7 +237,7 @@ public class FailureTest {
     Assert.assertEquals(joeBal + "", tx4.get("joe", balanceCol).toString());
     Assert.assertEquals("67", tx4.get("jill", balanceCol).toString());
     
-    long commitTs = Oracle.getInstance().getTimestamp();
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
     transfer(config, "bob", "joe", 2);
@@ -283,7 +284,7 @@ public class FailureTest {
     // get locks
     CommitData cd = tx2.preCommit();
     Assert.assertNotNull(cd);
-    long commitTs = Oracle.getInstance().getTimestamp();
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
     // test rolling forward primary and non-primary columns

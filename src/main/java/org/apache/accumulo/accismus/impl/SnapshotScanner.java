@@ -283,13 +283,10 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     // TODO cache col vis?
     delLockMutation.addCondition(new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(val));
     
-    // TODO maybe do scan 1st and conditional write 2nd.... for a tx w/ many columns, the conditional write will only succeed once... could check if its the
-    // primary or not
     // TODO sanity check on lockTs vs startTs
     
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
-    // TODO make auths configurable
     ConditionalWriter cw = new ConditionalWriterImpl(aconfig.getTable(), aconfig.getConnector(), aconfig.getAuthorizations());
     
     // TODO handle other conditional writer cases

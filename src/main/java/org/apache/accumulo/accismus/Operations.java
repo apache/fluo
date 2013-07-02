@@ -51,6 +51,7 @@ public class Operations {
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
     
     zk.create(zoodir, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    zk.create(zoodir + Constants.Zookeeper.CONFIG, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TABLE, table.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE, accumuloInstance.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     // TODO save accumulo instance ID for later sanity checks?

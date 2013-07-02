@@ -14,26 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 
  */
-public class Oracle {
+public class OracleServer {
   private AtomicLong ts = new AtomicLong(0);
-  private static Oracle oracle = new Oracle();
   
-  private Oracle() {
-    
+  public long getTimestamps(int num) {
+    return ts.getAndAdd(num);
   }
   
-  public long getTimestamp() {
-    return ts.getAndIncrement();
-  }
-  
-  public static Oracle getInstance() {
-    return oracle;
-  }
 }
