@@ -9,6 +9,8 @@ import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.zookeeper.ZooKeeper;
@@ -269,8 +271,42 @@ public class AccismusTest {
   }
   
   @Test
-  public void testVisibility() {
-    // TODO test col vis
+  public void testVisibility() throws Exception {
+    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
+    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
+    
+    conn.securityOperations().changeUserAuthorizations("root", new Authorizations("A", "B", "C"));
+
+    Operations.initialize(conn, "/test6", "visTest", EMPTY_OBSERVERS);
+    Configuration config = new Configuration(zk, "/test6", conn);
+    config.setAuthorizations(new Authorizations("A", "B", "C"));
+    
+    Column balanceCol = new Column("account", "balance");
+    balanceCol.setVisibility(new ColumnVisibility("A|B"));
+
+    Transaction tx = new Transaction(config);
+    
+    tx.set("bob", balanceCol, "10");
+    tx.set("joe", balanceCol, "20");
+    tx.set("jill", balanceCol, "60");
+    
+    Assert.assertTrue(tx.commit());
+    
+    Configuration config2 = new Configuration(zk, "/test6", conn);
+    config2.setAuthorizations(new Authorizations("B"));
+    
+    Transaction tx2 = new Transaction(config2);
+    Assert.assertEquals("10", tx2.get("bob", balanceCol).toString());
+    Assert.assertEquals("20", tx2.get("joe", balanceCol).toString());
+    Assert.assertEquals("60", tx2.get("jill", balanceCol).toString());
+    
+    Configuration config3 = new Configuration(zk, "/test6", conn);
+    config3.setAuthorizations(new Authorizations("C"));
+    
+    Transaction tx3 = new Transaction(config3);
+    Assert.assertNull(tx3.get("bob", balanceCol));
+    Assert.assertNull(tx3.get("joe", balanceCol));
+    Assert.assertNull(tx3.get("jill", balanceCol));
   }
 
   @Test
