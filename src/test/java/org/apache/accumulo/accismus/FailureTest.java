@@ -16,55 +16,22 @@
  */
 package org.apache.accumulo.accismus;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 import org.apache.accumulo.accismus.Transaction.CommitData;
 import org.apache.accumulo.accismus.impl.OracleClient;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.accumulo.minicluster.MiniAccumuloConfig;
-import org.apache.zookeeper.ZooKeeper;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * 
  */
-public class FailureTest {
-  private static String secret = "superSecret";
-  public static TemporaryFolder folder = new TemporaryFolder();
-  public static MiniAccumuloCluster cluster;
-  private static ZooKeeper zk;
+public class FailureTest extends TestBase {
   
-  private static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
   
   Column balanceCol = new Column("account", "balance");
 
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    folder.create();
-    MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
-    cluster = new MiniAccumuloCluster(cfg);
-    cluster.start();
     
-    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
-  }
-  
-
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {
-    cluster.stop();
-    folder.delete();
-  }
-  
   private void transfer(Configuration config, String from, String to, int amount) throws Exception {
     Transaction tx = new Transaction(config);
     
@@ -80,17 +47,6 @@ public class FailureTest {
   @Test
   public void testRollbackMany() throws Exception {
     // test writing lots of columns that need to be rolled back
-    
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    try {
-      conn.tableOperations().delete("trbm");
-    } catch (TableNotFoundException e) {}
-    
-    
-    Operations.initialize(conn, "/test1", "trbm", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test1", conn);
 
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
@@ -135,16 +91,6 @@ public class FailureTest {
   public void testRollforwardMany() throws Exception {
     // test writing lots of columns that need to be rolled forward
     
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    try {
-      conn.tableOperations().delete("trfm");
-    } catch (TableNotFoundException e) {}
-    
-    Operations.initialize(conn, "/test2", "trfm", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test2", conn);
-    
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
     
@@ -188,16 +134,6 @@ public class FailureTest {
   @Test
   public void testRollback() throws Exception {
     // test the case where a scan encounters a stuck lock and rolls it back
-    
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    try {
-      conn.tableOperations().delete("bank");
-    } catch (TableNotFoundException e) {}
-    
-    Operations.initialize(conn, "/test3", "bank", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test3", conn);
     
     Transaction tx = new Transaction(config);
     
@@ -255,16 +191,6 @@ public class FailureTest {
   public void testRollfoward() throws Exception {
     // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward
     
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    try {
-      conn.tableOperations().delete("bank");
-    } catch (TableNotFoundException e) {}
-    
-    Operations.initialize(conn, "/test4", "bank", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test4", conn);
-    
     Transaction tx = new Transaction(config);
 
     tx.set("bob", balanceCol, "10");
@@ -320,15 +246,6 @@ public class FailureTest {
   
   @Test
   public void testStaleScan() throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    try {
-      conn.tableOperations().delete("bank");
-    } catch (TableNotFoundException e) {}
-    
-    Operations.initialize(conn, "/test5", "bank", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test5", conn);
     
     Transaction tx = new Transaction(config);
     
@@ -346,7 +263,7 @@ public class FailureTest {
     transfer(config, "bob", "joe", 2);
     transfer(config, "jill", "joe", 2);
     
-    conn.tableOperations().flush("bank", null, null, true);
+    conn.tableOperations().flush(table, null, null, true);
     
     try {
       tx2.get("joe", balanceCol);

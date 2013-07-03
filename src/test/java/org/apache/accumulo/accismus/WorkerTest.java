@@ -19,15 +19,13 @@ package org.apache.accumulo.accismus;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.accumulo.accismus.format.AccismusFormatter;
+import org.apache.accumulo.accismus.impl.OracleServer;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.hadoop.io.Text;
@@ -114,6 +112,9 @@ public class WorkerTest {
     Operations.initialize(conn, "/test1", "graph", observed);
     Configuration config = new Configuration(zk, "/test1", conn);
     
+    OracleServer server = new OracleServer(config);
+    server.start();
+
     Transaction tx1 = new Transaction(config);
     
     tx1.set("N0003", new Column("link", "N0040"), "");
@@ -150,22 +151,7 @@ public class WorkerTest {
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
     
-    // TODO remove these prints
-    Scanner scanner = conn.createScanner("graph", new Authorizations());
-    AccismusFormatter formatter = new AccismusFormatter();
-    formatter.initialize(scanner, true);
-    while (formatter.hasNext()) {
-      System.out.println(formatter.next());
-    }
-    
-    conn.tableOperations().flush("graph", null, null, true);
-
-    System.out.println();
-    
-    formatter.initialize(scanner, true);
-    while (formatter.hasNext()) {
-      System.out.println(formatter.next());
-    }
+    server.stop();
 
   }
 }

@@ -24,6 +24,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.accumulo.accismus.Configuration;
+import org.apache.accumulo.accismus.Constants;
+import org.apache.accumulo.accismus.impl.thrift.OracleService;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.zookeeper.ZooKeeper;
 
 /**
  * 
@@ -36,19 +44,37 @@ public class OracleClient {
   }
 
   private class TimestampRetriever implements Runnable {
-    private OracleServer server = new OracleServer();
+
+
+    TimestampRetriever() throws Exception {
+
+    }
 
     public void run() {
       ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
       
       try {
+        
+        // TODO use shared zookeeper
+        ZooKeeper zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
+        String server = new String(zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, false, null));
+
+        String host = server.split(":")[0];
+        int port = Integer.parseInt(server.split(":")[1]);
+
+        zk.close();
+
+        TTransport transport = new TFastFramedTransport(new TSocket(host, port));
+        transport.open();
+        TProtocol protocol = new TCompactProtocol(transport);
+        OracleService.Client client = new OracleService.Client(protocol);
+
         while (true) {
           request.clear();
           request.add(queue.take());
           queue.drainTo(request);
           
-          // TODO use thrift
-          long start = server.getTimestamps(request.size());
+          long start = client.getTimestamps(config.getAccismusInstanceID(), request.size());
           
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
@@ -57,6 +83,8 @@ public class OracleClient {
           }
 
         }
+        
+        // TODO reconnect on failure
       } catch (Exception e) {
         // TODO
         e.printStackTrace();
@@ -70,9 +98,10 @@ public class OracleClient {
   private Configuration config;
   private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<TimeRequest>(1000);
 
-  private OracleClient(Configuration config) {
+  private OracleClient(Configuration config) throws Exception {
     this.config = config;
     
+    // TODO make thread exit if idle for a bit, and start one when request arrives
     Thread thread = new Thread(new TimestampRetriever());
     thread.setDaemon(true);
     thread.start();
@@ -86,13 +115,17 @@ public class OracleClient {
   }
 
   public static synchronized OracleClient getInstance(Configuration config) {
-    // TODO need a better key
-    String key = config.getZookeeperRoot() + ":" + config.getAccumuloInstance() + ":" + config.getTable();
+    // this key differintiates between different instances of Accumulo and Accismus
+    String key = config.getAccismusInstanceID();
     
     OracleClient client = clients.get(key);
     
     if (client == null) {
-      client = new OracleClient(config);
+      try {
+        client = new OracleClient(config);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
       clients.put(key, client);
     }
     

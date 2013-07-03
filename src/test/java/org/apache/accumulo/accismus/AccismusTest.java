@@ -1,42 +1,15 @@
 package org.apache.accumulo.accismus;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.accumulo.minicluster.MiniAccumuloConfig;
-import org.apache.zookeeper.ZooKeeper;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-public class AccismusTest {
-  private static String secret = "superSecret";
-  public static TemporaryFolder folder = new TemporaryFolder();
-  public static MiniAccumuloCluster cluster;
-  private static ZooKeeper zk;
-  
-  private static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
-  
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    folder.create();
-    MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
-    cluster = new MiniAccumuloCluster(cfg);
-    cluster.start();
-    
-    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
-  }
+public class AccismusTest extends TestBase {
   
   @Test
   public void testOverlap1() throws Exception {
@@ -47,13 +20,6 @@ public class AccismusTest {
     // TX2 reads/writes
     // TX2 commits -- succeeds
     // TX1 commits -- fails
-    
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Operations.initialize(conn, "/test1", "bank", EMPTY_OBSERVERS);
-
-    Configuration config = new Configuration(zk, "/test1", conn);
     
     Transaction tx = new Transaction(config);
     
@@ -103,12 +69,6 @@ public class AccismusTest {
     // TX2 reads/writes
     // TX2 commits
     // TX1 reads -- should not see TX2 writes
-    
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Operations.initialize(conn, "/test2", "bank2", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test2", conn);
     
     Transaction tx = new Transaction(config);
     
@@ -173,12 +133,6 @@ public class AccismusTest {
   public void testAck() throws Exception {
     // when two transactions run against the same observed column, only one should commit
     
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Operations.initialize(conn, "/test3", "ackTest", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test3", conn);
-    
     Transaction tx = new Transaction(config);
     
     Column balanceCol = new Column("account", "balance");
@@ -234,11 +188,6 @@ public class AccismusTest {
   @Test
   public void testWriteObserved() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Operations.initialize(conn, "/test4", "ackTest2", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test4", conn);
     
     Transaction tx = new Transaction(config);
     
@@ -272,13 +221,9 @@ public class AccismusTest {
   
   @Test
   public void testVisibility() throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
+
     conn.securityOperations().changeUserAuthorizations("root", new Authorizations("A", "B", "C"));
 
-    Operations.initialize(conn, "/test6", "visTest", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test6", conn);
     config.setAuthorizations(new Authorizations("A", "B", "C"));
     
     Column balanceCol = new Column("account", "balance");
@@ -292,7 +237,7 @@ public class AccismusTest {
     
     Assert.assertTrue(tx.commit());
     
-    Configuration config2 = new Configuration(zk, "/test6", conn);
+    Configuration config2 = new Configuration(zk, zkn, conn);
     config2.setAuthorizations(new Authorizations("B"));
     
     Transaction tx2 = new Transaction(config2);
@@ -300,7 +245,7 @@ public class AccismusTest {
     Assert.assertEquals("20", tx2.get("joe", balanceCol).toString());
     Assert.assertEquals("60", tx2.get("jill", balanceCol).toString());
     
-    Configuration config3 = new Configuration(zk, "/test6", conn);
+    Configuration config3 = new Configuration(zk, zkn, conn);
     config3.setAuthorizations(new Authorizations("C"));
     
     Transaction tx3 = new Transaction(config3);
@@ -312,11 +257,6 @@ public class AccismusTest {
   @Test
   public void testRange() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Operations.initialize(conn, "/test5", "rangeTest", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test5", conn);
     
     Transaction tx = new Transaction(config);
     tx.set("d00001", new Column("data", "content"), "blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
@@ -372,11 +312,5 @@ public class AccismusTest {
     expected.remove(new Column("outlink", "http://b.com"));
     Assert.assertEquals(expected, columns);
     
-  }
-  
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {
-    cluster.stop();
-    folder.delete();
   }
 }

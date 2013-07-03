@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.accismus.impl.ByteUtil;
@@ -46,15 +47,21 @@ public class Operations {
   public static void initialize(Connector conn, String zoodir, String table, Map<Column,Class<? extends Observer>> colObservers) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
-    String accumuloInstance = conn.getInstance().getInstanceName();
+    String accumuloInstanceName = conn.getInstance().getInstanceName();
+    String accumuloInstanceID = conn.getInstance().getInstanceID();
+    String accismusInstanceID = UUID.randomUUID().toString();
 
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
     
     zk.create(zoodir, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.CONFIG, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TABLE, table.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE, accumuloInstance.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    // TODO save accumulo instance ID for later sanity checks?
+    zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    zk.create(zoodir + Constants.Zookeeper.ACCISMUS_INSTANCE_ID, accismusInstanceID.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+    zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'0'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);

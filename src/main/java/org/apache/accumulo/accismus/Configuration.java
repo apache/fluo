@@ -39,6 +39,8 @@ public class Configuration {
   private String accumuloInstance;
   private Map<Column,String> observers;
   private Connector conn;
+  private String accumuloInstanceID;
+  private String accismusInstanceID;
   
   public Configuration(ZooKeeper zk, String zoodir, Connector conn) throws Exception {
     this.zoodir = zoodir;
@@ -49,6 +51,10 @@ public class Configuration {
     if (!conn.getInstance().getInstanceName().equals(accumuloInstance)) {
       throw new IllegalArgumentException("unexpected accumulo instance name " + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
     }
+    
+    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID)) {
+      throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
+    }
   }
   
   /**
@@ -58,7 +64,9 @@ public class Configuration {
    * @throws KeeperException
    */
   private void readConfig(ZooKeeper zk) throws Exception {
-    accumuloInstance = new String(zk.getData(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE, false, null), "UTF-8");
+    accumuloInstance = new String(zk.getData(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_NAME, false, null), "UTF-8");
+    accumuloInstanceID = new String(zk.getData(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_ID, false, null), "UTF-8");
+    accismusInstanceID = new String(zk.getData(zoodir + Constants.Zookeeper.ACCISMUS_INSTANCE_ID, false, null), "UTF-8");
     table = new String(zk.getData(zoodir + Constants.Zookeeper.TABLE, false, null), "UTF-8");
     
     ByteArrayInputStream bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.OBSERVERS, false, null));
@@ -90,6 +98,14 @@ public class Configuration {
     return accumuloInstance;
   }
   
+  public String getAccumuloInstanceID() {
+    return accumuloInstanceID;
+  }
+  
+  public String getAccismusInstanceID() {
+    return accismusInstanceID;
+  }
+
   public Map<Column,String> getObservers() {
     return observers;
   }

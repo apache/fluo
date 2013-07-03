@@ -25,61 +25,25 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.util.Stat;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.accumulo.minicluster.MiniAccumuloConfig;
-import org.apache.zookeeper.ZooKeeper;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
  * the average should not vary.
  */
-public class StochasticBank {
+public class StochasticBank extends TestBase {
   
-  private static String secret = "superSecret";
-  public static TemporaryFolder folder = new TemporaryFolder();
-  public static MiniAccumuloCluster cluster;
-  private static ZooKeeper zk;
-  
-  private static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
-
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    folder.create();
-    MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
-    cluster = new MiniAccumuloCluster(cfg);
-    cluster.start();
-    
-    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
-  }
-  
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {
-    cluster.stop();
-    folder.delete();
-  }
 
   private static AtomicInteger txCount = new AtomicInteger();
 
   @Test
   public void testConcurrency() throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken(secret));
-    
-    Operations.initialize(conn, "/test1", "bank", EMPTY_OBSERVERS);
-    Configuration config = new Configuration(zk, "/test1", conn);
-    
-    conn.tableOperations().setProperty("bank", Property.TABLE_MAJC_RATIO.getKey(), "1");
+
+    conn.tableOperations().setProperty(table, Property.TABLE_MAJC_RATIO.getKey(), "1");
     
     int numAccounts = 5000;
     

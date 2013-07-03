@@ -16,16 +16,135 @@
  */
 package org.apache.accumulo.accismus.impl;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.net.InetSocketAddress;
+
+import org.apache.accumulo.accismus.Configuration;
+import org.apache.accumulo.accismus.Constants;
+import org.apache.accumulo.accismus.impl.thrift.OracleService;
+import org.apache.thrift.TException;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * 
  */
-public class OracleServer {
-  private AtomicLong ts = new AtomicLong(0);
+public class OracleServer implements OracleService.Iface {
+  private long currentTs = 0;
+  private long maxTs = 0;
+  private ZooKeeper zk;
+  private Configuration config;
+  private Thread serverThread;
+  private THsHaServer server;
+  private boolean started = false;
   
-  public long getTimestamps(int num) {
-    return ts.getAndAdd(num);
+  public OracleServer(Configuration config) throws Exception {
+    this.config = config;
   }
   
+  private void allocateTimestamp() throws Exception {
+    Stat stat = new Stat();
+    byte[] d = zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, null, stat);
+    
+    // TODO check that d is expected
+    // TODO check that stil server when setting
+    // TODO make num allocated variable... when a server first starts allocate a small amount... the longer it runs and the busier it is, allocate bigger blocks
+    
+    long newMax = Long.parseLong(new String(d)) + 1000;
+    
+    zk.setData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, (newMax + "").getBytes("UTF-8"), stat.getVersion());
+
+    maxTs = newMax;
+
+  }
+  
+  @Override
+  public long getTimestamps(String id, int num) throws TException {
+    
+    if (!started)
+      throw new IllegalStateException();
+
+    if (!id.equals(config.getAccismusInstanceID())) {
+      throw new IllegalArgumentException();
+    }
+
+    try {
+      while (num + currentTs >= maxTs) {
+        allocateTimestamp();
+      }
+      
+      long tmp = currentTs;
+      currentTs += num;
+      return tmp;
+    } catch (Exception e) {
+      throw new TException(e);
+    }
+  }
+  
+  private InetSocketAddress startServer() throws TTransportException {
+    
+    // TODO pick port and/or make configurable
+    InetSocketAddress addr = new InetSocketAddress(9913);
+    
+    TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
+    
+    THsHaServer.Args serverArgs = new THsHaServer.Args(socket);
+    TProcessor processor = new OracleService.Processor<OracleService.Iface>(this);
+    serverArgs.processor(processor);
+    serverArgs.inputProtocolFactory(new TCompactProtocol.Factory());
+    serverArgs.outputProtocolFactory(new TCompactProtocol.Factory());
+    server = new THsHaServer(serverArgs);
+    
+    Runnable st = new Runnable() {
+      
+      @Override
+      public void run() {
+        server.serve();
+      }
+    };
+    
+    serverThread = new Thread(st);
+    serverThread.setDaemon(true);
+    serverThread.start();
+    
+    return addr;
+    
+  }
+  
+  public synchronized void start() throws Exception {
+    if (started)
+      throw new IllegalStateException();
+
+    this.zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
+
+    InetSocketAddress addr = startServer();
+
+    byte[] d = zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, null, null);
+    currentTs = maxTs = Long.parseLong(new String(d));
+
+    zk.create(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, (addr.getHostName() + ":" + addr.getPort()).getBytes(),
+        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+
+    // TODO use zoolock or curator
+
+    started = true;
+  }
+
+  public void stop() throws Exception {
+    if (started) {
+      server.stop();
+      serverThread.join();
+      // TODO use zoolock
+      zk.delete(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, -1);
+      zk.close();
+      started = false;
+    }
+  }
+
 }

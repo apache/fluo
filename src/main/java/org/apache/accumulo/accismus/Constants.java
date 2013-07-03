@@ -27,9 +27,15 @@ public class Constants {
   
   public static class Zookeeper {
     public static final String CONFIG = "/config";
-    public static final String TABLE = CONFIG + "/table";
-    public static final String ACCUMULO_INSTANCE = CONFIG + "/accumulo";
-    public static final String OBSERVERS = CONFIG + "/observers";
+    public static final String TABLE = CONFIG + "/accumulo.table";
+    public static final String ACCUMULO_INSTANCE_NAME = CONFIG + "/accumulo.instance.name";
+    public static final String ACCUMULO_INSTANCE_ID = CONFIG + "/accumulo.instance.id";
+    public static final String ACCISMUS_INSTANCE_ID = CONFIG + "/accismus.instance.id";
+    public static final String OBSERVERS = CONFIG + "/accismus.observers";
+    
+    public static final String ORACLE = "/oracle";
+    public static final String TIMESTAMP = ORACLE + "/timestamp";
+    public static final String ORACLE_SERVER = ORACLE + "/server";
   }
   
 }
