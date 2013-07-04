@@ -369,6 +369,7 @@ public class Transaction {
   }
 
   public boolean commit() throws Exception {
+    // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
     // TODO throw exception instead of return boolean
     CommitData cd = preCommit();
     

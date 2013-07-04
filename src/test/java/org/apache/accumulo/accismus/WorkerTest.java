@@ -154,4 +154,6 @@ public class WorkerTest {
     server.stop();
 
   }
+  
+  // TODO test that observers trigger on delete
 }

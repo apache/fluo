@@ -140,7 +140,7 @@ public class OracleServer implements OracleService.Iface {
     if (started) {
       server.stop();
       serverThread.join();
-      // TODO use zoolock
+      // TODO use zoolock or curator
       zk.delete(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, -1);
       zk.close();
       started = false;

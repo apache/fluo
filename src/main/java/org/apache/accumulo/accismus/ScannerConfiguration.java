@@ -16,14 +16,14 @@
  */
 package org.apache.accumulo.accismus;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.util.ArgumentChecker;
-import org.apache.hadoop.io.Text;
 
 /**
  * 
@@ -32,7 +32,8 @@ public class ScannerConfiguration implements Cloneable {
   
   private Range range = new Range();
   private IteratorSetting[] iters = new IteratorSetting[0];
-  private HashSet<Column> columns = new HashSet<Column>();
+  // TODO use a set
+  private ArrayList<Column> columns = new ArrayList<Column>();
   
   // TODO document that timestamps are ignored
 
@@ -62,6 +63,7 @@ public class ScannerConfiguration implements Cloneable {
   
   public ScannerConfiguration fetchColumnFamily(ByteSequence col) {
     ArgumentChecker.notNull(col);
+    // TODO causes NPE w/ set, add unit test
     columns.add(new Column(col, null));
     return this;
   }
@@ -86,9 +88,9 @@ public class ScannerConfiguration implements Cloneable {
     
     for (Column col : columns) {
       if (col.getQualifier() != null) {
-        scanner.fetchColumn(new Text(col.getFamily().toArray()), new Text(col.getQualifier().toArray()));
+        scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
       } else {
-        scanner.fetchColumnFamily(new Text(col.getFamily().toArray()));
+        scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
       }
     }
     
@@ -99,7 +101,7 @@ public class ScannerConfiguration implements Cloneable {
   public Object clone() throws CloneNotSupportedException {
     ScannerConfiguration sc = (ScannerConfiguration) super.clone();
     
-    sc.columns = (HashSet<Column>) columns.clone();
+    sc.columns = (ArrayList<Column>) columns.clone();
     sc.range = range;
     sc.iters = iters;
 

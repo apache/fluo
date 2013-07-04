@@ -16,6 +16,7 @@
  */
 package org.apache.accumulo.accismus.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -55,26 +58,29 @@ public class OracleClient {
       
       try {
         
-        // TODO use shared zookeeper
-        ZooKeeper zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
-        String server = new String(zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, false, null));
-
-        String host = server.split(":")[0];
-        int port = Integer.parseInt(server.split(":")[1]);
-
-        zk.close();
-
-        TTransport transport = new TFastFramedTransport(new TSocket(host, port));
-        transport.open();
-        TProtocol protocol = new TCompactProtocol(transport);
-        OracleService.Client client = new OracleService.Client(protocol);
+        OracleService.Client client = connect();
 
         while (true) {
           request.clear();
           request.add(queue.take());
           queue.drainTo(request);
           
-          long start = client.getTimestamps(config.getAccismusInstanceID(), request.size());
+          long start;
+
+          while (true) {
+            try {
+              start = client.getTimestamps(config.getAccismusInstanceID(), request.size());
+              break;
+            } catch (TTransportException tte) {
+              // TODO is this correct way to close?
+              client.getInputProtocol().getTransport().close();
+              client.getOutputProtocol().getTransport().close();
+              
+              // TODO maybe sleep a bit?
+              client = connect();
+            }
+            
+          }
           
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
@@ -83,12 +89,28 @@ public class OracleClient {
           }
 
         }
-        
-        // TODO reconnect on failure
+
       } catch (Exception e) {
         // TODO
         e.printStackTrace();
       }
+    }
+
+    private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
+      // TODO use shared zookeeper or curator
+      ZooKeeper zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
+      String server = new String(zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, false, null));
+
+      String host = server.split(":")[0];
+      int port = Integer.parseInt(server.split(":")[1]);
+
+      zk.close();
+
+      TTransport transport = new TFastFramedTransport(new TSocket(host, port));
+      transport.open();
+      TProtocol protocol = new TCompactProtocol(transport);
+      OracleService.Client client = new OracleService.Client(protocol);
+      return client;
     }
   }
 
