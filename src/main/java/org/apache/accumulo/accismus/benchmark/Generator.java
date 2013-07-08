@@ -16,8 +16,6 @@
  */
 package org.apache.accumulo.accismus.benchmark;
 
-import java.util.Random;
-
 import org.apache.accumulo.accismus.Column;
 import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.Transaction;
@@ -27,20 +25,10 @@ import org.apache.accumulo.accismus.Transaction;
  */
 public class Generator {
   
-  static final Column contetCol = new Column("doc", "content");
+  public static final Column contetCol = new Column("doc", "content");
 
 
-  public static void main(String[] args) throws Exception {
-    Random rand = new Random();
-    
-    Configuration config = null;
-    
-    for (int i = 0; i < 10; i++) {
-      Document doc = new Document(rand);
-      
-      insert(config, doc);
-    }
-  }
+
   
   /**
    * @param config

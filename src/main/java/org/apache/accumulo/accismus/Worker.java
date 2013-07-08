@@ -49,6 +49,7 @@ public class Worker {
     
   }
   
+  // TODO make package private
   public void processUpdates() throws Exception {
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
@@ -71,6 +72,9 @@ public class Worker {
       try {
         // TODO check ack to see if observer should run
         observer.process(tx, row, col);
+        
+        // TODO retry if commit fails, unless it failed because of ack
+        tx.commit();
       } catch (Exception e) {
         e.printStackTrace();
       }

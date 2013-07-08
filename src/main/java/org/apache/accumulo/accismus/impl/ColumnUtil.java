@@ -51,9 +51,7 @@ public class ColumnUtil {
     if (isTrigger) {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, Transaction.EMPTY);
       m.putDelete(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), startTs);
-    }
-    
-    if (observedColumns.contains(col)) {
+    } else if (observedColumns.contains(col)) {
       m.put(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), commitTs, Transaction.EMPTY);
     }
   }

@@ -32,21 +32,22 @@ public class Document {
   private static final byte[] K2_PREFIX = "ke2:".getBytes();
   private static final byte[] K3_PREFIX = "ke3:".getBytes();
 
-  int uri;
+  ByteSequence uri;
   ByteSequence content;
   
   public Document(Random rand) {
-    uri = rand.nextInt(1000000000);
+    uri = new ArrayByteSequence(FastFormat.toZeroPaddedString(rand.nextInt(1000000000), 8, 16, URL_PREFIX));
     content = new ArrayByteSequence(new byte[1000]);
     rand.nextBytes(content.getBackingArray());
   }
 
-  public Document(ByteSequence url, ByteSequence doc) {
-    
+  public Document(ByteSequence uri, ByteSequence doc) {
+    this.uri = uri;
+    this.content = doc;
   }
 
   public ByteSequence getUrl() {
-    return new ArrayByteSequence(FastFormat.toZeroPaddedString(uri, 8, 16, URL_PREFIX));
+    return uri;
   }
   
   private ByteSequence createKey(ByteSequence seq, byte[] prefix) {

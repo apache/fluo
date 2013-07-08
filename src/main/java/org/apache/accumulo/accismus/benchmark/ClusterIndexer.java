@@ -52,7 +52,8 @@ public class ClusterIndexer  implements Observer  {
       tx.delete(entry.getValue(), new Column(DUP, url));
     }
     
-    // TODO document why these are set in this tx
+    // these are set in this transaction to keep track of whats indexed. If set when the document was inserted, then would not match whats
+    // indexed.
     tx.set(url, key1Col, doc.getKey1());
     tx.set(url, key2Col, doc.getKey2());
     tx.set(url, key3Col, doc.getKey3());

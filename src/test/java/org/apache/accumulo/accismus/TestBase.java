@@ -20,15 +20,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.OracleServer;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
@@ -52,6 +57,21 @@ public class TestBase {
   protected OracleServer oserver;
   protected String zkn;
 
+  protected Map<Column,Class<? extends Observer>> getObservers() {
+    return EMPTY_OBSERVERS;
+  }
+
+  protected void runWorker() throws Exception, TableNotFoundException {
+    Worker worker = new Worker(config);
+    worker.processUpdates();
+    
+    // there should not be any notifcations
+    Scanner scanner = conn.createScanner(table, new Authorizations());
+    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+    
+    Assert.assertFalse(scanner.iterator().hasNext());
+  }
+
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     folder.create();
@@ -70,7 +90,7 @@ public class TestBase {
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
     
-    Operations.initialize(conn, zkn, table, EMPTY_OBSERVERS);
+    Operations.initialize(conn, zkn, table, getObservers());
     config = new Configuration(zk, zkn, conn);
     
     oserver = new OracleServer(config);

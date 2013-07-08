@@ -19,29 +19,25 @@ package org.apache.accumulo.accismus;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.accumulo.accismus.impl.OracleServer;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.hadoop.io.Text;
-import org.apache.zookeeper.ZooKeeper;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * 
  */
-public class WorkerTest {
+public class WorkerTest extends TestBase {
   
   private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
+
+  protected Map<Column,Class<? extends Observer>> getObservers() {
+    Map<Column,Class<? extends Observer>> observed = new HashMap<Column,Class<? extends Observer>>();
+    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class);
+    return observed;
+  }
 
   static class DegreeIndexer implements Observer {
     
@@ -73,48 +69,14 @@ public class WorkerTest {
         // delete old degree in index
         tx.delete("IDEG" + degree, new Column(NODE_CF, row));
       }
-      
-      // TODO maybe commit should be done externally
-      System.out.println("commit " + tx.commit());
     }
   }
   
-  private static String secret = "superSecret";
-  public static TemporaryFolder folder = new TemporaryFolder();
-  public static MiniAccumuloCluster cluster;
-  private static ZooKeeper zk;
   
-  @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    folder.create();
-    MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
-    cluster = new MiniAccumuloCluster(cfg);
-    cluster.start();
-    
-    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
-  }
-  
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {
-    cluster.stop();
-    folder.delete();
-  }
   
   @Test
   public void test1() throws Exception {
     
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    Connector conn = zki.getConnector("root", new PasswordToken("superSecret"));
-    
-    Map<Column,Class<? extends Observer>> observed = new HashMap<Column,Class<? extends Observer>>();
-    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class);
-    
-    Operations.initialize(conn, "/test1", "graph", observed);
-    Configuration config = new Configuration(zk, "/test1", conn);
-    
-    OracleServer server = new OracleServer(config);
-    server.start();
-
     Transaction tx1 = new Transaction(config);
     
     tx1.set("N0003", new Column("link", "N0040"), "");
@@ -132,9 +94,7 @@ public class WorkerTest {
     Map<Column,Observer> observers = new HashMap<Column,Observer>();
     observers.put(new Column("attr", "lastupdate"), new DegreeIndexer());
     
-    Worker worker = new Worker(config);
-    
-    worker.processUpdates();
+    runWorker();
     
     Transaction tx3 = new Transaction(config);
     Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
@@ -144,15 +104,13 @@ public class WorkerTest {
     tx3.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     Assert.assertTrue(tx3.commit());
     
-    worker.processUpdates();
+    runWorker();
     
     Transaction tx4 = new Transaction(config);
     Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
     
-    server.stop();
-
   }
   
   // TODO test that observers trigger on delete
