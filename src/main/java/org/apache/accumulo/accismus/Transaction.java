@@ -16,6 +16,7 @@ import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.accismus.impl.LockValue;
 import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.accismus.impl.SnapshotScanner;
+import org.apache.accumulo.accismus.impl.TxStatus;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
@@ -28,11 +29,11 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.util.ArgumentChecker;
+import org.apache.commons.lang.mutable.MutableLong;
 
 import core.client.ConditionalWriter;
 import core.client.ConditionalWriter.Result;
 import core.client.ConditionalWriter.Status;
-import core.client.impl.ConditionalWriterImpl;
 import core.data.Condition;
 import core.data.ConditionalMutation;
 
@@ -238,7 +239,8 @@ public class Transaction {
 
     CommitData cd = new CommitData();
     
-    cd.cw = new ConditionalWriterImpl(table, conn, config.getAuthorizations());
+    // TODO use shared writer
+    cd.cw = config.createConditionalWriter();
     
     // get a primary column
     cd.prow = updates.keySet().iterator().next();
@@ -252,8 +254,31 @@ public class Transaction {
     ConditionalMutation pcm = new ConditionalMutation(cd.prow.toArray());
     prewrite(pcm, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
     
-    // TODO handle unknown
-    if (cd.cw.write(pcm).getStatus() != Status.ACCEPTED) {
+    Status mutationStatus = cd.cw.write(pcm).getStatus();
+    
+    while (mutationStatus == Status.UNKNOWN) {
+      
+      MutableLong mcts = new MutableLong(-1);
+      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts);
+      
+      switch (txStatus) {
+        case LOCKED:
+          mutationStatus = Status.ACCEPTED;
+          break;
+        case ROLLED_BACK:
+          mutationStatus = Status.REJECTED;
+          break;
+        case UNKNOWN:
+          mutationStatus = cd.cw.write(pcm).getStatus();
+          break;
+        case COMMITTED:
+        default:
+          throw new IllegalStateException("unexpected tx state " + txStatus + " " + cd.prow + " " + cd.pcol);
+          
+      }
+    }
+    
+    if (mutationStatus != Status.ACCEPTED) {
       return null;
     }
     
@@ -295,10 +320,28 @@ public class Transaction {
         .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS)));
     ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
     
-    Status status = cd.cw.write(delLockMutation).getStatus();
-    // TODO handle unknown
-    if (status != Status.ACCEPTED) {
-      // TODO rollback
+    Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
+    
+    while (mutationStatus == Status.UNKNOWN) {
+      
+      MutableLong mcts = new MutableLong(-1);
+      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts);
+      
+      switch (txStatus) {
+        case COMMITTED:
+          if (mcts.longValue() != commitTs)
+            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + mcts.longValue() + "!=" + commitTs);
+          mutationStatus = Status.ACCEPTED;
+          break;
+        case LOCKED:
+          mutationStatus = cd.cw.write(delLockMutation).getStatus();
+          break;
+        default:
+          mutationStatus = Status.REJECTED;
+      }
+    }
+
+    if (mutationStatus != Status.ACCEPTED) {
       return false;
     }
     
@@ -311,15 +354,9 @@ public class Transaction {
     // TODO let rollback be done lazily? this makes GC more difficult
     
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
-    // TODO does order matter, should primary be deleted last?
     
-    Mutation m = new Mutation(cd.prow.toArray());
-    // TODO timestamp?
-    // TODO writing the primary column with a batch writer is iffy
-    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(startTs, false, true));
-    bw.addMutation(m);
-    
+    Mutation m;
+
     for (ByteSequence row : cd.acceptedRows) {
       m = new Mutation(row.toArray());
       for (Column col : updates.get(row).keySet()) {
@@ -333,6 +370,10 @@ public class Transaction {
     
     // mark transaction as complete for garbage collection purposes
     m = new Mutation(cd.prow.toArray());
+    // TODO timestamp?
+    // TODO writing the primary column with a batch writer is iffy
+    m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encode(startTs, false, true));
     m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | startTs, EMPTY);
     bw.addMutation(m);
 
@@ -380,10 +421,15 @@ public class Transaction {
       if (commitPrimaryColumn(cd, commitTs)) {
         return finishCommit(cd, commitTs);
       } else {
+        // TODO write TX_DONE
         return false;
       }
     } else {
       return rollback(cd);
     }
+  }
+  
+  long getStartTs() {
+    return startTs;
   }
 }

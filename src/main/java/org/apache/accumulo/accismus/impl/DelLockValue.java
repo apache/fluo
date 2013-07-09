@@ -22,12 +22,12 @@ public class DelLockValue {
   private long lockTime;
   
   public DelLockValue(byte[] data) {
-    primary = (data[0] & 0x01) == 1;
-    rollback = (data[0] & 0x02) == 2;
-    lockTime = ByteUtil.decodeLong(data, 1);
+    primary = isPrimary(data);
+    rollback = isRollback(data);
+    lockTime = getTimestamp(data);
   }
   
-  public long getLockTime() {
+  public long getTimestamp() {
     return lockTime;
   }
   
@@ -53,4 +53,13 @@ public class DelLockValue {
   public static boolean isPrimary(byte[] data) {
     return (data[0] & 0x01) == 1;
   }
+  
+  public static boolean isRollback(byte[] data) {
+    return (data[0] & 0x02) == 2;
+  }
+  
+  public static long getTimestamp(byte[] data) {
+    return ByteUtil.decodeLong(data, 1);
+  }
+
 }

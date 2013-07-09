@@ -91,20 +91,22 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
       if (colType == ColumnUtil.TX_DONE_PREFIX) {
         
       } else if (colType == ColumnUtil.WRITE_PREFIX) {
-        if (invalidationTime == -1) {
-          invalidationTime = ts;
-        }
+        long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
         
-        if (lockTime == new WriteValue(source.getTopValue().get()).getTimestamp()) {
+        if (timePtr > invalidationTime)
+          invalidationTime = timePtr;
+        
+        if (lockTime == timePtr) {
           hasTop = true;
           return;
         }
       } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
-        if (ts > invalidationTime)
-          invalidationTime = ts;
+        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
         
-        DelLockValue dlv = new DelLockValue(source.getTopValue().get());
-        if (dlv.getLockTime() == lockTime) {
+        if (timePtr > invalidationTime)
+          invalidationTime = timePtr;
+        
+        if (timePtr == lockTime) {
           hasTop = true;
           return;
         }

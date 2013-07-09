@@ -25,7 +25,6 @@ import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.ScannerConfiguration;
 import org.apache.accumulo.accismus.StaleScanException;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
-import org.apache.accumulo.accismus.iterators.RollbackCheckIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
@@ -41,10 +40,10 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.UtilWaitThread;
+import org.apache.commons.lang.mutable.MutableLong;
 
 import core.client.ConditionalWriter;
 import core.client.ConditionalWriter.Status;
-import core.client.impl.ConditionalWriterImpl;
 import core.data.Condition;
 import core.data.ConditionalMutation;
 
@@ -179,46 +178,39 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       // TODO ensure primary is visible
       // TODO reususe scanner?
       try {
-        Scanner scanner = aconfig.getConnector().createScanner(aconfig.getTable(), aconfig.getAuthorizations());
-        IteratorSetting is = new IteratorSetting(10, RollbackCheckIterator.class);
-        RollbackCheckIterator.setLocktime(is, lockTs);
-        scanner.addScanIterator(is);
-        scanner.setRange(Range.exact(ByteUtil.toText(prow), ByteUtil.toText(pfam), ByteUtil.toText(pqual), ByteUtil.toText(pvis)));
         
-        Iterator<Entry<Key,Value>> iter = scanner.iterator();
+        MutableLong commitTs = new MutableLong(-1);
+        // TODO use cached CV
+        TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual).setVisibility(new ColumnVisibility(pvis.toArray())), lockTs,
+            commitTs);
         
-        if (iter.hasNext()) {
-          // TODO verify what comes back from iterator
-          Entry<Key,Value> entry2 = iter.next();
-          long colType = entry2.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
-          if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
-            if(new DelLockValue(entry2.getValue().get()).isRollback()){ 
-              rollback(entry.getKey(), lockTs);
-              resolvedLock = true;
-            } else {
-              long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
-              commitColumn(entry, lockTs, commitTs);
-              resolvedLock = true;
+        switch (txStatus) {
+          case COMMITTED:
+            if (commitTs.longValue() < lockTs) {
+              throw new IllegalStateException("bad commitTs : " + prow + " " + pfam + " " + pqual + " " + pvis + " (" + commitTs.longValue() + "<" + lockTs
+                  + ")");
             }
-          } else if (colType == ColumnUtil.WRITE_PREFIX) {
-            // TODO ensure value == lockTs
-            long commitTs = entry2.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
-            commitColumn(entry, lockTs, commitTs);
+            commitColumn(entry, lockTs, commitTs.longValue());
             resolvedLock = true;
-          } else if (colType == ColumnUtil.LOCK_PREFIX) {
+            break;
+          case LOCKED:
             if (abort) {
               if (rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get())) {
                 rollback(entry.getKey(), lockTs);
                 resolvedLock = true;
               }
             }
-          } else {
-            // TODO
-            throw new IllegalStateException();
-          }
-        } else {
-          // TODO no info about the status of this tx
-          throw new IllegalStateException();
+            break;
+          case ROLLED_BACK:
+            // TODO ensure this if ok if there concurrent rollback
+            rollback(entry.getKey(), lockTs);
+            resolvedLock = true;
+            break;
+          case UNKNOWN:
+            if (abort) {
+              throw new IllegalStateException("can not abort : " + prow + " " + pfam + " " + pqual + " " + pvis + " (" + txStatus + ")");
+            }
+            break;
         }
 
       } catch (Exception e) {
@@ -287,7 +279,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
-    ConditionalWriter cw = new ConditionalWriterImpl(aconfig.getTable(), aconfig.getConnector(), aconfig.getAuthorizations());
+    ConditionalWriter cw = aconfig.createConditionalWriter();
     
     // TODO handle other conditional writer cases
     return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
@@ -296,5 +288,4 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   public void remove() {
     iterator.remove();
   }
-  
 }

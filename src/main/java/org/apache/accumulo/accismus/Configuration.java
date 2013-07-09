@@ -28,6 +28,9 @@ import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
+import core.client.ConditionalWriter;
+import core.client.impl.ConditionalWriterImpl;
+
 /**
  * 
  */
@@ -42,6 +45,17 @@ public class Configuration {
   private String accumuloInstanceID;
   private String accismusInstanceID;
   
+  public Configuration(Configuration config) throws Exception {
+    this.table = config.table;
+    this.auths = config.auths;
+    this.zoodir = config.zoodir;
+    this.accumuloInstance = config.accumuloInstance;
+    this.accismusInstanceID = config.accismusInstanceID;
+    this.accumuloInstanceID = config.accumuloInstanceID;
+    this.observers = config.observers;
+    this.conn = config.conn;
+  }
+
   public Configuration(ZooKeeper zk, String zoodir, Connector conn) throws Exception {
     this.zoodir = zoodir;
     readConfig(zk);
@@ -118,6 +132,11 @@ public class Configuration {
     return conn;
   }
   
+  // TODO use connector when its in Accumulo
+  public ConditionalWriter createConditionalWriter() {
+    return new ConditionalWriterImpl(getTable(), getConnector(), getAuthorizations());
+  }
+
   public String getZookeeperRoot() {
     return zoodir;
   }

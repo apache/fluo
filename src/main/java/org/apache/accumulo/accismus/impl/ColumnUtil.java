@@ -16,12 +16,24 @@
  */
 package org.apache.accumulo.accismus.impl;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.accumulo.accismus.Column;
+import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.Transaction;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.hadoop.io.Text;
 
 
 /**
@@ -56,5 +68,37 @@ public class ColumnUtil {
     }
   }
   
+  public static Entry<Key,Value> checkColumn(Configuration config, IteratorSetting iterConf, ByteSequence row, Column col) {
+    Range range = Range.exact(ByteUtil.toText(row), ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), new Text(col.getVisibility()
+        .getExpression()));
+    
+    Scanner scanner;
+    try {
+      // TODO reuse or share scanner
+      scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
+    } catch (TableNotFoundException e) {
+      // TODO proper exception handling
+      throw new RuntimeException(e);
+    }
+    scanner.setRange(range);
+    scanner.addScanIterator(iterConf);
+    
+    Iterator<Entry<Key,Value>> iter = scanner.iterator();
+    if (iter.hasNext()) {
+      Entry<Key,Value> entry = iter.next();
+      
+      Key k = entry.getKey();
+      
+      if (k.getRowData().equals(row) && k.getColumnFamilyData().equals(col.getFamily()) && k.getColumnQualifierData().equals(col.getQualifier())
+          && k.getColumnVisibilityData().equals(new ArrayByteSequence(col.getVisibility().getExpression()))) {
+        return entry;
+      } else {
+        throw new RuntimeException("unexpected key " + k + " " + row + " " + col);
+      }
+    }
+    
+    return null;
+  }
+
 
 }

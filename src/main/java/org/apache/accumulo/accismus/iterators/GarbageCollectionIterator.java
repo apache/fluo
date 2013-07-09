@@ -139,6 +139,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
         byte[] val = source.getTopValue().get();
+        long timePtr = WriteValue.getTimestamp(val);
         
         if (WriteValue.isPrimary(val) && !complete)
           keep = true;
@@ -152,14 +153,14 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
           if (writesSeen == numVersions - 1 || truncationSeen) {
             if (truncationTime != -1)
               throw new IllegalStateException();
-            WriteValue wv = new WriteValue(source.getTopValue().get());
-            truncationTime = wv.getTimestamp();
-            val = WriteValue.encode(truncationTime, wv.isPrimary(), true);
+            
+            truncationTime = timePtr;
+            val = WriteValue.encode(truncationTime, WriteValue.isPrimary(val), true);
           }
         }
 
-        if (invalidationTime == -1) 
-          invalidationTime = ts;
+        if (timePtr > invalidationTime)
+          invalidationTime = timePtr;
         
         if (keep) {
           keys.add(new KeyValue(new Key(source.getTopKey()), val));
@@ -176,7 +177,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete)
           keep = true;
 
-        if (ts > invalidationTime) {
+        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
+
+        if (timePtr > invalidationTime) {
           invalidationTime = ts;
           keep = true;
         }

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.accismus.impl.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -65,19 +66,23 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
           
         } else if (colType == ColumnUtil.WRITE_PREFIX) {
           // TODO check of truncated writes
-          if (invalidationTime == -1) {
-            invalidationTime = ts;
-          }
           
+          long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
+          
+          if (timePtr > invalidationTime)
+            invalidationTime = timePtr;
+
           if (dataPointer == -1) {
             if (ts <= snaptime)
-              dataPointer = new WriteValue(source.getTopValue().get()).getTimestamp();
+              dataPointer = timePtr;
             else if (WriteValue.isTruncated(source.getTopValue().get()))
               return;
           }
         } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
-          if (ts > invalidationTime)
-            invalidationTime = ts;
+          long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
+          
+          if (timePtr > invalidationTime)
+            invalidationTime = timePtr;
         } else if (colType == ColumnUtil.LOCK_PREFIX) {
           if (ts > invalidationTime && ts <= snaptime) {
             // nothing supersedes this lock, therefore the column is locked
@@ -136,6 +141,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
       }
     }
     
+    // TODO could possibly exclude notification locality group
     source.seek(range, columnFamilies, inclusive);
     
     findTop();

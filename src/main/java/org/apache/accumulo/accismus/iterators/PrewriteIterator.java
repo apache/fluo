@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.DelLockValue;
+import org.apache.accumulo.accismus.impl.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -99,9 +101,10 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
         
       } else if (colType == ColumnUtil.WRITE_PREFIX) {
         
-        if (invalidationTime == -1) {
-          invalidationTime = ts;
-        }
+        long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
+        
+        if (timePtr > invalidationTime)
+          invalidationTime = timePtr;
         
         if (firstWrite == -1) {
           firstWrite = ts;
@@ -113,8 +116,18 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
         }
         
       } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
-        if (ts > invalidationTime)
-          invalidationTime = ts;
+        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
+        
+        if (timePtr > invalidationTime) {
+          invalidationTime = timePtr;
+          
+          // this delete marker will hide locks, so can not let a lock be written before it
+          // TODO need unit test for this iterator... for this case
+          if (timePtr >= snaptime) {
+            hasTop = true;
+            return;
+          }
+        }
       } else if (colType == ColumnUtil.LOCK_PREFIX) {
         if (ts > invalidationTime) {
           // nothing supersedes this lock, therefore the column is locked

@@ -25,9 +25,9 @@ public class WriteValue {
   long ts;
   
   public WriteValue(byte[] data) {
-    primary = (data[0] & 0x01) == 1;
-    truncated = (data[0] & 0x02) == 2;
-    ts = ByteUtil.decodeLong(data, 1);
+    primary = isPrimary(data);
+    truncated = isTruncated(data);
+    ts = getTimestamp(data);
   }
   
   public boolean isPrimary() {
@@ -52,6 +52,10 @@ public class WriteValue {
   
   public static boolean isPrimary(byte[] data) {
     return (data[0] & 0x01) == 1;
+  }
+
+  public static long getTimestamp(byte[] data) {
+    return ByteUtil.decodeLong(data, 1);
   }
 
   public static byte[] encode(long ts, boolean primary, boolean truncated) {

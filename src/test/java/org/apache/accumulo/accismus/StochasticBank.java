@@ -16,6 +16,10 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +29,8 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.accumulo.accismus.format.AccismusFormatter;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.util.Stat;
@@ -51,7 +57,9 @@ public class StochasticBank extends TestBase {
     
     populate(config, numAccounts);
     
-    List<Thread> threads = startTransfers(config, numAccounts, 20, runFlag);
+    // TODO do not always want FaultyConfig
+    // TODO make up vary between .10 and .90
+    List<Thread> threads = startTransfers(new FaultyConfig(config, .50, .50), numAccounts, 20, runFlag);
     
     runVerifier(config, numAccounts, 100);
     
@@ -75,7 +83,7 @@ public class StochasticBank extends TestBase {
       tx.set(fmtAcct(i), balanceCol, "1000");
     }
     
-    tx.commit();
+    Assert.assertTrue(tx.commit());
   }
   
   private static String fmtAcct(int i) {
@@ -139,6 +147,7 @@ public class StochasticBank extends TestBase {
       txCount.incrementAndGet();
     } catch (Exception e) {
       e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -177,9 +186,7 @@ public class StochasticBank extends TestBase {
 
         if (stat.getSum() != numAccounts * 1000) {
           if (lastTx != null)
-            printDiffs(lastTx, tx);
-
-          return;
+            printDiffs(config, lastTx, tx);
         }
         
         Assert.assertEquals(numAccounts * 1000, stat.getSum());
@@ -191,7 +198,7 @@ public class StochasticBank extends TestBase {
     }
   }
   
-  private static void printDiffs(Transaction lastTx, Transaction tx) throws Exception {
+  private static void printDiffs(Configuration config, Transaction lastTx, Transaction tx) throws Exception {
     Map<String,String> bals1 = toMap(lastTx);
     Map<String,String> bals2 = toMap(tx);
     
@@ -215,7 +222,25 @@ public class StochasticBank extends TestBase {
       }
     }
 
+    System.out.println("start times : " + lastTx.getStartTs() + " " + tx.getStartTs());
     System.out.printf("sum1 : %,d  sum2 : %,d  diff : %,d\n", sum1, sum2, sum2 - sum1);
+    
+    File tmpFile = File.createTempFile("sb_dump", ".txt");
+    Writer fw = new BufferedWriter(new FileWriter(tmpFile));
+    
+    Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
+    AccismusFormatter af = new AccismusFormatter();
+    af.initialize(scanner, true);
+    
+    while (af.hasNext()) {
+      fw.append(af.next());
+      fw.append("\n");
+    }
+    
+    fw.close();
+    
+    System.out.println("Dumped table : " + tmpFile);
+
   }
   
   private static HashMap<String,String> toMap(Transaction tx) throws Exception {
