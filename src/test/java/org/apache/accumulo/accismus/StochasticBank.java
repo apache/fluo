@@ -57,9 +57,12 @@ public class StochasticBank extends TestBase {
     
     populate(config, numAccounts);
     
-    // TODO do not always want FaultyConfig
-    // TODO make up vary between .10 and .90
-    List<Thread> threads = startTransfers(new FaultyConfig(config, .50, .50), numAccounts, 20, runFlag);
+    Random rand = new Random();
+    Configuration tconfig = config;
+    if (rand.nextBoolean()) {
+      tconfig = new FaultyConfig(config, (rand.nextDouble() * .4) + .1, .50);
+    }
+    List<Thread> threads = startTransfers(tconfig, numAccounts, 20, runFlag);
     
     runVerifier(config, numAccounts, 100);
     
