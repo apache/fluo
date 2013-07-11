@@ -41,7 +41,7 @@ import org.junit.Test;
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
  * the average should not vary.
  */
-public class StochasticBank extends TestBase {
+public class StochasticBankTest extends TestBase {
   
 
   private static AtomicInteger txCount = new AtomicInteger();
