@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,6 +35,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.util.Stat;
+import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,9 +52,17 @@ public class StochasticBankTest extends TestBase {
   public void testConcurrency() throws Exception {
 
     conn.tableOperations().setProperty(table, Property.TABLE_MAJC_RATIO.getKey(), "1");
+    conn.tableOperations().setProperty(table, Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     
     int numAccounts = 5000;
     
+    TreeSet<Text> splits = new TreeSet<Text>();
+    splits.add(new Text(fmtAcct(numAccounts / 4)));
+    splits.add(new Text(fmtAcct(numAccounts / 2)));
+    splits.add(new Text(fmtAcct(3 * numAccounts / 4)));
+
+    conn.tableOperations().addSplits(table, splits);
+
     AtomicBoolean runFlag = new AtomicBoolean(true);
     
     populate(config, numAccounts);

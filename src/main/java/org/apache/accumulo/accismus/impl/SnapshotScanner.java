@@ -28,12 +28,16 @@ import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
+import org.apache.accumulo.core.client.ConditionalWriter;
+import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Condition;
+import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -42,10 +46,6 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.commons.lang.mutable.MutableLong;
 
-import core.client.ConditionalWriter;
-import core.client.ConditionalWriter.Status;
-import core.data.Condition;
-import core.data.ConditionalMutation;
 
 /**
  * 
@@ -269,17 +269,23 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     // TODO avoid conversions to arrays
     // TODO review use of PrewriteIter here
-    ConditionalMutation delLockMutation = new ConditionalMutation(prow.toArray());
+
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     // TODO cache col vis?
-    delLockMutation.addCondition(new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(val));
+    ConditionalMutation delLockMutation = new ConditionalMutation(prow, new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(val));
     
     // TODO sanity check on lockTs vs startTs
     
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
-    ConditionalWriter cw = aconfig.createConditionalWriter();
+    ConditionalWriter cw;
+    try {
+      cw = aconfig.createConditionalWriter();
+    } catch (TableNotFoundException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
     
     // TODO handle other conditional writer cases
     return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;

@@ -20,22 +20,22 @@ import org.apache.accumulo.accismus.impl.TxStatus;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
+import org.apache.accumulo.core.client.ConditionalWriter;
+import org.apache.accumulo.core.client.ConditionalWriter.Result;
+import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Condition;
+import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.commons.lang.mutable.MutableLong;
 
-import core.client.ConditionalWriter;
-import core.client.ConditionalWriter.Result;
-import core.client.ConditionalWriter.Status;
-import core.data.Condition;
-import core.data.ConditionalMutation;
 
 public class Transaction {
   
@@ -199,21 +199,36 @@ public class Transaction {
     set(row, col, DELETE);
   }
   
-  private void prewrite(ConditionalMutation cm, Column col, ByteSequence val, ByteSequence primaryRow, Column primaryColumn, boolean isTriggerRow) {
+  private ConditionalMutation prewrite(ConditionalMutation cm, ByteSequence row, Column col, ByteSequence val, ByteSequence primaryRow, Column primaryColumn,
+      boolean isTriggerRow) {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = isTriggerRow && col.equals(triggerColumn);
     if (isTrigger)
       PrewriteIterator.enableAckCheck(iterConf);
     
-
-    cm.addCondition(new Condition(col.getFamily(), col.getQualifier()).setIterators(iterConf).setVisibility(col.getVisibility()));
+    Condition cond = new Condition(col.getFamily(), col.getQualifier()).setIterators(iterConf).setVisibility(col.getVisibility());
+    
+    if (cm == null)
+      cm = new ConditionalMutation(row, cond);
+    else
+      cm.addCondition(cond);
     
     if (val != null && val != DELETE)
       cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DATA_PREFIX | startTs, val.toArray());
     
     cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs,
         LockValue.encode(primaryRow, primaryColumn, val != null, isTrigger ? observer : EMPTY_BS));
+    
+    return cm;
+  }
+  
+  private ConditionalMutation prewrite(ByteSequence row, Column col, ByteSequence val, ByteSequence primaryRow, Column primaryColumn, boolean isTriggerRow) {
+    return prewrite(null, row, col, val, primaryRow, primaryColumn, isTriggerRow);
+  }
+
+  private void prewrite(ConditionalMutation cm, Column col, ByteSequence val, ByteSequence primaryRow, Column primaryColumn, boolean isTriggerRow) {
+    prewrite(cm, null, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
 
 
@@ -231,7 +246,7 @@ public class Transaction {
 
   }
 
-  CommitData preCommit() {
+  CommitData preCommit() throws TableNotFoundException {
     if (commitStarted)
       throw new IllegalStateException();
 
@@ -251,8 +266,7 @@ public class Transaction {
       updates.remove(cd.prow);
     
     // try to lock primary column
-    ConditionalMutation pcm = new ConditionalMutation(cd.prow.toArray());
-    prewrite(pcm, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
+    ConditionalMutation pcm = prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
     
     Status mutationStatus = cd.cw.write(pcm).getStatus();
     
@@ -286,11 +300,14 @@ public class Transaction {
     ArrayList<ConditionalMutation> mutations = new ArrayList<ConditionalMutation>();
     
     for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
-      ConditionalMutation cm = new ConditionalMutation(rowUpdates.getKey().toArray());
+      ConditionalMutation cm = null;
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       
       for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
-        prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
+        if (cm == null)
+          cm = prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
+        else
+          prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
       }
       
       mutations.add(cm);
@@ -312,12 +329,12 @@ public class Transaction {
 
   boolean commitPrimaryColumn(CommitData cd, long commitTs) {
     // try to delete lock and add write for primary column
-    ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow.toArray());
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
-    delLockMutation.addCondition(new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
-        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS)));
+    Condition lockCheck = new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
+        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS));
+    ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow, lockCheck);
     ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
     
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();

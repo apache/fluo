@@ -16,8 +16,10 @@
  */
 package org.apache.accumulo.accismus;
 
-import core.client.ConditionalWriter;
-import core.client.FaultyConditionalWriter;
+import org.apache.accumulo.core.client.ConditionalWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.test.FaultyConditionalWriter;
 
 /**
  * 
@@ -33,7 +35,12 @@ public class FaultyConfig extends Configuration {
     this.wp = wp;
   }
   
-  public ConditionalWriter createConditionalWriter() {
+  @Override
+  public Connector getConnector() {
+    return super.getConnector();
+  }
+
+  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
     return new FaultyConditionalWriter(super.createConditionalWriter(), up, wp);
   }
 }

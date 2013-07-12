@@ -22,14 +22,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
-import core.client.ConditionalWriter;
-import core.client.impl.ConditionalWriterImpl;
 
 /**
  * 
@@ -132,9 +132,8 @@ public class Configuration {
     return conn;
   }
   
-  // TODO use connector when its in Accumulo
-  public ConditionalWriter createConditionalWriter() {
-    return new ConditionalWriterImpl(getTable(), getConnector(), getAuthorizations());
+  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
+    return conn.createConditionalWriter(table, auths);
   }
 
   public String getZookeeperRoot() {
