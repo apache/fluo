@@ -2,7 +2,10 @@ Accismus
 ========
 
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
-[ACCUMULO-1000][3] [branch][4].
+[ACCUMULO-1000][3] [branch][4].  Theoretically this prototype is to a point
+where it could run in a distributed manner.  But this has not been tested.  The
+pieces are in place, CAS is done on the tablet server and the Oracle is a
+service.
 
 Building Accumulo 1.6.0 with CAS
 --------------------------------
