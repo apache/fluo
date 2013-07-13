@@ -43,7 +43,7 @@ Experimenting with Accismus
 ---------------------------
 
 An easy way to experiment with Accismus is to edit a unit test and run it.  The
-WorkerTest is probably a good place to start because it uses an Observer to
+[WorkerTest][6] is probably a good place to start because it uses an Observer to
 build a secondary index.  This can be done using the following commands.  
 
 ```
@@ -56,5 +56,5 @@ mvn test -Dtest=org.apache.accumulo.accismus.WorkerTest
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [4]: https://svn.apache.org/repos/asf/accumulo/branches/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
-
+[6]: src/test/java/org/apache/accumulo/accismus/WorkerTest.java
 
