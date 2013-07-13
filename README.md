@@ -5,7 +5,8 @@ A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
 [ACCUMULO-1000][3] [branch][4].  Theoretically this prototype is to a point
 where it could run in a distributed manner.  But this has not been tested.  The
 pieces are in place, CAS is done on the tablet server and the Oracle is a
-service.
+service.  In addition to [ACCUMULO-1000][3], this prototype will also depend on
+[ACCUMULO-112][5] inorder to effeciently find notifications.
 
 Building Accumulo 1.6.0 with CAS
 --------------------------------
@@ -51,5 +52,6 @@ mvn test -Dtest=org.apache.accumulo.accismus.WorkerTest
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [4]: https://svn.apache.org/repos/asf/accumulo/branches/ACCUMULO-1000
+[5]: https://issues.apache.org/jira/browse/ACCUMULO-112
 
 
