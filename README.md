@@ -7,7 +7,7 @@ A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
 Building Accumulo 1.6.0 with CAS
 --------------------------------
 
-Before you can build Accissmus, you will need to build Accumulo with CAS.  This
+Before you can build Accismus, you will need to build Accumulo with CAS.  This
 can be accomplished with the following steps.
 
 ```
