@@ -17,7 +17,8 @@ mvn clean compile install -DskipTests
 ```
 
 Running these commands will leave 1.6.0-SNAPSHOT jars in your local maven repo.
-You may want to delete these later.
+You may want to delete these later.  The skipTest option was suggested because 
+the integration test are currently in a state of flux in 1.6.0-SNAPSHOT.
 
 
 Building Accismus
