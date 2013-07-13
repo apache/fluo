@@ -12,7 +12,7 @@ can be accomplished with the following steps.
 
 ```
 svn checkout  https://svn.apache.org/repos/asf/accumulo/branches/ACCUMULO-1000
-cd ACCUMULO-1000/
+cd ACCUMULO-1000
 mvn clean compile install -DskipTests
 ```
 
