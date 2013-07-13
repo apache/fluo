@@ -8,6 +8,9 @@ pieces are in place, CAS is done on the tablet server and the Oracle is a
 service.  In addition to [ACCUMULO-1000][3], this prototype will also depend on
 [ACCUMULO-112][5] inorder to effeciently find notifications.
 
+There is a lot that needs to be done.  If you are interested in contributing
+send me an email or check out the issues.
+
 Building Accumulo 1.6.0 with CAS
 --------------------------------
 
