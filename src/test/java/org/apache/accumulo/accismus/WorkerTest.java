@@ -27,7 +27,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * 
+ * A simple test that added links between nodes in a graph.  There is an observer
+ * that updates an index of node degree.
  */
 public class WorkerTest extends TestBase {
   
@@ -78,7 +79,8 @@ public class WorkerTest extends TestBase {
   public void test1() throws Exception {
     
     Transaction tx1 = new Transaction(config);
-    
+
+    //add a link between two nodes in a graph    
     tx1.set("N0003", new Column("link", "N0040"), "");
     tx1.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     
@@ -86,6 +88,7 @@ public class WorkerTest extends TestBase {
     
     Transaction tx2 = new Transaction(config);
     
+    //add a link between two nodes in a graph    
     tx2.set("N0003", new Column("link", "N0020"), "");
     tx2.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     
@@ -95,17 +98,21 @@ public class WorkerTest extends TestBase {
     observers.put(new Column("attr", "lastupdate"), new DegreeIndexer());
     
     runWorker();
-    
+   
+    //verify observer updated degree index 
     Transaction tx3 = new Transaction(config);
     Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")).toString());
     
+    //add a link between two nodes in a graph    
     tx3.set("N0003", new Column("link", "N0010"), "");
     tx3.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     Assert.assertTrue(tx3.commit());
     
     runWorker();
     
+    //verify observer updated degree index.  Should have deleted old index entry 
+    //and added a new one 
     Transaction tx4 = new Transaction(config);
     Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
