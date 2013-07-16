@@ -67,8 +67,8 @@ public class FailureTest extends TestBase {
       tx2.set(r + "", col2, "1" + r + "1");
     }
     
-    CommitData cd = tx2.preCommit();
-    Assert.assertNotNull(cd);
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
     
     Transaction tx3 = new Transaction(config);
     for (int r = 0; r < 10; r++) {
@@ -110,8 +110,8 @@ public class FailureTest extends TestBase {
       tx2.set(r + "", col2, "1" + r + "1");
     }
     
-    CommitData cd = tx2.preCommit();
-    Assert.assertNotNull(cd);
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
@@ -152,8 +152,8 @@ public class FailureTest extends TestBase {
     tx2.set("joe", balanceCol, "" + (bal2 + 7));
     
     // get locks
-    CommitData cd = tx2.preCommit();
-    Assert.assertNotNull(cd);
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
     
     // test rolling back primary and non-primary columns
 
@@ -208,8 +208,8 @@ public class FailureTest extends TestBase {
     tx2.set("joe", balanceCol, "" + (bal2 + 7));
     
     // get locks
-    CommitData cd = tx2.preCommit();
-    Assert.assertNotNull(cd);
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 

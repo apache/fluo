@@ -246,17 +246,12 @@ public class Transaction {
 
   }
 
-  CommitData preCommit() throws TableNotFoundException {
+  boolean preCommit(CommitData cd) throws TableNotFoundException {
     if (commitStarted)
       throw new IllegalStateException();
 
     commitStarted = true;
 
-    CommitData cd = new CommitData();
-    
-    // TODO use shared writer
-    cd.cw = config.createConditionalWriter();
-    
     // get a primary column
     cd.prow = updates.keySet().iterator().next();
     Map<Column,ByteSequence> colSet = updates.get(cd.prow);
@@ -293,7 +288,7 @@ public class Transaction {
     }
     
     if (mutationStatus != Status.ACCEPTED) {
-      return null;
+      return false;
     }
     
     // try to lock other columns
@@ -324,7 +319,7 @@ public class Transaction {
       else
         cd.rejectedCount++;
     }
-    return cd;
+    return true;
   }
 
   boolean commitPrimaryColumn(CommitData cd, long commitTs) {
@@ -426,26 +421,38 @@ public class Transaction {
     return true;
   }
 
+  CommitData createCommitData() throws TableNotFoundException {
+    CommitData cd = new CommitData();
+    // TODO use shared writer
+    cd.cw = config.createConditionalWriter();
+    return cd;
+  }
+
   public boolean commit() throws Exception {
     // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
     // TODO throw exception instead of return boolean
-    CommitData cd = preCommit();
+    // TODO synchronize or detect concurrent use
+    CommitData cd = createCommitData();
     
-    if (cd == null)
-      return false;
-    if (cd.rejectedCount == 0) {
-      long commitTs = OracleClient.getInstance(config).getTimestamp();
-      if (commitPrimaryColumn(cd, commitTs)) {
-        return finishCommit(cd, commitTs);
-      } else {
-        // TODO write TX_DONE
+    try {
+      if (!preCommit(cd))
         return false;
+      if (cd.rejectedCount == 0) {
+        long commitTs = OracleClient.getInstance(config).getTimestamp();
+        if (commitPrimaryColumn(cd, commitTs)) {
+          return finishCommit(cd, commitTs);
+        } else {
+          // TODO write TX_DONE
+          return false;
+        }
+      } else {
+        return rollback(cd);
       }
-    } else {
-      return rollback(cd);
+    } finally {
+      cd.cw.close();
     }
   }
-  
+
   long getStartTs() {
     return startTs;
   }

@@ -279,16 +279,21 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
-    ConditionalWriter cw;
+    ConditionalWriter cw = null;
     try {
       cw = aconfig.createConditionalWriter();
+      
+      // TODO handle other conditional writer cases
+      return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
     } catch (TableNotFoundException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
+    } finally {
+      if (cw != null)
+        cw.close();
     }
     
-    // TODO handle other conditional writer cases
-    return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
+
   }
 
   public void remove() {
