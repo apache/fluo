@@ -18,8 +18,8 @@ Before you can build Accismus, you will need to build Accumulo with CAS.  This
 can be accomplished with the following steps.
 
 ```
-svn checkout  https://svn.apache.org/repos/asf/accumulo/branches/ACCUMULO-1000
-cd ACCUMULO-1000
+git clone -b ACCUMULO-1000 https://github.com/keith-turner/accumulo.git
+cd accumulo
 mvn clean compile install -DskipTests
 ```
 
