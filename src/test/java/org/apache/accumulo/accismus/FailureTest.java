@@ -78,6 +78,7 @@ public class FailureTest extends TestBase {
     
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
+    cd.cw.close();
     
     Transaction tx4 = new Transaction(config);
     for (int r = 0; r < 10; r++) {
@@ -122,6 +123,7 @@ public class FailureTest extends TestBase {
     }
     
     tx2.finishCommit(cd, commitTs);
+    cd.cw.close();
     
     Transaction tx4 = new Transaction(config);
     for (int r = 0; r < 10; r++) {
@@ -176,6 +178,8 @@ public class FailureTest extends TestBase {
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
+    cd.cw.close();
+
     transfer(config, "bob", "joe", 2);
     bobBal -= 2;
     joeBal += 2;
@@ -231,6 +235,7 @@ public class FailureTest extends TestBase {
     Assert.assertEquals("62", tx4.get("jill", balanceCol).toString());
 
     tx2.finishCommit(cd, commitTs);
+    cd.cw.close();
     
     Transaction tx5 = new Transaction(config);
     

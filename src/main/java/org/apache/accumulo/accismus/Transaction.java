@@ -235,7 +235,7 @@ public class Transaction {
 
 
   static class CommitData {
-    private ConditionalWriter cw;
+    ConditionalWriter cw;
     private ByteSequence prow;
     private Column pcol;
     private ByteSequence pval;
