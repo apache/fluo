@@ -26,6 +26,8 @@ import org.apache.accumulo.accismus.ScannerConfiguration;
 import org.apache.accumulo.accismus.StaleScanException;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -170,7 +172,13 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
     if (isPrimary) {
       if (abort) {
-        rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get());
+        try {
+          rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get());
+        } catch (AccumuloException e) {
+          throw new RuntimeException(e);
+        } catch (AccumuloSecurityException e) {
+          throw new RuntimeException(e);
+        }
         resolvedLock = true;
       }
     } else {
@@ -263,7 +271,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
   }
 
-  boolean rollbackPrimary(ByteSequence prow, ByteSequence pfam, ByteSequence pqual, ByteSequence pvis, long lockTs, byte[] val) {
+  boolean rollbackPrimary(ByteSequence prow, ByteSequence pfam, ByteSequence pqual, ByteSequence pvis, long lockTs, byte[] val) throws AccumuloException,
+      AccumuloSecurityException {
     // TODO use cached CV
     ColumnVisibility cv = new ColumnVisibility(pvis.toArray());
     

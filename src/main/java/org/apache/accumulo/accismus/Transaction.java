@@ -18,6 +18,8 @@ import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.accismus.impl.SnapshotScanner;
 import org.apache.accumulo.accismus.impl.TxStatus;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -246,7 +248,7 @@ public class Transaction {
 
   }
 
-  boolean preCommit(CommitData cd) throws TableNotFoundException {
+  boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
     if (commitStarted)
       throw new IllegalStateException();
 
@@ -322,7 +324,7 @@ public class Transaction {
     return true;
   }
 
-  boolean commitPrimaryColumn(CommitData cd, long commitTs) {
+  boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException, AccumuloSecurityException {
     // try to delete lock and add write for primary column
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
