@@ -281,6 +281,8 @@ public class Transaction {
           break;
         case UNKNOWN:
           mutationStatus = cd.cw.write(pcm).getStatus();
+          // TODO rejected here could mean that previously submitted unknown mutation went through
+          // TODO handle case were data other tx has lock
           break;
         case COMMITTED:
         default:
@@ -349,6 +351,14 @@ public class Transaction {
           break;
         case LOCKED:
           mutationStatus = cd.cw.write(delLockMutation).getStatus();
+          
+          // TODO if Accumulo can garuntee that unknown mutation will not go through, then this is not needed
+          if (mutationStatus == Status.REJECTED) {
+            // its possible that it was rejected because a previously submitted mutation with status of UNKNOWN went through
+            // so set the status to unknown in order to recheck
+            mutationStatus = Status.UNKNOWN;
+          }
+
           break;
         default:
           mutationStatus = Status.REJECTED;

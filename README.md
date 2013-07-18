@@ -54,7 +54,7 @@ mvn test -Dtest=org.apache.accumulo.accismus.WorkerTest
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
-[4]: https://svn.apache.org/repos/asf/accumulo/branches/ACCUMULO-1000
+[4]: https://github.com/keith-turner/accumulo/tree/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
 [6]: src/test/java/org/apache/accumulo/accismus/WorkerTest.java
 
