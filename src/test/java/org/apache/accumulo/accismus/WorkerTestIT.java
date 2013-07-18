@@ -30,7 +30,7 @@ import org.junit.Test;
  * A simple test that added links between nodes in a graph.  There is an observer
  * that updates an index of node degree.
  */
-public class WorkerTest extends TestBase {
+public class WorkerTestIT extends Base {
   
   private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
 

@@ -9,7 +9,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class AccismusTest extends TestBase {
+public class AccismusTestIT extends Base {
   
   @Test
   public void testOverlap1() throws Exception {

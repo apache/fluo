@@ -16,6 +16,7 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,33 +24,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.OracleServer;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.minicluster.MiniAccumuloCluster;
-import org.apache.accumulo.minicluster.MiniAccumuloConfig;
+import org.apache.accumulo.minicluster.MiniAccumuloInstance;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * 
  */
-public class TestBase {
-  protected static String secret = "superSecret";
-  protected static TemporaryFolder folder = new TemporaryFolder();
-  protected static MiniAccumuloCluster cluster;
+public class Base {
+  protected static String secret = "ITSecret";
+  
   protected static ZooKeeper zk;
   
   protected static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
   
   protected static AtomicInteger next = new AtomicInteger();
+  
+  private static Instance instance;
   
   protected Configuration config;
   protected Connector conn;
@@ -73,19 +72,16 @@ public class TestBase {
   }
 
   @BeforeClass
-  public static void setUpBeforeClass() throws Exception {
-    folder.create();
-    MiniAccumuloConfig cfg = new MiniAccumuloConfig(folder.newFolder("miniAccumulo"), secret);
-    cluster = new MiniAccumuloCluster(cfg);
-    cluster.start();
-    
-    zk = new ZooKeeper(cluster.getZooKeepers(), 30000, null);
+  public static void setUp() throws Exception {
+    String instanceName = "plugin-it-instance";
+    instance = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
+    zk = new ZooKeeper(instance.getZooKeepers(), 30000, null);
   }
-  
+
   @Before
   public void setup() throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(cluster.getInstanceName(), cluster.getZooKeepers());
-    conn = zki.getConnector("root", new PasswordToken("superSecret"));
+    
+    conn = instance.getConnector("root", new PasswordToken(secret));
     
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
@@ -101,11 +97,5 @@ public class TestBase {
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);
     oserver.stop();
-  }
-
-  @AfterClass
-  public static void tearDownAfterClass() throws Exception {
-    cluster.stop();
-    folder.delete();
   }
 }

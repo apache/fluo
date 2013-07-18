@@ -33,7 +33,7 @@ import org.junit.Test;
 /**
  * 
  */
-public class BenchTest extends TestBase {
+public class BenchTestIT extends Base {
   
   protected Map<Column,Class<? extends Observer>> getObservers() {
     Map<Column,Class<? extends Observer>> colObservers = new HashMap<Column,Class<? extends Observer>>();

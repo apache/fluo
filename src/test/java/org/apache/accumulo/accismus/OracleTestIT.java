@@ -31,7 +31,7 @@ import org.junit.Test;
 /**
  * 
  */
-public class OracleTest extends TestBase {
+public class OracleTestIT extends Base {
   
   @Test
   public void testRestart() throws Exception {

@@ -26,7 +26,7 @@ import org.junit.Test;
 /**
  * 
  */
-public class FailureTest extends TestBase {
+public class FailureTestIT extends Base {
   
   
   Column balanceCol = new Column("account", "balance");
