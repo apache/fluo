@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.accumulo.core.client.ConditionalWriter;
+import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
@@ -133,7 +134,7 @@ public class Configuration {
   }
   
   public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return conn.createConditionalWriter(table, auths);
+    return conn.createConditionalWriter(table, new ConditionalWriterConfig().setAuthorizations(auths));
   }
 
   public String getZookeeperRoot() {
