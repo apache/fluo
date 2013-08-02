@@ -34,9 +34,9 @@ public class WorkerTestIT extends Base {
   
   private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
 
-  protected Map<Column,Class<? extends Observer>> getObservers() {
-    Map<Column,Class<? extends Observer>> observed = new HashMap<Column,Class<? extends Observer>>();
-    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class);
+  protected Map<Column,String> getObservers() {
+    Map<Column,String> observed = new HashMap<Column,String>();
+    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class.getName());
     return observed;
   }
 

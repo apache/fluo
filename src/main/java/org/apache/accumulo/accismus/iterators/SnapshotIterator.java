@@ -110,6 +110,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
+    // TODO could require client to send version as a sanity check
   }
   
   public boolean hasTop() {

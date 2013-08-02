@@ -44,7 +44,7 @@ import org.apache.zookeeper.ZooKeeper;
  */
 public class Operations {
   
-  public static void initialize(Connector conn, String zoodir, String table, Map<Column,Class<? extends Observer>> colObservers) throws Exception {
+  public static void initialize(Connector conn, String zoodir, String table, Map<Column,String> colObservers) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
     String accumuloInstanceName = conn.getInstance().getInstanceName();
@@ -68,13 +68,13 @@ public class Operations {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
     
-    Set<Entry<Column,Class<? extends Observer>>> es = colObservers.entrySet();
+    Set<Entry<Column,String>> es = colObservers.entrySet();
     
     WritableUtils.writeVInt(dos, colObservers.size());
     
-    for (Entry<Column,Class<? extends Observer>> entry : es) {
+    for (Entry<Column,String> entry : es) {
       entry.getKey().write(dos);
-      dos.writeUTF(entry.getValue().getName());
+      dos.writeUTF(entry.getValue());
     }
     
     dos.close();

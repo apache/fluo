@@ -44,7 +44,7 @@ public class Base {
   
   protected static ZooKeeper zk;
   
-  protected static final Map<Column,Class<? extends Observer>> EMPTY_OBSERVERS = new HashMap<Column,Class<? extends Observer>>();
+  protected static final Map<Column,String> EMPTY_OBSERVERS = new HashMap<Column,String>();
   
   protected static AtomicInteger next = new AtomicInteger();
   
@@ -56,7 +56,7 @@ public class Base {
   protected OracleServer oserver;
   protected String zkn;
 
-  protected Map<Column,Class<? extends Observer>> getObservers() {
+  protected Map<Column,String> getObservers() {
     return EMPTY_OBSERVERS;
   }
 

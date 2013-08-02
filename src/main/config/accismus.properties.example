@@ -1,0 +1,13 @@
+#Accismus properties
+
+#the zookeeper connect string
+accismus.zookeeper.connect=localhost
+accismus.zookeeper.timeout=30000
+
+#where Accismus will store its data in zookeeper
+accismus.zookeeper.root=/accismus
+
+#accumulo instance to connect to
+accismus.accumulo.instance=accumulo1
+accismus.accumulo.password=secret
+accismus.accumulo.user=accismus

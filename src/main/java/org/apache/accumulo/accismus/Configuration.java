@@ -18,14 +18,22 @@ package org.apache.accumulo.accismus;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
+import org.apache.accumulo.accismus.Constants.Props;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
@@ -72,6 +80,38 @@ public class Configuration {
     }
   }
   
+  /**
+   * @param props
+   */
+  public Configuration(Properties props) throws Exception {
+    this(new ZooKeeper(props.getProperty(Props.ZOOKEEPER_CONNECT), Integer.parseInt(props.getProperty(Props.ZOOKEEPER_TIMEOUT)), null), props
+        .getProperty(Props.ZOOKEEPER_ROOT), new ZooKeeperInstance(props.getProperty(Props.ACCUMULO_INSTANCE),
+        props.getProperty(Props.ZOOKEEPER_CONNECT)).getConnector(props.getProperty(Props.ACCUMULO_USER),
+        new PasswordToken(props.getProperty(Props.ACCUMULO_PASSWORD))));
+  }
+  
+  private static Properties load(File propFile) throws FileNotFoundException, IOException {
+    Properties props = new Properties(Configuration.getDefaultProperties());
+    props.load(new FileReader(propFile));
+    return props;
+  }
+  
+  public Configuration(File propFile) throws Exception {
+    this(load(propFile));
+  }
+
+  public static Properties getDefaultProperties() {
+    Properties props = new Properties();
+    props.put(Props.ZOOKEEPER_CONNECT, "localhost");
+    props.put(Props.ZOOKEEPER_ROOT, "/accismus");
+    props.put(Props.ZOOKEEPER_TIMEOUT, "30000");
+    props.put(Props.ACCUMULO_INSTANCE, "accumulo1");
+    props.put(Props.ACCUMULO_USER, "accismus");
+    props.put(Props.ACCUMULO_PASSWORD, "secret");
+    
+    return props;
+  }
+
   /**
    * read configuration from zookeeper
    * 
