@@ -2,6 +2,7 @@ package org.apache.accumulo.accismus;
 
 import java.util.HashSet;
 
+import org.apache.accumulo.accismus.exceptions.CommitException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
@@ -29,7 +30,7 @@ public class AccismusTestIT extends Base {
     tx.set("joe", balanceCol, "20");
     tx.set("jill", balanceCol, "60");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     tx = new Transaction(config);
     
@@ -51,14 +52,23 @@ public class AccismusTestIT extends Base {
     tx2.set("bob", balanceCol, (Long.parseLong(bal3) - 5) + "");
     tx2.set("jill", balanceCol, (Long.parseLong(bal4) + 5) + "");
     
-    Assert.assertTrue(tx2.commit());
-    Assert.assertFalse(tx.commit());
+    tx2.commit();
+    assertCommitFails(tx);
     
     Transaction tx3 = new Transaction(config);
     
     Assert.assertEquals("5", tx3.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
     Assert.assertEquals("65", tx3.get("jill", balanceCol).toString());
+  }
+  
+  private void assertCommitFails(Transaction tx) {
+    try {
+      tx.commit();
+      Assert.fail();
+    } catch (CommitException ce) {
+      
+    }
   }
   
   @Test
@@ -79,7 +89,7 @@ public class AccismusTestIT extends Base {
     tx.set("jill", balanceCol, "60");
     tx.set("jane", balanceCol, "0");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     Transaction tx1 = new Transaction(config);
     
@@ -90,7 +100,7 @@ public class AccismusTestIT extends Base {
     
     String bal1 = tx1.get("bob", balanceCol).toString();
     
-    Assert.assertTrue(tx2.commit());
+    tx2.commit();
     
     Transaction txd = new Transaction(config);
     txd.delete("jane", balanceCol);
@@ -108,7 +118,7 @@ public class AccismusTestIT extends Base {
     tx1.set("bob", balanceCol, (Long.parseLong(bal1) - 5) + "");
     tx1.set("joe", balanceCol, (Long.parseLong(bal2) + 5) + "");
     
-    Assert.assertFalse(tx1.commit());
+    assertCommitFails(tx1);
     
     Transaction tx3 = new Transaction(config);
     
@@ -141,7 +151,7 @@ public class AccismusTestIT extends Base {
     tx.set("joe", balanceCol, "20");
     tx.set("jill", balanceCol, "60");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     Transaction tx1 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx1.get("joe", balanceCol);
@@ -151,8 +161,8 @@ public class AccismusTestIT extends Base {
     tx2.get("joe", balanceCol);
     tx2.set("bob", balanceCol, "11");
     
-    Assert.assertTrue(tx1.commit());
-    Assert.assertFalse(tx2.commit());
+    tx1.commit();
+    assertCommitFails(tx2);
     
     Transaction tx3 = new Transaction(config);
     
@@ -163,7 +173,7 @@ public class AccismusTestIT extends Base {
     // update joe, so it can be acknowledged again
     tx3.set("joe", balanceCol, "21");
     
-    Assert.assertTrue(tx3.commit());
+    tx3.commit();
     
     Transaction tx4 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx4.get("joe", balanceCol);
@@ -174,8 +184,8 @@ public class AccismusTestIT extends Base {
     tx5.set("bob", balanceCol, "11");
     
     // make the 2nd transaction to start commit 1st
-    Assert.assertTrue(tx5.commit());
-    Assert.assertFalse(tx4.commit());
+    tx5.commit();
+    assertCommitFails(tx4);
     
     Transaction tx6 = new Transaction(config);
     
@@ -197,7 +207,7 @@ public class AccismusTestIT extends Base {
     tx.set("joe", balanceCol, "20");
     tx.set("jill", balanceCol, "60");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     Transaction tx2 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx2.get("joe", balanceCol);
@@ -208,8 +218,8 @@ public class AccismusTestIT extends Base {
     tx1.get("joe", balanceCol);
     tx1.set("jill", balanceCol, "61");
     
-    Assert.assertTrue(tx1.commit());
-    Assert.assertFalse(tx2.commit());
+    tx1.commit();
+    assertCommitFails(tx2);
     
     Transaction tx3 = new Transaction(config);
     
@@ -235,7 +245,7 @@ public class AccismusTestIT extends Base {
     tx.set("joe", balanceCol, "20");
     tx.set("jill", balanceCol, "60");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     Configuration config2 = new Configuration(zk, zkn, conn);
     config2.setAuthorizations(new Authorizations("B"));
@@ -269,7 +279,7 @@ public class AccismusTestIT extends Base {
     tx.set("d00002", new Column("outlink", "http://e.com"), "");
     tx.set("d00002", new Column("outlink", "http://c.com"), "");
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
     
     Transaction tx2 = new Transaction(config);
     

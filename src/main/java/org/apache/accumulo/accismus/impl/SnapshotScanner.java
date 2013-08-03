@@ -23,7 +23,7 @@ import java.util.Map.Entry;
 import org.apache.accumulo.accismus.Column;
 import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.ScannerConfiguration;
-import org.apache.accumulo.accismus.StaleScanException;
+import org.apache.accumulo.accismus.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.iterators.PrewriteIterator;
 import org.apache.accumulo.accismus.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.AccumuloException;

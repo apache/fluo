@@ -22,10 +22,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.accumulo.accismus.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.ByteUtil;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 
 /**
@@ -49,10 +55,18 @@ public class Worker {
     
   }
   
+  private Range pickRandomStartPoint(Scanner scanner) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+    // TODO use current firstRow + historical max chars seen in each position to compute a random row
+    return new Range();
+  }
+
   // TODO make package private
   public void processUpdates() throws Exception {
+
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+    
+    scanner.setRange(pickRandomStartPoint(scanner));
     
     for (Entry<Key,Value> entry : scanner) {
       List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());
@@ -69,15 +83,18 @@ public class Worker {
       
       Transaction tx = new Transaction(config, row, col);
       
-      try {
-        // TODO check ack to see if observer should run
-        observer.process(tx, row, col);
-        
-        // TODO retry if commit fails, unless it failed because of ack
-        tx.commit();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      while (true)
+        try {
+          // TODO check ack to see if observer should run
+          observer.process(tx, row, col);
+          
+          tx.commit();
+          break;
+        } catch (AlreadyAcknowledgedException aae) {
+          return;
+        } catch (CommitException e) {
+          // retry
+        }
     }
   }
 }

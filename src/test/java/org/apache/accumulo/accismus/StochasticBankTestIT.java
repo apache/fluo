@@ -30,6 +30,8 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.accumulo.accismus.exceptions.CommitException;
+import org.apache.accumulo.accismus.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
@@ -96,7 +98,7 @@ public class StochasticBankTestIT extends Base {
       tx.set(fmtAcct(i), balanceCol, "1000");
     }
     
-    Assert.assertTrue(tx.commit());
+    tx.commit();
   }
   
   private static String fmtAcct(int i) {
@@ -136,9 +138,7 @@ public class StochasticBankTestIT extends Base {
   private static void transfer(Configuration config, String from, String to, int amt) {
     try {
       
-      boolean commited = false;
-      
-      while (!commited) {
+      while (true) {
         try {
           Transaction tx = new Transaction(config);
           int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
@@ -151,8 +151,12 @@ public class StochasticBankTestIT extends Base {
             break;
           }
           
-          commited = tx.commit();
+          tx.commit();
+          break;
+
         } catch (StaleScanException sse) {
+          // retry
+        } catch (CommitException ce) {
           // retry
         }
       }

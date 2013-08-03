@@ -19,6 +19,7 @@ package org.apache.accumulo.accismus;
 import java.util.Random;
 
 import org.apache.accumulo.accismus.Transaction.CommitData;
+import org.apache.accumulo.accismus.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.impl.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;

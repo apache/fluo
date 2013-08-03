@@ -84,7 +84,7 @@ public class WorkerTestIT extends Base {
     tx1.set("N0003", new Column("link", "N0040"), "");
     tx1.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     
-    Assert.assertTrue(tx1.commit());
+    tx1.commit();
     
     Transaction tx2 = new Transaction(config);
     
@@ -92,10 +92,7 @@ public class WorkerTestIT extends Base {
     tx2.set("N0003", new Column("link", "N0020"), "");
     tx2.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
     
-    Assert.assertTrue(tx2.commit());
-    
-    Map<Column,Observer> observers = new HashMap<Column,Observer>();
-    observers.put(new Column("attr", "lastupdate"), new DegreeIndexer());
+    tx2.commit();
     
     runWorker();
    
@@ -107,7 +104,7 @@ public class WorkerTestIT extends Base {
     //add a link between two nodes in a graph    
     tx3.set("N0003", new Column("link", "N0010"), "");
     tx3.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
-    Assert.assertTrue(tx3.commit());
+    tx3.commit();
     
     runWorker();
     

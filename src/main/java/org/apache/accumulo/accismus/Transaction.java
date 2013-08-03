@@ -6,10 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.accumulo.accismus.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.ByteUtil;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
 import org.apache.accumulo.accismus.impl.DelLockValue;
@@ -31,10 +34,13 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.ColumnUpdate;
 import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.commons.lang.mutable.MutableLong;
 
@@ -248,7 +254,7 @@ public class Transaction {
 
   }
 
-  boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException, AlreadyAcknowledgedException {
     if (commitStarted)
       throw new IllegalStateException();
 
@@ -281,7 +287,6 @@ public class Transaction {
           break;
         case UNKNOWN:
           mutationStatus = cd.cw.write(pcm).getStatus();
-          // TODO rejected here could mean that previously submitted unknown mutation went through
           // TODO handle case were data other tx has lock
           break;
         case COMMITTED:
@@ -292,6 +297,9 @@ public class Transaction {
     }
     
     if (mutationStatus != Status.ACCEPTED) {
+      if (checkForAckCollision(pcm)) {
+        throw new AlreadyAcknowledgedException();
+      }
       return false;
     }
     
@@ -315,15 +323,58 @@ public class Transaction {
     cd.acceptedRows = new HashSet<ByteSequence>();
     cd.rejectedCount = 0;
     
+    boolean ackCollision = false;
+
     Iterator<Result> resultsIter = cd.cw.write(mutations.iterator());
     while (resultsIter.hasNext()) {
       Result result = resultsIter.next();
+      // TODO handle unknown?
       if (result.getStatus() == Status.ACCEPTED)
         cd.acceptedRows.add(new ArrayByteSequence(result.getMutation().getRow()));
-      else
+      else {
+        ackCollision |= checkForAckCollision(result.getMutation());
         cd.rejectedCount++;
+      }
     }
+    
+    if (cd.rejectedCount > 0) {
+      rollback(cd);
+      
+      if (ackCollision)
+        throw new AlreadyAcknowledgedException();
+      
+      return false;
+    }
+
     return true;
+  }
+
+  private boolean checkForAckCollision(ConditionalMutation cm) {
+    ArrayByteSequence row = new ArrayByteSequence(cm.getRow());
+    
+    if (row.equals(triggerRow)) {
+      List<ColumnUpdate> updates = cm.getUpdates();
+      
+      for (ColumnUpdate cu : updates) {
+        // TODO avoid create col vis object
+        Column col = new Column(cu.getColumnFamily(), cu.getColumnQualifier()).setVisibility(new ColumnVisibility(cu.getColumnVisibility()));
+        if (triggerColumn.equals(col)) {
+          
+          IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
+          PrewriteIterator.setSnaptime(iterConf, startTs);
+          PrewriteIterator.enableAckCheck(iterConf);
+          Key key = ColumnUtil.checkColumn(config, iterConf, row, col).getKey();
+          // TODO could key be null?
+          long colType = key.getTimestamp() & ColumnUtil.PREFIX_MASK;
+          
+          if (colType == ColumnUtil.ACK_PREFIX) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
   }
 
   boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException, AccumuloSecurityException {
@@ -351,14 +402,6 @@ public class Transaction {
           break;
         case LOCKED:
           mutationStatus = cd.cw.write(delLockMutation).getStatus();
-          
-          // TODO if Accumulo can garuntee that unknown mutation will not go through, then this is not needed
-          if (mutationStatus == Status.REJECTED) {
-            // its possible that it was rejected because a previously submitted mutation with status of UNKNOWN went through
-            // so set the status to unknown in order to recheck
-            mutationStatus = Status.UNKNOWN;
-          }
-
           break;
         default:
           mutationStatus = Status.REJECTED;
@@ -372,7 +415,7 @@ public class Transaction {
     return true;
   }
   
-  boolean rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
+  private void rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
     // roll back locks
     
     // TODO let rollback be done lazily? this makes GC more difficult
@@ -402,8 +445,6 @@ public class Transaction {
     bw.addMutation(m);
 
     bw.close();
-    
-    return false;
   }
   
   boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
@@ -440,26 +481,35 @@ public class Transaction {
     return cd;
   }
 
-  public boolean commit() throws Exception {
+  public void commit() throws CommitException {
     // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
     // TODO throw exception instead of return boolean
     // TODO synchronize or detect concurrent use
-    CommitData cd = createCommitData();
+    CommitData cd;
+    try {
+      cd = createCommitData();
+    } catch (TableNotFoundException e1) {
+      throw new RuntimeException(e1);
+    }
     
     try {
       if (!preCommit(cd))
-        return false;
-      if (cd.rejectedCount == 0) {
-        long commitTs = OracleClient.getInstance(config).getTimestamp();
-        if (commitPrimaryColumn(cd, commitTs)) {
-          return finishCommit(cd, commitTs);
-        } else {
-          // TODO write TX_DONE
-          return false;
-        }
+        throw new CommitException();
+      
+      long commitTs = OracleClient.getInstance(config).getTimestamp();
+      if (commitPrimaryColumn(cd, commitTs)) {
+        finishCommit(cd, commitTs);
       } else {
-        return rollback(cd);
+        // TODO write TX_DONE
+        throw new CommitException();
       }
+
+    } catch (CommitException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     } finally {
       cd.cw.close();
     }
