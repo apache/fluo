@@ -81,6 +81,8 @@ public class Operations {
     
     zk.create(zoodir + Constants.Zookeeper.OBSERVERS, baos.toByteArray(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     
+    zk.close();
+
     createTable(table, conn);
   }
 

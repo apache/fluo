@@ -29,6 +29,9 @@ import org.apache.hadoop.util.ToolRunner;
  * 
  */
 public class WorkerTool extends Configured implements Tool {
+  
+  private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
+
   public static void main(String[] args) throws Exception {
     ToolRunner.run(new WorkerTool(), args);
   }
@@ -46,10 +49,18 @@ public class WorkerTool extends Configured implements Tool {
     
     Worker worker = new Worker(config);
     
+    long sleepTime = 0;
+
     while (true) {
-      worker.processUpdates();
-      // TODO sleep more when less work was done in loop
-      UtilWaitThread.sleep(1000);
+      long numProcessed = worker.processUpdates();
+      if (numProcessed > 0)
+        sleepTime = 0;
+      else if (sleepTime == 0)
+        sleepTime = 100;
+      else if (sleepTime < MAX_SLEEP_TIME)
+        sleepTime = sleepTime + (long) (sleepTime * Math.random());
+      
+      UtilWaitThread.sleep(sleepTime);
     }
   }
 }

@@ -1,9 +1,12 @@
 #This properties files is used as input to the Accismus initialization program.
 #After initialization, all of this information is stored in zookeeper
 
+#should a previously initialized location be overwritten
+accismus.init.overwrite=false
+
 #table to initialize
-accismus.table=yourtable
+accismus.init.table=yourtable
 
 #observers
-accismus.observer.0=colfam1,colqual1,colvis1,com.foo.Observer1
-accismus.observer.1=colfam1,colqual1,colvis2,com.foo.Observer2
+accismus.init.observer.0=colfam1,colqual1,colvis1,com.foo.Observer1
+accismus.init.observer.1=colfam1,colqual1,colvis2,com.foo.Observer2

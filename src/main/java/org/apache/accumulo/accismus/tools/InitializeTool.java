@@ -31,9 +31,12 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.accumulo.core.zookeeper.ZooUtil;
+import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.zookeeper.ZooKeeper;
 
 /**
  * 
@@ -66,7 +69,7 @@ public class InitializeTool extends Configured implements Tool {
     Set<Entry<Object,Object>> entries = initProps.entrySet();
     for (Entry<Object,Object> entry : entries) {
       String key = (String) entry.getKey();
-      if (key.startsWith("accismus.observer.")) {
+      if (key.startsWith("accismus.init.observer.")) {
         String val = (String) entry.getValue();
         String[] fields = val.split(",");
         Column col = new Column(fields[0], fields[1]).setVisibility(new ColumnVisibility(fields[2]));
@@ -74,7 +77,13 @@ public class InitializeTool extends Configured implements Tool {
       }
     }
     
-    Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.table"), colObservers);
+    if (Boolean.getBoolean(initProps.getProperty("accismus.init.overwrite", "false"))) {
+      ZooKeeper zk = new ZooKeeper(props.getProperty(Props.ZOOKEEPER_CONNECT), 30000, null);
+      ZooUtil.recursiveDelete(zk, props.getProperty(Props.ZOOKEEPER_ROOT), NodeMissingPolicy.SKIP);
+      zk.close();
+    }
+
+    Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
 
     return 0;
   }

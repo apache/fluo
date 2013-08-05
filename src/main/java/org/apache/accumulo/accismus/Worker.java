@@ -16,10 +16,12 @@
  */
 package org.apache.accumulo.accismus;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.accumulo.accismus.exceptions.AlreadyAcknowledgedException;
@@ -33,6 +35,7 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.hadoop.io.Text;
 
 /**
  * A service that looks for updated columns to process
@@ -40,6 +43,7 @@ import org.apache.accumulo.core.data.Value;
 public class Worker {
   private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
   private Configuration config;
+  private Random rand = new Random();
   
   public Worker(Configuration config) throws Exception {
 
@@ -55,19 +59,36 @@ public class Worker {
     
   }
   
-  private Range pickRandomStartPoint(Scanner scanner) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
-    // TODO use current firstRow + historical max chars seen in each position to compute a random row
-    return new Range();
+  private Range pickRandomStartPoint() throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+    // TODO cache splits for a bit
+    // TODO some tablets may never have notifications... need to learn this
+    Collection<Text> splits = config.getConnector().tableOperations().listSplits(config.getTable());
+
+    int num = rand.nextInt(splits.size() + 1);
+    
+    if (num == splits.size())
+      return new Range();
+    
+    int count = 0;
+    for (Text split : splits) {
+      if (count == num)
+        return new Range(split, false, null, true);
+      count++;
+    }
+    
+    // should not get here
+    return null;
   }
 
   // TODO make package private
-  public void processUpdates() throws Exception {
-
+  public long processUpdates() throws Exception {
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     
-    scanner.setRange(pickRandomStartPoint(scanner));
+    scanner.setRange(pickRandomStartPoint());
     
+    long numProcessed = 0;
+
     for (Entry<Key,Value> entry : scanner) {
       List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());
       Column col = new Column(ca.get(0), ca.get(1));
@@ -85,16 +106,18 @@ public class Worker {
       
       while (true)
         try {
-          // TODO check ack to see if observer should run
           observer.process(tx, row, col);
-          
           tx.commit();
           break;
         } catch (AlreadyAcknowledgedException aae) {
-          return;
+          return numProcessed;
         } catch (CommitException e) {
           // retry
         }
+      
+      numProcessed++;
     }
+    
+    return numProcessed;
   }
 }
