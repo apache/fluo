@@ -17,6 +17,7 @@
 package org.apache.accumulo.accismus.tools;
 
 import java.io.File;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,7 +50,7 @@ public class WorkerTool extends Configured implements Tool {
     
     @Override
     public void run() {
-      
+      // TODO handle worker dying
       Worker worker = null;
       try {
         worker = new Worker(config);
@@ -63,7 +64,6 @@ public class WorkerTool extends Configured implements Tool {
         long numProcessed = 0;
         try {
           numProcessed = worker.processUpdates();
-          log.debug("Processed " + numProcessed);
         } catch (Exception e) {
           log.error("Error while processing updates", e);
         }
@@ -98,11 +98,19 @@ public class WorkerTool extends Configured implements Tool {
 
     Configuration config = new Configuration(new File(args[0]));
     
-    ExecutorService tp = Executors.newFixedThreadPool(10);
-    for (int i = 0; i < 10; i++) {
+    for (Entry<Object,Object> entry : config.getWorkerProperties().entrySet()) {
+      log.info("config " + entry.getKey() + " = " + entry.getValue());
+    }
+
+    int numThreads = Integer.parseInt(config.getWorkerProperties().getProperty("accismus.config.worker.numThreads"));
+    
+    ExecutorService tp = Executors.newFixedThreadPool(numThreads);
+    for (int i = 0; i < numThreads; i++) {
       tp.submit(new WorkerTask(config));
     }
     
+    // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.
+
     while (true)
       UtilWaitThread.sleep(1000);
   }

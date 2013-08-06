@@ -53,6 +53,7 @@ public class Configuration {
   private Connector conn;
   private String accumuloInstanceID;
   private String accismusInstanceID;
+  private Properties workerProps;
   
   public Configuration(Configuration config) throws Exception {
     this.table = config.table;
@@ -138,7 +139,10 @@ public class Configuration {
     }
 
     observers = Collections.unmodifiableMap(observers);
-
+    
+    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
+    this.workerProps = new Properties();
+    this.workerProps.load(bais);
   }
 
   public void setAuthorizations(Authorizations auths) {
@@ -179,5 +183,9 @@ public class Configuration {
 
   public String getZookeeperRoot() {
     return zoodir;
+  }
+  
+  public Properties getWorkerProperties() {
+    return workerProps;
   }
 }

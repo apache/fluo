@@ -32,6 +32,7 @@ public class Constants {
     public static final String ACCUMULO_INSTANCE_ID = CONFIG + "/accumulo.instance.id";
     public static final String ACCISMUS_INSTANCE_ID = CONFIG + "/accismus.instance.id";
     public static final String OBSERVERS = CONFIG + "/accismus.observers";
+    public static final String WORKER_CONFIG = CONFIG + "/accismus.workers";
     
     public static final String ORACLE = "/oracle";
     public static final String TIMESTAMP = ORACLE + "/timestamp";

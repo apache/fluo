@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,10 +36,14 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.zookeeper.ZooUtil;
+import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeExistsPolicy;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
@@ -47,6 +52,46 @@ import org.apache.zookeeper.ZooKeeper;
  */
 public class Operations {
   
+  private static boolean putData(ZooKeeper zk, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
+    if (policy == null)
+      policy = NodeExistsPolicy.FAIL;
+    
+    while (true) {
+      try {
+        zk.create(zPath, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        return true;
+      } catch (NodeExistsException nee) {
+        switch (policy) {
+          case SKIP:
+            return false;
+          case OVERWRITE:
+            try {
+              zk.setData(zPath, data, -1);
+              return true;
+            } catch (NoNodeException nne) {
+              // node delete between create call and set data, so try create call again
+              continue;
+            }
+          default:
+            throw nee;
+        }
+      }
+    }
+  }
+
+  public static void updateWorkerConfig(Connector conn, String zoodir, Properties workerConfig) throws Exception {
+    // TODO Auto-generated method stub
+    String zookeepers = conn.getInstance().getZooKeepers();
+    ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
+    
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    workerConfig.store(baos, "Java props");
+    
+    putData(zk, zoodir + Constants.Zookeeper.WORKER_CONFIG, baos.toByteArray(), NodeExistsPolicy.OVERWRITE);
+
+    zk.close();
+  }
+
   public static void updateObservers(Connector conn, String zoodir, Map<Column,String> colObservers) throws Exception {
     // TODO check that no workers are running... or make workers watch this znode
     String zookeepers = conn.getInstance().getZooKeepers();
@@ -55,12 +100,12 @@ public class Operations {
     ZooUtil.recursiveDelete(zk, zoodir + Constants.Zookeeper.OBSERVERS, NodeMissingPolicy.SKIP);
 
     byte[] serializedObservers = serializeObservers(colObservers);
-    zk.setData(zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, -1);
+    putData(zk, zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, NodeExistsPolicy.OVERWRITE);
     
     zk.close();
   }
 
-  public static void initialize(Connector conn, String zoodir, String table, Map<Column,String> colObservers) throws Exception {
+  public static void initialize(Connector conn, String zoodir, String table) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
     String accumuloInstanceName = conn.getInstance().getInstanceName();
@@ -81,10 +126,6 @@ public class Operations {
     zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'0'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-    byte[] serializedObservers = serializeObservers(colObservers);
-    
-    zk.create(zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    
     zk.close();
     
     createTable(table, conn);
@@ -123,5 +164,6 @@ public class Operations {
     
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), AccismusFormatter.class.getName());
   }
+
 
 }

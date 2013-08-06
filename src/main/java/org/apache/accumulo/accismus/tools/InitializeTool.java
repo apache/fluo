@@ -36,6 +36,7 @@ import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -66,14 +67,18 @@ public class InitializeTool extends Configured implements Tool {
     
     Map<Column,String> colObservers = new HashMap<Column,String>();
     
+    Properties workerConfig = new Properties();
+
     Set<Entry<Object,Object>> entries = initProps.entrySet();
     for (Entry<Object,Object> entry : entries) {
       String key = (String) entry.getKey();
-      if (key.startsWith("accismus.init.observer.")) {
+      if (key.startsWith("accismus.config.observer.")) {
         String val = (String) entry.getValue();
         String[] fields = val.split(",");
         Column col = new Column(fields[0], fields[1]).setVisibility(new ColumnVisibility(fields[2]));
         colObservers.put(col, fields[3]);
+      } else if (key.startsWith("accismus.config.worker")) {
+        workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
       }
     }
     
@@ -83,11 +88,11 @@ public class InitializeTool extends Configured implements Tool {
       zk.close();
     }
 
-    if (Boolean.valueOf(initProps.getProperty("accismus.init.observers.update", "false"))) {
-      Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
-    } else {
-      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
-    }
+    try {
+      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"));
+    } catch (NodeExistsException nee) {}
+    Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
+    Operations.updateWorkerConfig(conn, props.getProperty(Props.ZOOKEEPER_ROOT), workerConfig);
 
     return 0;
   }
