@@ -102,10 +102,9 @@ public class Worker {
       
       ByteSequence row = entry.getKey().getRowData();
       
-      Transaction tx = new Transaction(config, row, col);
-      
       while (true)
         try {
+          Transaction tx = new Transaction(config, row, col);
           observer.process(tx, row, col);
           tx.commit();
           break;
@@ -114,6 +113,7 @@ public class Worker {
         } catch (CommitException e) {
           // retry
         }
+      // TODO if duplicate set detected, see if its because already acknowledged
       
       numProcessed++;
     }

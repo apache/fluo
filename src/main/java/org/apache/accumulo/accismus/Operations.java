@@ -18,6 +18,7 @@ package org.apache.accumulo.accismus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -33,6 +34,8 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import org.apache.accumulo.core.zookeeper.ZooUtil;
+import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.CreateMode;
@@ -44,6 +47,19 @@ import org.apache.zookeeper.ZooKeeper;
  */
 public class Operations {
   
+  public static void updateObservers(Connector conn, String zoodir, Map<Column,String> colObservers) throws Exception {
+    // TODO check that no workers are running... or make workers watch this znode
+    String zookeepers = conn.getInstance().getZooKeepers();
+    ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
+    
+    ZooUtil.recursiveDelete(zk, zoodir + Constants.Zookeeper.OBSERVERS, NodeMissingPolicy.SKIP);
+
+    byte[] serializedObservers = serializeObservers(colObservers);
+    zk.setData(zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, -1);
+    
+    zk.close();
+  }
+
   public static void initialize(Connector conn, String zoodir, String table, Map<Column,String> colObservers) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
@@ -65,6 +81,18 @@ public class Operations {
     zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'0'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
+    byte[] serializedObservers = serializeObservers(colObservers);
+    
+    zk.create(zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    
+    zk.close();
+    
+    createTable(table, conn);
+  }
+  
+  private static byte[] serializeObservers(Map<Column,String> colObservers) throws IOException {
+    // TODO use a human readable serialized format like json
+
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
     
@@ -78,12 +106,8 @@ public class Operations {
     }
     
     dos.close();
-    
-    zk.create(zoodir + Constants.Zookeeper.OBSERVERS, baos.toByteArray(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    
-    zk.close();
-
-    createTable(table, conn);
+    byte[] serializedObservers = baos.toByteArray();
+    return serializedObservers;
   }
 
   private static void createTable(String tableName, Connector conn) throws Exception {
@@ -99,4 +123,5 @@ public class Operations {
     
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), AccismusFormatter.class.getName());
   }
+
 }

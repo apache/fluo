@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.impl.thrift.OracleService;
+import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -44,6 +45,8 @@ public class OracleServer implements OracleService.Iface {
   private THsHaServer server;
   private boolean started = false;
   
+  private static Logger log = Logger.getLogger(OracleServer.class);
+
   public OracleServer(Configuration config) throws Exception {
     this.config = config;
   }
@@ -65,7 +68,7 @@ public class OracleServer implements OracleService.Iface {
   }
   
   @Override
-  public long getTimestamps(String id, int num) throws TException {
+  public synchronized long getTimestamps(String id, int num) throws TException {
     
     if (!started)
       throw new IllegalStateException();
@@ -132,6 +135,8 @@ public class OracleServer implements OracleService.Iface {
         ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
     // TODO use zoolock or curator
+
+    log.info("Listening " + addr);
 
     started = true;
   }

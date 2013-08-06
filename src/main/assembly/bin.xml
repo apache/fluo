@@ -29,7 +29,7 @@
     </fileSet>
     <fileSet>
       <directory>src/main/config</directory>
-      <outputDirectory>conf</outputDirectory>
+      <outputDirectory>conf/examples</outputDirectory>
       <includes>
         <include>*</include>
       </includes>

@@ -19,6 +19,7 @@ package org.apache.accumulo.accismus.tools;
 import java.io.File;
 
 import org.apache.accumulo.accismus.Configuration;
+import org.apache.accumulo.accismus.impl.Logging;
 import org.apache.accumulo.accismus.impl.OracleServer;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
@@ -42,6 +43,8 @@ public class OracleTool extends Configured implements Tool {
       System.exit(-1);
     }
     
+    Logging.init("oracle");
+
     Configuration config = new Configuration(new File(args[0]));
     
     OracleServer server = new OracleServer(config);

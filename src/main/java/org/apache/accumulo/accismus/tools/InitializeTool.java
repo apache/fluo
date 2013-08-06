@@ -77,13 +77,17 @@ public class InitializeTool extends Configured implements Tool {
       }
     }
     
-    if (Boolean.getBoolean(initProps.getProperty("accismus.init.overwrite", "false"))) {
+    if (Boolean.valueOf(initProps.getProperty("accismus.init.zookeeper.clear", "false"))) {
       ZooKeeper zk = new ZooKeeper(props.getProperty(Props.ZOOKEEPER_CONNECT), 30000, null);
       ZooUtil.recursiveDelete(zk, props.getProperty(Props.ZOOKEEPER_ROOT), NodeMissingPolicy.SKIP);
       zk.close();
     }
 
-    Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
+    if (Boolean.valueOf(initProps.getProperty("accismus.init.observers.update", "false"))) {
+      Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
+    } else {
+      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
+    }
 
     return 0;
   }

@@ -17,20 +17,69 @@
 package org.apache.accumulo.accismus.tools;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.accumulo.accismus.Configuration;
 import org.apache.accumulo.accismus.Worker;
+import org.apache.accumulo.accismus.impl.Logging;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Logger;
 
 /**
  * 
  */
 public class WorkerTool extends Configured implements Tool {
   
+  // TODO max sleep time should probably be a function of the total number of threads in the system
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
+
+  private static Logger log = Logger.getLogger(WorkerTool.class);
+
+  private static class WorkerTask implements Runnable {
+    
+    private Configuration config;
+    
+    WorkerTask(Configuration config) {
+      this.config = config;
+    }
+    
+    @Override
+    public void run() {
+      
+      Worker worker = null;
+      try {
+        worker = new Worker(config);
+      } catch (Exception e1) {
+        throw new RuntimeException(e1);
+      }
+      
+      long sleepTime = 0;
+      
+      while (true) {
+        long numProcessed = 0;
+        try {
+          numProcessed = worker.processUpdates();
+          log.debug("Processed " + numProcessed);
+        } catch (Exception e) {
+          log.error("Error while processing updates", e);
+        }
+        
+        if (numProcessed > 0)
+          sleepTime = 0;
+        else if (sleepTime == 0)
+          sleepTime = 100;
+        else if (sleepTime < MAX_SLEEP_TIME)
+          sleepTime = sleepTime + (long) (sleepTime * Math.random());
+        
+        UtilWaitThread.sleep(sleepTime);
+      }
+    }
+    
+  }
 
   public static void main(String[] args) throws Exception {
     ToolRunner.run(new WorkerTool(), args);
@@ -45,22 +94,16 @@ public class WorkerTool extends Configured implements Tool {
       System.exit(-1);
     }
 
+    Logging.init("worker");
+
     Configuration config = new Configuration(new File(args[0]));
     
-    Worker worker = new Worker(config);
-    
-    long sleepTime = 0;
-
-    while (true) {
-      long numProcessed = worker.processUpdates();
-      if (numProcessed > 0)
-        sleepTime = 0;
-      else if (sleepTime == 0)
-        sleepTime = 100;
-      else if (sleepTime < MAX_SLEEP_TIME)
-        sleepTime = sleepTime + (long) (sleepTime * Math.random());
-      
-      UtilWaitThread.sleep(sleepTime);
+    ExecutorService tp = Executors.newFixedThreadPool(10);
+    for (int i = 0; i < 10; i++) {
+      tp.submit(new WorkerTask(config));
     }
+    
+    while (true)
+      UtilWaitThread.sleep(1000);
   }
 }

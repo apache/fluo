@@ -1,14 +1,46 @@
-#!/bin/sh
+#! /usr/bin/env bash
 
-if [ -z "$ACCUMULO_HOME" -o ! -d "$ACCUMULO_HOME" ]; then
-   echo "ACCUMULO_HOME is not set or is not a directory."
-   exit 1
-fi
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-if [ -z "$ACCISMUS_HOME" -o ! -d "$ACCISMUS_HOME" ]; then
-   echo "ACCISMUS_HOME is not set or is not a directory."
-   exit 1
-fi
+# Start: Resolve Script Directory
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+   bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+   SOURCE="$(readlink "$SOURCE")"
+   [[ $SOURCE != /* ]] && SOURCE="$bin/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+script=$( basename "$SOURCE" )
+# Stop: Resolve Script Directory
 
-$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar org.apache.accumulo.accismus.tools.OracleTool $ACCISMUS_HOME/conf/accismus.properties
+. "$bin"/config.sh
+
+LOGHOST=$(hostname)
+SERVICE="oracle"
+
+case "$1" in
+start)
+	$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar org.apache.accumulo.accismus.tools.OracleTool $ACCISMUS_HOME/conf/accismus.properties  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+
+	;;
+stop)
+	kill `jps -m | grep org.apache.accumulo.accismus.tools.OracleTool | cut -f 1 -d ' '`
+	;;
+*)
+	echo $"Usage: $0 start|stop"
+	exit 1
+esac
 

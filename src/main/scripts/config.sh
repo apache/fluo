@@ -26,7 +26,32 @@ bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 script=$( basename "$SOURCE" )
 # Stop: Resolve Script Directory
 
-. "$bin"/config.sh
+ACCISMUS_HOME=$( cd -P ${bin}/.. && pwd )
+export ACCISMUS_HOME
 
-$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar org.apache.accumulo.accismus.tools.InitializeTool $ACCISMUS_HOME/conf/accismus.properties $ACCISMUS_HOME/conf/initialization.properties
+ACCISMUS_CONF_DIR="${ACCISMUS_CONF_DIR:-$ACCISMUS_HOME/conf}"
+export ACCISMUS_CONF_DIR
+if [ -z "$ACCISMUS_CONF_DIR" -o ! -d "$ACCISMUS_CONF_DIR" ]
+then
+  echo "ACCISMUS_CONF_DIR=$ACCISMUS_CONF_DIR is not a valid directory.  Please make sure it exists"
+  exit 1
+fi
+
+if [ -f $ACCISMUS_CONF_DIR/accismus-env.sh ] ; then
+   . $ACCISMUS_CONF_DIR/accismus-env.sh
+fi
+
+if [ -z ${ACCISMUS_LOG_DIR} ]; then
+   ACCISMUS_LOG_DIR=$ACCISMUS_HOME/logs
+fi
+
+mkdir -p $ACCISMUS_LOG_DIR 2>/dev/null
+
+export ACCISMUS_LOG_DIR
+
+if [ -z "$ACCUMULO_HOME" -o ! -d "$ACCUMULO_HOME" ]; then
+   echo "ACCUMULO_HOME is not set or is not a directory."
+   exit 1
+fi
+
 
