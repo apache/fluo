@@ -19,6 +19,7 @@ package org.apache.accumulo.accismus;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.accismus.impl.ByteUtil;
@@ -86,7 +87,10 @@ public class Base {
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
     
-    Operations.initialize(conn, zkn, table, getObservers());
+    Operations.initialize(conn, zkn, table);
+    Operations.updateObservers(conn, zkn, getObservers());
+    Operations.updateWorkerConfig(conn, zkn, new Properties());
+
     config = new Configuration(zk, zkn, conn);
     
     oserver = new OracleServer(config);
