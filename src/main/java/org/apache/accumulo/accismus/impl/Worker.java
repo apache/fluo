@@ -26,8 +26,8 @@ import java.util.Set;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Configuration;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.Observer;
+import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -85,6 +85,8 @@ public class Worker {
 
   // TODO make package private
   public long processUpdates() throws Exception {
+    // TODO how does user set auths that workers are expected to use
+
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     

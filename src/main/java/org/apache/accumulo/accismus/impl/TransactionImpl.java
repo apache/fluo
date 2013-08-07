@@ -14,9 +14,9 @@ import java.util.Set;
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.ColumnIterator;
 import org.apache.accumulo.accismus.api.Configuration;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.iterators.PrewriteIterator;
@@ -71,7 +71,7 @@ public class TransactionImpl implements Transaction {
     }
   }
 
-  TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
+  TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn, Long startTs) throws Exception {
     this.config = config;
     this.table = config.getTable();
     this.conn = config.getConnector();
@@ -81,7 +81,13 @@ public class TransactionImpl implements Transaction {
     this.triggerRow = triggerRow;
     this.triggerColumn = tiggerColumn;
     
-    this.startTs = OracleClient.getInstance(config).getTimestamp();
+    if (startTs == null)
+      this.startTs = OracleClient.getInstance(config).getTimestamp();
+    else {
+      if (startTs < 0)
+        throw new IllegalArgumentException();
+      this.startTs = startTs;
+    }
     
     if (triggerRow != null) {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
@@ -91,10 +97,17 @@ public class TransactionImpl implements Transaction {
     }
   }
   
+  public TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
+    this(config, triggerRow, tiggerColumn, null);
+  }
+
   public TransactionImpl(Configuration config) throws Exception {
-    this(config, null, null);
+    this(config, null, null, null);
   }
   
+  public TransactionImpl(Configuration config, long startTs) throws Exception {
+    this(config, null, null, startTs);
+  }
 
   @Override
   public ByteSequence get(String row, Column column) throws Exception {
