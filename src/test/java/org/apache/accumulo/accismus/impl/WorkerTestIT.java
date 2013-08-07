@@ -14,11 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.ColumnIterator;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.Observer;
+import org.apache.accumulo.accismus.api.RowIterator;
+import org.apache.accumulo.accismus.api.ScannerConfiguration;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
@@ -78,7 +84,7 @@ public class WorkerTestIT extends Base {
   @Test
   public void test1() throws Exception {
     
-    Transaction tx1 = new Transaction(config);
+    Transaction tx1 = new TransactionImpl(config);
 
     //add a link between two nodes in a graph    
     tx1.set("N0003", new Column("link", "N0040"), "");
@@ -86,7 +92,7 @@ public class WorkerTestIT extends Base {
     
     tx1.commit();
     
-    Transaction tx2 = new Transaction(config);
+    Transaction tx2 = new TransactionImpl(config);
     
     //add a link between two nodes in a graph    
     tx2.set("N0003", new Column("link", "N0020"), "");
@@ -97,7 +103,7 @@ public class WorkerTestIT extends Base {
     runWorker();
    
     //verify observer updated degree index 
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")).toString());
     
@@ -110,7 +116,7 @@ public class WorkerTestIT extends Base {
     
     //verify observer updated degree index.  Should have deleted old index entry 
     //and added a new one 
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());

@@ -14,11 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.exceptions;
+package org.apache.accumulo.accismus.api;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
+
+import org.apache.accumulo.core.data.ByteSequence;
 
 /**
  * 
  */
-public class CommitException extends Exception {
+public interface RowIterator extends Iterator<Entry<ByteSequence,ColumnIterator>> {
   
 }

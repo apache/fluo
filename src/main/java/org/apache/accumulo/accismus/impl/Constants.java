@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -48,4 +48,8 @@ public class Constants {
     public static final String ZOOKEEPER_CONNECT = "accismus.zookeeper.connect";
   }
   
+  public static class WorkerProps {
+    public static final String WORKER_THREADS = "accismus.config.worker.numThreads";
+  }
+
 }

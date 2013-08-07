@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -27,7 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.accumulo.accismus.Constants.Props;
+import org.apache.accumulo.accismus.impl.Constants;
+import org.apache.accumulo.accismus.impl.Constants.Props;
+import org.apache.accumulo.accismus.impl.Constants.WorkerProps;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
@@ -112,6 +114,13 @@ public class Configuration {
     
     return props;
   }
+  
+  public static Properties getDefaultWorkerProperties() {
+    Properties props = new Properties();
+    props.put(WorkerProps.WORKER_THREADS, "10");
+    
+    return props;
+  }
 
   /**
    * read configuration from zookeeper
@@ -141,7 +150,7 @@ public class Configuration {
     observers = Collections.unmodifiableMap(observers);
     
     bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
-    this.workerProps = new Properties();
+    this.workerProps = new Properties(getDefaultWorkerProperties());
     this.workerProps.load(bais);
   }
 

@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.accismus.api.ColumnIterator;
+import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -26,11 +28,11 @@ import org.apache.accumulo.core.data.Value;
 /**
  * 
  */
-public class RowIterator implements Iterator<Entry<ByteSequence,ColumnIterator>> {
+public class RowIteratorImpl implements RowIterator {
   
   private org.apache.accumulo.core.client.RowIterator rowIter;
 
-  RowIterator(Iterator<Entry<Key,Value>> scanner) {
+  RowIteratorImpl(Iterator<Entry<Key,Value>> scanner) {
     rowIter = new org.apache.accumulo.core.client.RowIterator(scanner);
   }
   
@@ -45,7 +47,7 @@ public class RowIterator implements Iterator<Entry<ByteSequence,ColumnIterator>>
     Entry<Key,Value> entry = cols.next();
 
     final ByteSequence row = entry.getKey().getRowData();
-    final ColumnIterator coliter = new ColumnIterator(entry, cols);
+    final ColumnIterator coliter = new ColumnIteratorImpl(entry, cols);
     
     return new Entry<ByteSequence,ColumnIterator>() {
       

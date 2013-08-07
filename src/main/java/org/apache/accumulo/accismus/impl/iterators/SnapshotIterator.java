@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.iterators;
+package org.apache.accumulo.accismus.impl.iterators;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.accumulo.accismus.Constants;
 import org.apache.accumulo.accismus.impl.ColumnUtil;
+import org.apache.accumulo.accismus.impl.Constants;
 import org.apache.accumulo.accismus.impl.DelLockValue;
 import org.apache.accumulo.accismus.impl.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;

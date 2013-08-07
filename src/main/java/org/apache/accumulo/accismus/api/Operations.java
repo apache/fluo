@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.api;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -30,7 +30,8 @@ import java.util.UUID;
 
 import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.accismus.impl.ByteUtil;
-import org.apache.accumulo.accismus.iterators.GarbageCollectionIterator;
+import org.apache.accumulo.accismus.impl.Constants;
+import org.apache.accumulo.accismus.impl.iterators.GarbageCollectionIterator;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
@@ -79,6 +80,8 @@ public class Operations {
     }
   }
 
+  // TODO maybe refactor all method in this class to take a properties object... if so the prop keys would need to be public
+
   public static void updateWorkerConfig(Connector conn, String zoodir, Properties workerConfig) throws Exception {
     // TODO Auto-generated method stub
     String zookeepers = conn.getInstance().getZooKeepers();
@@ -105,7 +108,7 @@ public class Operations {
     zk.close();
   }
 
-  public static void initialize(Connector conn, String zoodir, String table) throws Exception {
+  public static void initialize(Connector conn, String zoodir, String table, Map<Column,String> colObservers) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
     String accumuloInstanceName = conn.getInstance().getInstanceName();
@@ -125,6 +128,9 @@ public class Operations {
 
     zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'0'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+    updateObservers(conn, zoodir, colObservers);
+    updateWorkerConfig(conn, zoodir, new Properties());
 
     zk.close();
     

@@ -18,8 +18,7 @@ package org.apache.accumulo.accismus.impl;
 
 import java.net.InetSocketAddress;
 
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.Constants;
+import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.impl.thrift.OracleService;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;

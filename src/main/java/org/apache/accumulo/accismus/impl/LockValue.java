@@ -18,7 +18,7 @@ package org.apache.accumulo.accismus.impl;
 
 import java.util.List;
 
-import org.apache.accumulo.accismus.Column;
+import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;

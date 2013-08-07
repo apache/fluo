@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.accumulo.accismus.impl.ByteUtil;
-import org.apache.accumulo.accismus.impl.OracleServer;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Operations;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -87,9 +87,7 @@ public class Base {
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
     
-    Operations.initialize(conn, zkn, table);
-    Operations.updateObservers(conn, zkn, getObservers());
-    Operations.updateWorkerConfig(conn, zkn, new Properties());
+    Operations.initialize(conn, zkn, table, getObservers());
 
     config = new Configuration(zk, zkn, conn);
     

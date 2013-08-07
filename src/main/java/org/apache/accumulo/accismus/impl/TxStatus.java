@@ -18,9 +18,9 @@ package org.apache.accumulo.accismus.impl;
 
 import java.util.Map.Entry;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.iterators.RollbackCheckIterator;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.impl.iterators.RollbackCheckIterator;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;

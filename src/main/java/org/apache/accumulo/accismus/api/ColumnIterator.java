@@ -14,13 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.api;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.apache.accumulo.core.data.ByteSequence;
 
 /**
  * 
  */
-public interface Observer {
-  public void process(Transaction tx, ByteSequence row, Column col) throws Exception;
+public interface ColumnIterator extends Iterator<Entry<Column,ByteSequence>> {
+  
 }

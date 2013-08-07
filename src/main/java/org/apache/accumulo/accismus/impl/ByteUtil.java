@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.accumulo.accismus.Transaction;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;
@@ -132,7 +131,7 @@ public class ByteUtil {
 
   public static Text toText(ByteSequence bs) {
     if (bs.isBackedByArray()) {
-      Text t = new Text(Transaction.EMPTY);
+      Text t = new Text(TransactionImpl.EMPTY);
       t.set(bs.getBackingArray(), bs.offset(), bs.length());
       return t;
     } else {

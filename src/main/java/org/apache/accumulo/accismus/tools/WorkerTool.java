@@ -21,9 +21,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.Worker;
+import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.impl.Logging;
+import org.apache.accumulo.accismus.impl.Worker;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;

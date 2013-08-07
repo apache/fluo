@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.ColumnIterator;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
@@ -28,16 +30,16 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 /**
  * 
  */
-public class ColumnIterator implements Iterator<Entry<Column,ByteSequence>> {
+public class ColumnIteratorImpl implements ColumnIterator {
 
   private Iterator<Entry<Key,Value>> scanner;
   private Entry<Key,Value> firstEntry;
 
-  ColumnIterator(Iterator<Entry<Key,Value>> scanner) {
+  ColumnIteratorImpl(Iterator<Entry<Key,Value>> scanner) {
     this(null, scanner);
   }
   
-  ColumnIterator(Entry<Key,Value> firstEntry, Iterator<Entry<Key,Value>> cols) {
+  ColumnIteratorImpl(Entry<Key,Value> firstEntry, Iterator<Entry<Key,Value>> cols) {
     this.firstEntry = firstEntry;
     this.scanner = cols;
   }

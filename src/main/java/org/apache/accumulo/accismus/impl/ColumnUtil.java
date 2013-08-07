@@ -20,10 +20,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.Constants;
-import org.apache.accumulo.accismus.Transaction;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -51,6 +49,10 @@ public class ColumnUtil {
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
 
 
+  public static byte[] concatCFCQ(Column c) {
+    return ByteUtil.concat(c.getFamily(), c.getQualifier());
+  }
+
   public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, long startTs, long commitTs, Set<Column> observedColumns,
       Mutation m) {
     if (isWrite) {
@@ -61,10 +63,10 @@ public class ColumnUtil {
     }
     
     if (isTrigger) {
-      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, Transaction.EMPTY);
-      m.putDelete(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), startTs);
+      m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, TransactionImpl.EMPTY);
+      m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), startTs);
     } else if (observedColumns.contains(col)) {
-      m.put(Constants.NOTIFY_CF.toArray(), Transaction.concat(col), col.getVisibility(), commitTs, Transaction.EMPTY);
+      m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), commitTs, TransactionImpl.EMPTY);
     }
   }
   
@@ -99,6 +101,4 @@ public class ColumnUtil {
     
     return null;
   }
-
-
 }

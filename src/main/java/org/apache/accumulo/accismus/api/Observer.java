@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.exceptions;
+package org.apache.accumulo.accismus.api;
+
+import org.apache.accumulo.core.data.ByteSequence;
 
 /**
  * 
  */
-public class StaleScanException extends RuntimeException {
-  
+public interface Observer {
+  public void process(Transaction tx, ByteSequence row, Column col) throws Exception;
 }

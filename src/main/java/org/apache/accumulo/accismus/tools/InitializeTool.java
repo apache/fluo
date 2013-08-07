@@ -23,10 +23,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.Constants.Props;
-import org.apache.accumulo.accismus.Operations;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Operations;
+import org.apache.accumulo.accismus.impl.Constants.Props;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -89,10 +89,11 @@ public class InitializeTool extends Configured implements Tool {
     }
 
     try {
-      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"));
-    } catch (NodeExistsException nee) {}
-    Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
-    Operations.updateWorkerConfig(conn, props.getProperty(Props.ZOOKEEPER_ROOT), workerConfig);
+      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
+    } catch (NodeExistsException nee) {
+      Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
+      Operations.updateWorkerConfig(conn, props.getProperty(Props.ZOOKEEPER_ROOT), workerConfig);
+    }
 
     return 0;
   }

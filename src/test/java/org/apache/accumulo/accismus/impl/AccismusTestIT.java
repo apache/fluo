@@ -1,8 +1,14 @@
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.HashSet;
 
-import org.apache.accumulo.accismus.exceptions.CommitException;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.ColumnIterator;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.RowIterator;
+import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
@@ -22,7 +28,7 @@ public class AccismusTestIT extends Base {
     // TX2 commits -- succeeds
     // TX1 commits -- fails
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     Column balanceCol = new Column("account", "balance");
     
@@ -32,7 +38,7 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    tx = new Transaction(config);
+    tx = new TransactionImpl(config);
     
     String bal1 = tx.get("bob", balanceCol).toString();
     String bal2 = tx.get("joe", balanceCol).toString();
@@ -42,7 +48,7 @@ public class AccismusTestIT extends Base {
     tx.set("bob", balanceCol, (Long.parseLong(bal1) - 5) + "");
     tx.set("joe", balanceCol, (Long.parseLong(bal2) + 5) + "");
     
-    Transaction tx2 = new Transaction(config);
+    Transaction tx2 = new TransactionImpl(config);
     
     String bal3 = tx2.get("bob", balanceCol).toString();
     String bal4 = tx2.get("jill", balanceCol).toString();
@@ -55,7 +61,7 @@ public class AccismusTestIT extends Base {
     tx2.commit();
     assertCommitFails(tx);
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
     Assert.assertEquals("5", tx3.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
@@ -80,7 +86,7 @@ public class AccismusTestIT extends Base {
     // TX2 commits
     // TX1 reads -- should not see TX2 writes
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     Column balanceCol = new Column("account", "balance");
     
@@ -91,9 +97,9 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx1 = new Transaction(config);
+    Transaction tx1 = new TransactionImpl(config);
     
-    Transaction tx2 = new Transaction(config);
+    Transaction tx2 = new TransactionImpl(config);
     tx2.set("bob", balanceCol, (Long.parseLong(tx2.get("bob", balanceCol).toString()) - 5) + "");
     tx2.set("joe", balanceCol, (Long.parseLong(tx2.get("joe", balanceCol).toString()) - 5) + "");
     tx2.set("jill", balanceCol, (Long.parseLong(tx2.get("jill", balanceCol).toString()) + 10) + "");
@@ -102,7 +108,7 @@ public class AccismusTestIT extends Base {
     
     tx2.commit();
     
-    Transaction txd = new Transaction(config);
+    Transaction txd = new TransactionImpl(config);
     txd.delete("jane", balanceCol);
     txd.commit();
     
@@ -120,9 +126,9 @@ public class AccismusTestIT extends Base {
     
     assertCommitFails(tx1);
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     tx4.set("jane", balanceCol, "3");
     tx4.commit();
     
@@ -131,7 +137,7 @@ public class AccismusTestIT extends Base {
     Assert.assertEquals("70", tx3.get("jill", balanceCol).toString());
     Assert.assertNull(tx3.get("jane", balanceCol));
     
-    Transaction tx5 = new Transaction(config);
+    Transaction tx5 = new TransactionImpl(config);
     
     Assert.assertEquals("5", tx5.get("bob", balanceCol).toString());
     Assert.assertEquals("15", tx5.get("joe", balanceCol).toString());
@@ -143,7 +149,7 @@ public class AccismusTestIT extends Base {
   public void testAck() throws Exception {
     // when two transactions run against the same observed column, only one should commit
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     Column balanceCol = new Column("account", "balance");
     
@@ -153,18 +159,18 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx1 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx1 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx1.get("joe", balanceCol);
     tx1.set("jill", balanceCol, "61");
     
-    Transaction tx2 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx2 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx2.get("joe", balanceCol);
     tx2.set("bob", balanceCol, "11");
     
     tx1.commit();
     assertCommitFails(tx2);
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
     Assert.assertEquals("10", tx3.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
@@ -175,11 +181,11 @@ public class AccismusTestIT extends Base {
     
     tx3.commit();
     
-    Transaction tx4 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx4 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx4.get("joe", balanceCol);
     tx4.set("jill", balanceCol, "62");
     
-    Transaction tx5 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx5 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx5.get("joe", balanceCol);
     tx5.set("bob", balanceCol, "11");
     
@@ -187,7 +193,7 @@ public class AccismusTestIT extends Base {
     tx5.commit();
     assertCommitFails(tx4);
     
-    Transaction tx6 = new Transaction(config);
+    Transaction tx6 = new TransactionImpl(config);
     
     Assert.assertEquals("11", tx6.get("bob", balanceCol).toString());
     Assert.assertEquals("21", tx6.get("joe", balanceCol).toString());
@@ -199,7 +205,7 @@ public class AccismusTestIT extends Base {
   public void testWriteObserved() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     Column balanceCol = new Column("account", "balance");
     
@@ -209,19 +215,19 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx2 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx2.get("joe", balanceCol);
     tx2.set("joe", balanceCol, "21");
     tx2.set("bob", balanceCol, "11");
     
-    Transaction tx1 = new Transaction(config, new ArrayByteSequence("joe"), balanceCol);
+    Transaction tx1 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
     tx1.get("joe", balanceCol);
     tx1.set("jill", balanceCol, "61");
     
     tx1.commit();
     assertCommitFails(tx2);
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
     Assert.assertEquals("10", tx3.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx3.get("joe", balanceCol).toString());
@@ -239,7 +245,7 @@ public class AccismusTestIT extends Base {
     Column balanceCol = new Column("account", "balance");
     balanceCol.setVisibility(new ColumnVisibility("A|B"));
 
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     tx.set("bob", balanceCol, "10");
     tx.set("joe", balanceCol, "20");
@@ -250,7 +256,7 @@ public class AccismusTestIT extends Base {
     Configuration config2 = new Configuration(zk, zkn, conn);
     config2.setAuthorizations(new Authorizations("B"));
     
-    Transaction tx2 = new Transaction(config2);
+    Transaction tx2 = new TransactionImpl(config2);
     Assert.assertEquals("10", tx2.get("bob", balanceCol).toString());
     Assert.assertEquals("20", tx2.get("joe", balanceCol).toString());
     Assert.assertEquals("60", tx2.get("jill", balanceCol).toString());
@@ -258,7 +264,7 @@ public class AccismusTestIT extends Base {
     Configuration config3 = new Configuration(zk, zkn, conn);
     config3.setAuthorizations(new Authorizations("C"));
     
-    Transaction tx3 = new Transaction(config3);
+    Transaction tx3 = new TransactionImpl(config3);
     Assert.assertNull(tx3.get("bob", balanceCol));
     Assert.assertNull(tx3.get("joe", balanceCol));
     Assert.assertNull(tx3.get("jill", balanceCol));
@@ -268,7 +274,7 @@ public class AccismusTestIT extends Base {
   public void testRange() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     tx.set("d00001", new Column("data", "content"), "blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
     tx.set("d00001", new Column("outlink", "http://a.com"), "");
     tx.set("d00001", new Column("outlink", "http://b.com"), "");
@@ -281,9 +287,9 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    Transaction tx2 = new TransactionImpl(config);
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
     tx3.set("d00001", new Column("data", "content"), "blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
     tx3.set("d00001", new Column("outlink", "http://a.com"), "");
@@ -309,7 +315,7 @@ public class AccismusTestIT extends Base {
     
     Assert.assertEquals(expected, columns);
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     columns.clear();
     riter = tx4.get(new ScannerConfiguration().setRange(Range.exact("d00001", "outlink")));
     while (riter.hasNext()) {

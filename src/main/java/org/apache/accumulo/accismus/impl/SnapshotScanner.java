@@ -20,12 +20,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.accismus.Column;
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.ScannerConfiguration;
-import org.apache.accumulo.accismus.exceptions.StaleScanException;
-import org.apache.accumulo.accismus.iterators.PrewriteIterator;
-import org.apache.accumulo.accismus.iterators.SnapshotIterator;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
+import org.apache.accumulo.accismus.impl.iterators.PrewriteIterator;
+import org.apache.accumulo.accismus.impl.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;

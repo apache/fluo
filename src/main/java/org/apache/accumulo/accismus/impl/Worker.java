@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,9 +24,12 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.accumulo.accismus.exceptions.AlreadyAcknowledgedException;
-import org.apache.accumulo.accismus.exceptions.CommitException;
-import org.apache.accumulo.accismus.impl.ByteUtil;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.Observer;
+import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Scanner;
@@ -104,7 +107,7 @@ public class Worker {
       
       while (true)
         try {
-          Transaction tx = new Transaction(config, row, col);
+          Transaction tx = new TransactionImpl(config, row, col);
           observer.process(tx, row, col);
           tx.commit();
           break;

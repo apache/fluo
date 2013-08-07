@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.exceptions;
+package org.apache.accumulo.accismus.api.exceptions;
 
 /**
  * 
  */
-public class AlreadyAcknowledgedException extends CommitException {
+public class CommitException extends Exception {
   
 }

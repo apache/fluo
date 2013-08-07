@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.api;
 
 import java.util.ArrayList;
 
@@ -55,6 +55,7 @@ public class ScannerConfiguration implements Cloneable {
   }
 
   // TODO document SnapshotIterator
+  // TODO maybe remove from public API? Make first pass at Accismus as simple as possible
   
   public ScannerConfiguration setIterators(IteratorSetting... iters) {
     this.iters = iters;

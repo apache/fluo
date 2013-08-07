@@ -14,33 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
-
-import org.apache.accumulo.core.client.ConditionalWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.test.FaultyConditionalWriter;
+package org.apache.accumulo.accismus.api.exceptions;
 
 /**
  * 
  */
-public class FaultyConfig extends Configuration {
+public class StaleScanException extends RuntimeException {
   
-  private double up;
-  private double wp;
-  
-  public FaultyConfig(Configuration config, double up, double wp) throws Exception {
-    super(config);
-    this.up = up;
-    this.wp = wp;
-  }
-  
-  @Override
-  public Connector getConnector() {
-    return super.getConnector();
-  }
-
-  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return new FaultyConditionalWriter(super.createConditionalWriter(), up, wp);
-  }
 }

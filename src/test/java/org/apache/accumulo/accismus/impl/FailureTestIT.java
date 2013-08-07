@@ -14,13 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.util.Random;
 
-import org.apache.accumulo.accismus.Transaction.CommitData;
-import org.apache.accumulo.accismus.exceptions.StaleScanException;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.impl.OracleClient;
+import org.apache.accumulo.accismus.impl.TransactionImpl;
+import org.apache.accumulo.accismus.impl.TransactionImpl.CommitData;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +38,7 @@ public class FailureTestIT extends Base {
 
     
   private void transfer(Configuration config, String from, String to, int amount) throws Exception {
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
     int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
@@ -52,7 +56,7 @@ public class FailureTestIT extends Base {
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     for (int r = 0; r < 10; r++) {
       tx.set(r + "", col1, "0" + r + "0");
@@ -61,7 +65,7 @@ public class FailureTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    TransactionImpl tx2 = new TransactionImpl(config);
     
     for (int r = 0; r < 10; r++) {
       tx2.set(r + "", col1, "1" + r + "0");
@@ -71,7 +75,7 @@ public class FailureTestIT extends Base {
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("0" + r + "0", tx3.get(r + "", col1).toString());
       Assert.assertEquals("0" + r + "1", tx3.get(r + "", col2).toString());
@@ -81,7 +85,7 @@ public class FailureTestIT extends Base {
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     cd.cw.close();
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("0" + r + "0", tx4.get(r + "", col1).toString());
       Assert.assertEquals("0" + r + "1", tx4.get(r + "", col2).toString());
@@ -96,7 +100,7 @@ public class FailureTestIT extends Base {
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     for (int r = 0; r < 10; r++) {
       tx.set(r + "", col1, "0" + r + "0");
@@ -105,7 +109,7 @@ public class FailureTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    TransactionImpl tx2 = new TransactionImpl(config);
     
     for (int r = 0; r < 10; r++) {
       tx2.set(r + "", col1, "1" + r + "0");
@@ -117,7 +121,7 @@ public class FailureTestIT extends Base {
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("1" + r + "0", tx3.get(r + "", col1).toString());
       Assert.assertEquals("1" + r + "1", tx3.get(r + "", col2).toString());
@@ -126,7 +130,7 @@ public class FailureTestIT extends Base {
     tx2.finishCommit(cd, commitTs);
     cd.cw.close();
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("1" + r + "0", tx4.get(r + "", col1).toString());
       Assert.assertEquals("1" + r + "1", tx4.get(r + "", col2).toString());
@@ -138,7 +142,7 @@ public class FailureTestIT extends Base {
   public void testRollback() throws Exception {
     // test the case where a scan encounters a stuck lock and rolls it back
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     tx.set("bob", balanceCol, "10");
     tx.set("joe", balanceCol, "20");
@@ -146,7 +150,7 @@ public class FailureTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    TransactionImpl tx2 = new TransactionImpl(config);
     
     int bal1 = Integer.parseInt(tx2.get("bob", balanceCol).toString());
     int bal2 = Integer.parseInt(tx2.get("joe", balanceCol).toString());
@@ -170,7 +174,7 @@ public class FailureTestIT extends Base {
       bobBal -= 7;
     }
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     
     Assert.assertEquals(bobBal + "", tx4.get("bob", balanceCol).toString());
     Assert.assertEquals(joeBal + "", tx4.get("joe", balanceCol).toString());
@@ -185,7 +189,7 @@ public class FailureTestIT extends Base {
     bobBal -= 2;
     joeBal += 2;
     
-    Transaction tx6 = new Transaction(config);
+    Transaction tx6 = new TransactionImpl(config);
     
     Assert.assertEquals(bobBal + "", tx6.get("bob", balanceCol).toString());
     Assert.assertEquals(joeBal + "", tx6.get("joe", balanceCol).toString());
@@ -196,7 +200,7 @@ public class FailureTestIT extends Base {
   public void testRollfoward() throws Exception {
     // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
 
     tx.set("bob", balanceCol, "10");
     tx.set("joe", balanceCol, "20");
@@ -204,7 +208,7 @@ public class FailureTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    TransactionImpl tx2 = new TransactionImpl(config);
     
     int bal1 = Integer.parseInt(tx2.get("bob", balanceCol).toString());
     int bal2 = Integer.parseInt(tx2.get("joe", balanceCol).toString());
@@ -229,7 +233,7 @@ public class FailureTestIT extends Base {
       bobBal = "1";
     }
     
-    Transaction tx4 = new Transaction(config);
+    Transaction tx4 = new TransactionImpl(config);
     
     Assert.assertEquals(bobBal, tx4.get("bob", balanceCol).toString());
     Assert.assertEquals(joeBal, tx4.get("joe", balanceCol).toString());
@@ -238,7 +242,7 @@ public class FailureTestIT extends Base {
     tx2.finishCommit(cd, commitTs);
     cd.cw.close();
     
-    Transaction tx5 = new Transaction(config);
+    Transaction tx5 = new TransactionImpl(config);
     
     Assert.assertEquals(bobBal, tx5.get("bob", balanceCol).toString());
     Assert.assertEquals(joeBal, tx5.get("joe", balanceCol).toString());
@@ -253,7 +257,7 @@ public class FailureTestIT extends Base {
   @Test
   public void testStaleScan() throws Exception {
     
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     tx.set("bob", balanceCol, "10");
     tx.set("joe", balanceCol, "20");
@@ -261,7 +265,7 @@ public class FailureTestIT extends Base {
     
     tx.commit();
     
-    Transaction tx2 = new Transaction(config);
+    Transaction tx2 = new TransactionImpl(config);
     Assert.assertEquals("10", tx2.get("bob", balanceCol).toString());
     
     transfer(config, "joe", "jill", 1);
@@ -278,7 +282,7 @@ public class FailureTestIT extends Base {
       
     }
     
-    Transaction tx3 = new Transaction(config);
+    Transaction tx3 = new TransactionImpl(config);
     
     Assert.assertEquals("9", tx3.get("bob", balanceCol).toString());
     Assert.assertEquals("22", tx3.get("joe", balanceCol).toString());

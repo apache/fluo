@@ -48,7 +48,7 @@ An easy way to experiment with Accismus is to edit a unit test and run it.  The
 build a secondary index.  This can be done using the following commands.  
 
 ```
-vim src/test/java/org/apache/accumulo/accismus/WorkerTestIT.java
+vim src/test/java/org/apache/accumulo/accismus/impl/WorkerTestIT.java
 mvn verify -Dit.test=WorkerTestIT
 ```
 
@@ -56,5 +56,5 @@ mvn verify -Dit.test=WorkerTestIT
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
-[6]: src/test/java/org/apache/accumulo/accismus/WorkerTestIT.java
+[6]: src/test/java/org/apache/accumulo/accismus/impl/WorkerTestIT.java
 

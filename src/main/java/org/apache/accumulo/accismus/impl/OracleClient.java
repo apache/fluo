@@ -24,8 +24,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.accumulo.accismus.Configuration;
-import org.apache.accumulo.accismus.Constants;
+import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.impl.thrift.OracleService;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;

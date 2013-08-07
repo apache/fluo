@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -30,8 +30,14 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.accumulo.accismus.exceptions.CommitException;
-import org.apache.accumulo.accismus.exceptions.StaleScanException;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.ColumnIterator;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.RowIterator;
+import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
+import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.format.AccismusFormatter;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
@@ -92,7 +98,7 @@ public class StochasticBankTestIT extends Base {
   private static Column balanceCol = new Column("data", "balance");
 
   private static void populate(Configuration config, int numAccounts) throws Exception {
-    Transaction tx = new Transaction(config);
+    Transaction tx = new TransactionImpl(config);
     
     for(int i = 0; i < numAccounts; i++){
       tx.set(fmtAcct(i), balanceCol, "1000");
@@ -140,7 +146,7 @@ public class StochasticBankTestIT extends Base {
       
       while (true) {
         try {
-          Transaction tx = new Transaction(config);
+          Transaction tx = new TransactionImpl(config);
           int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
           int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
           
@@ -169,7 +175,7 @@ public class StochasticBankTestIT extends Base {
   }
 
   private static void runVerifier(Configuration config, int numAccounts, int num) {
-    Transaction lastTx = null;
+    TransactionImpl lastTx = null;
 
     try {
 
@@ -181,7 +187,7 @@ public class StochasticBankTestIT extends Base {
 
         long t1 = System.currentTimeMillis();
 
-        Transaction tx = new Transaction(config);
+        TransactionImpl tx = new TransactionImpl(config);
         RowIterator iter = tx.get(new ScannerConfiguration());
         
         Stat stat = new Stat();
@@ -215,7 +221,7 @@ public class StochasticBankTestIT extends Base {
     }
   }
   
-  private static void printDiffs(Configuration config, Transaction lastTx, Transaction tx) throws Exception {
+  private static void printDiffs(Configuration config, TransactionImpl lastTx, TransactionImpl tx) throws Exception {
     Map<String,String> bals1 = toMap(lastTx);
     Map<String,String> bals2 = toMap(tx);
     

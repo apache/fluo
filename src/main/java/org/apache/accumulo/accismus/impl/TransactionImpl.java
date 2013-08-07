@@ -1,4 +1,4 @@
-package org.apache.accumulo.accismus;
+package org.apache.accumulo.accismus.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -11,16 +11,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.accumulo.accismus.exceptions.AlreadyAcknowledgedException;
-import org.apache.accumulo.accismus.exceptions.CommitException;
-import org.apache.accumulo.accismus.impl.ByteUtil;
-import org.apache.accumulo.accismus.impl.ColumnUtil;
-import org.apache.accumulo.accismus.impl.DelLockValue;
-import org.apache.accumulo.accismus.impl.LockValue;
-import org.apache.accumulo.accismus.impl.OracleClient;
-import org.apache.accumulo.accismus.impl.SnapshotScanner;
-import org.apache.accumulo.accismus.impl.TxStatus;
-import org.apache.accumulo.accismus.iterators.PrewriteIterator;
+import org.apache.accumulo.accismus.api.Column;
+import org.apache.accumulo.accismus.api.ColumnIterator;
+import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.RowIterator;
+import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
+import org.apache.accumulo.accismus.impl.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -45,7 +44,7 @@ import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.commons.lang.mutable.MutableLong;
 
 
-public class Transaction {
+public class TransactionImpl implements Transaction {
   
   public static final byte[] EMPTY = new byte[0];
   public static final ByteSequence EMPTY_BS = new ArrayByteSequence(EMPTY);
@@ -72,11 +71,7 @@ public class Transaction {
     }
   }
 
-  public static byte[] concat(Column c) {
-    return ByteUtil.concat(c.getFamily(), c.getQualifier());
-  }
-
-  Transaction(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
+  TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
     this.config = config;
     this.table = config.getTable();
     this.conn = config.getConnector();
@@ -96,32 +91,38 @@ public class Transaction {
     }
   }
   
-  public Transaction(Configuration config) throws Exception {
+  public TransactionImpl(Configuration config) throws Exception {
     this(config, null, null);
   }
   
 
+  @Override
   public ByteSequence get(String row, Column column) throws Exception {
     return get(new ArrayByteSequence(toBytes(row)), column);
   }
   
+  @Override
   public ByteSequence get(byte[] row, Column column) throws Exception {
     return get(new ArrayByteSequence(row), column);
   }
 
+  @Override
   public ByteSequence get(ByteSequence row, Column column) throws Exception {
     // TODO cache? precache?
     return get(row, Collections.singleton(column)).get(column);
   }
   
+  @Override
   public Map<Column,ByteSequence> get(String row, Set<Column> columns) throws Exception {
     return get(new ArrayByteSequence(toBytes(row)), columns);
   }
   
+  @Override
   public Map<Column,ByteSequence> get(byte[] row, Set<Column> columns) throws Exception {
     return get(new ArrayByteSequence(row), columns);
   }
 
+  @Override
   public Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception {
     // TODO push visibility filtering to server side?
 
@@ -151,23 +152,27 @@ public class Transaction {
 
   // TODO add a get that uses the batch scanner
 
+  @Override
   public RowIterator get(ScannerConfiguration config) throws Exception {
     if (commitStarted)
       throw new IllegalStateException("transaction committed");
 
-    return new RowIterator(new SnapshotScanner(this.config, config, startTs));
+    return new RowIteratorImpl(new SnapshotScanner(this.config, config, startTs));
   }
   
+  @Override
   public void set(String row, Column col, String value) {
     ArgumentChecker.notNull(row, col, value);
     set(new ArrayByteSequence(toBytes(row)), col, new ArrayByteSequence(toBytes(value)));
   }
   
+  @Override
   public void set(byte[] row, Column col, byte[] value) {
     ArgumentChecker.notNull(row, col, value);
     set(new ArrayByteSequence(row), col, new ArrayByteSequence(value));
   }
   
+  @Override
   public void set(ByteSequence row, Column col, ByteSequence value) {
     if (commitStarted)
       throw new IllegalStateException("transaction committed");
@@ -192,16 +197,19 @@ public class Transaction {
     colUpdates.put(col, value);
   }
   
+  @Override
   public void delete(String row, Column col) {
     ArgumentChecker.notNull(row, col);
     set(new ArrayByteSequence(toBytes(row)), col, DELETE);
   }
   
+  @Override
   public void delete(byte[] row, Column col) {
     ArgumentChecker.notNull(row, col);
     set(new ArrayByteSequence(row), col, DELETE);
   }
   
+  @Override
   public void delete(ByteSequence row, Column col) {
     ArgumentChecker.notNull(row, col);
     set(row, col, DELETE);
@@ -481,6 +489,7 @@ public class Transaction {
     return cd;
   }
 
+  @Override
   public void commit() throws CommitException {
     // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
     // TODO throw exception instead of return boolean
