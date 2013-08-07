@@ -2,12 +2,12 @@ Accismus
 ========
 
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
-Accumulo 1.6.0-SNAPSHOT which has [ACCUMULO-1000][3].  Theoretically this
+Accumulo 1.6.0-SNAPSHOT which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
+[ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
+makes it possible to effeciently find notifications.  Theoretically this
 prototype is to a point where it could run in a distributed manner.  But this
 has not been tested.  The pieces are in place, CAS is done on the tablet server
-and the Oracle is a service.  In addition to [ACCUMULO-1000][3], this prototype
-will also depend on [ACCUMULO-112][5] inorder to effeciently find
-notifications.
+and the Oracle is a service.  
 
 There is a lot that needs to be done.  If you are interested in contributing
 send me an email or check out the issues.
