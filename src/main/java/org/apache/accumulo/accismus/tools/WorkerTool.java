@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.Logging;
 import org.apache.accumulo.accismus.impl.Worker;
 import org.apache.accumulo.core.util.UtilWaitThread;
@@ -55,6 +55,7 @@ public class WorkerTool extends Configured implements Tool {
       try {
         worker = new Worker(config);
       } catch (Exception e1) {
+        log.error("Error while processing updates", e1);
         throw new RuntimeException(e1);
       }
       

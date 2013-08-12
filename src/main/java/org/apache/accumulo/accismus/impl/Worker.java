@@ -25,7 +25,6 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.Observer;
 import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;

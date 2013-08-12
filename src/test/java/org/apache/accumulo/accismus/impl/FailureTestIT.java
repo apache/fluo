@@ -19,7 +19,6 @@ package org.apache.accumulo.accismus.impl;
 import java.util.Random;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.impl.OracleClient;

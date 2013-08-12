@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.impl.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;

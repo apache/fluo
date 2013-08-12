@@ -25,6 +25,8 @@ import org.apache.accumulo.core.data.ByteSequence;
 /**
  * 
  */
+
+// TODO change to abstract class
 public interface Transaction {
   
   public abstract ByteSequence get(String row, Column column) throws Exception;

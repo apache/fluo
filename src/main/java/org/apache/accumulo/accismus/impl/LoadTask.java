@@ -16,31 +16,36 @@
  */
 package org.apache.accumulo.accismus.impl;
 
-import org.apache.accumulo.core.client.ConditionalWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.test.FaultyConditionalWriter;
+import org.apache.accumulo.accismus.api.Loader;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
 
 /**
  * 
  */
-public class FaultyConfig extends Configuration {
+public class LoadTask implements Runnable {
   
-  private double up;
-  private double wp;
+  private Loader loader;
+  private Configuration config;
   
-  public FaultyConfig(Configuration config, double up, double wp) throws Exception {
-    super(config);
-    this.up = up;
-    this.wp = wp;
+  public LoadTask(Loader loader, Configuration config) {
+    this.loader = loader;
+    this.config = config;
   }
   
   @Override
-  public Connector getConnector() {
-    return super.getConnector();
+  public void run() {
+    while (true) {
+      try {
+        TransactionImpl tx = new TransactionImpl(config);
+        loader.load(tx);
+        tx.commit();
+        return;
+      } catch (CommitException e) {
+        // retry
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
-
-  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return new FaultyConditionalWriter(super.createConditionalWriter(), up, wp);
-  }
+  
 }

@@ -24,8 +24,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.Operations;
+import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.Constants.Props;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;

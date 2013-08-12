@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.Operations;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;

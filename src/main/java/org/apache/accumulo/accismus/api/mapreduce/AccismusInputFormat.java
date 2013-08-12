@@ -24,10 +24,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.accumulo.accismus.api.ColumnIterator;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
 import org.apache.accumulo.accismus.impl.Constants.Props;
+import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.accismus.impl.TransactionImpl;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.api.Configuration;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
 import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.impl.iterators.PrewriteIterator;

@@ -18,7 +18,7 @@ package org.apache.accumulo.accismus.tools;
 
 import java.io.File;
 
-import org.apache.accumulo.accismus.api.Configuration;
+import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.Logging;
 import org.apache.accumulo.accismus.impl.OracleServer;
 import org.apache.accumulo.core.util.UtilWaitThread;

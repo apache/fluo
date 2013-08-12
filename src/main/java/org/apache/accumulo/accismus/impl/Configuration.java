@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.api;
+package org.apache.accumulo.accismus.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.accumulo.accismus.impl.Constants;
+import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.impl.Constants.Props;
 import org.apache.accumulo.accismus.impl.Constants.WorkerProps;
 import org.apache.accumulo.core.client.ConditionalWriter;

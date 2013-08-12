@@ -14,33 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.impl;
+package org.apache.accumulo.accismus.api;
 
-import org.apache.accumulo.core.client.ConditionalWriter;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.test.FaultyConditionalWriter;
+import java.util.Properties;
+
+import org.apache.accumulo.accismus.impl.Configuration;
+import org.apache.accumulo.accismus.impl.LoadTask;
 
 /**
  * 
  */
-public class FaultyConfig extends Configuration {
+public class LoaderTaskFactory {
+  private Configuration config;
   
-  private double up;
-  private double wp;
-  
-  public FaultyConfig(Configuration config, double up, double wp) throws Exception {
-    super(config);
-    this.up = up;
-    this.wp = wp;
+  public LoaderTaskFactory(Properties connectionProps) throws Exception {
+    this.config = new Configuration(connectionProps);
   }
   
-  @Override
-  public Connector getConnector() {
-    return super.getConnector();
-  }
-
-  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return new FaultyConditionalWriter(super.createConditionalWriter(), up, wp);
+  public Runnable newLoadTask(Loader loader){
+    return new LoadTask(loader, config);
   }
 }
