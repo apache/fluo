@@ -80,7 +80,7 @@ public class Operations {
     }
   }
 
-  // TODO maybe refactor all method in this class to take a properties object... if so the prop keys would need to be public
+  // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
   public static void updateWorkerConfig(Connector conn, String zoodir, Properties workerConfig) throws Exception {
     // TODO Auto-generated method stub

@@ -39,17 +39,5 @@ public class Constants {
     public static final String ORACLE_SERVER = ORACLE + "/server";
   }
 
-  public static class Props {
-    public static final String ACCUMULO_PASSWORD = "accismus.accumulo.password";
-    public static final String ACCUMULO_USER = "accismus.accumulo.user";
-    public static final String ACCUMULO_INSTANCE = "accismus.accumulo.instance";
-    public static final String ZOOKEEPER_ROOT = "accismus.zookeeper.root";
-    public static final String ZOOKEEPER_TIMEOUT = "accismus.zookeeper.timeout";
-    public static final String ZOOKEEPER_CONNECT = "accismus.zookeeper.connect";
-  }
-  
-  public static class WorkerProps {
-    public static final String WORKER_THREADS = "accismus.config.worker.numThreads";
-  }
-
+  public static final String WORKER_THREADS = "accismus.config.worker.numThreads";
 }

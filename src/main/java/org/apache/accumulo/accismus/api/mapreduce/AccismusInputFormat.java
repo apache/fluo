@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.apache.accumulo.accismus.api.ColumnIterator;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
-import org.apache.accumulo.accismus.impl.Constants.Props;
+import org.apache.accumulo.accismus.api.config.AccismusProperties;
 import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.OracleClient;
 import org.apache.accumulo.accismus.impl.TransactionImpl;
@@ -125,6 +125,13 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
     return new AccumuloInputFormat().getSplits(context);
   }
   
+  /**
+   * Configure properties needed to connect to an Accismus instance
+   * 
+   * @param conf
+   * @param props
+   *          use {@link AccismusProperties} to configure programmatically
+   */
   public static void configure(Job conf, Properties props) {
     try {
       
@@ -140,8 +147,8 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
       
       conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
       
-      AccumuloInputFormat.setZooKeeperInstance(conf, props.getProperty(Props.ACCUMULO_INSTANCE), props.getProperty(Props.ZOOKEEPER_CONNECT));
-      AccumuloInputFormat.setConnectorInfo(conf, props.getProperty(Props.ACCUMULO_USER), new PasswordToken(props.getProperty(Props.ACCUMULO_PASSWORD)));
+      AccumuloInputFormat.setZooKeeperInstance(conf, props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP), props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP));
+      AccumuloInputFormat.setConnectorInfo(conf, props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP)));
       AccumuloInputFormat.setInputTableName(conf, accisConf.getTable());
       AccumuloInputFormat.setScanAuthorizations(conf, accisConf.getAuthorizations());
       

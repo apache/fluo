@@ -28,8 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.accumulo.accismus.api.Column;
-import org.apache.accumulo.accismus.impl.Constants.Props;
-import org.apache.accumulo.accismus.impl.Constants.WorkerProps;
+import org.apache.accumulo.accismus.api.config.AccismusProperties;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
@@ -87,10 +86,10 @@ public class Configuration {
    * @param props
    */
   public Configuration(Properties props) throws Exception {
-    this(new ZooKeeper(props.getProperty(Props.ZOOKEEPER_CONNECT), Integer.parseInt(props.getProperty(Props.ZOOKEEPER_TIMEOUT)), null), props
-        .getProperty(Props.ZOOKEEPER_ROOT), new ZooKeeperInstance(props.getProperty(Props.ACCUMULO_INSTANCE),
-        props.getProperty(Props.ZOOKEEPER_CONNECT)).getConnector(props.getProperty(Props.ACCUMULO_USER),
-        new PasswordToken(props.getProperty(Props.ACCUMULO_PASSWORD))));
+    this(new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP)), null), props
+        .getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
+        props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(AccismusProperties.ACCUMULO_USER_PROP),
+        new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP))));
   }
   
   private static Properties load(File propFile) throws FileNotFoundException, IOException {
@@ -105,19 +104,19 @@ public class Configuration {
 
   public static Properties getDefaultProperties() {
     Properties props = new Properties();
-    props.put(Props.ZOOKEEPER_CONNECT, "localhost");
-    props.put(Props.ZOOKEEPER_ROOT, "/accismus");
-    props.put(Props.ZOOKEEPER_TIMEOUT, "30000");
-    props.put(Props.ACCUMULO_INSTANCE, "accumulo1");
-    props.put(Props.ACCUMULO_USER, "accismus");
-    props.put(Props.ACCUMULO_PASSWORD, "secret");
+    props.put(AccismusProperties.ZOOKEEPER_CONNECT_PROP, "localhost");
+    props.put(AccismusProperties.ZOOKEEPER_ROOT_PROP, "/accismus");
+    props.put(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP, "30000");
+    props.put(AccismusProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
+    props.put(AccismusProperties.ACCUMULO_USER_PROP, "accismus");
+    props.put(AccismusProperties.ACCUMULO_PASSWORD_PROP, "secret");
     
     return props;
   }
   
   public static Properties getDefaultWorkerProperties() {
     Properties props = new Properties();
-    props.put(WorkerProps.WORKER_THREADS, "10");
+    props.put(Constants.WORKER_THREADS, "10");
     
     return props;
   }

@@ -25,8 +25,8 @@ import java.util.Set;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Operations;
+import org.apache.accumulo.accismus.api.config.AccismusProperties;
 import org.apache.accumulo.accismus.impl.Configuration;
-import org.apache.accumulo.accismus.impl.Constants.Props;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -57,9 +57,9 @@ public class InitializeTool extends Configured implements Tool {
     Properties props = new Properties(Configuration.getDefaultProperties());
     props.load(new FileReader(args[0]));
     
-    Connector conn = new ZooKeeperInstance(props.getProperty(Props.ACCUMULO_INSTANCE), props.getProperty(Props.ZOOKEEPER_CONNECT))
+    Connector conn = new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP), props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP))
         .getConnector(
-        props.getProperty(Props.ACCUMULO_USER), new PasswordToken(props.getProperty(Props.ACCUMULO_PASSWORD)));
+        props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP)));
     
     
     Properties initProps = new Properties();
@@ -83,16 +83,16 @@ public class InitializeTool extends Configured implements Tool {
     }
     
     if (Boolean.valueOf(initProps.getProperty("accismus.init.zookeeper.clear", "false"))) {
-      ZooKeeper zk = new ZooKeeper(props.getProperty(Props.ZOOKEEPER_CONNECT), 30000, null);
-      ZooUtil.recursiveDelete(zk, props.getProperty(Props.ZOOKEEPER_ROOT), NodeMissingPolicy.SKIP);
+      ZooKeeper zk = new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), 30000, null);
+      ZooUtil.recursiveDelete(zk, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), NodeMissingPolicy.SKIP);
       zk.close();
     }
 
     try {
-      Operations.initialize(conn, props.getProperty(Props.ZOOKEEPER_ROOT), initProps.getProperty("accismus.init.table"), colObservers);
+      Operations.initialize(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), initProps.getProperty("accismus.init.table"), colObservers);
     } catch (NodeExistsException nee) {
-      Operations.updateObservers(conn, props.getProperty(Props.ZOOKEEPER_ROOT), colObservers);
-      Operations.updateWorkerConfig(conn, props.getProperty(Props.ZOOKEEPER_ROOT), workerConfig);
+      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers);
+      Operations.updateWorkerConfig(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
     }
 
     return 0;
