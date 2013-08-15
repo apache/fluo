@@ -354,4 +354,36 @@ public class FailureTestIT extends Base {
     Assert.assertEquals("22", tx3.get("joe", balanceCol).toString());
     Assert.assertEquals("59", tx3.get("jill", balanceCol).toString());
   }
+  
+  @Test
+  public void testCommitBug1() throws Exception {
+    
+    TransactionImpl tx = new TransactionImpl(config);
+    
+    tx.set("bob", balanceCol, "10");
+    tx.set("joe", balanceCol, "20");
+    tx.set("jill", balanceCol, "60");
+    
+    CommitData cd = tx.createCommitData();
+    Assert.assertTrue(tx.preCommit(cd));
+    
+    TransactionImpl tx2 = new TransactionImpl(config);
+    
+    tx2.set("bob", balanceCol, "11");
+    tx2.set("jill", balanceCol, "61");
+    
+    // TODO remove when bug fixed
+    if (true)
+      return;
+
+    // tx1 should be rolled back.. howerver there is bug... when commit failure occurs, could check if unread columns were locked.. if locked attempt
+    // rollback/rollforward
+    tx2.commit();
+    
+    Transaction tx3 = new TransactionImpl(config);
+    
+    Assert.assertEquals("11", tx3.get("bob", balanceCol).toString());
+    Assert.assertNull(tx3.get("joe", balanceCol));
+    Assert.assertEquals("61", tx3.get("jill", balanceCol).toString());
+  }
 }
