@@ -16,14 +16,22 @@
  */
 package org.apache.accumulo.accismus.impl;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
-import org.apache.accumulo.accismus.impl.OracleClient;
-import org.apache.accumulo.accismus.impl.TransactionImpl;
 import org.apache.accumulo.accismus.impl.TransactionImpl.CommitData;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +42,6 @@ public class FailureTestIT extends Base {
   
   
   Column balanceCol = new Column("account", "balance");
-
     
   private void transfer(Configuration config, String from, String to, int amount) throws Exception {
     Transaction tx = new TransactionImpl(config);
@@ -46,6 +53,12 @@ public class FailureTestIT extends Base {
     tx.set(to, balanceCol, "" + (bal2 + amount));
     
     tx.commit();
+  }
+
+  protected Map<Column,String> getObservers() {
+    Map<Column,String> observed = new HashMap<Column,String>();
+    observed.put(new Column("attr", "lastupdate"), "foo");
+    return observed;
   }
 
   @Test
@@ -249,8 +262,62 @@ public class FailureTestIT extends Base {
   }
   
   @Test
-  public void testAcks() {
+  public void testAcks() throws Exception {
     // TODO test that acks are properly handled in rollback and rollforward
+    
+    Transaction tx = new TransactionImpl(config);
+    
+    tx.set("url0000", new Column("attr", "lastupdate"), "3");
+    tx.set("url0000", new Column("doc", "content"), "abc def");
+    
+    tx.commit();
+
+    TransactionImpl tx2 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx2.set("idx:abc", new Column("doc","url"), "url0000");
+    tx2.set("idx:def", new Column("doc","url"), "url0000");
+    CommitData cd = tx2.createCommitData();
+    tx2.preCommit(cd);
+    
+    Transaction tx3 = new TransactionImpl(config);
+    Assert.assertNull(tx3.get("idx:abc", new Column("doc", "url")));
+    Assert.assertNull(tx3.get("idx:def", new Column("doc", "url")));
+    Assert.assertEquals("3", tx3.get("url0000", new Column("attr", "lastupdate")).toString());
+
+    Scanner scanner = config.getConnector().createScanner(config.getTable(), Authorizations.EMPTY);
+    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+    Iterator<Entry<Key,Value>> iter = scanner.iterator();
+    Assert.assertTrue(iter.hasNext());
+    Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
+    
+    TransactionImpl tx5 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx5.set("idx:abc", new Column("doc", "url"), "url0000");
+    tx5.set("idx:def", new Column("doc", "url"), "url0000");
+    cd = tx5.createCommitData();
+    Assert.assertTrue(tx5.preCommit(cd, new ArrayByteSequence("idx:abc"), new Column("doc", "url")));
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
+    Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
+    
+    // should roll tx5 forward
+    Transaction tx6 = new TransactionImpl(config);
+    Assert.assertEquals("3", tx6.get("url0000", new Column("attr", "lastupdate")).toString());
+    Assert.assertEquals("url0000", tx6.get("idx:abc", new Column("doc", "url")).toString());
+    Assert.assertEquals("url0000", tx6.get("idx:def", new Column("doc", "url")).toString());
+    
+    iter = scanner.iterator();
+    Assert.assertFalse(iter.hasNext());
+
+    // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
+    TransactionImpl tx4 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx4.set("idx:abc", new Column("doc", "url"), "url0000");
+    tx4.set("idx:def", new Column("doc", "url"), "url0000");
+
+    try {
+      // should not go through if tx5 is properly rolled forward
+      tx4.commit();
+      Assert.fail();
+    } catch (AlreadyAcknowledgedException aae) {}
+
+
   }
   
   @Test

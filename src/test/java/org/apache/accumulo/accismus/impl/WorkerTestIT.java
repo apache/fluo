@@ -21,10 +21,11 @@ import java.util.Map;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.ColumnIterator;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.Observer;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.impl.TransactionImpl.CommitData;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
@@ -121,6 +122,24 @@ public class WorkerTestIT extends Base {
     Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
     
+    // test rollback
+    TransactionImpl tx5 = new TransactionImpl(config);
+    tx5.set("N0003", new Column("link", "N0030"), "");
+    tx5.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    tx5.commit();
+    
+    TransactionImpl tx6 = new TransactionImpl(config);
+    tx6.set("N0003", new Column("link", "N0050"), "");
+    tx6.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    CommitData cd = tx6.createCommitData();
+    tx6.preCommit(cd, new ArrayByteSequence("N0003"), new Column("attr", "lastupdate"));
+
+    runWorker();
+    
+    Transaction tx7 = new TransactionImpl(config);
+    Assert.assertEquals("4", tx7.get("N0003", new Column("attr", "degree")).toString());
+    Assert.assertNull("", tx7.get("IDEG3", new Column("node", "N0003")));
+    Assert.assertEquals("", tx7.get("IDEG4", new Column("node", "N0003")).toString());
   }
   
   // TODO test that observers trigger on delete

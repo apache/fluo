@@ -76,6 +76,8 @@ public class WorkerTool extends Configured implements Tool {
         else if (sleepTime < MAX_SLEEP_TIME)
           sleepTime = sleepTime + (long) (sleepTime * Math.random());
         
+        log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
+
         UtilWaitThread.sleep(sleepTime);
       }
     }

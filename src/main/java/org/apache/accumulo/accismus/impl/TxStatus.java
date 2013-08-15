@@ -32,7 +32,7 @@ public enum TxStatus {
   /**
    * determine the what state a transaction is in by inspecting the primary column
    */
-  public static TxStatus getTransactionStatus(Configuration config, ByteSequence prow, Column pcol, long startTs, MutableLong commitTs) {
+  public static TxStatus getTransactionStatus(Configuration config, ByteSequence prow, Column pcol, long startTs, MutableLong commitTs, Value lockVal) {
     // TODO ensure primary is visible
 
     IteratorSetting is = new IteratorSetting(10, RollbackCheckIterator.class);
@@ -50,9 +50,11 @@ public enum TxStatus {
     long ts = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
     
     if (colType == ColumnUtil.LOCK_PREFIX) {
-      if (ts == startTs)
+      if (ts == startTs) {
         status = TxStatus.LOCKED;
-      else
+        if (lockVal != null)
+          lockVal.set(entry.getValue().get());
+      } else
         status = TxStatus.UNKNOWN; // locked by another tx
     } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
       DelLockValue dlv = new DelLockValue(entry.getValue().get());

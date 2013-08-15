@@ -4,9 +4,10 @@ import java.util.HashSet;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.ColumnIterator;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
+import org.apache.accumulo.accismus.api.Transaction;
+import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
@@ -198,6 +199,21 @@ public class AccismusTestIT extends Base {
     Assert.assertEquals("21", tx6.get("joe", balanceCol).toString());
     Assert.assertEquals("61", tx6.get("jill", balanceCol).toString());
     
+    Transaction tx7 = new TransactionImpl(config, new ArrayByteSequence("joe"), balanceCol);
+    tx7.get("joe", balanceCol);
+    tx7.set("bob", balanceCol, "15");
+    tx7.set("jill", balanceCol, "60");
+    
+    try {
+      tx7.commit();
+      Assert.fail();
+    } catch (AlreadyAcknowledgedException aae) {}
+    
+    Transaction tx8 = new TransactionImpl(config);
+    
+    Assert.assertEquals("11", tx8.get("bob", balanceCol).toString());
+    Assert.assertEquals("21", tx8.get("joe", balanceCol).toString());
+    Assert.assertEquals("61", tx8.get("jill", balanceCol).toString());
   }
   
   @Test

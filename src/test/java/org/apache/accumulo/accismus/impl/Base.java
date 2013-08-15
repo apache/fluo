@@ -32,7 +32,6 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -62,13 +61,16 @@ public class Base {
 
   protected void runWorker() throws Exception, TableNotFoundException {
     Worker worker = new Worker(config);
-    worker.processUpdates();
-    
-    // there should not be any notifcations
-    Scanner scanner = conn.createScanner(table, new Authorizations());
-    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
-    
-    Assert.assertFalse(scanner.iterator().hasNext());
+    while (true) {
+      worker.processUpdates();
+      
+      // there should not be any notifcations
+      Scanner scanner = conn.createScanner(table, new Authorizations());
+      scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+      
+      if (!scanner.iterator().hasNext())
+        break;
+    }
   }
 
   @BeforeClass

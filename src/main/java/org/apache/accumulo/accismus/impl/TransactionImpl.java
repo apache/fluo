@@ -17,6 +17,7 @@ import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
 import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.api.exceptions.AlreadySetException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.AccumuloException;
@@ -204,7 +205,7 @@ public class TransactionImpl implements Transaction {
     }
     
     if (colUpdates.get(col) != null) {
-      throw new IllegalStateException("Value already set " + row + " " + col);
+      throw new AlreadySetException("Value already set " + row + " " + col);
     }
     colUpdates.put(col, value);
   }
@@ -275,16 +276,30 @@ public class TransactionImpl implements Transaction {
   }
 
   boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException, AlreadyAcknowledgedException {
+    if (triggerRow != null) {
+      // always want to throw already ack exception if collision, so process trigger first
+      return preCommit(cd, triggerRow, triggerColumn);
+    } else {
+      ByteSequence prow = updates.keySet().iterator().next();
+      Map<Column,ByteSequence> colSet = updates.get(prow);
+      Column pcol = colSet.keySet().iterator().next();
+      return preCommit(cd, prow, pcol);
+    }
+
+  }
+  
+  boolean preCommit(CommitData cd, ByteSequence primRow, Column primCol) throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
+      AlreadyAcknowledgedException {
     if (commitStarted)
       throw new IllegalStateException();
 
     commitStarted = true;
 
     // get a primary column
-    cd.prow = updates.keySet().iterator().next();
+    cd.prow = primRow;
     Map<Column,ByteSequence> colSet = updates.get(cd.prow);
-    cd.pcol = colSet.keySet().iterator().next();
-    cd.pval = colSet.remove(cd.pcol);
+    cd.pcol = primCol;
+    cd.pval = colSet.remove(primCol);
     if (colSet.size() == 0)
       updates.remove(cd.prow);
     
@@ -296,7 +311,7 @@ public class TransactionImpl implements Transaction {
     while (mutationStatus == Status.UNKNOWN) {
       
       MutableLong mcts = new MutableLong(-1);
-      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts);
+      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts, null);
       
       switch (txStatus) {
         case LOCKED:
@@ -323,6 +338,7 @@ public class TransactionImpl implements Transaction {
       return false;
     }
     
+    // TODO if trigger is always primary row:col, then do not need checks elsewhere
     // try to lock other columns
     ArrayList<ConditionalMutation> mutations = new ArrayList<ConditionalMutation>();
     
@@ -352,6 +368,7 @@ public class TransactionImpl implements Transaction {
       if (result.getStatus() == Status.ACCEPTED)
         cd.acceptedRows.add(new ArrayByteSequence(result.getMutation().getRow()));
       else {
+        // TODO if trigger is always primary row:col, then do not need checks elsewhere
         ackCollision |= checkForAckCollision(result.getMutation());
         cd.rejectedCount++;
       }
@@ -371,7 +388,7 @@ public class TransactionImpl implements Transaction {
 
   private boolean checkForAckCollision(ConditionalMutation cm) {
     ArrayByteSequence row = new ArrayByteSequence(cm.getRow());
-    
+
     if (row.equals(triggerRow)) {
       List<ColumnUpdate> updates = cm.getUpdates();
       
@@ -380,6 +397,9 @@ public class TransactionImpl implements Transaction {
         Column col = new Column(cu.getColumnFamily(), cu.getColumnQualifier()).setVisibility(new ColumnVisibility(cu.getColumnVisibility()));
         if (triggerColumn.equals(col)) {
           
+          // TODO this check will not detect ack when tx overlaps with another tx... it will instead the the lock release.. this may be ok, the worker will
+          // retry the tx and then see the already ack exception
+
           IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
           PrewriteIterator.setSnaptime(iterConf, startTs);
           PrewriteIterator.enableAckCheck(iterConf);
@@ -412,7 +432,7 @@ public class TransactionImpl implements Transaction {
     while (mutationStatus == Status.UNKNOWN) {
       
       MutableLong mcts = new MutableLong(-1);
-      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts);
+      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts, null);
       
       switch (txStatus) {
         case COMMITTED:

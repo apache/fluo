@@ -19,6 +19,7 @@ package org.apache.accumulo.accismus.impl;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
@@ -55,6 +56,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   private long startTs;
   private Iterator<Entry<Key,Value>> iterator;
+  private Entry<Key,Value> next;
   private ScannerConfiguration config;
 
   private Configuration aconfig;
@@ -89,15 +91,33 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   }
   
   public boolean hasNext() {
-    return iterator.hasNext();
+    if (next == null) {
+      next = getNext();
+    }
+    
+    return next != null;
   }
   
   public Entry<Key,Value> next() {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    
+    Entry<Key,Value> tmp = next;
+    next = null;
+    return tmp;
+  }
+  
+  public Entry<Key,Value> getNext() {
     
     long waitTime = INITIAL_WAIT_TIME;
     long firstSeen = -1;
 
     mloop: while (true) {
+      // its possible a next could exist then be rolled back
+      if (!iterator.hasNext())
+        return null;
+
       Entry<Key,Value> entry = iterator.next();
 
       byte[] cf = entry.getKey().getColumnFamilyData().toArray();
@@ -186,10 +206,11 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       // TODO reususe scanner?
       try {
         
+        Value lockVal = new Value();
         MutableLong commitTs = new MutableLong(-1);
         // TODO use cached CV
         TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual).setVisibility(new ColumnVisibility(pvis.toArray())), lockTs,
-            commitTs);
+            commitTs, lockVal);
         
         switch (txStatus) {
           case COMMITTED:
@@ -202,7 +223,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
             break;
           case LOCKED:
             if (abort) {
-              if (rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get())) {
+              if (rollbackPrimary(prow, pfam, pqual, pvis, lockTs, lockVal.get())) {
                 rollback(entry.getKey(), lockTs);
                 resolvedLock = true;
               }
