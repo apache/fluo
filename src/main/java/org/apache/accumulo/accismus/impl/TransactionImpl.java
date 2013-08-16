@@ -386,6 +386,53 @@ public class TransactionImpl implements Transaction {
     return true;
   }
 
+  /**
+   * This function helps handle the following case
+   * 
+   * <OL>
+   * <LI>TX1 locls r1 col1
+   * <LI>TX1 fails before unlocking
+   * <LI>TX2 attempts to write r1:col1 w/o reading it
+   * </OL>
+   * 
+   * In this case TX2 would not roll back TX1, because it never read the column. This function attempts to handle this case if TX2 fails. Only doing this in
+   * case of failures is cheaper than trying to always read unread columns.
+   * 
+   * @param cd
+   */
+  private void readUnread(CommitData cd) throws Exception {
+    // TODO this needs to be populated and made an instance var
+    Map<ByteSequence,Set<Column>> entriesRead = new HashMap<ByteSequence,Set<Column>>();
+    Map<ByteSequence,Set<Column>> entriesToRead = new HashMap<ByteSequence,Set<Column>>();
+    
+    for (Entry<ByteSequence,Map<Column,ByteSequence>> entry : updates.entrySet()) {
+      if (cd.acceptedRows != null && cd.acceptedRows.contains(entry.getKey()))
+        continue;
+      
+      Set<Column> colsRead = entriesRead.get(entry.getValue());
+      if (colsRead == null) {
+        entriesToRead.put(entry.getKey(), entry.getValue().keySet());
+      } else {
+        HashSet<Column> colsToRead = new HashSet<Column>(entry.getValue().keySet());
+        colsToRead.removeAll(colsRead);
+        if (colsToRead.size() > 0) {
+          entriesToRead.put(entry.getKey(), colsToRead);
+        }
+      }
+    }
+    
+    boolean cs = commitStarted;
+    try {
+      // TODO setting commitStarted false here is a bit of a hack... reuse code w/o doing this
+      commitStarted = false;
+      for (Entry<ByteSequence,Set<Column>> entry : entriesToRead.entrySet()) {
+        get(entry.getKey(), entry.getValue());
+      }
+    } finally {
+      commitStarted = cs;
+    }
+  }
+
   private boolean checkForAckCollision(ConditionalMutation cm) {
     ArrayByteSequence row = new ArrayByteSequence(cm.getRow());
 
@@ -524,7 +571,6 @@ public class TransactionImpl implements Transaction {
   @Override
   public void commit() throws CommitException {
     // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
-    // TODO throw exception instead of return boolean
     // TODO synchronize or detect concurrent use
     
     // TODO if data is being set for a row:col that was never read and is incomplete then the tx will fail instead of fixing it
@@ -537,8 +583,10 @@ public class TransactionImpl implements Transaction {
     }
     
     try {
-      if (!preCommit(cd))
+      if (!preCommit(cd)) {
+        readUnread(cd);
         throw new CommitException();
+      }
       
       long commitTs = OracleClient.getInstance(config).getTimestamp();
       if (commitPrimaryColumn(cd, commitTs)) {

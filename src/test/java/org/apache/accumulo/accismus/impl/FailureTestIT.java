@@ -25,6 +25,7 @@ import java.util.Random;
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
+import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.accismus.api.exceptions.StaleScanException;
 import org.apache.accumulo.accismus.impl.TransactionImpl.CommitData;
 import org.apache.accumulo.core.client.Scanner;
@@ -373,17 +374,26 @@ public class FailureTestIT extends Base {
     tx2.set("jill", balanceCol, "61");
     
     // TODO remove when bug fixed
-    if (true)
-      return;
 
-    // tx1 should be rolled back.. howerver there is bug... when commit failure occurs, could check if unread columns were locked.. if locked attempt
+    // tx1 should be rolled back.. howerver there was bug... when commit failure occurs, could check if unread columns were locked.. if locked attempt
     // rollback/rollforward
-    tx2.commit();
+    try {
+      // this should fail and rollback tx1.. so that retry will succeed
+      tx2.commit();
+      Assert.fail();
+    } catch (CommitException ce) {
+      
+    }
     
-    Transaction tx3 = new TransactionImpl(config);
+    TransactionImpl tx3 = new TransactionImpl(config);
+    tx3.set("bob", balanceCol, "11");
+    tx3.set("jill", balanceCol, "61");
+    tx3.commit();
     
-    Assert.assertEquals("11", tx3.get("bob", balanceCol).toString());
-    Assert.assertNull(tx3.get("joe", balanceCol));
-    Assert.assertEquals("61", tx3.get("jill", balanceCol).toString());
+    Transaction tx4 = new TransactionImpl(config);
+    
+    Assert.assertEquals("11", tx4.get("bob", balanceCol).toString());
+    Assert.assertNull(tx4.get("joe", balanceCol));
+    Assert.assertEquals("61", tx4.get("jill", balanceCol).toString());
   }
 }

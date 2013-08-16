@@ -55,6 +55,7 @@ public interface Transaction {
   
   public abstract void delete(ByteSequence row, Column col);
   
+  // TODO maybe this should not be in public API since it called by framework
   public abstract void commit() throws CommitException;
   
 }
