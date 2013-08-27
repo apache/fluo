@@ -56,6 +56,7 @@ public class TransactionImpl implements Transaction {
   private String table;
   
   private Map<ByteSequence,Map<Column,ByteSequence>> updates;
+  Map<ByteSequence,Set<Column>> columnsRead = new HashMap<ByteSequence,Set<Column>>();
   private ByteSequence observer;
   private ByteSequence triggerRow;
   private Column triggerColumn;
@@ -160,7 +161,19 @@ public class TransactionImpl implements Transaction {
       }
     }
     
+    // only update columns read after successful read
+    updateColumnsRead(row, columns);
+    
     return ret;
+  }
+  
+  private void updateColumnsRead(ByteSequence row, Set<Column> columns) {
+    Set<Column> colsRead = columnsRead.get(row);
+    if (colsRead == null) {
+      colsRead = new HashSet<Column>();
+      columnsRead.put(row, colsRead);
+    }
+    colsRead.addAll(columns);
   }
 
   // TODO add a get that uses the batch scanner
@@ -266,11 +279,31 @@ public class TransactionImpl implements Transaction {
     private ByteSequence prow;
     private Column pcol;
     private ByteSequence pval;
-    private int rejectedCount;
+
     private HashSet<ByteSequence> acceptedRows;
+    private Map<ByteSequence,Set<Column>> rejected = new HashMap<ByteSequence,Set<Column>>();
     
+    private void addPrimaryToRejected() {
+      rejected = Collections.singletonMap(prow, Collections.singleton(pcol));
+    }
+    
+    private void addToRejected(ByteSequence row, Set<Column> columns) {
+      rejected = new HashMap<ByteSequence,Set<Column>>();
+      
+      Set<Column> ret = rejected.put(row, columns);
+      if (ret != null)
+        throw new IllegalStateException();
+    }
+    
+    private Map<ByteSequence,Set<Column>> getRejected() {
+      if (rejected == null)
+        return Collections.emptyMap();
+      
+      return rejected;
+    }
+
     public String toString() {
-      return prow + " " + pcol + " " + pval + " " + rejectedCount;
+      return prow + " " + pcol + " " + pval + " " + rejected.size();
     }
 
   }
@@ -332,6 +365,7 @@ public class TransactionImpl implements Transaction {
     }
     
     if (mutationStatus != Status.ACCEPTED) {
+      cd.addPrimaryToRejected();
       if (checkForAckCollision(pcm)) {
         throw new AlreadyAcknowledgedException();
       }
@@ -357,7 +391,6 @@ public class TransactionImpl implements Transaction {
     }
     
     cd.acceptedRows = new HashSet<ByteSequence>();
-    cd.rejectedCount = 0;
     
     boolean ackCollision = false;
 
@@ -365,16 +398,17 @@ public class TransactionImpl implements Transaction {
     while (resultsIter.hasNext()) {
       Result result = resultsIter.next();
       // TODO handle unknown?
+      ArrayByteSequence row = new ArrayByteSequence(result.getMutation().getRow());
       if (result.getStatus() == Status.ACCEPTED)
-        cd.acceptedRows.add(new ArrayByteSequence(result.getMutation().getRow()));
+        cd.acceptedRows.add(row);
       else {
         // TODO if trigger is always primary row:col, then do not need checks elsewhere
         ackCollision |= checkForAckCollision(result.getMutation());
-        cd.rejectedCount++;
+        cd.addToRejected(row, updates.get(row).keySet());
       }
     }
     
-    if (cd.rejectedCount > 0) {
+    if (cd.getRejected().size() > 0) {
       rollback(cd);
       
       if (ackCollision)
@@ -401,22 +435,18 @@ public class TransactionImpl implements Transaction {
    * @param cd
    */
   private void readUnread(CommitData cd) throws Exception {
-    // TODO this needs to be populated and made an instance var
-    Map<ByteSequence,Set<Column>> entriesRead = new HashMap<ByteSequence,Set<Column>>();
-    Map<ByteSequence,Set<Column>> entriesToRead = new HashMap<ByteSequence,Set<Column>>();
+    // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user may not iterate over entire range
+    Map<ByteSequence,Set<Column>> columnsToRead = new HashMap<ByteSequence,Set<Column>>();
     
-    for (Entry<ByteSequence,Map<Column,ByteSequence>> entry : updates.entrySet()) {
-      if (cd.acceptedRows != null && cd.acceptedRows.contains(entry.getKey()))
-        continue;
-      
-      Set<Column> colsRead = entriesRead.get(entry.getValue());
-      if (colsRead == null) {
-        entriesToRead.put(entry.getKey(), entry.getValue().keySet());
+    for (Entry<ByteSequence,Set<Column>> entry : cd.getRejected().entrySet()) {
+      Set<Column> rowColsRead = columnsRead.get(entry.getKey());
+      if (rowColsRead == null) {
+        columnsToRead.put(entry.getKey(), entry.getValue());
       } else {
-        HashSet<Column> colsToRead = new HashSet<Column>(entry.getValue().keySet());
-        colsToRead.removeAll(colsRead);
+        HashSet<Column> colsToRead = new HashSet<Column>(entry.getValue());
+        colsToRead.removeAll(rowColsRead);
         if (colsToRead.size() > 0) {
-          entriesToRead.put(entry.getKey(), colsToRead);
+          columnsToRead.put(entry.getKey(), colsToRead);
         }
       }
     }
@@ -425,7 +455,7 @@ public class TransactionImpl implements Transaction {
     try {
       // TODO setting commitStarted false here is a bit of a hack... reuse code w/o doing this
       commitStarted = false;
-      for (Entry<ByteSequence,Set<Column>> entry : entriesToRead.entrySet()) {
+      for (Entry<ByteSequence,Set<Column>> entry : columnsToRead.entrySet()) {
         get(entry.getKey(), entry.getValue());
       }
     } finally {

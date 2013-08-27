@@ -359,37 +359,30 @@ public class FailureTestIT extends Base {
   @Test
   public void testCommitBug1() throws Exception {
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TransactionImpl tx1 = new TransactionImpl(config);
     
-    tx.set("bob", balanceCol, "10");
-    tx.set("joe", balanceCol, "20");
-    tx.set("jill", balanceCol, "60");
+    tx1.set("bob", balanceCol, "10");
+    tx1.set("joe", balanceCol, "20");
+    tx1.set("jill", balanceCol, "60");
     
-    CommitData cd = tx.createCommitData();
-    Assert.assertTrue(tx.preCommit(cd));
+    CommitData cd = tx1.createCommitData();
+    Assert.assertTrue(tx1.preCommit(cd));
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    while (true) {
+      TransactionImpl tx2 = new TransactionImpl(config);
     
-    tx2.set("bob", balanceCol, "11");
-    tx2.set("jill", balanceCol, "61");
-    
-    // TODO remove when bug fixed
-
-    // tx1 should be rolled back.. howerver there was bug... when commit failure occurs, could check if unread columns were locked.. if locked attempt
-    // rollback/rollforward
-    try {
-      // this should fail and rollback tx1.. so that retry will succeed
-      tx2.commit();
-      Assert.fail();
-    } catch (CommitException ce) {
+      tx2.set("bob", balanceCol, "11");
+      tx2.set("jill", balanceCol, "61");
       
+      // tx1 should be rolled back even in case where columns tx1 locked are not read by tx2
+      try {
+        tx2.commit();
+        break;
+      } catch (CommitException ce) {
+      
+      }
     }
-    
-    TransactionImpl tx3 = new TransactionImpl(config);
-    tx3.set("bob", balanceCol, "11");
-    tx3.set("jill", balanceCol, "61");
-    tx3.commit();
-    
+
     Transaction tx4 = new TransactionImpl(config);
     
     Assert.assertEquals("11", tx4.get("bob", balanceCol).toString());

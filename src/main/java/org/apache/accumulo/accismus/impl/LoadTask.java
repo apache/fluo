@@ -18,12 +18,14 @@ package org.apache.accumulo.accismus.impl;
 
 import org.apache.accumulo.accismus.api.Loader;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
+import org.apache.log4j.Logger;
 
 /**
  * 
  */
 public class LoadTask implements Runnable {
   
+  private static Logger log = Logger.getLogger(LoadTask.class);
   private Loader loader;
   private Configuration config;
   
@@ -43,6 +45,7 @@ public class LoadTask implements Runnable {
       } catch (CommitException e) {
         // retry
       } catch (Exception e) {
+        log.error("Failed to execute loader " + loader, e);
         throw new RuntimeException(e);
       }
     }
