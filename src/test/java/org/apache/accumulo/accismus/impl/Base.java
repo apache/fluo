@@ -60,7 +60,8 @@ public class Base {
   }
 
   protected void runWorker() throws Exception, TableNotFoundException {
-    Worker worker = new Worker(config);
+    // TODO pass a tablet chooser that returns first tablet
+    Worker worker = new Worker(config, new RandomTabletChooser(config));
     while (true) {
       worker.processUpdates();
       

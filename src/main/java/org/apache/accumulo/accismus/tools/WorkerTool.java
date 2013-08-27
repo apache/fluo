@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.Logging;
+import org.apache.accumulo.accismus.impl.RandomTabletChooser;
 import org.apache.accumulo.accismus.impl.Worker;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
@@ -53,7 +54,7 @@ public class WorkerTool extends Configured implements Tool {
       // TODO handle worker dying
       Worker worker = null;
       try {
-        worker = new Worker(config);
+        worker = new Worker(config, new RandomTabletChooser(config));
       } catch (Exception e1) {
         log.error("Error while processing updates", e1);
         throw new RuntimeException(e1);

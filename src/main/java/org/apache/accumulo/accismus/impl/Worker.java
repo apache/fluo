@@ -16,7 +16,6 @@
  */
 package org.apache.accumulo.accismus.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -32,10 +31,8 @@ import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.AlreadySetException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.RandomRowGenerator.DataSource;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.accismus.impl.RandomTabletChooser.TabletInfo;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -48,15 +45,21 @@ import org.apache.log4j.Logger;
  */
 public class Worker {
   
+  // TODO arbitrary
+  private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
+
   private static Logger log = Logger.getLogger(Worker.class);
 
   private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
   private Configuration config;
   private Random rand = new Random();
-  
-  public Worker(Configuration config) throws Exception {
+
+  private RandomTabletChooser tabletChooser;
+
+  public Worker(Configuration config, RandomTabletChooser tabletChooser) throws Exception {
 
     this.config = config;
+    this.tabletChooser = tabletChooser;
 
     Set<Entry<Column,String>> es = config.getObservers().entrySet();
     for (Entry<Column,String> entry : es) {
@@ -87,20 +90,35 @@ public class Worker {
     return new Range(row, true, null, false);
   }
   
-  private Range pickRandomStartPoint(Scanner scanner) throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
-    // TODO cache splits for a bit and share between worker threads
-
-    List<Text> splits = new ArrayList<Text>(config.getConnector().tableOperations().listSplits(config.getTable()));
-
-    int num = rand.nextInt(splits.size() + 1);
+  private Range pickRandomStartPoint(Scanner scanner) throws Exception {
     
-    Text start = num - 1 < 0 ? null : splits.get(num - 1);
-    Text end = num >= splits.size() ? null : splits.get(num);
-    
-    // TODO remember if a tablet is empty an do not retry it for a bit... the more times empty, the longer the retry
-    // TODO only have one thread inspecting a tablet for a start location at a time.. want to handle the case w/ few tablets, many workers, and no notifications
-    // well
-    return pickRandomRow(scanner, start, end);
+    TabletInfo tablet = tabletChooser.getRandomTablet();
+    // only have one thread per process inspecting a tablet for a start location at a time.. want to handle the case w/ few tablets, many workers, and no
+    // notifications well
+    if (tablet != null) {
+      try {
+        if (tablet.retryTime > System.currentTimeMillis()) {
+          return null;
+        }
+        
+        Range ret = pickRandomRow(scanner, tablet.start, tablet.end);
+        if (ret == null) {
+          // remember if a tablet is empty an do not retry it for a bit... the more times empty, the longer the retry
+          tablet.retryTime = tablet.sleepTime + System.currentTimeMillis();
+          if (tablet.sleepTime < MAX_SLEEP_TIME)
+            tablet.sleepTime = tablet.sleepTime + (long) (tablet.sleepTime * Math.random());
+        } else {
+          tablet.retryTime = 0;
+          tablet.sleepTime = 0;
+        }
+        
+        return ret;
+      } finally {
+        tablet.lock.unlock();
+      }
+    } else {
+      return null;
+    }
   }
 
   // TODO make package private
