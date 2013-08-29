@@ -30,6 +30,7 @@ import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.zookeeper.ZooUtil;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
@@ -94,6 +95,13 @@ public class InitializeTool extends Configured implements Tool {
       Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers);
       Operations.updateWorkerConfig(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
     }
+
+    // TODO add accismus version to context name to make it unique
+    String contextName = "accismus";
+    
+    conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "accismus",
+        initProps.getProperty("accismus.init.accumulo.classpath"));
+    conn.tableOperations().setProperty(initProps.getProperty("accismus.init.table"), Property.TABLE_CLASSPATH.getKey(), contextName);
 
     return 0;
   }

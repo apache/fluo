@@ -87,6 +87,7 @@ public class Worker {
     if (row == null)
       return null;
     
+    // TODO maybe limit to tablet by setting end.. this prevents all threads from scanning entire table
     return new Range(row, true, null, false);
   }
   
