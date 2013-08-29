@@ -598,13 +598,9 @@ public class TransactionImpl implements Transaction {
     return cd;
   }
 
-  @Override
   public void commit() throws CommitException {
-    // TODO can optimize a tx that modifies a single row, can be done with a single conditional mutation
     // TODO synchronize or detect concurrent use
     
-    // TODO if data is being set for a row:col that was never read and is incomplete then the tx will fail instead of fixing it
-
     CommitData cd;
     try {
       cd = createCommitData();

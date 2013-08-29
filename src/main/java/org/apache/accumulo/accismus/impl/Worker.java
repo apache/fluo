@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Observer;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.AlreadySetException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
@@ -159,7 +158,7 @@ public class Worker {
 
       while (true)
         try {
-          Transaction tx = new TransactionImpl(config, row, col);
+          TransactionImpl tx = new TransactionImpl(config, row, col);
           observer.process(tx, row, col);
           tx.commit();
           break;

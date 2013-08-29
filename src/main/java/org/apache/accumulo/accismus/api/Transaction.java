@@ -19,7 +19,6 @@ package org.apache.accumulo.accismus.api;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.data.ByteSequence;
 
 /**
@@ -54,8 +53,5 @@ public interface Transaction {
   public abstract void delete(byte[] row, Column col);
   
   public abstract void delete(ByteSequence row, Column col);
-  
-  // TODO maybe this should not be in public API since it called by framework
-  public abstract void commit() throws CommitException;
   
 }

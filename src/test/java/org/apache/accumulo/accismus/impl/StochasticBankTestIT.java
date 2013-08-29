@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.ColumnIterator;
-import org.apache.accumulo.accismus.api.Transaction;
 import org.apache.accumulo.accismus.api.RowIterator;
 import org.apache.accumulo.accismus.api.ScannerConfiguration;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
@@ -97,7 +96,7 @@ public class StochasticBankTestIT extends Base {
   private static Column balanceCol = new Column("data", "balance");
 
   private static void populate(Configuration config, int numAccounts) throws Exception {
-    Transaction tx = new TransactionImpl(config);
+    TransactionImpl tx = new TransactionImpl(config);
     
     for(int i = 0; i < numAccounts; i++){
       tx.set(fmtAcct(i), balanceCol, "1000");
@@ -145,7 +144,7 @@ public class StochasticBankTestIT extends Base {
       
       while (true) {
         try {
-          Transaction tx = new TransactionImpl(config);
+          TransactionImpl tx = new TransactionImpl(config);
           int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
           int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
           
@@ -265,7 +264,7 @@ public class StochasticBankTestIT extends Base {
 
   }
   
-  private static HashMap<String,String> toMap(Transaction tx) throws Exception {
+  private static HashMap<String,String> toMap(TransactionImpl tx) throws Exception {
     HashMap<String,String> map = new HashMap<String,String>();
     
     RowIterator iter = tx.get(new ScannerConfiguration());
