@@ -16,24 +16,26 @@
  */
 package org.apache.accumulo.accismus.api;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.accumulo.core.data.ByteSequence;
 
 /**
- * 
+ * Implementations of this interface should provide snapshot isolation across rows when reading from a table.
  */
+public interface Snapshot {
+  public abstract ByteSequence get(String row, Column column) throws Exception;
 
-public interface Transaction extends Snapshot {
-  
-  public abstract void set(String row, Column col, String value);
-  
-  public abstract void set(byte[] row, Column col, byte[] value);
-  
-  public abstract void set(ByteSequence row, Column col, ByteSequence value);
-  
-  public abstract void delete(String row, Column col);
-  
-  public abstract void delete(byte[] row, Column col);
-  
-  public abstract void delete(ByteSequence row, Column col);
-  
+  public abstract ByteSequence get(byte[] row, Column column) throws Exception;
+
+  public abstract ByteSequence get(ByteSequence row, Column column) throws Exception;
+
+  public abstract Map<Column,ByteSequence> get(String row, Set<Column> columns) throws Exception;
+
+  public abstract Map<Column,ByteSequence> get(byte[] row, Set<Column> columns) throws Exception;
+
+  public abstract Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception;
+
+  public abstract RowIterator get(ScannerConfiguration config) throws Exception;
 }

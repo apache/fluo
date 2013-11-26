@@ -86,6 +86,7 @@ public class Configuration {
    * @param props
    */
   public Configuration(Properties props) throws Exception {
+    // TODO need to close zookeeper
     this(new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP)), null), props
         .getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
         props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(AccismusProperties.ACCUMULO_USER_PROP),

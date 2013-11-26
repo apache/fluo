@@ -16,8 +16,8 @@
  */
 package org.apache.accumulo.accismus.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,13 +29,15 @@ import org.apache.accumulo.accismus.api.Observer;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
 import org.apache.accumulo.accismus.api.exceptions.AlreadySetException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
-import org.apache.accumulo.accismus.impl.RandomRowGenerator.DataSource;
 import org.apache.accumulo.accismus.impl.RandomTabletChooser.TabletInfo;
+import org.apache.accumulo.accismus.impl.iterators.NotificationSampleIterator;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.user.VersioningIterator;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
@@ -71,23 +73,32 @@ public class Worker {
   
   
   private Range pickRandomRow(final Scanner scanner, Text start, Text end) {
-    RandomRowGenerator rrg = new RandomRowGenerator(rand);
-    
-    Text row = rrg.pickRandomRow(new DataSource() {
-      
-      @Override
-      public Iterator<Entry<Key,Value>> scan(Text start, Text end) {
-        // TODO set batch size
-        scanner.setRange(new Range(start, true, end, true));
-        return scanner.iterator();
-      }
-    }, start, end);
 
-    if (row == null)
+    scanner.clearScanIterators();
+    scanner.clearColumns();
+
+    // table does not have versioning iterator configured, if there are multiple notification versions only want to see one
+    IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
+    scanner.addScanIterator(iterCfg);
+
+    iterCfg = new IteratorSetting(100, NotificationSampleIterator.class);
+    // TODO arbitrary number
+    NotificationSampleIterator.setSampleSize(iterCfg, 256);
+    scanner.addScanIterator(iterCfg);
+    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+    scanner.setRange(new Range(start, false, end, true));
+
+    ArrayList<Text> sample = new ArrayList<Text>();
+
+    for (Entry<Key,Value> entry : scanner)
+      sample.add(entry.getKey().getRow());
+
+    if (sample.size() == 0)
       return null;
     
-    // TODO maybe limit to tablet by setting end.. this prevents all threads from scanning entire table
-    return new Range(row, true, null, false);
+    Text row = sample.get(rand.nextInt(sample.size()));
+
+    return new Range(row, true, end, true);
   }
   
   private Range pickRandomStartPoint(Scanner scanner) throws Exception {
@@ -126,12 +137,19 @@ public class Worker {
     // TODO how does user set auths that workers are expected to use...
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
-    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     
     Range range = pickRandomStartPoint(scanner);
     if (range == null)
       return 0;
     
+    scanner.clearColumns();
+    scanner.clearScanIterators();
+
+    // table does not have versioning iterator configured, if there are multiple notification versions only want to see one
+    IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
+    scanner.addScanIterator(iterCfg);
+
+    scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     scanner.setRange(range);
     
     long numProcessed = 0;

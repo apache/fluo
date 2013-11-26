@@ -158,6 +158,9 @@ public class Operations {
   }
 
   private static void createTable(String tableName, Connector conn) throws Exception {
+    // TODO may need to configure an iterator that squishes multiple notifications to one at compaction time since versioning iterator is not configured for
+    // table...
+
     conn.tableOperations().create(tableName, false);
     Map<String,Set<Text>> groups = new HashMap<String,Set<Text>>();
     groups.put("notify", Collections.singleton(ByteUtil.toText(Constants.NOTIFY_CF)));

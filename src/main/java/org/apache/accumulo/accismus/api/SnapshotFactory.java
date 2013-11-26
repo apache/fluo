@@ -16,24 +16,41 @@
  */
 package org.apache.accumulo.accismus.api;
 
-import org.apache.accumulo.core.data.ByteSequence;
+import java.util.Properties;
+
+import org.apache.accumulo.accismus.api.config.AccismusProperties;
+import org.apache.accumulo.accismus.impl.Configuration;
+import org.apache.accumulo.accismus.impl.TransactionImpl;
 
 /**
  * 
  */
 
-public interface Transaction extends Snapshot {
+// TODO determine better way for users to get snapshots and LoaderExecturs... defering until multiple tables are supported
+
+public class SnapshotFactory {
   
-  public abstract void set(String row, Column col, String value);
+  private Configuration config;
+
+  /**
+   * 
+   * @param props
+   *          see {@link AccismusProperties}
+   */
   
-  public abstract void set(byte[] row, Column col, byte[] value);
-  
-  public abstract void set(ByteSequence row, Column col, ByteSequence value);
-  
-  public abstract void delete(String row, Column col);
-  
-  public abstract void delete(byte[] row, Column col);
-  
-  public abstract void delete(ByteSequence row, Column col);
-  
+  public SnapshotFactory(Properties props) {
+    try {
+      this.config = new Configuration(props);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Snapshot createSnapshot(){
+    try {
+      return new TransactionImpl(config);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
