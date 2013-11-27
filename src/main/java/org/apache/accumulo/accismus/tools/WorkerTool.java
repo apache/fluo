@@ -20,11 +20,12 @@ import java.io.File;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.accumulo.accismus.api.config.WorkerProperties;
 import org.apache.accumulo.accismus.impl.Configuration;
 import org.apache.accumulo.accismus.impl.Logging;
-import org.apache.accumulo.accismus.impl.RandomTabletChooser;
-import org.apache.accumulo.accismus.impl.Worker;
+import org.apache.accumulo.accismus.impl.WorkerTask;
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
@@ -36,54 +37,10 @@ import org.apache.log4j.Logger;
  */
 public class WorkerTool extends Configured implements Tool {
   
-  // TODO max sleep time should probably be a function of the total number of threads in the system
-  private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
   private static Logger log = Logger.getLogger(WorkerTool.class);
 
-  private static class WorkerTask implements Runnable {
-    
-    private Configuration config;
-    
-    WorkerTask(Configuration config) {
-      this.config = config;
-    }
-    
-    @Override
-    public void run() {
-      // TODO handle worker dying
-      Worker worker = null;
-      try {
-        worker = new Worker(config, new RandomTabletChooser(config));
-      } catch (Exception e1) {
-        log.error("Error while processing updates", e1);
-        throw new RuntimeException(e1);
-      }
-      
-      long sleepTime = 0;
-      
-      while (true) {
-        long numProcessed = 0;
-        try {
-          numProcessed = worker.processUpdates();
-        } catch (Exception e) {
-          log.error("Error while processing updates", e);
-        }
-        
-        if (numProcessed > 0)
-          sleepTime = 0;
-        else if (sleepTime == 0)
-          sleepTime = 100;
-        else if (sleepTime < MAX_SLEEP_TIME)
-          sleepTime = sleepTime + (long) (sleepTime * Math.random());
-        
-        log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
 
-        UtilWaitThread.sleep(sleepTime);
-      }
-    }
-    
-  }
 
   public static void main(String[] args) throws Exception {
     ToolRunner.run(new WorkerTool(), args);
@@ -106,11 +63,11 @@ public class WorkerTool extends Configured implements Tool {
       log.info("config " + entry.getKey() + " = " + entry.getValue());
     }
 
-    int numThreads = Integer.parseInt(config.getWorkerProperties().getProperty("accismus.config.worker.numThreads"));
+    int numThreads = Integer.parseInt(config.getWorkerProperties().getProperty(WorkerProperties.NUM_THREADS_PROP));
     
     ExecutorService tp = Executors.newFixedThreadPool(numThreads);
     for (int i = 0; i < numThreads; i++) {
-      tp.submit(new WorkerTask(config));
+      tp.submit(new WorkerTask(config, new AtomicBoolean(true)));
     }
     
     // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.

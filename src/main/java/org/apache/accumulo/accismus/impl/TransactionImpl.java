@@ -601,6 +601,9 @@ public class TransactionImpl implements Transaction {
   public void commit() throws CommitException {
     // TODO synchronize or detect concurrent use
     
+    if (updates.size() == 0)
+      return;
+
     CommitData cd;
     try {
       cd = createCommitData();

@@ -27,7 +27,6 @@ import java.util.Set;
 import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.api.Observer;
 import org.apache.accumulo.accismus.api.exceptions.AlreadyAcknowledgedException;
-import org.apache.accumulo.accismus.api.exceptions.AlreadySetException;
 import org.apache.accumulo.accismus.api.exceptions.CommitException;
 import org.apache.accumulo.accismus.impl.RandomTabletChooser.TabletInfo;
 import org.apache.accumulo.accismus.impl.iterators.NotificationSampleIterator;
@@ -180,19 +179,22 @@ public class Worker {
           observer.process(tx, row, col);
           tx.commit();
           break;
-        } catch (AlreadySetException ase) {
-          // this could be caused by multiple worker threads processing the same notification
-          scanner.setRange(new Range(entry.getKey(), true, entry.getKey(), true));
-          if (scanner.iterator().hasNext()) {
-            // notification is still there, so maybe a bug in user code
-            throw ase;
-          } else {
-            return numProcessed;
-          }
         } catch (AlreadyAcknowledgedException aae) {
           return numProcessed;
         } catch (CommitException e) {
           // retry
+        } catch (Exception e) {
+          // this could be caused by multiple worker threads processing the same notification
+          // TODO this detection method has a race condition, notification could be recreated after being deleted... need to check notification timestamp
+          scanner.setRange(new Range(entry.getKey(), true, entry.getKey(), true));
+          if (scanner.iterator().hasNext()) {
+            // notification is still there, so maybe a bug in user code
+            throw e;
+          } else {
+            // no notification, so maybe another thread processed notification
+            log.debug("Failure processing notification concurrently ", e);
+            return numProcessed;
+          }
         }
       // TODO if duplicate set detected, see if its because already acknowledged
       

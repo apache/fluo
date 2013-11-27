@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.accumulo.accismus.api;
+package org.apache.accumulo.accismus.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -28,9 +28,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.accumulo.accismus.api.Column;
 import org.apache.accumulo.accismus.format.AccismusFormatter;
-import org.apache.accumulo.accismus.impl.ByteUtil;
-import org.apache.accumulo.accismus.impl.Constants;
 import org.apache.accumulo.accismus.impl.iterators.GarbageCollectionIterator;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -108,7 +107,7 @@ public class Operations {
     zk.close();
   }
 
-  public static void initialize(Connector conn, String zoodir, String table, Map<Column,String> colObservers) throws Exception {
+  public static void initialize(Connector conn, String zoodir, String table) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
     String accumuloInstanceName = conn.getInstance().getInstanceName();
@@ -128,9 +127,6 @@ public class Operations {
 
     zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
     zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'0'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-    updateObservers(conn, zoodir, colObservers);
-    updateWorkerConfig(conn, zoodir, new Properties());
 
     zk.close();
     
