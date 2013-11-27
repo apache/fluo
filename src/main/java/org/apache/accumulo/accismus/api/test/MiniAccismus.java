@@ -72,7 +72,7 @@ public class MiniAccismus {
       if (oserver != null) {
         oserver.stop();
         shutdownFlag.set(true);
-        tp.shutdown();
+        tp.shutdownNow();
         while (!tp.awaitTermination(1, TimeUnit.SECONDS)) {
 
         }

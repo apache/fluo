@@ -76,7 +76,7 @@ public class Admin {
         String contextName = "accismus";
         conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "accismus",
             props.getProperty(InitializationProperties.CLASSPATH_PROP));
-        conn.tableOperations().setProperty(props.getProperty("accismus.init.table"), Property.TABLE_CLASSPATH.getKey(), contextName);
+        conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_CLASSPATH.getKey(), contextName);
       }
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException(nee);

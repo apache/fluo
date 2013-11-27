@@ -67,7 +67,7 @@ public class WorkerTool extends Configured implements Tool {
     
     ExecutorService tp = Executors.newFixedThreadPool(numThreads);
     for (int i = 0; i < numThreads; i++) {
-      tp.submit(new WorkerTask(config, new AtomicBoolean(true)));
+      tp.submit(new WorkerTask(config, new AtomicBoolean(false)));
     }
     
     // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.
