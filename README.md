@@ -21,6 +21,7 @@ can be accomplished with the following steps.
 ```
 git clone http://git-wip-us.apache.org/repos/asf/accumulo.git
 cd accumulo
+git checkout 1.6.0-SNAPSHOT
 mvn clean compile install -DskipTests
 ```
 
