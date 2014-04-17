@@ -34,11 +34,11 @@ SERVICE="worker"
 
 case "$1" in
 start)
-	$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar org.apache.accumulo.accismus.tools.WorkerTool -libjars "$ACCISMUS_WORKER_CLASSPATH,$ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar" $ACCISMUS_HOME/conf/accismus.properties  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+	$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar accismus.tools.WorkerTool -libjars "$ACCISMUS_WORKER_CLASSPATH,$ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar" $ACCISMUS_HOME/conf/accismus.properties  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 
 	;;
 stop)
-	kill `jps -m | grep org.apache.accumulo.accismus.tools.WorkerTool | cut -f 1 -d ' '`
+	kill `jps -m | grep accismus.tools.WorkerTool | cut -f 1 -d ' '`
 	;;
 *)
 	echo $"Usage: $0 start|stop"
