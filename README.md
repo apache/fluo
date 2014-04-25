@@ -56,9 +56,12 @@ mvn verify -Dit.test=WorkerTestIT
 Running Accismus
 ----------------
 
-TODO create example word count app to reference and run
+The following instructions command show a rough outline of how to get Accismus
+installed and running on a single node.
 
-The following instructions command show a rough outline of how to get Accismus installed and running on a single node.
+You will need observers to run.  You can use the [jinex][7] examples observers.
+[Jinex][7] is a probably a bit too complicated for a starting example, will
+create something simpler soon.
 
 ```
 OJAR=<location of observer jar>
@@ -78,8 +81,6 @@ cd ..
 ./bin/worker.sh start
 ```
 
-TODO load data and do stuff, or ref example app
-
 When finished, run the following commands to stop the oracle and worker.
 
 ```
@@ -92,4 +93,5 @@ When finished, run the following commands to stop the oracle and worker.
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
 [6]: src/test/java/accismus/impl/WorkerTestIT.java
+[7]: https://github.com/keith-turner/jinex
 
