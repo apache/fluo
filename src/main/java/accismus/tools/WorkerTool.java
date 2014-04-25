@@ -23,6 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.accumulo.core.util.UtilWaitThread;
+import org.apache.commons.configuration.ConfigurationConverter;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -57,8 +59,8 @@ public class WorkerTool extends Configured implements Tool {
     }
 
     Logging.init("worker");
-
-    Configuration config = new Configuration(new File(args[0]));
+    
+    Configuration config = new Configuration(InitializeTool.loadProps(args[0]));
     
     for (Entry<Object,Object> entry : config.getWorkerProperties().entrySet()) {
       log.info("config " + entry.getKey() + " = " + entry.getValue());

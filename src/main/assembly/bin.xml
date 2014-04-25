@@ -20,6 +20,13 @@
       </includes>
     </fileSet>
     <fileSet>
+      <directory>target</directory>
+      <outputDirectory>lib/observers</outputDirectory>
+      <excludes>
+        <exclude>*/**</exclude>
+      </excludes>
+    </fileSet>
+    <fileSet>
       <directory>src/main/scripts</directory>
       <outputDirectory>bin</outputDirectory>
       <fileMode>755</fileMode>

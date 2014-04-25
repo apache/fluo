@@ -53,6 +53,40 @@ vim src/test/java/accismus/impl/WorkerTestIT.java
 mvn verify -Dit.test=WorkerTestIT
 ```
 
+Running Accismus
+----------------
+
+TODO create example word count app to reference and run
+
+The following instructions command show a rough outline of how to get Accismus installed and running on a single node.
+
+```
+OJAR=<location of observer jar>
+OPT=/opt
+mvn package assembly:assembly
+tar -C $OPT -xvzf target/accismus-0.0.1-SNAPSHOT-bin.tar.gz
+cd $OPT/accismus-0.0.1-SNAPSHOT
+cp $OJAR lib/observers
+cd conf
+cp examples/* .
+vim accismus-env.sh
+vim initialization.properties
+vim accismus.properties
+cd ..
+./bin/initialize.sh
+./bin/oracle.sh start
+./bin/worker.sh start
+```
+
+TODO load data and do stuff, or ref example app
+
+When finished, run the following commands to stop the oracle and worker.
+
+```
+./bin/worker.sh stop
+./bin/oracle.sh stop
+```
+
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000

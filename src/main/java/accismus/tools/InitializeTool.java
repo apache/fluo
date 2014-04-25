@@ -16,9 +16,15 @@
  */
 package accismus.tools;
 
-import java.io.FileReader;
+import java.io.File;
 import java.util.Properties;
 
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationConverter;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
+import org.apache.commons.lang.text.StrLookup;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -35,6 +41,26 @@ public class InitializeTool extends Configured implements Tool {
     ToolRunner.run(new InitializeTool(), args);
   }
   
+  
+  static Properties loadProps(String ... files) throws ConfigurationException{
+    ConfigurationInterpolator.registerGlobalLookup("env", new StrLookup() {
+      @Override
+      public String lookup(String key) {
+        return System.getenv(key);
+      }
+    });
+    
+    Properties defaults = Configuration.getDefaultProperties();
+    
+    CompositeConfiguration compConf = new CompositeConfiguration();
+    for(String file : files)
+      compConf.addConfiguration(new PropertiesConfiguration(new File(file)));
+    
+    compConf.addConfiguration(ConfigurationConverter.getConfiguration(defaults));
+    
+    return ConfigurationConverter.getProperties(compConf.interpolatedConfiguration());
+  }
+  
   @Override
   public int run(String[] args) throws Exception {
     if (args.length != 2) {
@@ -42,11 +68,10 @@ public class InitializeTool extends Configured implements Tool {
       System.exit(-1);
     }
     
-    Properties props = new Properties(Configuration.getDefaultProperties());
-    props.load(new FileReader(args[0]));
-    props.load(new FileReader(args[1]));
-    
+   Properties props = loadProps(args);
+
     try {
+      //TODO maybe use commons Configuration instrea of Properties in API
       Admin.initialize(props);
     } catch (AlreadyInitializedException aie) {
       Admin.updateWorkerConfig(props);
