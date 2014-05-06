@@ -71,28 +71,6 @@ When finished, run the following commands to stop the oracle and worker.
 ./bin/oracle.sh stop
 ```
 
-Running Accumulo
-----------------
-
-The instructions above assume you have Accumulo and Zookeeper running.  If you
-do not then you can use the following command to quickly start a local Accumulo
-and Zookeeper instance.  After you run this command it will print the info need
-to connect to Accumulo and Zookeeper. This info can be used to configure
-Accismus.
-
-```
-mvn exec:java -Dexec.mainClass=org.apache.accumulo.minicluster.MiniAccumuloRunner -Dexec.classpathScope=test
-```
-
-This will start a mini Accumulo instance that will run until you press ctrl-C.
-For more info about MiniAccumuloRunner execute the following command. 
-
-```
-mvn exec:java -Dexec.mainClass=org.apache.accumulo.minicluster.MiniAccumuloRunner -Dexec.classpathScope=test -Dexec.args="--help"
-```
-
-
-
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
