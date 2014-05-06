@@ -77,7 +77,8 @@ Running Accumulo
 The instructions above assume you have Accumulo and Zookeeper running.  If you
 do not then you can use the following command to quickly start a local Accumulo
 and Zookeeper instance.  After you run this command it will print the info need
-to connect to Accumulo and Zookeeper. 
+to connect to Accumulo and Zookeeper. This info can be used to configure
+Accismus.
 
 ```
 mvn exec:java -Dexec.mainClass=org.apache.accumulo.minicluster.MiniAccumuloRunner -Dexec.classpathScope=test
