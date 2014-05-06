@@ -72,7 +72,7 @@ When finished, run the following commands to stop the oracle and worker.
 ```
 
 Running Accumulo
-===============
+----------------
 
 The instructions above assume you have Accumulo and Zookeeper running.  If you
 do not then you can use the following command to quickly start a local Accumulo
