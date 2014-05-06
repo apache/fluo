@@ -32,7 +32,7 @@
       <plugin>
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-maven-plugin</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.6.0</version>
         <configuration>
           <instanceName>plugin-it-instance</instanceName>
           <rootPassword>ITSecret</rootPassword>
@@ -90,7 +90,7 @@
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
-      <version>1.6.0-SNAPSHOT</version>
+      <version>1.6.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -122,12 +122,12 @@
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
-      <version>1.6.0-SNAPSHOT</version>
+      <version>1.6.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-test</artifactId>
-      <version>1.6.0-SNAPSHOT</version>
+      <version>1.6.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

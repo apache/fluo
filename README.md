@@ -2,7 +2,7 @@ Accismus
 ========
 
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
-Accumulo 1.6.0-SNAPSHOT which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
+Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
 [ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
 makes it possible to effeciently find notifications.  Theoretically this
 prototype is to a point where it could run in a distributed manner.  But this
@@ -11,23 +11,6 @@ and the Oracle is a service.
 
 There is a lot that needs to be done.  If you are interested in contributing
 send me an email or check out the issues.
-
-Building Accumulo 1.6.0 with CAS
---------------------------------
-
-Before you can build Accismus, you will need to build Accumulo with CAS.  This
-can be accomplished with the following steps.
-
-```
-git clone http://git-wip-us.apache.org/repos/asf/accumulo.git
-cd accumulo
-git checkout 1.6.0-SNAPSHOT
-mvn clean compile install -DskipTests
-```
-
-Running these commands will leave 1.6.0-SNAPSHOT jars in your local maven repo.
-You may want to delete these later.  The skipTest option was suggested because 
-the integration test are currently in a state of flux in 1.6.0-SNAPSHOT.
 
 
 Building Accismus
@@ -87,6 +70,27 @@ When finished, run the following commands to stop the oracle and worker.
 ./bin/worker.sh stop
 ./bin/oracle.sh stop
 ```
+
+Running Accumulo
+===============
+
+The instructions above assume you have Accumulo and Zookeeper running.  If you
+do not then you can use the following command to quickly start a local Accumulo
+and Zookeeper instance.  After you run this command it will print the info need
+to connect to Accumulo and Zookeeper. 
+
+```
+mvn exec:java -Dexec.mainClass=org.apache.accumulo.minicluster.MiniAccumuloRunner -Dexec.classpathScope=test
+```
+
+This will start a mini Accumulo instance that will run until you press ctrl-C.
+For more info about MiniAccumuloRunner execute the following command. 
+
+```
+mvn exec:java -Dexec.mainClass=org.apache.accumulo.minicluster.MiniAccumuloRunner -Dexec.classpathScope=test -Dexec.args="--help"
+```
+
+
 
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
