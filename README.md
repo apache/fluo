@@ -1,7 +1,7 @@
 Accismus
 ========
 
-A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on the
+A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
 Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
 [ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
 makes it possible to effeciently find notifications.  Theoretically this
@@ -16,7 +16,7 @@ send me an email or check out the issues.
 Building Accismus
 -----------------
 
-After building Accumulo with CAS, you can build Accismus with the following steps.
+Using Maven, you can build Accismus with the following steps.
 
 ```
 git clone https://github.com/keith-turner/Accismus.git
@@ -40,7 +40,8 @@ Running Accismus
 ----------------
 
 The following instructions command show a rough outline of how to get Accismus
-installed and running on a single node.
+installed and running on a single node.  These instructions assume an Accumulo
+1.6 instance is already running.
 
 You will need observers to run.  You can use the [jinex][7] examples observers.
 [Jinex][7] is a probably a bit too complicated for a starting example, will
