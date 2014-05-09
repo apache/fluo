@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
@@ -56,6 +57,7 @@ public class Configuration {
   private String accumuloInstanceID;
   private String accismusInstanceID;
   private Properties workerProps;
+  private SharedResources resources;
   
   public Configuration(Configuration config) throws Exception {
     this.table = config.table;
@@ -66,6 +68,8 @@ public class Configuration {
     this.accumuloInstanceID = config.accumuloInstanceID;
     this.observers = config.observers;
     this.conn = config.conn;
+
+    this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
   }
 
   public Configuration(ZooKeeper zk, String zoodir, Connector conn) throws Exception {
@@ -81,6 +85,8 @@ public class Configuration {
     if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID)) {
       throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
     }
+
+    this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
   }
   
   /**
@@ -157,6 +163,14 @@ public class Configuration {
 
   public void setAuthorizations(Authorizations auths) {
     this.auths = auths;
+
+    // TODO the following is a big hack, this method is currently not exposed in API
+    resources.close();
+    try {
+      this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   public Authorizations getAuthorizations() {
@@ -189,6 +203,10 @@ public class Configuration {
   
   public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
     return conn.createConditionalWriter(table, new ConditionalWriterConfig().setAuthorizations(auths));
+  }
+
+  public SharedResources getSharedResources() {
+    return resources;
   }
 
   public String getZookeeperRoot() {

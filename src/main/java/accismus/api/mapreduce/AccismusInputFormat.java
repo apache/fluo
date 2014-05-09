@@ -61,10 +61,12 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
       
       private Entry<ByteSequence,ColumnIterator> entry;
       private RowIterator rowIter;
+      private Configuration accisConf = null;
       
       @Override
       public void close() throws IOException {
-        
+        if (accisConf != null)
+          accisConf.getSharedResources().close();
       }
       
       @Override
@@ -95,7 +97,7 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
           Properties props = new Properties();
           props.load(bais);
           
-          Configuration accisConf = new Configuration(props);
+          accisConf = new Configuration(props);
           
           TransactionImpl ti = new TransactionImpl(accisConf, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
           ScannerConfiguration sc = new ScannerConfiguration().setRange(range);

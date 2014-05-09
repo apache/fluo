@@ -16,6 +16,7 @@
  */
 package accismus.api;
 
+import java.io.Closeable;
 import java.util.Properties;
 
 import accismus.api.config.AccismusProperties;
@@ -28,7 +29,7 @@ import accismus.impl.TransactionImpl;
 
 // TODO determine better way for users to get snapshots and LoaderExecturs... defering until multiple tables are supported
 
-public class SnapshotFactory {
+public class SnapshotFactory implements Closeable {
   
   private Configuration config;
 
@@ -52,5 +53,10 @@ public class SnapshotFactory {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  // TODO having a close method on a factory? is that bad?
+  public void close() {
+    config.getSharedResources().close();
   }
 }

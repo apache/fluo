@@ -13,8 +13,6 @@ import java.util.Set;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
@@ -538,20 +536,19 @@ public class TransactionImpl implements Transaction {
     
     // TODO let rollback be done lazily? this makes GC more difficult
     
-    BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
-    
     Mutation m;
 
+    ArrayList<Mutation> mutations = new ArrayList<Mutation>(cd.acceptedRows.size());
     for (ByteSequence row : cd.acceptedRows) {
       m = new Mutation(row.toArray());
       for (Column col : updates.get(row).keySet()) {
         m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
             DelLockValue.encode(startTs, false, true));
       }
-      bw.addMutation(m);
+      mutations.add(m);
     }
     
-    bw.flush();
+    config.getSharedResources().getBatchWriter().writeMutations(mutations);
     
     // mark transaction as complete for garbage collection purposes
     m = new Mutation(cd.prow.toArray());
@@ -560,15 +557,12 @@ public class TransactionImpl implements Transaction {
     m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
         DelLockValue.encode(startTs, false, true));
     m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | startTs, EMPTY);
-    bw.addMutation(m);
-
-    bw.close();
+    config.getSharedResources().getBatchWriter().writeMutation(m);
   }
   
   boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
     // delete locks and add writes for other columns
-    // TODO use shared batch writer
-    BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+    ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size());
     for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
       Mutation m = new Mutation(rowUpdates.getKey().toArray());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
@@ -577,25 +571,22 @@ public class TransactionImpl implements Transaction {
             commitTs, observedColumns, m);
       }
       
-      bw.addMutation(m);
+      mutations.add(m);
     }
     
-    bw.flush();
+    config.getSharedResources().getBatchWriter().writeMutations(mutations);
     
     // mark transaction as complete for garbage collection purposes
     Mutation m = new Mutation(cd.prow.toArray());
     m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | commitTs, EMPTY);
-    bw.addMutation(m);
-
-    bw.close();
+    config.getSharedResources().getBatchWriter().writeMutation(m);
     
     return true;
   }
 
   CommitData createCommitData() throws TableNotFoundException {
     CommitData cd = new CommitData();
-    // TODO use shared writer
-    cd.cw = config.createConditionalWriter();
+    cd.cw = config.getSharedResources().getConditionalWriter();
     return cd;
   }
 
@@ -632,8 +623,6 @@ public class TransactionImpl implements Transaction {
       throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
-    } finally {
-      cd.cw.close();
     }
   }
 

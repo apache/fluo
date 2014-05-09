@@ -35,13 +35,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import accismus.api.Column;
-import accismus.impl.ByteUtil;
-import accismus.impl.Configuration;
-import accismus.impl.Constants;
-import accismus.impl.Operations;
-import accismus.impl.OracleServer;
-import accismus.impl.RandomTabletChooser;
-import accismus.impl.Worker;
 
 /**
  * 
@@ -111,5 +104,6 @@ public class Base {
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);
     oserver.stop();
+    config.getSharedResources().close();
   }
 }

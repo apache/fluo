@@ -120,6 +120,8 @@ public class LoaderExecutor {
       }
     }
     
+    config.getSharedResources().close();
+
     if (exceptionRef.get() != null)
       throw new RuntimeException(exceptionRef.get());
   }

@@ -34,11 +34,6 @@ import accismus.api.Column;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.exceptions.StaleScanException;
-import accismus.impl.ByteUtil;
-import accismus.impl.Configuration;
-import accismus.impl.Constants;
-import accismus.impl.OracleClient;
-import accismus.impl.TransactionImpl;
 import accismus.impl.TransactionImpl.CommitData;
 
 /**
@@ -101,8 +96,7 @@ public class FailureTestIT extends Base {
     
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
-    cd.cw.close();
-    
+
     TransactionImpl tx4 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("0" + r + "0", tx4.get(r + "", col1).toString());
@@ -146,8 +140,7 @@ public class FailureTestIT extends Base {
     }
     
     tx2.finishCommit(cd, commitTs);
-    cd.cw.close();
-    
+
     TransactionImpl tx4 = new TransactionImpl(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("1" + r + "0", tx4.get(r + "", col1).toString());
@@ -201,8 +194,6 @@ public class FailureTestIT extends Base {
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
-    cd.cw.close();
-
     transfer(config, "bob", "joe", 2);
     bobBal -= 2;
     joeBal += 2;
@@ -258,7 +249,6 @@ public class FailureTestIT extends Base {
     Assert.assertEquals("62", tx4.get("jill", balanceCol).toString());
 
     tx2.finishCommit(cd, commitTs);
-    cd.cw.close();
     
     TransactionImpl tx5 = new TransactionImpl(config);
     

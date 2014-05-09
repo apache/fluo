@@ -23,12 +23,9 @@ import java.util.NoSuchElementException;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
@@ -261,17 +258,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     
     ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
     
-    try {
-      // TODO use conditional writer?
-      // TODO use shared batch writer
-      BatchWriter bw = aconfig.getConnector().createBatchWriter(aconfig.getTable(), new BatchWriterConfig());
-      bw.addMutation(m);
-      bw.close();
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (MutationsRejectedException e) {
-      throw new RuntimeException(e);
-    }
+    // TODO use conditional writer?
+    aconfig.getSharedResources().getBatchWriter().writeMutation(m);
+    ;
   }
 
   private void rollback(Key k, long lockTs) {
@@ -279,17 +268,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
         DelLockValue.encode(lockTs, false, true));
     
-    try {
-      // TODO use conditional writer?
-      // TODO use shared batch writer
-      BatchWriter bw = aconfig.getConnector().createBatchWriter(aconfig.getTable(), new BatchWriterConfig());
-      bw.addMutation(mut);
-      bw.close();
-    } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (MutationsRejectedException e) {
-      throw new RuntimeException(e);
-    }
+    // TODO use conditional writer?
+    aconfig.getSharedResources().getBatchWriter().writeMutation(mut);
   }
 
   boolean rollbackPrimary(ByteSequence prow, ByteSequence pfam, ByteSequence pqual, ByteSequence pvis, long lockTs, byte[] val) throws AccumuloException,
@@ -310,20 +290,11 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
     
     ConditionalWriter cw = null;
-    try {
-      cw = aconfig.createConditionalWriter();
-      
-      // TODO handle other conditional writer cases
-      return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
-    } catch (TableNotFoundException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    } finally {
-      if (cw != null)
-        cw.close();
-    }
     
+    cw = aconfig.getSharedResources().getConditionalWriter();
 
+    // TODO handle other conditional writer cases
+    return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
   }
 
   public void remove() {

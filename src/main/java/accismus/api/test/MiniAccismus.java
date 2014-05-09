@@ -77,6 +77,7 @@ public class MiniAccismus {
         while (!tp.awaitTermination(1, TimeUnit.SECONDS)) {
 
         }
+        aconfig.getSharedResources().close();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
