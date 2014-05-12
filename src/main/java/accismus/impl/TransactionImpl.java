@@ -579,7 +579,7 @@ public class TransactionImpl implements Transaction {
     // mark transaction as complete for garbage collection purposes
     Mutation m = new Mutation(cd.prow.toArray());
     m.put(cd.pcol.getFamily().toArray(), cd.pcol.getQualifier().toArray(), cd.pcol.getVisibility(), ColumnUtil.TX_DONE_PREFIX | commitTs, EMPTY);
-    config.getSharedResources().getBatchWriter().writeMutation(m);
+    config.getSharedResources().getBatchWriter().writeMutationAsync(m);
     
     return true;
   }
