@@ -72,10 +72,29 @@ When finished, run the following commands to stop the oracle and worker.
 ./bin/oracle.sh stop
 ```
 
+Tuning Accumulo
+---------------
+
+Accismus will reread the same data frequenty when it checks conditions on
+mutations.   When Accismus initializes a table it enables data caching to make
+this more efficient.  However you may need to increase the amount of memory
+available for caching in the tserver by increasing `tserver.cache.data.size`.
+Increasing this may require increasing the maximum tserver java heap size in
+`accumulo-env.sh`.  
+
+Accismus will run many client threads, will want to ensure the tablet server
+has enough threads.  Should probably increase the
+`tserver.server.threads.minimum` Accumulo setting.
+
+Group commit in Accumulo 1.6.0 is broken, the patch on [ACCUMULO-2766][8] can
+be applied to fix this.  
+
+
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
 [6]: src/test/java/accismus/impl/WorkerTestIT.java
 [7]: https://github.com/keith-turner/jinex
+[8]: https://issues.apache.org/jira/browse/ACCUMULO-2766
 
