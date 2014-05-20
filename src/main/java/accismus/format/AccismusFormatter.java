@@ -75,8 +75,8 @@ public class AccismusFormatter implements Formatter {
       val = entry.getValue().toString();
     }
     
-    return key.getRow() + " " + key.getColumnFamily() + " " + key.getColumnQualifier() + " " + key.getColumnVisibility() + " " + type + " "
-        + (ts & ColumnUtil.TIMESTAMP_MASK) + " " + val;
+    return key.getRow() + " " + key.getColumnFamily() + ":" + key.getColumnQualifier() + " [" + key.getColumnVisibility() + "] "
+        + (ts & ColumnUtil.TIMESTAMP_MASK) + "-" + type + "\t" + val;
   }
 
   public void remove() {
