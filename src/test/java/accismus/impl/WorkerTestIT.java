@@ -32,7 +32,8 @@ import accismus.api.Observer;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Transaction;
-import accismus.impl.TransactionImpl;
+import accismus.api.types.StringEncoder;
+import accismus.api.types.TypedTransaction;
 import accismus.impl.TransactionImpl.CommitData;
 
 /**
@@ -55,10 +56,11 @@ public class WorkerTestIT extends Base {
       // get previously calculated degree
       
       ByteSequence degree = tx.get(row, new Column("attr", "degree"));
+      TypedTransaction ttx = new TypedTransaction(tx, new StringEncoder());
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = tx.get(new ScannerConfiguration().setRange(Range.exact(new Text(row.toArray()), new Text("link"))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setRange(Range.exact(new Text(row.toArray()), new Text("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -69,15 +71,15 @@ public class WorkerTestIT extends Base {
       String degree2 = "" + count;
       
       if (degree == null || !degree.toString().equals(degree2)) {
-        tx.set(row, new Column("attr", "degree"), new ArrayByteSequence(degree2));
+        ttx.set(row, new Column("attr", "degree"), new ArrayByteSequence(degree2));
         
         // put new entry in degree index
-        tx.set("IDEG" + degree2, new Column(NODE_CF, row), "");
+        ttx.sete("IDEG" + degree2, new Column(NODE_CF, row)).from("");
       }
       
       if (degree != null) {
         // delete old degree in index
-        tx.delete("IDEG" + degree, new Column(NODE_CF, row));
+        ttx.delete("IDEG" + degree, new Column(NODE_CF, row));
       }
     }
   }
@@ -87,61 +89,61 @@ public class WorkerTestIT extends Base {
   @Test
   public void test1() throws Exception {
     
-    TransactionImpl tx1 = new TransactionImpl(config);
+    TestTransaction tx1 = new TestTransaction(config);
 
     //add a link between two nodes in a graph    
-    tx1.set("N0003", new Column("link", "N0040"), "");
-    tx1.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    tx1.sete("N0003", new Column("link", "N0040")).from("");
+    tx1.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
     
     tx1.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    TestTransaction tx2 = new TestTransaction(config);
     
     //add a link between two nodes in a graph    
-    tx2.set("N0003", new Column("link", "N0020"), "");
-    tx2.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    tx2.sete("N0003", new Column("link", "N0020")).from("");
+    tx2.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
     
     tx2.commit();
     
     runWorker();
    
     //verify observer updated degree index 
-    TransactionImpl tx3 = new TransactionImpl(config);
-    Assert.assertEquals("2", tx3.get("N0003", new Column("attr", "degree")).toString());
-    Assert.assertEquals("", tx3.get("IDEG2", new Column("node", "N0003")).toString());
+    TestTransaction tx3 = new TestTransaction(config);
+    Assert.assertEquals("2", tx3.getd("N0003", new Column("attr", "degree")).toString());
+    Assert.assertEquals("", tx3.getd("IDEG2", new Column("node", "N0003")).toString());
     
     //add a link between two nodes in a graph    
-    tx3.set("N0003", new Column("link", "N0010"), "");
-    tx3.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    tx3.sete("N0003", new Column("link", "N0010")).from("");
+    tx3.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
     tx3.commit();
     
     runWorker();
     
     //verify observer updated degree index.  Should have deleted old index entry 
     //and added a new one 
-    TransactionImpl tx4 = new TransactionImpl(config);
-    Assert.assertEquals("3", tx4.get("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx4.get("IDEG2", new Column("node", "N0003")));
-    Assert.assertEquals("", tx4.get("IDEG3", new Column("node", "N0003")).toString());
+    TestTransaction tx4 = new TestTransaction(config);
+    Assert.assertEquals("3", tx4.getd("N0003", new Column("attr", "degree")).toString());
+    Assert.assertNull("", tx4.getd("IDEG2", new Column("node", "N0003")));
+    Assert.assertEquals("", tx4.getd("IDEG3", new Column("node", "N0003")).toString());
     
     // test rollback
-    TransactionImpl tx5 = new TransactionImpl(config);
-    tx5.set("N0003", new Column("link", "N0030"), "");
-    tx5.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    TestTransaction tx5 = new TestTransaction(config);
+    tx5.sete("N0003", new Column("link", "N0030")).from("");
+    tx5.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
     tx5.commit();
     
-    TransactionImpl tx6 = new TransactionImpl(config);
-    tx6.set("N0003", new Column("link", "N0050"), "");
-    tx6.set("N0003", new Column("attr", "lastupdate"), System.currentTimeMillis() + "");
+    TestTransaction tx6 = new TestTransaction(config);
+    tx6.sete("N0003", new Column("link", "N0050")).from("");
+    tx6.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
     tx6.preCommit(cd, new ArrayByteSequence("N0003"), new Column("attr", "lastupdate"));
 
     runWorker();
     
-    TransactionImpl tx7 = new TransactionImpl(config);
-    Assert.assertEquals("4", tx7.get("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx7.get("IDEG3", new Column("node", "N0003")));
-    Assert.assertEquals("", tx7.get("IDEG4", new Column("node", "N0003")).toString());
+    TestTransaction tx7 = new TestTransaction(config);
+    Assert.assertEquals("4", tx7.getd("N0003", new Column("attr", "degree")).toString());
+    Assert.assertNull("", tx7.getd("IDEG3", new Column("node", "N0003")));
+    Assert.assertEquals("", tx7.getd("IDEG4", new Column("node", "N0003")).toString());
   }
   
   // TODO test that observers trigger on delete

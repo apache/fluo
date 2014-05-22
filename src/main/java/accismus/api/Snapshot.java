@@ -25,15 +25,8 @@ import org.apache.accumulo.core.data.ByteSequence;
  * Implementations of this interface should provide snapshot isolation across rows when reading from a table.
  */
 public interface Snapshot {
-  public abstract ByteSequence get(String row, Column column) throws Exception;
-
-  public abstract ByteSequence get(byte[] row, Column column) throws Exception;
 
   public abstract ByteSequence get(ByteSequence row, Column column) throws Exception;
-
-  public abstract Map<Column,ByteSequence> get(String row, Set<Column> columns) throws Exception;
-
-  public abstract Map<Column,ByteSequence> get(byte[] row, Set<Column> columns) throws Exception;
 
   public abstract Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception;
 

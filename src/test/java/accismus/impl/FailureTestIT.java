@@ -45,13 +45,13 @@ public class FailureTestIT extends Base {
   Column balanceCol = new Column("account", "balance");
     
   private void transfer(Configuration config, String from, String to, int amount) throws Exception {
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
-    int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
-    int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
+    int bal1 = Integer.parseInt(tx.getd(from, balanceCol).toString());
+    int bal2 = Integer.parseInt(tx.getd(to, balanceCol).toString());
     
-    tx.set(from, balanceCol, "" + (bal1 - amount));
-    tx.set(to, balanceCol, "" + (bal2 + amount));
+    tx.sete(from, balanceCol).from("" + (bal1 - amount));
+    tx.sete(to, balanceCol).from("" + (bal2 + amount));
     
     tx.commit();
   }
@@ -69,38 +69,38 @@ public class FailureTestIT extends Base {
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx.set(r + "", col1, "0" + r + "0");
-      tx.set(r + "", col2, "0" + r + "1");
+      tx.sete(r + "", col1).from("0" + r + "0");
+      tx.sete(r + "", col2).from("0" + r + "1");
     }
     
     tx.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    TestTransaction tx2 = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx2.set(r + "", col1, "1" + r + "0");
-      tx2.set(r + "", col2, "1" + r + "1");
+      tx2.sete(r + "", col1).from("1" + r + "0");
+      tx2.sete(r + "", col2).from("1" + r + "1");
     }
     
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
     
-    TransactionImpl tx3 = new TransactionImpl(config);
+    TestTransaction tx3 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
-      Assert.assertEquals("0" + r + "0", tx3.get(r + "", col1).toString());
-      Assert.assertEquals("0" + r + "1", tx3.get(r + "", col2).toString());
+      Assert.assertEquals("0" + r + "0", tx3.getd(r + "", col1).toString());
+      Assert.assertEquals("0" + r + "1", tx3.getd(r + "", col2).toString());
     }
     
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
 
-    TransactionImpl tx4 = new TransactionImpl(config);
+    TestTransaction tx4 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
-      Assert.assertEquals("0" + r + "0", tx4.get(r + "", col1).toString());
-      Assert.assertEquals("0" + r + "1", tx4.get(r + "", col2).toString());
+      Assert.assertEquals("0" + r + "0", tx4.getd(r + "", col1).toString());
+      Assert.assertEquals("0" + r + "1", tx4.getd(r + "", col2).toString());
     }
 
   }
@@ -112,20 +112,20 @@ public class FailureTestIT extends Base {
     Column col1 = new Column("fam1", "q1");
     Column col2 = new Column("fam1", "q2");
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx.set(r + "", col1, "0" + r + "0");
-      tx.set(r + "", col2, "0" + r + "1");
+      tx.sete(r + "", col1).from("0" + r + "0");
+      tx.sete(r + "", col2).from("0" + r + "1");
     }
     
     tx.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    TestTransaction tx2 = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx2.set(r + "", col1, "1" + r + "0");
-      tx2.set(r + "", col2, "1" + r + "1");
+      tx2.sete(r + "", col1).from("1" + r + "0");
+      tx2.sete(r + "", col2).from("1" + r + "1");
     }
     
     CommitData cd = tx2.createCommitData();
@@ -133,18 +133,18 @@ public class FailureTestIT extends Base {
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
-    TransactionImpl tx3 = new TransactionImpl(config);
+    TestTransaction tx3 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
-      Assert.assertEquals("1" + r + "0", tx3.get(r + "", col1).toString());
-      Assert.assertEquals("1" + r + "1", tx3.get(r + "", col2).toString());
+      Assert.assertEquals("1" + r + "0", tx3.getd(r + "", col1).toString());
+      Assert.assertEquals("1" + r + "1", tx3.getd(r + "", col2).toString());
     }
     
     tx2.finishCommit(cd, commitTs);
 
-    TransactionImpl tx4 = new TransactionImpl(config);
+    TestTransaction tx4 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
-      Assert.assertEquals("1" + r + "0", tx4.get(r + "", col1).toString());
-      Assert.assertEquals("1" + r + "1", tx4.get(r + "", col2).toString());
+      Assert.assertEquals("1" + r + "0", tx4.getd(r + "", col1).toString());
+      Assert.assertEquals("1" + r + "1", tx4.getd(r + "", col2).toString());
     }
     
   }
@@ -153,21 +153,21 @@ public class FailureTestIT extends Base {
   public void testRollback() throws Exception {
     // test the case where a scan encounters a stuck lock and rolls it back
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
-    tx.set("bob", balanceCol, "10");
-    tx.set("joe", balanceCol, "20");
-    tx.set("jill", balanceCol, "60");
+    tx.sete("bob", balanceCol).from("10");
+    tx.sete("joe", balanceCol).from("20");
+    tx.sete("jill", balanceCol).from("60");
     
     tx.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    TestTransaction tx2 = new TestTransaction(config);
     
-    int bal1 = Integer.parseInt(tx2.get("bob", balanceCol).toString());
-    int bal2 = Integer.parseInt(tx2.get("joe", balanceCol).toString());
+    int bal1 = Integer.parseInt(tx2.getd("bob", balanceCol).toString());
+    int bal2 = Integer.parseInt(tx2.getd("joe", balanceCol).toString());
     
-    tx2.set("bob", balanceCol, "" + (bal1 - 7));
-    tx2.set("joe", balanceCol, "" + (bal2 + 7));
+    tx2.sete("bob", balanceCol).from("" + (bal1 - 7));
+    tx2.sete("joe", balanceCol).from("" + (bal2 + 7));
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -185,11 +185,11 @@ public class FailureTestIT extends Base {
       bobBal -= 7;
     }
     
-    TransactionImpl tx4 = new TransactionImpl(config);
+    TestTransaction tx4 = new TestTransaction(config);
     
-    Assert.assertEquals(bobBal + "", tx4.get("bob", balanceCol).toString());
-    Assert.assertEquals(joeBal + "", tx4.get("joe", balanceCol).toString());
-    Assert.assertEquals("67", tx4.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal + "", tx4.getd("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal + "", tx4.getd("joe", balanceCol).toString());
+    Assert.assertEquals("67", tx4.getd("jill", balanceCol).toString());
     
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
@@ -198,32 +198,32 @@ public class FailureTestIT extends Base {
     bobBal -= 2;
     joeBal += 2;
     
-    TransactionImpl tx6 = new TransactionImpl(config);
+    TestTransaction tx6 = new TestTransaction(config);
     
-    Assert.assertEquals(bobBal + "", tx6.get("bob", balanceCol).toString());
-    Assert.assertEquals(joeBal + "", tx6.get("joe", balanceCol).toString());
-    Assert.assertEquals("67", tx6.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal + "", tx6.getd("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal + "", tx6.getd("joe", balanceCol).toString());
+    Assert.assertEquals("67", tx6.getd("jill", balanceCol).toString());
   }
 
   @Test
   public void testRollfoward() throws Exception {
     // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
 
-    tx.set("bob", balanceCol, "10");
-    tx.set("joe", balanceCol, "20");
-    tx.set("jill", balanceCol, "60");
+    tx.sete("bob", balanceCol).from("10");
+    tx.sete("joe", balanceCol).from("20");
+    tx.sete("jill", balanceCol).from("60");
     
     tx.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
+    TestTransaction tx2 = new TestTransaction(config);
     
-    int bal1 = Integer.parseInt(tx2.get("bob", balanceCol).toString());
-    int bal2 = Integer.parseInt(tx2.get("joe", balanceCol).toString());
+    int bal1 = Integer.parseInt(tx2.getd("bob", balanceCol).toString());
+    int bal2 = Integer.parseInt(tx2.getd("joe", balanceCol).toString());
     
-    tx2.set("bob", balanceCol, "" + (bal1 - 7));
-    tx2.set("joe", balanceCol, "" + (bal2 + 7));
+    tx2.sete("bob", balanceCol).from("" + (bal1 - 7));
+    tx2.sete("joe", balanceCol).from("" + (bal2 + 7));
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -242,42 +242,42 @@ public class FailureTestIT extends Base {
       bobBal = "1";
     }
     
-    TransactionImpl tx4 = new TransactionImpl(config);
+    TestTransaction tx4 = new TestTransaction(config);
     
-    Assert.assertEquals(bobBal, tx4.get("bob", balanceCol).toString());
-    Assert.assertEquals(joeBal, tx4.get("joe", balanceCol).toString());
-    Assert.assertEquals("62", tx4.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal, tx4.getd("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal, tx4.getd("joe", balanceCol).toString());
+    Assert.assertEquals("62", tx4.getd("jill", balanceCol).toString());
 
     tx2.finishCommit(cd, commitTs);
     
-    TransactionImpl tx5 = new TransactionImpl(config);
+    TestTransaction tx5 = new TestTransaction(config);
     
-    Assert.assertEquals(bobBal, tx5.get("bob", balanceCol).toString());
-    Assert.assertEquals(joeBal, tx5.get("joe", balanceCol).toString());
-    Assert.assertEquals("62", tx5.get("jill", balanceCol).toString());
+    Assert.assertEquals(bobBal, tx5.getd("bob", balanceCol).toString());
+    Assert.assertEquals(joeBal, tx5.getd("joe", balanceCol).toString());
+    Assert.assertEquals("62", tx5.getd("jill", balanceCol).toString());
   }
   
   @Test
   public void testAcks() throws Exception {
     // TODO test that acks are properly handled in rollback and rollforward
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
-    tx.set("url0000", new Column("attr", "lastupdate"), "3");
-    tx.set("url0000", new Column("doc", "content"), "abc def");
+    tx.sete("url0000", new Column("attr", "lastupdate")).from("3");
+    tx.sete("url0000", new Column("doc", "content")).from("abc def");
     
     tx.commit();
 
-    TransactionImpl tx2 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
-    tx2.set("idx:abc", new Column("doc","url"), "url0000");
-    tx2.set("idx:def", new Column("doc","url"), "url0000");
+    TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx2.sete("idx:abc", new Column("doc","url")).from("url0000");
+    tx2.sete("idx:def", new Column("doc","url")).from("url0000");
     CommitData cd = tx2.createCommitData();
     tx2.preCommit(cd);
     
-    TransactionImpl tx3 = new TransactionImpl(config);
-    Assert.assertNull(tx3.get("idx:abc", new Column("doc", "url")));
-    Assert.assertNull(tx3.get("idx:def", new Column("doc", "url")));
-    Assert.assertEquals("3", tx3.get("url0000", new Column("attr", "lastupdate")).toString());
+    TestTransaction tx3 = new TestTransaction(config);
+    Assert.assertNull(tx3.getd("idx:abc", new Column("doc", "url")).toString());
+    Assert.assertNull(tx3.getd("idx:def", new Column("doc", "url")).toString());
+    Assert.assertEquals("3", tx3.getd("url0000", new Column("attr", "lastupdate")).toString());
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), Authorizations.EMPTY);
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
@@ -285,27 +285,27 @@ public class FailureTestIT extends Base {
     Assert.assertTrue(iter.hasNext());
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
     
-    TransactionImpl tx5 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
-    tx5.set("idx:abc", new Column("doc", "url"), "url0000");
-    tx5.set("idx:def", new Column("doc", "url"), "url0000");
+    TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx5.sete("idx:abc", new Column("doc", "url")).from("url0000");
+    tx5.sete("idx:def", new Column("doc", "url")).from("url0000");
     cd = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd, new ArrayByteSequence("idx:abc"), new Column("doc", "url")));
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
     
     // should roll tx5 forward
-    TransactionImpl tx6 = new TransactionImpl(config);
-    Assert.assertEquals("3", tx6.get("url0000", new Column("attr", "lastupdate")).toString());
-    Assert.assertEquals("url0000", tx6.get("idx:abc", new Column("doc", "url")).toString());
-    Assert.assertEquals("url0000", tx6.get("idx:def", new Column("doc", "url")).toString());
+    TestTransaction tx6 = new TestTransaction(config);
+    Assert.assertEquals("3", tx6.getd("url0000", new Column("attr", "lastupdate")).toString());
+    Assert.assertEquals("url0000", tx6.getd("idx:abc", new Column("doc", "url")).toString());
+    Assert.assertEquals("url0000", tx6.getd("idx:def", new Column("doc", "url")).toString());
     
     iter = scanner.iterator();
     Assert.assertFalse(iter.hasNext());
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
-    TransactionImpl tx4 = new TransactionImpl(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
-    tx4.set("idx:abc", new Column("doc", "url"), "url0000");
-    tx4.set("idx:def", new Column("doc", "url"), "url0000");
+    TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("url0000"), new Column("attr", "lastupdate"));
+    tx4.sete("idx:abc", new Column("doc", "url")).from("url0000");
+    tx4.sete("idx:def", new Column("doc", "url")).from("url0000");
 
     try {
       // should not go through if tx5 is properly rolled forward
@@ -319,16 +319,16 @@ public class FailureTestIT extends Base {
   @Test
   public void testStaleScan() throws Exception {
     
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
-    tx.set("bob", balanceCol, "10");
-    tx.set("joe", balanceCol, "20");
-    tx.set("jill", balanceCol, "60");
+    tx.sete("bob", balanceCol).from("10");
+    tx.sete("joe", balanceCol).from("20");
+    tx.sete("jill", balanceCol).from("60");
     
     tx.commit();
     
-    TransactionImpl tx2 = new TransactionImpl(config);
-    Assert.assertEquals("10", tx2.get("bob", balanceCol).toString());
+    TestTransaction tx2 = new TestTransaction(config);
+    Assert.assertEquals("10", tx2.getd("bob", balanceCol).toString());
     
     transfer(config, "joe", "jill", 1);
     transfer(config, "joe", "bob", 1);
@@ -338,36 +338,36 @@ public class FailureTestIT extends Base {
     conn.tableOperations().flush(table, null, null, true);
     
     try {
-      tx2.get("joe", balanceCol);
+      tx2.getd("joe", balanceCol);
       Assert.assertFalse(true);
     } catch (StaleScanException sse) {
       
     }
     
-    TransactionImpl tx3 = new TransactionImpl(config);
+    TestTransaction tx3 = new TestTransaction(config);
     
-    Assert.assertEquals("9", tx3.get("bob", balanceCol).toString());
-    Assert.assertEquals("22", tx3.get("joe", balanceCol).toString());
-    Assert.assertEquals("59", tx3.get("jill", balanceCol).toString());
+    Assert.assertEquals("9", tx3.getd("bob", balanceCol).toString());
+    Assert.assertEquals("22", tx3.getd("joe", balanceCol).toString());
+    Assert.assertEquals("59", tx3.getd("jill", balanceCol).toString());
   }
   
   @Test
   public void testCommitBug1() throws Exception {
     
-    TransactionImpl tx1 = new TransactionImpl(config);
+    TestTransaction tx1 = new TestTransaction(config);
     
-    tx1.set("bob", balanceCol, "10");
-    tx1.set("joe", balanceCol, "20");
-    tx1.set("jill", balanceCol, "60");
+    tx1.sete("bob", balanceCol).from("10");
+    tx1.sete("joe", balanceCol).from("20");
+    tx1.sete("jill", balanceCol).from("60");
     
     CommitData cd = tx1.createCommitData();
     Assert.assertTrue(tx1.preCommit(cd));
     
     while (true) {
-      TransactionImpl tx2 = new TransactionImpl(config);
+      TestTransaction tx2 = new TestTransaction(config);
     
-      tx2.set("bob", balanceCol, "11");
-      tx2.set("jill", balanceCol, "61");
+      tx2.sete("bob", balanceCol).from("11");
+      tx2.sete("jill", balanceCol).from("61");
       
       // tx1 should be rolled back even in case where columns tx1 locked are not read by tx2
       try {
@@ -378,10 +378,10 @@ public class FailureTestIT extends Base {
       }
     }
 
-    TransactionImpl tx4 = new TransactionImpl(config);
+    TestTransaction tx4 = new TestTransaction(config);
     
-    Assert.assertEquals("11", tx4.get("bob", balanceCol).toString());
-    Assert.assertNull(tx4.get("joe", balanceCol));
-    Assert.assertEquals("61", tx4.get("jill", balanceCol).toString());
+    Assert.assertEquals("11", tx4.getd("bob", balanceCol).toString());
+    Assert.assertNull(tx4.getd("joe", balanceCol).toString());
+    Assert.assertEquals("61", tx4.getd("jill", balanceCol).toString());
   }
 }

@@ -21,18 +21,10 @@ import org.apache.accumulo.core.data.ByteSequence;
 /**
  * 
  */
-
+// TODO switch to ByteBuffer
 public interface Transaction extends Snapshot {
   
-  public abstract void set(String row, Column col, String value);
-  
-  public abstract void set(byte[] row, Column col, byte[] value);
-  
   public abstract void set(ByteSequence row, Column col, ByteSequence value);
-  
-  public abstract void delete(String row, Column col);
-  
-  public abstract void delete(byte[] row, Column col);
   
   public abstract void delete(ByteSequence row, Column col);
   

@@ -16,7 +16,6 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
-import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -51,8 +50,6 @@ public class TransactionImpl implements Transaction {
   private static final ByteSequence DELETE = new ArrayByteSequence("special delete object");
   
   private long startTs;
-  private Connector conn;
-  private String table;
   
   private Map<ByteSequence,Map<Column,ByteSequence>> updates;
   Map<ByteSequence,Set<Column>> columnsRead = new HashMap<ByteSequence,Set<Column>>();
@@ -73,8 +70,6 @@ public class TransactionImpl implements Transaction {
 
   TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn, Long startTs) throws Exception {
     this.config = config;
-    this.table = config.getTable();
-    this.conn = config.getConnector();
     this.observedColumns = config.getObservers().keySet();
     this.updates = new HashMap<ByteSequence,Map<Column,ByteSequence>>();
     
@@ -110,29 +105,9 @@ public class TransactionImpl implements Transaction {
   }
 
   @Override
-  public ByteSequence get(String row, Column column) throws Exception {
-    return get(new ArrayByteSequence(toBytes(row)), column);
-  }
-  
-  @Override
-  public ByteSequence get(byte[] row, Column column) throws Exception {
-    return get(new ArrayByteSequence(row), column);
-  }
-
-  @Override
   public ByteSequence get(ByteSequence row, Column column) throws Exception {
     // TODO cache? precache?
     return get(row, Collections.singleton(column)).get(column);
-  }
-  
-  @Override
-  public Map<Column,ByteSequence> get(String row, Set<Column> columns) throws Exception {
-    return get(new ArrayByteSequence(toBytes(row)), columns);
-  }
-  
-  @Override
-  public Map<Column,ByteSequence> get(byte[] row, Set<Column> columns) throws Exception {
-    return get(new ArrayByteSequence(row), columns);
   }
 
   @Override
@@ -186,18 +161,6 @@ public class TransactionImpl implements Transaction {
   }
   
   @Override
-  public void set(String row, Column col, String value) {
-    ArgumentChecker.notNull(row, col, value);
-    set(new ArrayByteSequence(toBytes(row)), col, new ArrayByteSequence(toBytes(value)));
-  }
-  
-  @Override
-  public void set(byte[] row, Column col, byte[] value) {
-    ArgumentChecker.notNull(row, col, value);
-    set(new ArrayByteSequence(row), col, new ArrayByteSequence(value));
-  }
-  
-  @Override
   public void set(ByteSequence row, Column col, ByteSequence value) {
     if (commitStarted)
       throw new IllegalStateException("transaction committed");
@@ -222,18 +185,7 @@ public class TransactionImpl implements Transaction {
     colUpdates.put(col, value);
   }
   
-  @Override
-  public void delete(String row, Column col) {
-    ArgumentChecker.notNull(row, col);
-    set(new ArrayByteSequence(toBytes(row)), col, DELETE);
-  }
-  
-  @Override
-  public void delete(byte[] row, Column col) {
-    ArgumentChecker.notNull(row, col);
-    set(new ArrayByteSequence(row), col, DELETE);
-  }
-  
+
   @Override
   public void delete(ByteSequence row, Column col) {
     ArgumentChecker.notNull(row, col);

@@ -45,9 +45,6 @@ import accismus.api.ScannerConfiguration;
 import accismus.api.exceptions.CommitException;
 import accismus.api.exceptions.StaleScanException;
 import accismus.format.AccismusFormatter;
-import accismus.impl.Configuration;
-import accismus.impl.TransactionImpl;
-
 /**
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
  * the average should not vary.
@@ -99,10 +96,10 @@ public class StochasticBankTestIT extends Base {
   private static Column balanceCol = new Column("data", "balance");
 
   private static void populate(Configuration config, int numAccounts) throws Exception {
-    TransactionImpl tx = new TransactionImpl(config);
+    TestTransaction tx = new TestTransaction(config);
     
     for(int i = 0; i < numAccounts; i++){
-      tx.set(fmtAcct(i), balanceCol, "1000");
+      tx.sete(fmtAcct(i), balanceCol).from(1000);
     }
     
     tx.commit();
@@ -147,13 +144,13 @@ public class StochasticBankTestIT extends Base {
       
       while (true) {
         try {
-          TransactionImpl tx = new TransactionImpl(config);
-          int bal1 = Integer.parseInt(tx.get(from, balanceCol).toString());
-          int bal2 = Integer.parseInt(tx.get(to, balanceCol).toString());
+          TestTransaction tx = new TestTransaction(config);
+          int bal1 = tx.getd(from, balanceCol).toInteger();
+          int bal2 = tx.getd(to, balanceCol).toInteger();
           
           if (bal1 - amt >= 0) {
-            tx.set(from, balanceCol, (bal1 - amt) + "");
-            tx.set(to, balanceCol, (bal2 + amt) + "");
+            tx.sete(from, balanceCol).from(bal1 - amt);
+            tx.sete(to, balanceCol).from(bal2 + amt);
           } else {
             break;
           }
@@ -176,7 +173,7 @@ public class StochasticBankTestIT extends Base {
   }
 
   private static void runVerifier(Configuration config, int numAccounts, int num) {
-    TransactionImpl lastTx = null;
+    TestTransaction lastTx = null;
 
     try {
 
@@ -188,7 +185,7 @@ public class StochasticBankTestIT extends Base {
 
         long t1 = System.currentTimeMillis();
 
-        TransactionImpl tx = new TransactionImpl(config);
+        TestTransaction tx = new TestTransaction(config);
         RowIterator iter = tx.get(new ScannerConfiguration());
         
         Stat stat = new Stat();
@@ -222,7 +219,7 @@ public class StochasticBankTestIT extends Base {
     }
   }
   
-  private static void printDiffs(Configuration config, TransactionImpl lastTx, TransactionImpl tx) throws Exception {
+  private static void printDiffs(Configuration config, TestTransaction lastTx, TestTransaction tx) throws Exception {
     Map<String,String> bals1 = toMap(lastTx);
     Map<String,String> bals2 = toMap(tx);
     
@@ -267,7 +264,7 @@ public class StochasticBankTestIT extends Base {
 
   }
   
-  private static HashMap<String,String> toMap(TransactionImpl tx) throws Exception {
+  private static HashMap<String,String> toMap(TestTransaction tx) throws Exception {
     HashMap<String,String> map = new HashMap<String,String>();
     
     RowIterator iter = tx.get(new ScannerConfiguration());
