@@ -27,7 +27,7 @@ mvn package
 Experimenting with Accismus
 ---------------------------
 
-An easy way to experiment with Accismus is play with the [phrasecount][7] example.
+An easy way to experiment with Accismus is to play with the [phrasecount][7] example.
 
 Running Accismus
 ----------------
