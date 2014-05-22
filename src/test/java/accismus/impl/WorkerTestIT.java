@@ -123,7 +123,7 @@ public class WorkerTestIT extends Base {
     //and added a new one 
     TestTransaction tx4 = new TestTransaction(config);
     Assert.assertEquals("3", tx4.getd("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx4.getd("IDEG2", new Column("node", "N0003")));
+    Assert.assertNull("", tx4.getd("IDEG2", new Column("node", "N0003")).toString());
     Assert.assertEquals("", tx4.getd("IDEG3", new Column("node", "N0003")).toString());
     
     // test rollback
@@ -142,7 +142,7 @@ public class WorkerTestIT extends Base {
     
     TestTransaction tx7 = new TestTransaction(config);
     Assert.assertEquals("4", tx7.getd("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx7.getd("IDEG3", new Column("node", "N0003")));
+    Assert.assertNull("", tx7.getd("IDEG3", new Column("node", "N0003")).toString());
     Assert.assertEquals("", tx7.getd("IDEG4", new Column("node", "N0003")).toString());
   }
   
