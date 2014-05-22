@@ -27,14 +27,7 @@ mvn package
 Experimenting with Accismus
 ---------------------------
 
-An easy way to experiment with Accismus is to edit a unit test and run it.  The
-[WorkerTest][6] is probably a good place to start because it uses an Observer to
-build a secondary index.  This can be done using the following commands.  
-
-```
-vim src/test/java/accismus/impl/WorkerTestIT.java
-mvn verify -Dit.test=WorkerTestIT
-```
+An easy way to experiment with Accismus is play with the [phrasecount][7] example.
 
 Running Accismus
 ----------------
@@ -43,9 +36,9 @@ The following instructions command show a rough outline of how to get Accismus
 installed and running on a single node.  These instructions assume an Accumulo
 1.6 instance is already running.
 
-You will need observers to run.  You can use the [jinex][7] examples observers.
-[Jinex][7] is a probably a bit too complicated for a starting example, will
-create something simpler soon.
+You will need observers to run.  You can use the [phrasecount][7] examples
+observers, check out its instructions for setting up observers in
+`initialization.properties`.
 
 ```
 OJAR=<location of observer jar>
@@ -94,7 +87,6 @@ be applied to fix this.
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
-[6]: src/test/java/accismus/impl/WorkerTestIT.java
-[7]: https://github.com/keith-turner/jinex
+[7]: https://github.com/keith-turner/phrasecount
 [8]: https://issues.apache.org/jira/browse/ACCUMULO-2766
 
