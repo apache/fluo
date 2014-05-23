@@ -5,13 +5,13 @@ import org.apache.accumulo.core.data.ByteSequence;
 public interface Encoder {
   public int decodeInteger(ByteSequence bs);
 
-  public ByteSequence encodeInteger(int i);
+  public ByteSequence encode(int i);
 
   public long decodeLong(ByteSequence bs);
 
-  public ByteSequence encodeLong(long l);
+  public ByteSequence encode(long l);
 
   public String decodeString(ByteSequence bs);
 
-  public ByteSequence encodeString(String s);
+  public ByteSequence encode(String s);
 }

@@ -6,11 +6,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.security.ColumnVisibility;
 
 import accismus.api.Column;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Snapshot;
+import accismus.api.types.TypeLayer.RowAction;
+import accismus.api.types.TypeLayer.RowColumnBuilder;
 
 //TODO need to refactor column to use Encoder
 
@@ -18,67 +21,141 @@ public class TypedSnapshot implements Snapshot {
 
   private Snapshot snapshot;
   private Encoder encoder;
+  private TypeLayer tl;
 
-  public class BytesDecoder {
-    private ByteSequence bytes;
+  private class KeyBuilder extends RowColumnBuilder<Value,VisBytesDecoder> {
 
-    private BytesDecoder(ByteSequence bytes) {
+    private ByteSequence family;
+    private ByteSequence row;
+
+    @Override
+    void setRow(ByteSequence r) {
+      this.row = r;
+    }
+
+    @Override
+    void setFamily(ByteSequence f) {
+      this.family = f;
+    }
+
+    @Override
+    public VisBytesDecoder setQualifier(ByteSequence q) {
+      return new VisBytesDecoder(row, new Column(family, q));
+    }
+
+    @Override
+    public Value setColumn(Column c) {
+      try {
+        return new Value(snapshot.get(row, c));
+      } catch (Exception e) {
+        // TODO
+        if (e instanceof RuntimeException)
+          throw (RuntimeException) e;
+        throw new RuntimeException(e);
+      }
+    }
+
+  }
+
+  public class VisBytesDecoder extends Value {
+
+    private ByteSequence row;
+    private Column col;
+    private boolean gotBytes = false;
+
+    ByteSequence getBytes() {
+      if (!gotBytes) {
+        try {
+          super.bytes = snapshot.get(row, col);
+          gotBytes = true;
+        } catch (Exception e) {
+          if (e instanceof RuntimeException)
+            throw (RuntimeException) e;
+          throw new RuntimeException(e);
+        }
+      }
+
+      return super.getBytes();
+    }
+
+    VisBytesDecoder(ByteSequence row, Column col) {
+      super(null);
+      this.row = row;
+      this.col = col;
+    }
+
+    public Value vis(ColumnVisibility cv) {
+      col.setVisibility(cv);
+      gotBytes = false;
+      return new Value(getBytes());
+    }
+  }
+
+  public class Value {
+    ByteSequence bytes;
+
+    ByteSequence getBytes() {
+      return bytes;
+    }
+
+    private Value(ByteSequence bytes) {
       this.bytes = bytes;
     }
 
     public Integer toInteger() {
-      if (bytes == null)
+      if (getBytes() == null)
         return null;
-      return encoder.decodeInteger(bytes);
+      return encoder.decodeInteger(getBytes());
     }
 
     public int toInteger(int defaultValue) {
-      if (bytes == null)
+      if (getBytes() == null)
         return defaultValue;
-      return encoder.decodeInteger(bytes);
+      return encoder.decodeInteger(getBytes());
     }
 
     public Long toLong() {
-      if (bytes == null)
+      if (getBytes() == null)
         return null;
-      return encoder.decodeLong(bytes);
+      return encoder.decodeLong(getBytes());
     }
 
     public long toLong(int defaultValue) {
-      if (bytes == null)
+      if (getBytes() == null)
         return defaultValue;
-      return encoder.decodeLong(bytes);
+      return encoder.decodeLong(getBytes());
     }
 
     @Override
     public String toString() {
-      if (bytes == null)
+      if (getBytes() == null)
         return null;
-      return encoder.decodeString(bytes);
+      return encoder.decodeString(getBytes());
     }
 
     public String toString(String defaultValue) {
-      if (bytes == null)
+      if (getBytes() == null)
         return defaultValue;
-      return encoder.decodeString(bytes);
+      return encoder.decodeString(getBytes());
     }
 
     public byte[] toBytes() {
-      if (bytes == null)
+      if (getBytes() == null)
         return null;
-      return bytes.toArray();
+      return getBytes().toArray();
     }
 
     public byte[] toBytes(byte[] defaultValue) {
-      if (bytes == null)
+      if (getBytes() == null)
         return defaultValue;
-      return bytes.toArray();
+      return getBytes().toArray();
     }
   }
 
-  public TypedSnapshot(Snapshot snapshot, Encoder encoder) {
+  TypedSnapshot(Snapshot snapshot, Encoder encoder, TypeLayer tl) {
     this.snapshot = snapshot;
     this.encoder = encoder;
+    this.tl = tl;
   }
 
   @Override
@@ -96,27 +173,23 @@ public class TypedSnapshot implements Snapshot {
     return snapshot.get(config);
   }
 
-  public BytesDecoder getd(ByteSequence row, Column column) throws Exception {
-    return new BytesDecoder(snapshot.get(row, column));
+  public RowAction<Value,VisBytesDecoder,KeyBuilder> get() {
+    return tl.new RowAction<Value,VisBytesDecoder,KeyBuilder>(new KeyBuilder());
   }
 
-  public BytesDecoder getd(String row, Column column) throws Exception {
-    return new BytesDecoder(snapshot.get(encoder.encodeString(row), column));
-  }
-
-  public Map<Column,BytesDecoder> getd(ByteSequence row, Set<Column> columns) throws Exception {
+  public Map<Column,Value> getd(ByteSequence row, Set<Column> columns) throws Exception {
     Map<Column,ByteSequence> map = snapshot.get(row, columns);
-    Map<Column,BytesDecoder> ret = new HashMap<Column,BytesDecoder>();
+    Map<Column,Value> ret = new HashMap<Column,Value>();
 
     Set<Entry<Column,ByteSequence>> es = map.entrySet();
     for (Entry<Column,ByteSequence> entry : es) {
-      ret.put(entry.getKey(), new BytesDecoder(entry.getValue()));
+      ret.put(entry.getKey(), new Value(entry.getValue()));
     }
 
     return ret;
   }
 
-  public Map<Column,BytesDecoder> getd(String row, Set<Column> columns) throws Exception {
-    return getd(encoder.encodeString(row), columns);
+  public Map<Column,Value> getd(String row, Set<Column> columns) throws Exception {
+    return getd(encoder.encode(row), columns);
   }
 }

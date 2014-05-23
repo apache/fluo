@@ -33,6 +33,7 @@ import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Transaction;
 import accismus.api.types.StringEncoder;
+import accismus.api.types.TypeLayer;
 import accismus.api.types.TypedTransaction;
 import accismus.impl.TransactionImpl.CommitData;
 
@@ -44,9 +45,11 @@ public class WorkerTestIT extends Base {
   
   private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
 
+  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+
   protected Map<Column,String> getObservers() {
     Map<Column,String> observed = new HashMap<Column,String>();
-    observed.put(new Column("attr", "lastupdate"), DegreeIndexer.class.getName());
+    observed.put(typeLayer.newColumn("attr", "lastupdate"), DegreeIndexer.class.getName());
     return observed;
   }
 
@@ -55,8 +58,8 @@ public class WorkerTestIT extends Base {
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
       // get previously calculated degree
       
-      ByteSequence degree = tx.get(row, new Column("attr", "degree"));
-      TypedTransaction ttx = new TypedTransaction(tx, new StringEncoder());
+      ByteSequence degree = tx.get(row, typeLayer.newColumn("attr", "degree"));
+      TypedTransaction ttx = typeLayer.transaction(tx);
 
       // calculate new degree
       int count = 0;
@@ -71,15 +74,15 @@ public class WorkerTestIT extends Base {
       String degree2 = "" + count;
       
       if (degree == null || !degree.toString().equals(degree2)) {
-        ttx.set(row, new Column("attr", "degree"), new ArrayByteSequence(degree2));
+        ttx.set(row, typeLayer.newColumn("attr", "degree"), new ArrayByteSequence(degree2));
         
         // put new entry in degree index
-        ttx.sete("IDEG" + degree2, new Column(NODE_CF, row)).from("");
+        ttx.set().row("IDEG" + degree2).col(new Column(NODE_CF, row)).val("");
       }
       
       if (degree != null) {
         // delete old degree in index
-        ttx.delete("IDEG" + degree, new Column(NODE_CF, row));
+        ttx.delete().row("IDEG" + degree).col(new Column(NODE_CF, row));
       }
     }
   }
@@ -92,16 +95,16 @@ public class WorkerTestIT extends Base {
     TestTransaction tx1 = new TestTransaction(config);
 
     //add a link between two nodes in a graph    
-    tx1.sete("N0003", new Column("link", "N0040")).from("");
-    tx1.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
+    tx1.set().row("N0003").col(typeLayer.newColumn("link", "N0040")).val("");
+    tx1.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
     
     tx1.commit();
     
     TestTransaction tx2 = new TestTransaction(config);
     
     //add a link between two nodes in a graph    
-    tx2.sete("N0003", new Column("link", "N0020")).from("");
-    tx2.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
+    tx2.set().row("N0003").col(typeLayer.newColumn("link", "N0020")).val("");
+    tx2.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
     
     tx2.commit();
     
@@ -109,12 +112,12 @@ public class WorkerTestIT extends Base {
    
     //verify observer updated degree index 
     TestTransaction tx3 = new TestTransaction(config);
-    Assert.assertEquals("2", tx3.getd("N0003", new Column("attr", "degree")).toString());
-    Assert.assertEquals("", tx3.getd("IDEG2", new Column("node", "N0003")).toString());
+    Assert.assertEquals("2", tx3.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
+    Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
     
     //add a link between two nodes in a graph    
-    tx3.sete("N0003", new Column("link", "N0010")).from("");
-    tx3.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
+    tx3.set().row("N0003").col(typeLayer.newColumn("link", "N0010")).val("");
+    tx3.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
     tx3.commit();
     
     runWorker();
@@ -122,28 +125,28 @@ public class WorkerTestIT extends Base {
     //verify observer updated degree index.  Should have deleted old index entry 
     //and added a new one 
     TestTransaction tx4 = new TestTransaction(config);
-    Assert.assertEquals("3", tx4.getd("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx4.getd("IDEG2", new Column("node", "N0003")).toString());
-    Assert.assertEquals("", tx4.getd("IDEG3", new Column("node", "N0003")).toString());
+    Assert.assertEquals("3", tx4.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
+    Assert.assertNull("", tx4.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
+    Assert.assertEquals("", tx4.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
     
     // test rollback
     TestTransaction tx5 = new TestTransaction(config);
-    tx5.sete("N0003", new Column("link", "N0030")).from("");
-    tx5.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
+    tx5.set().row("N0003").col(typeLayer.newColumn("link", "N0030")).val("");
+    tx5.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
     tx5.commit();
     
     TestTransaction tx6 = new TestTransaction(config);
-    tx6.sete("N0003", new Column("link", "N0050")).from("");
-    tx6.sete("N0003", new Column("attr", "lastupdate")).from(System.currentTimeMillis() + "");
+    tx6.set().row("N0003").col(typeLayer.newColumn("link", "N0050")).val("");
+    tx6.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, new ArrayByteSequence("N0003"), new Column("attr", "lastupdate"));
+    tx6.preCommit(cd, new ArrayByteSequence("N0003"), typeLayer.newColumn("attr", "lastupdate"));
 
     runWorker();
     
     TestTransaction tx7 = new TestTransaction(config);
-    Assert.assertEquals("4", tx7.getd("N0003", new Column("attr", "degree")).toString());
-    Assert.assertNull("", tx7.getd("IDEG3", new Column("node", "N0003")).toString());
-    Assert.assertEquals("", tx7.getd("IDEG4", new Column("node", "N0003")).toString());
+    Assert.assertEquals("4", tx7.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
+    Assert.assertNull("", tx7.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
+    Assert.assertEquals("", tx7.get().row("IDEG4").col(typeLayer.newColumn("node", "N0003")).toString());
   }
   
   // TODO test that observers trigger on delete

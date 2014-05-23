@@ -44,6 +44,8 @@ import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.exceptions.CommitException;
 import accismus.api.exceptions.StaleScanException;
+import accismus.api.types.StringEncoder;
+import accismus.api.types.TypeLayer;
 import accismus.format.AccismusFormatter;
 /**
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
@@ -51,7 +53,7 @@ import accismus.format.AccismusFormatter;
  */
 public class StochasticBankTestIT extends Base {
   
-
+  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();
 
   @Test
@@ -93,13 +95,13 @@ public class StochasticBankTestIT extends Base {
     runVerifier(config, numAccounts, 1);
   }
 
-  private static Column balanceCol = new Column("data", "balance");
+  private static Column balanceCol = typeLayer.newColumn("data", "balance");
 
   private static void populate(Configuration config, int numAccounts) throws Exception {
     TestTransaction tx = new TestTransaction(config);
     
     for(int i = 0; i < numAccounts; i++){
-      tx.sete(fmtAcct(i), balanceCol).from(1000);
+      tx.set().row(fmtAcct(i)).col(balanceCol).val(1000);
     }
     
     tx.commit();
@@ -145,12 +147,12 @@ public class StochasticBankTestIT extends Base {
       while (true) {
         try {
           TestTransaction tx = new TestTransaction(config);
-          int bal1 = tx.getd(from, balanceCol).toInteger();
-          int bal2 = tx.getd(to, balanceCol).toInteger();
+          int bal1 = tx.get().row(from).col(balanceCol).toInteger();
+          int bal2 = tx.get().row(to).col(balanceCol).toInteger();
           
           if (bal1 - amt >= 0) {
-            tx.sete(from, balanceCol).from(bal1 - amt);
-            tx.sete(to, balanceCol).from(bal2 + amt);
+            tx.set().row(from).col(balanceCol).val(bal1 - amt);
+            tx.set().row(to).col(balanceCol).val(bal2 + amt);
           } else {
             break;
           }

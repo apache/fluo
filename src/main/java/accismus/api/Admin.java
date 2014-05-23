@@ -26,6 +26,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.zookeeper.ZooUtil;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
@@ -110,7 +111,7 @@ public class Admin {
         if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
           String val = (String) entry.getValue();
           String[] fields = val.split(",");
-          Column col = new Column(fields[0], fields[1]).setVisibility(new ColumnVisibility(fields[2]));
+          Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
           colObservers.put(col, fields[3]);
         } else if (key.startsWith("accismus.worker")) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());

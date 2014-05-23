@@ -79,7 +79,18 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
-    config.configure(scanner);
+    scanner.clearColumns();
+    scanner.clearScanIterators();
+    
+    for (Column col : config.getColumns()) {
+      if (col.getQualifier() != null) {
+        scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
+      } else {
+        scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
+      }
+    }
+    
+    scanner.setRange(config.getRange());
     
     IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);

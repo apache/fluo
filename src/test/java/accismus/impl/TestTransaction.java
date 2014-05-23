@@ -11,6 +11,7 @@ import accismus.api.Column;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.types.StringEncoder;
+import accismus.api.types.TypeLayer;
 import accismus.api.types.TypedTransaction;
 import accismus.impl.TransactionImpl.CommitData;
 
@@ -23,7 +24,7 @@ public class TestTransaction extends TypedTransaction {
   }
 
   public TestTransaction(TransactionImpl transactionImpl, StringEncoder stringEncoder) {
-    super(transactionImpl, stringEncoder);
+    super(transactionImpl, stringEncoder, new TypeLayer(stringEncoder));
     this.tx = transactionImpl;
   }
 

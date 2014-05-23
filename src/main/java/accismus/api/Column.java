@@ -19,9 +19,7 @@ package accismus.api;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Writable;
@@ -39,14 +37,6 @@ public class Column implements Writable {
   private ByteSequence family;
   private ByteSequence qualifier;
   private ColumnVisibility visibility = EMPTY_VIS;
-  
-  private static byte[] toBytes(String s) {
-    try {
-      return s.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   public int hashCode() {
     return family.hashCode() + qualifier.hashCode() + visibility.hashCode();
@@ -64,16 +54,6 @@ public class Column implements Writable {
   
   public Column() {}
 
-  public Column(String family, String qualifier) {
-    this.family = new ArrayByteSequence(toBytes(family));
-    this.qualifier = new ArrayByteSequence(toBytes(qualifier));
-  }
-  
-  public Column(byte[] family, byte[] qualifier) {
-    this.family = new ArrayByteSequence(family);
-    this.qualifier = new ArrayByteSequence(qualifier);
-  }
-
   public Column(ByteSequence family, ByteSequence qualifier) {
     this.family = family;
     this.qualifier = qualifier;
@@ -87,6 +67,7 @@ public class Column implements Writable {
     return qualifier;
   }
 
+  // TODO should not have ColumnVisibility directly in public API... wrap it
   public Column setVisibility(ColumnVisibility cv) {
     this.visibility = cv;
     return this;
@@ -100,6 +81,7 @@ public class Column implements Writable {
     return family + " " + qualifier + " " + visibility;
   }
   
+  // TODO remove from public API
   public void write(DataOutput out) throws IOException {
     ByteUtil.write(out, family);
     ByteUtil.write(out, qualifier);

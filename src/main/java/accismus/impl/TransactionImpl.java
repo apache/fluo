@@ -422,7 +422,8 @@ public class TransactionImpl implements Transaction {
       
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
-        Column col = new Column(cu.getColumnFamily(), cu.getColumnQualifier()).setVisibility(new ColumnVisibility(cu.getColumnVisibility()));
+        Column col = new Column(new ArrayByteSequence(cu.getColumnFamily()), new ArrayByteSequence(cu.getColumnQualifier()))
+            .setVisibility(new ColumnVisibility(cu.getColumnVisibility()));
         if (triggerColumn.equals(col)) {
           
           // TODO this check will not detect ack when tx overlaps with another tx... it will instead the the lock release.. this may be ok, the worker will

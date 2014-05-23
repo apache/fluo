@@ -15,9 +15,13 @@ import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
+import accismus.api.types.StringEncoder;
+import accismus.api.types.TypeLayer;
 
 public class AccismusTestIT extends Base {
   
+  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+
   @Test
   public void testOverlap1() throws Exception {
     // test transactions that overlap reads and both attempt to write
@@ -30,42 +34,42 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    Column balanceCol = new Column("account", "balance");
+    Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.sete("bob", balanceCol).from("10");
-    tx.sete("joe", balanceCol).from("20");
-    tx.sete("jill", balanceCol).from("60");
+    tx.set().row("bob").col(balanceCol).val("10");
+    tx.set().row("joe").col(balanceCol).val("20");
+    tx.set().row("jill").col(balanceCol).val("60");
     
     tx.commit();
     
     tx = new TestTransaction(config);
     
-    String bal1 = tx.getd("bob", balanceCol).toString();
-    String bal2 = tx.getd("joe", balanceCol).toString();
+    String bal1 = tx.get().row("bob").col(balanceCol).toString();
+    String bal2 = tx.get().row("joe").col(balanceCol).toString();
     Assert.assertEquals("10", bal1);
     Assert.assertEquals("20", bal2);
     
-    tx.sete("bob", balanceCol).from((Long.parseLong(bal1) - 5) + "");
-    tx.sete("joe", balanceCol).from((Long.parseLong(bal2) + 5) + "");
+    tx.set().row("bob").col(balanceCol).val((Long.parseLong(bal1) - 5) + "");
+    tx.set().row("joe").col(balanceCol).val((Long.parseLong(bal2) + 5) + "");
     
     TestTransaction tx2 = new TestTransaction(config);
     
-    String bal3 = tx2.getd("bob", balanceCol).toString();
-    String bal4 = tx2.getd("jill", balanceCol).toString();
+    String bal3 = tx2.get().row("bob").col(balanceCol).toString();
+    String bal4 = tx2.get().row("jill").col(balanceCol).toString();
     Assert.assertEquals("10", bal3);
     Assert.assertEquals("60", bal4);
     
-    tx2.sete("bob", balanceCol).from((Long.parseLong(bal3) - 5) + "");
-    tx2.sete("jill", balanceCol).from((Long.parseLong(bal4) + 5) + "");
+    tx2.set().row("bob").col(balanceCol).val((Long.parseLong(bal3) - 5) + "");
+    tx2.set().row("jill").col(balanceCol).val((Long.parseLong(bal4) + 5) + "");
     
     tx2.commit();
     assertCommitFails(tx);
     
     TestTransaction tx3 = new TestTransaction(config);
     
-    Assert.assertEquals("5", tx3.getd("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx3.getd("joe", balanceCol).toString());
-    Assert.assertEquals("65", tx3.getd("jill", balanceCol).toString());
+    Assert.assertEquals("5", tx3.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("20", tx3.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("65", tx3.get().row("jill").col(balanceCol).toString());
   }
   
   private void assertCommitFails(TestTransaction tx) {
@@ -88,12 +92,12 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    Column balanceCol = new Column("account", "balance");
+    Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.sete("bob", balanceCol).from(10);
-    tx.sete("joe", balanceCol).from(20);
-    tx.sete("jill", balanceCol).from(60);
-    tx.sete("jane", balanceCol).from(0);
+    tx.set().row("bob").col(balanceCol).val(10);
+    tx.set().row("joe").col(balanceCol).val(20);
+    tx.set().row("jill").col(balanceCol).val(60);
+    tx.set().row("jane").col(balanceCol).val(0);
     
     tx.commit();
     
@@ -101,49 +105,49 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx2 = new TestTransaction(config);
     
-    tx2.sete("bob", balanceCol).from(tx2.getd("bob", balanceCol).toLong() - 5);
-    tx2.sete("joe", balanceCol).from(tx2.getd("joe", balanceCol).toLong() - 5);
-    tx2.sete("jill", balanceCol).from(tx2.getd("jill", balanceCol).toLong() + 10);
+    tx2.set().row("bob").col(balanceCol).val(tx2.get().row("bob").col(balanceCol).toLong() - 5);
+    tx2.set().row("joe").col(balanceCol).val(tx2.get().row("joe").col(balanceCol).toLong() - 5);
+    tx2.set().row("jill").col(balanceCol).val(tx2.get().row("jill").col(balanceCol).toLong() + 10);
 
-    long bal1 = tx1.getd("bob", balanceCol).toLong();
+    long bal1 = tx1.get().row("bob").col(balanceCol).toLong();
     
     tx2.commit();
     
     TestTransaction txd = new TestTransaction(config);
-    txd.delete("jane", balanceCol);
+    txd.delete().row("jane").col(balanceCol);
     txd.commit();
     
-    long bal2 = tx1.getd("joe", balanceCol).toLong();
-    long bal3 = tx1.getd("jill", balanceCol).toLong();
-    long bal4 = tx1.getd("jane", balanceCol).toLong();
+    long bal2 = tx1.get().row("joe").col(balanceCol).toLong();
+    long bal3 = tx1.get().row("jill").col(balanceCol).toLong();
+    long bal4 = tx1.get().row("jane").col(balanceCol).toLong();
     
     Assert.assertEquals(10l, bal1);
     Assert.assertEquals(20l, bal2);
     Assert.assertEquals(60l, bal3);
     Assert.assertEquals(0l, bal4);
     
-    tx1.sete("bob", balanceCol).from(bal1 - 5);
-    tx1.sete("joe", balanceCol).from(bal2 + 5);
+    tx1.set().row("bob").col(balanceCol).val(bal1 - 5);
+    tx1.set().row("joe").col(balanceCol).val(bal2 + 5);
     
     assertCommitFails(tx1);
     
     TestTransaction tx3 = new TestTransaction(config);
     
     TestTransaction tx4 = new TestTransaction(config);
-    tx4.sete("jane", balanceCol).from(3);
+    tx4.set().row("jane").col(balanceCol).val(3);
     tx4.commit();
     
-    Assert.assertEquals(5l, tx3.getd("bob", balanceCol).toLong(0));
-    Assert.assertEquals(15l, tx3.getd("joe", balanceCol).toLong(0));
-    Assert.assertEquals(70l, tx3.getd("jill", balanceCol).toLong(0));
-    Assert.assertNull(tx3.getd("jane", balanceCol).toLong());
+    Assert.assertEquals(5l, tx3.get().row("bob").col(balanceCol).toLong(0));
+    Assert.assertEquals(15l, tx3.get().row("joe").col(balanceCol).toLong(0));
+    Assert.assertEquals(70l, tx3.get().row("jill").col(balanceCol).toLong(0));
+    Assert.assertNull(tx3.get().row("jane").col(balanceCol).toLong());
     
     TestTransaction tx5 = new TestTransaction(config);
     
-    Assert.assertEquals(5l, tx5.getd("bob", balanceCol).toLong(0));
-    Assert.assertEquals(15l, tx5.getd("joe", balanceCol).toLong(0));
-    Assert.assertEquals(70l, tx5.getd("jill", balanceCol).toLong(0));
-    Assert.assertEquals(3l, tx5.getd("jane", balanceCol).toLong(0));
+    Assert.assertEquals(5l, tx5.get().row("bob").col(balanceCol).toLong(0));
+    Assert.assertEquals(15l, tx5.get().row("joe").col(balanceCol).toLong(0));
+    Assert.assertEquals(70l, tx5.get().row("jill").col(balanceCol).toLong(0));
+    Assert.assertEquals(3l, tx5.get().row("jane").col(balanceCol).toLong(0));
   }
   
   @Test
@@ -152,43 +156,43 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    Column balanceCol = new Column("account", "balance");
+    Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.sete("bob", balanceCol).from("10");
-    tx.sete("joe", balanceCol).from("20");
-    tx.sete("jill", balanceCol).from("60");
+    tx.set().row("bob").col(balanceCol).val("10");
+    tx.set().row("joe").col(balanceCol).val("20");
+    tx.set().row("jill").col(balanceCol).val("60");
     
     tx.commit();
     
     TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx1.getd("joe", balanceCol);
-    tx1.sete("jill", balanceCol).from("61");
+    tx1.get().row("joe").col(balanceCol);
+    tx1.set().row("jill").col(balanceCol).val("61");
     
     TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx2.getd("joe", balanceCol);
-    tx2.sete("bob", balanceCol).from("11");
+    tx2.get().row("joe").col(balanceCol);
+    tx2.set().row("bob").col(balanceCol).val("11");
     
     tx1.commit();
     assertCommitFails(tx2);
     
     TestTransaction tx3 = new TestTransaction(config);
     
-    Assert.assertEquals("10", tx3.getd("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx3.getd("joe", balanceCol).toString());
-    Assert.assertEquals("61", tx3.getd("jill", balanceCol).toString());
+    Assert.assertEquals("10", tx3.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("20", tx3.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("61", tx3.get().row("jill").col(balanceCol).toString());
     
     // update joe, so it can be acknowledged again
-    tx3.sete("joe", balanceCol).from("21");
+    tx3.set().row("joe").col(balanceCol).val("21");
     
     tx3.commit();
     
     TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx4.getd("joe", balanceCol);
-    tx4.sete("jill", balanceCol).from("62");
+    tx4.get().row("joe").col(balanceCol);
+    tx4.set().row("jill").col(balanceCol).val("62");
     
     TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx5.getd("joe", balanceCol);
-    tx5.sete("bob", balanceCol).from("11");
+    tx5.get().row("joe").col(balanceCol);
+    tx5.set().row("bob").col(balanceCol).val("11");
     
     // make the 2nd transaction to start commit 1st
     tx5.commit();
@@ -196,14 +200,14 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx6 = new TestTransaction(config);
     
-    Assert.assertEquals("11", tx6.getd("bob", balanceCol).toString());
-    Assert.assertEquals("21", tx6.getd("joe", balanceCol).toString());
-    Assert.assertEquals("61", tx6.getd("jill", balanceCol).toString());
+    Assert.assertEquals("11", tx6.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("21", tx6.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("61", tx6.get().row("jill").col(balanceCol).toString());
     
     TestTransaction tx7 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx7.getd("joe", balanceCol);
-    tx7.sete("bob", balanceCol).from("15");
-    tx7.sete("jill", balanceCol).from("60");
+    tx7.get().row("joe").col(balanceCol);
+    tx7.set().row("bob").col(balanceCol).val("15");
+    tx7.set().row("jill").col(balanceCol).val("60");
     
     try {
       tx7.commit();
@@ -212,9 +216,9 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx8 = new TestTransaction(config);
     
-    Assert.assertEquals("11", tx8.getd("bob", balanceCol).toString());
-    Assert.assertEquals("21", tx8.getd("joe", balanceCol).toString());
-    Assert.assertEquals("61", tx8.getd("jill", balanceCol).toString());
+    Assert.assertEquals("11", tx8.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("21", tx8.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("61", tx8.get().row("jill").col(balanceCol).toString());
   }
   
   @Test
@@ -223,31 +227,31 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    Column balanceCol = new Column("account", "balance");
+    Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.sete("bob", balanceCol).from("10");
-    tx.sete("joe", balanceCol).from("20");
-    tx.sete("jill", balanceCol).from("60");
+    tx.set().row("bob").col(balanceCol).val("10");
+    tx.set().row("joe").col(balanceCol).val("20");
+    tx.set().row("jill").col(balanceCol).val("60");
     
     tx.commit();
     
     TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx2.getd("joe", balanceCol);
-    tx2.sete("joe", balanceCol).from("21");
-    tx2.sete("bob", balanceCol).from("11");
+    tx2.get().row("joe").col(balanceCol);
+    tx2.set().row("joe").col(balanceCol).val("21");
+    tx2.set().row("bob").col(balanceCol).val("11");
     
     TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
-    tx1.getd("joe", balanceCol);
-    tx1.sete("jill", balanceCol).from("61");
+    tx1.get().row("joe").col(balanceCol);
+    tx1.set().row("jill").col(balanceCol).val("61");
     
     tx1.commit();
     assertCommitFails(tx2);
     
     TestTransaction tx3 = new TestTransaction(config);
     
-    Assert.assertEquals("10", tx3.getd("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx3.getd("joe", balanceCol).toString());
-    Assert.assertEquals("61", tx3.getd("jill", balanceCol).toString());
+    Assert.assertEquals("10", tx3.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("20", tx3.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("61", tx3.get().row("jill").col(balanceCol).toString());
     
   }
   
@@ -258,14 +262,14 @@ public class AccismusTestIT extends Base {
 
     config.setAuthorizations(new Authorizations("A", "B", "C"));
     
-    Column balanceCol = new Column("account", "balance");
+    Column balanceCol = typeLayer.newColumn("account", "balance");
     balanceCol.setVisibility(new ColumnVisibility("A|B"));
 
     TestTransaction tx = new TestTransaction(config);
     
-    tx.sete("bob", balanceCol).from("10");
-    tx.sete("joe", balanceCol).from("20");
-    tx.sete("jill", balanceCol).from("60");
+    tx.set().row("bob").col(balanceCol).val("10");
+    tx.set().row("joe").col(balanceCol).val("20");
+    tx.set().row("jill").col(balanceCol).val("60");
     
     tx.commit();
     
@@ -273,17 +277,17 @@ public class AccismusTestIT extends Base {
     config2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(config2);
-    Assert.assertEquals("10", tx2.getd("bob", balanceCol).toString());
-    Assert.assertEquals("20", tx2.getd("joe", balanceCol).toString());
-    Assert.assertEquals("60", tx2.getd("jill", balanceCol).toString());
+    Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("20", tx2.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
     
     Configuration config3 = new Configuration(zk, zkn, conn);
     config3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(config3);
-    Assert.assertNull(tx3.getd("bob", balanceCol).toString());
-    Assert.assertNull(tx3.getd("joe", balanceCol).toString());
-    Assert.assertNull(tx3.getd("jill", balanceCol).toString());
+    Assert.assertNull(tx3.get().row("bob").col(balanceCol).toString());
+    Assert.assertNull(tx3.get().row("joe").col(balanceCol).toString());
+    Assert.assertNull(tx3.get().row("jill").col(balanceCol).toString());
   }
 
   @Test
@@ -291,15 +295,15 @@ public class AccismusTestIT extends Base {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     
     TestTransaction tx = new TestTransaction(config);
-    tx.sete("d00001", new Column("data", "content")).from("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
-    tx.sete("d00001", new Column("outlink", "http://a.com")).from("");
-    tx.sete("d00001", new Column("outlink", "http://b.com")).from("");
-    tx.sete("d00001", new Column("outlink", "http://c.com")).from("");
+    tx.set().row("d00001").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
+    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).val("");
+    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).val("");
+    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
     
-    tx.sete("d00002", new Column("data", "content")).from("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
-    tx.sete("d00002", new Column("outlink", "http://d.com")).from("");
-    tx.sete("d00002", new Column("outlink", "http://e.com")).from("");
-    tx.sete("d00002", new Column("outlink", "http://c.com")).from("");
+    tx.set().row("d00002").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
+    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://d.com")).val("");
+    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://e.com")).val("");
+    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
     
     tx.commit();
     
@@ -307,11 +311,11 @@ public class AccismusTestIT extends Base {
     
     TestTransaction tx3 = new TestTransaction(config);
     
-    tx3.sete("d00001", new Column("data", "content")).from("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
-    tx3.sete("d00001", new Column("outlink", "http://a.com")).from("");
-    tx3.delete("d00001", new Column("outlink", "http://b.com"));
-    tx3.sete("d00001", new Column("outlink", "http://c.com")).from("");
-    tx3.sete("d00001", new Column("outlink", "http://z.com")).from("");
+    tx3.set().row("d00001").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
+    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).val("");
+    tx3.delete().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com"));
+    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
+    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://z.com")).val("");
     
     tx3.commit();
     
@@ -325,9 +329,9 @@ public class AccismusTestIT extends Base {
     }
     
     HashSet<Column> expected = new HashSet<Column>();
-    expected.add(new Column("outlink", "http://a.com"));
-    expected.add(new Column("outlink", "http://b.com"));
-    expected.add(new Column("outlink", "http://c.com"));
+    expected.add(typeLayer.newColumn("outlink", "http://a.com"));
+    expected.add(typeLayer.newColumn("outlink", "http://b.com"));
+    expected.add(typeLayer.newColumn("outlink", "http://c.com"));
     
     Assert.assertEquals(expected, columns);
     
@@ -340,8 +344,8 @@ public class AccismusTestIT extends Base {
         columns.add(citer.next().getKey());
       }
     }
-    expected.add(new Column("outlink", "http://z.com"));
-    expected.remove(new Column("outlink", "http://b.com"));
+    expected.add(typeLayer.newColumn("outlink", "http://z.com"));
+    expected.remove(typeLayer.newColumn("outlink", "http://b.com"));
     Assert.assertEquals(expected, columns);
     
   }

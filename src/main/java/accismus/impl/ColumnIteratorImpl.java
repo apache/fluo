@@ -58,8 +58,8 @@ public class ColumnIteratorImpl implements ColumnIterator {
     } else {
       entry = scanner.next();
     }
-    byte[] cf = entry.getKey().getColumnFamilyData().toArray();
-    byte[] cq = entry.getKey().getColumnQualifierData().toArray();
+    ByteSequence cf = entry.getKey().getColumnFamilyData();
+    ByteSequence cq = entry.getKey().getColumnQualifierData();
     // TODO cache colvis, pass cache in
     ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
     
