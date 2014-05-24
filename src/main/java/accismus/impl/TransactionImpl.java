@@ -141,6 +141,19 @@ public class TransactionImpl implements Transaction {
     return ret;
   }
   
+  @Override
+  public Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception {
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, config, startTs);
+
+    Map<ByteSequence,Map<Column,ByteSequence>> ret = pss.scan();
+
+    for (Entry<ByteSequence,Map<Column,ByteSequence>> entry : ret.entrySet()) {
+      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+    }
+
+    return ret;
+  }
+
   private void updateColumnsRead(ByteSequence row, Set<Column> columns) {
     Set<Column> colsRead = columnsRead.get(row);
     if (colsRead == null) {

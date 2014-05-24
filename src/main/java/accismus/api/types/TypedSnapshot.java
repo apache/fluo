@@ -1,6 +1,8 @@
 package accismus.api.types;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -173,9 +175,15 @@ public class TypedSnapshot implements Snapshot {
     return snapshot.get(config);
   }
 
+  @Override
+  public Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception {
+    return snapshot.get(rows, columns);
+  }
+
   public RowAction<Value,VisBytesDecoder,KeyBuilder> get() {
     return tl.new RowAction<Value,VisBytesDecoder,KeyBuilder>(new KeyBuilder());
   }
+
 
   public Map<Column,Value> getd(ByteSequence row, Set<Column> columns) throws Exception {
     Map<Column,ByteSequence> map = snapshot.get(row, columns);
@@ -191,5 +199,25 @@ public class TypedSnapshot implements Snapshot {
 
   public Map<Column,Value> getd(String row, Set<Column> columns) throws Exception {
     return getd(encoder.encode(row), columns);
+  }
+
+  public Map<String,Map<Column,Value>> getd(List<String> rows, Set<Column> columns) throws Exception {
+    ArrayList<ByteSequence> bsRows = new ArrayList<ByteSequence>(rows.size());
+    for (String row : rows) {
+      bsRows.add(encoder.encode(row));
+    }
+
+    Map<ByteSequence,Map<Column,ByteSequence>> in = snapshot.get(bsRows, columns);
+    Map<String,Map<Column,Value>> out = new HashMap<String,Map<Column,Value>>();
+
+    for (Entry<ByteSequence,Map<Column,ByteSequence>> rowEntry : in.entrySet()) {
+      Map<Column,Value> outCols = new HashMap<Column,Value>();
+      for (Entry<Column,ByteSequence> colEntry : rowEntry.getValue().entrySet()) {
+        outCols.put(colEntry.getKey(), new Value(colEntry.getValue()));
+      }
+      out.put(encoder.decodeString(rowEntry.getKey()), outCols);
+    }
+
+    return out;
   }
 }

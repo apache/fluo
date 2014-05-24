@@ -27,6 +27,7 @@ import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -61,7 +62,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   private static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
-  private static final long ROLLBACK_TIME = 5000;
+  private static final long ROLLBACK_TIME = 120000;
   private static final long MAX_WAIT_TIME = 60000;
 
   public SnapshotScanner(Configuration aconfig, ScannerConfiguration config, long startTs) {
@@ -82,7 +83,15 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     scanner.clearColumns();
     scanner.clearScanIterators();
     
-    for (Column col : config.getColumns()) {
+    scanner.setRange(config.getRange());
+
+    setupScanner(scanner, config.getColumns(), startTs);
+    
+    this.iterator = scanner.iterator();
+  }
+
+  static void setupScanner(ScannerBase scanner, List<Column> columns, long startTs) {
+    for (Column col : columns) {
       if (col.getQualifier() != null) {
         scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
       } else {
@@ -90,13 +99,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       }
     }
     
-    scanner.setRange(config.getRange());
-    
     IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);
     scanner.addScanIterator(iterConf);
-    
-    this.iterator = scanner.iterator();
   }
   
   public boolean hasNext() {
@@ -184,6 +189,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   }
   
   private boolean resolveLock(Entry<Key,Value> entry, boolean abort) {
+
+    // TODO need to check in zookeeper if worker processing tx is alive
+
     List<ByteSequence> primary = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
     
     ByteSequence prow = primary.get(0);
@@ -221,6 +229,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual).setVisibility(new ColumnVisibility(pvis.toArray())), lockTs,
             commitTs, lockVal);
         
+        // TODO cache status
+
         switch (txStatus) {
           case COMMITTED:
             if (commitTs.longValue() < lockTs) {
