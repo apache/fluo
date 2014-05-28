@@ -59,6 +59,7 @@ public class TransactionImpl implements Transaction {
   private Set<Column> observedColumns;
   private boolean commitStarted = false;
   private Configuration config;
+  private TxStats stats;
   
   public static byte[] toBytes(String s) {
     try {
@@ -90,6 +91,8 @@ public class TransactionImpl implements Transaction {
       updates.put(triggerRow, colUpdates);
       observer = new ArrayByteSequence("oid");
     }
+
+    this.stats = new TxStats();
   }
   
   public TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
@@ -143,7 +146,7 @@ public class TransactionImpl implements Transaction {
   
   @Override
   public Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception {
-    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, config, startTs);
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, config, startTs, stats);
 
     Map<ByteSequence,Map<Column,ByteSequence>> ret = pss.scan();
 
@@ -170,7 +173,7 @@ public class TransactionImpl implements Transaction {
     if (commitStarted)
       throw new IllegalStateException("transaction committed");
 
-    return new RowIteratorImpl(new SnapshotScanner(this.config, config, startTs));
+    return new RowIteratorImpl(new SnapshotScanner(this.config, config, startTs, stats));
   }
   
   @Override
@@ -550,7 +553,7 @@ public class TransactionImpl implements Transaction {
     return true;
   }
 
-  CommitData createCommitData() throws TableNotFoundException {
+  CommitData createCommitData() {
     CommitData cd = new CommitData();
     cd.cw = config.getSharedResources().getConditionalWriter();
     return cd;
@@ -558,16 +561,15 @@ public class TransactionImpl implements Transaction {
 
   public void commit() throws CommitException {
     // TODO synchronize or detect concurrent use
+    // TODO prevent multiple calls
     
     if (updates.size() == 0)
       return;
 
-    CommitData cd;
-    try {
-      cd = createCommitData();
-    } catch (TableNotFoundException e1) {
-      throw new RuntimeException(e1);
-    }
+    for (Map<Column,ByteSequence> cols : updates.values())
+      stats.incrementEntriesSet(cols.size());
+
+    CommitData cd = createCommitData();
     
     try {
       if (!preCommit(cd)) {
@@ -589,7 +591,16 @@ public class TransactionImpl implements Transaction {
       throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
+    } finally {
+      stats.setFinishTime(System.currentTimeMillis());
+      for (Set<Column> cols : cd.getRejected().values()) {
+        stats.incrementCollisions(cols.size());
+      }
     }
+  }
+
+  TxStats getStats() {
+    return stats;
   }
 
   long getStartTs() {

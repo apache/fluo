@@ -38,16 +38,22 @@ public class LoadTask implements Runnable {
   @Override
   public void run() {
     while (true) {
+      TransactionImpl tx = null;
+      String status = "FAILED";
       try {
-        TransactionImpl tx = new TransactionImpl(config);
+        tx = new TransactionImpl(config);
         loader.load(tx);
         tx.commit();
+        status = "COMMITTED";
         return;
       } catch (CommitException e) {
         // retry
       } catch (Exception e) {
         log.error("Failed to execute loader " + loader, e);
         throw new RuntimeException(e);
+      } finally {
+        if (tx != null)
+          TxLogger.logTx(status, loader.getClass().getName(), tx.getStats());
       }
     }
   }

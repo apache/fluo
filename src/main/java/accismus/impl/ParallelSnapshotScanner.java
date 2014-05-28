@@ -27,19 +27,22 @@ public class ParallelSnapshotScanner {
   private long startTs;
   private List<ByteSequence> rows;
   private Set<Column> columns;
+  private TxStats stats;
 
-  ParallelSnapshotScanner(List<ByteSequence> rows, Set<Column> columns, Configuration aconfig, long startTs) {
+  ParallelSnapshotScanner(List<ByteSequence> rows, Set<Column> columns, Configuration aconfig, long startTs, TxStats stats) {
     this.rows = rows;
     this.columns = columns;
     this.aconfig = aconfig;
     this.startTs = startTs;
+    this.stats = stats;
   }
 
   private BatchScanner setupBatchScanner(List<ByteSequence> rows, Set<Column> columns) {
     BatchScanner scanner;
     try {
       // TODO hardcoded number of threads!
-      scanner = aconfig.getConnector().createBatchScanner(aconfig.getTable(), aconfig.getAuthorizations(), 3);
+      // one thread is probably good.. going for throug
+      scanner = aconfig.getConnector().createBatchScanner(aconfig.getTable(), aconfig.getAuthorizations(), 1);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -65,7 +68,9 @@ public class ParallelSnapshotScanner {
 
   Map<ByteSequence,Map<Column,ByteSequence>> scan() {
 
-    int count = 0;
+    long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
+    long startTime = System.currentTimeMillis();
+
     while (true) {
       List<Entry<Key,Value>> locks = new ArrayList<Entry<Key,Value>>();
 
@@ -73,18 +78,21 @@ public class ParallelSnapshotScanner {
 
       if (locks.size() > 0) {
 
-        if (count == 10) {
+        if (System.currentTimeMillis() - startTime > SnapshotScanner.ROLLBACK_TIME) {
           throw new NotImplementedException("Parallel lock recovery");
         }
 
         // TODO get unique set of primary lock row/cols and then determine status of those... and then roll back or forward in batch
         // TODO only reread locked row/cols
-        UtilWaitThread.sleep(1000);
-
-        count++;
+        UtilWaitThread.sleep(waitTime);
+        stats.incrementLockWaitTime(waitTime);
+        waitTime = Math.min(SnapshotScanner.MAX_WAIT_TIME, waitTime * 2);
 
         continue;
       }
+
+      for (Map<Column,ByteSequence> cols : ret.values())
+        stats.incrementEntriesReturned(cols.size());
 
       return ret;
     }

@@ -174,13 +174,17 @@ public class Worker {
         loggedFirst = true;
       }
 
-      while (true)
+      while (true) {
+        TransactionImpl tx = null;
+        String status = "FAILED";
         try {
-          TransactionImpl tx = new TransactionImpl(config, row, col);
+          tx = new TransactionImpl(config, row, col);
           observer.process(tx, row, col);
           tx.commit();
+          status = "COMMITTED";
           break;
         } catch (AlreadyAcknowledgedException aae) {
+          status = "AACKED";
           return numProcessed;
         } catch (CommitException e) {
           // retry
@@ -196,9 +200,12 @@ public class Worker {
             log.debug("Failure processing notification concurrently ", e);
             return numProcessed;
           }
+        } finally {
+          if (tx != null && TxLogger.isLoggingEnabled())
+            TxLogger.logTx(status, observer.getClass().getSimpleName(), tx.getStats(), row + ":" + col);
         }
       // TODO if duplicate set detected, see if its because already acknowledged
-      
+      }
       numProcessed++;
     }
     

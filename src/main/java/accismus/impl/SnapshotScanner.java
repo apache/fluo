@@ -59,16 +59,18 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   private ScannerConfiguration config;
 
   private Configuration aconfig;
+  private TxStats stats;
 
-  private static final long INITIAL_WAIT_TIME = 50;
+  static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
-  private static final long ROLLBACK_TIME = 120000;
-  private static final long MAX_WAIT_TIME = 60000;
+  static final long ROLLBACK_TIME = 120000;
+  static final long MAX_WAIT_TIME = 60000;
 
-  public SnapshotScanner(Configuration aconfig, ScannerConfiguration config, long startTs) {
+  public SnapshotScanner(Configuration aconfig, ScannerConfiguration config, long startTs, TxStats stats) {
     this.aconfig = aconfig;
     this.config = config;
     this.startTs = startTs;
+    this.stats = stats;
     
     setUpIterator();
   }
@@ -139,7 +141,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
 
       if (colType == ColumnUtil.LOCK_PREFIX) {
-        // TODO do read ahead while waiting for the lock
+        // TODO do read ahead while waiting for the lock... this is important for the case where reprocessing a failed transaction... need to find a batch or
+        // locked columns and resolve them together, not one by one... should cache the status of the primary lock while doing this
         
         boolean resolvedLock = false;
 
@@ -152,6 +155,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
         if (!resolvedLock) {
           UtilWaitThread.sleep(waitTime);
+          stats.incrementLockWaitTime(waitTime);
           waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
         
           if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
@@ -175,6 +179,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       } else if (colType == ColumnUtil.DATA_PREFIX) {
         waitTime = INITIAL_WAIT_TIME;
         firstSeen = -1;
+        stats.incrementEntriesReturned(1);
         return entry;
       } else if (colType == ColumnUtil.WRITE_PREFIX) {
         if (WriteValue.isTruncated(entry.getValue().get())) {
