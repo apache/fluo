@@ -25,7 +25,8 @@ import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import accismus.api.config.WorkerProperties;
 import accismus.impl.Configuration;
@@ -37,11 +38,8 @@ import accismus.impl.WorkerTask;
  */
 public class WorkerTool extends Configured implements Tool {
   
-
-  private static Logger log = Logger.getLogger(WorkerTool.class);
-
-
-
+  private static Logger log = LoggerFactory.getLogger(WorkerTool.class);
+  
   public static void main(String[] args) throws Exception {
     ToolRunner.run(new WorkerTool(), args);
   }

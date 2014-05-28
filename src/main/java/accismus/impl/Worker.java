@@ -32,7 +32,8 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.VersioningIterator;
 import org.apache.hadoop.io.Text;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import accismus.api.Column;
 import accismus.api.Observer;
@@ -49,7 +50,7 @@ public class Worker {
   // TODO arbitrary
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
-  private static Logger log = Logger.getLogger(Worker.class);
+  private static Logger log = LoggerFactory.getLogger(Worker.class);
 
   private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
   private Configuration config;

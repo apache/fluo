@@ -19,7 +19,8 @@ package accismus.impl;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.accumulo.core.util.UtilWaitThread;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import accismus.tools.WorkerTool;
 
@@ -31,7 +32,7 @@ public class WorkerTask implements Runnable {
   // TODO max sleep time should probably be a function of the total number of threads in the system
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
-  private static Logger log = Logger.getLogger(WorkerTool.class);
+  private static Logger log = LoggerFactory.getLogger(WorkerTool.class);
   private Configuration config;
   private AtomicBoolean shutdownFlag;
 

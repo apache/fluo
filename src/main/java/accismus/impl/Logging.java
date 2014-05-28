@@ -20,15 +20,16 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
  */
 public class Logging {
   
-  private static Logger log = Logger.getLogger(Logging.class);
+  private static Logger log = LoggerFactory.getLogger(Logging.class);
   
   public static void init(String application) throws UnknownHostException {
     

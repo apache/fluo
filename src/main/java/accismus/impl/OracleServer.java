@@ -18,7 +18,6 @@ package accismus.impl;
 
 import java.net.InetSocketAddress;
 
-import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -29,6 +28,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import accismus.impl.thrift.OracleService;
 
@@ -44,7 +45,7 @@ public class OracleServer implements OracleService.Iface {
   private THsHaServer server;
   private boolean started = false;
   
-  private static Logger log = Logger.getLogger(OracleServer.class);
+  private static Logger log = LoggerFactory.getLogger(OracleServer.class);
 
   public OracleServer(Configuration config) throws Exception {
     this.config = config;

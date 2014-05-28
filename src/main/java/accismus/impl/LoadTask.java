@@ -16,7 +16,8 @@
  */
 package accismus.impl;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import accismus.api.Loader;
 import accismus.api.exceptions.CommitException;
@@ -26,7 +27,7 @@ import accismus.api.exceptions.CommitException;
  */
 public class LoadTask implements Runnable {
   
-  private static Logger log = Logger.getLogger(LoadTask.class);
+  private static Logger log = LoggerFactory.getLogger(LoadTask.class);
   private Loader loader;
   private Configuration config;
   
