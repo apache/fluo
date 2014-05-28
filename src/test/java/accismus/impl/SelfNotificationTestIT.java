@@ -129,6 +129,4 @@ public class SelfNotificationTestIT extends Base {
     Assert.assertNull(exp);
     
   }
-  
-  // TODO test that observers trigger on delete
 }
