@@ -113,7 +113,7 @@ public class Admin {
           String[] fields = val.split(",");
           Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
           colObservers.put(col, fields[3]);
-        } else if (key.startsWith("accismus.worker")) {
+        } else if (key.startsWith("accismus.worker") || key.startsWith("accismus.tx")) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
       }

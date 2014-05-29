@@ -23,13 +23,15 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import accismus.api.Column;
+import accismus.impl.Constants;
 
 /**
  * 
  */
-public class WorkerProperties extends AccismusProperties {
+public class WorkerProperties extends AccismusProperties implements TransactionConfiguration {
 
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.worker.numThreads";
@@ -37,15 +39,23 @@ public class WorkerProperties extends AccismusProperties {
 
   public WorkerProperties() {
     super();
+    setDefaults();
   }
 
   public WorkerProperties(File file) throws FileNotFoundException, IOException {
     this();
     load(new FileInputStream(file));
+    setDefaults();
   }
 
   public WorkerProperties(Properties props) {
     super(props);
+    setDefaults();
+  }
+
+  private void setDefaults() {
+    setDefault(NUM_THREADS_PROP, "10");
+    setDefault(TransactionConfiguration.ROLLBACK_TIME_PROP, Constants.ROLLBACK_TIME_DEFAULT + "");
   }
 
   public WorkerProperties setNumThreads(int num) {
@@ -72,5 +82,10 @@ public class WorkerProperties extends AccismusProperties {
     }
 
     return this;
+  }
+
+  @Override
+  public void setRollbackTime(long time, TimeUnit tu) {
+    setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, tu.toMillis(time) + "");
   }
 }

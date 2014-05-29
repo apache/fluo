@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import accismus.api.Column;
+import accismus.api.config.TransactionConfiguration;
 
 /**
  * 
@@ -91,7 +92,9 @@ public class Base {
     zkn = "/test" + next.getAndIncrement();
     
     Operations.initialize(conn, zkn, table);
-    Operations.updateWorkerConfig(conn, zkn, new Properties());
+    Properties wprops = new Properties();
+    wprops.setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, "5000");
+    Operations.updateWorkerConfig(conn, zkn, wprops);
     Operations.updateObservers(conn, zkn, getObservers());
 
     config = new Configuration(zk, zkn, conn);

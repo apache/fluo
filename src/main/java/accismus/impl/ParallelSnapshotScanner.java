@@ -78,7 +78,7 @@ public class ParallelSnapshotScanner {
 
       if (locks.size() > 0) {
 
-        if (System.currentTimeMillis() - startTime > SnapshotScanner.ROLLBACK_TIME) {
+        if (System.currentTimeMillis() - startTime > aconfig.getRollbackTime()) {
           throw new NotImplementedException("Parallel lock recovery");
         }
 

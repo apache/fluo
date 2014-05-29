@@ -41,6 +41,7 @@ import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.Column;
 import accismus.api.config.AccismusProperties;
+import accismus.api.config.TransactionConfiguration;
 
 
 /**
@@ -58,6 +59,7 @@ public class Configuration {
   private String accismusInstanceID;
   private Properties workerProps;
   private SharedResources resources;
+  private long rollbackTime;
   
   public Configuration(Configuration config) throws Exception {
     this.table = config.table;
@@ -87,6 +89,8 @@ public class Configuration {
     }
 
     this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
+
+    rollbackTime = Long.parseLong(getWorkerProperties().getProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, Constants.ROLLBACK_TIME_DEFAULT + ""));
   }
   
   /**
@@ -215,5 +219,9 @@ public class Configuration {
   
   public Properties getWorkerProperties() {
     return workerProps;
+  }
+
+  public long getRollbackTime() {
+    return rollbackTime;
   }
 }
