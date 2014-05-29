@@ -65,7 +65,8 @@ public class ColumnUtil {
     if (isTrigger) {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, TransactionImpl.EMPTY);
       m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), startTs);
-    } else if (observedColumns.contains(col)) {
+    }
+    if (observedColumns.contains(col) && isWrite) {
       m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), commitTs, TransactionImpl.EMPTY);
     }
   }
