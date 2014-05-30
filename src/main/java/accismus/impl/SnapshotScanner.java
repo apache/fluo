@@ -280,7 +280,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         .getColumnVisibilityParsed());
     Mutation m = new Mutation(entry.getKey().getRowData().toArray());
     
-    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
+    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
     
     // TODO use conditional writer?
     aconfig.getSharedResources().getBatchWriter().writeMutation(m);

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.commons.collections.map.DefaultedMap;
 
 import accismus.api.Column;
 import accismus.api.RowIterator;
@@ -185,6 +186,7 @@ public class TypedSnapshot implements Snapshot {
   }
 
 
+  @SuppressWarnings("unchecked")
   public Map<Column,Value> getd(ByteSequence row, Set<Column> columns) throws Exception {
     Map<Column,ByteSequence> map = snapshot.get(row, columns);
     Map<Column,Value> ret = new HashMap<Column,Value>();
@@ -194,13 +196,14 @@ public class TypedSnapshot implements Snapshot {
       ret.put(entry.getKey(), new Value(entry.getValue()));
     }
 
-    return ret;
+    return DefaultedMap.decorate(ret, new Value(null));
   }
 
   public Map<Column,Value> getd(String row, Set<Column> columns) throws Exception {
     return getd(encoder.encode(row), columns);
   }
 
+  @SuppressWarnings("unchecked")
   public Map<String,Map<Column,Value>> getd(List<String> rows, Set<Column> columns) throws Exception {
     ArrayList<ByteSequence> bsRows = new ArrayList<ByteSequence>(rows.size());
     for (String row : rows) {
@@ -215,9 +218,9 @@ public class TypedSnapshot implements Snapshot {
       for (Entry<Column,ByteSequence> colEntry : rowEntry.getValue().entrySet()) {
         outCols.put(colEntry.getKey(), new Value(colEntry.getValue()));
       }
-      out.put(encoder.decodeString(rowEntry.getKey()), outCols);
+      out.put(encoder.decodeString(rowEntry.getKey()), DefaultedMap.decorate(outCols, new Value(null)));
     }
 
-    return out;
+    return DefaultedMap.decorate(out, new DefaultedMap(new Value(null)));
   }
 }

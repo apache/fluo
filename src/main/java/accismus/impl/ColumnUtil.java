@@ -53,8 +53,8 @@ public class ColumnUtil {
     return ByteUtil.concat(c.getFamily(), c.getQualifier());
   }
 
-  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, long startTs, long commitTs, Set<Column> observedColumns,
-      Mutation m) {
+  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
+      Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
     } else {
@@ -66,7 +66,7 @@ public class ColumnUtil {
       m.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ACK_PREFIX | startTs, TransactionImpl.EMPTY);
       m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), startTs);
     }
-    if (observedColumns.contains(col) && isWrite) {
+    if (observedColumns.contains(col) && isWrite && !isDelete) {
       m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), commitTs, TransactionImpl.EMPTY);
     }
   }
