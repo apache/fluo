@@ -18,7 +18,7 @@ import accismus.api.exceptions.CommitException;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
 
-public class AccismusTestIT extends Base {
+public class AccismusIT extends Base {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 

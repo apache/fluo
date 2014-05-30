@@ -41,7 +41,7 @@ import accismus.impl.TransactionImpl.CommitData;
 /**
  * 
  */
-public class FailureTestIT extends Base {
+public class FailureIT extends Base {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   Column balanceCol = typeLayer.newColumn("account", "balance");

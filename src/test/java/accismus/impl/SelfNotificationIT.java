@@ -36,7 +36,7 @@ import accismus.api.types.TypedTransaction;
 /**
  * Test an observer notifying the column its observing.  This is a useful pattern for exporting data.
  */
-public class SelfNotificationTestIT extends Base {
+public class SelfNotificationIT extends Base {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   
