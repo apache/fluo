@@ -36,6 +36,7 @@ import org.junit.BeforeClass;
 
 import accismus.api.Column;
 import accismus.api.config.TransactionConfiguration;
+import accismus.format.AccismusFormatter;
 
 /**
  * 
@@ -108,5 +109,16 @@ public class Base {
     conn.tableOperations().delete(table);
     oserver.stop();
     config.getSharedResources().close();
+  }
+
+  protected void printTable() throws Exception {
+    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    AccismusFormatter af = new AccismusFormatter();
+
+    af.initialize(scanner, true);
+
+    while (af.hasNext()) {
+      System.out.println(af.next());
+    }
   }
 }

@@ -32,6 +32,10 @@ public class TestTransaction extends TypedTransaction {
     this(new TransactionImpl(config, trow, tcol), new StringEncoder());
   }
 
+  public TestTransaction(Configuration config, String trow, Column tcol) throws Exception {
+    this(new TransactionImpl(config, new ArrayByteSequence(trow), tcol), new StringEncoder());
+  }
+
   public void commit() throws CommitException {
     tx.commit();
   }

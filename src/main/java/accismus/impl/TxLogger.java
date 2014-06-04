@@ -17,7 +17,8 @@ public class TxLogger {
 
       // TODO need better names for #read and #ret... these indicate the number the user looked up and the number looked up that existed
 
-      String msg = String.format("tx info status:%s time:%d #read:TODO #ret:%,d #set:%,d #collisions:%,d waitTime:%,d %sclass:%s", status, stats.getTime(),
+      String msg = String.format("tx info thread:%d status:%s time:%d #read:TODO #ret:%,d #set:%,d #collisions:%,d waitTime:%,d %sclass:%s", Thread
+          .currentThread().getId(), status, stats.getTime(),
           stats.getEntriesReturned(), stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), triggerMsg, clazz);
       log.trace(msg);
     }
