@@ -17,6 +17,7 @@ import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
+import accismus.impl.TransactionImpl.CommitData;
 
 public class AccismusIT extends Base {
   
@@ -221,6 +222,56 @@ public class AccismusIT extends Base {
     Assert.assertEquals("61", tx8.get().row("jill").col(balanceCol).toString());
   }
   
+  @Test
+  public void testAck2() throws Exception {
+    TestTransaction tx = new TestTransaction(config);
+
+    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column addrCol = typeLayer.newColumn("account", "addr");
+
+    tx.set().row("bob").col(balanceCol).val("10");
+    tx.set().row("joe").col(balanceCol).val("20");
+    tx.set().row("jill").col(balanceCol).val("60");
+
+    tx.commit();
+
+    TestTransaction tx1 = new TestTransaction(config, "bob", balanceCol);
+    TestTransaction tx2 = new TestTransaction(config, "bob", balanceCol);
+
+    tx1.get().row("bob").col(balanceCol).toString();
+    tx2.get().row("bob").col(balanceCol).toString();
+
+    tx1.get().row("bob").col(addrCol).toString();
+    tx2.get().row("bob").col(addrCol).toString();
+
+    tx1.set().row("bob").col(addrCol).val("1 loop pl");
+    tx2.set().row("bob").col(addrCol).val("1 loop pl");
+
+    // this test overlaps the commmits of two transactions w/ the same trigger
+
+    CommitData cd = tx1.createCommitData();
+    Assert.assertTrue(tx1.preCommit(cd));
+
+    try {
+      tx2.commit();
+    } catch (CommitException ce) {
+
+    }
+
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
+    Assert.assertTrue(tx1.commitPrimaryColumn(cd, commitTs));
+    tx1.finishCommit(cd, commitTs);
+
+    TestTransaction tx3 = new TestTransaction(config, "bob", balanceCol);
+    tx3.set().row("bob").col(addrCol).val("2 loop pl");
+    try {
+      tx3.commit();
+    } catch (AlreadyAcknowledgedException e) {
+
+    }
+
+  }
+
   @Test
   public void testWriteObserved() throws Exception {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
