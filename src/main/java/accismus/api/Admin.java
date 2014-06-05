@@ -79,8 +79,9 @@ public class Admin {
         conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "accismus",
             props.getProperty(InitializationProperties.CLASSPATH_PROP));
         conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_CLASSPATH.getKey(), contextName);
-        conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
       }
+
+      conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException(nee);
     } catch (Exception e) {
@@ -113,7 +114,7 @@ public class Admin {
           String[] fields = val.split(",");
           Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
           colObservers.put(col, fields[3]);
-        } else if (key.startsWith("accismus.worker")) {
+        } else if (key.startsWith("accismus.worker") || key.startsWith("accismus.tx")) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
       }

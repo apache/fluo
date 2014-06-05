@@ -20,13 +20,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import accismus.api.LoaderExecutor;
 
 /**
  * This class helps setting the properties need to create a {@link LoaderExecutor}
  */
-public class LoaderExecutorProperties extends AccismusProperties {
+public class LoaderExecutorProperties extends AccismusProperties implements TransactionConfiguration {
 
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.loader.executor.numThreads";
@@ -59,6 +60,12 @@ public class LoaderExecutorProperties extends AccismusProperties {
   private void setDefaults() {
     setDefault(NUM_THREADS_PROP, "10");
     setDefault(QUEUE_SIZE_PROP, "10");
+  }
+
+  @Override
+  public void setRollbackTime(long time, TimeUnit tu) {
+    // TODO implement this, currently only gets rollback time for worker props in zookeeper
+    throw new UnsupportedOperationException();
   }
 
 }

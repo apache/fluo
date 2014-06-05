@@ -41,7 +41,7 @@ public class ParallelSnapshotScanner {
     BatchScanner scanner;
     try {
       // TODO hardcoded number of threads!
-      // one thread is probably good.. going for throug
+      // one thread is probably good.. going for throughput
       scanner = aconfig.getConnector().createBatchScanner(aconfig.getTable(), aconfig.getAuthorizations(), 1);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
@@ -78,7 +78,7 @@ public class ParallelSnapshotScanner {
 
       if (locks.size() > 0) {
 
-        if (System.currentTimeMillis() - startTime > SnapshotScanner.ROLLBACK_TIME) {
+        if (System.currentTimeMillis() - startTime > aconfig.getRollbackTime()) {
           throw new NotImplementedException("Parallel lock recovery");
         }
 
@@ -87,6 +87,8 @@ public class ParallelSnapshotScanner {
         UtilWaitThread.sleep(waitTime);
         stats.incrementLockWaitTime(waitTime);
         waitTime = Math.min(SnapshotScanner.MAX_WAIT_TIME, waitTime * 2);
+
+        // TODO only reread data that was locked when retrying, not everything
 
         continue;
       }
@@ -114,7 +116,6 @@ public class ParallelSnapshotScanner {
         long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
 
         if (colType == ColumnUtil.LOCK_PREFIX) {
-
           locks.add(entry);
         } else if (colType == ColumnUtil.DATA_PREFIX) {
           Map<Column,ByteSequence> cols = ret.get(row);

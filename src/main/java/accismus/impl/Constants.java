@@ -40,4 +40,6 @@ public class Constants {
   }
 
   public static final String WORKER_THREADS = "accismus.config.worker.numThreads";
+
+  public static final long ROLLBACK_TIME_DEFAULT = 300000;
 }

@@ -51,7 +51,7 @@ import accismus.format.AccismusFormatter;
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
  * the average should not vary.
  */
-public class StochasticBankTestIT extends Base {
+public class StochasticBankIT extends Base {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();

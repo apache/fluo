@@ -63,7 +63,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
-  static final long ROLLBACK_TIME = 120000;
   static final long MAX_WAIT_TIME = 60000;
 
   public SnapshotScanner(Configuration aconfig, ScannerConfiguration config, long startTs, TxStats stats) {
@@ -71,7 +70,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.config = config;
     this.startTs = startTs;
     this.stats = stats;
-    
     setUpIterator();
   }
   
@@ -158,7 +156,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
           stats.incrementLockWaitTime(waitTime);
           waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
         
-          if (System.currentTimeMillis() - firstSeen > ROLLBACK_TIME) {
+          if (System.currentTimeMillis() - firstSeen > aconfig.getRollbackTime()) {
             // try to abort the transaction
             resolveLock(entry, true);
           }
@@ -282,7 +280,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         .getColumnVisibilityParsed());
     Mutation m = new Mutation(entry.getKey().getRowData().toArray());
     
-    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
+    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
     
     // TODO use conditional writer?
     aconfig.getSharedResources().getBatchWriter().writeMutation(m);

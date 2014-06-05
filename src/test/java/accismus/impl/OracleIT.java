@@ -33,7 +33,7 @@ import accismus.impl.OracleClient;
 /**
  * 
  */
-public class OracleTestIT extends Base {
+public class OracleIT extends Base {
   
   @Test
   public void testRestart() throws Exception {

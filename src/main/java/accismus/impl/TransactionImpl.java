@@ -227,7 +227,7 @@ public class TransactionImpl implements Transaction {
       cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DATA_PREFIX | startTs, val.toArray());
     
     cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs,
-        LockValue.encode(primaryRow, primaryColumn, val != null, isTrigger ? observer : EMPTY_BS));
+        LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTrigger ? observer : EMPTY_BS));
     
     return cm;
   }
@@ -468,9 +468,9 @@ public class TransactionImpl implements Transaction {
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
     Condition lockCheck = new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
-        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, isTrigger ? observer : EMPTY_BS));
+        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger ? observer : EMPTY_BS));
     ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow, lockCheck);
-    ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, startTs, commitTs, observedColumns, delLockMutation);
+    ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE, startTs, commitTs, observedColumns, delLockMutation);
     
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
     
@@ -536,8 +536,8 @@ public class TransactionImpl implements Transaction {
       Mutation m = new Mutation(rowUpdates.getKey().toArray());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       for (Entry<Column,ByteSequence> colUpdates : rowUpdates.getValue().entrySet()) {
-        ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null, startTs,
-            commitTs, observedColumns, m);
+        ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null,
+            colUpdates.getValue() == DELETE, startTs, commitTs, observedColumns, m);
       }
       
       mutations.add(m);
