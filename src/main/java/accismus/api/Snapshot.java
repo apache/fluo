@@ -16,7 +16,7 @@
  */
 package accismus.api;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +31,7 @@ public interface Snapshot {
 
   public abstract Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception;
 
-  public abstract Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception;
+  public abstract Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception;
 
   public abstract RowIterator get(ScannerConfiguration config) throws Exception;
 }

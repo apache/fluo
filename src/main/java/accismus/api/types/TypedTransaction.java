@@ -76,6 +76,24 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
       set = true;
     }
 
+    public void increment(int i) throws Exception {
+      checkNotSet();
+      ByteSequence val = tx.get(row, col);
+      int v = 0;
+      if (val != null)
+        v = encoder.decodeInteger(val);
+      tx.set(row, col, encoder.encode(v + i));
+    }
+
+    public void increment(long l) throws Exception {
+      checkNotSet();
+      ByteSequence val = tx.get(row, col);
+      long v = 0;
+      if (val != null)
+        v = encoder.decodeLong(val);
+      tx.set(row, col, encoder.encode(v + l));
+    }
+
     public void set(byte[] ba) {
       checkNotSet();
       tx.set(row, col, new ArrayByteSequence(ba));

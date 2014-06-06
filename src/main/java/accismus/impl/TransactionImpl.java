@@ -2,6 +2,7 @@ package accismus.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -154,7 +155,7 @@ public class TransactionImpl implements Transaction {
   }
   
   @Override
-  public Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception {
+  public Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception {
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, config, startTs, stats);
 
     Map<ByteSequence,Map<Column,ByteSequence>> ret = pss.scan();

@@ -78,7 +78,7 @@ public class Column implements Writable {
   }
 
   public String toString() {
-    return "'" + family + "' '" + qualifier + "' " + visibility;
+    return family + " " + qualifier + " " + visibility;
   }
   
   // TODO remove from public API

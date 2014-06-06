@@ -1,8 +1,8 @@
 package accismus.api.types;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -177,7 +177,7 @@ public class TypedSnapshot implements Snapshot {
   }
 
   @Override
-  public Map<ByteSequence,Map<Column,ByteSequence>> get(List<ByteSequence> rows, Set<Column> columns) throws Exception {
+  public Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception {
     return snapshot.get(rows, columns);
   }
 
@@ -204,7 +204,7 @@ public class TypedSnapshot implements Snapshot {
   }
 
   @SuppressWarnings("unchecked")
-  public Map<String,Map<Column,Value>> getd(List<String> rows, Set<Column> columns) throws Exception {
+  public Map<String,Map<Column,Value>> getd(Collection<String> rows, Set<Column> columns) throws Exception {
     ArrayList<ByteSequence> bsRows = new ArrayList<ByteSequence>(rows.size());
     for (String row : rows) {
       bsRows.add(encoder.encode(row));
