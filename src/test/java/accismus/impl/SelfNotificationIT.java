@@ -67,10 +67,10 @@ public class SelfNotificationIT extends Base {
         export(row, exportCount);
         
         if(currentCount == null || exportCount.equals(currentCount)){
-          ttx.delete().row(row).col(EXPORT_COUNT_COL);
+          ttx.mutate().row(row).col(EXPORT_COUNT_COL).delete();
         }else{
-          ttx.set().row(row).col(EXPORT_COUNT_COL).val(currentCount);
-          ttx.set().row(row).col(EXPORT_CHECK_COL).val();
+          ttx.mutate().row(row).col(EXPORT_COUNT_COL).set(currentCount);
+          ttx.mutate().row(row).col(EXPORT_CHECK_COL).set();
         }
         
       }
@@ -86,9 +86,9 @@ public class SelfNotificationIT extends Base {
     
     TestTransaction tx1 = new TestTransaction(config);
 
-    tx1.set().row("r1").col(STAT_COUNT_COL).val(3);
-    tx1.set().row("r1").col(EXPORT_CHECK_COL).val();
-    tx1.set().row("r1").col(EXPORT_COUNT_COL).val(3);
+    tx1.mutate().row("r1").col(STAT_COUNT_COL).set(3);
+    tx1.mutate().row("r1").col(EXPORT_CHECK_COL).set();
+    tx1.mutate().row("r1").col(EXPORT_COUNT_COL).set(3);
     
     tx1.commit();
     
@@ -102,16 +102,16 @@ public class SelfNotificationIT extends Base {
 
     Assert.assertNull(tx2.get().row("r1").col(EXPORT_COUNT_COL).toInteger());
     
-    tx2.set().row("r1").col(STAT_COUNT_COL).val(4);
-    tx2.set().row("r1").col(EXPORT_CHECK_COL).val();
-    tx2.set().row("r1").col(EXPORT_COUNT_COL).val(4);
+    tx2.mutate().row("r1").col(STAT_COUNT_COL).set(4);
+    tx2.mutate().row("r1").col(EXPORT_CHECK_COL).set();
+    tx2.mutate().row("r1").col(EXPORT_COUNT_COL).set(4);
     
     tx2.commit();
     
     TestTransaction tx3 = new TestTransaction(config);
 
-    tx3.set().row("r1").col(STAT_COUNT_COL).val(5);
-    tx3.set().row("r1").col(EXPORT_CHECK_COL).val();
+    tx3.mutate().row("r1").col(STAT_COUNT_COL).set(5);
+    tx3.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     
     tx3.commit();
     

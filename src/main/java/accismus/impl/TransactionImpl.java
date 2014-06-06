@@ -52,10 +52,13 @@ public class TransactionImpl implements Transaction {
   private long startTs;
   
   private Map<ByteSequence,Map<Column,ByteSequence>> updates;
+  private Map<ByteSequence,Set<Column>> weakNotifications;
   Map<ByteSequence,Set<Column>> columnsRead = new HashMap<ByteSequence,Set<Column>>();
   private ByteSequence observer;
   private ByteSequence triggerRow;
   private Column triggerColumn;
+  private ByteSequence weakRow;
+  private Column weakColumn;
   private Set<Column> observedColumns;
   private boolean commitStarted = false;
   private Configuration config;
@@ -69,13 +72,19 @@ public class TransactionImpl implements Transaction {
     }
   }
 
-  TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn, Long startTs) throws Exception {
+  TransactionImpl(Configuration config, ByteSequence triggerRow, Column triggerColumn, Long startTs) throws Exception {
     this.config = config;
     this.observedColumns = config.getObservers().keySet();
     this.updates = new HashMap<ByteSequence,Map<Column,ByteSequence>>();
+    this.weakNotifications = new HashMap<ByteSequence,Set<Column>>();
     
-    this.triggerRow = triggerRow;
-    this.triggerColumn = tiggerColumn;
+    if (triggerColumn != null && config.getWeakObservers().containsKey(triggerColumn)) {
+      this.weakRow = triggerRow;
+      this.weakColumn = triggerColumn;
+    } else {
+      this.triggerRow = triggerRow;
+      this.triggerColumn = triggerColumn;
+    }
     
     if (startTs == null)
       this.startTs = OracleClient.getInstance(config).getTimestamp();
@@ -87,7 +96,7 @@ public class TransactionImpl implements Transaction {
     
     if (triggerRow != null) {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
-      colUpdates.put(tiggerColumn, null);
+      colUpdates.put(triggerColumn, null);
       updates.put(triggerRow, colUpdates);
       observer = new ArrayByteSequence("oid");
     }
@@ -201,6 +210,27 @@ public class TransactionImpl implements Transaction {
     colUpdates.put(col, value);
   }
   
+
+  @Override
+  public void setWeakNotification(ByteSequence row, Column col) {
+    if (commitStarted)
+      throw new IllegalStateException("transaction committed");
+
+    // TODO do not use ArgumentChecked
+    // TODO anlyze code to see what non-public Accumulo APIs are used
+    ArgumentChecker.notNull(row, col);
+
+    if (!config.getWeakObservers().containsKey(col))
+      throw new IllegalArgumentException("Column not configured for weak notifications " + col);
+
+    Set<Column> columns = weakNotifications.get(row);
+    if (columns == null) {
+      columns = new HashSet<Column>();
+      weakNotifications.put(row, columns);
+    }
+
+    columns.add(col);
+  }
 
   @Override
   public void delete(ByteSequence row, Column col) {
@@ -384,7 +414,29 @@ public class TransactionImpl implements Transaction {
       return false;
     }
 
+    // set weak notifications after all locks are written, but before finishing commit. If weak notifications were set after the commit, then information
+    // about weak notifications would need to be persisted in the lock phase. Setting here is safe because any observers that run as a result of the weak
+    // notification will wait for the commit to finish. Setting here may cause an observer to run unessecarily in the case of rollback, but thats ok.
+    // TODO look into setting weak notification as part of lock and commit phases to avoid this synchronous step
+    writeWeakNotifications();
+
     return true;
+  }
+
+  private void writeWeakNotifications() {
+    if (weakNotifications.size() > 0) {
+      SharedBatchWriter sbw = config.getSharedResources().getBatchWriter();
+      ArrayList<Mutation> mutations = new ArrayList<Mutation>();
+
+      for (Entry<ByteSequence,Set<Column>> entry : weakNotifications.entrySet()) {
+        Mutation m = new Mutation(entry.getKey().toArray());
+        for (Column col : entry.getValue()) {
+          m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), startTs, TransactionImpl.EMPTY);
+        }
+        mutations.add(m);
+      }
+      sbw.writeMutations(mutations);
+    }
   }
 
   /**
@@ -531,7 +583,7 @@ public class TransactionImpl implements Transaction {
   
   boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
     // delete locks and add writes for other columns
-    ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size());
+    ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size() + 1);
     for (Entry<ByteSequence,Map<Column,ByteSequence>> rowUpdates : updates.entrySet()) {
       Mutation m = new Mutation(rowUpdates.getKey().toArray());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
@@ -543,6 +595,12 @@ public class TransactionImpl implements Transaction {
       mutations.add(m);
     }
     
+    if (weakRow != null) {
+      Mutation m = new Mutation(weakRow.toArray());
+      m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibility(), commitTs);
+      mutations.add(m);
+    }
+
     config.getSharedResources().getBatchWriter().writeMutations(mutations);
     
     // mark transaction as complete for garbage collection purposes
@@ -563,8 +621,10 @@ public class TransactionImpl implements Transaction {
     // TODO synchronize or detect concurrent use
     // TODO prevent multiple calls
     
-    if (updates.size() == 0)
+    if (updates.size() == 0) {
+      deleteWeakRow();
       return;
+    }
 
     for (Map<Column,ByteSequence> cols : updates.values())
       stats.incrementEntriesSet(cols.size());
@@ -596,6 +656,22 @@ public class TransactionImpl implements Transaction {
       for (Set<Column> cols : cd.getRejected().values()) {
         stats.incrementCollisions(cols.size());
       }
+    }
+  }
+
+  void deleteWeakRow() {
+    if (weakRow != null) {
+      long commitTs;
+      try {
+        commitTs = OracleClient.getInstance(config).getTimestamp();
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      Mutation m = new Mutation(weakRow.toArray());
+      m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibility(), commitTs);
+      config.getSharedResources().getBatchWriter().writeMutation(m);
     }
   }
 

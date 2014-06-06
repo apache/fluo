@@ -24,8 +24,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -54,6 +56,8 @@ public class Configuration {
   private String zoodir;
   private String accumuloInstance;
   private Map<Column,String> observers;
+  private Map<Column,String> weakObservers;
+  private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
   private String accismusInstanceID;
@@ -148,21 +152,31 @@ public class Configuration {
     ByteArrayInputStream bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.OBSERVERS, false, null));
     DataInputStream dis = new DataInputStream(bais);
     
-    observers = new HashMap<Column,String>();
+    observers = Collections.unmodifiableMap(readObservers(dis));
+    weakObservers = Collections.unmodifiableMap(readObservers(dis));
+    allObserversColumns = new HashSet<Column>();
+    allObserversColumns.addAll(observers.keySet());
+    allObserversColumns.addAll(weakObservers.keySet());
+    allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
+
+    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
+    this.workerProps = new Properties(getDefaultWorkerProperties());
+    this.workerProps.load(bais);
+  }
+
+  private static Map<Column,String> readObservers(DataInputStream dis) throws IOException {
+
+    HashMap<Column,String> omap = new HashMap<Column,String>();
     
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = new Column();
       col.readFields(dis);
       String clazz = dis.readUTF();
-      observers.put(col, clazz);
+      omap.put(col, clazz);
     }
-
-    observers = Collections.unmodifiableMap(observers);
     
-    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
-    this.workerProps = new Properties(getDefaultWorkerProperties());
-    this.workerProps.load(bais);
+    return omap;
   }
 
   public void setAuthorizations(Authorizations auths) {
@@ -195,6 +209,10 @@ public class Configuration {
 
   public Map<Column,String> getObservers() {
     return observers;
+  }
+
+  public Map<Column,String> getWeakObservers() {
+    return weakObservers;
   }
 
   public String getTable() {

@@ -105,11 +105,17 @@ public class Admin {
       Properties workerConfig = new Properties();
 
       Map<Column,String> colObservers = new HashMap<Column,String>();
+      Map<Column,String> weakObservers = new HashMap<Column,String>();
 
       Set<Entry<Object,Object>> entries = props.entrySet();
       for (Entry<Object,Object> entry : entries) {
         String key = (String) entry.getKey();
-        if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
+        if (key.startsWith(WorkerProperties.WEAK_OBSERVER_PREFIX_PROP)) {
+          String val = (String) entry.getValue();
+          String[] fields = val.split(",");
+          Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
+          weakObservers.put(col, fields[3]);
+        } else if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
           String val = (String) entry.getValue();
           String[] fields = val.split(",");
           Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
@@ -119,7 +125,7 @@ public class Admin {
         }
       }
 
-      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers);
+      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers, weakObservers);
       Operations.updateWorkerConfig(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
     } catch (Exception e) {
       if (e instanceof RuntimeException)

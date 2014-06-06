@@ -36,6 +36,7 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.worker.numThreads";
   public static final String OBSERVER_PREFIX_PROP = "accismus.worker.observer.";
+  public static final String WEAK_OBSERVER_PREFIX_PROP = "accismus.worker.observer.weak.";
 
   public WorkerProperties() {
     super();
@@ -65,10 +66,11 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
     return this;
   }
 
-  public WorkerProperties setObservers(Map<Column,String> observers) {
+  private WorkerProperties setObservers(Map<Column,String> observers, String prefix) {
     Iterator<java.util.Map.Entry<Object,Object>> iter = entrySet().iterator();
     while (iter.hasNext()) {
-      if (iter.next().getKey().toString().startsWith(OBSERVER_PREFIX_PROP)) {
+      String key = iter.next().getKey().toString();
+      if (key.startsWith(prefix) && key.substring(prefix.length()).matches("\\d+")) {
         iter.remove();
       }
     }
@@ -76,12 +78,20 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
     int count = 0;
     for (java.util.Map.Entry<Column,String> entry : observers.entrySet()) {
       Column col = entry.getKey();
-      setProperty(OBSERVER_PREFIX_PROP + "" + count, col.getFamily() + "," + col.getQualifier() + "," + new String(col.getVisibility().getExpression()) + ","
-          + entry.getValue());
+      setProperty(prefix + "" + count,
+          col.getFamily() + "," + col.getQualifier() + "," + new String(col.getVisibility().getExpression()) + "," + entry.getValue());
       count++;
     }
 
     return this;
+  }
+
+  public WorkerProperties setWeakObservers(Map<Column,String> observers) {
+    return setObservers(observers, WEAK_OBSERVER_PREFIX_PROP);
+  }
+
+  public WorkerProperties setObservers(Map<Column,String> observers) {
+    return setObservers(observers, OBSERVER_PREFIX_PROP);
   }
 
   @Override

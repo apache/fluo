@@ -90,6 +90,10 @@ public class SharedBatchWriter {
   }
 
   public void writeMutations(List<Mutation> ml) {
+
+    if (ml.size() == 0)
+      return;
+
     try {
       MutationBatch mb = new MutationBatch(ml);
       mQueue.put(mb);

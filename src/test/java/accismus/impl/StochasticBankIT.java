@@ -101,7 +101,7 @@ public class StochasticBankIT extends Base {
     TestTransaction tx = new TestTransaction(config);
     
     for(int i = 0; i < numAccounts; i++){
-      tx.set().row(fmtAcct(i)).col(balanceCol).val(1000);
+      tx.mutate().row(fmtAcct(i)).col(balanceCol).set(1000);
     }
     
     tx.commit();
@@ -151,8 +151,8 @@ public class StochasticBankIT extends Base {
           int bal2 = tx.get().row(to).col(balanceCol).toInteger();
           
           if (bal1 - amt >= 0) {
-            tx.set().row(from).col(balanceCol).val(bal1 - amt);
-            tx.set().row(to).col(balanceCol).val(bal2 + amt);
+            tx.mutate().row(from).col(balanceCol).set(bal1 - amt);
+            tx.mutate().row(to).col(balanceCol).set(bal2 + amt);
           } else {
             break;
           }

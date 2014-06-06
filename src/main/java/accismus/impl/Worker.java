@@ -65,7 +65,13 @@ public class Worker {
     Set<Entry<Column,String>> es = config.getObservers().entrySet();
     for (Entry<Column,String> entry : es) {
       Column col = entry.getKey();
-      
+      Observer observer = Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance();
+      colObservers.put(col, observer);
+    }
+
+    es = config.getWeakObservers().entrySet();
+    for (Entry<Column,String> entry : es) {
+      Column col = entry.getKey();
       Observer observer = Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance();
       colObservers.put(col, observer);
     }

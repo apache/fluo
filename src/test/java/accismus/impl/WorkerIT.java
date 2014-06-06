@@ -77,12 +77,12 @@ public class WorkerIT extends Base {
         ttx.set(row, typeLayer.newColumn("attr", "degree"), new ArrayByteSequence(degree2));
         
         // put new entry in degree index
-        ttx.set().row("IDEG" + degree2).col(new Column(NODE_CF, row)).val("");
+        ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
       }
       
       if (degree != null) {
         // delete old degree in index
-        ttx.delete().row("IDEG" + degree).col(new Column(NODE_CF, row));
+        ttx.mutate().row("IDEG" + degree).col(new Column(NODE_CF, row)).delete();
       }
     }
   }
@@ -95,16 +95,16 @@ public class WorkerIT extends Base {
     TestTransaction tx1 = new TestTransaction(config);
 
     //add a link between two nodes in a graph    
-    tx1.set().row("N0003").col(typeLayer.newColumn("link", "N0040")).val("");
-    tx1.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
+    tx1.mutate().row("N0003").col(typeLayer.newColumn("link", "N0040")).set("");
+    tx1.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     
     tx1.commit();
     
     TestTransaction tx2 = new TestTransaction(config);
     
     //add a link between two nodes in a graph    
-    tx2.set().row("N0003").col(typeLayer.newColumn("link", "N0020")).val("");
-    tx2.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
+    tx2.mutate().row("N0003").col(typeLayer.newColumn("link", "N0020")).set("");
+    tx2.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     
     tx2.commit();
     
@@ -116,8 +116,8 @@ public class WorkerIT extends Base {
     Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
     
     //add a link between two nodes in a graph    
-    tx3.set().row("N0003").col(typeLayer.newColumn("link", "N0010")).val("");
-    tx3.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
+    tx3.mutate().row("N0003").col(typeLayer.newColumn("link", "N0010")).set("");
+    tx3.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     tx3.commit();
     
     runWorker();
@@ -131,13 +131,13 @@ public class WorkerIT extends Base {
     
     // test rollback
     TestTransaction tx5 = new TestTransaction(config);
-    tx5.set().row("N0003").col(typeLayer.newColumn("link", "N0030")).val("");
-    tx5.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
+    tx5.mutate().row("N0003").col(typeLayer.newColumn("link", "N0030")).set("");
+    tx5.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     tx5.commit();
     
     TestTransaction tx6 = new TestTransaction(config);
-    tx6.set().row("N0003").col(typeLayer.newColumn("link", "N0050")).val("");
-    tx6.set().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).val(System.currentTimeMillis() + "");
+    tx6.mutate().row("N0003").col(typeLayer.newColumn("link", "N0050")).set("");
+    tx6.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
     tx6.preCommit(cd, new ArrayByteSequence("N0003"), typeLayer.newColumn("attr", "lastupdate"));
 

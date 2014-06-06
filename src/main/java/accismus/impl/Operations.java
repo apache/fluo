@@ -95,14 +95,14 @@ public class Operations {
     zk.close();
   }
 
-  public static void updateObservers(Connector conn, String zoodir, Map<Column,String> colObservers) throws Exception {
+  public static void updateObservers(Connector conn, String zoodir, Map<Column,String> colObservers, Map<Column,String> weakObservers) throws Exception {
     // TODO check that no workers are running... or make workers watch this znode
     String zookeepers = conn.getInstance().getZooKeepers();
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
     
     ZooUtil.recursiveDelete(zk, zoodir + Constants.Zookeeper.OBSERVERS, NodeMissingPolicy.SKIP);
 
-    byte[] serializedObservers = serializeObservers(colObservers);
+    byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
     putData(zk, zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, NodeExistsPolicy.OVERWRITE);
     
     zk.close();
@@ -134,7 +134,7 @@ public class Operations {
     createTable(table, conn);
   }
   
-  private static byte[] serializeObservers(Map<Column,String> colObservers) throws IOException {
+  private static byte[] serializeObservers(Map<Column,String> colObservers, Map<Column,String> weakObservers) throws IOException {
     // TODO use a human readable serialized format like json
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -149,6 +149,15 @@ public class Operations {
       dos.writeUTF(entry.getValue());
     }
     
+    es = weakObservers.entrySet();
+
+    WritableUtils.writeVInt(dos, weakObservers.size());
+
+    for (Entry<Column,String> entry : es) {
+      entry.getKey().write(dos);
+      dos.writeUTF(entry.getValue());
+    }
+
     dos.close();
     byte[] serializedObservers = baos.toByteArray();
     return serializedObservers;
@@ -170,6 +179,4 @@ public class Operations {
     
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), AccismusFormatter.class.getName());
   }
-
-
 }

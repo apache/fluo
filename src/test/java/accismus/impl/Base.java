@@ -62,6 +62,10 @@ public class Base {
     return EMPTY_OBSERVERS;
   }
 
+  protected Map<Column,String> getWeakObservers() {
+    return EMPTY_OBSERVERS;
+  }
+
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
     Worker worker = new Worker(config, new RandomTabletChooser(config));
@@ -96,7 +100,7 @@ public class Base {
     Properties wprops = new Properties();
     wprops.setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, "5000");
     Operations.updateWorkerConfig(conn, zkn, wprops);
-    Operations.updateObservers(conn, zkn, getObservers());
+    Operations.updateObservers(conn, zkn, getObservers(), getWeakObservers());
 
     config = new Configuration(zk, zkn, conn);
     
