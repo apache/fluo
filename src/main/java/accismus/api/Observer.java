@@ -16,11 +16,14 @@
  */
 package accismus.api;
 
+import java.util.Map;
+
 import org.apache.accumulo.core.data.ByteSequence;
 
 /**
  * 
  */
 public interface Observer {
+  public void init(Map<String,String> config) throws Exception;
   public void process(Transaction tx, ByteSequence row, Column col) throws Exception;
 }

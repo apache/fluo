@@ -45,6 +45,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.Column;
+import accismus.api.config.ObserverConfiguration;
 import accismus.format.AccismusFormatter;
 import accismus.impl.iterators.GarbageCollectionIterator;
 
@@ -95,7 +96,8 @@ public class Operations {
     zk.close();
   }
 
-  public static void updateObservers(Connector conn, String zoodir, Map<Column,String> colObservers, Map<Column,String> weakObservers) throws Exception {
+  public static void updateObservers(Connector conn, String zoodir, Map<Column,ObserverConfiguration> colObservers,
+      Map<Column,ObserverConfiguration> weakObservers) throws Exception {
     // TODO check that no workers are running... or make workers watch this znode
     String zookeepers = conn.getInstance().getZooKeepers();
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
@@ -134,29 +136,31 @@ public class Operations {
     createTable(table, conn);
   }
   
-  private static byte[] serializeObservers(Map<Column,String> colObservers, Map<Column,String> weakObservers) throws IOException {
+  private static void serializeObservers(DataOutputStream dos, Map<Column,ObserverConfiguration> colObservers) throws IOException {
     // TODO use a human readable serialized format like json
 
+    Set<Entry<Column,ObserverConfiguration>> es = colObservers.entrySet();
+
+    WritableUtils.writeVInt(dos, colObservers.size());
+
+    for (Entry<Column,ObserverConfiguration> entry : es) {
+      entry.getKey().write(dos);
+      dos.writeUTF(entry.getValue().getClassName());
+      Map<String,String> params = entry.getValue().getParameters();
+      WritableUtils.writeVInt(dos, params.size());
+      for (Entry<String,String> pentry : entry.getValue().getParameters().entrySet()) {
+        dos.writeUTF(pentry.getKey());
+        dos.writeUTF(pentry.getValue());
+      }
+    }
+  }
+
+  private static byte[] serializeObservers(Map<Column,ObserverConfiguration> colObservers, Map<Column,ObserverConfiguration> weakObservers) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
     
-    Set<Entry<Column,String>> es = colObservers.entrySet();
-    
-    WritableUtils.writeVInt(dos, colObservers.size());
-    
-    for (Entry<Column,String> entry : es) {
-      entry.getKey().write(dos);
-      dos.writeUTF(entry.getValue());
-    }
-    
-    es = weakObservers.entrySet();
-
-    WritableUtils.writeVInt(dos, weakObservers.size());
-
-    for (Entry<Column,String> entry : es) {
-      entry.getKey().write(dos);
-      dos.writeUTF(entry.getValue());
-    }
+    serializeObservers(dos, colObservers);
+    serializeObservers(dos, weakObservers);
 
     dos.close();
     byte[] serializedObservers = baos.toByteArray();

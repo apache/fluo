@@ -15,6 +15,7 @@ import accismus.api.Observer;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Transaction;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
 import accismus.api.types.TypedTransaction;
@@ -25,6 +26,9 @@ public class WeakNotificationIT extends Base {
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
   static class SimpleObserver implements Observer {
+
+    @Override
+    public void init(Map<String,String> config) {}
 
     @Override
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
@@ -53,8 +57,8 @@ public class WeakNotificationIT extends Base {
   }
 
   @Override
-  protected Map<Column,String> getWeakObservers() {
-    return Collections.singletonMap(tl.newColumn("stat", "check"), SimpleObserver.class.getName());
+  protected Map<Column,ObserverConfiguration> getWeakObservers() {
+    return Collections.singletonMap(tl.newColumn("stat", "check"), new ObserverConfiguration(SimpleObserver.class.getName()));
   }
 
   @Test

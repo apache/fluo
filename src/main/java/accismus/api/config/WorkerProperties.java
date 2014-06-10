@@ -66,7 +66,7 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
     return this;
   }
 
-  private WorkerProperties setObservers(Map<Column,String> observers, String prefix) {
+  private WorkerProperties setObservers(Map<Column,ObserverConfiguration> observers, String prefix) {
     Iterator<java.util.Map.Entry<Object,Object>> iter = entrySet().iterator();
     while (iter.hasNext()) {
       String key = iter.next().getKey().toString();
@@ -76,21 +76,31 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
     }
 
     int count = 0;
-    for (java.util.Map.Entry<Column,String> entry : observers.entrySet()) {
+    for (java.util.Map.Entry<Column,ObserverConfiguration> entry : observers.entrySet()) {
       Column col = entry.getKey();
-      setProperty(prefix + "" + count,
-          col.getFamily() + "," + col.getQualifier() + "," + new String(col.getVisibility().getExpression()) + "," + entry.getValue());
+
+      Map<String,String> params = entry.getValue().getParameters();
+      StringBuilder paramString = new StringBuilder();
+      for (java.util.Map.Entry<String,String> pentry : params.entrySet()) {
+        paramString.append(',');
+        paramString.append(pentry.getKey());
+        paramString.append('=');
+        paramString.append(pentry.getValue());
+      }
+
+      setProperty(prefix + "" + count, col.getFamily() + "," + col.getQualifier() + "," + new String(col.getVisibility().getExpression()) + ","
+          + entry.getValue().getClassName() + paramString);
       count++;
     }
 
     return this;
   }
 
-  public WorkerProperties setWeakObservers(Map<Column,String> observers) {
+  public WorkerProperties setWeakObservers(Map<Column,ObserverConfiguration> observers) {
     return setObservers(observers, WEAK_OBSERVER_PREFIX_PROP);
   }
 
-  public WorkerProperties setObservers(Map<Column,String> observers) {
+  public WorkerProperties setObservers(Map<Column,ObserverConfiguration> observers) {
     return setObservers(observers, OBSERVER_PREFIX_PROP);
   }
 

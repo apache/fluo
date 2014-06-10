@@ -43,6 +43,7 @@ import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.Column;
 import accismus.api.config.AccismusProperties;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 
 
@@ -55,8 +56,8 @@ public class Configuration {
   private Authorizations auths = new Authorizations();
   private String zoodir;
   private String accumuloInstance;
-  private Map<Column,String> observers;
-  private Map<Column,String> weakObservers;
+  private Map<Column,ObserverConfiguration> observers;
+  private Map<Column,ObserverConfiguration> weakObservers;
   private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
@@ -164,16 +165,27 @@ public class Configuration {
     this.workerProps.load(bais);
   }
 
-  private static Map<Column,String> readObservers(DataInputStream dis) throws IOException {
+  private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
 
-    HashMap<Column,String> omap = new HashMap<Column,String>();
+    HashMap<Column,ObserverConfiguration> omap = new HashMap<Column,ObserverConfiguration>();
     
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = new Column();
       col.readFields(dis);
       String clazz = dis.readUTF();
-      omap.put(col, clazz);
+      Map<String,String> params = new HashMap<String,String>();
+      int numParams = WritableUtils.readVInt(dis);
+      for (int j = 0; j < numParams; j++) {
+        String k = dis.readUTF();
+        String v = dis.readUTF();
+        params.put(k, v);
+      }
+
+      ObserverConfiguration observerConfig = new ObserverConfiguration(clazz);
+      observerConfig.setParameters(params);
+
+      omap.put(col, observerConfig);
     }
     
     return omap;
@@ -207,11 +219,11 @@ public class Configuration {
     return accismusInstanceID;
   }
 
-  public Map<Column,String> getObservers() {
+  public Map<Column,ObserverConfiguration> getObservers() {
     return observers;
   }
 
-  public Map<Column,String> getWeakObservers() {
+  public Map<Column,ObserverConfiguration> getWeakObservers() {
     return weakObservers;
   }
 

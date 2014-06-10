@@ -32,6 +32,7 @@ import accismus.api.Observer;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Transaction;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
 import accismus.api.types.TypedTransaction;
@@ -47,14 +48,17 @@ public class WorkerIT extends Base {
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  protected Map<Column,String> getObservers() {
-    Map<Column,String> observed = new HashMap<Column,String>();
-    observed.put(typeLayer.newColumn("attr", "lastupdate"), DegreeIndexer.class.getName());
+  protected Map<Column,ObserverConfiguration> getObservers() {
+    Map<Column,ObserverConfiguration> observed = new HashMap<Column,ObserverConfiguration>();
+    observed.put(typeLayer.newColumn("attr", "lastupdate"), new ObserverConfiguration(DegreeIndexer.class.getName()));
     return observed;
   }
 
   static class DegreeIndexer implements Observer {
     
+    @Override
+    public void init(Map<String,String> config) {}
+
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
       // get previously calculated degree
       

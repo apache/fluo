@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.impl.RandomTabletChooser.TabletInfo;
@@ -62,17 +63,19 @@ public class Worker {
     this.config = config;
     this.tabletChooser = tabletChooser;
 
-    Set<Entry<Column,String>> es = config.getObservers().entrySet();
-    for (Entry<Column,String> entry : es) {
+    Set<Entry<Column,ObserverConfiguration>> es = config.getObservers().entrySet();
+    for (Entry<Column,ObserverConfiguration> entry : es) {
       Column col = entry.getKey();
-      Observer observer = Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance();
+      Observer observer = Class.forName(entry.getValue().getClassName()).asSubclass(Observer.class).newInstance();
+      observer.init(entry.getValue().getParameters());
       colObservers.put(col, observer);
     }
 
     es = config.getWeakObservers().entrySet();
-    for (Entry<Column,String> entry : es) {
+    for (Entry<Column,ObserverConfiguration> entry : es) {
       Column col = entry.getKey();
-      Observer observer = Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance();
+      Observer observer = Class.forName(entry.getValue().getClassName()).asSubclass(Observer.class).newInstance();
+      observer.init(entry.getValue().getParameters());
       colObservers.put(col, observer);
     }
   }

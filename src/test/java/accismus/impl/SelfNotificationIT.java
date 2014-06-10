@@ -29,6 +29,7 @@ import org.junit.Test;
 import accismus.api.Column;
 import accismus.api.Observer;
 import accismus.api.Transaction;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
 import accismus.api.types.TypedTransaction;
@@ -46,15 +47,16 @@ public class SelfNotificationIT extends Base {
 
   
 
-  protected Map<Column,String> getObservers() {
-    return Collections.singletonMap(EXPORT_CHECK_COL, ExportingObserver.class.getName());
+  protected Map<Column,ObserverConfiguration> getObservers() {
+    return Collections.singletonMap(EXPORT_CHECK_COL, new ObserverConfiguration(ExportingObserver.class.getName()));
   }
 
   static List<Integer> exports = new ArrayList<Integer>();
   
   static class ExportingObserver implements Observer {
     
-   
+    @Override
+    public void init(Map<String,String> config) {}
     
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
 
@@ -122,4 +124,6 @@ public class SelfNotificationIT extends Base {
     Assert.assertEquals(0, exports.size());
     
   }
+
+  // TODO test self notification w/ weak notifications
 }

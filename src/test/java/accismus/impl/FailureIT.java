@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import accismus.api.Column;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.exceptions.StaleScanException;
@@ -58,9 +59,9 @@ public class FailureIT extends Base {
     tx.commit();
   }
 
-  protected Map<Column,String> getObservers() {
-    Map<Column,String> observed = new HashMap<Column,String>();
-    observed.put(typeLayer.newColumn("attr", "lastupdate"), "foo");
+  protected Map<Column,ObserverConfiguration> getObservers() {
+    Map<Column,ObserverConfiguration> observed = new HashMap<Column,ObserverConfiguration>();
+    observed.put(typeLayer.newColumn("attr", "lastupdate"), new ObserverConfiguration("foo"));
     return observed;
   }
 

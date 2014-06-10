@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import accismus.api.Column;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 import accismus.format.AccismusFormatter;
 
@@ -46,7 +47,7 @@ public class Base {
   
   protected static ZooKeeper zk;
   
-  protected static final Map<Column,String> EMPTY_OBSERVERS = new HashMap<Column,String>();
+  protected static final Map<Column,ObserverConfiguration> EMPTY_OBSERVERS = new HashMap<Column,ObserverConfiguration>();
   
   protected static AtomicInteger next = new AtomicInteger();
   
@@ -58,11 +59,11 @@ public class Base {
   protected OracleServer oserver;
   protected String zkn;
 
-  protected Map<Column,String> getObservers() {
+  protected Map<Column,ObserverConfiguration> getObservers() {
     return EMPTY_OBSERVERS;
   }
 
-  protected Map<Column,String> getWeakObservers() {
+  protected Map<Column,ObserverConfiguration> getWeakObservers() {
     return EMPTY_OBSERVERS;
   }
 
