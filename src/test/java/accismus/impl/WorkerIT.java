@@ -89,6 +89,9 @@ public class WorkerIT extends Base {
         ttx.mutate().row("IDEG" + degree).col(new Column(NODE_CF, row)).delete();
       }
     }
+
+    @Override
+    public void close() {}
   }
   
   

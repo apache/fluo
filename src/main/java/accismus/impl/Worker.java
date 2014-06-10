@@ -17,12 +17,10 @@
 package accismus.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
@@ -52,7 +50,6 @@ public class Worker {
 
   private static Logger log = Logger.getLogger(Worker.class);
 
-  private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
   private Configuration config;
   private Random rand = new Random();
 
@@ -62,22 +59,6 @@ public class Worker {
 
     this.config = config;
     this.tabletChooser = tabletChooser;
-
-    Set<Entry<Column,ObserverConfiguration>> es = config.getObservers().entrySet();
-    for (Entry<Column,ObserverConfiguration> entry : es) {
-      Column col = entry.getKey();
-      Observer observer = Class.forName(entry.getValue().getClassName()).asSubclass(Observer.class).newInstance();
-      observer.init(entry.getValue().getParameters());
-      colObservers.put(col, observer);
-    }
-
-    es = config.getWeakObservers().entrySet();
-    for (Entry<Column,ObserverConfiguration> entry : es) {
-      Column col = entry.getKey();
-      Observer observer = Class.forName(entry.getValue().getClassName()).asSubclass(Observer.class).newInstance();
-      observer.init(entry.getValue().getParameters());
-      colObservers.put(col, observer);
-    }
   }
   
   
@@ -142,7 +123,7 @@ public class Worker {
   }
 
   // TODO make package private
-  public long processUpdates() throws Exception {
+  public long processUpdates(Map<Column,Observer> colObservers) throws Exception {
     // TODO how does user set auths that workers are expected to use...
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
@@ -171,10 +152,7 @@ public class Worker {
       // TODO cache col vis
       col.setVisibility(entry.getKey().getColumnVisibilityParsed());
       
-      Observer observer = colObservers.get(col);
-      if (observer == null) {
-        // TODO do something
-      }
+      Observer observer = getObserver(colObservers, col);
       
       ByteSequence row = entry.getKey().getRowData();
       
@@ -219,5 +197,23 @@ public class Worker {
     }
     
     return numProcessed;
+  }
+
+
+  private Observer getObserver(Map<Column,Observer> colObservers, Column col) throws Exception {
+    Observer observer = colObservers.get(col);
+    if (observer == null) {
+      ObserverConfiguration observerConfig = config.getObservers().get(col);
+      if (observerConfig == null)
+        observerConfig = config.getWeakObservers().get(col);
+
+      if (observerConfig != null) {
+        observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+        observer.init(observerConfig.getParameters());
+        colObservers.put(col, observer);
+      }
+      // TODO do something
+    }
+    return observer;
   }
 }

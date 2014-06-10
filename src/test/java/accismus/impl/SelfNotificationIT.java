@@ -26,8 +26,8 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.junit.Assert;
 import org.junit.Test;
 
+import accismus.api.AbstractObserver;
 import accismus.api.Column;
-import accismus.api.Observer;
 import accismus.api.Transaction;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
@@ -53,10 +53,7 @@ public class SelfNotificationIT extends Base {
 
   static List<Integer> exports = new ArrayList<Integer>();
   
-  static class ExportingObserver implements Observer {
-    
-    @Override
-    public void init(Map<String,String> config) {}
+  static class ExportingObserver extends AbstractObserver {
     
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
 

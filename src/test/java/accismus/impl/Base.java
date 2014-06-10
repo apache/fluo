@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import accismus.api.Column;
+import accismus.api.Observer;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 import accismus.format.AccismusFormatter;
@@ -70,15 +71,28 @@ public class Base {
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
     Worker worker = new Worker(config, new RandomTabletChooser(config));
-    while (true) {
-      worker.processUpdates();
-      
-      // there should not be any notifcations
-      Scanner scanner = conn.createScanner(table, new Authorizations());
-      scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
-      
-      if (!scanner.iterator().hasNext())
-        break;
+    Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+    try {
+      while (true) {
+        worker.processUpdates(colObservers);
+
+        // there should not be any notifcations
+        Scanner scanner = conn.createScanner(table, new Authorizations());
+        scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+
+        if (!scanner.iterator().hasNext())
+          break;
+      }
+    } finally {
+      for (Observer observer : colObservers.values()) {
+        try {
+          observer.close();
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 

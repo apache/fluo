@@ -9,9 +9,9 @@ import org.apache.accumulo.core.data.Range;
 import org.junit.Assert;
 import org.junit.Test;
 
+import accismus.api.AbstractObserver;
 import accismus.api.Column;
 import accismus.api.ColumnIterator;
-import accismus.api.Observer;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
 import accismus.api.Transaction;
@@ -25,10 +25,7 @@ public class WeakNotificationIT extends Base {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
-  static class SimpleObserver implements Observer {
-
-    @Override
-    public void init(Map<String,String> config) {}
+  static class SimpleObserver extends AbstractObserver {
 
     @Override
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {

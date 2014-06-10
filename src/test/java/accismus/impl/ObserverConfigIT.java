@@ -8,8 +8,8 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.junit.Assert;
 import org.junit.Test;
 
+import accismus.api.AbstractObserver;
 import accismus.api.Column;
-import accismus.api.Observer;
 import accismus.api.Transaction;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
@@ -19,7 +19,7 @@ public class ObserverConfigIT extends Base {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
-  public static class ConfigurableObserver implements Observer {
+  public static class ConfigurableObserver extends AbstractObserver {
 
     private ByteSequence outputCQ;
     private boolean setWeakNotification = false;
@@ -45,7 +45,6 @@ public class ObserverConfigIT extends Base {
       if (setWeakNotification)
         tx.setWeakNotification(row, outCol);
     }
-
   }
 
   Map<String,String> newMap(String... args) {
