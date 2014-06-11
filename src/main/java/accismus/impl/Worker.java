@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.api.Transaction;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
@@ -162,12 +163,16 @@ public class Worker {
       }
 
       while (true) {
-        TransactionImpl tx = null;
+        TransactionImpl txi = null;
         String status = "FAILED";
         try {
-          tx = new TransactionImpl(config, row, col);
+          txi = new TransactionImpl(config, row, col);
+          Transaction tx = txi;
+          if (TracingTransaction.isTracingEnabled())
+            tx = new TracingTransaction(tx);
+
           observer.process(tx, row, col);
-          tx.commit();
+          txi.commit();
           status = "COMMITTED";
           break;
         } catch (AlreadyAcknowledgedException aae) {
@@ -188,8 +193,8 @@ public class Worker {
             return numProcessed;
           }
         } finally {
-          if (tx != null && TxLogger.isLoggingEnabled())
-            TxLogger.logTx(status, observer.getClass().getSimpleName(), tx.getStats(), row + ":" + col);
+          if (txi != null && TxLogger.isLoggingEnabled())
+            TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
         }
       // TODO if duplicate set detected, see if its because already acknowledged
       }

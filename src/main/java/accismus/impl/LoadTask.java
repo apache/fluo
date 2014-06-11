@@ -19,6 +19,7 @@ package accismus.impl;
 import org.apache.log4j.Logger;
 
 import accismus.api.Loader;
+import accismus.api.Transaction;
 import accismus.api.exceptions.CommitException;
 
 /**
@@ -38,12 +39,15 @@ public class LoadTask implements Runnable {
   @Override
   public void run() {
     while (true) {
-      TransactionImpl tx = null;
+      TransactionImpl txi = null;
       String status = "FAILED";
       try {
-        tx = new TransactionImpl(config);
+        txi = new TransactionImpl(config);
+        Transaction tx = txi;
+        if (TracingTransaction.isTracingEnabled())
+          tx = new TracingTransaction(tx);
         loader.load(tx);
-        tx.commit();
+        txi.commit();
         status = "COMMITTED";
         return;
       } catch (CommitException e) {
@@ -52,8 +56,8 @@ public class LoadTask implements Runnable {
         log.error("Failed to execute loader " + loader, e);
         throw new RuntimeException(e);
       } finally {
-        if (tx != null)
-          TxLogger.logTx(status, loader.getClass().getName(), tx.getStats());
+        if (txi != null)
+          TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
       }
     }
   }
