@@ -31,17 +31,23 @@ script=$( basename "$SOURCE" )
 LOGHOST=$(hostname)
 SERVICE="worker"
 
+if [[ -z $HADOOP_PREFIX ]]; then
+  echo "HADOOP_PREFIX needs to be set!"
+  exit 1
+fi
 
 case "$1" in
-start)
-	$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar accismus.tools.WorkerTool -libjars "$ACCISMUS_WORKER_CLASSPATH,$ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar" $ACCISMUS_HOME/conf/accismus.properties  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
-
+start-yarn)
+  java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*:$ACCISMUS_HOME/lib/logback/*" accismus.yarn.WorkerApp -accismus-home $ACCISMUS_HOME -hadoop-prefix $HADOOP_PREFIX
 	;;
-stop)
-	kill `jps -m | grep accismus.tools.WorkerTool | cut -f 1 -d ' '`
+start-local)
+  java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*" accismus.yarn.WorkerRunnable -config-dir $ACCISMUS_CONF_DIR -log-output $ACCISMUS_LOG_DIR  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+	;;
+stop-local)
+	kill `jps -m | grep accismus.yarn.WorkerRunnable | cut -f 1 -d ' '`
 	;;
 *)
-	echo $"Usage: $0 start|stop"
+	echo $"Usage: $0 start-yarn|start-local|stop-local"
 	exit 1
 esac
 

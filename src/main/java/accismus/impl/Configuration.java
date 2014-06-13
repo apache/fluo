@@ -127,6 +127,9 @@ public class Configuration {
     props.put(AccismusProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
     props.put(AccismusProperties.ACCUMULO_USER_PROP, "accismus");
     props.put(AccismusProperties.ACCUMULO_PASSWORD_PROP, "secret");
+    props.put(AccismusProperties.WORKER_INSTANCES_PROP, "1");
+    props.put(AccismusProperties.WORKER_MAX_MEMORY_PROP, "256");
+    props.put(AccismusProperties.ORACLE_MAX_MEMORY_PROP, "256");
     
     return props;
   }
@@ -245,6 +248,10 @@ public class Configuration {
 
   public String getZookeeperRoot() {
     return zoodir;
+  }
+  
+  public String getZookeepers() {
+    return getConnector().getInstance().getZooKeepers();
   }
   
   public Properties getWorkerProperties() {

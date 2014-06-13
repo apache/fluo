@@ -17,8 +17,8 @@
 package accismus.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
@@ -31,34 +31,40 @@ public class Logging {
   
   private static Logger log = LoggerFactory.getLogger(Logging.class);
   
-  public static void init(String application) throws UnknownHostException {
+  public static void init(String application, String configDir, String logOutput) throws IOException {
     
-    System.setProperty("accismus.log.application", application);
+    String logConfig;
     
-    if (System.getenv("ACCISMUS_LOG_DIR") != null)
-      System.setProperty("accismus.log.dir.log", System.getenv("ACCISMUS_LOG_DIR"));
-    else
-      System.setProperty("accismus.log.dir.log", System.getenv("ACCISMUS_HOME") + "/logs/");
-    
-    String localhost = InetAddress.getLocalHost().getHostName();
-    System.setProperty("accismus.log.ip.localhost.hostname", localhost);
-    
-    if (System.getenv("ACCISMUS_LOG_HOST") != null)
-      System.setProperty("accismus.log.host.log", System.getenv("ACCISMUS_LOG_HOST"));
-    else
-      System.setProperty("accismus.log.host.log", localhost);
-    
-    // Use a specific log config, if it exists
-    String logConfig = String.format("%s/%s_logger.xml", System.getenv("ACCISMUS_CONF_DIR"), application);
-    if (!new File(logConfig).exists()) {
-      // otherwise, use the generic config
-      logConfig = String.format("%s/generic_logger.xml", System.getenv("ACCISMUS_CONF_DIR"));
-    }
-    
-    // Configure logging
+    if (logOutput.equalsIgnoreCase("STDOUT")) {
+      // Use a specific log config, if it exists
+      logConfig = String.format("%s/logger-stdout-%s.xml", configDir, application);
+      if (!new File(logConfig).exists()) {
+        // otherwise, use the generic config
+        logConfig = String.format("%s/logger-stdout.xml", configDir);
+      }
+    } else {
+      
+      System.setProperty("accismus.log.application", application);
+      System.setProperty("accismus.log.dir.log", logOutput);
+
+      String localhost = InetAddress.getLocalHost().getHostName();
+      System.setProperty("accismus.log.ip.localhost.hostname", localhost);
+ 
+      // Use a specific log config, if it exists
+      logConfig = String.format("%s/logger-file-%s.xml", configDir, application);
+      if (!new File(logConfig).exists()) {
+        // otherwise, use the generic config
+        logConfig = String.format("%s/logger-file.xml", configDir);
+      }
+    } 
+        
     DOMConfigurator.configureAndWatch(logConfig, 5000);
     
-    log.info(application + " starting");
+    System.out.println("Logging to "+logOutput+" using config "+ logConfig);
+    log.info("Initialized logging using config in "+ logConfig);
+    
+    log.info("Starting "+application+" application");
+    
     // TODO print info about instance like zookeepers, zookeeper root
   }
 }

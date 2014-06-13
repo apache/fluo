@@ -63,7 +63,6 @@ public class Worker {
     this.tabletChooser = tabletChooser;
   }
   
-  
   private Range pickRandomRow(final Scanner scanner, Text start, Text end) {
 
     scanner.clearScanIterators();

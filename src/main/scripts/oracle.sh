@@ -31,16 +31,23 @@ script=$( basename "$SOURCE" )
 LOGHOST=$(hostname)
 SERVICE="oracle"
 
-case "$1" in
-start)
-	$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar accismus.tools.OracleTool $ACCISMUS_HOME/conf/accismus.properties  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+if [[ -z $HADOOP_PREFIX ]]; then
+  echo "HADOOP_PREFIX needs to be set!"
+  exit 1
+fi
 
+case "$1" in
+start-yarn)
+  java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/logback/*" accismus.yarn.OracleApp -accismus-home $ACCISMUS_HOME -hadoop-prefix $HADOOP_PREFIX
 	;;
-stop)
-	kill `jps -m | grep accismus.tools.OracleTool | cut -f 1 -d ' '`
+start-local)
+  java -cp "$ACCISMUS_HOME/lib/*" accismus.yarn.OracleRunnable -config-dir $ACCISMUS_CONF_DIR -log-output $ACCISMUS_LOG_DIR >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+	;;
+stop-local)
+	kill `jps -m | grep accismus.yarn.OracleRunnable | cut -f 1 -d ' '`
 	;;
 *)
-	echo $"Usage: $0 start|stop"
+	echo $"Usage: $0 start-yarn|start-local|stop-local"
 	exit 1
 esac
 

@@ -54,15 +54,27 @@ vim initialization.properties
 vim accismus.properties
 cd ..
 ./bin/initialize.sh
-./bin/oracle.sh start
-./bin/worker.sh start
 ```
 
-When finished, run the following commands to stop the oracle and worker.
-
+The preferred method is run Accismus applications within YARN:
 ```
-./bin/worker.sh stop
-./bin/oracle.sh stop
+./bin/oracle.sh start-yarn
+./bin/worker.sh start-yarn
+```
+You can use `yarn application -list` to check the status of the applications. 
+Logs are viewable within YARN.  When finished, you can kill the applications
+using `yarn application -kill <Application ID>`.  The application ID can be
+found using the list command.  
+
+If you do not have YARN set up, you can run Accismus as local Java processes:
+```
+./bin/oracle.sh start-local
+./bin/worker.sh start-local
+```
+When finished, run the following commands to stop local oracle and worker.
+```
+./bin/worker.sh stop-local
+./bin/oracle.sh stop-local
 ```
 
 Tuning Accumulo

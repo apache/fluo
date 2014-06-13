@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import accismus.api.Column;
 import accismus.api.Observer;
-import accismus.tools.WorkerTool;
 
 /**
  * 
@@ -36,7 +35,7 @@ public class WorkerTask implements Runnable {
   // TODO max sleep time should probably be a function of the total number of threads in the system
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
-  private static Logger log = LoggerFactory.getLogger(WorkerTool.class);
+  private static Logger log = LoggerFactory.getLogger(WorkerTask.class);
   private Configuration config;
   private AtomicBoolean shutdownFlag;
 

@@ -29,20 +29,19 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import com.beust.jcommander.JCommander;
+
 import accismus.api.Admin;
 import accismus.api.Admin.AlreadyInitializedException;
 import accismus.impl.Configuration;
+import accismus.impl.Logging;
+import accismus.yarn.RunnableOptions;
 
-/**
- * 
+/** Initializes Accismus using properties in configuration files
  */
-public class InitializeTool extends Configured implements Tool {
-  public static void main(String[] args) throws Exception {
-    ToolRunner.run(new InitializeTool(), args);
-  }
-  
-  
-  static Properties loadProps(String ... files) throws ConfigurationException{
+public class InitializeTool {
+
+  public static Properties loadProps(String ... files) throws ConfigurationException{
     ConfigurationInterpolator.registerGlobalLookup("env", new StrLookup() {
       @Override
       public String lookup(String key) {
@@ -60,15 +59,22 @@ public class InitializeTool extends Configured implements Tool {
     
     return ConfigurationConverter.getProperties(compConf.interpolatedConfiguration());
   }
-  
-  @Override
-  public int run(String[] args) throws Exception {
-    if (args.length != 2) {
-      System.err.println("Usage : " + InitializeTool.class.getSimpleName() + " <props file>  <init file>");
+
+  public static void main(String[] args) throws Exception {
+
+    RunnableOptions options = new RunnableOptions();
+    JCommander jcommand = new JCommander(options, args);
+
+    if (options.help) {
+      jcommand.usage();
       System.exit(-1);
     }
-    
-   Properties props = loadProps(args);
+    options.validateConfig();
+
+    Logging.init("init", options.getConfigDir(), options.getLogOutput());
+
+    String[] configs = { options.getInitConfig(), options.getAccismusConfig() };
+    Properties props = loadProps(configs);
 
     try {
       //TODO maybe use commons Configuration instrea of Properties in API
@@ -76,7 +82,5 @@ public class InitializeTool extends Configured implements Tool {
     } catch (AlreadyInitializedException aie) {
       Admin.updateWorkerConfig(props);
     }
-
-    return 0;
   }
 }

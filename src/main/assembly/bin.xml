@@ -2,8 +2,33 @@
   <id>bin</id>
   <formats>
     <format>tar.gz</format>
-    <format>zip</format>
   </formats>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>lib</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <excludes>
+      	<exclude>ch.qos.logback:*</exclude>
+      </excludes>
+    </dependencySet>
+  	<dependencySet>
+      <outputDirectory>lib/logback</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <includes>
+      	<include>ch.qos.logback:*</include>
+      </includes>
+    </dependencySet>
+  </dependencySets> 
   <fileSets>
     <fileSet>
       <includes>
@@ -18,6 +43,9 @@
       <includes>
         <include>*.jar</include>
       </includes>
+      <excludes>
+      	<exclude>logback*.jar</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>target</directory>

@@ -14,6 +14,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <accumulo.version>1.6.0</accumulo.version>
+    <hadoop.version>2.3.0</hadoop.version>
+    <twill.version>0.2.0-incubating</twill.version>
   </properties>
 
   <profiles>
@@ -84,14 +86,81 @@
     </plugins>
   </build>
 
-
-
   <dependencies>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-      <version>2.2.0</version>
+  	<dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.7</version>
     </dependency>
+      	<dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.7</version>
+    </dependency>
+	<dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>3.3.6</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>${hadoop.version}</version>
+      <exclusions>
+      	<exclusion>
+      		<artifactId>guava</artifactId>
+      		<groupId>com.google.guava</groupId>
+      	</exclusion>
+      </exclusions>
+	</dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-core</artifactId>
+      <version>${accumulo.version}</version>
+      <exclusions>
+      	<exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client</artifactId>
+      	</exclusion>
+      	<exclusion>
+      		<artifactId>guava</artifactId>
+      		<groupId>com.google.guava</groupId>
+      	</exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+   		<artifactId>guava</artifactId>
+       	<groupId>com.google.guava</groupId>
+       	<version>13.0.1</version>
+    </dependency>
+    <dependency>
+ 	  <groupId>org.apache.twill</groupId>
+	  <artifactId>twill-api</artifactId>
+	  <version>${twill.version}</version>
+	  <exclusions>
+	  	<exclusion>
+	  		<artifactId>guava</artifactId>
+	  		<groupId>com.google.guava</groupId>
+	  	</exclusion>
+	  </exclusions>
+    </dependency>
+	<dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-yarn</artifactId>
+      <version>${twill.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>asm</artifactId>
+    	  <groupId>asm</groupId>
+        </exclusion>
+        <exclusion>
+        	<artifactId>guava</artifactId>
+        	<groupId>com.google.guava</groupId>
+        </exclusion>
+      </exclusions>
+	</dependency>
+
+    <!-- Test Dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -103,42 +172,41 @@
       <artifactId>accumulo-minicluster</artifactId>
       <version>${accumulo.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <version>3.3.6</version>
-    </dependency>
-  	<dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.7</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.7</version>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.16</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-core</artifactId>
-      <version>${accumulo.version}</version>
+      <exclusions>
+      	<exclusion>
+      	  <artifactId>hadoop-client</artifactId>
+      	  <groupId>org.apache.hadoop</groupId>
+      	</exclusion>
+      	<exclusion>
+          <artifactId>hadoop-minicluster</artifactId>
+      	  <groupId>org.apache.hadoop</groupId>
+      	</exclusion>
+      	<exclusion>
+      		<artifactId>guava</artifactId>
+      		<groupId>com.google.guava</groupId>
+      	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-test</artifactId>
       <version>${accumulo.version}</version>
+      <scope>test</scope>
+      <exclusions>
+      	<exclusion>
+      	  <artifactId>hadoop-client</artifactId>
+      	  <groupId>org.apache.hadoop</groupId>
+      	</exclusion>
+      	<exclusion>
+      		<artifactId>guava</artifactId>
+      		<groupId>com.google.guava</groupId>
+      	</exclusion>
+      </exclusions>
+    </dependency>
+ 	<dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

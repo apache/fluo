@@ -28,5 +28,4 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/config.sh
 
-$ACCUMULO_HOME/bin/tool.sh $ACCISMUS_HOME/lib/accismus-0.0.1-SNAPSHOT.jar accismus.tools.InitializeTool $ACCISMUS_HOME/conf/accismus.properties $ACCISMUS_HOME/conf/initialization.properties
-
+java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*" accismus.tools.InitializeTool -config-dir $ACCISMUS_CONF_DIR
