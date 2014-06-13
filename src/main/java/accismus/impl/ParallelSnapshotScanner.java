@@ -1,6 +1,7 @@
 package accismus.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +26,11 @@ public class ParallelSnapshotScanner {
 
   private Configuration aconfig;
   private long startTs;
-  private List<ByteSequence> rows;
+  private Collection<ByteSequence> rows;
   private Set<Column> columns;
   private TxStats stats;
 
-  ParallelSnapshotScanner(List<ByteSequence> rows, Set<Column> columns, Configuration aconfig, long startTs, TxStats stats) {
+  ParallelSnapshotScanner(Collection<ByteSequence> rows, Set<Column> columns, Configuration aconfig, long startTs, TxStats stats) {
     this.rows = rows;
     this.columns = columns;
     this.aconfig = aconfig;
@@ -37,7 +38,7 @@ public class ParallelSnapshotScanner {
     this.stats = stats;
   }
 
-  private BatchScanner setupBatchScanner(List<ByteSequence> rows, Set<Column> columns) {
+  private BatchScanner setupBatchScanner(Collection<ByteSequence> rows, Set<Column> columns) {
     BatchScanner scanner;
     try {
       // TODO hardcoded number of threads!

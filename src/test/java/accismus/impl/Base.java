@@ -35,6 +35,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import accismus.api.Column;
+import accismus.api.Observer;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 import accismus.format.AccismusFormatter;
 
@@ -46,7 +48,7 @@ public class Base {
   
   protected static ZooKeeper zk;
   
-  protected static final Map<Column,String> EMPTY_OBSERVERS = new HashMap<Column,String>();
+  protected static final Map<Column,ObserverConfiguration> EMPTY_OBSERVERS = new HashMap<Column,ObserverConfiguration>();
   
   protected static AtomicInteger next = new AtomicInteger();
   
@@ -58,22 +60,39 @@ public class Base {
   protected OracleServer oserver;
   protected String zkn;
 
-  protected Map<Column,String> getObservers() {
+  protected Map<Column,ObserverConfiguration> getObservers() {
+    return EMPTY_OBSERVERS;
+  }
+
+  protected Map<Column,ObserverConfiguration> getWeakObservers() {
     return EMPTY_OBSERVERS;
   }
 
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
     Worker worker = new Worker(config, new RandomTabletChooser(config));
-    while (true) {
-      worker.processUpdates();
-      
-      // there should not be any notifcations
-      Scanner scanner = conn.createScanner(table, new Authorizations());
-      scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
-      
-      if (!scanner.iterator().hasNext())
-        break;
+    Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+    try {
+      while (true) {
+        worker.processUpdates(colObservers);
+
+        // there should not be any notifcations
+        Scanner scanner = conn.createScanner(table, new Authorizations());
+        scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
+
+        if (!scanner.iterator().hasNext())
+          break;
+      }
+    } finally {
+      for (Observer observer : colObservers.values()) {
+        try {
+          observer.close();
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 
@@ -96,7 +115,7 @@ public class Base {
     Properties wprops = new Properties();
     wprops.setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, "5000");
     Operations.updateWorkerConfig(conn, zkn, wprops);
-    Operations.updateObservers(conn, zkn, getObservers());
+    Operations.updateObservers(conn, zkn, getObservers(), getWeakObservers());
 
     config = new Configuration(zk, zkn, conn);
     

@@ -17,12 +17,10 @@
 package accismus.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
@@ -37,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.api.Transaction;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.impl.RandomTabletChooser.TabletInfo;
@@ -52,7 +52,6 @@ public class Worker {
 
   private static Logger log = LoggerFactory.getLogger(Worker.class);
 
-  private Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
   private Configuration config;
   private Random rand = new Random();
 
@@ -62,14 +61,6 @@ public class Worker {
 
     this.config = config;
     this.tabletChooser = tabletChooser;
-
-    Set<Entry<Column,String>> es = config.getObservers().entrySet();
-    for (Entry<Column,String> entry : es) {
-      Column col = entry.getKey();
-      
-      Observer observer = Class.forName(entry.getValue()).asSubclass(Observer.class).newInstance();
-      colObservers.put(col, observer);
-    }
   }
   
   
@@ -134,7 +125,7 @@ public class Worker {
   }
 
   // TODO make package private
-  public long processUpdates() throws Exception {
+  public long processUpdates(Map<Column,Observer> colObservers) throws Exception {
     // TODO how does user set auths that workers are expected to use...
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
@@ -163,10 +154,7 @@ public class Worker {
       // TODO cache col vis
       col.setVisibility(entry.getKey().getColumnVisibilityParsed());
       
-      Observer observer = colObservers.get(col);
-      if (observer == null) {
-        // TODO do something
-      }
+      Observer observer = getObserver(colObservers, col);
       
       ByteSequence row = entry.getKey().getRowData();
       
@@ -176,12 +164,16 @@ public class Worker {
       }
 
       while (true) {
-        TransactionImpl tx = null;
+        TransactionImpl txi = null;
         String status = "FAILED";
         try {
-          tx = new TransactionImpl(config, row, col);
+          txi = new TransactionImpl(config, row, col);
+          Transaction tx = txi;
+          if (TracingTransaction.isTracingEnabled())
+            tx = new TracingTransaction(tx);
+
           observer.process(tx, row, col);
-          tx.commit();
+          txi.commit();
           status = "COMMITTED";
           break;
         } catch (AlreadyAcknowledgedException aae) {
@@ -202,8 +194,8 @@ public class Worker {
             return numProcessed;
           }
         } finally {
-          if (tx != null && TxLogger.isLoggingEnabled())
-            TxLogger.logTx(status, observer.getClass().getSimpleName(), tx.getStats(), row + ":" + col);
+          if (txi != null && TxLogger.isLoggingEnabled())
+            TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
         }
       // TODO if duplicate set detected, see if its because already acknowledged
       }
@@ -211,5 +203,23 @@ public class Worker {
     }
     
     return numProcessed;
+  }
+
+
+  private Observer getObserver(Map<Column,Observer> colObservers, Column col) throws Exception {
+    Observer observer = colObservers.get(col);
+    if (observer == null) {
+      ObserverConfiguration observerConfig = config.getObservers().get(col);
+      if (observerConfig == null)
+        observerConfig = config.getWeakObservers().get(col);
+
+      if (observerConfig != null) {
+        observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+        observer.init(observerConfig.getParameters());
+        colObservers.put(col, observer);
+      }
+      // TODO do something
+    }
+    return observer;
   }
 }

@@ -15,7 +15,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
   private Encoder encoder;
   private TypeLayer tl;
 
-  private class KeyBuilder extends RowColumnBuilder<ValueSetter,VisAction> {
+  private class MutateKeyBuilder extends RowColumnBuilder<Mutator,VisibilityMutator> {
 
     private ByteSequence row;
     private ByteSequence cf;
@@ -31,31 +31,19 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
     }
 
     @Override
-    VisAction setQualifier(ByteSequence q) {
-      return new VisAction(row, new Column(cf, q));
+    VisibilityMutator setQualifier(ByteSequence q) {
+      return new VisibilityMutator(row, new Column(cf, q));
     }
 
     @Override
-    ValueSetter setColumn(Column c) {
-      return new ValueSetter(row, c);
+    Mutator setColumn(Column c) {
+      return new Mutator(row, c);
     }
 
   }
 
-  public class VisAction extends ValueSetter {
-    private VisAction(ByteSequence row, Column col) {
-      super(row, col);
-    }
+  public class Mutator {
 
-    public ValueSetter vis(ColumnVisibility cv) {
-      checkNotSet();
-      super.col.setVisibility(cv);
-      super.set = true;
-      return new ValueSetter(super.row, super.col);
-    }
-  }
-
-  public class ValueSetter {
     private ByteSequence row;
     private Column col;
     private boolean set = false;
@@ -65,30 +53,48 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
         throw new IllegalStateException("Already set value");
     }
 
-    ValueSetter(ByteSequence row, Column col) {
+    Mutator(ByteSequence row, Column column) {
       this.row = row;
-      this.col = col;
+      this.col = column;
     }
 
-    public void val(String s) {
+    public void set(String s) {
       checkNotSet();
       tx.set(row, col, encoder.encode(s));
       set = true;
     }
 
-    public void val(int i) {
+    public void set(int i) {
       checkNotSet();
       tx.set(row, col, encoder.encode(i));
       set = true;
     }
 
-    public void val(long l) {
+    public void set(long l) {
       checkNotSet();
       tx.set(row, col, encoder.encode(l));
       set = true;
     }
 
-    public void val(byte[] ba) {
+    public void increment(int i) throws Exception {
+      checkNotSet();
+      ByteSequence val = tx.get(row, col);
+      int v = 0;
+      if (val != null)
+        v = encoder.decodeInteger(val);
+      tx.set(row, col, encoder.encode(v + i));
+    }
+
+    public void increment(long l) throws Exception {
+      checkNotSet();
+      ByteSequence val = tx.get(row, col);
+      long v = 0;
+      if (val != null)
+        v = encoder.decodeLong(val);
+      tx.set(row, col, encoder.encode(v + l));
+    }
+
+    public void set(byte[] ba) {
       checkNotSet();
       tx.set(row, col, new ArrayByteSequence(ba));
       set = true;
@@ -97,66 +103,40 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
     /**
      * Set an empty value
      */
-    public void val() {
+    public void set() {
       checkNotSet();
       tx.set(row, col, new ArrayByteSequence(new byte[0]));
       set = true;
     }
-  }
 
-  private class DeleteKeyBuilder extends RowColumnBuilder<Deleted,VisDeleter> {
-
-    private ByteSequence row;
-    private ByteSequence cf;
-
-    @Override
-    void setRow(ByteSequence r) {
-      this.row = r;
+    public void delete() {
+      checkNotSet();
+      tx.delete(row, col);
+      set = true;
     }
 
-    @Override
-    void setFamily(ByteSequence f) {
-      this.cf = f;
-    }
-
-    @Override
-    VisDeleter setQualifier(ByteSequence q) {
-      return new VisDeleter(row, cf, q);
-    }
-
-    @Override
-    Deleted setColumn(Column c) {
-      tx.delete(row, c);
-      return null;
+    public void weaklyNotify() {
+      checkNotSet();
+      tx.setWeakNotification(row, col);
+      set = true;
     }
 
   }
 
-  /**
-   * this return type indicates the row column was set for delete.
-   */
-  public class Deleted {
+  public class VisibilityMutator extends Mutator {
 
-  }
-
-  public class VisDeleter {
-
-    private ByteSequence row;
-    private ByteSequence cf;
-    private ByteSequence cq;
-
-    public VisDeleter(ByteSequence row, ByteSequence cf, ByteSequence q) {
-      this.row = row;
-      this.cf = cf;
-      this.cq = q;
+    VisibilityMutator(ByteSequence row, Column column) {
+      super(row, column);
     }
 
-    public Deleted vis(ColumnVisibility cv) {
-      tx.delete(row, new Column(cf, cq).setVisibility(cv));
-      return null;
+    public Mutator vis(ColumnVisibility cv) {
+      checkNotSet();
+      super.col.setVisibility(cv);
+      super.set = true;
+      return new Mutator(super.row, super.col);
     }
-
   }
+
 
   // TODO make private.. test depend on it
   protected TypedTransaction(Transaction tx, Encoder encoder, TypeLayer tl) {
@@ -166,21 +146,22 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
     this.tl = tl;
   }
 
+  public RowAction<Mutator,VisibilityMutator,MutateKeyBuilder> mutate() {
+    return tl.new RowAction<Mutator,VisibilityMutator,MutateKeyBuilder>(new MutateKeyBuilder());
+  }
+
   @Override
   public void set(ByteSequence row, Column col, ByteSequence value) {
     tx.set(row, col, value);
   }
 
   @Override
+  public void setWeakNotification(ByteSequence row, Column col) {
+    tx.setWeakNotification(row, col);
+  }
+
+  @Override
   public void delete(ByteSequence row, Column col) {
     tx.delete(row, col);
-  }
-
-  public RowAction<ValueSetter,VisAction,KeyBuilder> set() {
-    return tl.new RowAction<ValueSetter,VisAction,KeyBuilder>(new KeyBuilder());
-  }
-
-  public RowAction<Deleted,VisDeleter,DeleteKeyBuilder> delete() {
-    return tl.new RowAction<Deleted,VisDeleter,DeleteKeyBuilder>(new DeleteKeyBuilder());
   }
 }

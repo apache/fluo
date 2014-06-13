@@ -37,9 +37,9 @@ public class AccismusIT extends Base {
     
     Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
@@ -50,8 +50,8 @@ public class AccismusIT extends Base {
     Assert.assertEquals("10", bal1);
     Assert.assertEquals("20", bal2);
     
-    tx.set().row("bob").col(balanceCol).val((Long.parseLong(bal1) - 5) + "");
-    tx.set().row("joe").col(balanceCol).val((Long.parseLong(bal2) + 5) + "");
+    tx.mutate().row("bob").col(balanceCol).set((Long.parseLong(bal1) - 5) + "");
+    tx.mutate().row("joe").col(balanceCol).set((Long.parseLong(bal2) + 5) + "");
     
     TestTransaction tx2 = new TestTransaction(config);
     
@@ -60,8 +60,8 @@ public class AccismusIT extends Base {
     Assert.assertEquals("10", bal3);
     Assert.assertEquals("60", bal4);
     
-    tx2.set().row("bob").col(balanceCol).val((Long.parseLong(bal3) - 5) + "");
-    tx2.set().row("jill").col(balanceCol).val((Long.parseLong(bal4) + 5) + "");
+    tx2.mutate().row("bob").col(balanceCol).set((Long.parseLong(bal3) - 5) + "");
+    tx2.mutate().row("jill").col(balanceCol).set((Long.parseLong(bal4) + 5) + "");
     
     tx2.commit();
     assertCommitFails(tx);
@@ -95,10 +95,10 @@ public class AccismusIT extends Base {
     
     Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.set().row("bob").col(balanceCol).val(10);
-    tx.set().row("joe").col(balanceCol).val(20);
-    tx.set().row("jill").col(balanceCol).val(60);
-    tx.set().row("jane").col(balanceCol).val(0);
+    tx.mutate().row("bob").col(balanceCol).set(10);
+    tx.mutate().row("joe").col(balanceCol).set(20);
+    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.mutate().row("jane").col(balanceCol).set(0);
     
     tx.commit();
     
@@ -106,16 +106,16 @@ public class AccismusIT extends Base {
     
     TestTransaction tx2 = new TestTransaction(config);
     
-    tx2.set().row("bob").col(balanceCol).val(tx2.get().row("bob").col(balanceCol).toLong() - 5);
-    tx2.set().row("joe").col(balanceCol).val(tx2.get().row("joe").col(balanceCol).toLong() - 5);
-    tx2.set().row("jill").col(balanceCol).val(tx2.get().row("jill").col(balanceCol).toLong() + 10);
+    tx2.mutate().row("bob").col(balanceCol).set(tx2.get().row("bob").col(balanceCol).toLong() - 5);
+    tx2.mutate().row("joe").col(balanceCol).set(tx2.get().row("joe").col(balanceCol).toLong() - 5);
+    tx2.mutate().row("jill").col(balanceCol).set(tx2.get().row("jill").col(balanceCol).toLong() + 10);
 
     long bal1 = tx1.get().row("bob").col(balanceCol).toLong();
     
     tx2.commit();
     
     TestTransaction txd = new TestTransaction(config);
-    txd.delete().row("jane").col(balanceCol);
+    txd.mutate().row("jane").col(balanceCol).delete();
     txd.commit();
     
     long bal2 = tx1.get().row("joe").col(balanceCol).toLong();
@@ -127,15 +127,15 @@ public class AccismusIT extends Base {
     Assert.assertEquals(60l, bal3);
     Assert.assertEquals(0l, bal4);
     
-    tx1.set().row("bob").col(balanceCol).val(bal1 - 5);
-    tx1.set().row("joe").col(balanceCol).val(bal2 + 5);
+    tx1.mutate().row("bob").col(balanceCol).set(bal1 - 5);
+    tx1.mutate().row("joe").col(balanceCol).set(bal2 + 5);
     
     assertCommitFails(tx1);
     
     TestTransaction tx3 = new TestTransaction(config);
     
     TestTransaction tx4 = new TestTransaction(config);
-    tx4.set().row("jane").col(balanceCol).val(3);
+    tx4.mutate().row("jane").col(balanceCol).set(3);
     tx4.commit();
     
     Assert.assertEquals(5l, tx3.get().row("bob").col(balanceCol).toLong(0));
@@ -159,19 +159,19 @@ public class AccismusIT extends Base {
     
     Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
     TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx1.get().row("joe").col(balanceCol);
-    tx1.set().row("jill").col(balanceCol).val("61");
+    tx1.mutate().row("jill").col(balanceCol).set("61");
     
     TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx2.get().row("joe").col(balanceCol);
-    tx2.set().row("bob").col(balanceCol).val("11");
+    tx2.mutate().row("bob").col(balanceCol).set("11");
     
     tx1.commit();
     assertCommitFails(tx2);
@@ -183,17 +183,17 @@ public class AccismusIT extends Base {
     Assert.assertEquals("61", tx3.get().row("jill").col(balanceCol).toString());
     
     // update joe, so it can be acknowledged again
-    tx3.set().row("joe").col(balanceCol).val("21");
+    tx3.mutate().row("joe").col(balanceCol).set("21");
     
     tx3.commit();
     
     TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx4.get().row("joe").col(balanceCol);
-    tx4.set().row("jill").col(balanceCol).val("62");
+    tx4.mutate().row("jill").col(balanceCol).set("62");
     
     TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx5.get().row("joe").col(balanceCol);
-    tx5.set().row("bob").col(balanceCol).val("11");
+    tx5.mutate().row("bob").col(balanceCol).set("11");
     
     // make the 2nd transaction to start commit 1st
     tx5.commit();
@@ -207,8 +207,8 @@ public class AccismusIT extends Base {
     
     TestTransaction tx7 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx7.get().row("joe").col(balanceCol);
-    tx7.set().row("bob").col(balanceCol).val("15");
-    tx7.set().row("jill").col(balanceCol).val("60");
+    tx7.mutate().row("bob").col(balanceCol).set("15");
+    tx7.mutate().row("jill").col(balanceCol).set("60");
     
     try {
       tx7.commit();
@@ -229,9 +229,9 @@ public class AccismusIT extends Base {
     Column balanceCol = typeLayer.newColumn("account", "balance");
     Column addrCol = typeLayer.newColumn("account", "addr");
 
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
 
     tx.commit();
 
@@ -244,8 +244,8 @@ public class AccismusIT extends Base {
     tx1.get().row("bob").col(addrCol).toString();
     tx2.get().row("bob").col(addrCol).toString();
 
-    tx1.set().row("bob").col(addrCol).val("1 loop pl");
-    tx2.set().row("bob").col(addrCol).val("1 loop pl");
+    tx1.mutate().row("bob").col(addrCol).set("1 loop pl");
+    tx2.mutate().row("bob").col(addrCol).set("1 loop pl");
 
     // this test overlaps the commmits of two transactions w/ the same trigger
 
@@ -263,7 +263,7 @@ public class AccismusIT extends Base {
     tx1.finishCommit(cd, commitTs);
 
     TestTransaction tx3 = new TestTransaction(config, "bob", balanceCol);
-    tx3.set().row("bob").col(addrCol).val("2 loop pl");
+    tx3.mutate().row("bob").col(addrCol).set("2 loop pl");
     try {
       tx3.commit();
     } catch (AlreadyAcknowledgedException e) {
@@ -280,20 +280,20 @@ public class AccismusIT extends Base {
     
     Column balanceCol = typeLayer.newColumn("account", "balance");
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
     TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx2.get().row("joe").col(balanceCol);
-    tx2.set().row("joe").col(balanceCol).val("21");
-    tx2.set().row("bob").col(balanceCol).val("11");
+    tx2.mutate().row("joe").col(balanceCol).set("21");
+    tx2.mutate().row("bob").col(balanceCol).set("11");
     
     TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
     tx1.get().row("joe").col(balanceCol);
-    tx1.set().row("jill").col(balanceCol).val("61");
+    tx1.mutate().row("jill").col(balanceCol).set("61");
     
     tx1.commit();
     assertCommitFails(tx2);
@@ -318,9 +318,9 @@ public class AccismusIT extends Base {
 
     TestTransaction tx = new TestTransaction(config);
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
@@ -346,15 +346,15 @@ public class AccismusIT extends Base {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     
     TestTransaction tx = new TestTransaction(config);
-    tx.set().row("d00001").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
-    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).val("");
-    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).val("");
-    tx.set().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
+    tx.mutate().row("d00001").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
+    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).set("");
+    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).set("");
+    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
     
-    tx.set().row("d00002").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
-    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://d.com")).val("");
-    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://e.com")).val("");
-    tx.set().row("d00002").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
+    tx.mutate().row("d00002").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
+    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://d.com")).set("");
+    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://e.com")).set("");
+    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
     
     tx.commit();
     
@@ -362,11 +362,11 @@ public class AccismusIT extends Base {
     
     TestTransaction tx3 = new TestTransaction(config);
     
-    tx3.set().row("d00001").col(typeLayer.newColumn("data", "content")).val("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
-    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).val("");
-    tx3.delete().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com"));
-    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).val("");
-    tx3.set().row("d00001").col(typeLayer.newColumn("outlink", "http://z.com")).val("");
+    tx3.mutate().row("d00001").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
+    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).set("");
+    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).delete();
+    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
+    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://z.com")).set("");
     
     tx3.commit();
     

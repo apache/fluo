@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.config.AccismusProperties;
 import accismus.api.config.InitializationProperties;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.WorkerProperties;
 import accismus.impl.Operations;
 
@@ -104,27 +105,44 @@ public class Admin {
 
       Properties workerConfig = new Properties();
 
-      Map<Column,String> colObservers = new HashMap<Column,String>();
+      Map<Column,ObserverConfiguration> colObservers = new HashMap<Column,ObserverConfiguration>();
+      Map<Column,ObserverConfiguration> weakObservers = new HashMap<Column,ObserverConfiguration>();
 
       Set<Entry<Object,Object>> entries = props.entrySet();
       for (Entry<Object,Object> entry : entries) {
         String key = (String) entry.getKey();
-        if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
-          String val = (String) entry.getValue();
-          String[] fields = val.split(",");
-          Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
-          colObservers.put(col, fields[3]);
+        if (key.startsWith(WorkerProperties.WEAK_OBSERVER_PREFIX_PROP)) {
+          addObserver(weakObservers, entry);
+        } else if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
+          addObserver(colObservers, entry);
         } else if (key.startsWith("accismus.worker") || key.startsWith("accismus.tx")) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
       }
 
-      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers);
+      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers, weakObservers);
       Operations.updateWorkerConfig(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
       throw new RuntimeException(e);
     }
+  }
+
+  static void addObserver(Map<Column,ObserverConfiguration> observers, Entry<Object,Object> entry) {
+    String val = (String) entry.getValue();
+    String[] fields = val.split(",");
+    Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
+
+    ObserverConfiguration observerConfig = new ObserverConfiguration(fields[3]);
+
+    Map<String,String> params = new HashMap<String,String>();
+    for (int i = 4; i < fields.length; i++) {
+      String[] kv = fields[i].split("=");
+      params.put(kv[0], kv[1]);
+    }
+    observerConfig.setParameters(params);
+
+    observers.put(col, observerConfig);
   }
 }

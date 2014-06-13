@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import accismus.api.Column;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.exceptions.StaleScanException;
@@ -52,15 +53,15 @@ public class FailureIT extends Base {
     int bal1 = Integer.parseInt(tx.get().row(from).col(balanceCol).toString());
     int bal2 = Integer.parseInt(tx.get().row(to).col(balanceCol).toString());
     
-    tx.set().row(from).col(balanceCol).val("" + (bal1 - amount));
-    tx.set().row(to).col(balanceCol).val("" + (bal2 + amount));
+    tx.mutate().row(from).col(balanceCol).set("" + (bal1 - amount));
+    tx.mutate().row(to).col(balanceCol).set("" + (bal2 + amount));
     
     tx.commit();
   }
 
-  protected Map<Column,String> getObservers() {
-    Map<Column,String> observed = new HashMap<Column,String>();
-    observed.put(typeLayer.newColumn("attr", "lastupdate"), "foo");
+  protected Map<Column,ObserverConfiguration> getObservers() {
+    Map<Column,ObserverConfiguration> observed = new HashMap<Column,ObserverConfiguration>();
+    observed.put(typeLayer.newColumn("attr", "lastupdate"), new ObserverConfiguration("foo"));
     return observed;
   }
 
@@ -74,8 +75,8 @@ public class FailureIT extends Base {
     TestTransaction tx = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx.set().row(r + "").col(col1).val("0" + r + "0");
-      tx.set().row(r + "").col(col2).val("0" + r + "1");
+      tx.mutate().row(r + "").col(col1).set("0" + r + "0");
+      tx.mutate().row(r + "").col(col2).set("0" + r + "1");
     }
     
     tx.commit();
@@ -83,8 +84,8 @@ public class FailureIT extends Base {
     TestTransaction tx2 = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx2.set().row(r + "").col(col1).val("1" + r + "0");
-      tx2.set().row(r + "").col(col2).val("1" + r + "1");
+      tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
+      tx2.mutate().row(r + "").col(col2).set("1" + r + "1");
     }
     
     CommitData cd = tx2.createCommitData();
@@ -117,8 +118,8 @@ public class FailureIT extends Base {
     TestTransaction tx = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx.set().row(r + "").col(col1).val("0" + r + "0");
-      tx.set().row(r + "").col(col2).val("0" + r + "1");
+      tx.mutate().row(r + "").col(col1).set("0" + r + "0");
+      tx.mutate().row(r + "").col(col2).set("0" + r + "1");
     }
     
     tx.commit();
@@ -126,8 +127,8 @@ public class FailureIT extends Base {
     TestTransaction tx2 = new TestTransaction(config);
     
     for (int r = 0; r < 10; r++) {
-      tx2.set().row(r + "").col(col1).val("1" + r + "0");
-      tx2.set().row(r + "").col(col2).val("1" + r + "1");
+      tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
+      tx2.mutate().row(r + "").col(col2).set("1" + r + "1");
     }
     
     CommitData cd = tx2.createCommitData();
@@ -157,9 +158,9 @@ public class FailureIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
@@ -168,8 +169,8 @@ public class FailureIT extends Base {
     int bal1 = Integer.parseInt(tx2.get().row("bob").col(balanceCol).toString());
     int bal2 = Integer.parseInt(tx2.get().row("joe").col(balanceCol).toString());
     
-    tx2.set().row("bob").col(balanceCol).val("" + (bal1 - 7));
-    tx2.set().row("joe").col(balanceCol).val("" + (bal2 + 7));
+    tx2.mutate().row("bob").col(balanceCol).set("" + (bal1 - 7));
+    tx2.mutate().row("joe").col(balanceCol).set("" + (bal2 + 7));
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -213,9 +214,9 @@ public class FailureIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
 
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
@@ -224,8 +225,8 @@ public class FailureIT extends Base {
     int bal1 = Integer.parseInt(tx2.get().row("bob").col(balanceCol).toString());
     int bal2 = Integer.parseInt(tx2.get().row("joe").col(balanceCol).toString());
     
-    tx2.set().row("bob").col(balanceCol).val("" + (bal1 - 7));
-    tx2.set().row("joe").col(balanceCol).val("" + (bal2 + 7));
+    tx2.mutate().row("bob").col(balanceCol).set("" + (bal1 - 7));
+    tx2.mutate().row("joe").col(balanceCol).set("" + (bal2 + 7));
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -265,14 +266,14 @@ public class FailureIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    tx.set().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).val("3");
-    tx.set().row("url0000").col(typeLayer.newColumn("doc", "content")).val("abc def");
+    tx.mutate().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).set("3");
+    tx.mutate().row("url0000").col(typeLayer.newColumn("doc", "content")).set("abc def");
     
     tx.commit();
 
     TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
-    tx2.set().row("idx:abc").col(typeLayer.newColumn("doc", "url")).val("url0000");
-    tx2.set().row("idx:def").col(typeLayer.newColumn("doc", "url")).val("url0000");
+    tx2.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    tx2.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
     CommitData cd = tx2.createCommitData();
     tx2.preCommit(cd);
     
@@ -288,8 +289,8 @@ public class FailureIT extends Base {
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
     
     TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
-    tx5.set().row("idx:abc").col(typeLayer.newColumn("doc", "url")).val("url0000");
-    tx5.set().row("idx:def").col(typeLayer.newColumn("doc", "url")).val("url0000");
+    tx5.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    tx5.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
     cd = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd, new ArrayByteSequence("idx:abc"), typeLayer.newColumn("doc", "url")));
     long commitTs = OracleClient.getInstance(config).getTimestamp();
@@ -306,8 +307,8 @@ public class FailureIT extends Base {
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
     TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
-    tx4.set().row("idx:abc").col(typeLayer.newColumn("doc", "url")).val("url0000");
-    tx4.set().row("idx:def").col(typeLayer.newColumn("doc", "url")).val("url0000");
+    tx4.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    tx4.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
 
     try {
       // should not go through if tx5 is properly rolled forward
@@ -323,9 +324,9 @@ public class FailureIT extends Base {
     
     TestTransaction tx = new TestTransaction(config);
     
-    tx.set().row("bob").col(balanceCol).val("10");
-    tx.set().row("joe").col(balanceCol).val("20");
-    tx.set().row("jill").col(balanceCol).val("60");
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
     
     tx.commit();
     
@@ -358,9 +359,9 @@ public class FailureIT extends Base {
     
     TestTransaction tx1 = new TestTransaction(config);
     
-    tx1.set().row("bob").col(balanceCol).val("10");
-    tx1.set().row("joe").col(balanceCol).val("20");
-    tx1.set().row("jill").col(balanceCol).val("60");
+    tx1.mutate().row("bob").col(balanceCol).set("10");
+    tx1.mutate().row("joe").col(balanceCol).set("20");
+    tx1.mutate().row("jill").col(balanceCol).set("60");
     
     CommitData cd = tx1.createCommitData();
     Assert.assertTrue(tx1.preCommit(cd));
@@ -368,8 +369,8 @@ public class FailureIT extends Base {
     while (true) {
       TestTransaction tx2 = new TestTransaction(config);
     
-      tx2.set().row("bob").col(balanceCol).val("11");
-      tx2.set().row("jill").col(balanceCol).val("61");
+      tx2.mutate().row("bob").col(balanceCol).set("11");
+      tx2.mutate().row("jill").col(balanceCol).set("61");
       
       // tx1 should be rolled back even in case where columns tx1 locked are not read by tx2
       try {

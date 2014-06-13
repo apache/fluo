@@ -24,8 +24,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -41,6 +43,7 @@ import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.Column;
 import accismus.api.config.AccismusProperties;
+import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 
 
@@ -53,7 +56,9 @@ public class Configuration {
   private Authorizations auths = new Authorizations();
   private String zoodir;
   private String accumuloInstance;
-  private Map<Column,String> observers;
+  private Map<Column,ObserverConfiguration> observers;
+  private Map<Column,ObserverConfiguration> weakObservers;
+  private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
   private String accismusInstanceID;
@@ -148,21 +153,42 @@ public class Configuration {
     ByteArrayInputStream bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.OBSERVERS, false, null));
     DataInputStream dis = new DataInputStream(bais);
     
-    observers = new HashMap<Column,String>();
+    observers = Collections.unmodifiableMap(readObservers(dis));
+    weakObservers = Collections.unmodifiableMap(readObservers(dis));
+    allObserversColumns = new HashSet<Column>();
+    allObserversColumns.addAll(observers.keySet());
+    allObserversColumns.addAll(weakObservers.keySet());
+    allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
+
+    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
+    this.workerProps = new Properties(getDefaultWorkerProperties());
+    this.workerProps.load(bais);
+  }
+
+  private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
+
+    HashMap<Column,ObserverConfiguration> omap = new HashMap<Column,ObserverConfiguration>();
     
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = new Column();
       col.readFields(dis);
       String clazz = dis.readUTF();
-      observers.put(col, clazz);
-    }
+      Map<String,String> params = new HashMap<String,String>();
+      int numParams = WritableUtils.readVInt(dis);
+      for (int j = 0; j < numParams; j++) {
+        String k = dis.readUTF();
+        String v = dis.readUTF();
+        params.put(k, v);
+      }
 
-    observers = Collections.unmodifiableMap(observers);
+      ObserverConfiguration observerConfig = new ObserverConfiguration(clazz);
+      observerConfig.setParameters(params);
+
+      omap.put(col, observerConfig);
+    }
     
-    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
-    this.workerProps = new Properties(getDefaultWorkerProperties());
-    this.workerProps.load(bais);
+    return omap;
   }
 
   public void setAuthorizations(Authorizations auths) {
@@ -193,8 +219,12 @@ public class Configuration {
     return accismusInstanceID;
   }
 
-  public Map<Column,String> getObservers() {
+  public Map<Column,ObserverConfiguration> getObservers() {
     return observers;
+  }
+
+  public Map<Column,ObserverConfiguration> getWeakObservers() {
+    return weakObservers;
   }
 
   public String getTable() {

@@ -16,12 +16,16 @@
  */
 package accismus.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.accumulo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import accismus.api.Column;
+import accismus.api.Observer;
 import accismus.tools.WorkerTool;
 
 /**
@@ -54,24 +58,36 @@ public class WorkerTask implements Runnable {
 
     long sleepTime = 0;
 
-    while (!shutdownFlag.get()) {
-      long numProcessed = 0;
-      try {
-        numProcessed = worker.processUpdates();
-      } catch (Exception e) {
-        log.error("Error while processing updates", e);
+    Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+
+    try {
+      while (!shutdownFlag.get()) {
+        long numProcessed = 0;
+        try {
+          numProcessed = worker.processUpdates(colObservers);
+        } catch (Exception e) {
+          log.error("Error while processing updates", e);
+        }
+
+        if (numProcessed > 0)
+          sleepTime = 0;
+        else if (sleepTime == 0)
+          sleepTime = 100;
+        else if (sleepTime < MAX_SLEEP_TIME)
+          sleepTime = sleepTime + (long) (sleepTime * Math.random());
+
+        log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
+
+        UtilWaitThread.sleep(sleepTime);
       }
-
-      if (numProcessed > 0)
-        sleepTime = 0;
-      else if (sleepTime == 0)
-        sleepTime = 100;
-      else if (sleepTime < MAX_SLEEP_TIME)
-        sleepTime = sleepTime + (long) (sleepTime * Math.random());
-
-      log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
-
-      UtilWaitThread.sleep(sleepTime);
+    } finally {
+      for (Observer observer : colObservers.values()) {
+        try {
+          observer.close();
+        } catch (Exception e) {
+          log.error("Failed to close observer", e);
+        }
+      }
     }
   }
 
