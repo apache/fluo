@@ -80,27 +80,27 @@ public class Column implements Writable {
   public String toString() {
     return family + " " + qualifier + " " + visibility;
   }
-  
+
   // TODO remove from public API
   public void write(DataOutput out) throws IOException {
     ByteUtil.write(out, family);
     ByteUtil.write(out, qualifier);
-    
+
     WritableUtils.writeVInt(out, visibility.getExpression().length);
     out.write(visibility.getExpression());
-    
+
   }
-  
+
   public void readFields(DataInput in) throws IOException {
     family = ByteUtil.read(in);
     qualifier = ByteUtil.read(in);
-    
+
     int len = WritableUtils.readVInt(in);
     byte[] cv = new byte[len];
     in.readFully(cv);
-    
+
     // TODO use cv cache?
     visibility = new ColumnVisibility(cv);
-    
+
   }
 }

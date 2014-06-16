@@ -25,17 +25,14 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
 import org.apache.commons.lang.text.StrLookup;
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
-
-import com.beust.jcommander.JCommander;
 
 import accismus.api.Admin;
 import accismus.api.Admin.AlreadyInitializedException;
 import accismus.impl.Configuration;
 import accismus.impl.Logging;
 import accismus.yarn.RunnableOptions;
+
+import com.beust.jcommander.JCommander;
 
 /** Initializes Accismus using properties in configuration files
  */

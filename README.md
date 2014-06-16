@@ -43,8 +43,8 @@ observers, check out its instructions for setting up observers in
 ```
 OJAR=<location of observer jar>
 OPT=/opt
-mvn package assembly:assembly
-tar -C $OPT -xvzf target/accismus-0.0.1-SNAPSHOT-bin.tar.gz
+mvn package 
+tar -C $OPT -xvzf modules/distribution/target/accismus-0.0.1-SNAPSHOT-bin.tar.gz
 cd $OPT/accismus-0.0.1-SNAPSHOT
 cp $OJAR lib/observers
 cd conf
@@ -57,14 +57,16 @@ cd ..
 ```
 
 The preferred method is run Accismus applications within YARN:
+
 ```
 ./bin/oracle.sh start-yarn
 ./bin/worker.sh start-yarn
 ```
+
 You can use `yarn application -list` to check the status of the applications. 
 Logs are viewable within YARN.  When finished, you can kill the applications
 using `yarn application -kill <Application ID>`.  The application ID can be
-found using the list command.  
+found using the list command.
 
 If you do not have YARN set up, you can run Accismus as local Java processes:
 ```
@@ -76,6 +78,20 @@ When finished, run the following commands to stop local oracle and worker.
 ./bin/worker.sh stop-local
 ./bin/oracle.sh stop-local
 ```
+
+Dependencies
+------------
+
+Running `mvn package` will build a tar ball that contains all of the
+dependencies needed at runtime.  Currently the tar ball is targeted twoards
+Hadoop 2.3.0 and Accumulo 1.6.0.  If you have different versions installed on
+your cluster, you can try passing the following options to maven package.
+Other versions of Hadoop and Accumulo may not work, please open a bug if you
+run into problems.
+
+```
+mvn package -Daccumulo.version=1.6.1-SNAPSHOT -Dhadoop.version=2.4.0
+```  
 
 Tuning Accumulo
 ---------------

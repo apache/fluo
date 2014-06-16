@@ -3,6 +3,7 @@
   <formats>
     <format>tar.gz</format>
   </formats>
+
   <dependencySets>
     <dependencySet>
       <outputDirectory>lib</outputDirectory>
@@ -28,7 +29,10 @@
       	<include>ch.qos.logback:*</include>
       </includes>
     </dependencySet>
-  </dependencySets> 
+  </dependencySets>
+
+
+
   <fileSets>
     <fileSet>
       <includes>

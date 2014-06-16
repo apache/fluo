@@ -41,12 +41,6 @@ if [ -f $ACCISMUS_CONF_DIR/accismus-env.sh ] ; then
    . $ACCISMUS_CONF_DIR/accismus-env.sh
 fi
 
-if [ -z "$ACCUMULO_HOME" -o ! -d "$ACCUMULO_HOME" ]
-then
-  echo "ACCUMULO_HOME=$ACCUMULO_HOME is not a valid directory.  Please make sure it exists"
-  exit 1
-fi
-
 if [ -z ${ACCISMUS_LOG_DIR} ]; then
    ACCISMUS_LOG_DIR=$ACCISMUS_HOME/logs
 fi
@@ -55,9 +49,5 @@ mkdir -p $ACCISMUS_LOG_DIR 2>/dev/null
 
 export ACCISMUS_LOG_DIR
 
-if [ -z "$ACCUMULO_HOME" -o ! -d "$ACCUMULO_HOME" ]; then
-   echo "ACCUMULO_HOME is not set or is not a directory."
-   exit 1
-fi
 
 
