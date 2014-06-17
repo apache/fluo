@@ -28,8 +28,8 @@ import org.apache.commons.lang.text.StrLookup;
 
 import accismus.api.Admin;
 import accismus.api.Admin.AlreadyInitializedException;
+import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
-import accismus.impl.Logging;
 import accismus.yarn.RunnableOptions;
 
 import com.beust.jcommander.JCommander;

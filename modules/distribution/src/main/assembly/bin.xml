@@ -13,25 +13,8 @@
       <scope>runtime</scope>
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
-      <excludes>
-      	<exclude>ch.qos.logback:*</exclude>
-      </excludes>
-    </dependencySet>
-  	<dependencySet>
-      <outputDirectory>lib/logback</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>true</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <includes>
-      	<include>ch.qos.logback:*</include>
-      </includes>
     </dependencySet>
   </dependencySets>
-
-
 
   <fileSets>
     <fileSet>

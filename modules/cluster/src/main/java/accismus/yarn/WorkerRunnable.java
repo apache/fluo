@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import accismus.api.config.WorkerProperties;
+import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
-import accismus.impl.Logging;
 import accismus.impl.WorkerTask;
 import accismus.tools.InitializeTool;
 
@@ -43,9 +43,6 @@ public class WorkerRunnable extends AbstractTwillRunnable {
   
   @Override
   public void run() {
-    System.out.println("Starting Worker");
-    System.err.println("Starting Worker");
-    log.error("Starting Worker");
     String[] args = { "-config-dir", "./conf"};
     run(args);
   }

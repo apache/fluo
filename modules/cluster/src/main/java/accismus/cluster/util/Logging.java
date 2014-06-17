@@ -14,15 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package accismus.impl;
+package accismus.cluster.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
 
 /**
  * 
@@ -37,10 +41,10 @@ public class Logging {
     
     if (logOutput.equalsIgnoreCase("STDOUT")) {
       // Use a specific log config, if it exists
-      logConfig = String.format("%s/logger-stdout-%s.xml", configDir, application);
+      logConfig = String.format("%s/logback-stdout-%s.xml", configDir, application);
       if (!new File(logConfig).exists()) {
         // otherwise, use the generic config
-        logConfig = String.format("%s/logger-stdout.xml", configDir);
+        logConfig = String.format("%s/logback-stdout.xml", configDir);
       }
     } else {
       
@@ -51,15 +55,28 @@ public class Logging {
       System.setProperty("accismus.log.ip.localhost.hostname", localhost);
  
       // Use a specific log config, if it exists
-      logConfig = String.format("%s/logger-file-%s.xml", configDir, application);
+      logConfig = String.format("%s/logback-file-%s.xml", configDir, application);
       if (!new File(logConfig).exists()) {
         // otherwise, use the generic config
-        logConfig = String.format("%s/logger-file.xml", configDir);
+        logConfig = String.format("%s/logback-file.xml", configDir);
       }
     } 
         
-    DOMConfigurator.configureAndWatch(logConfig, 5000);
+    // assume SLF4J is bound to logback in the current environment
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
     
+    try {
+      JoranConfigurator configurator = new JoranConfigurator();
+      configurator.setContext(context);
+      // Call context.reset() to clear any previous configuration, e.g. default 
+      // configuration. For multi-step configuration, omit calling context.reset().
+      context.reset(); 
+      configurator.doConfigure(logConfig);
+    } catch (JoranException je) {
+      // StatusPrinter will handle this
+    }
+    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+
     System.out.println("Logging to "+logOutput+" using config "+ logConfig);
     log.info("Initialized logging using config in "+ logConfig);
     

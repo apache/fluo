@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import accismus.api.config.AccismusProperties;
+import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
-import accismus.impl.Logging;
 import accismus.tools.InitializeTool;
 
 import com.beust.jcommander.JCommander;

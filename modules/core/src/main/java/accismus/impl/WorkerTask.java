@@ -51,7 +51,7 @@ public class WorkerTask implements Runnable {
     try {
       worker = new Worker(config, new RandomTabletChooser(config));
     } catch (Exception e1) {
-      log.error("Error while processing updates", e1);
+      log.error("Error creating worker", e1);
       throw new RuntimeException(e1);
     }
 
@@ -79,6 +79,8 @@ public class WorkerTask implements Runnable {
 
         UtilWaitThread.sleep(sleepTime);
       }
+    } catch (Exception e1) {
+      log.error("Error in worker loop", e1);
     } finally {
       for (Observer observer : colObservers.values()) {
         try {

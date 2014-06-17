@@ -21,8 +21,8 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
-import accismus.impl.Logging;
 import accismus.impl.OracleServer;
 import accismus.tools.InitializeTool;
 

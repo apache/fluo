@@ -44,7 +44,7 @@ start-local)
   java -cp "$ACCISMUS_HOME/lib/*" accismus.yarn.OracleRunnable -config-dir $ACCISMUS_CONF_DIR -log-output $ACCISMUS_LOG_DIR >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
 stop-local)
-	kill `jps -m | grep accismus.yarn.OracleRunnable | cut -f 1 -d ' '`
+	kill `jps -m | grep OracleRunnable | cut -f 1 -d ' '`
 	;;
 *)
 	echo $"Usage: $0 start-yarn|start-local|stop-local"
