@@ -39,6 +39,7 @@ to a directory of your choice (rather than `/opt`).
 
 ```
 tar -C /opt -xvzf modules/distribution/target/accismus-0.0.1-SNAPSHOT-bin.tar.gz
+```
 
 Configuring Accismus
 --------------------
