@@ -19,6 +19,10 @@ package accismus.impl;
 import accismus.impl.thrift.OracleService;
 import com.netflix.curator.framework.CuratorFramework;
 import com.netflix.curator.framework.CuratorFrameworkFactory;
+import com.netflix.curator.framework.recipes.cache.PathChildrenCache;
+import com.netflix.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import com.netflix.curator.framework.recipes.cache.PathChildrenCacheListener;
+import com.netflix.curator.framework.recipes.cache.PathChildrenCacheMode;
 import com.netflix.curator.framework.recipes.leader.LeaderSelector;
 import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
 import com.netflix.curator.framework.recipes.leader.Participant;
@@ -52,18 +56,43 @@ public class OracleClient {
 
   private class TimestampRetriever implements Runnable, LeaderSelectorListener {
 
+    private LeaderSelector leaderSelector;
+    private CuratorFramework curatorFramework;
+
     TimestampRetriever() throws Exception {
 
     }
+
 
     public void run() {
       ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
       
       try {
-        
+
+        curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 300000));
+        curatorFramework.start();
+
+        leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
+
         OracleService.Client client = connect();
 
-        while (true) {
+        PathChildrenCache cache = new PathChildrenCache(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, PathChildrenCacheMode.CACHE_PATHS_ONLY);
+        cache.getListenable().addListener(new PathChildrenCacheListener() {
+          Participant currentLeader = null;
+
+          @Override
+          public void childEvent(CuratorFramework curatorClient, PathChildrenCacheEvent event) throws Exception {
+            if(event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
+              Participant leader = leaderSelector.getLeader();
+              if(currentLeader == null || (currentLeader != null && !currentLeader.equals(leader)))
+                connect();
+            }
+          }
+        });
+
+          cache.start();
+
+          while (true) {
           request.clear();
           request.add(queue.take());
           queue.drainTo(request);
@@ -97,20 +126,17 @@ public class OracleClient {
         // TODO
         e.printStackTrace();
       }
+
+      curatorFramework.close();
     }
 
-    private CuratorFramework curatorFramework;
 
     private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
       // TODO use shared zookeeper or curator
-      curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 300000));
-      curatorFramework.start();
-
-      LeaderSelector leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
 
       Participant participant = null;
       try {
-          System.out.println(leaderSelector.getParticipants());
+          Thread.sleep(100);
           participant = leaderSelector.getLeader();
       } catch (Exception e) {
           throw new RuntimeException("There was an error finding a leader in the list of Oracle servers.");
@@ -119,8 +145,6 @@ public class OracleClient {
       System.out.println("ID: "+ participant.getId());
       String host = participant.getId().split(":")[0];
       int port = Integer.parseInt(participant.getId().split(":")[1]);
-
-      curatorFramework.close();
 
       TTransport transport = new TFastFramedTransport(new TSocket(host, port));
       transport.open();
