@@ -18,6 +18,13 @@ package accismus.impl;
 
 import java.net.InetSocketAddress;
 
+import accismus.impl.thrift.OracleService;
+import com.netflix.curator.framework.CuratorFrameworkFactory;
+import com.netflix.curator.framework.recipes.leader.LeaderSelector;
+import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
+import com.netflix.curator.framework.state.ConnectionState;
+import com.netflix.curator.retry.ExponentialBackoffRetry;
+import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -26,7 +33,6 @@ import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,14 +43,16 @@ import accismus.impl.thrift.OracleService;
 /**
  * 
  */
-public class OracleServer implements OracleService.Iface {
+public class OracleServer implements OracleService.Iface, LeaderSelectorListener {
   private long currentTs = 0;
   private long maxTs = 0;
-  private ZooKeeper zk;
   private Configuration config;
   private Thread serverThread;
   private THsHaServer server;
   private boolean started = false;
+
+  private LeaderSelector leaderSelector;
+  private CuratorFramework curatorFramework;
   
   private static Logger log = LoggerFactory.getLogger(OracleServer.class);
 
@@ -54,15 +62,19 @@ public class OracleServer implements OracleService.Iface {
   
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
-    byte[] d = zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, null, stat);
-    
+    byte[] d = curatorFramework.getData()
+      .storingStatIn(stat)
+      .forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
+
     // TODO check that d is expected
     // TODO check that stil server when setting
     // TODO make num allocated variable... when a server first starts allocate a small amount... the longer it runs and the busier it is, allocate bigger blocks
     
     long newMax = Long.parseLong(new String(d)) + 1000;
-    
-    zk.setData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, (newMax + "").getBytes("UTF-8"), stat.getVersion());
+
+    curatorFramework.setData()
+      .withVersion(stat.getVersion())
+      .forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, (newMax + "").getBytes("UTF-8"));
 
     maxTs = newMax;
 
@@ -125,17 +137,19 @@ public class OracleServer implements OracleService.Iface {
     if (started)
       throw new IllegalStateException();
 
-    this.zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
-
     InetSocketAddress addr = startServer();
 
-    byte[] d = zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, null, null);
+    byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
     currentTs = maxTs = Long.parseLong(new String(d));
 
-    zk.create(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, (addr.getHostName() + ":" + addr.getPort()).getBytes(),
-        ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+    curatorFramework.create()
+      .withMode(CreateMode.EPHEMERAL)
+      .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
+      .forPath(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, (addr.getHostName() + ":" + addr.getPort()).getBytes());
 
-    // TODO use zoolock or curator
+    curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 30000));
+    leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER + "/leader", this);
+    leaderSelector.start();
 
     log.info("Listening " + addr);
 
@@ -147,10 +161,23 @@ public class OracleServer implements OracleService.Iface {
       server.stop();
       serverThread.join();
       // TODO use zoolock or curator
-      zk.delete(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, -1);
-      zk.close();
+
+      curatorFramework.delete()
+        .withVersion(-1)
+        .forPath(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER);
+      leaderSelector.close();
+      curatorFramework.close();
       started = false;
     }
   }
 
+  @Override
+  public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
+    while(started) Thread.sleep(50);
+  }
+
+  @Override
+  public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
+
+  }
 }
