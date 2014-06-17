@@ -31,8 +31,6 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,16 +137,14 @@ public class OracleServer implements OracleService.Iface, LeaderSelectorListener
 
     InetSocketAddress addr = startServer();
 
+    curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 30000));
+    curatorFramework.start();
+
     byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
     currentTs = maxTs = Long.parseLong(new String(d));
 
-    curatorFramework.create()
-      .withMode(CreateMode.EPHEMERAL)
-      .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
-      .forPath(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, (addr.getHostName() + ":" + addr.getPort()).getBytes());
-
-    curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 30000));
-    leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER + "/leader", this);
+    leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
+    leaderSelector.setId(addr.getHostName() + ":" + addr.getPort());
     leaderSelector.start();
 
     log.info("Listening " + addr);
@@ -162,9 +158,6 @@ public class OracleServer implements OracleService.Iface, LeaderSelectorListener
       serverThread.join();
       // TODO use zoolock or curator
 
-      curatorFramework.delete()
-        .withVersion(-1)
-        .forPath(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER);
       leaderSelector.close();
       curatorFramework.close();
       started = false;

@@ -16,14 +16,14 @@
  */
 package accismus.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
-
+import accismus.impl.thrift.OracleService;
+import com.netflix.curator.framework.CuratorFramework;
+import com.netflix.curator.framework.CuratorFrameworkFactory;
+import com.netflix.curator.framework.recipes.leader.LeaderSelector;
+import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
+import com.netflix.curator.framework.recipes.leader.Participant;
+import com.netflix.curator.framework.state.ConnectionState;
+import com.netflix.curator.retry.ExponentialBackoffRetry;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -31,9 +31,14 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 
-import accismus.impl.thrift.OracleService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 
@@ -45,8 +50,7 @@ public class OracleClient {
     AtomicLong timestamp = new AtomicLong();
   }
 
-  private class TimestampRetriever implements Runnable {
-
+  private class TimestampRetriever implements Runnable, LeaderSelectorListener {
 
     TimestampRetriever() throws Exception {
 
@@ -95,15 +99,28 @@ public class OracleClient {
       }
     }
 
+    private CuratorFramework curatorFramework;
+
     private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
       // TODO use shared zookeeper or curator
-      ZooKeeper zk = new ZooKeeper(config.getConnector().getInstance().getZooKeepers(), 30000, null);
-      String server = new String(zk.getData(config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, false, null));
+      curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 300000));
+      curatorFramework.start();
 
-      String host = server.split(":")[0];
-      int port = Integer.parseInt(server.split(":")[1]);
+      LeaderSelector leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
 
-      zk.close();
+      Participant participant = null;
+      try {
+          System.out.println(leaderSelector.getParticipants());
+          participant = leaderSelector.getLeader();
+      } catch (Exception e) {
+          throw new RuntimeException("There was an error finding a leader in the list of Oracle servers.");
+      }
+
+      System.out.println("ID: "+ participant.getId());
+      String host = participant.getId().split(":")[0];
+      int port = Integer.parseInt(participant.getId().split(":")[1]);
+
+      curatorFramework.close();
 
       TTransport transport = new TFastFramedTransport(new TSocket(host, port));
       transport.open();
@@ -111,9 +128,16 @@ public class OracleClient {
       OracleService.Client client = new OracleService.Client(protocol);
       return client;
     }
+
+      @Override
+      public void takeLeadership(CuratorFramework curatorFramework) throws Exception {}
+
+      @Override
+      public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {}
   }
 
   private static Map<String,OracleClient> clients = new HashMap<String,OracleClient>();
+
 
 
   private Configuration config;
