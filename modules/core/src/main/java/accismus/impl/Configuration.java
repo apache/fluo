@@ -44,7 +44,9 @@ import org.apache.zookeeper.ZooKeeper;
 import accismus.api.Column;
 import accismus.api.config.AccismusProperties;
 import accismus.api.config.ObserverConfiguration;
+import accismus.api.config.OracleProperties;
 import accismus.api.config.TransactionConfiguration;
+import accismus.api.config.WorkerProperties;
 
 
 /**
@@ -113,7 +115,7 @@ public class Configuration {
       props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
           props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP))
       ),
-      Integer.parseInt(props.getProperty(AccismusProperties.ORACLE_PORT_PROP))
+      Integer.parseInt(props.getProperty(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT + ""))
     );
   }
   
@@ -135,10 +137,10 @@ public class Configuration {
     props.put(AccismusProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
     props.put(AccismusProperties.ACCUMULO_USER_PROP, "accismus");
     props.put(AccismusProperties.ACCUMULO_PASSWORD_PROP, "secret");
-    props.put(AccismusProperties.WORKER_INSTANCES_PROP, "1");
-    props.put(AccismusProperties.WORKER_MAX_MEMORY_PROP, "256");
-    props.put(AccismusProperties.ORACLE_MAX_MEMORY_PROP, "256");
-    props.put(AccismusProperties.ORACLE_PORT_PROP, AccismusProperties.ORACLE_DEFAULT_PORT);
+    props.put(WorkerProperties.WORKER_INSTANCES_PROP, "1");
+    props.put(WorkerProperties.WORKER_MAX_MEMORY_PROP, "256");
+    props.put(OracleProperties.ORACLE_MAX_MEMORY_PROP, "256");
+    props.put(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT+"");
     
     return props;
   }

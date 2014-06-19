@@ -35,7 +35,7 @@ import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.WorkerProperties;
 import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
 import accismus.tools.InitializeTool;
@@ -56,8 +56,8 @@ public class WorkerApp implements TwillApplication {
   }
        
   public TwillSpecification configure() { 
-    int numInstances = Integer.parseInt(props.getProperty(AccismusProperties.WORKER_INSTANCES_PROP, "1"));
-    int maxMemoryMB = Integer.parseInt(props.getProperty(AccismusProperties.WORKER_MAX_MEMORY_PROP, "256"));
+    int numInstances = Integer.parseInt(props.getProperty(WorkerProperties.WORKER_INSTANCES_PROP, "1"));
+    int maxMemoryMB = Integer.parseInt(props.getProperty(WorkerProperties.WORKER_MAX_MEMORY_PROP, "256"));
     
     ResourceSpecification workerResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)

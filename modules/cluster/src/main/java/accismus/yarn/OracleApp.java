@@ -34,7 +34,7 @@ import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.OracleProperties;
 import accismus.cluster.util.Logging;
 import accismus.impl.Configuration;
 import accismus.tools.InitializeTool;
@@ -55,7 +55,7 @@ public class OracleApp implements TwillApplication {
   }
        
   public TwillSpecification configure() {   
-    int maxMemoryMB = Integer.parseInt(props.getProperty(AccismusProperties.ORACLE_MAX_MEMORY_PROP, "256"));
+    int maxMemoryMB = Integer.parseInt(props.getProperty(OracleProperties.ORACLE_MAX_MEMORY_PROP, "256"));
     
     log.info("Starting an accismus oracle with "+maxMemoryMB+"MB of memory");
     

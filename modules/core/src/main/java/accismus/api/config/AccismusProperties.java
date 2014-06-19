@@ -34,16 +34,9 @@ public class AccismusProperties extends Properties {
   public static final String ACCUMULO_USER_PROP = "accismus.accumulo.user";
   public static final String ACCUMULO_INSTANCE_PROP = "accismus.accumulo.instance";
 
-  public static final String ORACLE_PORT_PROP = "accismus.oracle.port";
-
   public static final String ZOOKEEPER_ROOT_PROP = "accismus.zookeeper.root";
   public static final String ZOOKEEPER_TIMEOUT_PROP = "accismus.zookeeper.timeout";
   public static final String ZOOKEEPER_CONNECT_PROP = "accismus.zookeeper.connect";
-  public static final String WORKER_INSTANCES_PROP = "accismus.worker.instances";
-  public static final String WORKER_MAX_MEMORY_PROP = "accismus.worker.max.memory.mb";
-  public static final String ORACLE_MAX_MEMORY_PROP = "accismus.worker.max.memory.mb";
-
-  public static final int ORACLE_DEFAULT_PORT = 9913;
   
   public AccismusProperties() {
     super(accismus.impl.Configuration.getDefaultProperties());
@@ -91,27 +84,7 @@ public class AccismusProperties extends Properties {
     setProperty(ACCUMULO_PASSWORD_PROP, accumuloPassword);
     return this;
   }
-  
-  public AccismusProperties setWorkerInstances(String workerInstances) {
-    setProperty(WORKER_INSTANCES_PROP, workerInstances);
-    return this;
-  }
-  
-  public AccismusProperties setWorkerMaxMemory(String workerMaxMemory) {
-    setProperty(WORKER_MAX_MEMORY_PROP, workerMaxMemory);
-    return this;
-  }
-  
-  public AccismusProperties setOracleMaxMemory(String oracleMaxMemory) {
-    setProperty(ORACLE_MAX_MEMORY_PROP, oracleMaxMemory);
-    return this;
-  }
-
-  public AccismusProperties setOraclePort(int oraclePort) {
-    setProperty(ORACLE_PORT_PROP, Integer.toString(oraclePort));
-    return this;
-  }
-
+    
   protected void setDefault(String key, String val) {
     if (getProperty(key) == null)
       setProperty(key, val);

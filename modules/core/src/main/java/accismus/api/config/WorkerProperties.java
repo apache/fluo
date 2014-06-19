@@ -37,6 +37,8 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
   public static final String NUM_THREADS_PROP = "accismus.worker.numThreads";
   public static final String OBSERVER_PREFIX_PROP = "accismus.worker.observer.";
   public static final String WEAK_OBSERVER_PREFIX_PROP = "accismus.worker.observer.weak.";
+  public static final String WORKER_INSTANCES_PROP = "accismus.worker.instances";
+  public static final String WORKER_MAX_MEMORY_PROP = "accismus.worker.max.memory.mb";
 
   public WorkerProperties() {
     super();
@@ -107,5 +109,15 @@ public class WorkerProperties extends AccismusProperties implements TransactionC
   @Override
   public void setRollbackTime(long time, TimeUnit tu) {
     setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, tu.toMillis(time) + "");
+  }
+  
+  public WorkerProperties setWorkerInstances(String workerInstances) {
+    setProperty(WorkerProperties.WORKER_INSTANCES_PROP, workerInstances);
+    return this;
+  }
+  
+  public WorkerProperties setWorkerMaxMemory(String workerMaxMemory) {
+    setProperty(WorkerProperties.WORKER_MAX_MEMORY_PROP, workerMaxMemory);
+    return this;
   }
 }
