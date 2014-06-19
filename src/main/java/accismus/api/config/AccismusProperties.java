@@ -33,6 +33,9 @@ public class AccismusProperties extends Properties {
   public static final String ACCUMULO_PASSWORD_PROP = "accismus.accumulo.password";
   public static final String ACCUMULO_USER_PROP = "accismus.accumulo.user";
   public static final String ACCUMULO_INSTANCE_PROP = "accismus.accumulo.instance";
+
+  public static final String ORACLE_PORT_PROP = "accismus.oracle.port";
+
   public static final String ZOOKEEPER_ROOT_PROP = "accismus.zookeeper.root";
   public static final String ZOOKEEPER_TIMEOUT_PROP = "accismus.zookeeper.timeout";
   public static final String ZOOKEEPER_CONNECT_PROP = "accismus.zookeeper.connect";
@@ -81,6 +84,11 @@ public class AccismusProperties extends Properties {
   
   public AccismusProperties setAccumuloPassword(String accumuloPassword) {
     setProperty(ACCUMULO_PASSWORD_PROP, accumuloPassword);
+    return this;
+  }
+
+  public AccismusProperties setOraclePort(int oraclePort) {
+    setProperty(ORACLE_PORT_PROP, Integer.toString(oraclePort));
     return this;
   }
 

@@ -16,8 +16,7 @@
  */
 package accismus.impl;
 
-import java.net.InetSocketAddress;
-
+import accismus.impl.thrift.OracleService;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -30,7 +29,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
-import accismus.impl.thrift.OracleService;
+import java.net.InetSocketAddress;
 
 /**
  * 
@@ -93,30 +92,30 @@ public class OracleServer implements OracleService.Iface {
     
     // TODO pick port and/or make configurable
     InetSocketAddress addr = new InetSocketAddress(9913);
-    
+
     TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
-    
+
     THsHaServer.Args serverArgs = new THsHaServer.Args(socket);
     TProcessor processor = new OracleService.Processor<OracleService.Iface>(this);
     serverArgs.processor(processor);
     serverArgs.inputProtocolFactory(new TCompactProtocol.Factory());
     serverArgs.outputProtocolFactory(new TCompactProtocol.Factory());
     server = new THsHaServer(serverArgs);
-    
+
     Runnable st = new Runnable() {
-      
+
       @Override
       public void run() {
         server.serve();
       }
     };
-    
+
     serverThread = new Thread(st);
     serverThread.setDaemon(true);
     serverThread.start();
-    
+
     return addr;
-    
+
   }
   
   public synchronized void start() throws Exception {

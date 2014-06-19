@@ -16,12 +16,7 @@
  */
 package accismus.impl;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import accismus.api.Column;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -34,14 +29,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import accismus.api.Column;
-import accismus.impl.ByteUtil;
-import accismus.impl.Configuration;
-import accismus.impl.Constants;
-import accismus.impl.Operations;
-import accismus.impl.OracleServer;
-import accismus.impl.RandomTabletChooser;
-import accismus.impl.Worker;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 
@@ -101,7 +93,7 @@ public class Base {
     Operations.updateWorkerConfig(conn, zkn, new Properties());
     Operations.updateObservers(conn, zkn, getObservers());
 
-    config = new Configuration(zk, zkn, conn);
+    config = new Configuration(zk, zkn, conn, 9913);
     
     oserver = new OracleServer(config);
     oserver.start();

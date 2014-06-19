@@ -1,7 +1,11 @@
 package accismus.impl;
 
-import java.util.HashSet;
-
+import accismus.api.Column;
+import accismus.api.ColumnIterator;
+import accismus.api.RowIterator;
+import accismus.api.ScannerConfiguration;
+import accismus.api.exceptions.AlreadyAcknowledgedException;
+import accismus.api.exceptions.CommitException;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
@@ -9,14 +13,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
 
-import accismus.api.Column;
-import accismus.api.ColumnIterator;
-import accismus.api.RowIterator;
-import accismus.api.ScannerConfiguration;
-import accismus.api.exceptions.AlreadyAcknowledgedException;
-import accismus.api.exceptions.CommitException;
-import accismus.impl.Configuration;
-import accismus.impl.TransactionImpl;
+import java.util.HashSet;
 
 public class AccismusTestIT extends Base {
   
@@ -270,7 +267,7 @@ public class AccismusTestIT extends Base {
     
     tx.commit();
     
-    Configuration config2 = new Configuration(zk, zkn, conn);
+    Configuration config2 = new Configuration(zk, zkn, conn, 9913);
     config2.setAuthorizations(new Authorizations("B"));
     
     TransactionImpl tx2 = new TransactionImpl(config2);
@@ -278,7 +275,7 @@ public class AccismusTestIT extends Base {
     Assert.assertEquals("20", tx2.get("joe", balanceCol).toString());
     Assert.assertEquals("60", tx2.get("jill", balanceCol).toString());
     
-    Configuration config3 = new Configuration(zk, zkn, conn);
+    Configuration config3 = new Configuration(zk, zkn, conn, 9913);
     config3.setAuthorizations(new Authorizations("C"));
     
     TransactionImpl tx3 = new TransactionImpl(config3);
