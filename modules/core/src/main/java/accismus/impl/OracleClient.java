@@ -17,17 +17,16 @@
 package accismus.impl;
 
 import accismus.impl.thrift.OracleService;
-import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.CuratorFrameworkFactory;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCache;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheEvent;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheListener;
-import com.netflix.curator.framework.recipes.cache.PathChildrenCacheMode;
-import com.netflix.curator.framework.recipes.leader.LeaderSelector;
-import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
-import com.netflix.curator.framework.recipes.leader.Participant;
-import com.netflix.curator.framework.state.ConnectionState;
-import com.netflix.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheMode;
+import org.apache.curator.framework.recipes.leader.LeaderSelector;
+import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
+import org.apache.curator.framework.recipes.leader.Participant;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -45,58 +44,62 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 
+ *
  */
 public class OracleClient {
-  
+
   private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicLong timestamp = new AtomicLong();
   }
 
-  private class TimestampRetriever implements Runnable, LeaderSelectorListener {
+  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable {
 
     private LeaderSelector leaderSelector;
     private CuratorFramework curatorFramework;
+    private OracleService.Client client;
 
     TimestampRetriever() throws Exception {
-
     }
-
 
     public void run() {
       ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
-      
+
       try {
 
-        curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 300000));
+        curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
         curatorFramework.start();
 
         leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
 
-        OracleService.Client client = connect();
+        client = connect();
 
-        PathChildrenCache cache = new PathChildrenCache(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, PathChildrenCacheMode.CACHE_PATHS_ONLY);
+        PathChildrenCache cache = new PathChildrenCache(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER,
+            PathChildrenCacheMode.CACHE_PATHS_ONLY);
         cache.getListenable().addListener(new PathChildrenCacheListener() {
           Participant currentLeader = null;
 
           @Override
           public void childEvent(CuratorFramework curatorClient, PathChildrenCacheEvent event) throws Exception {
-            if(event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
+
+            if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
               Participant leader = leaderSelector.getLeader();
-              if(currentLeader == null || (currentLeader != null && !currentLeader.equals(leader)))
-                connect();
+              if (currentLeader == null || (currentLeader != null && !currentLeader.equals(leader))) {
+                if(curatorClient != null && client != null && currentLeader != null)
+                  close(client);
+                client = connect();
+              }
             }
           }
         });
 
-          cache.start();
+        cache.start();
 
-          while (true) {
+        while (true) {
           request.clear();
           request.add(queue.take());
           queue.drainTo(request);
-          
+
           long start;
 
           while (true) {
@@ -104,16 +107,12 @@ public class OracleClient {
               start = client.getTimestamps(config.getAccismusInstanceID(), request.size());
               break;
             } catch (TTransportException tte) {
-              // TODO is this correct way to close?
-              client.getInputProtocol().getTransport().close();
-              client.getOutputProtocol().getTransport().close();
-              
+              close(client);
               // TODO maybe sleep a bit?
               client = connect();
             }
-            
           }
-          
+
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
             tr.timestamp.set(start + i);
@@ -130,52 +129,53 @@ public class OracleClient {
       curatorFramework.close();
     }
 
-
     private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
       // TODO use shared zookeeper or curator
 
       Participant participant = null;
       try {
-          Thread.sleep(100);
-          participant = leaderSelector.getLeader();
+        Thread.sleep(100);
+        participant = leaderSelector.getLeader();
       } catch (Exception e) {
-          throw new RuntimeException("There was an error finding a leader in the list of Oracle servers.");
+        throw new RuntimeException("There was an error finding a leader in the list of Oracle servers.");
       }
 
-      System.out.println("ID: "+ participant.getId());
       String host = participant.getId().split(":")[0];
       int port = Integer.parseInt(participant.getId().split(":")[1]);
 
       TTransport transport = new TFastFramedTransport(new TSocket(host, port));
       transport.open();
       TProtocol protocol = new TCompactProtocol(transport);
-      OracleService.Client client = new OracleService.Client(protocol);
+
+      OracleService.Client client =  new OracleService.Client(protocol);
       return client;
     }
 
-      @Override
-      public void takeLeadership(CuratorFramework curatorFramework) throws Exception {}
+    private void close(OracleService.Client client) {
+      // TODO is this correct way to close?
+      client.getInputProtocol().getTransport().close();
+      client.getOutputProtocol().getTransport().close();
+    }
 
-      @Override
-      public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {}
+    @Override
+    public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
+    }
   }
 
   private static Map<String,OracleClient> clients = new HashMap<String,OracleClient>();
-
-
 
   private Configuration config;
   private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<TimeRequest>(1000);
 
   private OracleClient(Configuration config) throws Exception {
     this.config = config;
-    
+
     // TODO make thread exit if idle for a bit, and start one when request arrives
     Thread thread = new Thread(new TimestampRetriever());
     thread.setDaemon(true);
     thread.start();
   }
-  
+
   public long getTimestamp() throws Exception {
     TimeRequest tr = new TimeRequest();
     queue.add(tr);
@@ -186,9 +186,9 @@ public class OracleClient {
   public static synchronized OracleClient getInstance(Configuration config) {
     // this key differintiates between different instances of Accumulo and Accismus
     String key = config.getAccismusInstanceID();
-    
+
     OracleClient client = clients.get(key);
-    
+
     if (client == null) {
       try {
         client = new OracleClient(config);
@@ -197,7 +197,7 @@ public class OracleClient {
       }
       clients.put(key, client);
     }
-    
+
     return client;
   }
 

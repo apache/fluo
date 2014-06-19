@@ -19,11 +19,11 @@ package accismus.impl;
 import java.net.InetSocketAddress;
 
 import accismus.impl.thrift.OracleService;
-import com.netflix.curator.framework.CuratorFrameworkFactory;
-import com.netflix.curator.framework.recipes.leader.LeaderSelector;
-import com.netflix.curator.framework.recipes.leader.LeaderSelectorListener;
-import com.netflix.curator.framework.state.ConnectionState;
-import com.netflix.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderSelector;
+import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -41,7 +41,7 @@ import accismus.impl.thrift.OracleService;
 /**
  * 
  */
-public class OracleServer implements OracleService.Iface, LeaderSelectorListener {
+public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface {
   private long currentTs = 0;
   private long maxTs = 0;
   private Configuration config;
@@ -137,7 +137,7 @@ public class OracleServer implements OracleService.Iface, LeaderSelectorListener
 
     InetSocketAddress addr = startServer();
 
-    curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 30000));
+    curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.start();
 
     byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
@@ -167,10 +167,5 @@ public class OracleServer implements OracleService.Iface, LeaderSelectorListener
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
     while(started) Thread.sleep(50);
-  }
-
-  @Override
-  public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
-
   }
 }
