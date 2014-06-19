@@ -46,7 +46,6 @@ public class Configuration {
   private String accumuloInstanceID;
   private String accismusInstanceID;
   private int oraclePort;
-  private Properties props;
   private Properties workerProps;
   
   public Configuration(Configuration config) throws Exception {
@@ -111,7 +110,7 @@ public class Configuration {
     props.put(AccismusProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
     props.put(AccismusProperties.ACCUMULO_USER_PROP, "accismus");
     props.put(AccismusProperties.ACCUMULO_PASSWORD_PROP, "secret");
-    props.put(AccismusProperties.ORACLE_PORT_PROP, "9913");
+    props.put(AccismusProperties.ORACLE_PORT_PROP, AccismusProperties.ORACLE_DEFAULT_PORT);
     
     return props;
   }

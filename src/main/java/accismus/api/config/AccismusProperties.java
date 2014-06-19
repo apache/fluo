@@ -39,6 +39,8 @@ public class AccismusProperties extends Properties {
   public static final String ZOOKEEPER_ROOT_PROP = "accismus.zookeeper.root";
   public static final String ZOOKEEPER_TIMEOUT_PROP = "accismus.zookeeper.timeout";
   public static final String ZOOKEEPER_CONNECT_PROP = "accismus.zookeeper.connect";
+
+  public static final int ORACLE_DEFAULT_PORT = 9913;
   
   public AccismusProperties() {
     super(accismus.impl.Configuration.getDefaultProperties());
