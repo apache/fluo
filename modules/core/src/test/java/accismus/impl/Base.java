@@ -53,7 +53,7 @@ public class Base {
   
   protected static AtomicInteger next = new AtomicInteger();
   
-  private static Instance instance;
+  protected static Instance instance;
   
   protected Configuration config;
   protected Connector conn;
@@ -120,8 +120,13 @@ public class Base {
 
     config = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
     
-    oserver = new OracleServer(config);
+    oserver = createOracle(9913);
     oserver.start();
+  }
+
+  public OracleServer createOracle(int port) throws Exception {
+    config = new Configuration(zk, zkn, conn, port);
+    return new OracleServer(config);
   }
   
   @After

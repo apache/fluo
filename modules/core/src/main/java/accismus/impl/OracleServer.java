@@ -137,11 +137,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     InetSocketAddress addr = startServer();
 
+    log.info("Starting OracleServer...");
+
     curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.start();
-
-    byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
-    currentTs = maxTs = Long.parseLong(new String(d));
 
     leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
     leaderSelector.setId(addr.getHostName() + ":" + addr.getPort());
@@ -156,8 +155,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     if (started) {
       server.stop();
       serverThread.join();
-      // TODO use zoolock or curator
-
       leaderSelector.close();
       curatorFramework.close();
       started = false;
@@ -166,6 +163,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-    while(started) Thread.sleep(50);
+
+    byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
+    currentTs = maxTs = Long.parseLong(new String(d));
+
+    while(started) Thread.sleep(100);
   }
 }

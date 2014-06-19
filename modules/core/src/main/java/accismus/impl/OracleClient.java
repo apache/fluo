@@ -22,11 +22,11 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheMode;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -34,6 +34,8 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +50,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OracleClient {
 
+  public static final Logger log = LoggerFactory.getLogger(OracleClient.class);
+
   private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicLong timestamp = new AtomicLong();
@@ -57,37 +61,43 @@ public class OracleClient {
 
     private LeaderSelector leaderSelector;
     private CuratorFramework curatorFramework;
-    private OracleService.Client client;
+    private volatile OracleService.Client client;
+    private volatile boolean leaderFound = false;
 
     TimestampRetriever() throws Exception {
     }
 
     public void run() {
-      ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
 
       try {
+
+        log.info("Starting OracleClient...");
 
         curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
         curatorFramework.start();
 
         leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
 
-        client = connect();
-
-        PathChildrenCache cache = new PathChildrenCache(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER,
-            PathChildrenCacheMode.CACHE_PATHS_ONLY);
+        PathChildrenCache cache = new PathChildrenCache(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, false);
         cache.getListenable().addListener(new PathChildrenCacheListener() {
           Participant currentLeader = null;
 
           @Override
           public void childEvent(CuratorFramework curatorClient, PathChildrenCacheEvent event) throws Exception {
-
             if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
               Participant leader = leaderSelector.getLeader();
-              if (currentLeader == null || (currentLeader != null && !currentLeader.equals(leader))) {
-                if(curatorClient != null && client != null && currentLeader != null)
+              if (currentLeader == null || (currentLeader != null && !currentLeader.equals(leader) && leader.isLeader())) {
+                System.out.println(currentLeader + " " + leader);
+                if (curatorClient != null && client != null && currentLeader != null)
                   close(client);
                 client = connect();
+                if(!leaderFound) {
+                  doWork();
+                  leaderFound = true;
+                }
+                log.info("Established oracle connection to " + leader);
+              } else if (!leader.isLeader() || leader == null) {
+                log.warn("No oracle is leading the timestamp queue. Waiting for one to step up...");
               }
             }
           }
@@ -95,7 +105,18 @@ public class OracleClient {
 
         cache.start();
 
-        while (true) {
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    private void doWork() {
+
+      ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
+
+      while (true) {
+
+        try {
           request.clear();
           request.add(queue.take());
           queue.drainTo(request);
@@ -108,8 +129,10 @@ public class OracleClient {
               break;
             } catch (TTransportException tte) {
               close(client);
-              // TODO maybe sleep a bit?
+              Thread.sleep(20);
               client = connect();
+            } catch (TException e) {
+              e.printStackTrace();
             }
           }
 
@@ -118,37 +141,43 @@ public class OracleClient {
             tr.timestamp.set(start + i);
             tr.cdl.countDown();
           }
-
+        } catch(Exception e) {
+          e.printStackTrace();
         }
-
-      } catch (Exception e) {
-        // TODO
-        e.printStackTrace();
       }
-
-      curatorFramework.close();
     }
 
     private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
-      // TODO use shared zookeeper or curator
 
       Participant participant = null;
+
+      log.info("Loading leader...");
       try {
-        Thread.sleep(100);
         participant = leaderSelector.getLeader();
       } catch (Exception e) {
-        throw new RuntimeException("There was an error finding a leader in the list of Oracle servers.");
+        throw new RuntimeException("There was an error finding a leader in the list of Oracle servers. Waiting for one to step up...");
       }
 
-      String host = participant.getId().split(":")[0];
-      int port = Integer.parseInt(participant.getId().split(":")[1]);
+      if(participant.isLeader()) {
 
-      TTransport transport = new TFastFramedTransport(new TSocket(host, port));
-      transport.open();
-      TProtocol protocol = new TCompactProtocol(transport);
+        log.info("Leading oracle is " + participant);
+        String[] hostAndPort = participant.getId().split(":");
 
-      OracleService.Client client =  new OracleService.Client(protocol);
-      return client;
+        String host = hostAndPort[0];
+        int port = Integer.parseInt(hostAndPort[1]);
+
+        TTransport transport = new TFastFramedTransport(new TSocket(host, port));
+        transport.open();
+        TProtocol protocol = new TCompactProtocol(transport);
+
+        OracleService.Client client =  new OracleService.Client(protocol);
+
+        log.info("Returning client");
+        return client;
+      } else {
+        throw new RuntimeException("Unfortunately, there are participants but no leader.");
+      }
+
     }
 
     private void close(OracleService.Client client) {
@@ -157,7 +186,7 @@ public class OracleClient {
       client.getOutputProtocol().getTransport().close();
     }
 
-    @Override
+   @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
     }
   }
@@ -200,5 +229,7 @@ public class OracleClient {
 
     return client;
   }
+
+
 
 }

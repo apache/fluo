@@ -16,6 +16,12 @@
  */
 package accismus.impl;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,12 +29,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import accismus.impl.Configuration;
-import accismus.impl.OracleClient;
 
 /**
  * 
@@ -117,5 +117,32 @@ public class OracleIT extends Base {
     Assert.assertTrue(ts1.last() < ts2.first());
     
     tpool.shutdown();
+  }
+
+
+  @Test
+  public void failoverTest() throws Exception {
+
+    System.out.println("TESTING FAILOVER");
+    Thread.sleep(1000); // make sure first server becomes the leader
+    OracleServer oserver2 = createOracle(9914);
+    OracleServer oserver3 = createOracle(9915);
+
+    oserver2.start();
+    oserver3.start();
+
+    CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(instance.getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
+    curatorFramework.start();
+
+    OracleClient client = OracleClient.getInstance(config);
+    System.out.println(client.getTimestamp());
+    System.out.println(client.getTimestamp());
+
+    oserver.stop();
+
+    System.out.println(client.getTimestamp());
+
+    oserver2.stop();
+    oserver3.stop();
   }
 }
