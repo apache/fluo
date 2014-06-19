@@ -36,6 +36,7 @@ import org.junit.BeforeClass;
 
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.api.config.AccismusProperties;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.TransactionConfiguration;
 import accismus.format.AccismusFormatter;
@@ -117,7 +118,7 @@ public class Base {
     Operations.updateWorkerConfig(conn, zkn, wprops);
     Operations.updateObservers(conn, zkn, getObservers(), getWeakObservers());
 
-    config = new Configuration(zk, zkn, conn);
+    config = new Configuration(zk, zkn, conn, AccismusProperties.ORACLE_DEFAULT_PORT);
     
     oserver = new OracleServer(config);
     oserver.start();

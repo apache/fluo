@@ -62,6 +62,7 @@ public class Configuration {
   private Connector conn;
   private String accumuloInstanceID;
   private String accismusInstanceID;
+  private int oraclePort;
   private Properties workerProps;
   private SharedResources resources;
   private long rollbackTime;
@@ -79,10 +80,12 @@ public class Configuration {
     this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
   }
 
-  public Configuration(ZooKeeper zk, String zoodir, Connector conn) throws Exception {
+  //TODO: This constructor will get out of control quickly
+  public Configuration(ZooKeeper zk, String zoodir, Connector conn, int oraclePort) throws Exception {
     this.zoodir = zoodir;
     readConfig(zk);
-    
+
+    this.oraclePort = oraclePort;
     this.conn = conn;
 
     if (!conn.getInstance().getInstanceName().equals(accumuloInstance)) {
@@ -103,10 +106,15 @@ public class Configuration {
    */
   public Configuration(Properties props) throws Exception {
     // TODO need to close zookeeper
-    this(new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP)), null), props
-        .getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
-        props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(AccismusProperties.ACCUMULO_USER_PROP),
-        new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP))));
+    this(
+      new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP)), null),
+      props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP),
+      new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
+      props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
+          props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP))
+      ),
+      Integer.parseInt(props.getProperty(AccismusProperties.ORACLE_PORT_PROP))
+    );
   }
   
   private static Properties load(File propFile) throws FileNotFoundException, IOException {
@@ -130,6 +138,7 @@ public class Configuration {
     props.put(AccismusProperties.WORKER_INSTANCES_PROP, "1");
     props.put(AccismusProperties.WORKER_MAX_MEMORY_PROP, "256");
     props.put(AccismusProperties.ORACLE_MAX_MEMORY_PROP, "256");
+    props.put(AccismusProperties.ORACLE_PORT_PROP, AccismusProperties.ORACLE_DEFAULT_PORT);
     
     return props;
   }
@@ -260,5 +269,9 @@ public class Configuration {
 
   public long getRollbackTime() {
     return rollbackTime;
+  }
+  
+  public int getOraclePort() {
+    return oraclePort;
   }
 }

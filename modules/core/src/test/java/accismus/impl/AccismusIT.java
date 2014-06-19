@@ -13,6 +13,7 @@ import accismus.api.Column;
 import accismus.api.ColumnIterator;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
+import accismus.api.config.AccismusProperties;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
 import accismus.api.types.StringEncoder;
@@ -324,7 +325,7 @@ public class AccismusIT extends Base {
     
     tx.commit();
     
-    Configuration config2 = new Configuration(zk, zkn, conn);
+    Configuration config2 = new Configuration(zk, zkn, conn, AccismusProperties.ORACLE_DEFAULT_PORT);
     config2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(config2);
@@ -332,7 +333,7 @@ public class AccismusIT extends Base {
     Assert.assertEquals("20", tx2.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
     
-    Configuration config3 = new Configuration(zk, zkn, conn);
+    Configuration config3 = new Configuration(zk, zkn, conn, AccismusProperties.ORACLE_DEFAULT_PORT);
     config3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(config3);

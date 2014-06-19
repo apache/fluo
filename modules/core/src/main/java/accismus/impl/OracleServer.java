@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import accismus.impl.thrift.OracleService;
 
+
 /**
  * 
  */
@@ -93,31 +94,31 @@ public class OracleServer implements OracleService.Iface {
   private InetSocketAddress startServer() throws TTransportException {
     
     // TODO pick port and/or make configurable
-    InetSocketAddress addr = new InetSocketAddress(9913);
-    
+    InetSocketAddress addr = new InetSocketAddress(config.getOraclePort());
+
     TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
-    
+
     THsHaServer.Args serverArgs = new THsHaServer.Args(socket);
     TProcessor processor = new OracleService.Processor<OracleService.Iface>(this);
     serverArgs.processor(processor);
     serverArgs.inputProtocolFactory(new TCompactProtocol.Factory());
     serverArgs.outputProtocolFactory(new TCompactProtocol.Factory());
     server = new THsHaServer(serverArgs);
-    
+
     Runnable st = new Runnable() {
-      
+
       @Override
       public void run() {
         server.serve();
       }
     };
-    
+
     serverThread = new Thread(st);
     serverThread.setDaemon(true);
     serverThread.start();
-    
+
     return addr;
-    
+
   }
   
   public synchronized void start() throws Exception {
