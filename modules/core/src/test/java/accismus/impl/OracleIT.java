@@ -16,10 +16,8 @@
  */
 package accismus.impl;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,8 +27,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.junit.Test;
 
 /**
  * 
@@ -50,9 +50,9 @@ public class OracleIT extends Base {
     long ts3 = client.getTimestamp();
     long ts4 = client.getTimestamp();
     
-    assertTrue(ts1 < ts2);
-    assertTrue(ts2 < ts3);
-    assertTrue(ts3 < ts4);
+    assertTrue(ts1 + " " + ts2, ts1 < ts2);
+    assertTrue(ts2 + " " + ts3, ts2 < ts3);
+    assertTrue(ts3 + " " + ts4, ts3 < ts4);
   }
   
   private static class TimestampFetcher implements Runnable {
@@ -148,10 +148,13 @@ public class OracleIT extends Base {
     oserver.stop();
 
     Thread.sleep(1000);
-
     assertEquals(1000, client.getTimestamp());
 
     oserver2.stop();
+
+    Thread.sleep(1000);
+    assertEquals(2000, client.getTimestamp());
+
     oserver3.stop();
   }
 }

@@ -16,7 +16,8 @@
  */
 package accismus.impl;
 
-import accismus.impl.thrift.OracleService;
+import java.net.InetSocketAddress;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -32,7 +33,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import accismus.impl.thrift.OracleService;
 
 
 /**
@@ -49,7 +50,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private Configuration config;
   private Thread serverThread;
   private THsHaServer server;
-  private boolean started = false;
+  private volatile boolean started = false;
 
   private LeaderSelector leaderSelector;
   private CuratorFramework curatorFramework;
@@ -78,6 +79,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     maxTs = newMax;
 
+    if (!leaderSelector.hasLeadership())
+      throw new IllegalStateException();
+
   }
   
   @Override
@@ -90,6 +94,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       throw new IllegalArgumentException();
     }
 
+    if (!leaderSelector.hasLeadership())
+      throw new IllegalStateException();
+
     try {
       while (num + currentTs >= maxTs) {
         allocateTimestamp();
@@ -97,6 +104,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       
       long tmp = currentTs;
       currentTs += num;
+
       return tmp;
     } catch (Exception e) {
       throw new TException(e);
@@ -169,9 +177,15 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
 
-    byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
-    currentTs = maxTs = Long.parseLong(new String(d));
+    // TODO when we first get leadership should we delay processing request for a bit? its possible the old oracle process is still out there
+    // and could be processing request for a short period..
 
-    while(started) Thread.sleep(100);
+    synchronized (this) {
+      byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
+      currentTs = maxTs = Long.parseLong(new String(d));
+    }
+
+    while (started)
+      Thread.sleep(100); // if leadership is lost, then curator will interrup the thread that called this method
   }
 }

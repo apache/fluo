@@ -16,7 +16,14 @@
  */
 package accismus.impl;
 
-import accismus.impl.thrift.OracleService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -34,13 +41,7 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
+import accismus.impl.thrift.OracleService;
 
 /**
  * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically
@@ -147,7 +148,7 @@ public class OracleClient {
 
 
 	    try {
-		    System.out.println("LEADERS: " + leaderSelector.getParticipants());
+        log.debug("LEADERS: " + leaderSelector.getParticipants());
 	    } catch (Exception e) {
 		    e.printStackTrace();
 	    }
