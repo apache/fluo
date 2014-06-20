@@ -19,7 +19,6 @@ package accismus.impl;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -29,6 +28,9 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * 
@@ -48,9 +50,9 @@ public class OracleIT extends Base {
     long ts3 = client.getTimestamp();
     long ts4 = client.getTimestamp();
     
-    Assert.assertTrue(ts1 < ts2);
-    Assert.assertTrue(ts2 < ts3);
-    Assert.assertTrue(ts3 < ts4);
+    assertTrue(ts1 < ts2);
+    assertTrue(ts2 < ts3);
+    assertTrue(ts3 < ts4);
   }
   
   private static class TimestampFetcher implements Runnable {
@@ -100,7 +102,7 @@ public class OracleIT extends Base {
 
     TreeSet<Long> ts1 = new TreeSet<Long>(output);
 
-    Assert.assertEquals(numThreads * numTimes, ts1.size());
+    assertEquals(numThreads * numTimes, ts1.size());
 
     cdl = new CountDownLatch(numThreads);
     output.clear();
@@ -113,8 +115,8 @@ public class OracleIT extends Base {
 
     TreeSet<Long> ts2 = new TreeSet<Long>(output);
     
-    Assert.assertEquals(numThreads * numTimes, ts2.size());
-    Assert.assertTrue(ts1.last() < ts2.first());
+    assertEquals(numThreads * numTimes, ts2.size());
+    assertTrue(ts1.last() < ts2.first());
     
     tpool.shutdown();
   }
@@ -123,24 +125,37 @@ public class OracleIT extends Base {
   @Test
   public void failoverTest() throws Exception {
 
-    System.out.println("TESTING FAILOVER");
     Thread.sleep(1000); // make sure first server becomes the leader
     OracleServer oserver2 = createOracle(9914);
     OracleServer oserver3 = createOracle(9915);
 
     oserver2.start();
+    Thread.sleep(1000);
     oserver3.start();
 
     CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(instance.getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.start();
 
     OracleClient client = OracleClient.getInstance(config);
-    System.out.println(client.getTimestamp());
-    System.out.println(client.getTimestamp());
+
+
+    long timestamp;
+    for(long i = 0; i <= 5; i++) {
+      timestamp = client.getTimestamp();
+      assertEquals(i, timestamp);
+    }
+
+//    System.out.println(client.getOracle());
+    assertTrue(client.getOracle().endsWith("9913"));
 
     oserver.stop();
 
-    System.out.println(client.getTimestamp());
+    Thread.sleep(1000);
+
+    assertEquals(1000, client.getTimestamp());
+
+//    System.out.println(client.getOracle());
+    assertTrue(client.getOracle().endsWith("9914"));
 
     oserver2.stop();
     oserver3.stop();

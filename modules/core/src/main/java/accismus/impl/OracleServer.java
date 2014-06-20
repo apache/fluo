@@ -134,8 +134,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     InetSocketAddress addr = startServer();
 
-    log.info("Starting OracleServer...");
-
     curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.start();
 
