@@ -145,7 +145,6 @@ public class OracleIT extends Base {
       assertEquals(i, timestamp);
     }
 
-//    System.out.println(client.getOracle());
     assertTrue(client.getOracle().endsWith("9913"));
 
     oserver.stop();
@@ -154,7 +153,6 @@ public class OracleIT extends Base {
 
     assertEquals(1000, client.getTimestamp());
 
-//    System.out.println(client.getOracle());
     assertTrue(client.getOracle().endsWith("9914"));
 
     oserver2.stop();

@@ -43,7 +43,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *
+ * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically
+ * fail over to different leaders.
  */
 public class OracleClient {
 
@@ -176,6 +177,9 @@ public class OracleClient {
       client.getOutputProtocol().getTransport().close();
     }
 
+	  /**
+	   * NOTE: This isn't competing for leadership, so it doesn't need to be started.
+	   */
     @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
     }
@@ -202,10 +206,19 @@ public class OracleClient {
     return tr.timestamp.get();
   }
 
+	/**
+	 * Return the oracle that the current client is connected to.
+	 * @return
+	 */
   public synchronized String getOracle() {
     return currentLeader != null ? currentLeader.getId() : null;
   }
 
+	/**
+	 * Create an instance of an OracleClient and cache it by the Accismus instance id
+	 * @param config
+	 * @return
+	 */
   public static synchronized OracleClient getInstance(Configuration config) {
     // this key differintiates between different instances of Accumulo and Accismus
     String key = config.getAccismusInstanceID();

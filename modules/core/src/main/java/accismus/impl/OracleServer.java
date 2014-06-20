@@ -36,11 +36,16 @@ import java.net.InetSocketAddress;
 
 
 /**
- * 
+ * Oracle server is the responsible for providing incrementing logical timestamps to clients. It should never
+ * give the same timestamp to two clients and it should always provide an incrementing timestamp.
+ *
+ * If multiple oracle servers are run, they will choose a leader and clients will automatically connect
+ * to that leader. If the leader goes down, the client will automatically fail over to the next leader.
+ * In the case where an oracle fails over, the next oracle will begin a new block of timestamps.
  */
 public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface {
-  private long currentTs = 0;
-  private long maxTs = 0;
+  private volatile long currentTs = 0;
+  private volatile long maxTs = 0;
   private Configuration config;
   private Thread serverThread;
   private THsHaServer server;
@@ -100,7 +105,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   
   private InetSocketAddress startServer() throws TTransportException {
     
-    // TODO pick port and/or make configurable
     InetSocketAddress addr = new InetSocketAddress(config.getOraclePort());
 
     TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
@@ -156,6 +160,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     }
   }
 
+	/**
+	 * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the last timestamp
+	 * set in zookeeper.
+	 * @param curatorFramework
+	 * @throws Exception
+	 */
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
 
