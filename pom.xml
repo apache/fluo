@@ -131,7 +131,7 @@
 				<groupId>org.apache.twill</groupId>
 				<artifactId>twill-yarn</artifactId>
 				<version>${twill.version}</version>
-			</dependency>
+		  </dependency>
 
 			<!-- Test Dependencies -->
 			<dependency>

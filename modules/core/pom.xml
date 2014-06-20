@@ -98,11 +98,11 @@
 			<artifactId>accumulo-minicluster</artifactId>
 			<scope>test</scope>
 		</dependency>
-    <dependency>
-      <groupId>org.apache.curator</groupId>
-      <artifactId>curator-recipes</artifactId>
-    </dependency>
-    <dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-recipes</artifactId>
+			</dependency>
+		<dependency>
 			<groupId>org.apache.accumulo</groupId>
 			<artifactId>accumulo-test</artifactId>
 			<scope>test</scope>
