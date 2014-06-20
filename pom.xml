@@ -14,12 +14,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<accumulo.version>1.6.0</accumulo.version>
-    <curator.version>2.5.0</curator.version>
+                <curator.version>2.5.0</curator.version>
 		<hadoop.version>2.3.0</hadoop.version>
 		<twill.version>0.2.0-incubating</twill.version>
 		<logback.version>1.0.13</logback.version>
 		<slf4j.version>1.7.7</slf4j.version>
-    <zookeeper.version>3.4.6</zookeeper.version>
+                <zookeeper.version>3.4.6</zookeeper.version>
 	</properties>
 
 	<modules>
@@ -107,11 +107,11 @@
 				<artifactId>hadoop-client</artifactId>
 				<version>${hadoop.version}</version>
 			</dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-recipes</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
+                        <dependency>
+                                <groupId>org.apache.curator</groupId>
+                                <artifactId>curator-recipes</artifactId>
+                                <version>${curator.version}</version>
+                        </dependency>
 			<dependency>
 				<groupId>org.apache.accumulo</groupId>
 				<artifactId>accumulo-core</artifactId>
