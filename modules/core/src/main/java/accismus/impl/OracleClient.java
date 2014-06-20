@@ -131,7 +131,7 @@ public class OracleClient {
 
       getLeader();
 
-      long ebackoff = 100; // exponential backoff so we aren't hammering zookeeper.
+	    long ebackoff = 100; // exponential backoff so we aren't hammering zookeeper.
       while (currentLeader == null || !currentLeader.isLeader()) {
         getLeader();
         ebackoff *= ebackoff;
@@ -144,6 +144,14 @@ public class OracleClient {
           throw new RuntimeException(e);
         }
       }
+
+
+	    try {
+		    System.out.println("LEADERS: " + leaderSelector.getParticipants());
+	    } catch (Exception e) {
+		    e.printStackTrace();
+	    }
+
     }
 
     private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
@@ -215,7 +223,7 @@ public class OracleClient {
   }
 
 	/**
-	 * Create an instance of an OracleClient and cache it by the Accismus instance id
+	 * Create an instance of an OracleClient and cache it by the Accismus instance id`
 	 * @param config
 	 * @return
 	 */

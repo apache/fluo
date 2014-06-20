@@ -130,14 +130,14 @@ public class OracleIT extends Base {
     OracleServer oserver3 = createOracle(9915);
 
     oserver2.start();
-    Thread.sleep(1000);
     oserver3.start();
+
+	  Thread.sleep(3000);
 
     CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(instance.getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.start();
 
     OracleClient client = OracleClient.getInstance(config);
-
 
     long timestamp;
     for(long i = 0; i <= 5; i++) {
@@ -145,15 +145,11 @@ public class OracleIT extends Base {
       assertEquals(i, timestamp);
     }
 
-    assertTrue(client.getOracle().endsWith("9913"));
-
     oserver.stop();
 
     Thread.sleep(1000);
 
     assertEquals(1000, client.getTimestamp());
-
-    assertTrue(client.getOracle().endsWith("9914"));
 
     oserver2.stop();
     oserver3.stop();
