@@ -28,9 +28,9 @@ import org.slf4j.LoggerFactory;
 import accismus.api.config.WorkerProperties;
 import accismus.cluster.util.Logging;
 import accismus.core.util.UtilWaitThread;
+import accismus.core.util.PropertyUtil;
 import accismus.impl.Configuration;
 import accismus.impl.WorkerTask;
-import accismus.tools.InitializeTool;
 
 import com.beust.jcommander.JCommander;
 
@@ -60,7 +60,7 @@ public class WorkerRunnable extends AbstractTwillRunnable {
 
       Logging.init("worker", options.getConfigDir(), options.getLogOutput());
 
-      Configuration config = new Configuration(InitializeTool.loadProps(options.getAccismusConfig()));
+      Configuration config = new Configuration(PropertyUtil.loadProps(options.getAccismusConfig()));
 
       for (Entry<Object,Object> entry : config.getWorkerProperties().entrySet()) {
         log.info("config " + entry.getKey() + " = " + entry.getValue());
