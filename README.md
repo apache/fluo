@@ -1,6 +1,8 @@
 Accismus
 ========
 
+[![Build Status](https://travis-ci.org/keith-turner/Accismus.svg?branch=master)](https://travis-ci.org/keith-turner/Accismus)
+
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
 Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
 [ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
