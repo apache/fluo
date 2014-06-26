@@ -42,7 +42,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
 import accismus.api.Column;
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.ConnectionProperties;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.OracleProperties;
 import accismus.api.config.TransactionConfiguration;
@@ -109,11 +109,11 @@ public class Configuration {
   public Configuration(Properties props) throws Exception {
     // TODO need to close zookeeper
     this(
-      new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP)), null),
-      props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP),
-      new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
-      props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
-          props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP))
+      new ZooKeeper(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP)), null),
+      props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP),
+      new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
+      props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
+          props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP))
       ),
       Integer.parseInt(props.getProperty(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT + ""))
     );
@@ -131,12 +131,12 @@ public class Configuration {
 
   public static Properties getDefaultProperties() {
     Properties props = new Properties();
-    props.put(AccismusProperties.ZOOKEEPER_CONNECT_PROP, "localhost");
-    props.put(AccismusProperties.ZOOKEEPER_ROOT_PROP, "/accismus");
-    props.put(AccismusProperties.ZOOKEEPER_TIMEOUT_PROP, "30000");
-    props.put(AccismusProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
-    props.put(AccismusProperties.ACCUMULO_USER_PROP, "accismus");
-    props.put(AccismusProperties.ACCUMULO_PASSWORD_PROP, "secret");
+    props.put(ConnectionProperties.ZOOKEEPER_CONNECT_PROP, "localhost");
+    props.put(ConnectionProperties.ZOOKEEPER_ROOT_PROP, "/accismus");
+    props.put(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP, "30000");
+    props.put(ConnectionProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
+    props.put(ConnectionProperties.ACCUMULO_USER_PROP, "accismus");
+    props.put(ConnectionProperties.ACCUMULO_PASSWORD_PROP, "secret");
     props.put(WorkerProperties.WORKER_INSTANCES_PROP, "1");
     props.put(WorkerProperties.WORKER_MAX_MEMORY_PROP, "256");
     props.put(OracleProperties.ORACLE_MAX_MEMORY_PROP, "256");

@@ -39,7 +39,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import accismus.api.ColumnIterator;
 import accismus.api.RowIterator;
 import accismus.api.ScannerConfiguration;
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.ConnectionProperties;
 import accismus.impl.Configuration;
 import accismus.impl.OracleClient;
 import accismus.impl.TransactionImpl;
@@ -133,7 +133,7 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
    * 
    * @param conf
    * @param props
-   *          use {@link AccismusProperties} to configure programmatically
+   *          use {@link ConnectionProperties} to configure programmatically
    */
   public static void configure(Job conf, Properties props) {
     try {
@@ -150,8 +150,8 @@ public class AccismusInputFormat extends InputFormat<ByteSequence,ColumnIterator
       
       conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
       
-      AccumuloInputFormat.setZooKeeperInstance(conf, props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP), props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP));
-      AccumuloInputFormat.setConnectorInfo(conf, props.getProperty(AccismusProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP)));
+      AccumuloInputFormat.setZooKeeperInstance(conf, props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP), props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP));
+      AccumuloInputFormat.setConnectorInfo(conf, props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
       AccumuloInputFormat.setInputTableName(conf, accisConf.getTable());
       AccumuloInputFormat.setScanAuthorizations(conf, accisConf.getAuthorizations());
       

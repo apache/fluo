@@ -33,7 +33,7 @@ import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooKeeper;
 
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.ConnectionProperties;
 import accismus.api.config.InitializationProperties;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.WorkerProperties;
@@ -59,18 +59,18 @@ public class Admin {
 
   public static void initialize(Properties props) throws AlreadyInitializedException {
     try {
-      Connector conn = new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
-          props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(AccismusProperties.ACCUMULO_USER_PROP),
-          new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP)));
+      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
+          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP),
+          new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
 
       if (Boolean.valueOf(props.getProperty(InitializationProperties.CLEAR_ZOOKEEPER_PROP, "false"))) {
-        ZooKeeper zk = new ZooKeeper(props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP), 30000, null);
-        ZooUtil.recursiveDelete(zk, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), NodeMissingPolicy.SKIP);
+        ZooKeeper zk = new ZooKeeper(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP), 30000, null);
+        ZooUtil.recursiveDelete(zk, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), NodeMissingPolicy.SKIP);
         zk.close();
       }
 
 
-      Operations.initialize(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), props.getProperty(InitializationProperties.TABLE_PROP));
+      Operations.initialize(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), props.getProperty(InitializationProperties.TABLE_PROP));
 
       updateWorkerConfig(props);
 
@@ -99,9 +99,9 @@ public class Admin {
    */
   public static void updateWorkerConfig(Properties props) {
     try {
-      Connector conn = new ZooKeeperInstance(props.getProperty(AccismusProperties.ACCUMULO_INSTANCE_PROP),
-          props.getProperty(AccismusProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(AccismusProperties.ACCUMULO_USER_PROP),
-          new PasswordToken(props.getProperty(AccismusProperties.ACCUMULO_PASSWORD_PROP)));
+      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
+          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP),
+          new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
 
       Properties workerConfig = new Properties();
 
@@ -120,8 +120,8 @@ public class Admin {
         }
       }
 
-      Operations.updateObservers(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), colObservers, weakObservers);
-      Operations.updateWorkerConfig(conn, props.getProperty(AccismusProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
+      Operations.updateObservers(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), colObservers, weakObservers);
+      Operations.updateWorkerConfig(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
