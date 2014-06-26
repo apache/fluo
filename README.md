@@ -44,7 +44,7 @@ Once the tarball is built, deploy it using the command below which can be modifi
 to a directory of your choice (rather than `/opt`).
 
 ```
-tar -C /opt -xvzf modules/distribution/target/accismus-0.0.1-SNAPSHOT-bin.tar.gz
+tar -C /opt -xvzf modules/distribution/target/accismus-1.0.0-alpha-1-SNAPSHOT-bin.tar.gz
 ```
 
 Configuring Accismus
@@ -57,7 +57,7 @@ jar, you can build an observer jar using the [phrasecount][7] example.
 First, copy the example configuration files and modify them for you environment.
 
 ```
-cd accismus-0.0.1-SNAPSHOT/conf
+cd accismus-1.0.0-alpha-1-SNAPSHOT/conf
 cp examples/* .
 vim accismus-env.sh
 vim initialization.properties
@@ -70,7 +70,7 @@ observer jar and find instructions for configuring `initialization.properties`.
 
 ```
 OBSERVER_JAR=<location of observer jar>
-cd accismus-0.0.1-SNAPSHOT/
+cd accismus-1.0.0-alpha-1-SNAPSHOT/
 cp $OBSERVER_JAR lib/observers
 vim conf/initialization.properties
 ```
