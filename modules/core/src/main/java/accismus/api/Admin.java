@@ -26,13 +26,13 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.zookeeper.ZooUtil;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooKeeper;
 
+import accismus.api.Observer.NotificationType;
+import accismus.api.Observer.ObservedColumn;
 import accismus.api.config.ConnectionProperties;
 import accismus.api.config.InitializationProperties;
 import accismus.api.config.ObserverConfiguration;
@@ -111,10 +111,8 @@ public class Admin {
       Set<Entry<Object,Object>> entries = props.entrySet();
       for (Entry<Object,Object> entry : entries) {
         String key = (String) entry.getKey();
-        if (key.startsWith(WorkerProperties.WEAK_OBSERVER_PREFIX_PROP)) {
-          addObserver(weakObservers, entry);
-        } else if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
-          addObserver(colObservers, entry);
+        if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
+          addObserver(colObservers, weakObservers, entry);
         } else if (key.startsWith("accismus.worker") || key.startsWith("accismus.tx")) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
@@ -129,20 +127,27 @@ public class Admin {
     }
   }
 
-  static void addObserver(Map<Column,ObserverConfiguration> observers, Entry<Object,Object> entry) {
+  static void addObserver(Map<Column,ObserverConfiguration> observers, Map<Column,ObserverConfiguration> weakObservers, Entry<Object,Object> entry)
+      throws Exception {
     String val = (String) entry.getValue();
     String[] fields = val.split(",");
-    Column col = new Column(new ArrayByteSequence(fields[0]), new ArrayByteSequence(fields[1])).setVisibility(new ColumnVisibility(fields[2]));
 
-    ObserverConfiguration observerConfig = new ObserverConfiguration(fields[3]);
+    ObserverConfiguration observerConfig = new ObserverConfiguration(fields[0]);
 
     Map<String,String> params = new HashMap<String,String>();
-    for (int i = 4; i < fields.length; i++) {
+    for (int i = 1; i < fields.length; i++) {
       String[] kv = fields[i].split("=");
       params.put(kv[0], kv[1]);
     }
     observerConfig.setParameters(params);
 
-    observers.put(col, observerConfig);
+    Observer observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+    observer.init(observerConfig.getParameters());
+    ObservedColumn observedCol = observer.getObservedColumn();
+
+    if (observedCol.getType() == NotificationType.STRONG)
+      observers.put(observedCol.getColumn(), observerConfig);
+    else
+      weakObservers.put(observedCol.getColumn(), observerConfig);
   }
 }

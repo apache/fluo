@@ -46,7 +46,7 @@ import accismus.impl.iterators.NotificationSampleIterator;
  * A service that looks for updated columns to process
  */
 public class Worker {
-  
+
   // TODO arbitrary
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
@@ -62,7 +62,7 @@ public class Worker {
     this.config = config;
     this.tabletChooser = tabletChooser;
   }
-  
+
   private Range pickRandomRow(final Scanner scanner, Text start, Text end) {
 
     scanner.clearScanIterators();
@@ -86,14 +86,14 @@ public class Worker {
 
     if (sample.size() == 0)
       return null;
-    
+
     Text row = sample.get(rand.nextInt(sample.size()));
 
     return new Range(row, true, end, true);
   }
-  
+
   private Range pickRandomStartPoint(Scanner scanner) throws Exception {
-    
+
     TabletInfo tablet = tabletChooser.getRandomTablet();
     // only have one thread per process inspecting a tablet for a start location at a time.. want to handle the case w/ few tablets, many workers, and no
     // notifications well
@@ -102,7 +102,7 @@ public class Worker {
         if (tablet.retryTime > System.currentTimeMillis()) {
           return null;
         }
-        
+
         Range ret = pickRandomRow(scanner, tablet.start, tablet.end);
         if (ret == null) {
           // remember if a tablet is empty an do not retry it for a bit... the more times empty, the longer the retry
@@ -113,7 +113,7 @@ public class Worker {
           tablet.retryTime = 0;
           tablet.sleepTime = 0;
         }
-        
+
         return ret;
       } finally {
         tablet.lock.unlock();
@@ -128,11 +128,11 @@ public class Worker {
     // TODO how does user set auths that workers are expected to use...
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
-    
+
     Range range = pickRandomStartPoint(scanner);
     if (range == null)
       return 0;
-    
+
     scanner.clearColumns();
     scanner.clearScanIterators();
 
@@ -142,7 +142,7 @@ public class Worker {
 
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
     scanner.setRange(range);
-    
+
     long numProcessed = 0;
 
     boolean loggedFirst = false;
@@ -152,11 +152,11 @@ public class Worker {
       Column col = new Column(ca.get(0), ca.get(1));
       // TODO cache col vis
       col.setVisibility(entry.getKey().getColumnVisibilityParsed());
-      
+
       Observer observer = getObserver(colObservers, col);
-      
+
       ByteSequence row = entry.getKey().getRowData();
-      
+
       if (!loggedFirst) {
         log.debug("thread id: " + Thread.currentThread().getId() + "  row :" + row);
         loggedFirst = true;
@@ -196,14 +196,13 @@ public class Worker {
           if (txi != null && TxLogger.isLoggingEnabled())
             TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
         }
-      // TODO if duplicate set detected, see if its because already acknowledged
+        // TODO if duplicate set detected, see if its because already acknowledged
       }
       numProcessed++;
     }
-    
+
     return numProcessed;
   }
-
 
   private Observer getObserver(Map<Column,Observer> colObservers, Column col) throws Exception {
     Observer observer = colObservers.get(col);
@@ -215,6 +214,12 @@ public class Worker {
       if (observerConfig != null) {
         observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
         observer.init(observerConfig.getParameters());
+
+        if (!observer.getObservedColumn().getColumn().equals(col)) {
+          throw new IllegalStateException("Mismatch between configured column and class column " + observerConfig.getClassName() + " " + col + " "
+              + observer.getObservedColumn().getColumn());
+        }
+
         colObservers.put(col, observer);
       }
       // TODO do something

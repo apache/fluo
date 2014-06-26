@@ -16,7 +16,8 @@
  */
 package accismus.impl;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.accumulo.core.data.ArrayByteSequence;
@@ -39,29 +40,29 @@ import accismus.api.types.TypedTransaction;
 import accismus.impl.TransactionImpl.CommitData;
 
 /**
- * A simple test that added links between nodes in a graph.  There is an observer
- * that updates an index of node degree.
+ * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
  */
 public class WorkerIT extends Base {
-  
+
   private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  protected Map<Column,ObserverConfiguration> getObservers() {
-    Map<Column,ObserverConfiguration> observed = new HashMap<Column,ObserverConfiguration>();
-    observed.put(typeLayer.newColumn("attr", "lastupdate"), new ObserverConfiguration(DegreeIndexer.class.getName()));
-    return observed;
+  private static Column observedColumn = typeLayer.newColumn("attr", "lastupdate");
+
+  @Override
+  protected List<ObserverConfiguration> getObservers() {
+    return Collections.singletonList(new ObserverConfiguration(DegreeIndexer.class.getName()));
   }
 
-  static class DegreeIndexer implements Observer {
-    
+  public static class DegreeIndexer implements Observer {
+
     @Override
     public void init(Map<String,String> config) {}
 
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
       // get previously calculated degree
-      
+
       ByteSequence degree = tx.get(row, typeLayer.newColumn("attr", "degree"));
       TypedTransaction ttx = typeLayer.transaction(tx);
 
@@ -76,14 +77,14 @@ public class WorkerIT extends Base {
         }
       }
       String degree2 = "" + count;
-      
+
       if (degree == null || !degree.toString().equals(degree2)) {
         ttx.set(row, typeLayer.newColumn("attr", "degree"), new ArrayByteSequence(degree2));
-        
+
         // put new entry in degree index
         ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
       }
-      
+
       if (degree != null) {
         // delete old degree in index
         ttx.mutate().row("IDEG" + degree).col(new Column(NODE_CF, row)).delete();
@@ -91,57 +92,60 @@ public class WorkerIT extends Base {
     }
 
     @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(observedColumn, NotificationType.STRONG);
+    }
+
+    @Override
     public void close() {}
   }
-  
-  
-  
+
   @Test
   public void test1() throws Exception {
-    
+
     TestTransaction tx1 = new TestTransaction(config);
 
-    //add a link between two nodes in a graph    
+    // add a link between two nodes in a graph
     tx1.mutate().row("N0003").col(typeLayer.newColumn("link", "N0040")).set("");
     tx1.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
-    
+
     tx1.commit();
-    
+
     TestTransaction tx2 = new TestTransaction(config);
-    
-    //add a link between two nodes in a graph    
+
+    // add a link between two nodes in a graph
     tx2.mutate().row("N0003").col(typeLayer.newColumn("link", "N0020")).set("");
     tx2.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
-    
+
     tx2.commit();
-    
+
     runWorker();
-   
-    //verify observer updated degree index 
+
+    // verify observer updated degree index
     TestTransaction tx3 = new TestTransaction(config);
     Assert.assertEquals("2", tx3.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
     Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
-    
-    //add a link between two nodes in a graph    
+
+    // add a link between two nodes in a graph
     tx3.mutate().row("N0003").col(typeLayer.newColumn("link", "N0010")).set("");
     tx3.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     tx3.commit();
-    
+
     runWorker();
-    
-    //verify observer updated degree index.  Should have deleted old index entry 
-    //and added a new one 
+
+    // verify observer updated degree index. Should have deleted old index entry
+    // and added a new one
     TestTransaction tx4 = new TestTransaction(config);
     Assert.assertEquals("3", tx4.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
     Assert.assertNull("", tx4.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
     Assert.assertEquals("", tx4.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
-    
+
     // test rollback
     TestTransaction tx5 = new TestTransaction(config);
     tx5.mutate().row("N0003").col(typeLayer.newColumn("link", "N0030")).set("");
     tx5.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     tx5.commit();
-    
+
     TestTransaction tx6 = new TestTransaction(config);
     tx6.mutate().row("N0003").col(typeLayer.newColumn("link", "N0050")).set("");
     tx6.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
@@ -149,12 +153,39 @@ public class WorkerIT extends Base {
     tx6.preCommit(cd, new ArrayByteSequence("N0003"), typeLayer.newColumn("attr", "lastupdate"));
 
     runWorker();
-    
+
     TestTransaction tx7 = new TestTransaction(config);
     Assert.assertEquals("4", tx7.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
     Assert.assertNull("", tx7.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
     Assert.assertEquals("", tx7.get().row("IDEG4").col(typeLayer.newColumn("node", "N0003")).toString());
   }
-  
+
+  /*
+   * test when the configured column of an observer stored in zk differs from what the class returns
+   */
+  public void testDiffObserverConfig() throws Exception {
+    Column old = observedColumn;
+    observedColumn = typeLayer.newColumn("attr2", "lastupdate");
+    try {
+
+      TestTransaction tx1 = new TestTransaction(config);
+
+      // add a link between two nodes in a graph
+      tx1.mutate().row("N0003").col(typeLayer.newColumn("link", "N0040")).set("");
+      tx1.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+
+      tx1.commit();
+
+      runWorker();
+
+      Assert.fail();
+
+    } catch (IllegalStateException ise) {
+      Assert.assertTrue(ise.getMessage().contains("Mismatch between configured column and class column"));
+    } finally {
+      observedColumn = old;
+    }
+  }
+
   // TODO test that observers trigger on delete
 }
