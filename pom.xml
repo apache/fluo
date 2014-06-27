@@ -5,7 +5,7 @@
 
 	<groupId>accismus</groupId>
 	<artifactId>accismus-parent</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-alpha-1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Parent</name>
