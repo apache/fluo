@@ -28,4 +28,4 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/config.sh
 
-java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*" accismus.tools.InitializeTool -config-dir $ACCISMUS_CONF_DIR
+java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" org.fluo.tools.InitializeTool -config-dir $FLUO_CONF_DIR

@@ -38,10 +38,10 @@ fi
 
 case "$1" in
 start-yarn)
-  java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*:$ACCISMUS_HOME/lib/logback/*" accismus.yarn.WorkerApp -accismus-home $ACCISMUS_HOME -hadoop-prefix $HADOOP_PREFIX
+  java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*:$FLUO_HOME/lib/logback/*" org.fluo.yarn.WorkerApp -fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX
 	;;
 start-local)
-  java -cp "$ACCISMUS_HOME/lib/*:$ACCISMUS_HOME/lib/observers/*" accismus.yarn.WorkerRunnable -config-dir $ACCISMUS_CONF_DIR -log-output $ACCISMUS_LOG_DIR  >${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${ACCISMUS_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" org.fluo.yarn.WorkerRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR  >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
 stop-local)
 	kill `jps -m | grep WorkerRunnable | cut -f 1 -d ' '`

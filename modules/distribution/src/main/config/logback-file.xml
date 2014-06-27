@@ -1,9 +1,9 @@
 <configuration>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${accismus.log.dir.log}/${accismus.log.application}_${accismus.log.ip.localhost.hostname}.log</file>
+    <file>${org.fluo.log.dir.log}/${org.fluo.log.application}_${org.fluo.log.ip.localhost.hostname}.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${accismus.log.application}_${accismus.log.ip.localhost.hostname}.log.%i</fileNamePattern>
+      <fileNamePattern>${org.fluo.log.application}_${org.fluo.log.ip.localhost.hostname}.log.%i</fileNamePattern>
       <minIndex>1</minIndex>
       <maxIndex>10</maxIndex>
     </rollingPolicy>
@@ -17,7 +17,7 @@
     </encoder>
   </appender>
   
-  <logger name="accismus" level="debug"/>
+  <logger name="fluo" level="debug"/>
   <logger name="org.apache.zookeeper" level="error"/>
 
   <root level="debug">
