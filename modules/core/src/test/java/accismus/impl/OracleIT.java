@@ -140,7 +140,7 @@ public class OracleIT extends Base {
     OracleClient client = OracleClient.getInstance(config);
 
     long timestamp;
-    for(long i = 0; i <= 5; i++) {
+    for (long i = 2; i <= 7; i++) {
       timestamp = client.getTimestamp();
       assertEquals(i, timestamp);
     }
@@ -148,12 +148,12 @@ public class OracleIT extends Base {
     oserver.stop();
 
     Thread.sleep(1000);
-    assertEquals(1000, client.getTimestamp());
+    assertEquals(1002, client.getTimestamp());
 
     oserver2.stop();
 
     Thread.sleep(1000);
-    assertEquals(2000, client.getTimestamp());
+    assertEquals(2002, client.getTimestamp());
 
     oserver3.stop();
   }
