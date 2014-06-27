@@ -61,7 +61,7 @@ cd accismus-0.0.1-SNAPSHOT/conf
 cp examples/* .
 vim accismus-env.sh
 vim initialization.properties
-vim accismus.properties
+vim connection.properties
 ```
 
 Copy your observer jar to Accismus and set up notifications to your observer in
@@ -90,7 +90,7 @@ These processes can either be run on a YARN cluster or started locally on each
 machine.
 
 The preferred method to run Accismus applications is using YARN which will start
-up multiple workers as configured in `accismus.properties`.  To start an Accismus
+up multiple workers as configured in `connection.properties`.  To start an Accismus
 cluster in YARN, run following commands:
 
 ```

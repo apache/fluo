@@ -19,7 +19,7 @@ package accismus.api;
 import java.io.Closeable;
 import java.util.Properties;
 
-import accismus.api.config.AccismusProperties;
+import accismus.api.config.ConnectionProperties;
 import accismus.impl.Configuration;
 import accismus.impl.TransactionImpl;
 
@@ -36,7 +36,7 @@ public class SnapshotFactory implements Closeable {
   /**
    * 
    * @param props
-   *          see {@link AccismusProperties}
+   *          see {@link ConnectionProperties}
    */
   
   public SnapshotFactory(Properties props) {

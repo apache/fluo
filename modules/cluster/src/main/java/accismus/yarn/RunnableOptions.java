@@ -38,7 +38,7 @@ public class RunnableOptions {
   }
   
   public String getAccismusConfig() {
-    return configDir+"/accismus.properties";
+    return configDir + "/connection.properties";
   }
   
   public String getInitConfig() {
@@ -51,9 +51,9 @@ public class RunnableOptions {
   
   public void validateConfig() throws IOException {
     if (getConfigDir() == null) { 
-      System.err.println("Please set -config-dir option to directory containing accismus.properties file like below: ");
+      System.err.println("Please set -config-dir option to directory containing connection.properties file like below: ");
       System.err.println();
-      Configuration.getDefaultProperties().store(System.err, "Accismus properties");
+      Configuration.getDefaultProperties().store(System.err, "Accismus connection properties");
       System.exit(-1);
     }
   }

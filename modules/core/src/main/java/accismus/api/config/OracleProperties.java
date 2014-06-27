@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-public class OracleProperties extends AccismusProperties {
+public class OracleProperties extends ConnectionProperties {
  
   private static final long serialVersionUID = 1L;
  

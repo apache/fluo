@@ -27,7 +27,7 @@ import accismus.api.LoaderExecutor;
 /**
  * This class helps setting the properties need to create a {@link LoaderExecutor}
  */
-public class LoaderExecutorProperties extends AccismusProperties implements TransactionConfiguration {
+public class LoaderExecutorProperties extends ConnectionProperties implements TransactionConfiguration {
 
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.loader.executor.numThreads";

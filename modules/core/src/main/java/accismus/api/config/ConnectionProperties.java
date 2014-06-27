@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * The class helps create a properties object with the key/values required to connect to an Accismus instance.
  */
-public class AccismusProperties extends Properties {
+public class ConnectionProperties extends Properties {
   
   private static final long serialVersionUID = 1L;
 
@@ -38,16 +38,16 @@ public class AccismusProperties extends Properties {
   public static final String ZOOKEEPER_TIMEOUT_PROP = "accismus.zookeeper.timeout";
   public static final String ZOOKEEPER_CONNECT_PROP = "accismus.zookeeper.connect";
   
-  public AccismusProperties() {
+  public ConnectionProperties() {
     super(accismus.impl.Configuration.getDefaultProperties());
   }
   
-  public AccismusProperties(File file) throws FileNotFoundException, IOException {
+  public ConnectionProperties(File file) throws FileNotFoundException, IOException {
     this();
     load(new FileInputStream(file));
   }
 
-  public AccismusProperties(Properties props) {
+  public ConnectionProperties(Properties props) {
     super(props);
     Set<java.util.Map.Entry<Object,Object>> es = accismus.impl.Configuration.getDefaultProperties().entrySet();
     for (java.util.Map.Entry<Object,Object> entry : es) {
@@ -55,32 +55,32 @@ public class AccismusProperties extends Properties {
     }
   }
 
-  public AccismusProperties setZookeepers(String zookeepers) {
+  public ConnectionProperties setZookeepers(String zookeepers) {
     setProperty(ZOOKEEPER_CONNECT_PROP, zookeepers);
     return this;
   }
   
-  public AccismusProperties setTimeout(int timeout) {
+  public ConnectionProperties setTimeout(int timeout) {
     setProperty(ZOOKEEPER_TIMEOUT_PROP, timeout + "");
     return this;
   }
   
-  public AccismusProperties setZookeeperRoot(String zookeeperRoot) {
+  public ConnectionProperties setZookeeperRoot(String zookeeperRoot) {
     setProperty(ZOOKEEPER_ROOT_PROP, zookeeperRoot);
     return this;
   }
   
-  public AccismusProperties setAccumuloInstance(String accumuloInstance) {
+  public ConnectionProperties setAccumuloInstance(String accumuloInstance) {
     setProperty(ACCUMULO_INSTANCE_PROP, accumuloInstance);
     return this;
   }
   
-  public AccismusProperties setAccumuloUser(String accumuloUser) {
+  public ConnectionProperties setAccumuloUser(String accumuloUser) {
     setProperty(ACCUMULO_USER_PROP, accumuloUser);
     return this;
   }
   
-  public AccismusProperties setAccumuloPassword(String accumuloPassword) {
+  public ConnectionProperties setAccumuloPassword(String accumuloPassword) {
     setProperty(ACCUMULO_PASSWORD_PROP, accumuloPassword);
     return this;
   }

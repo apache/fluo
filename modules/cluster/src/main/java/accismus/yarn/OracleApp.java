@@ -68,12 +68,11 @@ public class OracleApp implements TwillApplication {
         .setName("AccismusOracle").withRunnable()
         .add(new OracleRunnable(), oracleResources)
         .withLocalFiles()
-          .add("./conf/accismus.properties", 
-            new File(String.format("%s/conf/accismus.properties", options.getAccismusHome())));
+        .add("./conf/connection.properties", new File(String.format("%s/conf/connection.properties", options.getAccismusHome())));
 
     File confDir = new File(String.format("%s/conf", options.getAccismusHome()));
     for (File f : confDir.listFiles()) {
-      if (f.isFile() && (f.getName().equals("accismus.properties") == false)) {
+      if (f.isFile() && (f.getName().equals("connection.properties") == false)) {
         log.info("Adding config file - "+f.getName());
         moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
       }
@@ -94,7 +93,7 @@ public class OracleApp implements TwillApplication {
     
     Logging.init("oracle", options.getAccismusHome()+"/conf", "STDOUT");
     
-    Properties props = InitializeTool.loadProps(options.getAccismusHome()+"/conf/accismus.properties");
+    Properties props = InitializeTool.loadProps(options.getAccismusHome() + "/conf/connection.properties");
     Configuration config = new Configuration(props);
     
     YarnConfiguration yarnConfig = new YarnConfiguration();

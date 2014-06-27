@@ -31,7 +31,7 @@ import accismus.impl.Constants;
 /**
  * 
  */
-public class WorkerProperties extends AccismusProperties implements TransactionConfiguration {
+public class WorkerProperties extends ConnectionProperties implements TransactionConfiguration {
 
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.worker.numThreads";
