@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>accismus</groupId>
-	<artifactId>accismus-parent</artifactId>
+	<groupId>io.fluo</groupId>
+	<artifactId>fluo-parent</artifactId>
 	<version>1.0.0-alpha-1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Parent</name>
-	<url>https://github.com/keith-turner/Accismus</url>
+	<url>https://github.com/keith-turner/Fluo</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -63,13 +63,13 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>accismus</groupId>
-				<artifactId>accismus-core</artifactId>
+				<groupId>io.fluo</groupId>
+				<artifactId>fluo-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>accismus</groupId>
-				<artifactId>accismus-cluster</artifactId>
+				<groupId>io.fluo</groupId>
+				<artifactId>fluo-cluster</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

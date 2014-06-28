@@ -1,7 +1,7 @@
-Accismus
+Fluo
 ========
 
-[![Build Status](https://travis-ci.org/keith-turner/Accismus.svg?branch=master)](https://travis-ci.org/keith-turner/Accismus)
+[![Build Status](https://travis-ci.org/keith-turner/Fluo.svg?branch=master)](https://travis-ci.org/keith-turner/Fluo)
 
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
 Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
@@ -18,14 +18,14 @@ If you want to experiment with Accimus, check out the [phrasecount][7] example.
 This example is a simple end-to-end application that is super easy to run.  It
 also has handling for real world problems like high cardinality phrases.
 
-Building Accismus
+Building Fluo
 -----------------
 
-Using Maven, you can build Accismus with the following steps.
+Using Maven, you can build Fluo with the following steps.
 
 ```
-git clone https://github.com/keith-turner/Accismus.git
-cd Accismus
+git clone https://github.com/keith-turner/Fluo.git
+cd Fluo
 mvn package
 ```
 
@@ -44,33 +44,33 @@ Once the tarball is built, deploy it using the command below which can be modifi
 to a directory of your choice (rather than `/opt`).
 
 ```
-tar -C /opt -xvzf modules/distribution/target/accismus-1.0.0-alpha-1-SNAPSHOT-bin.tar.gz
+tar -C /opt -xvzf modules/distribution/target/fluo-1.0.0-alpha-1-SNAPSHOT-bin.tar.gz
 ```
 
-Configuring Accismus
+Configuring Fluo
 --------------------
 
-To configure and run Accismus, you will need a running Accumulo instance as well 
-as an observer jar to run with Accismus.  If you have not created your own observer
+To configure and run Fluo, you will need a running Accumulo instance as well
+as an observer jar to run with Fluo.  If you have not created your own observer
 jar, you can build an observer jar using the [phrasecount][7] example.
 
 First, copy the example configuration files and modify them for you environment.
 
 ```
-cd accismus-1.0.0-alpha-1-SNAPSHOT/conf
+cd fluo-1.0.0-alpha-1-SNAPSHOT/conf
 cp examples/* .
-vim accismus-env.sh
+vim fluo-env.sh
 vim initialization.properties
 vim connection.properties
 ```
 
-Copy your observer jar to Accismus and set up notifications to your observer in
+Copy your observer jar to Fluo and set up notifications to your observer in
  `initialization.properties`.  Check out [phrasecount][7] to build an example
 observer jar and find instructions for configuring `initialization.properties`.
 
 ```
 OBSERVER_JAR=<location of observer jar>
-cd accismus-1.0.0-alpha-1-SNAPSHOT/
+cd fluo-1.0.0-alpha-1-SNAPSHOT/
 cp $OBSERVER_JAR lib/observers
 vim conf/initialization.properties
 ```
@@ -82,15 +82,15 @@ Finally, initialize your instance which only needs to be called once and stores
 ./bin/initialize.sh
 ```
 
-Running Accismus
+Running Fluo
 ----------------
 
-An Accismus instance consists of 1 oracle process and multiple worker processes.
+An Fluo instance consists of 1 oracle process and multiple worker processes.
 These processes can either be run on a YARN cluster or started locally on each
 machine.
 
-The preferred method to run Accismus applications is using YARN which will start
-up multiple workers as configured in `connection.properties`.  To start an Accismus
+The preferred method to run Fluo applications is using YARN which will start
+up multiple workers as configured in `connection.properties`.  To start an Fluo
 cluster in YARN, run following commands:
 
 ```
@@ -100,7 +100,7 @@ cluster in YARN, run following commands:
 
 The `start-yarn` commands above submit your Accimus applications to YARN.  
 Therefore, they work for a single-node or a large cluster.  By using YARN, you 
-no longer need to deploy the Accismus binaries to every node on your cluster or 
+no longer need to deploy the Fluo binaries to every node on your cluster or
 start processes on every node.
 
 You can use `yarn application -list` to check the status of the applications. 
@@ -108,7 +108,7 @@ Logs are viewable within YARN.  When finished, you can kill the applications
 using `yarn application -kill <Application ID>`.  The application ID can be
 found using the list command.
 
-If you do not have YARN set up, you can start a local Accismus process using
+If you do not have YARN set up, you can start a local Fluo process using
 the following commands:
 
 ```
@@ -116,10 +116,10 @@ the following commands:
 ./bin/worker.sh start-local
 ```
 
-In a distributed enivornment, you will need to deploy the Accismus binary to 
+In a distributed enivornment, you will need to deploy the Fluo binary to
 every node and start each process individually.
 
-To stop Accismus processes, run the following commands:
+To stop Fluo processes, run the following commands:
 
 ```
 ./bin/worker.sh stop-local
@@ -129,14 +129,14 @@ To stop Accismus processes, run the following commands:
 Tuning Accumulo
 ---------------
 
-Accismus will reread the same data frequenty when it checks conditions on
-mutations.   When Accismus initializes a table it enables data caching to make
+Fluo will reread the same data frequenty when it checks conditions on
+mutations.   When Fluo initializes a table it enables data caching to make
 this more efficient.  However you may need to increase the amount of memory
 available for caching in the tserver by increasing `tserver.cache.data.size`.
 Increasing this may require increasing the maximum tserver java heap size in
 `accumulo-env.sh`.  
 
-Accismus will run many client threads, will want to ensure the tablet server
+Fluo will run many client threads, will want to ensure the tablet server
 has enough threads.  Should probably increase the
 `tserver.server.threads.minimum` Accumulo setting.
 
