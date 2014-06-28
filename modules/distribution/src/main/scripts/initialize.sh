@@ -28,4 +28,4 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/config.sh
 
-java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" org.fluo.tools.InitializeTool -config-dir $FLUO_CONF_DIR
+java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" io.fluo.tools.InitializeTool -config-dir $FLUO_CONF_DIR

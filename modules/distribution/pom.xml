@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.fluo</groupId>
+		<groupId>io.fluo</groupId>
 		<artifactId>fluo-parent</artifactId>
 		<version>1.0.0-alpha-1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
@@ -21,7 +21,7 @@
 		project builds AFTER that one... -->
 	<dependencies>
 		<dependency>
-			<groupId>org.fluo</groupId>
+			<groupId>io.fluo</groupId>
 			<artifactId>fluo-cluster</artifactId>
 		</dependency>
 	</dependencies>
