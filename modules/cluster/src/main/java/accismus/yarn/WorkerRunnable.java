@@ -21,13 +21,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import accismus.api.config.WorkerProperties;
 import accismus.cluster.util.Logging;
+import accismus.core.util.UtilWaitThread;
 import accismus.impl.Configuration;
 import accismus.impl.WorkerTask;
 import accismus.tools.InitializeTool;

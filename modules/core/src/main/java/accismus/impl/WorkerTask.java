@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.core.util.UtilWaitThread;
 
 /**
  * 
@@ -77,7 +77,7 @@ public class WorkerTask implements Runnable {
 
         log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
 
-        UtilWaitThread.sleep(sleepTime);
+        UtilWaitThread.sleep(sleepTime, shutdownFlag);
       }
     } catch (Exception e1) {
       log.error("Error in worker loop", e1);
