@@ -34,7 +34,7 @@ import accismus.api.LoaderExecutor;
 import accismus.api.config.LoaderExecutorProperties;
 
 /**
- * 
+ * This output format enables the execution of load transaction against an Accismus table using map reduce.
  */
 public class AccismusOutputFormat extends OutputFormat<Loader,NullWritable> {
   
