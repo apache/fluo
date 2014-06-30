@@ -38,12 +38,12 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.commons.lang.mutable.MutableLong;
 
 import accismus.api.Column;
 import accismus.api.ScannerConfiguration;
 import accismus.api.exceptions.StaleScanException;
+import accismus.core.util.UtilWaitThread;
 import accismus.impl.iterators.PrewriteIterator;
 import accismus.impl.iterators.SnapshotIterator;
 

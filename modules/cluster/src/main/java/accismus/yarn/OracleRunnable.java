@@ -16,12 +16,12 @@
  */
 package accismus.yarn;
 
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import accismus.cluster.util.Logging;
+import accismus.core.util.UtilWaitThread;
 import accismus.impl.Configuration;
 import accismus.impl.OracleServer;
 import accismus.tools.InitializeTool;

@@ -16,11 +16,11 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.commons.lang.NotImplementedException;
 
 import accismus.api.Column;
 import accismus.api.exceptions.StaleScanException;
+import accismus.core.util.UtilWaitThread;
 
 public class ParallelSnapshotScanner {
 
