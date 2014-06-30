@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.accumulo.core.data.ByteSequence;
 import org.junit.Assert;
@@ -45,16 +44,16 @@ public class SelfNotificationIT extends Base {
   static final Column EXPORT_CHECK_COL = typeLayer.newColumn("export", "check");
   static final Column EXPORT_COUNT_COL = typeLayer.newColumn("export", "count");
 
-  
-
-  protected Map<Column,ObserverConfiguration> getObservers() {
-    return Collections.singletonMap(EXPORT_CHECK_COL, new ObserverConfiguration(ExportingObserver.class.getName()));
+  @Override
+  protected List<ObserverConfiguration> getObservers() {
+    return Collections.singletonList(new ObserverConfiguration(ExportingObserver.class.getName()));
   }
 
   static List<Integer> exports = new ArrayList<Integer>();
   
-  static class ExportingObserver extends AbstractObserver {
+  public static class ExportingObserver extends AbstractObserver {
     
+    @Override
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
 
       TypedTransaction ttx = typeLayer.transaction(tx);
@@ -77,6 +76,11 @@ public class SelfNotificationIT extends Base {
 
     private void export(ByteSequence row, Integer exportCount) {
       exports.add(exportCount);
+    }
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(EXPORT_COUNT_COL, NotificationType.STRONG);
     }
   }
   

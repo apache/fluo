@@ -16,21 +16,24 @@
  */
 package accismus.impl;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.junit.Assert;
 import org.junit.Test;
 
+import accismus.api.AbstractObserver;
 import accismus.api.Column;
+import accismus.api.Transaction;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.exceptions.AlreadyAcknowledgedException;
 import accismus.api.exceptions.CommitException;
@@ -59,9 +62,21 @@ public class FailureIT extends Base {
     tx.commit();
   }
 
-  protected Map<Column,ObserverConfiguration> getObservers() {
-    Map<Column,ObserverConfiguration> observed = new HashMap<Column,ObserverConfiguration>();
-    observed.put(typeLayer.newColumn("attr", "lastupdate"), new ObserverConfiguration("foo"));
+  public static class NullObserver extends AbstractObserver {
+
+    @Override
+    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {}
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(typeLayer.newColumn("attr", "lastupdate"), NotificationType.STRONG);
+    }
+  }
+
+  @Override
+  protected List<ObserverConfiguration> getObservers() {
+    List<ObserverConfiguration> observed = new ArrayList<ObserverConfiguration>();
+    observed.add(new ObserverConfiguration(NullObserver.class.getName()));
     return observed;
   }
 

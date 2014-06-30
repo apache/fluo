@@ -1,7 +1,7 @@
 package accismus.impl;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.core.data.ByteSequence;
@@ -25,7 +25,7 @@ public class WeakNotificationIT extends Base {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
-  static class SimpleObserver extends AbstractObserver {
+  public static class SimpleObserver extends AbstractObserver {
 
     @Override
     public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
@@ -51,11 +51,16 @@ public class WeakNotificationIT extends Base {
         ttx.mutate().row(row).fam("stat").qual("count").set(sum);
       }
     }
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(tl.newColumn("stat", "check"), NotificationType.WEAK);
+    }
   }
 
   @Override
-  protected Map<Column,ObserverConfiguration> getWeakObservers() {
-    return Collections.singletonMap(tl.newColumn("stat", "check"), new ObserverConfiguration(SimpleObserver.class.getName()));
+  protected List<ObserverConfiguration> getObservers() {
+    return Collections.singletonList(new ObserverConfiguration(SimpleObserver.class.getName()));
   }
 
   @Test

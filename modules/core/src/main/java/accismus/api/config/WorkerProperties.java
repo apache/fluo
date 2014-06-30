@@ -21,11 +21,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import accismus.api.Column;
 import accismus.impl.Constants;
 
 /**
@@ -36,7 +36,6 @@ public class WorkerProperties extends ConnectionProperties implements Transactio
   private static final long serialVersionUID = 1L;
   public static final String NUM_THREADS_PROP = "accismus.worker.numThreads";
   public static final String OBSERVER_PREFIX_PROP = "accismus.worker.observer.";
-  public static final String WEAK_OBSERVER_PREFIX_PROP = "accismus.worker.observer.weak.";
   public static final String WORKER_INSTANCES_PROP = "accismus.worker.instances";
   public static final String WORKER_MAX_MEMORY_PROP = "accismus.worker.max.memory.mb";
 
@@ -68,7 +67,9 @@ public class WorkerProperties extends ConnectionProperties implements Transactio
     return this;
   }
 
-  private WorkerProperties setObservers(Map<Column,ObserverConfiguration> observers, String prefix) {
+  public WorkerProperties setObservers(List<ObserverConfiguration> observers) {
+    String prefix = OBSERVER_PREFIX_PROP;
+
     Iterator<java.util.Map.Entry<Object,Object>> iter = entrySet().iterator();
     while (iter.hasNext()) {
       String key = iter.next().getKey().toString();
@@ -78,10 +79,9 @@ public class WorkerProperties extends ConnectionProperties implements Transactio
     }
 
     int count = 0;
-    for (java.util.Map.Entry<Column,ObserverConfiguration> entry : observers.entrySet()) {
-      Column col = entry.getKey();
+    for (ObserverConfiguration oconf : observers) {
 
-      Map<String,String> params = entry.getValue().getParameters();
+      Map<String,String> params = oconf.getParameters();
       StringBuilder paramString = new StringBuilder();
       for (java.util.Map.Entry<String,String> pentry : params.entrySet()) {
         paramString.append(',');
@@ -90,32 +90,23 @@ public class WorkerProperties extends ConnectionProperties implements Transactio
         paramString.append(pentry.getValue());
       }
 
-      setProperty(prefix + "" + count, col.getFamily() + "," + col.getQualifier() + "," + new String(col.getVisibility().getExpression()) + ","
-          + entry.getValue().getClassName() + paramString);
+      setProperty(prefix + "" + count, oconf.getClassName() + paramString);
       count++;
     }
 
     return this;
   }
 
-  public WorkerProperties setWeakObservers(Map<Column,ObserverConfiguration> observers) {
-    return setObservers(observers, WEAK_OBSERVER_PREFIX_PROP);
-  }
-
-  public WorkerProperties setObservers(Map<Column,ObserverConfiguration> observers) {
-    return setObservers(observers, OBSERVER_PREFIX_PROP);
-  }
-
   @Override
   public void setRollbackTime(long time, TimeUnit tu) {
     setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, tu.toMillis(time) + "");
   }
-  
+
   public WorkerProperties setWorkerInstances(String workerInstances) {
     setProperty(WorkerProperties.WORKER_INSTANCES_PROP, workerInstances);
     return this;
   }
-  
+
   public WorkerProperties setWorkerMaxMemory(String workerMaxMemory) {
     setProperty(WorkerProperties.WORKER_MAX_MEMORY_PROP, workerMaxMemory);
     return this;

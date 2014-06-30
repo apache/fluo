@@ -1,6 +1,8 @@
 package accismus.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.accumulo.core.data.ArrayByteSequence;
@@ -10,6 +12,7 @@ import org.junit.Test;
 
 import accismus.api.AbstractObserver;
 import accismus.api.Column;
+import accismus.api.Observer.NotificationType;
 import accismus.api.Transaction;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.types.StringEncoder;
@@ -21,11 +24,14 @@ public class ObserverConfigIT extends Base {
 
   public static class ConfigurableObserver extends AbstractObserver {
 
+    private ObservedColumn observedColumn;
     private ByteSequence outputCQ;
     private boolean setWeakNotification = false;
 
     @Override
     public void init(Map<String,String> config) {
+      String ocTokens[] = config.get("observedCol").split(":");
+      observedColumn = new ObservedColumn(tl.newColumn(ocTokens[0], ocTokens[1]), NotificationType.valueOf(ocTokens[2]));
       outputCQ = new ArrayByteSequence(config.get("outputCQ"));
       String swn = config.get("setWeakNotification");
       if (swn != null && swn.equals("true"))
@@ -45,6 +51,11 @@ public class ObserverConfigIT extends Base {
       if (setWeakNotification)
         tx.setWeakNotification(row, outCol);
     }
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return observedColumn;
+    }
   }
 
   Map<String,String> newMap(String... args) {
@@ -54,19 +65,19 @@ public class ObserverConfigIT extends Base {
     return ret;
   }
 
-  protected Map<Column,ObserverConfiguration> getObservers() {
-    Map<Column,ObserverConfiguration> observers = new HashMap<Column,ObserverConfiguration>();
+  @Override
+  protected List<ObserverConfiguration> getObservers() {
+    List<ObserverConfiguration> observers = new ArrayList<ObserverConfiguration>();
 
-    observers.put(tl.newColumn("fam1", "col1"), new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("outputCQ", "col2")));
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col1:" + NotificationType.STRONG,
+        "outputCQ", "col2")));
 
-    observers.put(tl.newColumn("fam1", "col2"),
-        new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("outputCQ", "col3", "setWeakNotification", "true")));
-    return observers;
-  }
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col2:" + NotificationType.STRONG,
+        "outputCQ", "col3", "setWeakNotification", "true")));
 
-  protected Map<Column,ObserverConfiguration> getWeakObservers() {
-    Map<Column,ObserverConfiguration> observers = new HashMap<Column,ObserverConfiguration>();
-    observers.put(tl.newColumn("fam1", "col3"), new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("outputCQ", "col4")));
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col3:" + NotificationType.WEAK,
+        "outputCQ", "col4")));
+
     return observers;
   }
 

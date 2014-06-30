@@ -17,9 +17,11 @@
 package accismus.impl;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.core.client.Connector;
@@ -34,11 +36,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import accismus.api.Admin;
 import accismus.api.Column;
 import accismus.api.Observer;
+import accismus.api.config.InitializationProperties;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.OracleProperties;
-import accismus.api.config.TransactionConfiguration;
 import accismus.format.AccismusFormatter;
 
 /**
@@ -49,7 +52,6 @@ public class Base {
   
   protected static ZooKeeper zk;
   
-  protected static final Map<Column,ObserverConfiguration> EMPTY_OBSERVERS = new HashMap<Column,ObserverConfiguration>();
   
   protected static AtomicInteger next = new AtomicInteger();
   
@@ -61,13 +63,10 @@ public class Base {
   protected OracleServer oserver;
   protected String zkn;
 
-  protected Map<Column,ObserverConfiguration> getObservers() {
-    return EMPTY_OBSERVERS;
+  protected List<ObserverConfiguration> getObservers() {
+    return Collections.emptyList();
   }
 
-  protected Map<Column,ObserverConfiguration> getWeakObservers() {
-    return EMPTY_OBSERVERS;
-  }
 
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
@@ -112,11 +111,18 @@ public class Base {
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
     
-    Operations.initialize(conn, zkn, table);
-    Properties wprops = new Properties();
-    wprops.setProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, "5000");
-    Operations.updateWorkerConfig(conn, zkn, wprops);
-    Operations.updateObservers(conn, zkn, getObservers(), getWeakObservers());
+    InitializationProperties initProps = new InitializationProperties();
+
+    initProps.setAccumuloInstance(instance.getInstanceName());
+    initProps.setAccumuloUser("root");
+    initProps.setAccumuloPassword(secret);
+    initProps.setAccumuloTable(table);
+    initProps.setZookeeperRoot(zkn);
+    initProps.setZookeepers(instance.getZooKeepers());
+    initProps.setRollbackTime(5, TimeUnit.SECONDS);
+    initProps.setObservers(getObservers());
+
+    Admin.initialize(initProps);
 
     config = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
     
