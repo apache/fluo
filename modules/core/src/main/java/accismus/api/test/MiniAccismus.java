@@ -40,6 +40,33 @@ public class MiniAccismus {
   private ExecutorService tp;
   private AtomicBoolean shutdownFlag;
 
+  private int numProcessing = 0;
+
+  private class MiniWorkerTask extends WorkerTask {
+
+    public MiniWorkerTask(Configuration config, AtomicBoolean shutdownFlag) {
+      super(config, shutdownFlag);
+    }
+
+    @Override
+    public void startedProcessing() {
+      synchronized (MiniAccismus.this) {
+        numProcessing++;
+      }
+    }
+
+    @Override
+    public void finishedProcessing(long numProcessed) {
+      synchronized (MiniAccismus.this) {
+        numProcessing--;
+      }
+    }
+  }
+
+  private synchronized boolean isProcessing(Scanner scanner) {
+    return scanner.iterator().hasNext() || numProcessing > 0;
+  }
+
   public MiniAccismus(Properties props) {
     try {
       aconfig = new Configuration(props);
@@ -59,7 +86,7 @@ public class MiniAccismus {
 
       tp = Executors.newFixedThreadPool(numThreads);
       for (int i = 0; i < numThreads; i++) {
-        tp.submit(new WorkerTask(aconfig, shutdownFlag));
+        tp.submit(new MiniWorkerTask(aconfig, shutdownFlag));
       }
 
     } catch (Exception e) {
@@ -85,14 +112,14 @@ public class MiniAccismus {
   }
 
   public void waitForObservers() {
-    // TODO create a better implementation
     try {
       Scanner scanner = aconfig.getConnector().createScanner(aconfig.getTable(), aconfig.getAuthorizations());
       scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
 
-      while (scanner.iterator().hasNext()) {
+      while (isProcessing(scanner)) {
         Thread.sleep(100);
       }
+
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
