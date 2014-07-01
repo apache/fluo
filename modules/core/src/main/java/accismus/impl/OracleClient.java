@@ -16,16 +16,14 @@
  */
 package accismus.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
-
+import accismus.core.util.UtilWaitThread;
+import accismus.impl.support.CuratorCnxnListener;
+import accismus.impl.thrift.OracleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 import org.apache.curator.framework.recipes.leader.Participant;
@@ -41,7 +39,13 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accismus.impl.thrift.OracleService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically
@@ -58,26 +62,56 @@ public class OracleClient {
     AtomicLong timestamp = new AtomicLong();
   }
 
-  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable {
+  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable, PathChildrenCacheListener {
 
     private LeaderSelector leaderSelector;
     private CuratorFramework curatorFramework;
     private OracleService.Client client;
+    private PathChildrenCache pathChildrenCache;
+
+    private TTransport transport;
 
     public void run() {
 
-      try {
+      String zkPath = config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER;
 
+      try {
         curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
+        CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
+        curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
         curatorFramework.start();
 
-        leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
+        while (!cnxnListener.isConnected())
+          Thread.sleep(200);
 
-        client = connect();
+        pathChildrenCache = new PathChildrenCache(curatorFramework, zkPath, true);
+        pathChildrenCache.getListenable().addListener(this);
+        pathChildrenCache.start();
+
+        leaderSelector = new LeaderSelector(curatorFramework, zkPath, this);
+
+        connect();
         doWork();
 
       } catch (Exception e) {
         e.printStackTrace();
+      }
+    }
+
+    /**
+     * It's possible an Oracle has gone into a bad state. Upon the leader being changed, we want to update our state
+     */
+    @Override
+    public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+
+      if (pathChildrenCacheEvent.getType().toString().startsWith("CHILD")) {
+        Participant participant = leaderSelector.getLeader();
+        synchronized (this) {
+          if(isLeader(participant))
+            currentLeader = leaderSelector.getLeader();
+          else
+            currentLeader = null;
+        }
       }
     }
 
@@ -97,11 +131,26 @@ public class OracleClient {
           while (true) {
 
             try {
-              start = client.getTimestamps(config.getAccismusInstanceID(), request.size());
+              String currentLeaderId;
+              OracleService.Client localClient;
+              synchronized (this) {
+                currentLeaderId = getOracle();
+                localClient = client;
+              }
+
+              start = localClient.getTimestamps(config.getAccismusInstanceID(), request.size());
+
+              String leaderId = getOracle();
+              if(leaderId != null && !leaderId.equals(currentLeaderId)) {
+                reconnect();
+                continue;
+              }
+
               break;
+
             } catch (TTransportException tte) {
-              close(client);
-              client = connect();
+              log.info("Oracle connection lost. Retrying...");
+              reconnect();
             } catch (TException e) {
               e.printStackTrace();
             }
@@ -119,76 +168,87 @@ public class OracleClient {
       }
     }
 
-    private void getLeader() {
-      try {
-        currentLeader = leaderSelector.getLeader();
-      } catch (KeeperException e) {
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    private void loadNextLeader() {
+    private synchronized void connect() throws IOException, KeeperException, InterruptedException, TTransportException {
 
       getLeader();
-
-	    long ebackoff = 100; // exponential backoff so we aren't hammering zookeeper.
-      while (currentLeader == null || !currentLeader.isLeader()) {
-        getLeader();
-        ebackoff *= ebackoff;
-        if (ebackoff > 5000)
-          ebackoff = 100;
-
-        try {
-          Thread.sleep(ebackoff);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-
-	    try {
-        log.debug("LEADERS: " + leaderSelector.getParticipants());
-	    } catch (Exception e) {
-		    e.printStackTrace();
-	    }
-
-    }
-
-    private OracleService.Client connect() throws IOException, KeeperException, InterruptedException, TTransportException {
-
-      loadNextLeader();
-
-      log.info("Connecting to oracle at " + currentLeader.getId());
-      String[] hostAndPort = currentLeader.getId().split(":");
-
-      String host = hostAndPort[0];
-      int port = Integer.parseInt(hostAndPort[1]);
-
       while (true) {
+        log.debug("Connecting to oracle at " + currentLeader.getId());
+        String[] hostAndPort = currentLeader.getId().split(":");
+
+        String host = hostAndPort[0];
+        int port = Integer.parseInt(hostAndPort[1]);
+
         try {
-          TTransport transport = new TFastFramedTransport(new TSocket(host, port));
+          transport = new TFastFramedTransport(new TSocket(host, port));
           transport.open();
           TProtocol protocol = new TCompactProtocol(transport);
-          OracleService.Client client = new OracleService.Client(protocol);
-          return client;
+          client = new OracleService.Client(protocol);
+          log.info("Connected to oracle at " + getOracle());
+          break;
         } catch (TTransportException e) {
-          loadNextLeader();
+          sleepRandom();
+          getLeader();
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
       }
     }
 
-    private void close(OracleService.Client client) {
-      // TODO is this correct way to close?
-      client.getInputProtocol().getTransport().close();
-      client.getOutputProtocol().getTransport().close();
+    /**
+     * Atomically closes current connection and connects to the current leader
+     */
+    private synchronized void reconnect() throws InterruptedException, TTransportException, KeeperException, IOException {
+      close();
+      connect();
     }
 
-	  /**
-	   * NOTE: This isn't competing for leadership, so it doesn't need to be started.
-	   */
+    private void close() {
+      if(transport.isOpen())
+        transport.close();
+    }
+
+    private boolean getLeaderAttempt() {
+      Participant possibleLeader = null;
+      try {
+        possibleLeader = leaderSelector.getLeader();
+      } catch (KeeperException e) {
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      if (isLeader(possibleLeader)) {
+        currentLeader = possibleLeader;
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Attempt to retrieve a leader until one is found
+     */
+    private void getLeader() {
+      boolean found = getLeaderAttempt();
+      while (!found) {
+        sleepRandom();
+        found = getLeaderAttempt();
+      }
+    }
+
+    /**
+     * Sleep a random amount of time from 100ms to 1sec
+     */
+    private void sleepRandom() {
+      UtilWaitThread.sleep(100 + (long) (1000 * Math.random()));
+    }
+
+    private boolean isLeader(Participant participant) {
+      return participant != null && participant.isLeader();
+    }
+
+
+    /**
+     * NOTE: This isn't competing for leadership, so it doesn't need to be started.
+     */
     @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
     }
@@ -215,19 +275,19 @@ public class OracleClient {
     return tr.timestamp.get();
   }
 
-	/**
-	 * Return the oracle that the current client is connected to.
-	 * @return
-	 */
+  /**
+   * Return the oracle that the current client is connected to.
+   */
   public synchronized String getOracle() {
     return currentLeader != null ? currentLeader.getId() : null;
   }
 
-	/**
-	 * Create an instance of an OracleClient and cache it by the Accismus instance id`
-	 * @param config
-	 * @return
-	 */
+  /**
+   * Create an instance of an OracleClient and cache it by the Accismus instance id`
+   *
+   * @param config
+   * @return
+   */
   public static synchronized OracleClient getInstance(Configuration config) {
     // this key differintiates between different instances of Accumulo and Accismus
     String key = config.getAccismusInstanceID();

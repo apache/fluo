@@ -16,18 +16,10 @@
  */
 package accismus.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-
+import accismus.api.Column;
+import accismus.api.config.ObserverConfiguration;
+import accismus.format.AccismusFormatter;
+import accismus.impl.iterators.GarbageCollectionIterator;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
@@ -44,20 +36,21 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
-import accismus.api.Column;
-import accismus.api.config.ObserverConfiguration;
-import accismus.format.AccismusFormatter;
-import accismus.impl.iterators.GarbageCollectionIterator;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
- * 
+ *
  */
 public class Operations {
-  
+
   private static boolean putData(ZooKeeper zk, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
     if (policy == null)
       policy = NodeExistsPolicy.FAIL;
-    
+
     while (true) {
       try {
         zk.create(zPath, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -87,10 +80,10 @@ public class Operations {
     // TODO Auto-generated method stub
     String zookeepers = conn.getInstance().getZooKeepers();
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
-    
+
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     workerConfig.store(baos, "Java props");
-    
+
     putData(zk, zoodir + Constants.Zookeeper.WORKER_CONFIG, baos.toByteArray(), NodeExistsPolicy.OVERWRITE);
 
     zk.close();
@@ -101,12 +94,12 @@ public class Operations {
     // TODO check that no workers are running... or make workers watch this znode
     String zookeepers = conn.getInstance().getZooKeepers();
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
-    
+
     ZooUtil.recursiveDelete(zk, zoodir + Constants.Zookeeper.OBSERVERS, NodeMissingPolicy.SKIP);
 
     byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
     putData(zk, zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, NodeExistsPolicy.OVERWRITE);
-    
+
     zk.close();
   }
 
@@ -118,7 +111,7 @@ public class Operations {
     String accismusInstanceID = UUID.randomUUID().toString();
 
     ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
-    
+
     // TODO set Accismus data version
 
     zk.create(zoodir, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -132,10 +125,10 @@ public class Operations {
     zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'2'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
     zk.close();
-    
+
     createTable(table, conn);
   }
-  
+
   private static void serializeObservers(DataOutputStream dos, Map<Column,ObserverConfiguration> colObservers) throws IOException {
     // TODO use a human readable serialized format like json
 
