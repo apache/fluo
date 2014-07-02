@@ -16,14 +16,13 @@
  */
 package accismus.impl;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import accismus.api.Admin;
+import accismus.api.Column;
+import accismus.api.Observer;
+import accismus.api.config.InitializationProperties;
+import accismus.api.config.ObserverConfiguration;
+import accismus.api.config.OracleProperties;
+import accismus.format.AccismusFormatter;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -36,13 +35,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import accismus.api.Admin;
-import accismus.api.Column;
-import accismus.api.Observer;
-import accismus.api.config.InitializationProperties;
-import accismus.api.config.ObserverConfiguration;
-import accismus.api.config.OracleProperties;
-import accismus.format.AccismusFormatter;
+import java.io.File;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 
@@ -56,7 +55,7 @@ public class Base {
   protected static AtomicInteger next = new AtomicInteger();
   
   protected static Instance instance;
-  
+
   protected Configuration config;
   protected Connector conn;
   protected String table;
@@ -105,12 +104,12 @@ public class Base {
 
   @Before
   public void setup() throws Exception {
-    
+
     conn = instance.getConnector("root", new PasswordToken(secret));
-    
+
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
-    
+
     InitializationProperties initProps = new InitializationProperties();
 
     initProps.setAccumuloInstance(instance.getInstanceName());
@@ -125,7 +124,7 @@ public class Base {
     Admin.initialize(initProps);
 
     config = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
-    
+
     oserver = createOracle(9913);
     oserver.start();
   }
@@ -134,12 +133,13 @@ public class Base {
     config = new Configuration(zk, zkn, conn, port);
     return new OracleServer(config);
   }
-  
+
   @After
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);
     oserver.stop();
-    config.getSharedResources().close();
+
+  config.getSharedResources().close();
   }
 
   protected void printTable() throws Exception {

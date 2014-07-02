@@ -1,14 +1,5 @@
 package accismus.impl;
 
-import java.util.HashSet;
-
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.core.security.ColumnVisibility;
-import org.junit.Assert;
-import org.junit.Test;
-
 import accismus.api.Column;
 import accismus.api.ColumnIterator;
 import accismus.api.RowIterator;
@@ -19,6 +10,14 @@ import accismus.api.exceptions.CommitException;
 import accismus.api.types.StringEncoder;
 import accismus.api.types.TypeLayer;
 import accismus.impl.TransactionImpl.CommitData;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.security.ColumnVisibility;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.HashSet;
 
 public class AccismusIT extends Base {
   
@@ -72,6 +71,8 @@ public class AccismusIT extends Base {
     Assert.assertEquals("5", tx3.get().row("bob").col(balanceCol).toString());
     Assert.assertEquals("20", tx3.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("65", tx3.get().row("jill").col(balanceCol).toString());
+
+
   }
   
   private void assertCommitFails(TestTransaction tx) {
