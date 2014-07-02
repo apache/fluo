@@ -63,9 +63,12 @@ public class WorkerTask implements Runnable {
       while (!shutdownFlag.get()) {
         long numProcessed = 0;
         try {
+          startedProcessing();
           numProcessed = worker.processUpdates(colObservers);
         } catch (Exception e) {
           log.error("Error while processing updates", e);
+        } finally {
+          finishedProcessing(numProcessed);
         }
 
         if (numProcessed > 0)
@@ -91,5 +94,9 @@ public class WorkerTask implements Runnable {
       }
     }
   }
+
+  public void startedProcessing() {}
+
+  public void finishedProcessing(long numProcessed) {}
 
 }
