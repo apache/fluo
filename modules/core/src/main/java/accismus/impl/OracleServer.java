@@ -16,9 +16,11 @@
  */
 package accismus.impl;
 
-import accismus.impl.support.CuratorCnxnListener;
-import accismus.impl.thrift.OracleService;
-import com.google.common.annotations.VisibleForTesting;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
@@ -36,7 +38,10 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import accismus.impl.support.CuratorCnxnListener;
+import accismus.impl.thrift.OracleService;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Oracle server is the responsible for providing incrementing logical timestamps to clients. It should never
@@ -148,6 +153,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     return addr;
 
   }
+  
+  private String getHostName() throws IOException {
+    Process p = Runtime.getRuntime().exec("hostname");
+    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+    return reader.readLine();
+  }
 
   public synchronized void start() throws Exception {
     if (started)
@@ -163,7 +174,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       Thread.sleep(200);
 
     leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
-    leaderSelector.setId(addr.getHostName() + ":" + addr.getPort());
+    String leaderId = getHostName() + ":" + addr.getPort();
+    leaderSelector.setId(leaderId);
+    log.info("Leader ID = " + leaderId);
     leaderSelector.autoRequeue();
     leaderSelector.start();
 
