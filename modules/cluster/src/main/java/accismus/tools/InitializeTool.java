@@ -16,20 +16,12 @@
  */
 package accismus.tools;
 
-import java.io.File;
 import java.util.Properties;
-
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
-import org.apache.commons.lang.text.StrLookup;
 
 import accismus.api.Admin;
 import accismus.api.Admin.AlreadyInitializedException;
 import accismus.cluster.util.Logging;
-import accismus.impl.Configuration;
+import accismus.core.util.PropertyUtil;
 import accismus.yarn.RunnableOptions;
 
 import com.beust.jcommander.JCommander;
@@ -37,25 +29,6 @@ import com.beust.jcommander.JCommander;
 /** Initializes Accismus using properties in configuration files
  */
 public class InitializeTool {
-
-  public static Properties loadProps(String ... files) throws ConfigurationException{
-    ConfigurationInterpolator.registerGlobalLookup("env", new StrLookup() {
-      @Override
-      public String lookup(String key) {
-        return System.getenv(key);
-      }
-    });
-    
-    Properties defaults = Configuration.getDefaultProperties();
-    
-    CompositeConfiguration compConf = new CompositeConfiguration();
-    for(String file : files)
-      compConf.addConfiguration(new PropertiesConfiguration(new File(file)));
-    
-    compConf.addConfiguration(ConfigurationConverter.getConfiguration(defaults));
-    
-    return ConfigurationConverter.getProperties(compConf.interpolatedConfiguration());
-  }
 
   public static void main(String[] args) throws Exception {
 
@@ -71,7 +44,7 @@ public class InitializeTool {
     Logging.init("init", options.getConfigDir(), options.getLogOutput());
 
     String[] configs = { options.getInitConfig(), options.getAccismusConfig() };
-    Properties props = loadProps(configs);
+    Properties props = PropertyUtil.loadProps(configs);
 
     try {
       //TODO maybe use commons Configuration instrea of Properties in API

@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import accismus.api.config.WorkerProperties;
 import accismus.cluster.util.Logging;
+import accismus.core.util.PropertyUtil;
 import accismus.impl.Configuration;
-import accismus.tools.InitializeTool;
 
 import com.beust.jcommander.JCommander;
 
@@ -94,11 +94,12 @@ public class WorkerApp implements TwillApplication {
     
     Logging.init("worker", options.getAccismusHome()+"/conf", "STDOUT");
     
-    Properties props = InitializeTool.loadProps(options.getAccismusHome() + "/conf/connection.properties");
+    Properties props = PropertyUtil.loadProps(options.getAccismusHome() + "/conf/connection.properties");
     Configuration config = new Configuration(props);
     
     YarnConfiguration yarnConfig = new YarnConfiguration();
     yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/core-site.xml"));
+    yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/yarn-site.xml"));
         
     TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, config.getZookeepers()); 
     twillRunner.startAndWait(); 

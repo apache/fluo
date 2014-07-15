@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import accismus.cluster.util.Logging;
 import accismus.core.util.UtilWaitThread;
+import accismus.core.util.PropertyUtil;
 import accismus.impl.Configuration;
 import accismus.impl.OracleServer;
-import accismus.tools.InitializeTool;
 
 import com.beust.jcommander.JCommander;
 
@@ -55,7 +55,7 @@ public class OracleRunnable extends AbstractTwillRunnable {
 
       Logging.init("oracle", options.getConfigDir(), options.getLogOutput());
 
-      Configuration config = new Configuration(InitializeTool.loadProps(options.getAccismusConfig()));
+      Configuration config = new Configuration(PropertyUtil.loadProps(options.getAccismusConfig()));
 
       OracleServer server = new OracleServer(config);
       server.start();

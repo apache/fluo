@@ -143,6 +143,11 @@ has enough threads.  Should probably increase the
 Group commit in Accumulo 1.6.0 is broken, the patch on [ACCUMULO-2766][8] can
 be applied to fix this.  
 
+Additional Documentation
+------------------------
+
+[Stress Testing](modules/stress/README.md)
+
 
 [1]: http://accumulo.apache.org
 [2]: http://research.google.com/pubs/pub36726.html
