@@ -22,7 +22,9 @@ import accismus.api.Observer;
 import accismus.api.config.InitializationProperties;
 import accismus.api.config.ObserverConfiguration;
 import accismus.api.config.OracleProperties;
+import accismus.core.util.PortUtils;
 import accismus.format.AccismusFormatter;
+
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -65,7 +67,6 @@ public class Base {
   protected List<ObserverConfiguration> getObservers() {
     return Collections.emptyList();
   }
-
 
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
@@ -123,17 +124,19 @@ public class Base {
 
     Admin.initialize(initProps);
 
-    config = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
-
-    oserver = createOracle(9913);
+    config = new Configuration(zk, zkn, conn, PortUtils.getRandomFreePort());
+    oserver = new OracleServer(config);
     oserver.start();
   }
 
-  public OracleServer createOracle(int port) throws Exception {
-    config = new Configuration(zk, zkn, conn, port);
+  /** Utility method to create additional oracles (setup method 
+   * will always create one oracle)
+   */
+  public OracleServer createExtraOracle(int port) throws Exception {
+    Configuration config = new Configuration(zk, zkn, conn, port);
     return new OracleServer(config);
   }
-
+  
   @After
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);

@@ -18,6 +18,8 @@ package accismus.impl;
 
 import org.junit.Test;
 
+import accismus.core.util.PortUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -127,8 +129,11 @@ public class OracleIT extends Base {
     while (!oserver.isConnected())
       Thread.sleep(100);
 
-    OracleServer oserver2 = createOracle(9914);
-    OracleServer oserver3 = createOracle(9915);
+    int port2 = PortUtils.getRandomFreePort();
+    int port3 = PortUtils.getRandomFreePort();
+    
+    OracleServer oserver2 = createExtraOracle(port2);
+    OracleServer oserver3 = createExtraOracle(port3);
 
     oserver2.start();
     while (!oserver2.isConnected())
@@ -146,19 +151,19 @@ public class OracleIT extends Base {
       assertEquals(i, timestamp);
     }
 
-    assertTrue(client.getOracle().endsWith("9913"));
+    assertTrue(client.getOracle().endsWith(Integer.toString(config.getOraclePort())));
 
     oserver.stop();
 
     Thread.sleep(1000);
     assertEquals(1002, client.getTimestamp());
-    assertTrue(client.getOracle().endsWith("9914"));
+    assertTrue(client.getOracle().endsWith(Integer.toString(port2)));
 
     oserver2.stop();
 
     Thread.sleep(2000);
     assertEquals(2002, client.getTimestamp());
-    assertTrue(client.getOracle().endsWith("9915"));
+    assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
 
     oserver3.stop();
   }
@@ -194,7 +199,7 @@ public class OracleIT extends Base {
 
     assertEquals(1002, client.getTimestamp());
 
-    assertTrue(client.getOracle().endsWith("9913"));
+    assertTrue(client.getOracle().endsWith(Integer.toString(config.getOraclePort())));
 
     oserver.stop();
   }
@@ -210,13 +215,17 @@ public class OracleIT extends Base {
     ExecutorService tpool = Executors.newFixedThreadPool(numThreads);
     CountDownLatch cdl = new CountDownLatch(numThreads);
 
-    OracleServer oserver2 = createOracle(9914);
+    
+    int port2 = PortUtils.getRandomFreePort();
+    int port3 = PortUtils.getRandomFreePort();
+    
+    OracleServer oserver2 = createExtraOracle(port2);
 
     oserver2.start();
     while (!oserver2.isConnected())
       Thread.sleep(100);
 
-    OracleServer oserver3 = createOracle(9915);
+    OracleServer oserver3 = createExtraOracle(port3);
 
     oserver3.start();
     while (!oserver3.isConnected())
