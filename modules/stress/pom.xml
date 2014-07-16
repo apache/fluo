@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>accismus</groupId>
-		<artifactId>accismus-parent</artifactId>
+		<groupId>fluo</groupId>
+		<artifactId>fluo-parent</artifactId>
 		<version>1.0.0-alpha-1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>accismus-stress</artifactId>
+	<artifactId>fluo-stress</artifactId>
 	<packaging>jar</packaging>
 
 	<name>Stress</name>
@@ -72,8 +72,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>accismus</groupId>
-			<artifactId>accismus-core</artifactId>
+			<groupId>fluo</groupId>
+			<artifactId>fluo-core</artifactId>
 		</dependency>
 
 		<!-- Test Dependencies -->

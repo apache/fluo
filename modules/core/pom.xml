@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>accismus</groupId>
-		<artifactId>accismus-parent</artifactId>
+		<groupId>fluo</groupId>
+		<artifactId>fluo-parent</artifactId>
 		<version>1.0.0-alpha-1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>accismus-core</artifactId>
+	<artifactId>fluo-core</artifactId>
 	<packaging>jar</packaging>
 
 	<name>Core</name>

@@ -8,7 +8,7 @@
     </encoder>
   </appender>
   
-  <logger name="accismus" level="debug"/>
+  <logger name="fluo" level="debug"/>
   <logger name="org.apache.zookeeper" level="error"/>
 
   <root level="info">

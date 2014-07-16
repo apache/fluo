@@ -1,3 +1,3 @@
 
-test -z "$ACCISMUS_LOG_DIR"           && export ACCISMUS_LOG_DIR=$ACCISMUS_HOME/logs
+test -z "$FLUO_LOG_DIR"           && export FLUO_LOG_DIR=$FLUO_HOME/logs
 

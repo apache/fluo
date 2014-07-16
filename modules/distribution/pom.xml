@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>accismus</groupId>
-		<artifactId>accismus-parent</artifactId>
+		<groupId>fluo</groupId>
+		<artifactId>fluo-parent</artifactId>
 		<version>1.0.0-alpha-1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>accismus-distribution</artifactId>
+	<artifactId>fluo-distribution</artifactId>
 	<packaging>pom</packaging>
 
 	<name>Distribution</name>
@@ -21,8 +21,8 @@
 		project builds AFTER that one... -->
 	<dependencies>
 		<dependency>
-			<groupId>accismus</groupId>
-			<artifactId>accismus-cluster</artifactId>
+			<groupId>fluo</groupId>
+			<artifactId>fluo-cluster</artifactId>
 		</dependency>
 	</dependencies>
 
@@ -38,7 +38,7 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<finalName>accismus-${project.version}</finalName>
+							<finalName>fluo-${project.version}</finalName>
 							<descriptors>
 								<descriptor>src/main/assembly/bin.xml</descriptor>
 							</descriptors>
