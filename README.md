@@ -1,7 +1,7 @@
 Fluo
 ========
 
-[![Build Status](https://travis-ci.org/keith-turner/Fluo.svg?branch=master)](https://travis-ci.org/keith-turner/Fluo)
+[![Build Status](https://travis-ci.org/fluo-io/fluo.svg?branch=master)](https://travis-ci.org/fluo-io/fluo)
 
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
 Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
@@ -24,7 +24,7 @@ Building Fluo
 Using Maven, you can build Fluo with the following steps.
 
 ```
-git clone https://github.com/keith-turner/Fluo.git
+git clone https://github.com/fluo-io/fluo.git
 cd Fluo
 mvn package
 ```
