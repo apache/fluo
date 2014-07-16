@@ -26,28 +26,28 @@ bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 script=$( basename "$SOURCE" )
 # Stop: Resolve Script Directory
 
-ACCISMUS_HOME=$( cd -P ${bin}/.. && pwd )
-export ACCISMUS_HOME
+FLUO_HOME=$( cd -P ${bin}/.. && pwd )
+export FLUO_HOME
 
-ACCISMUS_CONF_DIR="${ACCISMUS_CONF_DIR:-$ACCISMUS_HOME/conf}"
-export ACCISMUS_CONF_DIR
-if [ -z "$ACCISMUS_CONF_DIR" -o ! -d "$ACCISMUS_CONF_DIR" ]
+FLUO_CONF_DIR="${FLUO_CONF_DIR:-$FLUO_HOME/conf}"
+export FLUO_CONF_DIR
+if [ -z "$FLUO_CONF_DIR" -o ! -d "$FLUO_CONF_DIR" ]
 then
-  echo "ACCISMUS_CONF_DIR=$ACCISMUS_CONF_DIR is not a valid directory.  Please make sure it exists"
+  echo "FLUO_CONF_DIR=$FLUO_CONF_DIR is not a valid directory.  Please make sure it exists"
   exit 1
 fi
 
-if [ -f $ACCISMUS_CONF_DIR/accismus-env.sh ] ; then
-   . $ACCISMUS_CONF_DIR/accismus-env.sh
+if [ -f $FLUO_CONF_DIR/fluo-env.sh ] ; then
+   . $FLUO_CONF_DIR/fluo-env.sh
 fi
 
-if [ -z ${ACCISMUS_LOG_DIR} ]; then
-   ACCISMUS_LOG_DIR=$ACCISMUS_HOME/logs
+if [ -z ${FLUO_LOG_DIR} ]; then
+   FLUO_LOG_DIR=$FLUO_HOME/logs
 fi
 
-mkdir -p $ACCISMUS_LOG_DIR 2>/dev/null
+mkdir -p $FLUO_LOG_DIR 2>/dev/null
 
-export ACCISMUS_LOG_DIR
+export FLUO_LOG_DIR
 
 
 

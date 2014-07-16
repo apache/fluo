@@ -4,21 +4,21 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>accismus</groupId>
-		<artifactId>accismus-parent</artifactId>
+		<groupId>fluo</groupId>
+		<artifactId>fluo-parent</artifactId>
 		<version>1.0.0-alpha-1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>accismus-cluster</artifactId>
+	<artifactId>fluo-cluster</artifactId>
 	<packaging>jar</packaging>
 
 	<name>Cluster</name>
 
 	<dependencies>
 		<dependency>
-			<groupId>accismus</groupId>
-			<artifactId>accismus-core</artifactId>
+			<groupId>fluo</groupId>
+			<artifactId>fluo-core</artifactId>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -31,8 +31,8 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>accismus</groupId>
-			<artifactId>accismus-stress</artifactId>
+			<groupId>fluo</groupId>
+			<artifactId>fluo-stress</artifactId>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
