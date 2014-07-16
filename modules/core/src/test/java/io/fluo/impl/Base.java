@@ -16,14 +16,6 @@
  */
 package io.fluo.impl;
 
-import io.fluo.api.Admin;
-import io.fluo.api.Column;
-import io.fluo.api.Observer;
-import io.fluo.api.config.InitializationProperties;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.core.util.PortUtils;
-import io.fluo.format.FluoFormatter;
-
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +24,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.fluo.api.Admin;
+import io.fluo.api.Column;
+import io.fluo.api.Observer;
+import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.core.util.PortUtils;
+import io.fluo.format.FluoFormatter;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -140,7 +139,9 @@ public class Base {
   @After
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);
-    oserver.stop();
+    if(oserver.isConnected())
+      oserver.stop();
+
     config.getSharedResources().close();
   }
 

@@ -19,22 +19,26 @@ package io.fluo.impl;
 import java.net.InetSocketAddress;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.fluo.core.util.Halt;
 import io.fluo.core.util.HostUtil;
 import io.fluo.impl.support.CuratorCnxnListener;
 import io.fluo.impl.thrift.OracleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
-import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.THsHaServer;
-import org.apache.thrift.transport.TNonblockingServerSocket;
-import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,30 +51,37 @@ import org.slf4j.LoggerFactory;
  * to that leader. If the leader goes down, the client will automatically fail over to the next leader.
  * In the case where an oracle fails over, the next oracle will begin a new block of timestamps.
  */
-public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface {
+public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface, PathChildrenCacheListener {
   private volatile long currentTs = 0;
   private volatile long maxTs = 0;
-  private Configuration config;
+  private final Configuration config;
   private Thread serverThread;
   private THsHaServer server;
   private volatile boolean started = false;
 
   private LeaderSelector leaderSelector;
+  private PathChildrenCache pathChildrenCache;
   private CuratorFramework curatorFramework;
   private CuratorCnxnListener cnxnListener;
+  private Participant currentLeader;
+
+  private final String tsPath;
+  private final String oraclePath;
+
+  private volatile boolean isLeader = false;
 
   private static Logger log = LoggerFactory.getLogger(OracleServer.class);
 
   public OracleServer(Configuration config) throws Exception {
     this.config = config;
     this.cnxnListener = new CuratorCnxnListener();
+    this.tsPath = Constants.timestampPath(config);
+    this.oraclePath = Constants.oraclePath(config);
   }
 
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
-    byte[] d = curatorFramework.getData()
-        .storingStatIn(stat)
-        .forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
+    byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(tsPath);
 
     // TODO check that d is expected
     // TODO check that stil server when setting
@@ -80,11 +91,11 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     curatorFramework.setData()
         .withVersion(stat.getVersion())
-        .forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP, (newMax + "").getBytes("UTF-8"));
+        .forPath(tsPath, (newMax + "").getBytes("UTF-8"));
 
     maxTs = newMax;
 
-    if (!leaderSelector.hasLeadership())
+    if (!isLeader)
       throw new IllegalStateException();
 
   }
@@ -99,7 +110,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       throw new IllegalArgumentException();
     }
 
-    if (!leaderSelector.hasLeadership())
+    if (!isLeader)
       throw new IllegalStateException();
 
     try {
@@ -114,6 +125,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     } catch (Exception e) {
       throw new TException(e);
     }
+  }
+
+  @Override public boolean isLeader() throws TException {
+    return isLeader;
   }
 
   @VisibleForTesting
@@ -148,9 +163,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     serverThread.start();
 
     return addr;
-
   }
-  
 
   public synchronized void start() throws Exception {
     if (started)
@@ -169,27 +182,53 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     String leaderId = HostUtil.getHostName() + ":" + addr.getPort();
     leaderSelector.setId(leaderId);
     log.info("Leader ID = " + leaderId);
-    leaderSelector.autoRequeue();
     leaderSelector.start();
+
+    pathChildrenCache = new PathChildrenCache(curatorFramework, oraclePath, true);
+    pathChildrenCache.getListenable().addListener(this);
+    pathChildrenCache.start();
+
+    while (!cnxnListener.isConnected())
+      Thread.sleep(200);
 
     log.info("Listening " + addr);
 
     started = true;
   }
 
-  public void stop() throws Exception {
+  public synchronized void stop() throws Exception {
     if (started) {
+
       server.stop();
       serverThread.join();
 
-      if (curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
+      started = false;
 
+      currentLeader = null;
+      if (curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
+        pathChildrenCache.getListenable().removeListener(this);
+        pathChildrenCache.close();
         leaderSelector.close();
+        curatorFramework.getConnectionStateListenable().removeListener(this);
         curatorFramework.close();
       }
-      started = false;
-      log.debug("Oracle server is stopped.");
+      log.info("Oracle server has been stopped.");
     }
+  }
+
+  private OracleService.Client getOracleClient(String host, int port) {
+    try {
+      TTransport transport = new TFastFramedTransport(new TSocket(host, port));
+      transport.open();
+      TProtocol protocol = new TCompactProtocol(transport);
+      log.info("Former leader was reachable at " + host + ":" + port);
+      return new OracleService.Client(protocol);
+    } catch (TTransportException e) {
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    return null;
   }
 
   /**
@@ -202,22 +241,60 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
 
-    // TODO when we first get leadership should we delay processing request for a bit? its possible the old oracle process is still out there
-    // and could be processing request for a short period..
+    try {
+      // sanity check- make sure previous oracle is no longer listening for connections
+      if (currentLeader != null) {
+        String[] address = currentLeader.getId().split(":");
+        String host = address[0];
+        int port = Integer.parseInt(address[1]);
 
-    synchronized (this) {
-      byte[] d = curatorFramework.getData().forPath(config.getZookeeperRoot() + Constants.Zookeeper.TIMESTAMP);
-      currentTs = maxTs = Long.parseLong(new String(d));
+        OracleService.Client client = getOracleClient(host, port);
+        if(client != null) {
+          try {
+            while(client.isLeader())
+              Thread.sleep(500);
+          } catch(Exception e) {}
+        }
+      }
+
+      synchronized (this) {
+        byte[] d = curatorFramework.getData().forPath(tsPath);
+        currentTs = maxTs = Long.parseLong(new String(d));
+      }
+
+      isLeader = true;
+
+      while (started)
+        Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that called this method
+
+    } finally {
+      isLeader = false;
+
+      if(started)
+        Halt.halt("Oracle has lost leadership unexpectedly and is now halting.");    // if we stopped the server manually, we shouldn't halt
     }
-
-    while (started)
-      Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that called this method
   }
 
-  @Override public void stateChanged(CuratorFramework client, ConnectionState newState) {
-    super.stateChanged(client, newState);
+  @Override
+  public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
 
-    if(newState.equals(ConnectionState.RECONNECTED))
-      leaderSelector.requeue();
+    try {
+      if (isConnected() && (event.equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
+                            event.equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
+                            event.equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) ) {
+        synchronized (this) {
+          Participant participant = leaderSelector.getLeader();
+          if (isLeader(participant) && !leaderSelector.hasLeadership())    // in case current instance becomes leader, we want to know who came before it.
+            currentLeader = participant;
+        }
+      }
+    } catch(InterruptedException e) {
+      log.warn("Oracle leadership watcher has been interrupted unexpectedly");
+    }
   }
+
+  private boolean isLeader(Participant participant) {
+    return participant != null && participant.isLeader();
+  }
+
 }

@@ -48,4 +48,14 @@ public class Constants {
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
 
   public static final long ROLLBACK_TIME_DEFAULT = 300000;
+
+  public static final String oraclePath(Configuration config) {
+    return config.getZookeeperRoot() + Zookeeper.ORACLE_SERVER;
+  }
+
+  public static final String timestampPath(Configuration config) {
+    return config.getZookeeperRoot() + Zookeeper.TIMESTAMP;
+  }
+
+
 }

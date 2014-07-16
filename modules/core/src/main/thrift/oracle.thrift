@@ -19,4 +19,5 @@ namespace java io.fluo.impl.thrift
 
 service OracleService {
 	i64 getTimestamps(1:string id, 2:i32 num);
+	bool isLeader();
 }

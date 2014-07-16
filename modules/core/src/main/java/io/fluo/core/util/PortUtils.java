@@ -22,6 +22,8 @@ import java.util.Random;
 
 public class PortUtils {
 
+  private PortUtils() {}
+
   public static int getRandomFreePort() {
     Random r = new Random();
     int count = 0;

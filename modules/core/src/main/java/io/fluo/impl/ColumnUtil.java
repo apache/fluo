@@ -18,11 +18,6 @@ package io.fluo.impl;
 
 import io.fluo.api.Bytes;
 import io.fluo.api.Column;
-
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -31,6 +26,11 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.io.Text;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+
 
 /**
  * Utilities for modifying columns in Fluo
@@ -45,6 +45,8 @@ public class ColumnUtil {
   public static final long DATA_PREFIX = 0xa000000000000000l;
   
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
+
+  private ColumnUtil() {}
 
 
   public static byte[] concatCFCQ(Column c) {

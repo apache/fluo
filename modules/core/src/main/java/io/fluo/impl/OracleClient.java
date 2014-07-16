@@ -73,7 +73,7 @@ public class OracleClient {
 
     public void run() {
 
-      String zkPath = config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER;
+      String zkPath = Constants.oraclePath(config);
 
       try {
         curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
@@ -102,9 +102,12 @@ public class OracleClient {
      * It's possible an Oracle has gone into a bad state. Upon the leader being changed, we want to update our state
      */
     @Override
-    public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent pathChildrenCacheEvent) throws Exception {
+    public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
 
-      if (pathChildrenCacheEvent.getType().toString().startsWith("CHILD")) {
+      if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
+          event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
+          event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) {
+
         Participant participant = leaderSelector.getLeader();
         synchronized (this) {
           if(isLeader(participant))
