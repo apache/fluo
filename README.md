@@ -14,7 +14,7 @@ and the Oracle is a service.
 There is a lot that needs to be done.  If you are interested in contributing
 send me an email or check out the issues.
 
-If you want to experiment with Accimus, check out the [phrasecount][7] example.
+If you want to experiment with Fluo, check out the [phrasecount][7] example.
 This example is a simple end-to-end application that is super easy to run.  It
 also has handling for real world problems like high cardinality phrases.
 
@@ -153,6 +153,6 @@ Additional Documentation
 [2]: http://research.google.com/pubs/pub36726.html
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
-[7]: https://github.com/keith-turner/phrasecount
+[7]: https://github.com/fluo-io/phrasecount
 [8]: https://issues.apache.org/jira/browse/ACCUMULO-2766
 
