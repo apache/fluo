@@ -33,7 +33,7 @@ import io.fluo.api.Loader;
 import io.fluo.api.LoaderExecutor;
 
 /**
- * This output format enables the execution of load transaction against an Fluo table using map reduce.
+ * This output format enables the execution of load transaction against a Fluo table using map reduce.
  */
 public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
   

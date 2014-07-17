@@ -57,7 +57,7 @@ public class OracleApp implements TwillApplication {
   public TwillSpecification configure() {   
     int maxMemoryMB = Integer.parseInt(props.getProperty(OracleProperties.ORACLE_MAX_MEMORY_PROP, "256"));
     
-    log.info("Starting an fluo oracle with "+maxMemoryMB+"MB of memory");
+    log.info("Starting a fluo oracle with "+maxMemoryMB+"MB of memory");
     
     ResourceSpecification oracleResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)
