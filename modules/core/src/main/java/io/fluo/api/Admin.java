@@ -16,14 +16,9 @@
  */
 package io.fluo.api;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.Observer.NotificationType;
+import io.fluo.api.Observer.ObservedColumn;
+import io.fluo.api.config.*;
 import io.fluo.impl.Operations;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -34,10 +29,11 @@ import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooKeeper;
 
-import io.fluo.api.Observer.NotificationType;
-import io.fluo.api.Observer.ObservedColumn;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.WorkerProperties;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * 
@@ -113,7 +109,7 @@ public class Admin {
         String key = (String) entry.getKey();
         if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
           addObserver(colObservers, weakObservers, entry);
-        } else if (key.startsWith("fluo.worker") || key.startsWith("fluo.tx")) {
+        } else if (key.startsWith(WorkerProperties.WORKER_PREFIX) || key.startsWith(TransactionConfiguration.TRANSACTION_PREFIX)) {
           workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
       }

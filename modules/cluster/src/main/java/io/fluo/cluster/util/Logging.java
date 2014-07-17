@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import io.fluo.impl.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +49,11 @@ public class Logging {
       }
     } else {
       
-      System.setProperty("fluo.log.application", application);
-      System.setProperty("fluo.log.dir.log", logOutput);
+      System.setProperty(Constants.FLUO_PREFIX + ".log.application", application);
+      System.setProperty(Constants.FLUO_PREFIX + ".log.dir.log", logOutput);
 
       String localhost = InetAddress.getLocalHost().getHostName();
-      System.setProperty("fluo.log.ip.localhost.hostname", localhost);
+      System.setProperty(Constants.FLUO_PREFIX + ".log.ip.localhost.hostname", localhost);
  
       // Use a specific log config, if it exists
       logConfig = String.format("%s/logback-file-%s.xml", configDir, application);

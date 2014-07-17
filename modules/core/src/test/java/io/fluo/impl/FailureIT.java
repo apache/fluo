@@ -16,21 +16,6 @@
  */
 package io.fluo.impl;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
-
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
-import org.junit.Assert;
-import org.junit.Test;
-
 import io.fluo.api.AbstractObserver;
 import io.fluo.api.Column;
 import io.fluo.api.Transaction;
@@ -41,6 +26,20 @@ import io.fluo.api.exceptions.StaleScanException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.TransactionImpl.CommitData;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
 
 /**
  * 
@@ -126,7 +125,7 @@ public class FailureIT extends Base {
   @Test
   public void testRollforwardMany() throws Exception {
     // test writing lots of columns that need to be rolled forward
-    
+
     Column col1 = typeLayer.newColumn("fam1", "q1");
     Column col2 = typeLayer.newColumn("fam1", "q2");
     
@@ -170,7 +169,7 @@ public class FailureIT extends Base {
   @Test
   public void testRollback() throws Exception {
     // test the case where a scan encounters a stuck lock and rolls it back
-    
+
     TestTransaction tx = new TestTransaction(config);
     
     tx.mutate().row("bob").col(balanceCol).set("10");
@@ -226,7 +225,7 @@ public class FailureIT extends Base {
   @Test
   public void testRollfoward() throws Exception {
     // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward
-    
+
     TestTransaction tx = new TestTransaction(config);
 
     tx.mutate().row("bob").col(balanceCol).set("10");
@@ -336,7 +335,7 @@ public class FailureIT extends Base {
   
   @Test
   public void testStaleScan() throws Exception {
-    
+
     TestTransaction tx = new TestTransaction(config);
     
     tx.mutate().row("bob").col(balanceCol).set("10");
@@ -371,7 +370,7 @@ public class FailureIT extends Base {
   
   @Test
   public void testCommitBug1() throws Exception {
-    
+
     TestTransaction tx1 = new TestTransaction(config);
     
     tx1.mutate().row("bob").col(balanceCol).set("10");

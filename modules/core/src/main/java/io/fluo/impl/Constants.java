@@ -26,6 +26,7 @@ public class Constants {
   public static final ByteSequence NOTIFY_CF = new ArrayByteSequence("ntfy");
   
   public static class Zookeeper {
+
     public static final String CONFIG = "/config";
     public static final String TABLE = CONFIG + "/accumulo.table";
     public static final String ACCUMULO_INSTANCE_NAME = CONFIG + "/accumulo.instance.name";
@@ -39,7 +40,8 @@ public class Constants {
     public static final String ORACLE_SERVER = ORACLE + "/server";
   }
 
-  public static final String WORKER_THREADS = "fluo.config.worker.numThreads";
+  public static final String FLUO_PREFIX = "io.fluo";
+  public static final String WORKER_THREADS = FLUO_PREFIX + ".config.worker.numThreads";
 
   public static final long ROLLBACK_TIME_DEFAULT = 300000;
 }

@@ -16,6 +16,8 @@
  */
 package io.fluo.api.config;
 
+import io.fluo.impl.Constants;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,7 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import io.fluo.impl.Constants;
+import static io.fluo.impl.Constants.FLUO_PREFIX;
 
 /**
  * 
@@ -34,10 +36,11 @@ import io.fluo.impl.Constants;
 public class WorkerProperties extends ConnectionProperties implements TransactionConfiguration {
 
   private static final long serialVersionUID = 1L;
-  public static final String NUM_THREADS_PROP = "fluo.worker.numThreads";
-  public static final String OBSERVER_PREFIX_PROP = "fluo.worker.observer.";
-  public static final String WORKER_INSTANCES_PROP = "fluo.worker.instances";
-  public static final String WORKER_MAX_MEMORY_PROP = "fluo.worker.max.memory.mb";
+  public static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
+  public static final String NUM_THREADS_PROP = WORKER_PREFIX + ".numThreads";
+  public static final String OBSERVER_PREFIX_PROP = WORKER_PREFIX + ".observer.";
+  public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
+  public static final String WORKER_MAX_MEMORY_PROP = WORKER_PREFIX + ".max.memory.mb";
 
   public WorkerProperties() {
     super();

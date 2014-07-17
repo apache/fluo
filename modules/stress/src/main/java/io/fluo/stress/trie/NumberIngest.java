@@ -16,13 +16,12 @@
  */
 package io.fluo.stress.trie;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Random;
-
+import io.fluo.api.LoaderExecutor;
+import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.LoaderExecutorProperties;
+import io.fluo.core.util.PropertyUtil;
+import io.fluo.impl.*;
+import io.fluo.impl.Constants;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -31,23 +30,16 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reducer;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.fluo.api.LoaderExecutor;
-import io.fluo.api.config.InitializationProperties;
-import io.fluo.api.config.LoaderExecutorProperties;
-import io.fluo.core.util.PropertyUtil;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Random;
 
 /** MapReduce pipeline that ingests random numbers into Fluo, determines a unique set numbers,
  * and counts the number of unique numbers in that set.
@@ -65,11 +57,11 @@ public class NumberIngest {
     
     public void configure(JobConf job) {      
       InitializationProperties props = new InitializationProperties();
-      props.setZookeepers(job.get("fluo.zookeeper.connect"));
-      props.setZookeeperRoot(job.get("fluo.zookeeper.root"));
-      props.setAccumuloInstance(job.get("fluo.accumulo.instance"));
-      props.setAccumuloUser(job.get("fluo.accumulo.user"));
-      props.setAccumuloPassword(job.get("fluo.accumulo.password"));
+      props.setZookeepers(job.get(Constants.FLUO_PREFIX + ".zookeeper.connect"));
+      props.setZookeeperRoot(job.get(Constants.FLUO_PREFIX + ".zookeeper.root"));
+      props.setAccumuloInstance(job.get(Constants.FLUO_PREFIX + ".accumulo.instance"));
+      props.setAccumuloUser(job.get(Constants.FLUO_PREFIX + ".accumulo.user"));
+      props.setAccumuloPassword(job.get(Constants.FLUO_PREFIX + ".accumulo.password"));
      
       nodeSize = job.getInt("trie.node.size", 4);
       

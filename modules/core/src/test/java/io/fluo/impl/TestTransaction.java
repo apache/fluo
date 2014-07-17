@@ -1,14 +1,5 @@
 package io.fluo.impl;
 
-
-import io.fluo.impl.Configuration;
-import io.fluo.impl.TransactionImpl;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-
 import io.fluo.api.Column;
 import io.fluo.api.exceptions.AlreadyAcknowledgedException;
 import io.fluo.api.exceptions.CommitException;
@@ -16,6 +7,11 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.impl.TransactionImpl.CommitData;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 
 public class TestTransaction extends TypedTransaction {
 
