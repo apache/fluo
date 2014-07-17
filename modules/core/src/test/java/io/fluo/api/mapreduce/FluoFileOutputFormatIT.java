@@ -1,9 +1,8 @@
 package io.fluo.api.mapreduce;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-
+import io.fluo.api.Column;
+import io.fluo.api.types.StringEncoder;
+import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.Base;
 import io.fluo.impl.TestTransaction;
 import org.apache.accumulo.core.data.ArrayByteSequence;
@@ -22,9 +21,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import io.fluo.api.Column;
-import io.fluo.api.types.StringEncoder;
-import io.fluo.api.types.TypeLayer;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class FluoFileOutputFormatIT extends Base {
 
@@ -66,7 +65,7 @@ public class FluoFileOutputFormatIT extends Base {
     // run map reduce job to generate rfiles
     JobConf jconf = new JobConf();
     jconf.set("mapred.job.tracker", "true");
-    jconf.set("fs.default.name", "file:///");
+    jconf.set("fs.defaultFS", "file:///");
     Job job = new Job(jconf);
     job.setInputFormatClass(TextInputFormat.class);
     FileInputFormat.setInputPaths(job, inDir.toURI().toString());
