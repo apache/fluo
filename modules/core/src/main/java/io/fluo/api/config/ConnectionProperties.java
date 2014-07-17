@@ -17,6 +17,7 @@
 package io.fluo.api.config;
 
 import io.fluo.impl.Configuration;
+import io.fluo.impl.Constants;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
+import static io.fluo.impl.Constants.FLUO_PREFIX;
+
 /**
  * The class helps create a properties object with the key/values required to connect to an Fluo instance.
  */
@@ -32,13 +35,13 @@ public class ConnectionProperties extends Properties {
   
   private static final long serialVersionUID = 1L;
 
-  public static final String ACCUMULO_PASSWORD_PROP = "fluo.accumulo.password";
-  public static final String ACCUMULO_USER_PROP = "fluo.accumulo.user";
-  public static final String ACCUMULO_INSTANCE_PROP = "fluo.accumulo.instance";
+  public static final String ACCUMULO_PASSWORD_PROP = FLUO_PREFIX + ".accumulo.password";
+  public static final String ACCUMULO_USER_PROP = FLUO_PREFIX + ".accumulo.user";
+  public static final String ACCUMULO_INSTANCE_PROP = FLUO_PREFIX + ".accumulo.instance";
 
-  public static final String ZOOKEEPER_ROOT_PROP = "fluo.zookeeper.root";
-  public static final String ZOOKEEPER_TIMEOUT_PROP = "fluo.zookeeper.timeout";
-  public static final String ZOOKEEPER_CONNECT_PROP = "fluo.zookeeper.connect";
+  public static final String ZOOKEEPER_ROOT_PROP = FLUO_PREFIX + ".zookeeper.root";
+  public static final String ZOOKEEPER_TIMEOUT_PROP = FLUO_PREFIX + ".zookeeper.timeout";
+  public static final String ZOOKEEPER_CONNECT_PROP = FLUO_PREFIX + ".zookeeper.connect";
   
   public ConnectionProperties() {
     super(Configuration.getDefaultProperties());

@@ -16,10 +16,14 @@
  */
 package io.fluo.api.config;
 
+import io.fluo.impl.Constants;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
+
+import static io.fluo.impl.Constants.FLUO_PREFIX;
 
 
 /**
@@ -28,9 +32,9 @@ import java.util.Properties;
 public class InitializationProperties extends WorkerProperties {
   private static final long serialVersionUID = 1L;
 
-  public static final String CLEAR_ZOOKEEPER_PROP = "fluo.init.zookeeper.clear";
-  public static final String TABLE_PROP = "fluo.init.accumulo.table";
-  public static final String CLASSPATH_PROP = "fluo.init.accumulo.classpath";
+  public static final String CLEAR_ZOOKEEPER_PROP = FLUO_PREFIX + ".init.zookeeper.clear";
+  public static final String TABLE_PROP = FLUO_PREFIX + ".init.accumulo.table";
+  public static final String CLASSPATH_PROP = FLUO_PREFIX + ".init.accumulo.classpath";
 
   private void setDefaults() {
     setDefault(CLEAR_ZOOKEEPER_PROP, "false");

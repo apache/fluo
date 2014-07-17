@@ -25,7 +25,7 @@ Using Maven, you can build Fluo with the following steps.
 
 ```
 git clone https://github.com/fluo-io/fluo.git
-cd Fluo
+cd fluo
 mvn package
 ```
 
@@ -90,7 +90,7 @@ These processes can either be run on a YARN cluster or started locally on each
 machine.
 
 The preferred method to run Fluo applications is using YARN which will start
-up multiple workers as configured in `connection.properties`.  To start an Fluo
+up multiple workers as configured in `connection.properties`.  To start a Fluo
 cluster in YARN, run following commands:
 
 ```

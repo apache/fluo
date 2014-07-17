@@ -1,17 +1,21 @@
 package io.fluo.api.config;
 
+import io.fluo.impl.Constants;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
+import static io.fluo.impl.Constants.FLUO_PREFIX;
+
 public class OracleProperties extends ConnectionProperties {
  
   private static final long serialVersionUID = 1L;
  
-  public static final String ORACLE_PORT_PROP = "fluo.oracle.port";
-  public static final String ORACLE_MAX_MEMORY_PROP = "fluo.oracle.max.memory.mb";
+  public static final String ORACLE_PORT_PROP = FLUO_PREFIX + ".oracle.port";
+  public static final String ORACLE_MAX_MEMORY_PROP = FLUO_PREFIX + ".oracle.max.memory.mb";
 
   public static final int ORACLE_DEFAULT_PORT = 9913;
   
