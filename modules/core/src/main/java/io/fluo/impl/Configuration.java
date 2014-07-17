@@ -16,6 +16,14 @@
  */
 package io.fluo.impl;
 
+import io.fluo.api.Column;
+import io.fluo.api.config.ConnectionProperties;
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.config.OracleProperties;
+import io.fluo.api.config.TransactionConfiguration;
+import io.fluo.api.config.WorkerProperties;
+import io.fluo.core.util.CuratorUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -28,13 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.fluo.api.Column;
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.OracleProperties;
-import io.fluo.api.config.TransactionConfiguration;
-import io.fluo.api.config.WorkerProperties;
-import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -96,10 +97,9 @@ public class Configuration {
     if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
       throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
 
-    this.resources = new SharedResources(this);
-
     rollbackTime = Long.parseLong(getWorkerProperties().getProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, Constants.ROLLBACK_TIME_DEFAULT + ""));
 
+    this.resources = new SharedResources(this);
   }
   
   /**

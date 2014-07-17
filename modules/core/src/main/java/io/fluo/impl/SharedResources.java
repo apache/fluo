@@ -1,7 +1,7 @@
 package io.fluo.impl;
 
-import io.fluo.impl.TransactorID.TrStatus;
 import io.fluo.impl.TransactorCache.TcStatus;
+import io.fluo.impl.TransactorID.TrStatus;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -26,9 +26,10 @@ public class SharedResources implements Closeable {
   private SharedBatchWriter sbw;
   private CuratorFramework curator;
   private TransactorID tid = null;
-  private TransactorCache cache = null;
+  private TransactorCache transactorCache = null;
   private volatile boolean isClosed = false;
-  
+  private TxInfoCache txInfoCache;
+
   public SharedResources(Configuration config) throws TableNotFoundException {
     this.config = config;
     curator = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), 
@@ -38,6 +39,7 @@ public class SharedResources implements Closeable {
     sbw = new SharedBatchWriter(bw);
     cw = config.getConnector().createConditionalWriter(config.getTable(), 
         new ConditionalWriterConfig().setAuthorizations(config.getAuthorizations()));
+    txInfoCache = new TxInfoCache(config);
   }
   
   public SharedBatchWriter getBatchWriter() {
@@ -50,11 +52,16 @@ public class SharedResources implements Closeable {
     return cw;
   }
   
+  public TxInfoCache getTxInfoCache() {
+    checkIfClosed();
+    return txInfoCache;
+  }
+  
   public CuratorFramework getCurator() {
     checkIfClosed();
     return curator;
   }
-  
+
   public synchronized TransactorID getTransactorID() {
     checkIfClosed();
     if (tid == null) {
@@ -67,12 +74,12 @@ public class SharedResources implements Closeable {
   
   public synchronized TransactorCache getTransactorCache() {
     checkIfClosed();
-    if (cache == null) {
-      cache = new TransactorCache(config);
-    } else if (cache.getStatus() == TcStatus.CLOSED) {
+    if (transactorCache == null) {
+      transactorCache = new TransactorCache(config);
+    } else if (transactorCache.getStatus() == TcStatus.CLOSED) {
       throw new IllegalStateException("TransactorCache is closed!");
     }
-    return cache;
+    return transactorCache;
   }
   
   @Override
@@ -85,9 +92,9 @@ public class SharedResources implements Closeable {
         throw new RuntimeException(e);
       }
     }
-    if (cache != null) {
+    if (transactorCache != null) {
       try {
-        cache.close();
+        transactorCache.close();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
