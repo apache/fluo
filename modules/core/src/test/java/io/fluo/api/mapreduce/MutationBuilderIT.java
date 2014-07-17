@@ -17,7 +17,7 @@ public class MutationBuilderIT extends Base {
 
   @Test
   public void testBatchWrite() throws Exception {
-    // test initializing an Fluo table by batch writing to it
+    // test initializing a Fluo table by batch writing to it
 
     // use a batch writer to test this because its easier than using AccumuloOutputFormat
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());

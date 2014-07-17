@@ -47,7 +47,7 @@ public class Admin {
   }
 
   /**
-   * initialize an Fluo instance
+   * initialize a Fluo instance
    * 
    * @param props
    *          see {@link io.fluo.api.config.InitializationProperties}

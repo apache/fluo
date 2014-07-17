@@ -29,7 +29,7 @@ import java.util.Set;
 import static io.fluo.impl.Constants.FLUO_PREFIX;
 
 /**
- * The class helps create a properties object with the key/values required to connect to an Fluo instance.
+ * The class helps create a properties object with the key/values required to connect to a Fluo instance.
  */
 public class ConnectionProperties extends Properties {
   

@@ -45,7 +45,7 @@ import io.fluo.impl.OracleClient;
 import io.fluo.impl.TransactionImpl;
 
 /**
- * This input format reads a consistent snapshot from an Fluo table.
+ * This input format reads a consistent snapshot from a Fluo table.
  */
 public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
   
@@ -129,7 +129,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
   }
   
   /**
-   * Configure properties needed to connect to an Fluo instance
+   * Configure properties needed to connect to a Fluo instance
    * 
    * @param conf
    * @param props

@@ -85,7 +85,7 @@ Finally, initialize your instance which only needs to be called once and stores
 Running Fluo
 ----------------
 
-An Fluo instance consists of 1 oracle process and multiple worker processes.
+A Fluo instance consists of 1 oracle process and multiple worker processes.
 These processes can either be run on a YARN cluster or started locally on each
 machine.
 
