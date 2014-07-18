@@ -33,7 +33,8 @@ public class LockValue {
   private Column pcol;
   private boolean isWrite;
   private boolean isDelete;
-  private ByteSequence observer;
+  private boolean isTrigger;
+  private Long transactor;
 
   public LockValue(byte[] enc) {
     List<ByteSequence> fields = ByteUtil.split(new ArrayByteSequence(enc));
@@ -45,8 +46,8 @@ public class LockValue {
     this.pcol = new Column(fields.get(1), fields.get(2)).setVisibility(new ColumnVisibility(fields.get(3).toArray()));
     this.isWrite = (fields.get(4).byteAt(0) & 0x1) == 0x1;
     this.isDelete = (fields.get(4).byteAt(0) & 0x2) == 0x2;
-    this.observer = fields.get(5);
-    
+    this.isTrigger = (fields.get(4).byteAt(0) & 0x4) == 0x4;
+    this.transactor = ByteUtil.decodeLong(fields.get(5).toArray());    
   }
   
   public ByteSequence getPrimaryRow() {
@@ -65,22 +66,29 @@ public class LockValue {
     return isDelete;
   }
   
-  public ByteSequence getObserver() {
-    return observer;
+  public boolean isTrigger() {
+    return isTrigger;
+  }
+  
+  public Long getTransactor() {
+    return transactor;
   }
 
-  public static byte[] encode(ByteSequence prow, Column pcol, boolean isWrite, boolean isDelete, ByteSequence observer) {
+  public static byte[] encode(ByteSequence prow, Column pcol, boolean isWrite, boolean isDelete, boolean isTrigger, Long transactor) {
     byte bools[] = new byte[1];
     bools[0] = 0;
     if (isWrite)
       bools[0] = 0x1;
     if (isDelete)
       bools[0] |= 0x2;
+    if (isTrigger)
+      bools[0] |= 0x4;
     return ByteUtil.concat(prow, pcol.getFamily(), pcol.getQualifier(), new ArrayByteSequence(pcol.getVisibility().getExpression()), new ArrayByteSequence(
-        bools), observer);
+        bools), new ArrayByteSequence(ByteUtil.encode(transactor)));
   }
   
   public String toString() {
-    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") + " " + observer;
+    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") 
+        + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + TransactorID.longToString(transactor);
   }
 }

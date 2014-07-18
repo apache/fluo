@@ -9,6 +9,8 @@ public class TxStats {
   private long collisions = 0;
   // number of entries recovered from other transactions
   private long recovered = 0;
+  private long deadLocks = 0;
+  private long timedOutLocks = 0;
 
   TxStats() {
     this.startTime = System.currentTimeMillis();
@@ -37,6 +39,14 @@ public class TxStats {
   public long getRecovered() {
     return recovered;
   }
+  
+  public long getDeadLocks() {
+    return deadLocks;
+  }
+  
+  public long getTimedOutLocks() {
+    return timedOutLocks;
+  }
 
   void incrementLockWaitTime(long l) {
     lockWaitTime += l;
@@ -53,7 +63,14 @@ public class TxStats {
   void incrementCollisions(long c) {
     collisions += c;
   }
-
+  
+  void incrementDeadLocks() {
+    deadLocks++;
+  }
+  
+  void incrementTimedOutLocks() {
+    timedOutLocks++;
+  }
 
   void setFinishTime(long t) {
     finishTime = t;

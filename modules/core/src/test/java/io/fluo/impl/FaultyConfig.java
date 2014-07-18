@@ -42,6 +42,6 @@ public class FaultyConfig extends Configuration {
   }
 
   public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return new FaultyConditionalWriter(super.createConditionalWriter(), up, wp);
+    return new FaultyConditionalWriter(super.getSharedResources().getConditionalWriter(), up, wp);
   }
 }
