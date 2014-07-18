@@ -16,23 +16,12 @@
  */
 package io.fluo.stress.trie;
 
+import static io.fluo.impl.Constants.FLUO_PREFIX;
 import io.fluo.api.LoaderExecutor;
+import io.fluo.api.config.ConnectionProperties;
 import io.fluo.api.config.InitializationProperties;
 import io.fluo.api.config.LoaderExecutorProperties;
 import io.fluo.core.util.PropertyUtil;
-import io.fluo.impl.*;
-import io.fluo.impl.Constants;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
@@ -41,12 +30,34 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.RunningJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** MapReduce pipeline that ingests random numbers into Fluo, determines a unique set numbers,
  * and counts the number of unique numbers in that set.
  */
 public class NumberIngest {
   
   private static Logger log = LoggerFactory.getLogger(NumberIngest.class);
+  public static final String TRIE_NODE_SIZE_PROP = FLUO_PREFIX + ".stress.trie.node.size";
   
   public static class IngestMapper extends MapReduceBase 
       implements Mapper<LongWritable, Text, LongWritable, IntWritable> {
@@ -57,13 +68,13 @@ public class NumberIngest {
     
     public void configure(JobConf job) {      
       InitializationProperties props = new InitializationProperties();
-      props.setZookeepers(job.get(Constants.FLUO_PREFIX + ".zookeeper.connect"));
-      props.setZookeeperRoot(job.get(Constants.FLUO_PREFIX + ".zookeeper.root"));
-      props.setAccumuloInstance(job.get(Constants.FLUO_PREFIX + ".accumulo.instance"));
-      props.setAccumuloUser(job.get(Constants.FLUO_PREFIX + ".accumulo.user"));
-      props.setAccumuloPassword(job.get(Constants.FLUO_PREFIX + ".accumulo.password"));
+      props.setZookeepers(job.get(ConnectionProperties.ZOOKEEPER_CONNECT_PROP));
+      props.setZookeeperRoot(job.get(ConnectionProperties.ZOOKEEPER_ROOT_PROP));
+      props.setAccumuloInstance(job.get(ConnectionProperties.ACCUMULO_INSTANCE_PROP));
+      props.setAccumuloUser(job.get(ConnectionProperties.ACCUMULO_USER_PROP));
+      props.setAccumuloPassword(job.get(ConnectionProperties.ACCUMULO_PASSWORD_PROP));
      
-      nodeSize = job.getInt("trie.node.size", 4);
+      nodeSize = job.getInt(TRIE_NODE_SIZE_PROP, 4);
       
       LoaderExecutorProperties lep = new LoaderExecutorProperties(props);
       try {
@@ -157,13 +168,14 @@ public class NumberIngest {
   public static void main(String[] args) throws IOException, ConfigurationException {
 
     // Parse arguments
-    if (args.length != 3) {
-      log.error("Usage: NumberIngest <numMappers> <numbersPerMapper> <fluoConnectionProps>");
+    if (args.length != 4) {
+      log.error("Usage: NumberIngest <numMappers> <numbersPerMapper> <nodeSize> <fluoConnectionProps>");
       System.exit(-1);
     }
     int numMappers = Integer.parseInt(args[0]);
     int numPerMapper = Integer.parseInt(args[1]);
-    String connPropsPath = args[2];
+    int nodeSize = Integer.parseInt(args[2]);
+    String connPropsPath = args[3];
     
     String hadoopPrefix = System.getenv("HADOOP_PREFIX");
     if (hadoopPrefix == null) {
@@ -184,6 +196,7 @@ public class NumberIngest {
     ingestConf.setJobName("NumberIngest");
     
     loadConfig(ingestConf, PropertyUtil.loadProps(connPropsPath));
+    ingestConf.setInt(TRIE_NODE_SIZE_PROP, nodeSize);
     
     ingestConf.setOutputKeyClass(LongWritable.class);
     ingestConf.setOutputValueClass(IntWritable.class);

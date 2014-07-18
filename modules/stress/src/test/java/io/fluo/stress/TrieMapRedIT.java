@@ -68,7 +68,7 @@ public class TrieMapRedIT extends StressBase {
   public void runMapRedTest(Integer mappers, Integer numPerMapper, Integer nodeSize) throws Exception {
     
     Configuration config = driver.getConfiguration();
-    config.setInt("trie.node.size", nodeSize);
+    config.setInt(NumberIngest.TRIE_NODE_SIZE_PROP, nodeSize);
     loadConfig(config, props);
     
     Integer total = mappers * numPerMapper;
