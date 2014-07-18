@@ -28,6 +28,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
+import org.apache.accumulo.server.util.PortUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -41,6 +42,7 @@ import io.fluo.api.Snapshot;
 import io.fluo.api.SnapshotFactory;
 import io.fluo.api.config.InitializationProperties;
 import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.config.OracleProperties;
 import io.fluo.api.test.MiniFluo;
 import io.fluo.format.FluoFormatter;
 
@@ -86,6 +88,7 @@ public class StressBase {
     props.setAccumuloTable(getNextTableName());
     props.setNumThreads(5);
     props.setObservers(getObservers());
+    props.setProperty(OracleProperties.ORACLE_PORT_PROP, Integer.toString(PortUtils.getRandomFreePort()));
   
     Admin.initialize(props);
 

@@ -47,12 +47,13 @@ Finally, on a node where Hadoop is set up, run the following command to ingest
 data into Fluo using fluo-stress-1.0.0-alpha-1-SNAPSHOT-jar-with-dependencies.jar:
 
 ```
-yarn jar <jarPath> io.fluo.stress.trie.NumberIngest <numMap> <numPerMap> <connPath>
+yarn jar <jarPath> io.fluo.stress.trie.NumberIngest <numMap> <numPerMap> <nodeSize> <connPath>
 
 where:
 
 jarPath = target/fluo-stress-1.0.0-alpha-1-SNAPSHOT-jar-with-dependencies.jar
 numMap = Number of ingest map tasks
 numPerMap = Number of integers ingested per map
+nodeSize = Size of node in bits which must be a divisor of 32/64
 connPath = Path to Fluo connection.properties
 ```
