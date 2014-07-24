@@ -24,11 +24,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import io.fluo.api.config.ConnectionProperties;
+
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -37,6 +36,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
@@ -47,7 +47,7 @@ import io.fluo.impl.TransactionImpl;
 /**
  * This input format reads a consistent snapshot from a Fluo table.
  */
-public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
+public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   
   private static String TIMESTAMP_CONF_KEY = FluoInputFormat.class.getName() + ".timestamp";
   private static String PROPS_CONF_KEY = FluoInputFormat.class.getName() + ".props";
@@ -55,11 +55,11 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
 
 
   @Override
-  public RecordReader<ByteSequence,ColumnIterator> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+  public RecordReader<Bytes,ColumnIterator> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
 
-    return new RecordReader<ByteSequence,ColumnIterator>() {
+    return new RecordReader<Bytes,ColumnIterator>() {
       
-      private Entry<ByteSequence,ColumnIterator> entry;
+      private Entry<Bytes,ColumnIterator> entry;
       private RowIterator rowIter;
       private Configuration accisConf = null;
       
@@ -70,7 +70,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
       }
       
       @Override
-      public ByteSequence getCurrentKey() throws IOException, InterruptedException {
+      public Bytes getCurrentKey() throws IOException, InterruptedException {
         return entry.getKey();
       }
       
@@ -103,7 +103,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
           ScannerConfiguration sc = new ScannerConfiguration().setRange(range);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
-            sc.fetchColumnFamily(new ArrayByteSequence(fam));
+            sc.fetchColumnFamily(Bytes.wrap(fam));
 
           rowIter = ti.get(sc);
         } catch (Exception e) {
@@ -135,6 +135,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
    * @param props
    *          use {@link io.fluo.api.config.ConnectionProperties} to configure programmatically
    */
+  @SuppressWarnings("deprecation")
   public static void configure(Job conf, Properties props) {
     try {
       
@@ -165,7 +166,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
     job.getConfiguration().setStrings(FAMS_CONF_KEY, fams);
   }
 
-  public static void fetchFamilies(Job job, ByteSequence... fams) {
+  public static void fetchFamilies(Job job, Bytes... fams) {
     // TODO support binary data
     String sfams[] = new String[fams.length];
     for (int i = 0; i < sfams.length; i++) {

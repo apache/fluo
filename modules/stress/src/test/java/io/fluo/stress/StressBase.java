@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
 import org.apache.accumulo.server.util.PortUtils;
@@ -34,6 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import io.fluo.api.Admin;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
@@ -125,10 +125,10 @@ public class StressBase {
 
       System.out.println("== snapshot start ==");
       while (iter.hasNext()) {
-        Entry<ByteSequence, ColumnIterator> rowEntry = iter.next();
+        Entry<Bytes, ColumnIterator> rowEntry = iter.next();
         ColumnIterator citer = rowEntry.getValue();
         while (citer.hasNext()) {
-          Entry<Column, ByteSequence> colEntry = citer.next();
+          Entry<Column, Bytes> colEntry = citer.next();
           System.out.println(rowEntry.getKey()+" "+colEntry.getKey()+"\t"+colEntry.getValue());
         }
       }  

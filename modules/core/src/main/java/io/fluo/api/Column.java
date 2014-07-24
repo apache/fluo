@@ -20,21 +20,19 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import io.fluo.impl.ByteUtil;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 
 /**
- * 
+ * Represents Column in Fluo
  */
 public class Column implements Writable {
   
   private static final ColumnVisibility EMPTY_VIS = new ColumnVisibility(new byte[0]);
 
-  private ByteSequence family;
-  private ByteSequence qualifier;
+  private Bytes family;
+  private Bytes qualifier;
   private ColumnVisibility visibility = EMPTY_VIS;
 
   public int hashCode() {
@@ -53,16 +51,16 @@ public class Column implements Writable {
   
   public Column() {}
 
-  public Column(ByteSequence family, ByteSequence qualifier) {
+  public Column(Bytes family, Bytes qualifier) {
     this.family = family;
     this.qualifier = qualifier;
   }
   
-  public ByteSequence getFamily() {
+  public Bytes getFamily() {
     return family;
   }
   
-  public ByteSequence getQualifier() {
+  public Bytes getQualifier() {
     return qualifier;
   }
 
@@ -82,17 +80,16 @@ public class Column implements Writable {
 
   // TODO remove from public API
   public void write(DataOutput out) throws IOException {
-    ByteUtil.write(out, family);
-    ByteUtil.write(out, qualifier);
+    Bytes.write(out, family);
+    Bytes.write(out, qualifier);
 
     WritableUtils.writeVInt(out, visibility.getExpression().length);
     out.write(visibility.getExpression());
-
   }
 
   public void readFields(DataInput in) throws IOException {
-    family = ByteUtil.read(in);
-    qualifier = ByteUtil.read(in);
+    family = Bytes.read(in);
+    qualifier = Bytes.read(in);
 
     int len = WritableUtils.readVInt(in);
     byte[] cv = new byte[len];
@@ -100,6 +97,5 @@ public class Column implements Writable {
 
     // TODO use cv cache?
     visibility = new ColumnVisibility(cv);
-
   }
 }

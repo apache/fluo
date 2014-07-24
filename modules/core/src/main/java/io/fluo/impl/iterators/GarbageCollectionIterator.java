@@ -23,7 +23,9 @@ import java.util.HashSet;
 import java.util.Map;
 
 import io.fluo.impl.WriteValue;
+
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.KeyValue;
@@ -46,6 +48,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   // TODO this iterator should support the concept of oldest running scan, and have the ability to gather this from an external source.
 
   private static final String VERSION_OPT = "numVersions";
+  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(Constants.NOTIFY_CF.toArray());
   private int numVersions;
   private SortedKeyValueIterator<Key,Value> source;
   
@@ -124,7 +127,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
     curCol.set(source.getTopKey());
 
-    if (source.getTopKey().getColumnFamilyData().equals(Constants.NOTIFY_CF)) {
+    if (source.getTopKey().getColumnFamilyData().equals(NOTIFY_CF_BS)) {
       return;
     }
 

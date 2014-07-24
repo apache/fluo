@@ -1,10 +1,10 @@
 package io.fluo.api.types;
 
 import io.fluo.api.Transaction;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
+
 import org.apache.accumulo.core.security.ColumnVisibility;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.Snapshot;
 import io.fluo.api.SnapshotFactory;
@@ -14,31 +14,31 @@ public class TypeLayer {
   private Encoder encoder;
 
   abstract static class RowColumnBuilder<TC,TQ> {
-    abstract void setRow(ByteSequence r);
+    abstract void setRow(Bytes r);
 
-    abstract void setFamily(ByteSequence f);
+    abstract void setFamily(Bytes f);
 
-    abstract TQ setQualifier(ByteSequence q);
+    abstract TQ setQualifier(Bytes q);
 
     abstract TC setColumn(Column c);
   }
 
   private static class ColumnBuilder extends RowColumnBuilder<Column,VisibilityBuilder> {
 
-    private ByteSequence family;
+    private Bytes family;
 
     @Override
-    void setRow(ByteSequence r) {
+    void setRow(Bytes r) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    void setFamily(ByteSequence f) {
+    void setFamily(Bytes f) {
       this.family = f;
     }
 
     @Override
-    VisibilityBuilder setQualifier(ByteSequence q) {
+    VisibilityBuilder setQualifier(Bytes q) {
       return new VisibilityBuilder(new Column(family, q));
     }
 
@@ -90,11 +90,11 @@ public class TypeLayer {
     }
 
     public FamilyAction<TC,TQ,R> row(byte[] row) {
-      result.setRow(new ArrayByteSequence(row));
+      result.setRow(Bytes.wrap(row));
       return new FamilyAction<TC,TQ,R>(result);
     }
 
-    public FamilyAction<TC,TQ,R> row(ByteSequence row) {
+    public FamilyAction<TC,TQ,R> row(Bytes row) {
       result.setRow(row);
       return new FamilyAction<TC,TQ,R>(result);
     }
@@ -126,11 +126,11 @@ public class TypeLayer {
     }
 
     public QualifierAction<TC,TQ,R> fam(byte[] family) {
-      result.setFamily(new ArrayByteSequence(family));
+      result.setFamily(Bytes.wrap(family));
       return new QualifierAction<TC,TQ,R>(result);
     }
 
-    public QualifierAction<TC,TQ,R> fam(ByteSequence family) {
+    public QualifierAction<TC,TQ,R> fam(Bytes family) {
       result.setFamily(family);
       return new QualifierAction<TC,TQ,R>(result);
     }
@@ -161,10 +161,10 @@ public class TypeLayer {
     }
 
     public TQ qual(byte[] qualifier) {
-      return result.setQualifier(new ArrayByteSequence(qualifier));
+      return result.setQualifier(Bytes.wrap(qualifier));
     }
 
-    public TQ qual(ByteSequence qualifier) {
+    public TQ qual(Bytes qualifier) {
       return result.setQualifier(qualifier);
     }
 

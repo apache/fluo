@@ -1,17 +1,17 @@
 package io.fluo.impl;
 
+import io.fluo.api.Bytes;
+import io.fluo.api.Column;
+import io.fluo.api.RowIterator;
+import io.fluo.api.ScannerConfiguration;
+import io.fluo.api.Transaction;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.fluo.api.Transaction;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.log4j.Logger;
-
-import io.fluo.api.Column;
-import io.fluo.api.RowIterator;
-import io.fluo.api.ScannerConfiguration;
 
 public class TracingTransaction implements Transaction {
 
@@ -33,22 +33,22 @@ public class TracingTransaction implements Transaction {
   }
 
   @Override
-  public ByteSequence get(ByteSequence row, Column column) throws Exception {
-    ByteSequence ret = tx.get(row, column);
+  public Bytes get(Bytes row, Column column) throws Exception {
+    Bytes ret = tx.get(row, column);
     log("get(%s, %s) -> %s", row, column, ret);
     return ret;
   }
 
   @Override
-  public Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception {
-    Map<Column,ByteSequence> ret = tx.get(row, columns);
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
+    Map<Column,Bytes> ret = tx.get(row, columns);
     log("get(%s, %s) -> %s", row, columns, ret);
     return ret;
   }
 
   @Override
-  public Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception {
-    Map<ByteSequence,Map<Column,ByteSequence>> ret = tx.get(rows, columns);
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
+    Map<Bytes,Map<Column,Bytes>> ret = tx.get(rows, columns);
     // TODO make multiple log calls
     log("get(%s, %s) -> %s", rows, columns, ret);
     return ret;
@@ -62,19 +62,19 @@ public class TracingTransaction implements Transaction {
   }
 
   @Override
-  public void setWeakNotification(ByteSequence row, Column col) {
+  public void setWeakNotification(Bytes row, Column col) {
     log("setWeakNotification(%s, %s)", row, col);
     tx.setWeakNotification(row, col);
   }
 
   @Override
-  public void set(ByteSequence row, Column col, ByteSequence value) {
+  public void set(Bytes row, Column col, Bytes value) {
     log("set(%s, %s, %s)", row, col, value);
     tx.set(row, col, value);
   }
 
   @Override
-  public void delete(ByteSequence row, Column col) {
+  public void delete(Bytes row, Column col) {
     log("delete(%s, %s)", row, col);
     tx.delete(row, col);
   }

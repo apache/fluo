@@ -17,6 +17,7 @@
 package io.fluo.impl;
 
 import io.fluo.api.AbstractObserver;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
@@ -34,8 +35,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
@@ -67,7 +66,7 @@ public class FailureIT extends Base {
   public static class NullObserver extends AbstractObserver {
 
     @Override
-    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {}
+    public void process(Transaction tx, Bytes row, Column col) throws Exception {}
 
     @Override
     public ObservedColumn getObservedColumn() {
@@ -265,7 +264,7 @@ public class FailureIT extends Base {
     Assert.assertEquals(0, tx3.getStats().getDeadLocks());
     Assert.assertEquals(0, tx3.getStats().getTimedOutLocks());
     
-    int bobFinal = Integer.parseInt(tx3.get(new ArrayByteSequence("bob"), balanceCol).toString());
+    int bobFinal = Integer.parseInt(tx3.get(Bytes.wrap("bob"), balanceCol).toString());
     Assert.assertEquals(10, bobFinal);
     
     if (killTransactor) {
@@ -351,7 +350,7 @@ public class FailureIT extends Base {
     
     tx.commit();
 
-    TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
+    TestTransaction tx2 = new TestTransaction(config, "url0000", typeLayer.newColumn("attr", "lastupdate"));
     tx2.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
     tx2.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
     CommitData cd = tx2.createCommitData();
@@ -368,11 +367,11 @@ public class FailureIT extends Base {
     Assert.assertTrue(iter.hasNext());
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
     
-    TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
+    TestTransaction tx5 = new TestTransaction(config, "url0000", typeLayer.newColumn("attr", "lastupdate"));
     tx5.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
     tx5.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
     cd = tx5.createCommitData();
-    Assert.assertTrue(tx5.preCommit(cd, new ArrayByteSequence("idx:abc"), typeLayer.newColumn("doc", "url")));
+    Assert.assertTrue(tx5.preCommit(cd, Bytes.wrap("idx:abc"), typeLayer.newColumn("doc", "url")));
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
     
@@ -386,7 +385,7 @@ public class FailureIT extends Base {
     Assert.assertFalse(iter.hasNext());
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
-    TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("url0000"), typeLayer.newColumn("attr", "lastupdate"));
+    TestTransaction tx4 = new TestTransaction(config, "url0000", typeLayer.newColumn("attr", "lastupdate"));
     tx4.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
     tx4.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
 

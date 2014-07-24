@@ -22,11 +22,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Observer;
 import io.fluo.api.Transaction;
+
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -148,14 +149,14 @@ public class Worker {
     boolean loggedFirst = false;
 
     for (Entry<Key,Value> entry : scanner) {
-      List<ByteSequence> ca = ByteUtil.split(entry.getKey().getColumnQualifierData());
+      List<Bytes> ca = Bytes.split(Bytes.wrap(entry.getKey().getColumnQualifierData().toArray()));
       Column col = new Column(ca.get(0), ca.get(1));
       // TODO cache col vis
       col.setVisibility(entry.getKey().getColumnVisibilityParsed());
 
       Observer observer = getObserver(colObservers, col);
 
-      ByteSequence row = entry.getKey().getRowData();
+      Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
 
       if (!loggedFirst) {
         log.debug("thread id: " + Thread.currentThread().getId() + "  row :" + row);

@@ -18,10 +18,9 @@ package io.fluo.impl;
 
 import java.util.List;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 
 /**
@@ -29,7 +28,7 @@ import io.fluo.api.Column;
  */
 public class LockValue {
 
-  private ByteSequence prow;
+  private Bytes prow;
   private Column pcol;
   private boolean isWrite;
   private boolean isDelete;
@@ -37,7 +36,7 @@ public class LockValue {
   private Long transactor;
 
   public LockValue(byte[] enc) {
-    List<ByteSequence> fields = ByteUtil.split(new ArrayByteSequence(enc));
+    List<Bytes> fields = Bytes.split(new ArrayBytes(enc));
     
     if (fields.size() != 6)
       throw new IllegalArgumentException("more fields than expected");
@@ -50,7 +49,7 @@ public class LockValue {
     this.transactor = ByteUtil.decodeLong(fields.get(5).toArray());    
   }
   
-  public ByteSequence getPrimaryRow() {
+  public Bytes getPrimaryRow() {
     return prow;
   }
   
@@ -74,7 +73,7 @@ public class LockValue {
     return transactor;
   }
 
-  public static byte[] encode(ByteSequence prow, Column pcol, boolean isWrite, boolean isDelete, boolean isTrigger, Long transactor) {
+  public static byte[] encode(Bytes prow, Column pcol, boolean isWrite, boolean isDelete, boolean isTrigger, Long transactor) {
     byte bools[] = new byte[1];
     bools[0] = 0;
     if (isWrite)
@@ -83,8 +82,8 @@ public class LockValue {
       bools[0] |= 0x2;
     if (isTrigger)
       bools[0] |= 0x4;
-    return ByteUtil.concat(prow, pcol.getFamily(), pcol.getQualifier(), new ArrayByteSequence(pcol.getVisibility().getExpression()), new ArrayByteSequence(
-        bools), new ArrayByteSequence(ByteUtil.encode(transactor)));
+    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), Bytes.wrap(pcol.getVisibility().getExpression()), 
+        Bytes.wrap(bools), Bytes.wrap(ByteUtil.encode(transactor))).toArray();
   }
   
   public String toString() {

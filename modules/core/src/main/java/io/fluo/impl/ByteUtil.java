@@ -16,87 +16,38 @@
  */
 package io.fluo.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import io.fluo.api.Bytes;
 
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableUtils;
 
 /**
- * 
+ * Utilities for modifying byte arrays and converting
+ * Bytes objects to external formats
  */
 public class ByteUtil {
-
-  public static byte[] concat(ByteSequence... byteArrays) {
-    
-    try {
-      // TODO calculate exact array size needed
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      DataOutputStream dos = new DataOutputStream(baos);
-      
-      for (ByteSequence bs : byteArrays) {
-        WritableUtils.writeVInt(dos, bs.length());
-        if (bs.isBackedByArray()) {
-          dos.write(bs.getBackingArray(), bs.offset(), bs.length());
-        } else {
-          // TODO avoid array conversion
-          dos.write(bs.toArray());
-        }
-      }
-      
-      dos.close();
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
   
-  public static List<ByteSequence> split(ByteSequence bs) {
-    ByteArrayInputStream bais;
-    if (bs.isBackedByArray())
-      bais = new ByteArrayInputStream(bs.getBackingArray(), bs.offset(), bs.length());
-    else
-      bais = new ByteArrayInputStream(bs.toArray());
-    
-    DataInputStream dis = new DataInputStream(bais);
-    
-    ArrayList<ByteSequence> ret = new ArrayList<ByteSequence>();
-    
-    try {
-      while (true) {
-        int len = WritableUtils.readVInt(dis);
-        
-        // TODO could get pointers into original byte seq
-        byte field[] = new byte[len];
-        
-        dis.readFully(field);
-        ret.add(new ArrayByteSequence(field));
-      }
-    } catch (EOFException ee) {
-      
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    
-    return ret;
-  }
-
+  /**
+   * Encode long as byte array
+   * 
+   * @param v Long value
+   * @return byte array
+   */
   public static byte[] encode(long v) {
     byte ba[] = new byte[8];
     encode(ba, 0, v);
     return ba;
   }
 
+  /**
+   * Encode a long into a byte array at an offset
+   * 
+   * @param ba Byte array
+   * @param offset Offset
+   * @param v Long value
+   * @return byte array given in input
+   */
   public static byte[] encode(byte[] ba, int offset, long v) {
     ba[offset + 0] = (byte) (v >>> 56);
     ba[offset + 1] = (byte) (v >>> 48);
@@ -109,55 +60,71 @@ public class ByteUtil {
     return ba;
   }
 
+  /**
+   * Decode long from byte array at offset
+   * 
+   * @param ba byte array
+   * @param offset Offset 
+   * @return long value
+   */
   public static long decodeLong(byte[] ba, int offset) {
     return ((((long) ba[offset + 0] << 56) + ((long) (ba[offset + 1] & 255) << 48) + ((long) (ba[offset + 2] & 255) << 40)
         + ((long) (ba[offset + 3] & 255) << 32) + ((long) (ba[offset + 4] & 255) << 24) + ((ba[offset + 5] & 255) << 16) + ((ba[offset + 6] & 255) << 8) + ((ba[offset + 7] & 255) << 0)));
   }
 
+  /**
+   * Decode long from byte array
+   * 
+   * @param ba byte array
+   * @return long value
+   */
   public static long decodeLong(byte[] ba) {
     return ((((long) ba[0] << 56) + ((long) (ba[1] & 255) << 48) + ((long) (ba[2] & 255) << 40) + ((long) (ba[3] & 255) << 32) + ((long) (ba[4] & 255) << 24)
         + ((ba[5] & 255) << 16) + ((ba[6] & 255) << 8) + ((ba[7] & 255) << 0)));
   
   }
 
+  /**
+   * Concatenate several byte arrays into one
+   * 
+   * @param byteArrays List of byte arrays
+   * @return concatenated byte array
+   */
   public static byte[] concat(byte[]... byteArrays) {
-    ByteSequence[] bs = new ByteSequence[byteArrays.length];
+    ArrayBytes[] bs = new ArrayBytes[byteArrays.length];
     for (int i = 0; i < byteArrays.length; i++) {
-      bs[i] = new ArrayByteSequence(byteArrays[i]);
+      bs[i] = new ArrayBytes(byteArrays[i]);
     }
-    
-    return concat(bs);
+    return Bytes.concat(bs).toArray();
   }
 
-  public static Text toText(ByteSequence bs) {
-    if (bs.isBackedByArray()) {
+  /**
+   * Convert a Bytes object to Hadoop Text object
+   * 
+   * @param b Bytes
+   * @return Text object
+   */
+  public static Text toText(Bytes b) {
+    if (b.isBackedByArray()) {
       Text t = new Text(TransactionImpl.EMPTY);
-      t.set(bs.getBackingArray(), bs.offset(), bs.length());
+      t.set(b.getBackingArray(), b.offset(), b.length());
       return t;
     } else {
-      return new Text(bs.toArray());
+      return new Text(b.toArray());
     }
-  }
-
-  public static void write(DataOutput out, ByteSequence sequence) throws IOException {
-    WritableUtils.writeVInt(out, sequence.length());
-    if (sequence.isBackedByArray()) {
-      out.write(sequence.getBackingArray(), sequence.offset(), sequence.length());
-    } else {
-      for (int i = 0; i < sequence.length(); i++) {
-        out.write(sequence.byteAt(i) & 0xff);
-      }
-    }
-    
   }
   
-  public static ByteSequence read(DataInput in) throws IOException {
-    int len = WritableUtils.readVInt(in);
-    byte b[] = new byte[len];
-    
-    in.readFully(b);
-    
-    return new ArrayByteSequence(b);
+  /**
+   * Convert a Bytes object to ByteSequence object
+   * 
+   * @param b Bytes
+   * @return ByteSequence object
+   */
+  public static ByteSequence toByteSequence(Bytes b) {
+    if (b.isBackedByArray()) {
+      return new ArrayByteSequence(b.getBackingArray(), b.offset(), b.length());
+    } else {
+      return new ArrayByteSequence(b.toArray());
+    }
   }
-
 }

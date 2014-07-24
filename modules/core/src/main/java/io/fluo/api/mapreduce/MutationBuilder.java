@@ -1,11 +1,15 @@
 package io.fluo.api.mapreduce;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
+import io.fluo.impl.ByteUtil;
 import io.fluo.impl.ColumnUtil;
 import io.fluo.impl.WriteValue;
+
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Value;
+import org.apache.hadoop.io.Text;
 
 /**
  * This class allows building Accumulo mutations that are in the Fluo data format. This class is intended to be used with {@link AccumuloOutputFormat}
@@ -16,20 +20,20 @@ public class MutationBuilder {
 
   private Mutation mutation;
 
-  public MutationBuilder(ByteSequence row) {
+  public MutationBuilder(Bytes row) {
     if (row.isBackedByArray())
       mutation = new Mutation(row.getBackingArray(), row.offset(), row.length());
     else
       mutation = new Mutation(row.toArray());
   }
 
-  public MutationBuilder put(Column col, ByteSequence value) {
+  public MutationBuilder put(Column col, Bytes value) {
 
-    byte[] fam = col.getFamily().toArray();
-    byte[] qual = col.getQualifier().toArray();
+    Text fam = ByteUtil.toText(col.getFamily());
+    Text qual = ByteUtil.toText(col.getQualifier());
 
-    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.DATA_PREFIX | 0, value.toArray());
-    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.WRITE_PREFIX | 1, WriteValue.encode(0, false, false));
+    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.DATA_PREFIX | 0, new Value(value.toArray()));
+    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.WRITE_PREFIX | 1, new Value(WriteValue.encode(0, false, false)));
 
     return this;
   }

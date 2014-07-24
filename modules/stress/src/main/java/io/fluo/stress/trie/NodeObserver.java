@@ -16,11 +16,11 @@
  */
 package io.fluo.stress.trie;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.fluo.api.AbstractObserver;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.Transaction;
 import io.fluo.api.types.TypedTransaction;
@@ -34,7 +34,7 @@ public class NodeObserver extends AbstractObserver {
   private static Logger log = LoggerFactory.getLogger(NodeObserver.class);
 
   @Override
-  public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
+  public void process(Transaction tx, Bytes row, Column col) throws Exception {
     
     TypedTransaction ttx = Constants.TYPEL.transaction(tx);
     Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);

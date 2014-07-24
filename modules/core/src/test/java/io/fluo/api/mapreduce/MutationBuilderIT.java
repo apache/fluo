@@ -2,12 +2,13 @@ package io.fluo.api.mapreduce;
 
 import io.fluo.impl.Base;
 import io.fluo.impl.TestTransaction;
+
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 
@@ -23,16 +24,16 @@ public class MutationBuilderIT extends Base {
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
     try {
 
-      MutationBuilder mb1 = new MutationBuilder(new ArrayByteSequence("row1"));
-      mb1.put(tl.newColumn("cf1", "cq1"), new ArrayByteSequence("v1"));
-      mb1.put(tl.newColumn("cf1", "cq2"), new ArrayByteSequence("v2"));
-      mb1.put(tl.newColumn("cf1", "cq3"), new ArrayByteSequence("v3"));
+      MutationBuilder mb1 = new MutationBuilder(Bytes.wrap("row1"));
+      mb1.put(tl.newColumn("cf1", "cq1"), Bytes.wrap("v1"));
+      mb1.put(tl.newColumn("cf1", "cq2"), Bytes.wrap("v2"));
+      mb1.put(tl.newColumn("cf1", "cq3"), Bytes.wrap("v3"));
 
       bw.addMutation(mb1.build());
 
-      MutationBuilder mb2 = new MutationBuilder(new ArrayByteSequence("row2"));
-      mb2.put(tl.newColumn("cf1", "cq1"), new ArrayByteSequence("v4"));
-      mb2.put(tl.newColumn("cf1", "cq2"), new ArrayByteSequence("v5"));
+      MutationBuilder mb2 = new MutationBuilder(Bytes.wrap("row2"));
+      mb2.put(tl.newColumn("cf1", "cq1"), Bytes.wrap("v4"));
+      mb2.put(tl.newColumn("cf1", "cq2"), Bytes.wrap("v5"));
 
       bw.addMutation(mb2.build());
 

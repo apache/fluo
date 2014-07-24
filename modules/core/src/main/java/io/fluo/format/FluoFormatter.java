@@ -69,7 +69,7 @@ public class FluoFormatter implements Formatter {
     } else if (type.equals("DEL_LOCK")) {
       val = new DelLockValue(entry.getValue().get()).toString();
     } else if (type.equals("LOCK")) {
-      // TODO can Value be made to extend bytesequence w/o breaking API?
+      // TODO can Value be made to extend Bytes w/o breaking API?
       val = new LockValue(entry.getValue().get()).toString();
     } else {
       val = entry.getValue().toString();

@@ -20,13 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.Observer;
@@ -44,7 +43,7 @@ import io.fluo.impl.TransactionImpl.CommitData;
  */
 public class WorkerIT extends Base {
 
-  private static final ByteSequence NODE_CF = new ArrayByteSequence("node");
+  private static final Bytes NODE_CF = Bytes.wrap("node");
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
@@ -60,15 +59,15 @@ public class WorkerIT extends Base {
     @Override
     public void init(Map<String,String> config) {}
 
-    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
+    public void process(Transaction tx, Bytes row, Column col) throws Exception {
       // get previously calculated degree
 
-      ByteSequence degree = tx.get(row, typeLayer.newColumn("attr", "degree"));
+      Bytes degree = tx.get(row, typeLayer.newColumn("attr", "degree"));
       TypedTransaction ttx = typeLayer.transaction(tx);
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setRange(Range.exact(new Text(row.toArray()), new Text("link"))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setRange(Range.exact(ByteUtil.toText(row), new Text("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -79,7 +78,7 @@ public class WorkerIT extends Base {
       String degree2 = "" + count;
 
       if (degree == null || !degree.toString().equals(degree2)) {
-        ttx.set(row, typeLayer.newColumn("attr", "degree"), new ArrayByteSequence(degree2));
+        ttx.set(row, typeLayer.newColumn("attr", "degree"), Bytes.wrap(degree2));
 
         // put new entry in degree index
         ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
@@ -150,7 +149,7 @@ public class WorkerIT extends Base {
     tx6.mutate().row("N0003").col(typeLayer.newColumn("link", "N0050")).set("");
     tx6.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, new ArrayByteSequence("N0003"), typeLayer.newColumn("attr", "lastupdate"));
+    tx6.preCommit(cd, Bytes.wrap("N0003"), typeLayer.newColumn("attr", "lastupdate"));
 
     runWorker();
 

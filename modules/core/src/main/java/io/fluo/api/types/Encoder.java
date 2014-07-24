@@ -1,17 +1,17 @@
 package io.fluo.api.types;
 
-import org.apache.accumulo.core.data.ByteSequence;
+import io.fluo.api.Bytes;
 
 public interface Encoder {
-  public int decodeInteger(ByteSequence bs);
+  public int decodeInteger(Bytes b);
 
-  public ByteSequence encode(int i);
+  public Bytes encode(int i);
 
-  public long decodeLong(ByteSequence bs);
+  public long decodeLong(Bytes b);
 
-  public ByteSequence encode(long l);
+  public Bytes encode(long l);
 
-  public String decodeString(ByteSequence bs);
+  public String decodeString(Bytes b);
 
-  public ByteSequence encode(String s);
+  public Bytes encode(String s);
 }

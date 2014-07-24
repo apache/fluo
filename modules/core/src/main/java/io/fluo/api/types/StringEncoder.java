@@ -1,48 +1,36 @@
 package io.fluo.api.types;
 
-import java.io.UnsupportedEncodingException;
-
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
+import io.fluo.api.Bytes;
 
 public class StringEncoder implements Encoder {
 
   @Override
-  public int decodeInteger(ByteSequence bs) {
-    return Integer.parseInt(decodeString(bs));
+  public int decodeInteger(Bytes b) {
+    return Integer.parseInt(decodeString(b));
   }
 
   @Override
-  public ByteSequence encode(int i) {
+  public Bytes encode(int i) {
     return encode(Integer.toString(i));
   }
 
   @Override
-  public long decodeLong(ByteSequence bs) {
-    return Long.parseLong(decodeString(bs));
+  public long decodeLong(Bytes b) {
+    return Long.parseLong(decodeString(b));
   }
 
   @Override
-  public ByteSequence encode(long l) {
+  public Bytes encode(long l) {
     return encode(Long.toString(l));
   }
 
   @Override
-  public String decodeString(ByteSequence bs) {
-    try {
-      return new String(bs.toArray(), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+  public String decodeString(Bytes b) {
+    return b.toString();
   }
 
   @Override
-  public ByteSequence encode(String s) {
-    try {
-      return new ArrayByteSequence(s.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+  public Bytes encode(String s) {
+    return Bytes.wrap(s);
   }
-
 }

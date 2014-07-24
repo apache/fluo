@@ -1,11 +1,9 @@
 package io.fluo.api.types;
 
-import java.io.UnsupportedEncodingException;
+import io.fluo.api.Bytes;
 
 import org.apache.accumulo.core.client.lexicoder.IntegerLexicoder;
 import org.apache.accumulo.core.client.lexicoder.LongLexicoder;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 
 public class LexicoEncoder implements Encoder {
 
@@ -13,41 +11,32 @@ public class LexicoEncoder implements Encoder {
   private LongLexicoder ll = new LongLexicoder();
   
   @Override
-  public int decodeInteger(ByteSequence bs) {
-    return il.decode(bs.toArray());
+  public int decodeInteger(Bytes b) {
+    return il.decode(b.toArray());
   }
 
   @Override
-  public ByteSequence encode(int i) {
-    return new ArrayByteSequence(il.encode(i));
+  public Bytes encode(int i) {
+    return Bytes.wrap(il.encode(i));
   }
 
   @Override
-  public long decodeLong(ByteSequence bs) {
-    return ll.decode(bs.toArray());
+  public long decodeLong(Bytes b) {
+    return ll.decode(b.toArray());
   }
 
   @Override
-  public ByteSequence encode(long l) {
-    return new ArrayByteSequence(ll.encode(l));
+  public Bytes encode(long l) {
+    return Bytes.wrap(ll.encode(l));
   }
 
   @Override
-  public String decodeString(ByteSequence bs) {
-    try {
-      return new String(bs.toArray(), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+  public String decodeString(Bytes b) {
+    return b.toString();
   }
 
   @Override
-  public ByteSequence encode(String s) {
-    try {
-      return new ArrayByteSequence(s.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+  public Bytes encode(String s) {
+    return Bytes.wrap(s);
   }
-
 }

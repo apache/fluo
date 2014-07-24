@@ -16,20 +16,19 @@
  */
 package io.fluo.impl;
 
+import io.fluo.api.Bytes;
+import io.fluo.api.Column;
+import io.fluo.api.ColumnIterator;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import io.fluo.api.ColumnIterator;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
-import io.fluo.api.Column;
-
 /**
- * 
+ * Implementation of Column Iterator
  */
 public class ColumnIteratorImpl implements ColumnIterator {
 
@@ -50,7 +49,7 @@ public class ColumnIteratorImpl implements ColumnIterator {
   }
   
   // TODO create custom class to return instead of entry
-  public Entry<Column,ByteSequence> next() {
+  public Entry<Column,Bytes> next() {
     Entry<Key,Value> entry;
     if (firstEntry != null) {
       entry = firstEntry;
@@ -58,21 +57,21 @@ public class ColumnIteratorImpl implements ColumnIterator {
     } else {
       entry = scanner.next();
     }
-    ByteSequence cf = entry.getKey().getColumnFamilyData();
-    ByteSequence cq = entry.getKey().getColumnQualifierData();
+    Bytes cf = new ArrayBytes(entry.getKey().getColumnFamilyData());
+    Bytes cq = new ArrayBytes(entry.getKey().getColumnQualifierData());
     // TODO cache colvis, pass cache in
     ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
     
     final Column col = new Column(cf, cq).setVisibility(cv);
-    final ByteSequence val = new ArrayByteSequence(entry.getValue().get());
+    final Bytes val = Bytes.wrap(entry.getValue().get());
 
-    return new Entry<Column,ByteSequence>() {
+    return new Entry<Column,Bytes>() {
       
-      public ByteSequence setValue(ByteSequence value) {
+      public Bytes setValue(Bytes value) {
         throw new UnsupportedOperationException();
       }
       
-      public ByteSequence getValue() {
+      public Bytes getValue() {
         return val;
       }
       

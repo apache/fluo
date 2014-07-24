@@ -18,8 +18,6 @@ package io.fluo.api;
 
 import java.util.Map;
 
-import org.apache.accumulo.core.data.ByteSequence;
-
 /**
  * An observer is created for each worker thread and re-used for the lifetime of a worker thread.
  * 
@@ -51,7 +49,7 @@ public interface Observer {
 
   public void init(Map<String,String> config) throws Exception;
 
-  public void process(Transaction tx, ByteSequence row, Column col) throws Exception;
+  public void process(Transaction tx, Bytes row, Column col) throws Exception;
 
   /**
    * Its safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from whats passed to

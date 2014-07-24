@@ -19,11 +19,11 @@ package io.fluo.impl;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.commons.lang.mutable.MutableLong;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.impl.iterators.RollbackCheckIterator;
 
@@ -33,7 +33,7 @@ public enum TxStatus {
   /**
    * determine the what state a transaction is in by inspecting the primary column
    */
-  public static TxStatus getTransactionStatus(Configuration config, ByteSequence prow, Column pcol, long startTs, MutableLong commitTs, Value lockVal) {
+  public static TxStatus getTransactionStatus(Configuration config, Bytes prow, Column pcol, long startTs, MutableLong commitTs, Value lockVal) {
     // TODO ensure primary is visible
 
     IteratorSetting is = new IteratorSetting(10, RollbackCheckIterator.class);

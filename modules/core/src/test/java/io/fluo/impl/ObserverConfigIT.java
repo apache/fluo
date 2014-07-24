@@ -5,12 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.junit.Assert;
 import org.junit.Test;
 
 import io.fluo.api.AbstractObserver;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.Observer.NotificationType;
 import io.fluo.api.Transaction;
@@ -25,23 +24,23 @@ public class ObserverConfigIT extends Base {
   public static class ConfigurableObserver extends AbstractObserver {
 
     private ObservedColumn observedColumn;
-    private ByteSequence outputCQ;
+    private Bytes outputCQ;
     private boolean setWeakNotification = false;
 
     @Override
     public void init(Map<String,String> config) {
       String ocTokens[] = config.get("observedCol").split(":");
       observedColumn = new ObservedColumn(tl.newColumn(ocTokens[0], ocTokens[1]), NotificationType.valueOf(ocTokens[2]));
-      outputCQ = new ArrayByteSequence(config.get("outputCQ"));
+      outputCQ = Bytes.wrap(config.get("outputCQ"));
       String swn = config.get("setWeakNotification");
       if (swn != null && swn.equals("true"))
         setWeakNotification = true;
     }
 
     @Override
-    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
+    public void process(Transaction tx, Bytes row, Column col) throws Exception {
 
-      ByteSequence in = tx.get(row, col);
+      Bytes in = tx.get(row, col);
       tx.delete(row, col);
 
       Column outCol = new Column(col.getFamily(), outputCQ);
