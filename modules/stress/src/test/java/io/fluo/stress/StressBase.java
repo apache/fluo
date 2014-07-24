@@ -54,6 +54,7 @@ public class StressBase {
   protected static InitializationProperties props;
   protected static MiniFluo miniFluo;
   protected static AtomicInteger tableCounter = new AtomicInteger(1);
+  protected static AtomicInteger next = new AtomicInteger();
   protected static String USER = "root";
   protected static String PASSWORD = "ITSecret";
   
@@ -78,11 +79,12 @@ public class StressBase {
   @Before
   public void setUpFluo() throws Exception {
     // TODO add helper code to make this shorter
+    
     props = new InitializationProperties();
     props.setAccumuloInstance(miniAccumulo.getInstanceName());
     props.setAccumuloUser(USER);
     props.setAccumuloPassword(PASSWORD);
-    props.setZookeeperRoot("/fluo");
+    props.setZookeeperRoot("/stress" + next.getAndIncrement());
     props.setZookeepers(miniAccumulo.getZooKeepers());
     props.setClearZookeeper(true);
     props.setAccumuloTable(getNextTableName());

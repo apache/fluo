@@ -16,6 +16,13 @@
  */
 package io.fluo.impl;
 
+import io.fluo.api.Column;
+import io.fluo.api.config.ConnectionProperties;
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.config.OracleProperties;
+import io.fluo.api.config.TransactionConfiguration;
+import io.fluo.api.config.WorkerProperties;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -29,10 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.fluo.api.Column;
-import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.ConditionalWriter;
-import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -41,12 +44,6 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
-
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.OracleProperties;
-import io.fluo.api.config.TransactionConfiguration;
-import io.fluo.api.config.WorkerProperties;
 
 
 /**
@@ -78,8 +75,7 @@ public class Configuration {
     this.accumuloInstanceID = config.accumuloInstanceID;
     this.observers = config.observers;
     this.conn = config.conn;
-
-    this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
+    this.resources = new SharedResources(this);
   }
 
   //TODO: This constructor will get out of control quickly
@@ -98,7 +94,7 @@ public class Configuration {
       throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
     }
 
-    this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
+    this.resources = new SharedResources(this);
 
     rollbackTime = Long.parseLong(getWorkerProperties().getProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, Constants.ROLLBACK_TIME_DEFAULT + ""));
   }
@@ -211,7 +207,7 @@ public class Configuration {
     // TODO the following is a big hack, this method is currently not exposed in API
     resources.close();
     try {
-      this.resources = new SharedResources(conn.createBatchWriter(this.table, new BatchWriterConfig()), createConditionalWriter());
+      this.resources = new SharedResources(this);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -248,11 +244,7 @@ public class Configuration {
   public Connector getConnector() {
     return conn;
   }
-  
-  public ConditionalWriter createConditionalWriter() throws TableNotFoundException {
-    return conn.createConditionalWriter(table, new ConditionalWriterConfig().setAuthorizations(auths));
-  }
-
+    
   public SharedResources getSharedResources() {
     return resources;
   }

@@ -31,12 +31,10 @@ import io.fluo.impl.TransactionImpl;
 public class SnapshotFactory implements Closeable {
   
   private Configuration config;
-
-  /**
-   * 
-   * @param props
-   *          see {@link io.fluo.api.config.ConnectionProperties}
-   */
+  
+  public SnapshotFactory(Configuration config) {
+    this.config = config;
+  }
   
   public SnapshotFactory(Properties props) {
     try {

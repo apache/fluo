@@ -99,7 +99,7 @@ public class FluoInputFormat extends InputFormat<ByteSequence,ColumnIterator> {
           
           accisConf = new Configuration(props);
           
-          TransactionImpl ti = new TransactionImpl(accisConf, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
+          TransactionImpl ti = new TransactionImpl(accisConf, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1), null);
           ScannerConfiguration sc = new ScannerConfiguration().setRange(range);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))

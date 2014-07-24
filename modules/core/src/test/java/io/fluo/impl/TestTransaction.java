@@ -16,6 +16,10 @@ import org.apache.accumulo.core.data.ArrayByteSequence;
 public class TestTransaction extends TypedTransaction {
 
   private TransactionImpl tx;
+  
+  public TestTransaction(Configuration config, TransactorID transactor) throws Exception {
+    this(new TransactionImpl(config, null, transactor), new StringEncoder());
+  }
 
   public TestTransaction(Configuration config) throws Exception {
     this(new TransactionImpl(config), new StringEncoder());
@@ -62,5 +66,8 @@ public class TestTransaction extends TypedTransaction {
   public long getStartTs() {
     return tx.getStartTs();
   }
-
+  
+  public TxStats getStats() {
+    return tx.getStats();
+  }
 }

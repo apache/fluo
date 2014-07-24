@@ -16,15 +16,18 @@
  */
 package io.fluo.impl;
 
+import io.fluo.api.Column;
+import io.fluo.api.ScannerConfiguration;
+import io.fluo.api.exceptions.StaleScanException;
+import io.fluo.core.util.UtilWaitThread;
+import io.fluo.impl.iterators.PrewriteIterator;
+import io.fluo.impl.iterators.SnapshotIterator;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
-import io.fluo.api.ScannerConfiguration;
-import io.fluo.core.util.UtilWaitThread;
-import io.fluo.impl.iterators.PrewriteIterator;
-import io.fluo.impl.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -44,10 +47,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.lang.mutable.MutableLong;
 
-import io.fluo.api.Column;
-import io.fluo.api.exceptions.StaleScanException;
-
-
 /**
  * 
  */
@@ -60,6 +59,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   private Configuration aconfig;
   private TxStats stats;
+  private TransactorCache cache;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -71,6 +71,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.startTs = startTs;
     this.stats = stats;
     setUpIterator();
+    this.cache = aconfig.getSharedResources().getTransactorCache();
   }
   
   private void setUpIterator() {
@@ -142,24 +143,26 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         // TODO do read ahead while waiting for the lock... this is important for the case where reprocessing a failed transaction... need to find a batch or
         // locked columns and resolve them together, not one by one... should cache the status of the primary lock while doing this
         
-        boolean resolvedLock = false;
-
         if (firstSeen == -1) {
           firstSeen = System.currentTimeMillis();
-          
-          // the first time a lock is seen, try to resolve in case the transaction is complete, but this column is still locked.
-          resolvedLock = resolveLock(entry, false);
         }
 
+        LockValue lv = new LockValue(entry.getValue().get());
+
+        // abort the transaction if transactor has died or timeout occurred
+        boolean resolvedLock = false;
+        if (!cache.checkExists(lv.getTransactor())) { 
+          stats.incrementDeadLocks();
+          resolvedLock = resolveLock(entry, true);
+        } else if ((System.currentTimeMillis() - firstSeen) > aconfig.getRollbackTime()) {
+          stats.incrementTimedOutLocks();
+          resolvedLock = resolveLock(entry, true);
+        }
+        
         if (!resolvedLock) {
           UtilWaitThread.sleep(waitTime);
           stats.incrementLockWaitTime(waitTime);
           waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
-        
-          if (System.currentTimeMillis() - firstSeen > aconfig.getRollbackTime()) {
-            // try to abort the transaction
-            resolveLock(entry, true);
-          }
         }
 
         Key k = entry.getKey();
@@ -274,17 +277,15 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
     LockValue lv = new LockValue(entry.getValue().get());
-    boolean isTrigger = lv.getObserver().length() > 0;
     // TODO cache col vis
     Column col = new Column(entry.getKey().getColumnFamilyData(), entry.getKey().getColumnQualifierData()).setVisibility(entry.getKey()
         .getColumnVisibilityParsed());
     Mutation m = new Mutation(entry.getKey().getRowData().toArray());
     
-    ColumnUtil.commitColumn(isTrigger, false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
+    ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
     
     // TODO use conditional writer?
     aconfig.getSharedResources().getBatchWriter().writeMutation(m);
-    ;
   }
 
   private void rollback(Key k, long lockTs) {

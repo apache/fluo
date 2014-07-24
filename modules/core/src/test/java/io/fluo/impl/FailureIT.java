@@ -26,14 +26,6 @@ import io.fluo.api.exceptions.StaleScanException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.TransactionImpl.CommitData;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.Authorizations;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,10 +33,21 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
-/**
- * 
- */
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 public class FailureIT extends Base {
+  
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   Column balanceCol = typeLayer.newColumn("account", "balance");
@@ -221,7 +224,70 @@ public class FailureIT extends Base {
     Assert.assertEquals(joeBal + "", tx6.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("67", tx6.get().row("jill").col(balanceCol).toString());
   }
+  
+  @Test
+  public void testDeadRollback() throws Exception {
+    rollbackTest(true);
+  }
+  
+  @Test
+  public void testTimeoutRollback() throws Exception {
+    rollbackTest(false);
+  }
+  
+  private void rollbackTest(boolean killTransactor) throws Exception {
+    TransactorID t1 = new TransactorID(config);
 
+    TestTransaction tx = new TestTransaction(config);
+    
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
+    
+    tx.commit();
+    
+    TestTransaction tx2 = new TestTransaction(config, t1);
+    
+    int bal1 = tx2.get().row("bob").col(balanceCol).toInteger();
+    int bal2 = tx2.get().row("joe").col(balanceCol).toInteger();
+    
+    tx2.mutate().row("bob").col(balanceCol).set(bal1 - 7);
+    tx2.mutate().row("joe").col(balanceCol).set(bal2 + 7);
+    
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
+    
+    if (killTransactor) {
+      t1.close();
+    }
+        
+    TransactionImpl tx3 = new TransactionImpl(config);
+    Assert.assertEquals(0, tx3.getStats().getDeadLocks());
+    Assert.assertEquals(0, tx3.getStats().getTimedOutLocks());
+    
+    int bobFinal = Integer.parseInt(tx3.get(new ArrayByteSequence("bob"), balanceCol).toString());
+    Assert.assertEquals(10, bobFinal);
+    
+    if (killTransactor) {
+      Assert.assertEquals(1, tx3.getStats().getDeadLocks());
+      Assert.assertEquals(0, tx3.getStats().getTimedOutLocks());
+    } else {
+      Assert.assertEquals(0, tx3.getStats().getDeadLocks());
+      Assert.assertEquals(1, tx3.getStats().getTimedOutLocks());
+    }
+    
+    long commitTs = OracleClient.getInstance(config).getTimestamp();
+
+    if (killTransactor) {
+      // test for exception
+      exception.expect(IllegalStateException.class);
+      tx2.commitPrimaryColumn(cd, commitTs); 
+    } else {
+      Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
+      t1.close();
+    }
+  }
+  
   @Test
   public void testRollfoward() throws Exception {
     // test the case where a scan encounters a stuck lock (for a complete tx) and rolls it forward

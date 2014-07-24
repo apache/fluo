@@ -38,6 +38,10 @@ public class Constants {
     public static final String ORACLE = "/oracle";
     public static final String TIMESTAMP = ORACLE + "/timestamp";
     public static final String ORACLE_SERVER = ORACLE + "/server";
+    
+    public static final String TRANSACTOR = "/transactor";
+    public static final String TRANSACTOR_COUNT = TRANSACTOR + "/count";
+    public static final String TRANSACTOR_NODES = TRANSACTOR + "/nodes";
   }
 
   public static final String FLUO_PREFIX = "io.fluo";

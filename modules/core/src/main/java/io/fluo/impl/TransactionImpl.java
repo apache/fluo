@@ -1,5 +1,15 @@
 package io.fluo.impl;
 
+import io.fluo.api.Column;
+import io.fluo.api.ColumnIterator;
+import io.fluo.api.RowIterator;
+import io.fluo.api.ScannerConfiguration;
+import io.fluo.api.Transaction;
+import io.fluo.api.exceptions.AlreadyAcknowledgedException;
+import io.fluo.api.exceptions.AlreadySetException;
+import io.fluo.api.exceptions.CommitException;
+import io.fluo.impl.iterators.PrewriteIterator;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import io.fluo.api.ColumnIterator;
-import io.fluo.api.RowIterator;
-import io.fluo.api.ScannerConfiguration;
-import io.fluo.api.Transaction;
-import io.fluo.api.exceptions.AlreadySetException;
-import io.fluo.impl.iterators.PrewriteIterator;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -38,10 +42,6 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.ArgumentChecker;
 import org.apache.commons.lang.mutable.MutableLong;
 
-import io.fluo.api.Column;
-import io.fluo.api.exceptions.AlreadyAcknowledgedException;
-import io.fluo.api.exceptions.CommitException;
-
 
 public class TransactionImpl implements Transaction {
   
@@ -55,7 +55,6 @@ public class TransactionImpl implements Transaction {
   private Map<ByteSequence,Map<Column,ByteSequence>> updates;
   private Map<ByteSequence,Set<Column>> weakNotifications;
   Map<ByteSequence,Set<Column>> columnsRead = new HashMap<ByteSequence,Set<Column>>();
-  private ByteSequence observer;
   private ByteSequence triggerRow;
   private Column triggerColumn;
   private ByteSequence weakRow;
@@ -64,6 +63,7 @@ public class TransactionImpl implements Transaction {
   private boolean commitStarted = false;
   private Configuration config;
   private TxStats stats;
+  private TransactorID tid;
   
   public static byte[] toBytes(String s) {
     try {
@@ -73,7 +73,7 @@ public class TransactionImpl implements Transaction {
     }
   }
 
-  TransactionImpl(Configuration config, ByteSequence triggerRow, Column triggerColumn, Long startTs) throws Exception {
+  TransactionImpl(Configuration config, ByteSequence triggerRow, Column triggerColumn, Long startTs, TransactorID tid) throws Exception {
     this.config = config;
     this.observedColumns = config.getObservers().keySet();
     this.updates = new HashMap<ByteSequence,Map<Column,ByteSequence>>();
@@ -99,22 +99,22 @@ public class TransactionImpl implements Transaction {
       Map<Column,ByteSequence> colUpdates = new HashMap<Column,ByteSequence>();
       colUpdates.put(triggerColumn, null);
       updates.put(triggerRow, colUpdates);
-      observer = new ArrayByteSequence("oid");
     }
 
     this.stats = new TxStats();
+    this.tid = tid;
   }
   
   public TransactionImpl(Configuration config, ByteSequence triggerRow, Column tiggerColumn) throws Exception {
-    this(config, triggerRow, tiggerColumn, null);
+    this(config, triggerRow, tiggerColumn, null, null);
   }
 
   public TransactionImpl(Configuration config) throws Exception {
-    this(config, null, null, null);
+    this(config, null, null, null, null);
   }
   
-  public TransactionImpl(Configuration config, long startTs) throws Exception {
-    this(config, null, null, startTs);
+  public TransactionImpl(Configuration config, Long startTs, TransactorID tid) throws Exception {
+    this(config, null, null, startTs, tid);
   }
 
   @Override
@@ -153,7 +153,7 @@ public class TransactionImpl implements Transaction {
     
     return ret;
   }
-  
+    
   @Override
   public Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception {
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, config, startTs, stats);
@@ -185,7 +185,7 @@ public class TransactionImpl implements Transaction {
 
     return new RowIteratorImpl(new SnapshotScanner(this.config, config, startTs, stats));
   }
-  
+    
   @Override
   public void set(ByteSequence row, Column col, ByteSequence value) {
     if (commitStarted)
@@ -258,7 +258,7 @@ public class TransactionImpl implements Transaction {
       cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.DATA_PREFIX | startTs, val.toArray());
     
     cm.put(col.getFamily().toArray(), col.getQualifier().toArray(), col.getVisibility(), ColumnUtil.LOCK_PREFIX | startTs,
-        LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTrigger ? observer : EMPTY_BS));
+        LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID()));
     
     return cm;
   }
@@ -521,7 +521,7 @@ public class TransactionImpl implements Transaction {
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
     Condition lockCheck = new Condition(cd.pcol.getFamily(), cd.pcol.getQualifier()).setIterators(iterConf).setVisibility(cd.pcol.getVisibility())
-        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger ? observer : EMPTY_BS));
+        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger, getTransactorID()));
     ConditionalMutation delLockMutation = new ConditionalMutation(cd.prow, lockCheck);
     ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE, startTs, commitTs, observedColumns, delLockMutation);
     
@@ -682,5 +682,12 @@ public class TransactionImpl implements Transaction {
 
   long getStartTs() {
     return startTs;
+  }
+  
+  private Long getTransactorID() {
+    if (tid == null) {
+      tid = config.getSharedResources().getTransactorID();
+    }
+    return tid.getLongID();
   }
 }
