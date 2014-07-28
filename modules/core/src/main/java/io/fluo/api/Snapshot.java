@@ -20,18 +20,16 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.accumulo.core.data.ByteSequence;
-
 /**
  * Implementations of this interface should provide snapshot isolation across rows when reading from a table.
  */
 public interface Snapshot {
 
-  public abstract ByteSequence get(ByteSequence row, Column column) throws Exception;
+  public abstract Bytes get(Bytes row, Column column) throws Exception;
 
-  public abstract Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception;
+  public abstract Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception;
 
-  public abstract Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception;
+  public abstract Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception;
 
   public abstract RowIterator get(ScannerConfiguration config) throws Exception;
 }

@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.collections.map.DefaultedMap;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
@@ -28,21 +28,21 @@ public class TypedSnapshot implements Snapshot {
 
   private class KeyBuilder extends RowColumnBuilder<Value,VisBytesDecoder> {
 
-    private ByteSequence family;
-    private ByteSequence row;
+    private Bytes family;
+    private Bytes row;
 
     @Override
-    void setRow(ByteSequence r) {
+    void setRow(Bytes r) {
       this.row = r;
     }
 
     @Override
-    void setFamily(ByteSequence f) {
+    void setFamily(Bytes f) {
       this.family = f;
     }
 
     @Override
-    public VisBytesDecoder setQualifier(ByteSequence q) {
+    public VisBytesDecoder setQualifier(Bytes q) {
       return new VisBytesDecoder(row, new Column(family, q));
     }
 
@@ -62,11 +62,11 @@ public class TypedSnapshot implements Snapshot {
 
   public class VisBytesDecoder extends Value {
 
-    private ByteSequence row;
+    private Bytes row;
     private Column col;
     private boolean gotBytes = false;
 
-    ByteSequence getBytes() {
+    Bytes getBytes() {
       if (!gotBytes) {
         try {
           super.bytes = snapshot.get(row, col);
@@ -81,7 +81,7 @@ public class TypedSnapshot implements Snapshot {
       return super.getBytes();
     }
 
-    VisBytesDecoder(ByteSequence row, Column col) {
+    VisBytesDecoder(Bytes row, Column col) {
       super(null);
       this.row = row;
       this.col = col;
@@ -95,13 +95,13 @@ public class TypedSnapshot implements Snapshot {
   }
 
   public class Value {
-    ByteSequence bytes;
+    Bytes bytes;
 
-    ByteSequence getBytes() {
+    Bytes getBytes() {
       return bytes;
     }
 
-    private Value(ByteSequence bytes) {
+    private Value(Bytes bytes) {
       this.bytes = bytes;
     }
 
@@ -162,12 +162,12 @@ public class TypedSnapshot implements Snapshot {
   }
 
   @Override
-  public ByteSequence get(ByteSequence row, Column column) throws Exception {
+  public Bytes get(Bytes row, Column column) throws Exception {
     return snapshot.get(row, column);
   }
 
   @Override
-  public Map<Column,ByteSequence> get(ByteSequence row, Set<Column> columns) throws Exception {
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
     return snapshot.get(row, columns);
   }
 
@@ -177,7 +177,7 @@ public class TypedSnapshot implements Snapshot {
   }
 
   @Override
-  public Map<ByteSequence,Map<Column,ByteSequence>> get(Collection<ByteSequence> rows, Set<Column> columns) throws Exception {
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
     return snapshot.get(rows, columns);
   }
 
@@ -187,12 +187,12 @@ public class TypedSnapshot implements Snapshot {
 
 
   @SuppressWarnings("unchecked")
-  public Map<Column,Value> getd(ByteSequence row, Set<Column> columns) throws Exception {
-    Map<Column,ByteSequence> map = snapshot.get(row, columns);
+  public Map<Column,Value> getd(Bytes row, Set<Column> columns) throws Exception {
+    Map<Column,Bytes> map = snapshot.get(row, columns);
     Map<Column,Value> ret = new HashMap<Column,Value>();
 
-    Set<Entry<Column,ByteSequence>> es = map.entrySet();
-    for (Entry<Column,ByteSequence> entry : es) {
+    Set<Entry<Column,Bytes>> es = map.entrySet();
+    for (Entry<Column,Bytes> entry : es) {
       ret.put(entry.getKey(), new Value(entry.getValue()));
     }
 
@@ -205,17 +205,17 @@ public class TypedSnapshot implements Snapshot {
 
   @SuppressWarnings("unchecked")
   public Map<String,Map<Column,Value>> getd(Collection<String> rows, Set<Column> columns) throws Exception {
-    ArrayList<ByteSequence> bsRows = new ArrayList<ByteSequence>(rows.size());
+    ArrayList<Bytes> bsRows = new ArrayList<Bytes>(rows.size());
     for (String row : rows) {
       bsRows.add(encoder.encode(row));
     }
 
-    Map<ByteSequence,Map<Column,ByteSequence>> in = snapshot.get(bsRows, columns);
+    Map<Bytes,Map<Column,Bytes>> in = snapshot.get(bsRows, columns);
     Map<String,Map<Column,Value>> out = new HashMap<String,Map<Column,Value>>();
 
-    for (Entry<ByteSequence,Map<Column,ByteSequence>> rowEntry : in.entrySet()) {
+    for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet()) {
       Map<Column,Value> outCols = new HashMap<Column,Value>();
-      for (Entry<Column,ByteSequence> colEntry : rowEntry.getValue().entrySet()) {
+      for (Entry<Column,Bytes> colEntry : rowEntry.getValue().entrySet()) {
         outCols.put(colEntry.getKey(), new Value(colEntry.getValue()));
       }
       out.put(encoder.decodeString(rowEntry.getKey()), DefaultedMap.decorate(outCols, new Value(null)));

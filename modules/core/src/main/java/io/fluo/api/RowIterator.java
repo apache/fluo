@@ -19,11 +19,9 @@ package io.fluo.api;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.core.data.ByteSequence;
-
 /**
- * 
+ * Iterator for Fluo rows
  */
-public interface RowIterator extends Iterator<Entry<ByteSequence,ColumnIterator>> {
+public interface RowIterator extends Iterator<Entry<Bytes,ColumnIterator>> {
   
 }

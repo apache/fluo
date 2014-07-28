@@ -32,12 +32,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.util.Stat;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
@@ -193,8 +193,8 @@ public class StochasticBankIT extends Base {
         Stat stat = new Stat();
 
         while (iter.hasNext()) {
-          Entry<ByteSequence,ColumnIterator> colIter = iter.next();
-          Entry<Column,ByteSequence> column = colIter.getValue().next();
+          Entry<Bytes,ColumnIterator> colIter = iter.next();
+          Entry<Column,Bytes> column = colIter.getValue().next();
           
           int amt = Integer.parseInt(column.getValue().toString());
           
@@ -271,8 +271,8 @@ public class StochasticBankIT extends Base {
     
     RowIterator iter = tx.get(new ScannerConfiguration());
     while (iter.hasNext()) {
-      Entry<ByteSequence,ColumnIterator> colIter = iter.next();
-      Entry<Column,ByteSequence> column = colIter.getValue().next();
+      Entry<Bytes,ColumnIterator> colIter = iter.next();
+      Entry<Column,Bytes> column = colIter.getValue().next();
       
       map.put(colIter.getKey().toString(), column.getValue().toString());
     }

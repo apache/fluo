@@ -10,7 +10,6 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.TransactionImpl.CommitData;
-import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -167,11 +166,11 @@ public class FluoIT extends Base {
     
     tx.commit();
     
-    TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx1 = new TestTransaction(config, "joe", balanceCol);
     tx1.get().row("joe").col(balanceCol);
     tx1.mutate().row("jill").col(balanceCol).set("61");
     
-    TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx2 = new TestTransaction(config, "joe", balanceCol);
     tx2.get().row("joe").col(balanceCol);
     tx2.mutate().row("bob").col(balanceCol).set("11");
     
@@ -189,11 +188,11 @@ public class FluoIT extends Base {
     
     tx3.commit();
     
-    TestTransaction tx4 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx4 = new TestTransaction(config, "joe", balanceCol);
     tx4.get().row("joe").col(balanceCol);
     tx4.mutate().row("jill").col(balanceCol).set("62");
     
-    TestTransaction tx5 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx5 = new TestTransaction(config, "joe", balanceCol);
     tx5.get().row("joe").col(balanceCol);
     tx5.mutate().row("bob").col(balanceCol).set("11");
     
@@ -207,7 +206,7 @@ public class FluoIT extends Base {
     Assert.assertEquals("21", tx6.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("61", tx6.get().row("jill").col(balanceCol).toString());
     
-    TestTransaction tx7 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx7 = new TestTransaction(config, "joe", balanceCol);
     tx7.get().row("joe").col(balanceCol);
     tx7.mutate().row("bob").col(balanceCol).set("15");
     tx7.mutate().row("jill").col(balanceCol).set("60");
@@ -288,12 +287,12 @@ public class FluoIT extends Base {
     
     tx.commit();
     
-    TestTransaction tx2 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx2 = new TestTransaction(config, "joe", balanceCol);
     tx2.get().row("joe").col(balanceCol);
     tx2.mutate().row("joe").col(balanceCol).set("21");
     tx2.mutate().row("bob").col(balanceCol).set("11");
     
-    TestTransaction tx1 = new TestTransaction(config, new ArrayByteSequence("joe"), balanceCol);
+    TestTransaction tx1 = new TestTransaction(config, "joe", balanceCol);
     tx1.get().row("joe").col(balanceCol);
     tx1.mutate().row("jill").col(balanceCol).set("61");
     

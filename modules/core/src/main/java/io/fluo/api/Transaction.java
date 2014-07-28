@@ -16,18 +16,15 @@
  */
 package io.fluo.api;
 
-import org.apache.accumulo.core.data.ByteSequence;
-
 /**
- * 
+ * Transaction interface
  */
-// TODO switch to ByteBuffer
 public interface Transaction extends Snapshot {
   
-  public abstract void setWeakNotification(ByteSequence row, Column col);
+  public abstract void setWeakNotification(Bytes row, Column col);
 
-  public abstract void set(ByteSequence row, Column col, ByteSequence value);
+  public abstract void set(Bytes row, Column col, Bytes value);
   
-  public abstract void delete(ByteSequence row, Column col);
+  public abstract void delete(Bytes row, Column col);
   
 }

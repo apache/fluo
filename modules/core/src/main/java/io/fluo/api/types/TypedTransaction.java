@@ -1,8 +1,8 @@
 package io.fluo.api.types;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Transaction;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
+
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 import io.fluo.api.Column;
@@ -17,21 +17,21 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
   private class MutateKeyBuilder extends RowColumnBuilder<Mutator,VisibilityMutator> {
 
-    private ByteSequence row;
-    private ByteSequence cf;
+    private Bytes row;
+    private Bytes cf;
 
     @Override
-    void setRow(ByteSequence r) {
+    void setRow(Bytes r) {
       this.row = r;
     }
 
     @Override
-    void setFamily(ByteSequence f) {
+    void setFamily(Bytes f) {
       this.cf = f;
     }
 
     @Override
-    VisibilityMutator setQualifier(ByteSequence q) {
+    VisibilityMutator setQualifier(Bytes q) {
       return new VisibilityMutator(row, new Column(cf, q));
     }
 
@@ -44,7 +44,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
   public class Mutator {
 
-    private ByteSequence row;
+    private Bytes row;
     private Column col;
     private boolean set = false;
 
@@ -53,7 +53,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
         throw new IllegalStateException("Already set value");
     }
 
-    Mutator(ByteSequence row, Column column) {
+    Mutator(Bytes row, Column column) {
       this.row = row;
       this.col = column;
     }
@@ -78,7 +78,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
     public void increment(int i) throws Exception {
       checkNotSet();
-      ByteSequence val = tx.get(row, col);
+      Bytes val = tx.get(row, col);
       int v = 0;
       if (val != null)
         v = encoder.decodeInteger(val);
@@ -87,7 +87,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
     public void increment(long l) throws Exception {
       checkNotSet();
-      ByteSequence val = tx.get(row, col);
+      Bytes val = tx.get(row, col);
       long v = 0;
       if (val != null)
         v = encoder.decodeLong(val);
@@ -96,7 +96,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
     public void set(byte[] ba) {
       checkNotSet();
-      tx.set(row, col, new ArrayByteSequence(ba));
+      tx.set(row, col, Bytes.wrap(ba));
       set = true;
     }
 
@@ -105,7 +105,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
      */
     public void set() {
       checkNotSet();
-      tx.set(row, col, new ArrayByteSequence(new byte[0]));
+      tx.set(row, col, Bytes.wrap(new byte[0]));
       set = true;
     }
 
@@ -125,7 +125,7 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
   public class VisibilityMutator extends Mutator {
 
-    VisibilityMutator(ByteSequence row, Column column) {
+    VisibilityMutator(Bytes row, Column column) {
       super(row, column);
     }
 
@@ -151,17 +151,17 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
   }
 
   @Override
-  public void set(ByteSequence row, Column col, ByteSequence value) {
+  public void set(Bytes row, Column col, Bytes value) {
     tx.set(row, col, value);
   }
 
   @Override
-  public void setWeakNotification(ByteSequence row, Column col) {
+  public void setWeakNotification(Bytes row, Column col) {
     tx.setWeakNotification(row, col);
   }
 
   @Override
-  public void delete(ByteSequence row, Column col) {
+  public void delete(Bytes row, Column col) {
     tx.delete(row, col);
   }
 }

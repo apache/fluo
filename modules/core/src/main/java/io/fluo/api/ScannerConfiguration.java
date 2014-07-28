@@ -20,12 +20,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.util.ArgumentChecker;
 
 /**
- * 
+ * Configures Scanner
  */
 public class ScannerConfiguration implements Cloneable {
 
@@ -59,15 +58,14 @@ public class ScannerConfiguration implements Cloneable {
 
   // TODO document SnapshotIterator
 
-
-  public ScannerConfiguration fetchColumnFamily(ByteSequence col) {
+  public ScannerConfiguration fetchColumnFamily(Bytes col) {
     ArgumentChecker.notNull(col);
     // TODO causes NPE w/ set, add unit test
     columns.add(new Column(col, null));
     return this;
   }
 
-  public ScannerConfiguration fetchColumn(ByteSequence colFam, ByteSequence colQual) {
+  public ScannerConfiguration fetchColumn(Bytes colFam, Bytes colQual) {
     ArgumentChecker.notNull(colFam, colQual);
     columns.add(new Column(colFam, colQual));
     return this;

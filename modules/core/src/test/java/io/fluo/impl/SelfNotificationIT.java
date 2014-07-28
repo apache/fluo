@@ -21,11 +21,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.junit.Assert;
 import org.junit.Test;
 
 import io.fluo.api.AbstractObserver;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
@@ -54,7 +54,7 @@ public class SelfNotificationIT extends Base {
   public static class ExportingObserver extends AbstractObserver {
     
     @Override
-    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
+    public void process(Transaction tx, Bytes row, Column col) throws Exception {
 
       TypedTransaction ttx = typeLayer.transaction(tx);
        
@@ -74,7 +74,7 @@ public class SelfNotificationIT extends Base {
       }
     }
 
-    private void export(ByteSequence row, Integer exportCount) {
+    private void export(Bytes row, Integer exportCount) {
       exports.add(exportCount);
     }
 

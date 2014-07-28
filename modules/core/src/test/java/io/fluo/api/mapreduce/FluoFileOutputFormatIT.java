@@ -1,12 +1,12 @@
 package io.fluo.api.mapreduce;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.Base;
 import io.fluo.impl.TestTransaction;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -29,14 +29,14 @@ public class FluoFileOutputFormatIT extends Base {
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  public static class TestMapper extends Mapper<LongWritable,Text,RowColumn,ByteSequence> {
+  public static class TestMapper extends Mapper<LongWritable,Text,RowColumn,Bytes> {
 
     @Override
     public void map(LongWritable key, Text data, Context context) throws IOException, InterruptedException {
       String fields[] = data.toString().split(",");
 
-      RowColumn rc = new RowColumn(new ArrayByteSequence(fields[0]), new Column(new ArrayByteSequence(fields[1]), new ArrayByteSequence(fields[2])));
-      ByteSequence val = new ArrayByteSequence(fields[3]);
+      RowColumn rc = new RowColumn(Bytes.wrap(fields[0]), new Column(Bytes.wrap(fields[1]), Bytes.wrap(fields[2])));
+      Bytes val = Bytes.wrap(fields[3]);
 
       context.write(rc, val);
     }

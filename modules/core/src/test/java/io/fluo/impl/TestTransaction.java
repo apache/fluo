@@ -1,5 +1,6 @@
 package io.fluo.impl;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.exceptions.AlreadyAcknowledgedException;
 import io.fluo.api.exceptions.CommitException;
@@ -7,11 +8,11 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.impl.TransactionImpl.CommitData;
+
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.ArrayByteSequence;
 
 public class TestTransaction extends TypedTransaction {
 
@@ -30,12 +31,12 @@ public class TestTransaction extends TypedTransaction {
     this.tx = transactionImpl;
   }
 
-  public TestTransaction(Configuration config, ArrayByteSequence trow, Column tcol) throws Exception {
+  public TestTransaction(Configuration config, Bytes trow, Column tcol) throws Exception {
     this(new TransactionImpl(config, trow, tcol), new StringEncoder());
   }
 
   public TestTransaction(Configuration config, String trow, Column tcol) throws Exception {
-    this(new TransactionImpl(config, new ArrayByteSequence(trow), tcol), new StringEncoder());
+    this(new TransactionImpl(config, Bytes.wrap(trow), tcol), new StringEncoder());
   }
 
   public void commit() throws CommitException {
@@ -50,7 +51,7 @@ public class TestTransaction extends TypedTransaction {
     return tx.preCommit(cd);
   }
 
-  public boolean preCommit(CommitData cd, ArrayByteSequence trow, Column tcol) throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException,
+  public boolean preCommit(CommitData cd, Bytes trow, Column tcol) throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException,
       AccumuloSecurityException {
     return tx.preCommit(cd, trow, tcol);
   }

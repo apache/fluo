@@ -21,7 +21,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import io.fluo.impl.WriteValue;
+
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -40,6 +42,7 @@ import io.fluo.impl.DelLockValue;
 public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   
   private static final String TIMESTAMP_OPT = "timestampOpt";
+  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(Constants.NOTIFY_CF.toArray());
   
   private SortedKeyValueIterator<Key,Value> source;
   private long snaptime;
@@ -52,7 +55,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
       long invalidationTime = -1;
       long dataPointer = -1;
       
-      if (source.getTopKey().getColumnFamilyData().equals(Constants.NOTIFY_CF)) {
+      if (source.getTopKey().getColumnFamilyData().equals(NOTIFY_CF_BS)) {
         source.next();
         continue;
       }

@@ -16,14 +16,13 @@
  */
 package io.fluo.impl;
 
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
+import io.fluo.api.Bytes;
 
 /**
- * 
+ * Fluo Constants
  */
 public class Constants {
-  public static final ByteSequence NOTIFY_CF = new ArrayByteSequence("ntfy");
+  public static final Bytes NOTIFY_CF = Bytes.wrap("ntfy");
   
   public static class Zookeeper {
 

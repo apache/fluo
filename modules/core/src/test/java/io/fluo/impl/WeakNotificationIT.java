@@ -4,12 +4,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Range;
 import org.junit.Assert;
 import org.junit.Test;
 
 import io.fluo.api.AbstractObserver;
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
@@ -28,7 +28,7 @@ public class WeakNotificationIT extends Base {
   public static class SimpleObserver extends AbstractObserver {
 
     @Override
-    public void process(Transaction tx, ByteSequence row, Column col) throws Exception {
+    public void process(Transaction tx, Bytes row, Column col) throws Exception {
       TypedTransaction ttx = tl.transaction(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
@@ -40,7 +40,7 @@ public class WeakNotificationIT extends Base {
       if (rowIter.hasNext()) {
         ColumnIterator colIter = rowIter.next().getValue();
         while (colIter.hasNext()) {
-          Entry<Column,ByteSequence> colVal = colIter.next();
+          Entry<Column,Bytes> colVal = colIter.next();
           sum += Integer.parseInt(colVal.getValue().toString());
           ttx.delete(row, colVal.getKey());
         }

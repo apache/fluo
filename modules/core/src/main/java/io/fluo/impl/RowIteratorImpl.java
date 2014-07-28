@@ -19,15 +19,15 @@ package io.fluo.impl;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
 
 /**
- * 
+ * Implementation of RowIterator
  */
 public class RowIteratorImpl implements RowIterator {
   
@@ -42,17 +42,17 @@ public class RowIteratorImpl implements RowIterator {
   }
   
   // TODO create custom class to return instead of entry
-  public Entry<ByteSequence,ColumnIterator> next() {
+  public Entry<Bytes,ColumnIterator> next() {
     Iterator<Entry<Key,Value>> cols = rowIter.next();
     
     Entry<Key,Value> entry = cols.next();
 
-    final ByteSequence row = entry.getKey().getRowData();
+    final Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
     final ColumnIterator coliter = new ColumnIteratorImpl(entry, cols);
     
-    return new Entry<ByteSequence,ColumnIterator>() {
+    return new Entry<Bytes,ColumnIterator>() {
       
-      public ByteSequence getKey() {
+      public Bytes getKey() {
         return row;
       }
       

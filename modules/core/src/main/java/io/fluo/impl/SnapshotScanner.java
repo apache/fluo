@@ -16,6 +16,7 @@
  */
 package io.fluo.impl;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ScannerConfiguration;
 import io.fluo.api.exceptions.StaleScanException;
@@ -36,8 +37,6 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
@@ -198,15 +197,19 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
     // TODO need to check in zookeeper if worker processing tx is alive
 
-    List<ByteSequence> primary = ByteUtil.split(new ArrayByteSequence(entry.getValue().get()));
+    List<Bytes> primary = Bytes.split(Bytes.wrap(entry.getValue().get()));
     
-    ByteSequence prow = primary.get(0);
-    ByteSequence pfam = primary.get(1);
-    ByteSequence pqual = primary.get(2);
-    ByteSequence pvis = primary.get(3);
+    Bytes prow = primary.get(0);
+    Bytes pfam = primary.get(1);
+    Bytes pqual = primary.get(2);
+    Bytes pvis = primary.get(3);
+    
+    Bytes erow = Bytes.wrap(entry.getKey().getRowData().toArray());
+    Bytes efam = Bytes.wrap(entry.getKey().getColumnFamilyData().toArray());
+    Bytes equal = Bytes.wrap(entry.getKey().getColumnQualifierData().toArray());
+    Bytes evis = Bytes.wrap(entry.getKey().getColumnVisibilityData().toArray());
 
-    boolean isPrimary = entry.getKey().getRowData().equals(prow) && entry.getKey().getColumnFamilyData().equals(pfam)
-        && entry.getKey().getColumnQualifierData().equals(pqual) && entry.getKey().getColumnVisibilityData().equals(pvis);
+    boolean isPrimary = erow.equals(prow) && efam.equals(pfam) && equal.equals(pqual) && evis.equals(pvis);
 
     long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
     
@@ -232,8 +235,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         Value lockVal = new Value();
         MutableLong commitTs = new MutableLong(-1);
         // TODO use cached CV
-        TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual).setVisibility(new ColumnVisibility(pvis.toArray())), lockTs,
-            commitTs, lockVal);
+        TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual)
+            .setVisibility(new ColumnVisibility(ByteUtil.toText(pvis))), lockTs, commitTs, lockVal);
         
         // TODO cache status
 
@@ -278,8 +281,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
   private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
     LockValue lv = new LockValue(entry.getValue().get());
     // TODO cache col vis
-    Column col = new Column(entry.getKey().getColumnFamilyData(), entry.getKey().getColumnQualifierData()).setVisibility(entry.getKey()
-        .getColumnVisibilityParsed());
+    Bytes cf = Bytes.wrap(entry.getKey().getColumnFamilyData().toArray());
+    Bytes cq = Bytes.wrap(entry.getKey().getColumnQualifierData().toArray());
+    Column col = new Column(cf, cq).setVisibility(entry.getKey().getColumnVisibilityParsed());
     Mutation m = new Mutation(entry.getKey().getRowData().toArray());
     
     ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
@@ -297,10 +301,10 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     aconfig.getSharedResources().getBatchWriter().writeMutation(mut);
   }
 
-  boolean rollbackPrimary(ByteSequence prow, ByteSequence pfam, ByteSequence pqual, ByteSequence pvis, long lockTs, byte[] val) throws AccumuloException,
+  boolean rollbackPrimary(Bytes prow, Bytes pfam, Bytes pqual, Bytes pvis, long lockTs, byte[] val) throws AccumuloException,
       AccumuloSecurityException {
     // TODO use cached CV
-    ColumnVisibility cv = new ColumnVisibility(pvis.toArray());
+    ColumnVisibility cv = new ColumnVisibility(ByteUtil.toText(pvis));
     
     // TODO avoid conversions to arrays
     // TODO review use of PrewriteIter here
@@ -308,11 +312,13 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     // TODO cache col vis?
-    ConditionalMutation delLockMutation = new ConditionalMutation(prow, new Condition(pfam, pqual).setIterators(iterConf).setVisibility(cv).setValue(val));
+    ConditionalMutation delLockMutation = new ConditionalMutation(ByteUtil.toByteSequence(prow), 
+        new Condition(ByteUtil.toByteSequence(pfam), ByteUtil.toByteSequence(pqual)).setIterators(iterConf).setVisibility(cv).setValue(val));
     
     // TODO sanity check on lockTs vs startTs
     
-    delLockMutation.put(pfam.toArray(), pqual.toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(lockTs, true, true));
+    delLockMutation.put(ByteUtil.toText(pfam), ByteUtil.toText(pqual), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, 
+          new Value(DelLockValue.encode(lockTs, true, true)));
     
     ConditionalWriter cw = null;
     

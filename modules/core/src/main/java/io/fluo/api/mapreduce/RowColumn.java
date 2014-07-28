@@ -1,18 +1,18 @@
 package io.fluo.api.mapreduce;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
-import org.apache.accumulo.core.data.ByteSequence;
 
 public class RowColumn {
-  private ByteSequence row;
+  private Bytes row;
   private Column col;
 
-  public RowColumn(ByteSequence row, Column col) {
+  public RowColumn(Bytes row, Column col) {
     this.row = row;
     this.col = col;
   }
 
-  public ByteSequence getRow() {
+  public Bytes getRow() {
     return row;
   }
 
