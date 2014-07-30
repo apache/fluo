@@ -21,12 +21,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-/** Tests transactor class
+/** 
+ * Tests transactor class
  */
 public class TransactorIT extends Base {
   
   public static Long id1 = new Long(1);
   public static Long id2 = new Long(2);
+  public static long NUM_OPEN_TIMEOUT_MS = 1000;
   
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -43,7 +45,7 @@ public class TransactorIT extends Base {
     TransactorID t2 = new TransactorID(config);
 
     // verify that they were created correctly
-    Assert.assertEquals(2, getNumOpen());
+    assertNumOpen(2);
     Assert.assertEquals(id1, t1.getLongID());
     Assert.assertEquals(id2, t2.getLongID());
     Assert.assertTrue(checkExists(t1));
@@ -59,7 +61,7 @@ public class TransactorIT extends Base {
     t1.close();
     
     // verify that t1 was closed
-    Assert.assertEquals(1, getNumOpen());
+    assertNumOpen(1);
     Assert.assertFalse(checkExists(t1));
     Assert.assertTrue(checkExists(t2));
     Assert.assertFalse(cache.checkExists(id1));
@@ -69,7 +71,7 @@ public class TransactorIT extends Base {
     t2.close();
     
     // verify that t2 closed
-    Assert.assertEquals(0, getNumOpen());
+    assertNumOpen(0);
     Assert.assertFalse(checkExists(t2));
     
     // verify the cache
@@ -84,7 +86,7 @@ public class TransactorIT extends Base {
     
     TransactorID t1 = new TransactorID(config);  
     
-    Assert.assertEquals(1, getNumOpen());
+    assertNumOpen(1);
     Assert.assertEquals(id1, t1.getLongID());
     Assert.assertTrue(checkExists(t1));
    
@@ -92,12 +94,12 @@ public class TransactorIT extends Base {
     curator.delete().forPath(t1.getNodePath());
     
     Assert.assertEquals(id1, t1.getLongID());
-    Assert.assertEquals(1, getNumOpen());
+    assertNumOpen(1);
     Assert.assertTrue(checkExists(t1));
     
     t1.close();
     
-    Assert.assertEquals(0, getNumOpen());
+    assertNumOpen(0);
     Assert.assertFalse(checkExists(t1));
     
     // Test for exception to be called
@@ -111,5 +113,15 @@ public class TransactorIT extends Base {
   
   private int getNumOpen() throws Exception {
     return curator.getChildren().forPath(config.getZookeeperRoot()+Constants.Zookeeper.TRANSACTOR_NODES).size();
+  }
+  
+  private void assertNumOpen(int expected) throws Exception {
+    long startTime = System.currentTimeMillis();
+    while (getNumOpen() != expected) {
+      Thread.sleep(50);
+      if ((System.currentTimeMillis() - startTime) > NUM_OPEN_TIMEOUT_MS) {
+        Assert.fail("Timed out waiting for correct transactor number in Zookeeper");
+      }
+    }
   }
 }
