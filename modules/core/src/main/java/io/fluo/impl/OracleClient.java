@@ -16,6 +16,14 @@
  */
 package io.fluo.impl;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
+
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.impl.support.CuratorCnxnListener;
 import io.fluo.impl.thrift.OracleService;
@@ -38,14 +46,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically

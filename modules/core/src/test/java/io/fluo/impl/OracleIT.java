@@ -16,10 +16,10 @@
  */
 package io.fluo.impl;
 
-import org.junit.Test;
-
-import io.fluo.core.util.PortUtils;
-
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +28,17 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.Assert.*;
+import io.fluo.core.util.HostUtil;
+import io.fluo.core.util.PortUtils;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.transport.TTransportException;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -80,6 +90,34 @@ public class OracleIT extends Base {
 
       cdl.countDown();
     }
+  }
+
+  /**
+   * Test that bogus input into the oracle server doesn't cause an OOM exception. This
+   * essentially tests for THRIFT-602
+   * @throws TTransportException
+   */
+  @Test
+  public void bogusDataTest() throws Exception {
+
+    // we are expecting an error at this point
+    Level curLevel = Logger.getLogger(THsHaServer.class).getLevel();
+    Logger.getLogger(THsHaServer.class).setLevel(Level.FATAL);
+
+    Socket socket = new Socket();
+    socket.connect(new InetSocketAddress(HostUtil.getHostName(), config.getOraclePort()));
+    OutputStream outstream = socket .getOutputStream();
+    PrintWriter out = new PrintWriter(outstream);
+    out.print("abcd");
+    out.flush();
+
+    socket.close();
+
+    OracleClient client = OracleClient.getInstance(config);
+
+    assertEquals(2, client.getTimestamp());
+
+    Logger.getLogger(THsHaServer.class).setLevel(curLevel);
   }
 
   @Test

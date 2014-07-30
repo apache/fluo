@@ -37,7 +37,7 @@ public class Constants {
     public static final String ORACLE = "/oracle";
     public static final String TIMESTAMP = ORACLE + "/timestamp";
     public static final String ORACLE_SERVER = ORACLE + "/server";
-    
+
     public static final String TRANSACTOR = "/transactor";
     public static final String TRANSACTOR_COUNT = TRANSACTOR + "/count";
     public static final String TRANSACTOR_NODES = TRANSACTOR + "/nodes";
@@ -45,6 +45,7 @@ public class Constants {
 
   public static final String FLUO_PREFIX = "io.fluo";
   public static final String WORKER_THREADS = FLUO_PREFIX + ".config.worker.numThreads";
+  public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
 
   public static final long ROLLBACK_TIME_DEFAULT = 300000;
 }
