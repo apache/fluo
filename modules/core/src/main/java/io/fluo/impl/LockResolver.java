@@ -169,7 +169,7 @@ public class LockResolver {
 
   private static boolean rollbackPrimary(Configuration aconfig, long startTs, PrimaryRowColumn prc, byte[] lockValue) {
     // TODO use cached CV
-    ColumnVisibility cv = prc.pcol.getVisibility();
+    ColumnVisibility cv = prc.pcol.getVisibilityParsed();
 
     // TODO review use of PrewriteIter here
 

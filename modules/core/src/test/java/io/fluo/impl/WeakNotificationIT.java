@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.accumulo.core.data.Range;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +11,7 @@ import io.fluo.api.AbstractObserver;
 import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
+import io.fluo.api.Span;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
 import io.fluo.api.Transaction;
@@ -32,7 +32,7 @@ public class WeakNotificationIT extends Base {
       TypedTransaction ttx = tl.transaction(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
-      sc.setRange(Range.exact(row.toString(), "stats"));
+      sc.setSpan(Span.exact(row, Bytes.wrap("stats")));
       RowIterator rowIter = ttx.get(sc);
 
       int sum = 0;

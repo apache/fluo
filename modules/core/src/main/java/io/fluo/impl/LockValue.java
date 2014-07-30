@@ -82,7 +82,7 @@ public class LockValue {
       bools[0] |= 0x2;
     if (isTrigger)
       bools[0] |= 0x4;
-    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), Bytes.wrap(pcol.getVisibility().getExpression()), 
+    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(), 
         Bytes.wrap(bools), Bytes.wrap(ByteUtil.encode(transactor))).toArray();
   }
   

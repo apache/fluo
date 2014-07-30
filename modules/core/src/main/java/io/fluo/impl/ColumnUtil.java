@@ -16,21 +16,20 @@
  */
 package io.fluo.impl;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import io.fluo.api.Bytes;
 import io.fluo.api.Column;
+import io.fluo.api.Span;
+import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.hadoop.io.Text;
-
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 
 /**
  * Utilities for modifying columns in Fluo
@@ -56,24 +55,23 @@ public class ColumnUtil {
   public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibility(), WRITE_PREFIX | commitTs, new Value(WriteValue.encode(startTs, isPrimary, false)));
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), WRITE_PREFIX | commitTs, new Value(WriteValue.encode(startTs, isPrimary, false)));
     } else {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibility(), DEL_LOCK_PREFIX | commitTs,
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), DEL_LOCK_PREFIX | commitTs,
           new Value(DelLockValue.encode(startTs, isPrimary, false)));
     }
     
     if (isTrigger) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibility(), ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
-      m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), startTs);
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
+      m.putDelete(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {
-      m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibility(), commitTs, TransactionImpl.EMPTY);
+      m.put(Constants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), commitTs, TransactionImpl.EMPTY);
     }
   }
   
   public static Entry<Key,Value> checkColumn(Configuration config, IteratorSetting iterConf, Bytes row, Column col) {
-    Range range = Range.exact(ByteUtil.toText(row), ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), new Text(col.getVisibility()
-        .getExpression()));
+    Span span = Span.exact(row, col.getFamily(), col.getQualifier(), col.getVisibility());
     
     Scanner scanner;
     try {
@@ -83,7 +81,7 @@ public class ColumnUtil {
       // TODO proper exception handling
       throw new RuntimeException(e);
     }
-    scanner.setRange(range);
+    scanner.setRange(SpanUtil.toRange(span));
     scanner.addScanIterator(iterConf);
     
     Iterator<Entry<Key,Value>> iter = scanner.iterator();
@@ -97,7 +95,7 @@ public class ColumnUtil {
       Bytes cv = Bytes.wrap(k.getColumnVisibilityData().toArray());
       
       if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
-          && cv.equals(Bytes.wrap(col.getVisibility().getExpression()))) {
+          && cv.equals(col.getVisibility())) {
         return entry;
       } else {
         throw new RuntimeException("unexpected key " + k + " " + row + " " + col);

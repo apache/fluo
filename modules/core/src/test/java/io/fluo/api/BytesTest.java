@@ -17,6 +17,7 @@
 package io.fluo.api;
 
 import io.fluo.impl.ArrayBytes;
+import io.fluo.impl.ByteUtil;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -62,6 +63,7 @@ public class BytesTest {
     Text t5 = new Text(s5);
     ArrayBytes b5 = new ArrayBytes(s5);
     Assert.assertEquals(t5, b5.toText());
+    Assert.assertEquals(t5, ByteUtil.toText(b5));
   }
   
   @Test

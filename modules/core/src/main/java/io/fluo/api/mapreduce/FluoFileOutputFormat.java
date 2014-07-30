@@ -41,7 +41,7 @@ public class FluoFileOutputFormat extends FileOutputFormat<RowColumn,Bytes> {
         Text row = ByteUtil.toText(key.getRow());
         Text fam = ByteUtil.toText(key.getColumn().getFamily());
         Text qual = ByteUtil.toText(key.getColumn().getQualifier());
-        Text vis = new Text(key.getColumn().getVisibility().getExpression());
+        Text vis = ByteUtil.toText(key.getColumn().getVisibility());
 
         Key dataKey = new Key(row, fam, qual, vis, ColumnUtil.DATA_PREFIX | 0);
         Key writeKey = new Key(row, fam, qual, vis, ColumnUtil.WRITE_PREFIX | 1);

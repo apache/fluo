@@ -2,8 +2,10 @@ package io.fluo.impl;
 
 import java.util.HashSet;
 
+import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
+import io.fluo.api.Span;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
 import io.fluo.api.config.OracleProperties;
@@ -12,7 +14,7 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.impl.TransactionImpl.CommitData;
-import org.apache.accumulo.core.data.Range;
+
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
@@ -372,7 +374,7 @@ public class FluoIT extends Base {
     tx3.commit();
     
     HashSet<Column> columns = new HashSet<Column>();
-    RowIterator riter = tx2.get(new ScannerConfiguration().setRange(Range.exact("d00001", "outlink")));
+    RowIterator riter = tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), Bytes.wrap("outlink"))));
     while (riter.hasNext()) {
       ColumnIterator citer = riter.next().getValue();
       while (citer.hasNext()) {
@@ -389,7 +391,7 @@ public class FluoIT extends Base {
     
     TestTransaction tx4 = new TestTransaction(config);
     columns.clear();
-    riter = tx4.get(new ScannerConfiguration().setRange(Range.exact("d00001", "outlink")));
+    riter = tx4.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), Bytes.wrap("outlink"))));
     while (riter.hasNext()) {
       ColumnIterator citer = riter.next().getValue();
       while (citer.hasNext()) {

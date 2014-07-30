@@ -37,6 +37,8 @@ import org.apache.hadoop.io.WritableUtils;
  * Represents a sequence of bytes in Fluo
  */
 public abstract class Bytes implements Comparable<Bytes> {
+  
+  public static final Bytes EMPTY = Bytes.wrap(new byte[0]);
 
   /**
    * Gets a byte within this sequence of bytes

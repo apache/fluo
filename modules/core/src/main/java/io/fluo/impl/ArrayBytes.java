@@ -133,6 +133,12 @@ public class ArrayBytes extends Bytes implements Serializable {
       this.offset = 0;
     }
   }
+  
+  public ArrayBytes(Text t) {
+    this.length = t.getLength();
+    this.data = t.getBytes();
+    this.offset = 0;
+  }
 
   @Override
   public byte byteAt(int i) {
