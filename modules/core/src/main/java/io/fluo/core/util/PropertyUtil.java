@@ -16,9 +16,7 @@
  */
 package io.fluo.core.util;
 
-import java.io.File;
-import java.util.Properties;
-
+import io.fluo.impl.Configuration;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.configuration.ConfigurationException;
@@ -26,9 +24,12 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
 import org.apache.commons.lang.text.StrLookup;
 
-import io.fluo.impl.Configuration;
+import java.io.File;
+import java.util.Properties;
 
 public class PropertyUtil {
+
+  private PropertyUtil() {}
   
   public static Properties loadProps(String ... files) throws ConfigurationException{
     ConfigurationInterpolator.registerGlobalLookup("env", new StrLookup() {

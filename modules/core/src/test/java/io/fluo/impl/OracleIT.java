@@ -36,9 +36,7 @@ import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -199,7 +197,7 @@ public class OracleIT extends Base {
 
     oserver2.stop();
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
     assertEquals(2002, client.getTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
 
@@ -241,7 +239,6 @@ public class OracleIT extends Base {
 
     oserver.stop();
   }
-
 
   @Test
   public void threadFailoverTest() throws Exception {

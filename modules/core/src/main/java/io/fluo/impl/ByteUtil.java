@@ -27,7 +27,9 @@ import org.apache.hadoop.io.Text;
  * Bytes objects to external formats
  */
 public class ByteUtil {
-  
+  private ByteUtil() {}
+
+
   /**
    * Encode long as byte array
    * 

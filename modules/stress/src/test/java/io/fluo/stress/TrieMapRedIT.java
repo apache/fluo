@@ -79,10 +79,10 @@ public class TrieMapRedIT extends StressBase {
     driver.runTest();
     
     // TODO - If sleep is removed test sometimes fails
-    Thread.sleep(1000);
+    Thread.sleep(4000);
     
     miniFluo.waitForObservers();
-    
+
     try (SnapshotFactory snapFact = new SnapshotFactory(props)) {          
       TypedSnapshot tsnap = TYPEL.snapshot(snapFact);
       
