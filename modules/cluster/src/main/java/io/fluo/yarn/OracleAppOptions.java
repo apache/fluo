@@ -18,26 +18,12 @@ package io.fluo.yarn;
 
 import com.beust.jcommander.Parameter;
 
-public class AppOptions {
-  
-  @Parameter(names = "-fluo-home", description = "Location of fluo home", required = true)
-  protected String fluoHome;
+public class OracleAppOptions extends AppOptions {
 
-  @Parameter(names = "-hadoop-prefix", description = "Location of hadoop prefix", required = true)
-  protected String hadoopPrefix;
-  
-  @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-  protected boolean help;
+    @Parameter(names = "-num-oracles")
+    protected int numOracles = YarnConstants.DEFAULT_NUM_ORACLES;
 
-  public String getFluoHome() {
-    return fluoHome;
-  }
-  
-  public String getHadoopPrefix() {
-    return hadoopPrefix;
-  }
-
-  public boolean displayHelp() {
-    return help;
-  }
+    public int getNumberOfOracles() {
+        return numOracles;
+    }
 }

@@ -46,10 +46,10 @@ import com.beust.jcommander.JCommander;
 public class OracleApp implements TwillApplication {
   
   private static Logger log = LoggerFactory.getLogger(OracleApp.class);
-  private AppOptions options;
+  private OracleAppOptions options;
   private Properties props;
   
-  public OracleApp(AppOptions options, Properties props) {
+  public OracleApp(OracleAppOptions options, Properties props) {
     this.options = options;
     this.props = props;
   }
@@ -62,7 +62,7 @@ public class OracleApp implements TwillApplication {
     ResourceSpecification oracleResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)
         .setMemory(maxMemoryMB, SizeUnit.MEGA)
-        .setInstances(1).build();
+        .setInstances(options.getNumberOfOracles()).build();
 
     MoreFile moreFile = TwillSpecification.Builder.with() 
         .setName("FluoOracle").withRunnable()
@@ -83,10 +83,10 @@ public class OracleApp implements TwillApplication {
 
   public static void main(String[] args) throws ConfigurationException, Exception {
     
-    AppOptions options = new AppOptions();
+    OracleAppOptions options = new OracleAppOptions();
     JCommander jcommand = new JCommander(options, args);
 
-    if (options.help) {
+    if (options.displayHelp()) {
       jcommand.usage();
       System.exit(-1);
     }
@@ -107,10 +107,10 @@ public class OracleApp implements TwillApplication {
     
     TwillController controller = preparer.start();
     controller.start();
-    
-    while (controller.isRunning() == false) {
+
+    while (controller.isRunning() == false)
       Thread.sleep(2000);
-    }
+
     System.exit(0);
   }
 }
