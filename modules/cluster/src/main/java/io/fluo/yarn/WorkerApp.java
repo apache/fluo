@@ -87,7 +87,7 @@ public class WorkerApp implements TwillApplication {
     AppOptions options = new AppOptions();
     JCommander jcommand = new JCommander(options, args);
 
-    if (options.help) {
+    if (options.displayHelp()) {
       jcommand.usage();
       System.exit(-1);
     }

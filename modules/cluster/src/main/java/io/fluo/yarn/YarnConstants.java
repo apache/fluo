@@ -16,28 +16,9 @@
  */
 package io.fluo.yarn;
 
-import com.beust.jcommander.Parameter;
+public class YarnConstants {
 
-public class AppOptions {
-  
-  @Parameter(names = "-fluo-home", description = "Location of fluo home", required = true)
-  protected String fluoHome;
+  private YarnConstants() {}
 
-  @Parameter(names = "-hadoop-prefix", description = "Location of hadoop prefix", required = true)
-  protected String hadoopPrefix;
-  
-  @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-  protected boolean help;
-
-  public String getFluoHome() {
-    return fluoHome;
-  }
-  
-  public String getHadoopPrefix() {
-    return hadoopPrefix;
-  }
-
-  public boolean displayHelp() {
-    return help;
-  }
+  public static final int DEFAULT_NUM_ORACLES = 1;
 }
