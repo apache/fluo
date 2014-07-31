@@ -16,11 +16,10 @@
  */
 package io.fluo.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.fluo.core.util.HostUtil;
 import io.fluo.impl.support.CuratorCnxnListener;
 import io.fluo.impl.thrift.OracleService;
 import org.apache.curator.framework.CuratorFramework;
@@ -39,8 +38,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Oracle server is the responsible for providing incrementing logical timestamps to clients. It should never
@@ -133,6 +130,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     THsHaServer.Args serverArgs = new THsHaServer.Args(socket);
     TProcessor processor = new OracleService.Processor<OracleService.Iface>(this);
     serverArgs.processor(processor);
+    serverArgs.maxReadBufferBytes = Constants.ORACLE_MAX_READ_BUFFER_BYTES;
     serverArgs.inputProtocolFactory(new TCompactProtocol.Factory());
     serverArgs.outputProtocolFactory(new TCompactProtocol.Factory());
     server = new THsHaServer(serverArgs);
@@ -153,11 +151,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   }
   
-  private String getHostName() throws IOException {
-    Process p = Runtime.getRuntime().exec("hostname");
-    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-    return reader.readLine();
-  }
 
   public synchronized void start() throws Exception {
     if (started)
@@ -173,7 +166,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       Thread.sleep(200);
 
     leaderSelector = new LeaderSelector(curatorFramework, config.getZookeeperRoot() + Constants.Zookeeper.ORACLE_SERVER, this);
-    String leaderId = getHostName() + ":" + addr.getPort();
+    String leaderId = HostUtil.getHostName() + ":" + addr.getPort();
     leaderSelector.setId(leaderId);
     log.info("Leader ID = " + leaderId);
     leaderSelector.autoRequeue();

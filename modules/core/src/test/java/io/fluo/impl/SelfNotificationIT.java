@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import io.fluo.api.AbstractObserver;
 import io.fluo.api.Bytes;
 import io.fluo.api.Column;
@@ -32,6 +29,8 @@ import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test an observer notifying the column its observing.  This is a useful pattern for exporting data.
