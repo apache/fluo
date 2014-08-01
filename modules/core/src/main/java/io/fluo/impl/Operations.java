@@ -16,8 +16,21 @@
  */
 package io.fluo.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
 import io.fluo.api.Column;
 import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.core.util.CuratorUtil;
 import io.fluo.format.FluoFormatter;
 import io.fluo.impl.iterators.GarbageCollectionIterator;
 import org.apache.accumulo.core.client.Connector;
@@ -27,6 +40,7 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.zookeeper.ZooUtil;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeExistsPolicy;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.CreateMode;
@@ -36,40 +50,41 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  *
  */
 public class Operations {
 
-  private static boolean putData(ZooKeeper zk, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
+  private static boolean putData(CuratorFramework curator, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
     if (policy == null)
       policy = NodeExistsPolicy.FAIL;
 
     while (true) {
       try {
-        zk.create(zPath, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zPath, data);
         return true;
-      } catch (NodeExistsException nee) {
-        switch (policy) {
-          case SKIP:
-            return false;
-          case OVERWRITE:
-            try {
-              zk.setData(zPath, data, -1);
-              return true;
-            } catch (NoNodeException nne) {
-              // node delete between create call and set data, so try create call again
-              continue;
-            }
-          default:
-            throw nee;
-        }
+      } catch (Exception nee) {
+        if(nee instanceof NodeExistsException) {
+          switch (policy) {
+            case SKIP:
+              return false;
+            case OVERWRITE:
+              try {
+                curator.setData().withVersion(-1).forPath(zPath, data);
+                return true;
+              } catch (Exception nne) {
+
+                if(nne instanceof NoNodeException)
+                  // node delete between create call and set data, so try create call again
+                  continue;
+                else
+                  throw new RuntimeException(nne);
+              }
+            default:
+              throw (NodeExistsException)nee;
+          }
+        } else
+          throw new RuntimeException(nee);
       }
     }
   }
@@ -77,30 +92,34 @@ public class Operations {
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
   public static void updateWorkerConfig(Connector conn, String zoodir, Properties workerConfig) throws Exception {
-    // TODO Auto-generated method stub
+
     String zookeepers = conn.getInstance().getZooKeepers();
-    ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
+    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
 
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    workerConfig.store(baos, "Java props");
+      curator.start();
 
-    putData(zk, zoodir + Constants.Zookeeper.WORKER_CONFIG, baos.toByteArray(), NodeExistsPolicy.OVERWRITE);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      workerConfig.store(baos, "Java props");
 
-    zk.close();
+      putData(curator, Constants.workerConfigPath(zoodir), baos.toByteArray(), NodeExistsPolicy.OVERWRITE);
+    }
   }
 
   public static void updateObservers(Connector conn, String zoodir, Map<Column,ObserverConfiguration> colObservers,
       Map<Column,ObserverConfiguration> weakObservers) throws Exception {
+
     // TODO check that no workers are running... or make workers watch this znode
     String zookeepers = conn.getInstance().getZooKeepers();
-    ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
+    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+      curator.start();
 
-    ZooUtil.recursiveDelete(zk, zoodir + Constants.Zookeeper.OBSERVERS, NodeMissingPolicy.SKIP);
+      ZooKeeper zk = curator.getZookeeperClient().getZooKeeper();
 
-    byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-    putData(zk, zoodir + Constants.Zookeeper.OBSERVERS, serializedObservers, NodeExistsPolicy.OVERWRITE);
+      ZooUtil.recursiveDelete(zk, Constants.observersPath(zoodir), NodeMissingPolicy.SKIP);
 
-    zk.close();
+      byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
+      putData(curator, Constants.observersPath(zoodir), serializedObservers, NodeExistsPolicy.OVERWRITE);
+    }
   }
 
   public static void initialize(Connector conn, String zoodir, String table) throws Exception {
@@ -110,23 +129,22 @@ public class Operations {
     String accumuloInstanceID = conn.getInstance().getInstanceID();
     String fluoInstanceID = UUID.randomUUID().toString();
 
-    ZooKeeper zk = new ZooKeeper(zookeepers, 30000, null);
+    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+      curator.start();
 
-    // TODO set Fluo data version
+      // TODO set Fluo data version
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zoodir, new byte[0]);
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.configPath(zoodir), new byte[0]);
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.tablePath(zoodir), table.getBytes("UTF-8"));
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.instanceNamePath(zoodir), accumuloInstanceName.getBytes("UTF-8"));
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.accumuloInstanceIdPath(zoodir), accumuloInstanceID.getBytes("UTF-8"));
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.fluoInstanceIdPath(zoodir), fluoInstanceID.getBytes("UTF-8"));
 
-    zk.create(zoodir, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.CONFIG, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.TABLE, table.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.FLUO_INSTANCE_ID, fluoInstanceID.getBytes("UTF-8"), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.oraclePath(zoodir), new byte[0]);
+      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(Constants.timestampPath(zoodir), new byte[] {'2'});
 
-    zk.create(zoodir + Constants.Zookeeper.ORACLE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-    zk.create(zoodir + Constants.Zookeeper.TIMESTAMP, new byte[] {'2'}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-    zk.close();
-
-    createTable(table, conn);
+      createTable(table, conn);
+    }
   }
 
   private static void serializeObservers(DataOutputStream dos, Map<Column,ObserverConfiguration> colObservers) throws IOException {
@@ -150,12 +168,11 @@ public class Operations {
 
   private static byte[] serializeObservers(Map<Column,ObserverConfiguration> colObservers, Map<Column,ObserverConfiguration> weakObservers) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    DataOutputStream dos = new DataOutputStream(baos);
+    try (DataOutputStream dos = new DataOutputStream(baos)) {
+      serializeObservers(dos, colObservers);
+      serializeObservers(dos, weakObservers);
+    }
     
-    serializeObservers(dos, colObservers);
-    serializeObservers(dos, weakObservers);
-
-    dos.close();
     byte[] serializedObservers = baos.toByteArray();
     return serializedObservers;
   }
@@ -176,4 +193,5 @@ public class Operations {
     
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
   }
+
 }

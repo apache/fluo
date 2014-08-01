@@ -38,7 +38,11 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.THsHaServer;
-import org.apache.thrift.transport.*;
+import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,8 +79,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public OracleServer(Configuration config) throws Exception {
     this.config = config;
     this.cnxnListener = new CuratorCnxnListener();
-    this.tsPath = Constants.timestampPath(config);
-    this.oraclePath = Constants.oraclePath(config);
+    this.tsPath = Constants.timestampPath(config.getZookeeperRoot());
+    this.oraclePath = Constants.oraclePath(config.getZookeeperRoot());
   }
 
   private void allocateTimestamp() throws Exception {

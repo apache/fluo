@@ -73,7 +73,7 @@ public class OracleClient {
 
     public void run() {
 
-      String zkPath = Constants.oraclePath(config);
+      String zkPath = Constants.oraclePath(config.getZookeeperRoot());
 
       try {
         curatorFramework = CuratorFrameworkFactory.newClient(config.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));

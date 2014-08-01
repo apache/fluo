@@ -16,17 +16,9 @@
  */
 package io.fluo.impl;
 
-import io.fluo.api.Column;
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.OracleProperties;
-import io.fluo.api.config.TransactionConfiguration;
-import io.fluo.api.config.WorkerProperties;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
@@ -36,14 +28,21 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import io.fluo.api.Column;
+import io.fluo.api.config.ConnectionProperties;
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.config.OracleProperties;
+import io.fluo.api.config.TransactionConfiguration;
+import io.fluo.api.config.WorkerProperties;
+import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
 
 
 /**
@@ -79,43 +78,54 @@ public class Configuration {
   }
 
   //TODO: This constructor will get out of control quickly
-  public Configuration(ZooKeeper zk, String zoodir, Connector conn, int oraclePort) throws Exception {
+  public Configuration(CuratorFramework curator , String zoodir, Connector conn, int oraclePort) throws Exception {
+    init(curator, zoodir, conn, oraclePort);
+  }
+
+
+  private void init(CuratorFramework curator , String zoodir, Connector conn, int oraclePort) throws Exception {
     this.zoodir = zoodir;
-    readConfig(zk);
+    readConfig(curator);
 
     this.oraclePort = oraclePort;
     this.conn = conn;
 
-    if (!conn.getInstance().getInstanceName().equals(accumuloInstance)) {
+    if (!conn.getInstance().getInstanceName().equals(accumuloInstance))
       throw new IllegalArgumentException("unexpected accumulo instance name " + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
-    }
-    
-    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID)) {
+
+    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
       throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
-    }
 
     this.resources = new SharedResources(this);
 
     rollbackTime = Long.parseLong(getWorkerProperties().getProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, Constants.ROLLBACK_TIME_DEFAULT + ""));
+
   }
   
   /**
    * @param props
    */
   public Configuration(Properties props) throws Exception {
-    // TODO need to close zookeeper
-    this(
-      new ZooKeeper(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP), Integer.parseInt(props.getProperty(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP)), null),
-      props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP),
-      new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
-      props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
+
+    try (CuratorFramework curator = CuratorUtil.getCurator(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP),
+        Integer.parseInt(props.getProperty(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP)))) {
+
+      String zooDir = props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP);
+
+      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
+          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
           props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP))
-      ),
-      Integer.parseInt(props.getProperty(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT + ""))
-    );
+      );
+
+      int oraclePort = Integer.parseInt(props.getProperty(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT + ""));
+
+      curator.start();
+
+      init(curator, zooDir, conn, oraclePort);
+    }
   }
   
-  private static Properties load(File propFile) throws FileNotFoundException, IOException {
+  private static Properties load(File propFile) throws IOException {
     Properties props = new Properties(Configuration.getDefaultProperties());
     props.load(new FileReader(propFile));
     return props;
@@ -154,13 +164,15 @@ public class Configuration {
    * @throws InterruptedException
    * @throws KeeperException
    */
-  private void readConfig(ZooKeeper zk) throws Exception {
-    accumuloInstance = new String(zk.getData(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_NAME, false, null), "UTF-8");
-    accumuloInstanceID = new String(zk.getData(zoodir + Constants.Zookeeper.ACCUMULO_INSTANCE_ID, false, null), "UTF-8");
-    fluoInstanceID = new String(zk.getData(zoodir + Constants.Zookeeper.FLUO_INSTANCE_ID, false, null), "UTF-8");
-    table = new String(zk.getData(zoodir + Constants.Zookeeper.TABLE, false, null), "UTF-8");
-    
-    ByteArrayInputStream bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.OBSERVERS, false, null));
+  private void readConfig(CuratorFramework curator) throws Exception {
+
+    accumuloInstance = new String(curator.getData().forPath(Constants.instanceNamePath(zoodir)), "UTF-8");
+    accumuloInstanceID = new String(curator.getData().forPath(Constants.accumuloInstanceIdPath(zoodir)), "UTF-8");
+    fluoInstanceID = new String(curator.getData().forPath(Constants.fluoInstanceIdPath(zoodir)), "UTF-8");
+
+    table = new String(curator.getData().forPath(Constants.tablePath(zoodir)), "UTF-8");
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(Constants.observersPath(zoodir)));
     DataInputStream dis = new DataInputStream(bais);
     
     observers = Collections.unmodifiableMap(readObservers(dis));
@@ -170,7 +182,7 @@ public class Configuration {
     allObserversColumns.addAll(weakObservers.keySet());
     allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
 
-    bais = new ByteArrayInputStream(zk.getData(zoodir + Constants.Zookeeper.WORKER_CONFIG, false, null));
+    bais = new ByteArrayInputStream(curator.getData().forPath(Constants.workerConfigPath(zoodir)));
     this.workerProps = new Properties(getDefaultWorkerProperties());
     this.workerProps.load(bais);
   }
