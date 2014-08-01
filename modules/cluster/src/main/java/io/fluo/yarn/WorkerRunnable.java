@@ -17,12 +17,9 @@
 package io.fluo.yarn;
 
 import com.beust.jcommander.JCommander;
-import io.fluo.impl.WorkerTask;
-import io.fluo.api.config.WorkerProperties;
 import io.fluo.cluster.util.Logging;
 import io.fluo.core.util.PropertyUtil;
 import io.fluo.core.util.UtilWaitThread;
-import io.fluo.impl.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +28,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.fluo.api.config.WorkerProperties;
+
+import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.WorkerTask;
 
 /** Main run method of Fluo worker that can be called within
  * a Twill/YARN application or on its own as a Java application
@@ -58,17 +60,17 @@ public class WorkerRunnable extends AbstractTwillRunnable {
 
       Logging.init("worker", options.getConfigDir(), options.getLogOutput());
 
-      Configuration config = new Configuration(PropertyUtil.loadProps(options.getFluoConfig()));
+      Environment env = new Environment(PropertyUtil.loadProps(options.getFluoConfig()));
 
-      for (Entry<Object,Object> entry : config.getWorkerProperties().entrySet()) {
+      for (Entry<Object,Object> entry : env.getWorkerProperties().entrySet()) {
         log.info("config " + entry.getKey() + " = " + entry.getValue());
       }
 
-      int numThreads = Integer.parseInt(config.getWorkerProperties().getProperty(WorkerProperties.NUM_THREADS_PROP));
+      int numThreads = Integer.parseInt(env.getWorkerProperties().getProperty(WorkerProperties.WORKER_NUM_THREADS_PROP));
 
       ExecutorService tp = Executors.newFixedThreadPool(numThreads);
       for (int i = 0; i < numThreads; i++) {
-        tp.submit(new WorkerTask(config, new AtomicBoolean(false)));
+        tp.submit(new WorkerTask(env, new AtomicBoolean(false)));
       }
 
       // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.

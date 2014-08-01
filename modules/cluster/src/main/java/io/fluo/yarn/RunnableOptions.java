@@ -18,7 +18,7 @@ package io.fluo.yarn;
 
 import java.io.IOException;
 
-import io.fluo.impl.Configuration;
+import io.fluo.core.impl.Environment;
 
 import com.beust.jcommander.Parameter;
 
@@ -53,7 +53,7 @@ public class RunnableOptions {
     if (getConfigDir() == null) { 
       System.err.println("Please set -config-dir option to directory containing connection.properties file like below: ");
       System.err.println();
-      Configuration.getDefaultProperties().store(System.err, "Fluo connection properties");
+      Environment.getDefaultProperties().store(System.err, "Fluo connection properties");
       System.exit(-1);
     }
   }

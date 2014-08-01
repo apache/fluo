@@ -16,16 +16,16 @@
  */
 package io.fluo.core.util;
 
-import io.fluo.impl.Configuration;
+import java.io.File;
+import java.util.Properties;
+
+import io.fluo.core.impl.Environment;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.interpol.ConfigurationInterpolator;
 import org.apache.commons.lang.text.StrLookup;
-
-import java.io.File;
-import java.util.Properties;
 
 public class PropertyUtil {
 
@@ -39,7 +39,7 @@ public class PropertyUtil {
       }
     });
     
-    Properties defaults = Configuration.getDefaultProperties();
+    Properties defaults = Environment.getDefaultProperties();
     
     CompositeConfiguration compConf = new CompositeConfiguration();
     for(String file : files)

@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>fluo</groupId>
-		<artifactId>fluo-parent</artifactId>
-		<version>1.0.0-alpha-1-SNAPSHOT</version>
-		<relativePath>../../pom.xml</relativePath>
-	</parent>
+  <parent>
+    <groupId>fluo</groupId>
+    <artifactId>fluo-parent</artifactId>
+    <version>1.0.0-alpha-1-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
 
-	<artifactId>fluo-distribution</artifactId>
-	<packaging>pom</packaging>
+  <artifactId>fluo-distribution</artifactId>
+  <packaging>pom</packaging>
 
-	<name>Distribution</name>
+  <name>Distribution</name>
 
-	<!-- NOTE: These dependency declarations are only required to sort this 
-		project to the end of the line in the multimodule build. Since we only include 
-		the child1 module in our assembly, we only need to ensure this distribution 
-		project builds AFTER that one... -->
-	<dependencies>
-		<dependency>
-			<groupId>fluo</groupId>
-			<artifactId>fluo-cluster</artifactId>
-		</dependency>
-	</dependencies>
+  <!-- NOTE: These dependency declarations are only required to sort this 
+    project to the end of the line in the multimodule build. Since we only include 
+    the child1 module in our assembly, we only need to ensure this distribution 
+    project builds AFTER that one... -->
+  <dependencies>
+    <dependency>
+      <groupId>fluo</groupId>
+      <artifactId>fluo-cluster</artifactId>
+    </dependency>
+  </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>distro-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<finalName>fluo-${project.version}</finalName>
-							<descriptors>
-								<descriptor>src/main/assembly/bin.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>distro-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <finalName>fluo-${project.version}</finalName>
+              <descriptors>
+                <descriptor>src/main/assembly/bin.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

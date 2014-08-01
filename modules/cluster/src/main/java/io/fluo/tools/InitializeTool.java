@@ -18,12 +18,13 @@ package io.fluo.tools;
 
 import java.util.Properties;
 
-import io.fluo.api.Admin;
-import io.fluo.api.Admin.AlreadyInitializedException;
+import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
+
+import io.fluo.api.client.FluoAdmin;
+import io.fluo.core.client.FluoAdminImpl;
 import io.fluo.cluster.util.Logging;
 import io.fluo.core.util.PropertyUtil;
 import io.fluo.yarn.RunnableOptions;
-
 import com.beust.jcommander.JCommander;
 
 /** Initializes Fluo using properties in configuration files
@@ -46,11 +47,12 @@ public class InitializeTool {
     String[] configs = { options.getInitConfig(), options.getFluoConfig() };
     Properties props = PropertyUtil.loadProps(configs);
 
+    FluoAdmin admin = new FluoAdminImpl();
     try {
       //TODO maybe use commons Configuration instrea of Properties in API
-      Admin.initialize(props);
+      admin.initialize(props);
     } catch (AlreadyInitializedException aie) {
-      Admin.updateWorkerConfig(props);
+      admin.updateWorkerConfig(props);
     }
   }
 }

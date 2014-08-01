@@ -16,7 +16,8 @@
  */
 package io.fluo.stress.trie;
 
-import io.fluo.api.Column;
+import io.fluo.api.data.Column;
+
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 

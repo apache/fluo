@@ -16,32 +16,32 @@
  */
 package io.fluo.stress;
 
-import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
-import static io.fluo.stress.trie.Constants.TYPEL;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import io.fluo.api.config.LoaderExecutorProperties;
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.types.TypedSnapshot;
+import io.fluo.core.TestBaseMini;
+import io.fluo.core.client.LoaderExecutorImpl;
+import io.fluo.stress.trie.Node;
+import io.fluo.stress.trie.NodeObserver;
+import io.fluo.stress.trie.NumberLoader;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.fluo.api.LoaderExecutor;
-import io.fluo.api.SnapshotFactory;
-import io.fluo.api.config.LoaderExecutorProperties;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.types.TypedSnapshot;
-import io.fluo.stress.trie.Node;
-import io.fluo.stress.trie.NodeObserver;
-import io.fluo.stress.trie.NumberLoader;
+import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
+import static io.fluo.stress.trie.Constants.TYPEL;
 
-/** Tests Trie Stress Test using Basic Loader
+/** 
+ * Tests Trie Stress Test using Basic Loader
  */
-public class TrieBasicIT extends StressBase {
+public class TrieBasicIT extends TestBaseMini {
   
   private static Logger log = LoggerFactory.getLogger(TrieBasicIT.class);
   
@@ -83,7 +83,7 @@ public class TrieBasicIT extends StressBase {
     lep.setNumThreads(0);
     lep.setQueueSize(0);
     
-    LoaderExecutor le = new LoaderExecutor(lep);
+    LoaderExecutorImpl le = new LoaderExecutorImpl(lep);
     
     Random random = new Random();
     Set<Integer> ingested = new HashSet<>();
@@ -97,23 +97,21 @@ public class TrieBasicIT extends StressBase {
     log.info("Ingested "+uniqueNum+" unique numbers with a nodeSize of "+nodeSize+" bits");
     
     miniFluo.waitForObservers();
-    
-    try (SnapshotFactory snapFact = new SnapshotFactory(props)) {          
-      TypedSnapshot tsnap = TYPEL.snapshot(snapFact);
-      
-      Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
-                            .col(COUNT_SEEN_COL).toInteger();
-      if (result == null) { 
-        log.error("Could not find root node");
-        printSnapshot();
-      }
-      
-      if (!result.equals(uniqueNum)) {
-        log.error("Count ("+result+") at root node does not match expected ("+uniqueNum+"):");
-        printSnapshot();
-      }
-      
-      Assert.assertEquals(uniqueNum, result.intValue());;
+
+    TypedSnapshot tsnap = TYPEL.snapshot(client.newSnapshot());
+
+    Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
+        .col(COUNT_SEEN_COL).toInteger();
+    if (result == null) { 
+      log.error("Could not find root node");
+      printSnapshot();
     }
+
+    if (!result.equals(uniqueNum)) {
+      log.error("Count ("+result+") at root node does not match expected ("+uniqueNum+"):");
+      printSnapshot();
+    }
+
+    Assert.assertEquals(uniqueNum, result.intValue());
   }
 }
