@@ -29,6 +29,7 @@ import io.fluo.api.Column;
 import io.fluo.api.Observer;
 import io.fluo.api.config.InitializationProperties;
 import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.PortUtils;
 import io.fluo.format.FluoFormatter;
 import org.apache.accumulo.core.client.Connector;
@@ -39,7 +40,6 @@ import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -49,13 +49,12 @@ import org.junit.BeforeClass;
  */
 public class Base {
   protected static String secret = "ITSecret";
-  protected static ZooKeeper zk;
   protected static AtomicInteger next = new AtomicInteger();
   protected static Instance instance;
   protected static CuratorFramework curator;
+  protected static Connector conn;
 
   protected Configuration config;
-  protected Connector conn;
   protected String table;
   protected OracleServer oserver;
   protected String zkn;
@@ -97,13 +96,13 @@ public class Base {
   public static void setUp() throws Exception {
     String instanceName = "plugin-it-instance";
     instance = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
-    zk = new ZooKeeper(instance.getZooKeepers(), 30000, null);
+    conn = instance.getConnector("root", new PasswordToken(secret));
+    curator = CuratorUtil.getCurator(conn.getInstance().getZooKeepers(), 30000);
+    curator.start();
   }
 
   @Before
   public void setup() throws Exception {
-
-    conn = instance.getConnector("root", new PasswordToken(secret));
 
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
@@ -120,10 +119,9 @@ public class Base {
     props.setObservers(getObservers());
 
     Admin.initialize(props);
-    
-    config = new Configuration(zk, zkn, conn, PortUtils.getRandomFreePort());
-    curator = config.getSharedResources().getCurator();
-    
+
+    config = new Configuration(curator, zkn, conn, PortUtils.getRandomFreePort());
+
     oserver = new OracleServer(config);
     oserver.start();
   }
@@ -132,7 +130,7 @@ public class Base {
    * will always create one oracle)
    */
   public OracleServer createExtraOracle(int port) throws Exception {
-    Configuration config = new Configuration(zk, zkn, conn, port);
+    Configuration config = new Configuration(curator, zkn, conn, port);
     return new OracleServer(config);
   }
   

@@ -1,5 +1,7 @@
 package io.fluo.impl;
 
+import java.util.HashSet;
+
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.RowIterator;
@@ -15,8 +17,6 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.HashSet;
 
 public class FluoIT extends Base {
   
@@ -325,7 +325,7 @@ public class FluoIT extends Base {
     
     tx.commit();
     
-    Configuration config2 = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
+    Configuration config2 = new Configuration(curator, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
     config2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(config2);
@@ -333,7 +333,7 @@ public class FluoIT extends Base {
     Assert.assertEquals("20", tx2.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
     
-    Configuration config3 = new Configuration(zk, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
+    Configuration config3 = new Configuration(curator, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
     config3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(config3);

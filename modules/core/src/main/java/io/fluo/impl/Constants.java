@@ -49,13 +49,40 @@ public class Constants {
 
   public static final long ROLLBACK_TIME_DEFAULT = 300000;
 
-  public static final String oraclePath(Configuration config) {
-    return config.getZookeeperRoot() + Zookeeper.ORACLE_SERVER;
+  public static final String oraclePath(String zkPath) {
+    return zkPath + Zookeeper.ORACLE_SERVER;
   }
 
-  public static final String timestampPath(Configuration config) {
-    return config.getZookeeperRoot() + Zookeeper.TIMESTAMP;
+  public static final String timestampPath(String zkPath) {
+    return zkPath + Zookeeper.TIMESTAMP;
   }
 
+  public static final String tablePath(String zkPath) {
+    return zkPath + Zookeeper.TABLE;
+  }
+
+  public static final String configPath(String zkPath) {
+    return zkPath + Zookeeper.CONFIG;
+  }
+
+  public static final String instanceNamePath(String zkPath) {
+    return zkPath + Zookeeper.ACCUMULO_INSTANCE_NAME;
+  }
+
+  public static final String accumuloInstanceIdPath(String zkPath) {
+    return zkPath + Zookeeper.ACCUMULO_INSTANCE_ID;
+  }
+
+  public static final String fluoInstanceIdPath(String zkPath) {
+    return zkPath + Zookeeper.FLUO_INSTANCE_ID;
+  }
+
+  public static final String observersPath(String zkPath) {
+    return zkPath + Constants.Zookeeper.OBSERVERS;
+  }
+
+  public static final String workerConfigPath(String zkPath) {
+    return zkPath + Constants.Zookeeper.WORKER_CONFIG;
+  }
 
 }
