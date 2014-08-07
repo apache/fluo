@@ -107,6 +107,41 @@ public class TransactorIT extends Base {
     t1.getLongID();
   }
   
+  @Test(timeout = 30000)
+  public void testTimeout() throws Exception {
+    TransactorCache cache = new TransactorCache(config);
+
+    cache.addTimedoutTransactor(id1, 4, System.currentTimeMillis() - 3);
+
+    Assert.assertTrue(cache.checkTimedout(id1, 3));
+    Assert.assertTrue(cache.checkTimedout(id1, 4));
+    Assert.assertFalse(cache.checkTimedout(id1, 5));
+    Assert.assertFalse(cache.checkTimedout(id1, 6));
+
+    cache.addTimedoutTransactor(id1, 7, System.currentTimeMillis() - 3);
+    cache.addTimedoutTransactor(id2, 4, System.currentTimeMillis() - 3);
+
+    Assert.assertTrue(cache.checkTimedout(id1, 4));
+    Assert.assertTrue(cache.checkTimedout(id1, 5));
+    Assert.assertTrue(cache.checkTimedout(id1, 6));
+    Assert.assertTrue(cache.checkTimedout(id1, 7));
+    Assert.assertFalse(cache.checkTimedout(id1, 8));
+    Assert.assertFalse(cache.checkTimedout(id1, 9));
+
+    Assert.assertTrue(cache.checkTimedout(id2, 3));
+    Assert.assertTrue(cache.checkTimedout(id2, 4));
+    Assert.assertFalse(cache.checkTimedout(id2, 5));
+    Assert.assertFalse(cache.checkTimedout(id2, 6));
+
+    // esnure setting a lower lockTs than previously set has no effect
+    cache.addTimedoutTransactor(id1, 3, System.currentTimeMillis() - 3);
+
+    Assert.assertTrue(cache.checkTimedout(id1, 7));
+    Assert.assertFalse(cache.checkTimedout(id1, 8));
+
+    cache.close();
+  }
+
   private boolean checkExists(TransactorID t) throws Exception {
     return curator.checkExists().forPath(t.getNodePath()) != null;
   }

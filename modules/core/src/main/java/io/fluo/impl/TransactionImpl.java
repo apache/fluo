@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.fluo.impl;
 
 import io.fluo.api.Bytes;
@@ -40,7 +57,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.ArgumentChecker;
-import org.apache.commons.lang.mutable.MutableLong;
 
 /**
  * Transaction implementation
@@ -345,10 +361,9 @@ public class TransactionImpl implements Transaction {
     
     while (mutationStatus == Status.UNKNOWN) {
       
-      MutableLong mcts = new MutableLong(-1);
-      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts, null);
+      TxInfo txInfo = TxInfo.getTransactionInfo(config, cd.prow, cd.pcol, startTs);
       
-      switch (txStatus) {
+      switch (txInfo.status) {
         case LOCKED:
           mutationStatus = Status.ACCEPTED;
           break;
@@ -361,7 +376,7 @@ public class TransactionImpl implements Transaction {
           break;
         case COMMITTED:
         default:
-          throw new IllegalStateException("unexpected tx state " + txStatus + " " + cd.prow + " " + cd.pcol);
+          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow + " " + cd.pcol);
           
       }
     }
@@ -534,13 +549,12 @@ public class TransactionImpl implements Transaction {
     
     while (mutationStatus == Status.UNKNOWN) {
       
-      MutableLong mcts = new MutableLong(-1);
-      TxStatus txStatus = TxStatus.getTransactionStatus(config, cd.prow, cd.pcol, startTs, mcts, null);
+      TxInfo txInfo = TxInfo.getTransactionInfo(config, cd.prow, cd.pcol, startTs);
       
-      switch (txStatus) {
+      switch (txInfo.status) {
         case COMMITTED:
-          if (mcts.longValue() != commitTs)
-            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + mcts.longValue() + "!=" + commitTs);
+          if (txInfo.commitTs != commitTs)
+            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + commitTs);
           mutationStatus = Status.ACCEPTED;
           break;
         case LOCKED:

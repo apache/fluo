@@ -18,9 +18,18 @@ package io.fluo.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 /** Provides cache of all Fluo transactors.
  * Used by clients to determine if transactor is running.
@@ -32,8 +41,15 @@ public class TransactorCache implements Closeable {
   private Configuration config;
   private PathChildrenCache cache;
   private TcStatus status;
+  private Cache<Long,AtomicLong> timeoutCache;
   
+  private static Logger log = LoggerFactory.getLogger(TransactorCache.class);
+
   public TransactorCache(Configuration config) {
+
+    timeoutCache = CacheBuilder.newBuilder().maximumSize(1 << 15).expireAfterAccess(TxInfoCache.CACHE_TIMEOUT_MIN, TimeUnit.MINUTES).concurrencyLevel(10)
+        .build();
+
     this.config = config;
     cache = new PathChildrenCache(config.getSharedResources().getCurator(),
         TransactorID.getNodeRoot(config), true);
@@ -45,6 +61,44 @@ public class TransactorCache implements Closeable {
     }
   }
   
+  private void logTimedoutTransactor(Long transactorId, long lockTs, Long startTime) {
+    log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", TransactorID.longToString(transactorId),
+        (System.currentTimeMillis() - startTime) / 1000.0, lockTs);
+  }
+
+  public void addTimedoutTransactor(final Long transactorId, final long lockTs, final Long startTime) {
+
+    try {
+      AtomicLong cachedLockTs = timeoutCache.get(transactorId, new Callable<AtomicLong>() {
+        @Override
+        public AtomicLong call() throws Exception {
+          logTimedoutTransactor(transactorId, lockTs, startTime);
+          return new AtomicLong(lockTs);
+        }
+      });
+
+      long currVal = cachedLockTs.get();
+
+      while (lockTs > currVal) {
+        if (cachedLockTs.compareAndSet(currVal, lockTs)) {
+          logTimedoutTransactor(transactorId, lockTs, startTime);
+        }
+
+        // its possible another thread updates and the above compare and set failed, so the following will get us out of loop in this case... it will also get
+        // us out of loop in case where compared and set succeeds
+        currVal = cachedLockTs.get();
+      }
+
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean checkTimedout(Long transactorId, long lockTs) {
+    AtomicLong timedoutLockTs = timeoutCache.getIfPresent(transactorId);
+    return timedoutLockTs != null && lockTs <= timedoutLockTs.get();
+  }
+
   public boolean checkExists(Long transactorId) {
     return cache.getCurrentData(TransactorID.getNodePath(config, transactorId)) != null;
   }

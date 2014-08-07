@@ -83,6 +83,16 @@ public class FailureIT extends Base {
 
   @Test
   public void testRollbackMany() throws Exception {
+    testRollbackMany(true);
+  }
+
+  @Test
+  public void testRollbackManyTimeout() throws Exception {
+    testRollbackMany(false);
+  }
+
+  public void testRollbackMany(boolean killTransactor) throws Exception {
+
     // test writing lots of columns that need to be rolled back
 
     Column col1 = typeLayer.newColumn("fam1", "q1");
@@ -97,7 +107,8 @@ public class FailureIT extends Base {
     
     tx.commit();
     
-    TestTransaction tx2 = new TestTransaction(config);
+    TransactorID t2 = new TransactorID(config);
+    TestTransaction tx2 = new TestTransaction(config, t2);
     
     for (int r = 0; r < 10; r++) {
       tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
@@ -107,25 +118,43 @@ public class FailureIT extends Base {
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
     
+    if (killTransactor)
+      t2.close();
+
     TestTransaction tx3 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("0" + r + "0", tx3.get().row(r + "").col(col1).toString());
       Assert.assertEquals("0" + r + "1", tx3.get().row(r + "").col(col2).toString());
     }
-    
-    long commitTs = OracleClient.getInstance(config).getTimestamp();
-    Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
+
+    if (killTransactor) {
+      long commitTs = OracleClient.getInstance(config).getTimestamp();
+      exception.expect(IllegalStateException.class);
+      tx2.commitPrimaryColumn(cd, commitTs);
+    } else {
+      long commitTs = OracleClient.getInstance(config).getTimestamp();
+      Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
+      t2.close();
+    }
 
     TestTransaction tx4 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("0" + r + "0", tx4.get().row(r + "").col(col1).toString());
       Assert.assertEquals("0" + r + "1", tx4.get().row(r + "").col(col2).toString());
     }
-
   }
 
   @Test
   public void testRollforwardMany() throws Exception {
+    testRollforwardMany(true);
+  }
+
+  @Test
+  public void testRollforwardManyTimeout() throws Exception {
+    testRollforwardMany(false);
+  }
+
+  public void testRollforwardMany(boolean killTransactor) throws Exception {
     // test writing lots of columns that need to be rolled forward
 
     Column col1 = typeLayer.newColumn("fam1", "q1");
@@ -140,7 +169,8 @@ public class FailureIT extends Base {
     
     tx.commit();
     
-    TestTransaction tx2 = new TestTransaction(config);
+    TransactorID t2 = new TransactorID(config);
+    TestTransaction tx2 = new TestTransaction(config, t2);
     
     for (int r = 0; r < 10; r++) {
       tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
@@ -152,6 +182,9 @@ public class FailureIT extends Base {
     long commitTs = OracleClient.getInstance(config).getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
+    if (killTransactor)
+      t2.close();
+
     TestTransaction tx3 = new TestTransaction(config);
     for (int r = 0; r < 10; r++) {
       Assert.assertEquals("1" + r + "0", tx3.get().row(r + "").col(col1).toString());
@@ -166,6 +199,8 @@ public class FailureIT extends Base {
       Assert.assertEquals("1" + r + "1", tx4.get().row(r + "").col(col2).toString());
     }
     
+    if (!killTransactor)
+      t2.close();
   }
   
   @Test

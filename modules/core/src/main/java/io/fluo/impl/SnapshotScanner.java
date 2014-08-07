@@ -16,35 +16,26 @@
  */
 package io.fluo.impl;
 
-import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ScannerConfiguration;
 import io.fluo.api.exceptions.StaleScanException;
 import io.fluo.core.util.UtilWaitThread;
-import io.fluo.impl.iterators.PrewriteIterator;
 import io.fluo.impl.iterators.SnapshotIterator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.ConditionalWriter;
-import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Condition;
-import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.lang.mutable.MutableLong;
 
 /**
  * 
@@ -58,7 +49,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   private Configuration aconfig;
   private TxStats stats;
-  private TransactorCache cache;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -70,7 +60,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.startTs = startTs;
     this.stats = stats;
     setUpIterator();
-    this.cache = aconfig.getSharedResources().getTransactorCache();
   }
   
   private void setUpIterator() {
@@ -122,11 +111,78 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     return tmp;
   }
   
-  public Entry<Key,Value> getNext() {
-    
-    long waitTime = INITIAL_WAIT_TIME;
-    long firstSeen = -1;
+  private void resetScanner(Range range) {
+    try {
+      config = (ScannerConfiguration) config.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
 
+    config.setRange(range);
+    setUpIterator();
+  }
+
+  public void resolveLock(Entry<Key,Value> lockEntry) {
+
+    // read ahead a little bit looking for other locks to resolve
+
+    long startTime = System.currentTimeMillis();
+    long waitTime = INITIAL_WAIT_TIME;
+
+    List<Entry<Key,Value>> locks = new ArrayList<>();
+    locks.add(lockEntry);
+    int amountRead = 0;
+    int numRead = 0;
+
+    Key origEndKey = config.getRange().getEndKey();
+    boolean isEndInclusive = config.getRange().isEndKeyInclusive();
+
+    while (true) {
+      while (iterator.hasNext()) {
+        Entry<Key,Value> entry = iterator.next();
+
+        long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
+
+        if (colType == ColumnUtil.LOCK_PREFIX) {
+          locks.add(entry);
+        }
+
+        amountRead += entry.getKey().getSize() + entry.getValue().getSize();
+        numRead++;
+
+        if (numRead > 100 || amountRead > 1 << 12) {
+          break;
+        }
+      }
+
+      boolean resolvedLocks = LockResolver.resolveLocks(aconfig, startTs, stats, locks, startTime);
+
+      if (!resolvedLocks) {
+        UtilWaitThread.sleep(waitTime);
+        stats.incrementLockWaitTime(waitTime);
+        waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
+
+        Key startKey = new Key(locks.get(0).getKey());
+        startKey.setTimestamp(Long.MAX_VALUE);
+
+        Key endKey = locks.get(locks.size() - 1).getKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
+
+        resetScanner(new Range(startKey, true, endKey, false));
+
+        locks.clear();
+
+      } else {
+        break;
+      }
+    }
+
+    Key startKey = new Key(lockEntry.getKey());
+    startKey.setTimestamp(Long.MAX_VALUE);
+
+    resetScanner(new Range(startKey, true, origEndKey, isEndInclusive));
+  }
+
+  public Entry<Key,Value> getNext() {
     mloop: while (true) {
       // its possible a next could exist then be rolled back
       if (!iterator.hasNext())
@@ -134,51 +190,12 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
       Entry<Key,Value> entry = iterator.next();
 
-      byte[] cf = entry.getKey().getColumnFamilyData().toArray();
-      byte[] cq = entry.getKey().getColumnQualifierData().toArray();
       long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
 
       if (colType == ColumnUtil.LOCK_PREFIX) {
-        // TODO do read ahead while waiting for the lock... this is important for the case where reprocessing a failed transaction... need to find a batch or
-        // locked columns and resolve them together, not one by one... should cache the status of the primary lock while doing this
-        
-        if (firstSeen == -1) {
-          firstSeen = System.currentTimeMillis();
-        }
-
-        LockValue lv = new LockValue(entry.getValue().get());
-
-        // abort the transaction if transactor has died or timeout occurred
-        boolean resolvedLock = false;
-        if (!cache.checkExists(lv.getTransactor())) { 
-          stats.incrementDeadLocks();
-          resolvedLock = resolveLock(entry, true);
-        } else if ((System.currentTimeMillis() - firstSeen) > aconfig.getRollbackTime()) {
-          stats.incrementTimedOutLocks();
-          resolvedLock = resolveLock(entry, true);
-        }
-        
-        if (!resolvedLock) {
-          UtilWaitThread.sleep(waitTime);
-          stats.incrementLockWaitTime(waitTime);
-          waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
-        }
-
-        Key k = entry.getKey();
-        Key start = new Key(k.getRowData().toArray(), cf, cq, k.getColumnVisibilityData().toArray(), Long.MAX_VALUE);
-        
-        try {
-          config = (ScannerConfiguration) config.clone();
-        } catch (CloneNotSupportedException e) {
-          throw new RuntimeException(e);
-        }
-        config.setRange(new Range(start, true, config.getRange().getEndKey(), config.getRange().isEndKeyInclusive()));
-        setUpIterator();
-
+        resolveLock(entry);
         continue mloop;
       } else if (colType == ColumnUtil.DATA_PREFIX) {
-        waitTime = INITIAL_WAIT_TIME;
-        firstSeen = -1;
         stats.incrementEntriesReturned(1);
         return entry;
       } else if (colType == ColumnUtil.WRITE_PREFIX) {
@@ -191,141 +208,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         throw new IllegalArgumentException();
       }
     }
-  }
-  
-  private boolean resolveLock(Entry<Key,Value> entry, boolean abort) {
-
-    // TODO need to check in zookeeper if worker processing tx is alive
-
-    List<Bytes> primary = Bytes.split(Bytes.wrap(entry.getValue().get()));
-    
-    Bytes prow = primary.get(0);
-    Bytes pfam = primary.get(1);
-    Bytes pqual = primary.get(2);
-    Bytes pvis = primary.get(3);
-    
-    Bytes erow = Bytes.wrap(entry.getKey().getRowData().toArray());
-    Bytes efam = Bytes.wrap(entry.getKey().getColumnFamilyData().toArray());
-    Bytes equal = Bytes.wrap(entry.getKey().getColumnQualifierData().toArray());
-    Bytes evis = Bytes.wrap(entry.getKey().getColumnVisibilityData().toArray());
-
-    boolean isPrimary = erow.equals(prow) && efam.equals(pfam) && equal.equals(pqual) && evis.equals(pvis);
-
-    long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
-    
-    boolean resolvedLock = false;
-
-    if (isPrimary) {
-      if (abort) {
-        try {
-          rollbackPrimary(prow, pfam, pqual, pvis, lockTs, entry.getValue().get());
-        } catch (AccumuloException e) {
-          throw new RuntimeException(e);
-        } catch (AccumuloSecurityException e) {
-          throw new RuntimeException(e);
-        }
-        resolvedLock = true;
-      }
-    } else {
-
-      // TODO ensure primary is visible
-      // TODO reususe scanner?
-      try {
-        
-        Value lockVal = new Value();
-        MutableLong commitTs = new MutableLong(-1);
-        // TODO use cached CV
-        TxStatus txStatus = TxStatus.getTransactionStatus(aconfig, prow, new Column(pfam, pqual)
-            .setVisibility(new ColumnVisibility(ByteUtil.toText(pvis))), lockTs, commitTs, lockVal);
-        
-        // TODO cache status
-
-        switch (txStatus) {
-          case COMMITTED:
-            if (commitTs.longValue() < lockTs) {
-              throw new IllegalStateException("bad commitTs : " + prow + " " + pfam + " " + pqual + " " + pvis + " (" + commitTs.longValue() + "<" + lockTs
-                  + ")");
-            }
-            commitColumn(entry, lockTs, commitTs.longValue());
-            resolvedLock = true;
-            break;
-          case LOCKED:
-            if (abort) {
-              if (rollbackPrimary(prow, pfam, pqual, pvis, lockTs, lockVal.get())) {
-                rollback(entry.getKey(), lockTs);
-                resolvedLock = true;
-              }
-            }
-            break;
-          case ROLLED_BACK:
-            // TODO ensure this if ok if there concurrent rollback
-            rollback(entry.getKey(), lockTs);
-            resolvedLock = true;
-            break;
-          case UNKNOWN:
-            if (abort) {
-              throw new IllegalStateException("can not abort : " + prow + " " + pfam + " " + pqual + " " + pvis + " (" + txStatus + ")");
-            }
-            break;
-        }
-
-      } catch (Exception e) {
-        // TODO proper exception handling
-        throw new RuntimeException(e);
-      }
-    }
-    
-    return resolvedLock;
-  }
-
-  private void commitColumn(Entry<Key,Value> entry, long lockTs, long commitTs) {
-    LockValue lv = new LockValue(entry.getValue().get());
-    // TODO cache col vis
-    Bytes cf = Bytes.wrap(entry.getKey().getColumnFamilyData().toArray());
-    Bytes cq = Bytes.wrap(entry.getKey().getColumnQualifierData().toArray());
-    Column col = new Column(cf, cq).setVisibility(entry.getKey().getColumnVisibilityParsed());
-    Mutation m = new Mutation(entry.getKey().getRowData().toArray());
-    
-    ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, aconfig.getObservers().keySet(), m);
-    
-    // TODO use conditional writer?
-    aconfig.getSharedResources().getBatchWriter().writeMutation(m);
-  }
-
-  private void rollback(Key k, long lockTs) {
-    Mutation mut = new Mutation(k.getRowData().toArray());
-    mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(lockTs, false, true));
-    
-    // TODO use conditional writer?
-    aconfig.getSharedResources().getBatchWriter().writeMutation(mut);
-  }
-
-  boolean rollbackPrimary(Bytes prow, Bytes pfam, Bytes pqual, Bytes pvis, long lockTs, byte[] val) throws AccumuloException,
-      AccumuloSecurityException {
-    // TODO use cached CV
-    ColumnVisibility cv = new ColumnVisibility(ByteUtil.toText(pvis));
-    
-    // TODO avoid conversions to arrays
-    // TODO review use of PrewriteIter here
-
-    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
-    PrewriteIterator.setSnaptime(iterConf, startTs);
-    // TODO cache col vis?
-    ConditionalMutation delLockMutation = new ConditionalMutation(ByteUtil.toByteSequence(prow), 
-        new Condition(ByteUtil.toByteSequence(pfam), ByteUtil.toByteSequence(pqual)).setIterators(iterConf).setVisibility(cv).setValue(val));
-    
-    // TODO sanity check on lockTs vs startTs
-    
-    delLockMutation.put(ByteUtil.toText(pfam), ByteUtil.toText(pqual), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs, 
-          new Value(DelLockValue.encode(lockTs, true, true)));
-    
-    ConditionalWriter cw = null;
-    
-    cw = aconfig.getSharedResources().getConditionalWriter();
-
-    // TODO handle other conditional writer cases
-    return cw.write(delLockMutation).getStatus() == Status.ACCEPTED;
   }
 
   public void remove() {

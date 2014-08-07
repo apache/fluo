@@ -8,6 +8,7 @@ import io.fluo.core.util.UtilWaitThread;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,18 +20,17 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.commons.lang.NotImplementedException;
 
 public class ParallelSnapshotScanner {
 
   private Configuration aconfig;
   private long startTs;
-  private Collection<Bytes> rows;
+  private HashSet<Bytes> unscannedRows;
   private Set<Column> columns;
   private TxStats stats;
 
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Configuration aconfig, long startTs, TxStats stats) {
-    this.rows = rows;
+    this.unscannedRows = new HashSet<>(rows);
     this.columns = columns;
     this.aconfig = aconfig;
     this.startTs = startTs;
@@ -52,8 +52,6 @@ public class ParallelSnapshotScanner {
 
     List<Range> ranges = new ArrayList<Range>(rows.size());
 
-    // TODO it may be better to create a range per row.... because scans between column qualifiers instead of seeking...
-
     for (Bytes row : rows) {
       ranges.add(Range.exact(ByteUtil.toText(row)));
     }
@@ -65,30 +63,36 @@ public class ParallelSnapshotScanner {
     return scanner;
   }
 
-
   Map<Bytes,Map<Column,Bytes>> scan() {
 
     long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
     long startTime = System.currentTimeMillis();
 
+    Map<Bytes,Map<Column,Bytes>> ret = new HashMap<Bytes,Map<Column,Bytes>>();
+
     while (true) {
       List<Entry<Key,Value>> locks = new ArrayList<Entry<Key,Value>>();
 
-      Map<Bytes,Map<Column,Bytes>> ret = scan(locks);
+      scan(ret, locks);
 
       if (locks.size() > 0) {
 
-        if (System.currentTimeMillis() - startTime > aconfig.getRollbackTime()) {
-          throw new NotImplementedException("Parallel lock recovery");
+        boolean resolvedAll = LockResolver.resolveLocks(aconfig, startTs, stats, locks, startTime);
+
+        if (!resolvedAll) {
+          UtilWaitThread.sleep(waitTime);
+          stats.incrementLockWaitTime(waitTime);
+          waitTime = Math.min(SnapshotScanner.MAX_WAIT_TIME, waitTime * 2);
+        }
+        // TODO, could only rescan the row/cols that were locked instead of just the entire row
+
+        // retain the rows that were locked for future scans
+        HashSet<Bytes> lockedRows = new HashSet<>();
+        for (Entry<Key,Value> entry : locks) {
+          lockedRows.add(new ArrayBytes(entry.getKey().getRowData()));
         }
 
-        // TODO get unique set of primary lock row/cols and then determine status of those... and then roll back or forward in batch
-        // TODO only reread locked row/cols
-        UtilWaitThread.sleep(waitTime);
-        stats.incrementLockWaitTime(waitTime);
-        waitTime = Math.min(SnapshotScanner.MAX_WAIT_TIME, waitTime * 2);
-
-        // TODO only reread data that was locked when retrying, not everything
+        unscannedRows.retainAll(lockedRows);
 
         continue;
       }
@@ -100,16 +104,14 @@ public class ParallelSnapshotScanner {
     }
   }
 
-  Map<Bytes,Map<Column,Bytes>> scan(List<Entry<Key,Value>> locks) {
+  void scan(Map<Bytes,Map<Column,Bytes>> ret, List<Entry<Key,Value>> locks) {
 
-    Map<Bytes,Map<Column,Bytes>> ret = new HashMap<Bytes,Map<Column,Bytes>>();
-
-    BatchScanner bs = setupBatchScanner(rows, columns);
+    BatchScanner bs = setupBatchScanner(unscannedRows, columns);
     try {
       for (Entry<Key,Value> entry : bs) {
-        Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
-        Bytes cf = Bytes.wrap(entry.getKey().getColumnFamilyData().toArray());
-        Bytes cq = Bytes.wrap(entry.getKey().getColumnQualifierData().toArray());
+        Bytes row = new ArrayBytes(entry.getKey().getRowData());
+        Bytes cf = new ArrayBytes(entry.getKey().getColumnFamilyData());
+        Bytes cq = new ArrayBytes(entry.getKey().getColumnQualifierData());
 
         // TODO cache col vis
         Column col = new Column(cf, cq).setVisibility(new ColumnVisibility(entry
@@ -134,14 +136,12 @@ public class ParallelSnapshotScanner {
             throw new IllegalArgumentException();
           }
         } else {
-          throw new IllegalArgumentException();
+          throw new IllegalArgumentException("Unexpected column type " + colType);
         }
       }
     } finally {
       bs.close();
     }
-
-    return ret;
   }
 
 }
