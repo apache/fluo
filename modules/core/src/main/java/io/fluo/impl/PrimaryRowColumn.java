@@ -33,7 +33,7 @@ class PrimaryRowColumn {
   }
 
   public int weight() {
-    return 32 + prow.length() + pcol.getFamily().length() + pcol.getQualifier().length() + pcol.getVisibility().getExpression().length;
+    return 32 + prow.length() + pcol.getFamily().length() + pcol.getQualifier().length() + pcol.getVisibility().length();
   }
 
   public boolean equals(Object o) {

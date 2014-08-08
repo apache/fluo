@@ -16,19 +16,11 @@
  */
 package io.fluo.impl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.accumulo.core.data.Range;
-import org.apache.hadoop.io.Text;
-import org.junit.Assert;
-import org.junit.Test;
-
 import io.fluo.api.Bytes;
 import io.fluo.api.Column;
 import io.fluo.api.ColumnIterator;
 import io.fluo.api.Observer;
+import io.fluo.api.Span;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
 import io.fluo.api.Transaction;
@@ -37,6 +29,13 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.impl.TransactionImpl.CommitData;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
@@ -67,7 +66,7 @@ public class WorkerIT extends Base {
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setRange(Range.exact(ByteUtil.toText(row), new Text("link"))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, Bytes.wrap("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {

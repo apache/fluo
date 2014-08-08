@@ -22,24 +22,24 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import io.fluo.api.mapreduce.RowColumn;
+
 import io.fluo.api.Bytes;
 import io.fluo.api.Observer;
+import io.fluo.api.Span;
 import io.fluo.api.Transaction;
-
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.VersioningIterator;
-import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import io.fluo.api.Column;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.exceptions.AlreadyAcknowledgedException;
 import io.fluo.api.exceptions.CommitException;
+import io.fluo.core.util.SpanUtil;
 import io.fluo.impl.RandomTabletChooser.TabletInfo;
 import io.fluo.impl.iterators.NotificationSampleIterator;
 
@@ -64,7 +64,7 @@ public class Worker {
     this.tabletChooser = tabletChooser;
   }
 
-  private Range pickRandomRow(final Scanner scanner, Text start, Text end) {
+  private Span pickRandomRow(final Scanner scanner, Bytes start, Bytes end) {
 
     scanner.clearScanIterators();
     scanner.clearColumns();
@@ -78,22 +78,22 @@ public class Worker {
     NotificationSampleIterator.setSampleSize(iterCfg, 256);
     scanner.addScanIterator(iterCfg);
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
-    scanner.setRange(new Range(start, false, end, true));
+    scanner.setRange(SpanUtil.toRange(new Span(start, false, end, true)));
 
-    ArrayList<Text> sample = new ArrayList<Text>();
+    ArrayList<Bytes> sample = new ArrayList<Bytes>();
 
     for (Entry<Key,Value> entry : scanner)
-      sample.add(entry.getKey().getRow());
+      sample.add(new ArrayBytes(entry.getKey().getRow()));
 
     if (sample.size() == 0)
       return null;
 
-    Text row = sample.get(rand.nextInt(sample.size()));
+    Bytes row = sample.get(rand.nextInt(sample.size()));
 
-    return new Range(row, true, end, true);
+    return new Span(row, true, end, true);
   }
 
-  private Range pickRandomStartPoint(Scanner scanner) throws Exception {
+  private Span pickRandomStartPoint(Scanner scanner) throws Exception {
 
     TabletInfo tablet = tabletChooser.getRandomTablet();
     // only have one thread per process inspecting a tablet for a start location at a time.. want to handle the case w/ few tablets, many workers, and no
@@ -103,8 +103,11 @@ public class Worker {
         if (tablet.retryTime > System.currentTimeMillis()) {
           return null;
         }
+                
+        Bytes start = tablet.start == null ? Bytes.EMPTY : new ArrayBytes(tablet.start);
+        Bytes end = tablet.end == null ? Bytes.EMPTY : new ArrayBytes(tablet.end);
 
-        Range ret = pickRandomRow(scanner, tablet.start, tablet.end);
+        Span ret = pickRandomRow(scanner, start, end);
         if (ret == null) {
           // remember if a tablet is empty an do not retry it for a bit... the more times empty, the longer the retry
           tablet.retryTime = tablet.sleepTime + System.currentTimeMillis();
@@ -130,8 +133,8 @@ public class Worker {
 
     Scanner scanner = config.getConnector().createScanner(config.getTable(), config.getAuthorizations());
 
-    Range range = pickRandomStartPoint(scanner);
-    if (range == null)
+    Span span = pickRandomStartPoint(scanner);
+    if (span == null)
       return 0;
 
     scanner.clearColumns();
@@ -142,7 +145,7 @@ public class Worker {
     scanner.addScanIterator(iterCfg);
 
     scanner.fetchColumnFamily(ByteUtil.toText(Constants.NOTIFY_CF));
-    scanner.setRange(range);
+    scanner.setRange(SpanUtil.toRange(span));
 
     long numProcessed = 0;
 
@@ -184,7 +187,8 @@ public class Worker {
         } catch (Exception e) {
           // this could be caused by multiple worker threads processing the same notification
           // TODO this detection method has a race condition, notification could be recreated after being deleted... need to check notification timestamp
-          scanner.setRange(new Range(entry.getKey(), true, entry.getKey(), true));
+          RowColumn rc = SpanUtil.toRowColumn(entry.getKey());
+          scanner.setRange(SpanUtil.toRange(new Span(rc, true, rc, true)));
           if (scanner.iterator().hasNext()) {
             // notification is still there, so maybe a bug in user code
             throw e;

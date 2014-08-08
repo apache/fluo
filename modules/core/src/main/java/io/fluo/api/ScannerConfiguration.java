@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.util.ArgumentChecker;
 
 /**
@@ -28,28 +27,17 @@ import org.apache.accumulo.core.util.ArgumentChecker;
  */
 public class ScannerConfiguration implements Cloneable {
 
-  private Range range = new Range();
+  private Span span = new Span();
   // TODO use a set
   private ArrayList<Column> columns = new ArrayList<Column>();
-  
-  // TODO document that timestamps are ignored
 
-  // TODO remove Accumulo Range from API
-  public ScannerConfiguration setRange(Range range) {
-    if (range.getStartKey() != null && range.getStartKey().getTimestamp() != Long.MAX_VALUE) {
-      throw new IllegalArgumentException("Timestamp is set in start Key");
-    }
-
-    if (range.getEndKey() != null && range.getEndKey().getTimestamp() != Long.MAX_VALUE) {
-      throw new IllegalArgumentException("Timestamp is set in end Key");
-    }
-
-    this.range = range;
+  public ScannerConfiguration setSpan(Span span) {
+    this.span = span;
     return this;
   }
 
-  public Range getRange() {
-    return range;
+  public Span getSpan() {
+    return span;
   }
 
   public List<Column> getColumns() {
@@ -80,7 +68,7 @@ public class ScannerConfiguration implements Cloneable {
     ScannerConfiguration sc = (ScannerConfiguration) super.clone();
 
     sc.columns = (ArrayList<Column>) columns.clone();
-    sc.range = range;
+    sc.span = span;
 
     return sc;
   }

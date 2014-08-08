@@ -32,8 +32,8 @@ public class MutationBuilder {
     Text fam = ByteUtil.toText(col.getFamily());
     Text qual = ByteUtil.toText(col.getQualifier());
 
-    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.DATA_PREFIX | 0, new Value(value.toArray()));
-    mutation.put(fam, qual, col.getVisibility(), ColumnUtil.WRITE_PREFIX | 1, new Value(WriteValue.encode(0, false, false)));
+    mutation.put(fam, qual, col.getVisibilityParsed(), ColumnUtil.DATA_PREFIX | 0, new Value(value.toArray()));
+    mutation.put(fam, qual, col.getVisibilityParsed(), ColumnUtil.WRITE_PREFIX | 1, new Value(WriteValue.encode(0, false, false)));
 
     return this;
   }

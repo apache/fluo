@@ -16,25 +16,25 @@
  */
 package io.fluo.impl;
 
-import io.fluo.api.Column;
-import io.fluo.api.ScannerConfiguration;
-import io.fluo.api.exceptions.StaleScanException;
-import io.fluo.core.util.UtilWaitThread;
-import io.fluo.impl.iterators.SnapshotIterator;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import io.fluo.api.Column;
+import io.fluo.api.ScannerConfiguration;
+import io.fluo.api.Span;
+import io.fluo.api.exceptions.StaleScanException;
+import io.fluo.api.mapreduce.RowColumn;
+import io.fluo.core.util.SpanUtil;
+import io.fluo.core.util.UtilWaitThread;
+import io.fluo.impl.iterators.SnapshotIterator;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.PartialKey;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 
 /**
@@ -72,7 +72,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     scanner.clearColumns();
     scanner.clearScanIterators();
     
-    scanner.setRange(config.getRange());
+    scanner.setRange(SpanUtil.toRange(config.getSpan()));
 
     setupScanner(scanner, config.getColumns(), startTs);
     
@@ -111,14 +111,14 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     return tmp;
   }
   
-  private void resetScanner(Range range) {
+  private void resetScanner(Span span) {
     try {
       config = (ScannerConfiguration) config.clone();
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
 
-    config.setRange(range);
+    config.setSpan(span);
     setUpIterator();
   }
 
@@ -134,8 +134,8 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     int amountRead = 0;
     int numRead = 0;
 
-    Key origEndKey = config.getRange().getEndKey();
-    boolean isEndInclusive = config.getRange().isEndKeyInclusive();
+    RowColumn origEnd = config.getSpan().getEnd();
+    boolean isEndInclusive = config.getSpan().isEndInclusive();
 
     while (true) {
       while (iterator.hasNext()) {
@@ -162,12 +162,10 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         stats.incrementLockWaitTime(waitTime);
         waitTime = Math.min(MAX_WAIT_TIME, waitTime * 2);
 
-        Key startKey = new Key(locks.get(0).getKey());
-        startKey.setTimestamp(Long.MAX_VALUE);
+        RowColumn start = SpanUtil.toRowColumn(locks.get(0).getKey());
+        RowColumn end = SpanUtil.toRowColumn(locks.get(locks.size() - 1).getKey()).following();
 
-        Key endKey = locks.get(locks.size() - 1).getKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
-
-        resetScanner(new Range(startKey, true, endKey, false));
+        resetScanner(new Span(start, true, end, false));
 
         locks.clear();
 
@@ -176,10 +174,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       }
     }
 
-    Key startKey = new Key(lockEntry.getKey());
-    startKey.setTimestamp(Long.MAX_VALUE);
+    RowColumn start = SpanUtil.toRowColumn(lockEntry.getKey());
 
-    resetScanner(new Range(startKey, true, origEndKey, isEndInclusive));
+    resetScanner(new Span(start, true, origEnd, isEndInclusive));
   }
 
   public Entry<Key,Value> getNext() {

@@ -28,7 +28,6 @@ import io.fluo.api.config.ConnectionProperties;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -38,8 +37,10 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import io.fluo.api.Bytes;
 import io.fluo.api.ColumnIterator;
+import io.fluo.api.Span;
 import io.fluo.api.RowIterator;
 import io.fluo.api.ScannerConfiguration;
+import io.fluo.core.util.SpanUtil;
 import io.fluo.impl.Configuration;
 import io.fluo.impl.OracleClient;
 import io.fluo.impl.TransactionImpl;
@@ -91,7 +92,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           // TODO this uses non public Accumulo API!
           RangeInputSplit ris = (RangeInputSplit) split;
           
-          Range range = ris.getRange();
+          Span span = SpanUtil.toSpan(ris.getRange());
           
           ByteArrayInputStream bais = new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY).getBytes("UTF-8"));
           Properties props = new Properties();
@@ -100,7 +101,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           accisConf = new Configuration(props);
           
           TransactionImpl ti = new TransactionImpl(accisConf, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1), null);
-          ScannerConfiguration sc = new ScannerConfiguration().setRange(range);
+          ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
             sc.fetchColumnFamily(Bytes.wrap(fam));
