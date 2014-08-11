@@ -28,13 +28,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
-import io.fluo.core.impl.ZookeeperConstants;
-
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
-import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.format.FluoFormatter;
+import io.fluo.core.impl.ZookeeperConstants;
 import io.fluo.core.iterators.GarbageCollectionIterator;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;

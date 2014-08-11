@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import io.fluo.api.data.impl.ArrayBytes;
-import io.fluo.api.data.impl.ByteUtil;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;
@@ -62,7 +61,6 @@ public class BytesTest {
     Text t5 = new Text(s5);
     ArrayBytes b5 = new ArrayBytes(s5);
     Assert.assertEquals(t5, b5.toText());
-    Assert.assertEquals(t5, ByteUtil.toText(b5));
   }
   
   @Test

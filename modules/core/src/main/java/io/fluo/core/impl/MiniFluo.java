@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.fluo.api.config.WorkerProperties;
-import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.oracle.OracleServer;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.Scanner;
 

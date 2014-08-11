@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.data.impl;
+package io.fluo.core.util;
 
 import io.fluo.api.data.Bytes;
+import io.fluo.api.data.impl.ArrayBytes;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;

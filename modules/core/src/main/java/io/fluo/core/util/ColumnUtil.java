@@ -23,8 +23,6 @@ import java.util.Set;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
-import io.fluo.api.data.impl.ByteUtil;
-import io.fluo.api.data.impl.SpanUtil;
 import io.fluo.core.impl.DelLockValue;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;

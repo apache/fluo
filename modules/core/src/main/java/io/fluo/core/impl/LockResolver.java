@@ -9,8 +9,8 @@ import java.util.Set;
 
 import io.fluo.api.data.Column;
 import io.fluo.api.data.impl.ArrayBytes;
-import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.iterators.PrewriteIterator;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;

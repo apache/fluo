@@ -2,8 +2,8 @@ package io.fluo.mapreduce;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.impl.WriteValue;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;

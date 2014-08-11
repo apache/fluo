@@ -130,4 +130,101 @@ public class SpanTest {
     Assert.assertEquals(new Span(frc1, true, rc2, false), 
         new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).cv(cv1b).exclusive().endRow(rw2b).cf(cf2b).cq(cq2b).cv(cv2b).exclusive().build());
   }
+  
+  @Test
+  public void testExactSpan() {
+    Span s = Span.exact(rw1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(Column.EMPTY, s.getStart().getColumn());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(new RowColumn(rw1b).following().getRow(), s.getEnd().getRow());
+    Assert.assertEquals(Column.EMPTY, s.getEnd().getColumn());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.exact(rw1b, cf1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getEnd().getRow());
+    Assert.assertEquals(new RowColumn(rw1b, new Column(cf1b)).following().getColumn().getFamily(),
+                        s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.exact(rw1b, cf1b, cq1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getStart().getColumn().getQualifier()); 
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getEnd().getRow());
+    Assert.assertEquals(cf1b, s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(new RowColumn(rw1b, new Column(cf1b, cq1b)).following().getColumn().getQualifier(),
+                        s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.exact(rw1b, cf1b, cq1b, cv1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getStart().getColumn().getQualifier()); 
+    Assert.assertEquals(cv1b, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getEnd().getRow());
+    Assert.assertEquals(cf1b, s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(new RowColumn(rw1b, new Column(cf1b, cq1b, cv1b)).following().getColumn().getVisibility(),
+                        s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+  }
+  
+  @Test
+  public void testPrefixSpan() {
+    Span s = Span.prefix(rw1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(Column.EMPTY, s.getStart().getColumn());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw2b, s.getEnd().getRow());
+    Assert.assertEquals(Column.EMPTY, s.getEnd().getColumn());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.prefix(rw1b, cf1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf2b, s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.prefix(rw1b, cf1b, cq1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getStart().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(cq2b, s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(Bytes.EMPTY, s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+    
+    s = Span.prefix(rw1b, cf1b, cq1b, cv1b);
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getStart().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getStart().getColumn().getQualifier());
+    Assert.assertEquals(cv1b, s.getStart().getColumn().getVisibility());
+    Assert.assertTrue(s.isStartInclusive());
+    Assert.assertEquals(rw1b, s.getStart().getRow());
+    Assert.assertEquals(cf1b, s.getEnd().getColumn().getFamily());
+    Assert.assertEquals(cq1b, s.getEnd().getColumn().getQualifier());
+    Assert.assertEquals(cv2b, s.getEnd().getColumn().getVisibility());
+    Assert.assertFalse(s.isEndInclusive());
+  }
 }

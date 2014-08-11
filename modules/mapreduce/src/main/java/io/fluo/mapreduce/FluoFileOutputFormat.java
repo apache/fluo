@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.RowColumn;
-import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.impl.WriteValue;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
