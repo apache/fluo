@@ -24,12 +24,13 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.fluo.api.data.impl.ArrayBytes;
 import org.apache.hadoop.io.WritableUtils;
 
 /**
@@ -38,6 +39,8 @@ import org.apache.hadoop.io.WritableUtils;
 public abstract class Bytes implements Comparable<Bytes> {
   
   public static final Bytes EMPTY = Bytes.wrap(new byte[0]);
+  
+  public Bytes() {}
 
   /**
    * Gets a byte within this sequence of bytes
@@ -181,6 +184,19 @@ public abstract class Bytes implements Comparable<Bytes> {
   public static Bytes wrap(byte[] array) {
     return new ArrayBytes(array);
   }
+  
+  /**
+   * Creates a Bytes object by wrapping a subsequence of the given byte array. 
+   * The given byte array is used directly as the backing array, so later changes
+   * made to the (relevant portion of the) array reflect into the new Byte array.
+   *
+   * @param data Byte data
+   * @param offset Starting offset in byte array (inclusive)
+   * @param length Number of bytes to include
+   */
+  public static Bytes wrap(byte data[], int offset, int length) {
+    return new ArrayBytes(data, offset, length);
+  }
 
   /**
    * Wraps ByteBuffer as Bytes
@@ -304,4 +320,153 @@ public abstract class Bytes implements Comparable<Bytes> {
     }
     return ret;
   }
+  
+  /**
+  * An implementation of {@link Bytes} that uses a backing byte array.
+  */
+  private static class ArrayBytes extends Bytes implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    protected byte data[];
+    protected int offset;
+    protected int length;
+
+    /**
+     * Creates a new ArrayBytes. The given byte array is used directly as the
+     * backing array, so later changes made to the array reflect into the new
+     * sequence.
+     *
+     * @param data byte data
+     */
+    private ArrayBytes(byte data[]) {
+      this.data = data;
+      this.offset = 0;
+      this.length = data.length;
+    }
+
+    /**
+     * Creates a new ArrayBytes from a subsequence of the given byte array. The
+     * given byte array is used directly as the backing array, so later changes
+     * made to the (relevant portion of the) array reflect into the new sequence.
+     *
+     * @param data byte data
+     * @param offset starting offset in byte array (inclusive)
+     * @param length number of bytes to include in sequence
+     * @throws IllegalArgumentException if the offset or length are out of bounds
+     * for the given byte array
+     */
+    private ArrayBytes(byte data[], int offset, int length) {
+      if (offset < 0 || offset > data.length || length < 0 || (offset + length) > data.length) {
+        throw new IllegalArgumentException(" Bad offset and/or length data.length = " + data.length + " offset = " + offset + " length = " + length);
+      }
+      this.data = data;
+      this.offset = offset;
+      this.length = length;
+    }
+
+    /**
+     * Creates a new ArrayBytes from the given string. The bytes are determined from
+     * the string using UTF-8 encoding
+     *
+     * @param s String to represent as Bytes
+     */
+    private ArrayBytes(String s) {
+      this(s.getBytes(StandardCharsets.UTF_8));
+    }
+    
+    /**
+     * Creates a new ArrayBytes from the given string. The bytes are determined from
+     * the string using the specified charset
+     *
+     * @param s String to represent as Bytes
+     * @param cs Charset
+     */
+    private ArrayBytes(String s, Charset cs) {
+      this(s.getBytes(cs));
+    }
+
+    /**
+     * Creates a new ArrayBytes based on a ByteBuffer. If the byte buffer has an
+     * array, that array (and the buffer's offset and limit) are used; otherwise,
+     * a new backing array is created and a relative bulk get is performed to
+     * transfer the buffer's contents (starting at its current position and
+     * not beyond its limit).
+     *
+     * @param buffer byte buffer
+     */
+    private ArrayBytes(ByteBuffer buffer) {
+      this.length = buffer.remaining();
+
+      if (buffer.hasArray()) {
+        this.data = buffer.array();
+        this.offset = buffer.position();
+      } else {
+        this.data = new byte[length];
+        this.offset = 0;
+        buffer.get(data);
+      }
+    }
+    
+    @Override
+    public byte byteAt(int i) {
+
+      if (i < 0) {
+        throw new IllegalArgumentException("i < 0, " + i);
+      }
+
+      if (i >= length) {
+        throw new IllegalArgumentException("i >= length, " + i + " >= " + length);
+      }
+
+      return data[offset + i];
+    }
+
+    @Override
+    public byte[] getBackingArray() {
+      return data;
+    }
+
+    @Override
+    public boolean isBackedByArray() {
+      return true;
+    }
+
+    @Override
+    public int length() {
+      return length;
+    }
+
+    @Override
+    public int offset() {
+      return offset;
+    }
+
+    @Override
+    public Bytes subSequence(int start, int end) {
+      if (start > end || start < 0 || end > length) {
+        throw new IllegalArgumentException("Bad start and/end start = " + start + " end=" + end + " offset=" + offset + " length=" + length);
+      }
+      return new ArrayBytes(data, offset + start, end - start);
+    }
+
+    @Override
+    public byte[] toArray() {
+      if (offset == 0 && length == data.length)
+        return data;
+
+      byte[] copy = new byte[length];
+      System.arraycopy(data, offset, copy, 0, length);
+      return copy;
+    }
+
+    /** 
+     * Creates UTF-8 String using Bytes data
+     */
+    public String toString() {
+      return new String(data, offset, length, StandardCharsets.UTF_8);
+    }
+  }
 }
+
+

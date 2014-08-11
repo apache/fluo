@@ -28,7 +28,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
-import io.fluo.api.data.impl.ArrayBytes;
 import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.CommitException;
@@ -85,7 +84,7 @@ public class Worker {
     ArrayList<Bytes> sample = new ArrayList<Bytes>();
 
     for (Entry<Key,Value> entry : scanner)
-      sample.add(new ArrayBytes(entry.getKey().getRow()));
+      sample.add(ByteUtil.toBytes(entry.getKey().getRow()));
 
     if (sample.size() == 0)
       return null;
@@ -106,8 +105,8 @@ public class Worker {
           return null;
         }
                 
-        Bytes start = tablet.start == null ? Bytes.EMPTY : new ArrayBytes(tablet.start);
-        Bytes end = tablet.end == null ? Bytes.EMPTY : new ArrayBytes(tablet.end);
+        Bytes start = tablet.start == null ? Bytes.EMPTY : ByteUtil.toBytes(tablet.start);
+        Bytes end = tablet.end == null ? Bytes.EMPTY : ByteUtil.toBytes(tablet.end);
 
         Span ret = pickRandomRow(scanner, start, end);
         if (ret == null) {

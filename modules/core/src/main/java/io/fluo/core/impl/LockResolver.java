@@ -8,10 +8,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import io.fluo.api.data.Column;
-import io.fluo.api.data.impl.ArrayBytes;
 import io.fluo.core.iterators.PrewriteIterator;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
+import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -214,8 +214,8 @@ public class LockResolver {
       }
 
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
-      Column col = new Column(new ArrayBytes(entry.getKey().getColumnFamilyData()), new ArrayBytes(entry.getKey().getColumnQualifierData()))
-          .setVisibility(entry.getKey().getColumnVisibilityParsed());
+      Column col = SpanUtil.toRowColumn(entry.getKey()).getColumn();
+      
       LockValue lv = new LockValue(entry.getValue().get());
       ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, env.getObservers().keySet(), mut);
     }
@@ -234,8 +234,6 @@ public class LockResolver {
   }
 
   private static boolean isPrimary(PrimaryRowColumn prc, Key k) {
-    return prc.prow.equals(k.getRowData())
-        && prc.pcol.equals(new Column(new ArrayBytes(k.getColumnFamilyData()), new ArrayBytes(k.getColumnQualifierData())).setVisibility(k
-            .getColumnVisibilityParsed()));
+    return prc.prow.equals(k.getRowData()) && prc.pcol.equals(SpanUtil.toRowColumn(k).getColumn());
   }
 }

@@ -19,15 +19,11 @@ package io.fluo.api.data;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import io.fluo.api.data.impl.ArrayBytes;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests Bytes & ArrayBytes classes
+ * Unit test for Bytes class
  */
 public class BytesTest {
 
@@ -46,21 +42,9 @@ public class BytesTest {
     Assert.assertEquals(s2, b2.toString());
     
     String s3 = "test3";
-    ByteSequence bs = new ArrayByteSequence(s3);
-    ArrayBytes b3 = new ArrayBytes(bs);
+    Bytes b3 = Bytes.wrap(s3.getBytes());
     Assert.assertArrayEquals(s3.getBytes(), b3.toArray());
     Assert.assertEquals(s3, b3.toString());
-    Assert.assertEquals(bs, b3.toByteSequence());
-    
-    String s4 = "test4";
-    Bytes b4 = Bytes.wrap(s4.getBytes());
-    Assert.assertArrayEquals(s4.getBytes(), b4.toArray());
-    Assert.assertEquals(s4, b4.toString());
-    
-    String s5 = "test5";
-    Text t5 = new Text(s5);
-    ArrayBytes b5 = new ArrayBytes(s5);
-    Assert.assertEquals(t5, b5.toText());
   }
   
   @Test

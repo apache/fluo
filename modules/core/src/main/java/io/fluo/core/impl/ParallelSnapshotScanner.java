@@ -11,7 +11,6 @@ import java.util.Set;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.api.data.impl.ArrayBytes;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
@@ -91,7 +90,7 @@ public class ParallelSnapshotScanner {
         // retain the rows that were locked for future scans
         HashSet<Bytes> lockedRows = new HashSet<>();
         for (Entry<Key,Value> entry : locks) {
-          lockedRows.add(new ArrayBytes(entry.getKey().getRowData()));
+          lockedRows.add(ByteUtil.toBytes(entry.getKey().getRowData()));
         }
 
         unscannedRows.retainAll(lockedRows);
@@ -111,9 +110,9 @@ public class ParallelSnapshotScanner {
     BatchScanner bs = setupBatchScanner(unscannedRows, columns);
     try {
       for (Entry<Key,Value> entry : bs) {
-        Bytes row = new ArrayBytes(entry.getKey().getRowData());
-        Bytes cf = new ArrayBytes(entry.getKey().getColumnFamilyData());
-        Bytes cq = new ArrayBytes(entry.getKey().getColumnQualifierData());
+        Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
+        Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
+        Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
 
         // TODO cache col vis
         Column col = new Column(cf, cq).setVisibility(new ColumnVisibility(entry

@@ -17,7 +17,6 @@
 package io.fluo.core.util;
 
 import io.fluo.api.data.Bytes;
-import io.fluo.api.data.impl.ArrayBytes;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;
@@ -95,15 +94,15 @@ public class ByteUtil {
    * @return concatenated byte array
    */
   public static byte[] concat(byte[]... byteArrays) {
-    ArrayBytes[] bs = new ArrayBytes[byteArrays.length];
+    Bytes[] bs = new Bytes[byteArrays.length];
     for (int i = 0; i < byteArrays.length; i++) {
-      bs[i] = new ArrayBytes(byteArrays[i]);
+      bs[i] = Bytes.wrap(byteArrays[i]);
     }
     return Bytes.concat(bs).toArray();
   }
 
   /**
-   * Convert a Bytes object to Hadoop Text object
+   * Convert from Bytes to Hadoop Text object
    * 
    * @param b Bytes
    * @return Text object
@@ -119,7 +118,17 @@ public class ByteUtil {
   }
   
   /**
-   * Convert a Bytes object to ByteSequence object
+   * Convert from Hadoop Text to Bytes object
+   * 
+   * @param t Text
+   * @return Bytes object
+   */
+  public static Bytes toBytes(Text t) {
+    return Bytes.wrap(t.getBytes(), 0, t.getLength());
+  }
+  
+  /**
+   * Convert from Bytes to ByteSequence object
    * 
    * @param b Bytes
    * @return ByteSequence object
@@ -129,6 +138,22 @@ public class ByteUtil {
       return new ArrayByteSequence(b.getBackingArray(), b.offset(), b.length());
     } else {
       return new ArrayByteSequence(b.toArray());
+    }
+  }
+  
+  /**
+   * Converts from ByteSequence to Bytes. If the ByteSequenc has a backing
+   * array, that array (and the buffer's offset and limit) are used.  Otherwise,
+   * a new backing array is created.
+   *
+   * @param bs ByteSequence
+   * @return Bytes object
+   */
+  public static Bytes toBytes(ByteSequence bs) {
+    if (bs.isBackedByArray()) {
+      return Bytes.wrap(bs.getBackingArray(), bs.offset(), bs.length());
+    } else {
+      return Bytes.wrap(bs.toArray(), 0, bs.length());
     }
   }
 }
