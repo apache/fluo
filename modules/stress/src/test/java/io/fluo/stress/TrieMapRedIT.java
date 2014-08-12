@@ -16,14 +16,17 @@
  */
 package io.fluo.stress;
 
-import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
-import static io.fluo.stress.trie.Constants.TYPEL;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.types.TypedSnapshot;
+import io.fluo.core.TestBaseMini;
+import io.fluo.stress.trie.Node;
+import io.fluo.stress.trie.NodeObserver;
+import io.fluo.stress.trie.NumberIngest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -34,16 +37,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.fluo.api.SnapshotFactory;
-import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.types.TypedSnapshot;
-import io.fluo.stress.trie.Node;
-import io.fluo.stress.trie.NodeObserver;
-import io.fluo.stress.trie.NumberIngest;
+import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
+import static io.fluo.stress.trie.Constants.TYPEL;
 
-/** Tests Trie Stress Test using MapReduce Ingest
+/** 
+ * Tests Trie Stress Test using MapReduce Ingest
  */
-public class TrieMapRedIT extends StressBase {
+public class TrieMapRedIT extends TestBaseMini {
   
   private static Logger log = LoggerFactory.getLogger(TrieMapRedIT.class);
   private PipelineMapReduceDriver<LongWritable, Text, Text, LongWritable> driver;
@@ -80,21 +80,19 @@ public class TrieMapRedIT extends StressBase {
     
     // TODO - If sleep is removed test sometimes fails
     Thread.sleep(4000);
-    
+
     miniFluo.waitForObservers();
 
-    try (SnapshotFactory snapFact = new SnapshotFactory(props)) {          
-      TypedSnapshot tsnap = TYPEL.snapshot(snapFact);
-      
-      Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
-      if (result == null) { 
-        log.error("Could not find root node");
-      } else if (!result.equals(total)) {
-        log.error("Count ("+result+") at root node does not match expected ("+total+"):");
-      }
-      
-      Assert.assertEquals(total.intValue(), result.intValue());
+    TypedSnapshot tsnap = TYPEL.snapshot(client.newSnapshot());
+
+    Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
+    if (result == null) { 
+      log.error("Could not find root node");
+    } else if (!result.equals(total)) {
+      log.error("Count ("+result+") at root node does not match expected ("+total+"):");
     }
+
+    Assert.assertEquals(total.intValue(), result.intValue());
   }
   
   private static void loadConfig(Configuration conf, Properties props) {

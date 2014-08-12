@@ -16,10 +16,7 @@
  */
 package io.fluo.stress.trie;
 
-import static io.fluo.impl.Constants.FLUO_PREFIX;
-import io.fluo.api.LoaderExecutor;
 import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.InitializationProperties;
 import io.fluo.api.config.LoaderExecutorProperties;
 import io.fluo.core.util.PropertyUtil;
 
@@ -30,6 +27,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 
+import io.fluo.api.config.InitializationProperties;
+
+import io.fluo.core.client.LoaderExecutorImpl;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -57,13 +57,13 @@ import org.slf4j.LoggerFactory;
 public class NumberIngest {
   
   private static Logger log = LoggerFactory.getLogger(NumberIngest.class);
-  public static final String TRIE_NODE_SIZE_PROP = FLUO_PREFIX + ".stress.trie.node.size";
+  public static final String TRIE_NODE_SIZE_PROP = ConnectionProperties.FLUO_PREFIX + ".stress.trie.node.size";
   
   public static class IngestMapper extends MapReduceBase 
       implements Mapper<LongWritable, Text, LongWritable, IntWritable> {
     
     private final static IntWritable one = new IntWritable(1);
-    private static LoaderExecutor le;
+    private static LoaderExecutorImpl le;
     private static int nodeSize;
     
     public void configure(JobConf job) {      
@@ -78,7 +78,7 @@ public class NumberIngest {
       
       LoaderExecutorProperties lep = new LoaderExecutorProperties(props);
       try {
-        le = new LoaderExecutor(lep);
+        le = new LoaderExecutorImpl(lep);
       } catch (Exception e) {
         e.printStackTrace();
       }

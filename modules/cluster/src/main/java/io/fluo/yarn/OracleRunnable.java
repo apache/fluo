@@ -16,16 +16,15 @@
  */
 package io.fluo.yarn;
 
+import io.fluo.core.impl.Environment;
+
+import io.fluo.core.oracle.OracleServer;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import io.fluo.cluster.util.Logging;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.util.PropertyUtil;
-import io.fluo.impl.Configuration;
-import io.fluo.impl.OracleServer;
-
 import com.beust.jcommander.JCommander;
 
 /** Main run method of Fluo oracle that can be called within
@@ -55,9 +54,9 @@ public class OracleRunnable extends AbstractTwillRunnable {
 
       Logging.init("oracle", options.getConfigDir(), options.getLogOutput());
 
-      Configuration config = new Configuration(PropertyUtil.loadProps(options.getFluoConfig()));
+      Environment env = new Environment(PropertyUtil.loadProps(options.getFluoConfig()));
 
-      OracleServer server = new OracleServer(config);
+      OracleServer server = new OracleServer(env);
       server.start();
 
       while (true) {

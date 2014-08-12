@@ -20,17 +20,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import io.fluo.impl.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static io.fluo.api.config.ConnectionProperties.FLUO_PREFIX;
 
 /**
- * 
+ * Used to initialize Logging for cluster applications
  */
 public class Logging {
   
@@ -49,11 +49,11 @@ public class Logging {
       }
     } else {
       
-      System.setProperty(Constants.FLUO_PREFIX + ".log.application", application);
-      System.setProperty(Constants.FLUO_PREFIX + ".log.dir.log", logOutput);
+      System.setProperty(FLUO_PREFIX + ".log.application", application);
+      System.setProperty(FLUO_PREFIX + ".log.dir.log", logOutput);
 
       String localhost = InetAddress.getLocalHost().getHostName();
-      System.setProperty(Constants.FLUO_PREFIX + ".log.ip.localhost.hostname", localhost);
+      System.setProperty(FLUO_PREFIX + ".log.ip.localhost.hostname", localhost);
  
       // Use a specific log config, if it exists
       logConfig = String.format("%s/logback-file-%s.xml", configDir, application);

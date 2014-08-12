@@ -17,8 +17,10 @@
 package io.fluo.stress.trie;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import io.fluo.api.Loader;
-import io.fluo.api.Transaction;
+
+import io.fluo.api.client.Loader;
+
+import io.fluo.api.client.Transaction;
 import io.fluo.api.types.TypedTransaction;
 
 /** Executes load transactions of numbers into trie at leaf node level

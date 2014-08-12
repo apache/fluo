@@ -20,6 +20,9 @@ import java.io.File;
 import java.net.URI;
 import java.util.Properties;
 
+import io.fluo.api.config.WorkerProperties;
+
+import io.fluo.core.impl.Environment;
 import io.fluo.cluster.util.Logging;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.fs.Path;
@@ -35,11 +38,7 @@ import org.apache.twill.api.TwillSpecification.Builder.MoreFile;
 import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.fluo.api.config.WorkerProperties;
 import io.fluo.core.util.PropertyUtil;
-import io.fluo.impl.Configuration;
-
 import com.beust.jcommander.JCommander;
 
 /** Tool to start a distributed Fluo workers in YARN
@@ -95,13 +94,13 @@ public class WorkerApp implements TwillApplication {
     Logging.init("worker", options.getFluoHome() + "/conf", "STDOUT");
     
     Properties props = PropertyUtil.loadProps(options.getFluoHome() + "/conf/connection.properties");
-    Configuration config = new Configuration(props);
+    Environment env = new Environment(props);
     
     YarnConfiguration yarnConfig = new YarnConfiguration();
     yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/core-site.xml"));
     yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/yarn-site.xml"));
         
-    TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, config.getZookeepers()); 
+    TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, env.getZookeepers()); 
     twillRunner.startAndWait(); 
     
     TwillPreparer preparer = twillRunner.prepare(new WorkerApp(options, props)); 
@@ -120,6 +119,7 @@ public class WorkerApp implements TwillApplication {
     while (controller.isRunning() == false) {
       Thread.sleep(2000);
     }
+    env.close();
     System.exit(0);
   }
 }
