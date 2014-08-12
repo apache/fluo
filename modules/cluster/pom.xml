@@ -4,12 +4,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>fluo</groupId>
+    <groupId>io.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-alpha-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-
   <artifactId>fluo-cluster</artifactId>
   <packaging>jar</packaging>
 
@@ -17,7 +16,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>fluo</groupId>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>
       <exclusions>
         <exclusion>
@@ -31,7 +30,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>fluo</groupId>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-stress</artifactId>
       <exclusions>
         <exclusion>
@@ -121,4 +120,5 @@
       </exclusions>
     </dependency>
   </dependencies>
+
 </project>

@@ -3,13 +3,55 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>fluo</groupId>
+  <groupId>io.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
   <version>1.0.0-alpha-1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Parent</name>
-  <url>https://github.com/fluo-io/fluo</url>
+  <description>An implementation of Percolator for Apache Accumulo</description>
+  <url>http://www.fluo.io</url>
+  <organization>
+    <name>Fluo IO</name>
+    <url>http://www.fluo.io</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Keith Turner</name>
+    </developer>
+    <developer>
+      <name>Mike Walch</name>
+    </developer>
+    <developer>
+      <name>Corey Nolet</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:https://github.com/fluo-io/fluo.git</connection>
+    <developerConnection>scm:https://github.com/fluo-io/fluo.git</developerConnection>
+    <tag>${project.version}</tag>
+    <url>https://github.com/fluo-io/fluo.git</url>
+  </scm>
+  <distributionManagement>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+      <layout>default</layout>
+    </repository>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -66,27 +108,27 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-mapreduce</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-stress</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-cluster</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -151,9 +193,10 @@
         <version>${twill.version}</version>
       </dependency>
 
+
       <!-- Test Dependencies -->
       <dependency>
-        <groupId>fluo</groupId>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -186,4 +229,59 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+
+    <profile>
+      <id>sign</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>full</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
