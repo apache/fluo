@@ -28,12 +28,11 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
-import io.fluo.core.impl.ZookeeperConstants;
-
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.impl.ByteUtil;
 import io.fluo.core.format.FluoFormatter;
+import io.fluo.core.impl.ZookeeperConstants;
 import io.fluo.core.iterators.GarbageCollectionIterator;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
@@ -41,9 +40,7 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import org.apache.accumulo.core.zookeeper.ZooUtil;
 import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeExistsPolicy;
-import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
@@ -52,12 +49,15 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class Operations {
+
+  private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
   private static boolean putData(CuratorFramework curator, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
     if (policy == null)
@@ -117,9 +117,14 @@ public class Operations {
     try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
       curator.start();
 
-      ZooKeeper zk = curator.getZookeeperClient().getZooKeeper();
-
-      ZooUtil.recursiveDelete(zk, ZookeeperConstants.observersPath(zoodir), NodeMissingPolicy.SKIP);
+      String observerPath = ZookeeperConstants.observersPath(zoodir);
+      try {
+        curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
+      } catch(NoNodeException nne) {
+      } catch(Exception e) {
+        logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=[" + e.getMessage() + "]");
+        throw new RuntimeException(e);
+      }
 
       byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
       putData(curator, ZookeeperConstants.observersPath(zoodir), serializedObservers, NodeExistsPolicy.OVERWRITE);

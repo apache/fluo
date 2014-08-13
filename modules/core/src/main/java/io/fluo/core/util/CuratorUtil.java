@@ -7,7 +7,7 @@ public class CuratorUtil {
 
   private CuratorUtil() {}
 
-  public static CuratorFramework getCurator(String zookeepers, long timeout) {
-    return CuratorFrameworkFactory.newClient(zookeepers, 30000, 30000, new ExponentialBackoffRetry(1000, 10));
+  public static CuratorFramework getCurator(String zookeepers, int timeout) {
+    return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout, new ExponentialBackoffRetry(1000, 10));
   }
 }

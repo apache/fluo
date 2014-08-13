@@ -32,20 +32,24 @@ import io.fluo.api.data.Column;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
+import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
-import org.apache.accumulo.core.zookeeper.ZooUtil;
-import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeMissingPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fluo Admin Implementation
  */
 public class FluoAdminImpl implements FluoAdmin {
-  
+
+  private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
+
   /**
    * Initialize a Fluo instance
    * 
@@ -58,9 +62,20 @@ public class FluoAdminImpl implements FluoAdmin {
           new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
 
       if (Boolean.valueOf(props.getProperty(InitializationProperties.CLEAR_ZOOKEEPER_PROP, "false"))) {
-        ZooKeeper zk = new ZooKeeper(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP), 30000, null);
-        ZooUtil.recursiveDelete(zk, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), NodeMissingPolicy.SKIP);
-        zk.close();
+
+        String zookeepers = props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP);
+        try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+          curator.start();
+
+          String zkRoot = props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP);
+          try {
+            curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
+          } catch(KeeperException.NoNodeException nne) {
+          } catch(Exception e) {
+            logger.error("An error occurred deleting Zookeeper node. node=[" + zkRoot + "], error=[" + e.getMessage() + "]");
+            throw new RuntimeException(e);
+          }
+        }
       }
 
       Operations.initialize(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), props.getProperty(InitializationProperties.TABLE_PROP));
