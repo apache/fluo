@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>fluo</groupId>
+    <groupId>io.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-alpha-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
@@ -72,7 +72,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>fluo</groupId>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>
     </dependency>
 
@@ -99,7 +99,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>fluo</groupId>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>

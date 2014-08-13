@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>fluo</groupId>
+    <groupId>io.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-alpha-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
@@ -15,13 +15,13 @@
 
   <name>Distribution</name>
 
-  <!-- NOTE: These dependency declarations are only required to sort this 
+  <!-- NOTE: These dependency declarations are only required to sort this
     project to the end of the line in the multimodule build. Since we only include 
     the child1 module in our assembly, we only need to ensure this distribution 
     project builds AFTER that one... -->
   <dependencies>
     <dependency>
-      <groupId>fluo</groupId>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-cluster</artifactId>
     </dependency>
   </dependencies>
