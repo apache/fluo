@@ -21,7 +21,7 @@ import java.util.List;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.impl.ArrayBytes;
-import io.fluo.api.data.impl.ByteUtil;
+import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**

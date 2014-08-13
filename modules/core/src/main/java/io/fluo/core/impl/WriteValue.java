@@ -16,7 +16,7 @@
  */
 package io.fluo.core.impl;
 
-import io.fluo.api.data.impl.ByteUtil;
+import io.fluo.core.util.ByteUtil;
 
 /**
  * 

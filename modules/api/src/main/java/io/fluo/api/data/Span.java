@@ -18,10 +18,6 @@ package io.fluo.api.data;
 
 import com.google.common.base.Preconditions;
 
-import io.fluo.api.data.impl.SpanUtil;
-import io.fluo.api.data.impl.ByteUtil;
-import org.apache.accumulo.core.data.Range;
-
 /**
  * Used to specify a span between two row/columns in a Fluo table
  */
@@ -93,7 +89,8 @@ public class Span {
   }
     
   /**
-   * Construct a new Span from a start and end row
+   * Construct a new Span from a start and end row.  Set either row to
+   * Bytes.EMPTY to indicate positive or negative infinite.
    * 
    * @param startRow Start row
    * @param startRowInclusive Start row inclusive
@@ -133,14 +130,7 @@ public class Span {
   public Span(String startRow, boolean startRowInclusive, String endRow, boolean endRowInclusive) {
     this(Bytes.wrap(startRow), startRowInclusive, Bytes.wrap(endRow), endRowInclusive);
   }
-  
-  private Span(Range range) {
-    this.start = SpanUtil.toRowColumn(range.getStartKey());
-    this.startInclusive = range.isStartKeyInclusive();
-    this.end = SpanUtil.toRowColumn(range.getEndKey());
-    this.endInclusive = range.isEndKeyInclusive();
-  }
-  
+    
   /**
    * Return start RowColumn of Span. 
    * 
@@ -205,7 +195,7 @@ public class Span {
    * Creates a span that covers an exact row
    */
   public static Span exact(Bytes row) {
-    return new Span(Range.exact(ByteUtil.toText(row)));
+    return new Span(row, true, row, true);
   }
   
   /**
@@ -220,7 +210,8 @@ public class Span {
    * Creates a Span that covers an exact row and column family
    */
   public static Span exact(Bytes row, Bytes cf) {
-    return new Span(Range.exact(ByteUtil.toText(row), ByteUtil.toText(cf)));
+    RowColumn start = new RowColumn(row, new Column(cf));
+    return new Span(start, true, start.following(), false);
   }
   
   /**
@@ -235,8 +226,8 @@ public class Span {
    * Creates a Span that covers an exact row, column family, and column qualifier
    */
   public static Span exact(Bytes row, Bytes cf, Bytes cq) {
-    return new Span(Range.exact(ByteUtil.toText(row), 
-        ByteUtil.toText(cf), ByteUtil.toText(cq)));
+    RowColumn start = new RowColumn(row, new Column(cf, cq));
+    return new Span(start, true, start.following(), false);
   }
   
   /**
@@ -251,8 +242,8 @@ public class Span {
    * Creates a Span that covers an exact row, column family, column qualifier, and column visibility
    */
   public static Span exact(Bytes row, Bytes cf, Bytes cq, Bytes cv) {
-    return new Span(Range.exact(ByteUtil.toText(row), 
-        ByteUtil.toText(cf), ByteUtil.toText(cq), ByteUtil.toText(cv)));
+    RowColumn start = new RowColumn(row, new Column(cf, cq, cv));
+    return new Span(start, true, start.following(), false);
   }
   
   /**
@@ -263,11 +254,31 @@ public class Span {
     return exact(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq), Bytes.wrap(cv));
   }
   
+  private static Bytes followingPrefix(Bytes prefix) {
+    byte[] prefixBytes = prefix.toArray();
+    
+    // find the last byte in the array that is not 0xff
+    int changeIndex = prefix.length() - 1;
+    while (changeIndex >= 0 && prefixBytes[changeIndex] == (byte) 0xff)
+      changeIndex--;
+    if (changeIndex < 0)
+      return null;
+    
+    // copy prefix bytes into new array
+    byte[] newBytes = new byte[changeIndex + 1];
+    System.arraycopy(prefixBytes, 0, newBytes, 0, changeIndex + 1);
+    
+    // increment the selected byte
+    newBytes[changeIndex]++;
+    return Bytes.wrap(newBytes);
+  }
+  
   /**
    * Returns a Span that covers all rows beginning with a prefix
    */
   public static Span prefix(Bytes rowPrefix) {
-    return new Span(Range.prefix(ByteUtil.toText(rowPrefix)));
+    Bytes fp = followingPrefix(rowPrefix);
+    return new Span(rowPrefix, true, fp == null ? Bytes.EMPTY : fp, false);
   }
   
   /**
@@ -282,8 +293,9 @@ public class Span {
    * Returns a Span that covers all column families beginning with a prefix within a given row
    */
   public static Span prefix(Bytes row, Bytes cfPrefix) {
-    return new Span(Range.prefix(ByteUtil.toText(row), 
-        ByteUtil.toText(cfPrefix)));
+    Bytes fp = followingPrefix(cfPrefix);
+    RowColumn end = (fp == null ? new RowColumn(row).following() : new RowColumn(row, new Column(fp)));
+    return new Span(new RowColumn(row, new Column(cfPrefix)), true, end, false);
   }
   
   /**
@@ -299,8 +311,9 @@ public class Span {
    * and column family
    */
   public static Span prefix(Bytes row, Bytes cf, Bytes cqPrefix) {
-    return new Span(Range.prefix(ByteUtil.toText(row), 
-        ByteUtil.toText(cf), ByteUtil.toText(cqPrefix)));
+    Bytes fp = followingPrefix(cqPrefix);
+    RowColumn end = (fp == null ? new RowColumn(row, new Column(cf)).following() : new RowColumn(row, new Column(cf, fp)));
+    return new Span(new RowColumn(row, new Column(cf, cqPrefix)), true, end, false);
   }
   
   /**
@@ -316,8 +329,9 @@ public class Span {
    * column family, and column qualifier.
    */
   public static Span prefix(Bytes row, Bytes cf, Bytes cq, Bytes cvPrefix) {
-    return new Span(Range.prefix(ByteUtil.toText(row), 
-        ByteUtil.toText(cf), ByteUtil.toText(cq), ByteUtil.toText(cvPrefix)));
+    Bytes fp = followingPrefix(cvPrefix);
+    RowColumn end = (fp == null ? new RowColumn(row, new Column(cf, cq)).following() : new RowColumn(row, new Column(cf, cq, fp)));
+    return new Span(new RowColumn(row, new Column(cf, cq, cvPrefix)), true, end, false);
   }
   
   /**
