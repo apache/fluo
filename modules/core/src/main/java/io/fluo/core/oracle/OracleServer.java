@@ -19,7 +19,6 @@ package io.fluo.core.oracle;
 import java.net.InetSocketAddress;
 
 import io.fluo.core.impl.ZookeeperConstants;
-
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.thrift.OracleService;

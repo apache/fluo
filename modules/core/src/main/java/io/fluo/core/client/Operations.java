@@ -57,7 +57,7 @@ public class Operations {
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
-  public static void updateWorkerConfig(Connector conn, String zoodir, Properties workerConfig) throws Exception {
+  public static void updateSharedConfig(Connector conn, String zoodir, Properties sharedProps) throws Exception {
 
     String zookeepers = conn.getInstance().getZooKeepers();
     try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
@@ -65,9 +65,9 @@ public class Operations {
       curator.start();
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      workerConfig.store(baos, "Java props");
+      sharedProps.store(baos, "Shared java props");
 
-      CuratorUtil.putData(curator, ZookeeperConstants.workerConfigPath(zoodir), baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
+      CuratorUtil.putData(curator, ZookeeperConstants.sharedConfigPath(zoodir), baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
     }
   }
 

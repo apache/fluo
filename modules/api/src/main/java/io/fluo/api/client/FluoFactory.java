@@ -16,11 +16,8 @@
  */
 package io.fluo.api.client;
 
-import java.util.Properties;
-
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.InitializationProperties;
-import io.fluo.api.config.MiniFluoProperties;
+import io.fluo.api.config.FluoConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,54 +29,71 @@ public class FluoFactory {
   private static Logger log = LoggerFactory.getLogger(FluoFactory.class);
 
   /**
-   * Create a Fluo client 
+   * Creates a Fluo client.  Configuration should contain properties 
+   * with client.* prefix.  Please review all client.* properties 
+   * but many have a default.  At a minimum, configuration should
+   * contain the following properties that have no default:
    * 
-   * @param props see {@link io.fluo.api.config.ConnectionProperties}
+   * io.fluo.client.accumulo.user
+   * io.fluo.client.accumulo.password
+   * io.fluo.client.accumulo.instance
+   * 
+   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return FluoClient
    */
-  public static FluoClient newClient(Properties props) {
-    String clientClassName = props.getProperty(ConnectionProperties.CLIENT_CLASS_PROP, 
-                                               ConnectionProperties.DEFAULT_CLIENT_CLASS);
-
-    return buildClassWithProps(props, clientClassName);
+  public static FluoClient newClient(Configuration configuration) {
+    FluoConfiguration config = new FluoConfiguration(configuration);
+    return buildClassWithConfig(config.getClientClass(), config);
   }
   
   /**
-   * Create a FluoAdmin client
+   * Creates a FluoAdmin client.  Configuration should contain properties 
+   * with client.* and admin.* prefix.  Please review all properties 
+   * but many have a default.  At a minimum, configuration should
+   * contain the following properties that have no default:
    * 
-   * @param props see {@link io.fluo.api.config.InitializationProperties}
+   * io.fluo.client.accumulo.user
+   * io.fluo.client.accumulo.password
+   * io.fluo.client.accumulo.instance
+   * io.fluo.admin.accumulo.table
+   * 
+   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return FluoAdmin
    */
-  public static FluoAdmin newAdmin(Properties props) {
-    String adminClassName = props.getProperty(InitializationProperties.ADMIN_CLASS_PROP, 
-                                               InitializationProperties.DEFAULT_ADMIN_CLASS);
-
-    return buildClass(adminClassName);
+  public static FluoAdmin newAdmin(Configuration configuration) {
+    FluoConfiguration config = new FluoConfiguration(configuration);
+    return buildClassWithConfig(config.getAdminClass(), config);
   }
 
   /**
-   * Create a MiniFluo instance
+   * Creates a MiniFluo instance.  Please review all properties in 
+   * fluo.properties.  At a minimum, configuration should contain 
+   * the following properties that have no default:
+   * 
+   * io.fluo.client.accumulo.user
+   * io.fluo.client.accumulo.password
+   * io.fluo.client.accumulo.instance
+   * io.fluo.admin.accumulo.table
    *
-   * @param props see {@link io.fluo.api.config.MiniFluoProperties}
+   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return MiniFluo
    */
-  public static MiniFluo newMiniFluo(Properties props) {
-
-    String miniFluoClassName = props.getProperty(MiniFluoProperties.MINI_CLASS_PROP,
-                                                 MiniFluoProperties.DEFAULT_MINI_CLASS);
-
-    return buildClassWithProps(props, miniFluoClassName);
+  public static MiniFluo newMiniFluo(Configuration configuration) {
+    FluoConfiguration config = new FluoConfiguration(configuration);
+    return buildClassWithConfig(config.getMiniClass(), config);
   }
 
-  private static <T>T buildClassWithProps(Properties props, String clazz) {
+  @SuppressWarnings("unchecked")
+  private static <T>T buildClassWithConfig(String clazz, Configuration config) {
     try {
-      return (T) Class.forName(clazz).getDeclaredConstructor(Properties.class).newInstance(props);
+      return (T) Class.forName(clazz).getDeclaredConstructor(FluoConfiguration.class).newInstance(config);
     } catch (Exception e) {
       log.error("Could not instantiate class - " + clazz);
       throw new IllegalStateException(e);
     }
   }
 
+  @SuppressWarnings({"unchecked", "unused"})
   private static <T>T buildClass(String clazz) {
     try {
       return (T) Class.forName(clazz).newInstance();
@@ -88,5 +102,4 @@ public class FluoFactory {
       throw new IllegalStateException(e);
     }
   }
-
 }

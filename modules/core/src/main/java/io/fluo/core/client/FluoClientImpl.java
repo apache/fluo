@@ -16,11 +16,10 @@
  */
 package io.fluo.core.client;
 
-import java.util.Properties;
-
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.client.Snapshot;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
 import org.slf4j.Logger;
@@ -32,13 +31,16 @@ import org.slf4j.LoggerFactory;
 public class FluoClientImpl implements FluoClient {
   
   private static Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
-  private Properties props;
+  private FluoConfiguration config;
   private Environment env;
   
-  public FluoClientImpl(Properties properties) {
-    this.props = properties;
+  public FluoClientImpl(FluoConfiguration config) {
+    this.config = config;
+    if (!config.hasRequiredClientProps()) {
+      throw new IllegalArgumentException("Client configuration is missing required properties");
+    }
     try {
-      this.env = new Environment(props);
+      this.env = new Environment(config);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -47,7 +49,7 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public LoaderExecutor newLoaderExecutor() {
     try {
-      return new LoaderExecutorImpl(props);
+      return new LoaderExecutorImpl(config);
     } catch (Exception e) {
       log.error("Failed to create a LoaderExecutor");
       throw new IllegalStateException(e);

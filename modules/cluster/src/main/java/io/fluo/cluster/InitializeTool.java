@@ -14,22 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.tools;
+package io.fluo.cluster;
 
-import java.util.Properties;
+import java.io.File;
 
-import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
-
-import io.fluo.api.client.FluoAdmin;
-import io.fluo.core.client.FluoAdminImpl;
-import io.fluo.cluster.util.Logging;
-import io.fluo.core.util.PropertyUtil;
-import io.fluo.yarn.RunnableOptions;
 import com.beust.jcommander.JCommander;
 
-/** Initializes Fluo using properties in configuration files
+import io.fluo.api.client.FluoAdmin;
+import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
+import io.fluo.api.client.FluoFactory;
+import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.util.Logging;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** 
+ * Initializes Fluo using properties in configuration files
  */
 public class InitializeTool {
+  
+  private static Logger log = LoggerFactory.getLogger(InitializeTool.class);
 
   public static void main(String[] args) throws Exception {
 
@@ -44,15 +49,17 @@ public class InitializeTool {
 
     Logging.init("init", options.getConfigDir(), options.getLogOutput());
 
-    String[] configs = { options.getInitConfig(), options.getFluoConfig() };
-    Properties props = PropertyUtil.loadProps(configs);
+    FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
+    if (!config.hasRequiredAdminProps()) {
+      log.error("fluo.properties is missing required properties for initialization");
+      System.exit(-1);
+    }
 
-    FluoAdmin admin = new FluoAdminImpl();
+    FluoAdmin admin = FluoFactory.newAdmin(config);
     try {
-      //TODO maybe use commons Configuration instrea of Properties in API
-      admin.initialize(props);
+      admin.initialize();
     } catch (AlreadyInitializedException aie) {
-      admin.updateWorkerConfig(props);
+      admin.updateSharedConfig();
     }
   }
 }

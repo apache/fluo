@@ -30,9 +30,6 @@
       <includes>
         <include>*.jar</include>
       </includes>
-      <excludes>
-      	<exclude>logback*.jar</exclude>
-      </excludes>
     </fileSet>
     <fileSet>
       <directory>target</directory>

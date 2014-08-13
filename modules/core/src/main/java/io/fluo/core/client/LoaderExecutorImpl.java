@@ -16,7 +16,6 @@
  */
 package io.fluo.core.client;
 
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -26,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.fluo.api.client.Loader;
 import io.fluo.api.client.LoaderExecutor;
-import io.fluo.api.config.LoaderExecutorProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.LoadTask;
 
@@ -43,17 +42,17 @@ public class LoaderExecutorImpl implements LoaderExecutor {
   /**
    * 
    * @param props
-   *          To programmatically initialize use {@link io.fluo.api.config.LoaderExecutorProperties}
+   *          To programmatically initialize use {@link io.fluo.api.config.FluoConfiguration}
    * @throws Exception
    */
 
-  public LoaderExecutorImpl(Properties props) throws Exception {
-    this(props, Integer.parseInt(props.getProperty(LoaderExecutorProperties.NUM_THREADS_PROP, "10")), Integer.parseInt(props.getProperty(LoaderExecutorProperties.QUEUE_SIZE_PROP, "10")));
+  public LoaderExecutorImpl(FluoConfiguration config) {
+    this(config, config.getLoaderThreads(), config.getLoaderQueueSize());
   }
 
-  private LoaderExecutorImpl(Properties connectionProps, int numThreads, int queueSize) throws Exception {
+  private LoaderExecutorImpl(FluoConfiguration config, int numThreads, int queueSize) {
     if (numThreads == 0 && queueSize == 0) {
-      this.env = new Environment(connectionProps);
+      this.env = new Environment(config);
       return;
     }
     
@@ -63,7 +62,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
     if (queueSize < 0)
       throw new IllegalArgumentException("queueSize must be non-negative OR numThreads and queueSize must both be 0");
 
-    this.env = new Environment(connectionProps);
+    this.env = new Environment(config);
     this.semaphore = new Semaphore(numThreads + queueSize);
     this.executor = Executors.newFixedThreadPool(numThreads);
   }

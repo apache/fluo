@@ -21,6 +21,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import io.fluo.api.config.FluoConfiguration;
+
+import org.apache.commons.configuration.ConfigurationConverter;
 import io.fluo.api.client.Loader;
 import io.fluo.core.client.LoaderExecutorImpl;
 import org.apache.hadoop.io.NullWritable;
@@ -76,9 +79,11 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
     Properties props = new Properties();
     props.load(bais);
     
+    FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
+    
     final LoaderExecutorImpl lexecutor;
     try {
-      lexecutor = new LoaderExecutorImpl(props);
+      lexecutor = new LoaderExecutorImpl(config);
     } catch (Exception e) {
       throw new IOException(e);
     }
@@ -102,7 +107,7 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
    * 
    * @param conf
    * @param props
-   *          Use {@link io.fluo.api.config.LoaderExecutorProperties} to set props programmatically
+   *          Use {@link io.fluo.api.config.FluoConfiguration} to set props programmatically
    */
 
   public static void configure(Job conf, Properties props) {

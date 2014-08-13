@@ -27,11 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
-import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.Observer;
-import io.fluo.core.client.FluoClientImpl;
 import io.fluo.core.format.FluoFormatter;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.RandomTabletChooser;
@@ -67,7 +66,7 @@ public class TestBaseImpl {
   protected String table;
   protected OracleServer oserver;
   protected String zkn;
-  protected InitializationProperties props;
+  protected FluoConfiguration config;
   protected FluoClient client;
   
   protected List<ObserverConfiguration> getObservers() {
@@ -117,21 +116,20 @@ public class TestBaseImpl {
     table = "table" + next.getAndIncrement();
     zkn = "/test" + next.getAndIncrement();
 
-    props = new InitializationProperties();
-
-    props.setAccumuloInstance(instance.getInstanceName());
-    props.setAccumuloUser("root");
-    props.setAccumuloPassword(secret);
-    props.setAccumuloTable(table);
-    props.setZookeeperRoot(zkn);
-    props.setZookeepers(instance.getZooKeepers());
-    props.setRollbackTime(1, TimeUnit.SECONDS);
-    props.setObservers(getObservers());
+    config = new FluoConfiguration();
+    config.setAccumuloInstance(instance.getInstanceName());
+    config.setAccumuloUser("root");
+    config.setAccumuloPassword(secret);
+    config.setAccumuloTable(table);
+    config.setZookeeperRoot(zkn);
+    config.setZookeepers(instance.getZooKeepers());
+    config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
+    config.setObservers(getObservers());
     
-    FluoAdmin admin = FluoFactory.newAdmin(props);
-    admin.initialize(props);
+    FluoAdmin admin = FluoFactory.newAdmin(config);
+    admin.initialize();
    
-    client = new FluoClientImpl(props);
+    client = FluoFactory.newClient(config);
 
     env = new Environment(curator, zkn, conn, PortUtils.getRandomFreePort());
     

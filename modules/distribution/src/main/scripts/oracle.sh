@@ -38,10 +38,10 @@ fi
 
 case "$1" in
 start-yarn)
-  java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/logback/*" io.fluo.yarn.OracleApp -fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.OracleApp -fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX
 	;;
 start-local)
-  java -cp "$FLUO_HOME/lib/*" OracleRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.OracleRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
 stop-local)
 	kill `jps -m | grep OracleRunnable | cut -f 1 -d ' '`

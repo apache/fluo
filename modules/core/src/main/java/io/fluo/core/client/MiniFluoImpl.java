@@ -16,14 +16,13 @@
  */
 package io.fluo.core.client;
 
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.fluo.api.client.MiniFluo;
-import io.fluo.api.config.WorkerProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.WorkerTask;
 import io.fluo.core.oracle.OracleServer;
@@ -32,7 +31,7 @@ import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.Scanner;
 
 /**
- * 
+ * Implementation of MiniFluo
  */
 public class MiniFluoImpl implements MiniFluo {
 
@@ -68,9 +67,12 @@ public class MiniFluoImpl implements MiniFluo {
     return scanner.iterator().hasNext() || numProcessing > 0;
   }
 
-  public MiniFluoImpl(Properties props) {
+  public MiniFluoImpl(FluoConfiguration config) {
+    if (!config.hasRequiredMiniFluoProps()) {
+      throw new IllegalArgumentException("MiniFluo configuration is missing required properties");
+    }
     try {
-      env = new Environment(props);
+      env = new Environment(config);
       shutdownFlag = new AtomicBoolean(false);
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -83,7 +85,7 @@ public class MiniFluoImpl implements MiniFluo {
       oserver = new OracleServer(env);
       oserver.start();
 
-      int numThreads = Integer.parseInt(env.getWorkerProperties().getProperty(WorkerProperties.WORKER_NUM_THREADS_PROP));
+      int numThreads = env.getConfiguration().getWorkerThreads();
 
       tp = Executors.newFixedThreadPool(numThreads);
       for (int i = 0; i < numThreads; i++) {

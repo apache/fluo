@@ -14,16 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.yarn;
+package io.fluo.cluster;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Properties;
 
-import io.fluo.api.config.WorkerProperties;
-
-import io.fluo.core.impl.Environment;
+import com.beust.jcommander.JCommander;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.Logging;
+import io.fluo.core.impl.Environment;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -38,25 +37,24 @@ import org.apache.twill.api.TwillSpecification.Builder.MoreFile;
 import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.fluo.core.util.PropertyUtil;
-import com.beust.jcommander.JCommander;
 
-/** Tool to start a distributed Fluo workers in YARN
+/** 
+ * Tool to start a distributed Fluo workers in YARN
  */
 public class WorkerApp implements TwillApplication {
   
   private static Logger log = LoggerFactory.getLogger(WorkerApp.class);
   private AppOptions options;
-  private Properties props;
+  private FluoConfiguration config;
   
-  public WorkerApp(AppOptions options, Properties props) {
+  public WorkerApp(AppOptions options, FluoConfiguration config) {
     this.options = options;
-    this.props = props;
+    this.config = config;
   }
        
   public TwillSpecification configure() { 
-    int numInstances = Integer.parseInt(props.getProperty(WorkerProperties.WORKER_INSTANCES_PROP, "1"));
-    int maxMemoryMB = Integer.parseInt(props.getProperty(WorkerProperties.WORKER_MAX_MEMORY_PROP, "256"));
+    int numInstances = config.getWorkerInstances();
+    int maxMemoryMB = config.getWorkerMaxMemory();
     
     ResourceSpecification workerResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)
@@ -69,11 +67,11 @@ public class WorkerApp implements TwillApplication {
         .setName("FluoWorker").withRunnable()
         .add(new WorkerRunnable(), workerResources)
         .withLocalFiles()
-        .add("./conf/connection.properties", new File(String.format("%s/conf/connection.properties", options.getFluoHome())));
+        .add("./conf/fluo.properties", new File(String.format("%s/conf/fluo.properties", options.getFluoHome())));
 
     File confDir = new File(String.format("%s/conf", options.getFluoHome()));
     for (File f : confDir.listFiles()) {
-      if (f.isFile() && (f.getName().equals("connection.properties") == false)) {
+      if (f.isFile() && (f.getName().equals("fluo.properties") == false)) {
         moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
       }
     }
@@ -93,8 +91,13 @@ public class WorkerApp implements TwillApplication {
     
     Logging.init("worker", options.getFluoHome() + "/conf", "STDOUT");
     
-    Properties props = PropertyUtil.loadProps(options.getFluoHome() + "/conf/connection.properties");
-    Environment env = new Environment(props);
+    File configFile = new File(options.getFluoHome() + "/conf/fluo.properties");
+    FluoConfiguration config = new FluoConfiguration(configFile);
+    if (!config.hasRequiredWorkerProps()) {
+      log.error("fluo.properties is missing required properties for worker");
+      System.exit(-1);
+    }
+    Environment env = new Environment(config);
     
     YarnConfiguration yarnConfig = new YarnConfiguration();
     yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/core-site.xml"));
@@ -103,7 +106,7 @@ public class WorkerApp implements TwillApplication {
     TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, env.getZookeepers()); 
     twillRunner.startAndWait(); 
     
-    TwillPreparer preparer = twillRunner.prepare(new WorkerApp(options, props)); 
+    TwillPreparer preparer = twillRunner.prepare(new WorkerApp(options, config)); 
    
     // Add any observer jars found in lib observers
     File observerDir = new File(options.getFluoHome()+"/lib/observers");

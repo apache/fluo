@@ -27,6 +27,7 @@ import io.fluo.core.TestBaseMini;
 import io.fluo.stress.trie.Node;
 import io.fluo.stress.trie.NodeObserver;
 import io.fluo.stress.trie.NumberIngest;
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -67,9 +68,9 @@ public class TrieMapRedIT extends TestBaseMini {
   
   public void runMapRedTest(Integer mappers, Integer numPerMapper, Integer nodeSize) throws Exception {
     
-    Configuration config = driver.getConfiguration();
-    config.setInt(NumberIngest.TRIE_NODE_SIZE_PROP, nodeSize);
-    loadConfig(config, props);
+    Configuration driverConfig = driver.getConfiguration();
+    driverConfig.setInt(NumberIngest.TRIE_NODE_SIZE_PROP, nodeSize);
+    loadConfig(driverConfig, ConfigurationConverter.getProperties(config));
     
     Integer total = mappers * numPerMapper;
     for (int i=0; i < mappers; i++) {

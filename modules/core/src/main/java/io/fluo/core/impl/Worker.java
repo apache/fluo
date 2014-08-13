@@ -60,7 +60,6 @@ public class Worker {
   private RandomTabletChooser tabletChooser;
 
   public Worker(Environment env, RandomTabletChooser tabletChooser) throws Exception {
-
     this.env = env;
     this.tabletChooser = tabletChooser;
   }

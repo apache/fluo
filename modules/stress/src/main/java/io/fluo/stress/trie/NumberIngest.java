@@ -16,6 +16,7 @@
  */
 package io.fluo.stress.trie;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
@@ -23,11 +24,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.InitializationProperties;
-import io.fluo.api.config.LoaderExecutorProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.client.LoaderExecutorImpl;
-import io.fluo.core.util.PropertyUtil;
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -55,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class NumberIngest {
   
   private static Logger log = LoggerFactory.getLogger(NumberIngest.class);
-  public static final String TRIE_NODE_SIZE_PROP = ConnectionProperties.FLUO_PREFIX + ".stress.trie.node.size";
+  public static final String TRIE_NODE_SIZE_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.node.size";
   
   public static class IngestMapper extends MapReduceBase 
       implements Mapper<LongWritable, Text, LongWritable, IntWritable> {
@@ -65,18 +64,17 @@ public class NumberIngest {
     private static int nodeSize;
     
     public void configure(JobConf job) {      
-      InitializationProperties props = new InitializationProperties();
-      props.setZookeepers(job.get(ConnectionProperties.ZOOKEEPER_CONNECT_PROP));
-      props.setZookeeperRoot(job.get(ConnectionProperties.ZOOKEEPER_ROOT_PROP));
-      props.setAccumuloInstance(job.get(ConnectionProperties.ACCUMULO_INSTANCE_PROP));
-      props.setAccumuloUser(job.get(ConnectionProperties.ACCUMULO_USER_PROP));
-      props.setAccumuloPassword(job.get(ConnectionProperties.ACCUMULO_PASSWORD_PROP));
+      FluoConfiguration props = new FluoConfiguration();
+      props.setZookeepers(job.get(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP));
+      props.setZookeeperRoot(job.get(FluoConfiguration.CLIENT_ZOOKEEPER_ROOT_PROP));
+      props.setAccumuloInstance(job.get(FluoConfiguration.CLIENT_ACCUMULO_INSTANCE_PROP));
+      props.setAccumuloUser(job.get(FluoConfiguration.CLIENT_ACCUMULO_USER_PROP));
+      props.setAccumuloPassword(job.get(FluoConfiguration.CLIENT_ACCUMULO_PASSWORD_PROP));
      
       nodeSize = job.getInt(TRIE_NODE_SIZE_PROP, 4);
       
-      LoaderExecutorProperties lep = new LoaderExecutorProperties(props);
       try {
-        le = new LoaderExecutorImpl(lep);
+        le = new LoaderExecutorImpl(props);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -172,13 +170,13 @@ public class NumberIngest {
 
     // Parse arguments
     if (args.length != 4) {
-      log.error("Usage: NumberIngest <numMappers> <numbersPerMapper> <nodeSize> <fluoConnectionProps>");
+      log.error("Usage: NumberIngest <numMappers> <numbersPerMapper> <nodeSize> <fluoProps>");
       System.exit(-1);
     }
     int numMappers = Integer.parseInt(args[0]);
     int numPerMapper = Integer.parseInt(args[1]);
     int nodeSize = Integer.parseInt(args[2]);
-    String connPropsPath = args[3];
+    String fluoPropsPath = args[3];
     
     String hadoopPrefix = System.getenv("HADOOP_PREFIX");
     if (hadoopPrefix == null) {
@@ -198,7 +196,9 @@ public class NumberIngest {
     JobConf ingestConf = new JobConf(NumberIngest.class);
     ingestConf.setJobName("NumberIngest");
     
-    loadConfig(ingestConf, PropertyUtil.loadProps(connPropsPath));
+    FluoConfiguration config = new FluoConfiguration(new File(fluoPropsPath));
+    
+    loadConfig(ingestConf, ConfigurationConverter.getProperties(config));
     ingestConf.setInt(TRIE_NODE_SIZE_PROP, nodeSize);
     
     ingestConf.setOutputKeyClass(LongWritable.class);
