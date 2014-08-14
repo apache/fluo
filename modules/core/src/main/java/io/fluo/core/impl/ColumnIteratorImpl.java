@@ -19,11 +19,10 @@ package io.fluo.core.impl;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import io.fluo.api.iterator.ColumnIterator;
-
-import io.fluo.api.data.impl.ArrayBytes;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.iterator.ColumnIterator;
+import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
@@ -58,8 +57,8 @@ public class ColumnIteratorImpl implements ColumnIterator {
     } else {
       entry = scanner.next();
     }
-    Bytes cf = new ArrayBytes(entry.getKey().getColumnFamilyData());
-    Bytes cq = new ArrayBytes(entry.getKey().getColumnQualifierData());
+    Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
+    Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
     // TODO cache colvis, pass cache in
     ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
     

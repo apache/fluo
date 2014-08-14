@@ -20,7 +20,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
-import io.fluo.api.data.impl.ArrayBytes;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.io.Text;
@@ -92,19 +91,19 @@ public class SpanUtil {
     if ((key.getRow() == null) || key.getRow().getLength() == 0) {
       return RowColumn.EMPTY;
     }
-    Bytes row = new ArrayBytes(key.getRow());
+    Bytes row = ByteUtil.toBytes(key.getRow());
     if ((key.getColumnFamily() == null) || key.getColumnFamily().getLength() == 0) {
       return new RowColumn(row);
     }
-    Bytes cf = new ArrayBytes(key.getColumnFamily());
+    Bytes cf = ByteUtil.toBytes(key.getColumnFamily());
     if ((key.getColumnQualifier() == null) || key.getColumnQualifier().getLength() == 0) {
       return new RowColumn(row, new Column(cf));
     }
-    Bytes cq = new ArrayBytes(key.getColumnQualifier());
+    Bytes cq = ByteUtil.toBytes(key.getColumnQualifier());
     if ((key.getColumnVisibility() == null) || key.getColumnVisibility().getLength() == 0) {
       return new RowColumn(row, new Column(cf, cq));
     }
-    Bytes cv = new ArrayBytes(key.getColumnVisibility());
+    Bytes cv = ByteUtil.toBytes(key.getColumnVisibility());
     return new RowColumn(row, new Column(cf, cq, cv));
   }
 }

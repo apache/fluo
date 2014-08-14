@@ -20,7 +20,6 @@ import java.util.List;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.api.data.impl.ArrayBytes;
 import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
@@ -37,7 +36,7 @@ public class LockValue {
   private Long transactor;
 
   public LockValue(byte[] enc) {
-    List<Bytes> fields = Bytes.split(new ArrayBytes(enc));
+    List<Bytes> fields = Bytes.split(Bytes.wrap(enc));
     
     if (fields.size() != 6)
       throw new IllegalArgumentException("more fields than expected");
