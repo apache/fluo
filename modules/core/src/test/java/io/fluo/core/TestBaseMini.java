@@ -26,18 +26,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
+import io.fluo.api.client.MiniFluo;
 import io.fluo.api.client.Snapshot;
-import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.MiniFluoProperties;
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.OracleProperties;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.core.client.FluoClientImpl;
 import io.fluo.core.format.FluoFormatter;
-import io.fluo.core.impl.MiniFluo;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.security.Authorizations;
@@ -48,12 +46,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 /** 
- * Base Integration Test Class that uses MiniFluo
+ * Base Integration Test Class that uses MiniFluoImpl
  */
 public class TestBaseMini {
   
   protected static Instance miniAccumulo;
-  protected static InitializationProperties props;
+  protected static MiniFluoProperties props;
   protected static MiniFluo miniFluo;
   protected static AtomicInteger tableCounter = new AtomicInteger(1);
   protected static AtomicInteger next = new AtomicInteger();
@@ -83,7 +81,7 @@ public class TestBaseMini {
   public void setUpFluo() throws Exception {
     // TODO add helper code to make this shorter
     
-    props = new InitializationProperties();
+    props = new MiniFluoProperties();
     props.setAccumuloInstance(miniAccumulo.getInstanceName());
     props.setAccumuloUser(USER);
     props.setAccumuloPassword(PASSWORD);
@@ -93,14 +91,14 @@ public class TestBaseMini {
     props.setAccumuloTable(getNextTableName());
     props.setNumThreads(5);
     props.setObservers(getObservers());
-    props.setProperty(OracleProperties.ORACLE_PORT_PROP, Integer.toString(PortUtils.getRandomFreePort()));
-  
+    props.setOraclePort(PortUtils.getRandomFreePort());
+
     FluoAdmin admin = FluoFactory.newAdmin(props);
     admin.initialize(props);
-   
-    client = new FluoClientImpl(props);
 
-    miniFluo = new MiniFluo(props);
+    client = FluoFactory.newClient(props);
+
+    miniFluo = FluoFactory.newMiniFluo(props);
     miniFluo.start();
   }
   
