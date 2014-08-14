@@ -83,35 +83,35 @@ public class TrieBasicIT extends TestBaseMini {
     lep.setNumThreads(0);
     lep.setQueueSize(0);
     
-    LoaderExecutorImpl le = new LoaderExecutorImpl(lep);
-    
-    Random random = new Random();
-    Set<Integer> ingested = new HashSet<>();
-    for (int i = 0; i < ingestNum; i++) {
-      int num = Math.abs(random.nextInt(maxValue));
-      le.execute(new NumberLoader(num, nodeSize));
-      ingested.add(num);
+    try(LoaderExecutorImpl le = new LoaderExecutorImpl(lep)) {
+      Random random = new Random();
+      Set<Integer> ingested = new HashSet<>();
+      for (int i = 0; i < ingestNum; i++) {
+        int num = Math.abs(random.nextInt(maxValue));
+        le.execute(new NumberLoader(num, nodeSize));
+        ingested.add(num);
+      }
+      int uniqueNum = ingested.size();
+
+      log.info("Ingested "+uniqueNum+" unique numbers with a nodeSize of "+nodeSize+" bits");
+
+      miniFluo.waitForObservers();
+
+      TypedSnapshot tsnap = TYPEL.snapshot(client.newSnapshot());
+
+      Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
+          .col(COUNT_SEEN_COL).toInteger();
+      if (result == null) {
+        log.error("Could not find root node");
+        printSnapshot();
+      }
+
+      if (!result.equals(uniqueNum)) {
+        log.error("Count ("+result+") at root node does not match expected ("+uniqueNum+"):");
+        printSnapshot();
+      }
+
+      Assert.assertEquals(uniqueNum, result.intValue());
     }
-    int uniqueNum = ingested.size();
-    
-    log.info("Ingested "+uniqueNum+" unique numbers with a nodeSize of "+nodeSize+" bits");
-    
-    miniFluo.waitForObservers();
-
-    TypedSnapshot tsnap = TYPEL.snapshot(client.newSnapshot());
-
-    Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
-        .col(COUNT_SEEN_COL).toInteger();
-    if (result == null) { 
-      log.error("Could not find root node");
-      printSnapshot();
-    }
-
-    if (!result.equals(uniqueNum)) {
-      log.error("Count ("+result+") at root node does not match expected ("+uniqueNum+"):");
-      printSnapshot();
-    }
-
-    Assert.assertEquals(uniqueNum, result.intValue());
   }
 }

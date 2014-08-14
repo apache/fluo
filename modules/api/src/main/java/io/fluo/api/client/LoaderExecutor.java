@@ -16,12 +16,12 @@
  */
 package io.fluo.api.client;
 
+import java.io.Closeable;
+
 /**
  * Executes Fluo Loader classes 
  */
-public interface LoaderExecutor {
+public interface LoaderExecutor extends Closeable {
 
   public void execute(Loader loader);
-
-  public void shutdown();
 }
