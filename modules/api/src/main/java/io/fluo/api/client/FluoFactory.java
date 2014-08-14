@@ -20,11 +20,12 @@ import java.util.Properties;
 
 import io.fluo.api.config.ConnectionProperties;
 import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.MiniFluoProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Factory for creating FluoClient objects
+ * Factory for creating Fluo client objects
  */
 public class FluoFactory {
 
@@ -39,12 +40,8 @@ public class FluoFactory {
   public static FluoClient newClient(Properties props) {
     String clientClassName = props.getProperty(ConnectionProperties.CLIENT_CLASS_PROP, 
                                                ConnectionProperties.DEFAULT_CLIENT_CLASS);
-    try {
-      return (FluoClient) Class.forName(clientClassName).getDeclaredConstructor(Properties.class).newInstance(props);
-    } catch (Exception e) {
-      log.error("Could not instantiate Client class - " + clientClassName);
-      throw new IllegalStateException(e);
-    }
+
+    return buildClassWithProps(props, clientClassName);
   }
   
   /**
@@ -56,11 +53,40 @@ public class FluoFactory {
   public static FluoAdmin newAdmin(Properties props) {
     String adminClassName = props.getProperty(InitializationProperties.ADMIN_CLASS_PROP, 
                                                InitializationProperties.DEFAULT_ADMIN_CLASS);
+
+    return buildClass(adminClassName);
+  }
+
+  /**
+   * Create a MiniFluo instance
+   *
+   * @param props see {@link io.fluo.api.config.MiniFluoProperties}
+   * @return MiniFluo
+   */
+  public static MiniFluo newMiniFluo(Properties props) {
+
+    String miniFluoClassName = props.getProperty(MiniFluoProperties.MINI_CLASS_PROP,
+                                                 MiniFluoProperties.DEFAULT_MINI_CLASS);
+
+    return buildClassWithProps(props, miniFluoClassName);
+  }
+
+  private static <T>T buildClassWithProps(Properties props, String clazz) {
     try {
-      return (FluoAdmin) Class.forName(adminClassName).newInstance();
+      return (T) Class.forName(clazz).getDeclaredConstructor(Properties.class).newInstance(props);
     } catch (Exception e) {
-      log.error("Could not instantiate Admin class - " + adminClassName);
+      log.error("Could not instantiate class - " + clazz);
       throw new IllegalStateException(e);
     }
   }
+
+  private static <T>T buildClass(String clazz) {
+    try {
+      return (T) Class.forName(clazz).newInstance();
+    } catch (Exception e) {
+      log.error("Could not instantiate class - " + clazz);
+      throw new IllegalStateException(e);
+    }
+  }
+
 }

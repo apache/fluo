@@ -37,11 +37,19 @@ public class OracleProperties extends ConnectionProperties {
   }
 
   public OracleProperties setOraclePort(int oraclePort) {
-    setProperty(OracleProperties.ORACLE_PORT_PROP, Integer.toString(oraclePort));
+    setOraclePort(this, oraclePort);
     return this;
+  }
+
+  public static void setOraclePort(Properties props, int oraclePort) {
+    props.setProperty(OracleProperties.ORACLE_PORT_PROP, Integer.toString(oraclePort));
   }
   
   private void setDefaults() {
-    setDefault(ORACLE_PORT_PROP, ORACLE_DEFAULT_PORT+"");
+    setDefaultOracleProp(this);
+  }
+
+  public static void setDefaultOracleProp(Properties props) {
+    props.setProperty(ORACLE_PORT_PROP, ORACLE_DEFAULT_PORT+"");
   }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.impl;
+package io.fluo.core.client;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +22,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.fluo.api.client.MiniFluo;
 import io.fluo.api.config.WorkerProperties;
+import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.WorkerTask;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
@@ -31,7 +34,8 @@ import org.apache.accumulo.core.client.Scanner;
 /**
  * 
  */
-public class MiniFluo {
+public class MiniFluoImpl implements MiniFluo {
+
   private OracleServer oserver;
   private Environment env;
   private ExecutorService tp;
@@ -47,14 +51,14 @@ public class MiniFluo {
 
     @Override
     public void startedProcessing() {
-      synchronized (MiniFluo.this) {
+      synchronized (MiniFluoImpl.this) {
         numProcessing++;
       }
     }
 
     @Override
     public void finishedProcessing(long numProcessed) {
-      synchronized (MiniFluo.this) {
+      synchronized (MiniFluoImpl.this) {
         numProcessing--;
       }
     }
@@ -64,7 +68,7 @@ public class MiniFluo {
     return scanner.iterator().hasNext() || numProcessing > 0;
   }
 
-  public MiniFluo(Properties props) {
+  public MiniFluoImpl(Properties props) {
     try {
       env = new Environment(props);
       shutdownFlag = new AtomicBoolean(false);
