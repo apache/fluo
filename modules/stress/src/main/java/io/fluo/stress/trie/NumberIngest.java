@@ -16,10 +16,6 @@
  */
 package io.fluo.stress.trie;
 
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.LoaderExecutorProperties;
-import io.fluo.core.util.PropertyUtil;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
@@ -27,9 +23,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
 
+import io.fluo.api.config.ConnectionProperties;
 import io.fluo.api.config.InitializationProperties;
-
+import io.fluo.api.config.LoaderExecutorProperties;
 import io.fluo.core.client.LoaderExecutorImpl;
+import io.fluo.core.util.PropertyUtil;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -82,6 +80,11 @@ public class NumberIngest {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+
+    @Override
+    public void close() throws IOException {
+      le.close();
     }
 
     @Override

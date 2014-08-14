@@ -110,7 +110,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
   }
 
   @Override
-  public void shutdown() {
+  public void close() {
     if (executor != null) {
       executor.shutdown();
       while (!executor.isTerminated()) {

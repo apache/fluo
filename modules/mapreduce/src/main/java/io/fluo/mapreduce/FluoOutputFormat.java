@@ -87,7 +87,7 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
       
       @Override
       public void close(TaskAttemptContext conext) throws IOException, InterruptedException {
-        lexecutor.shutdown();
+        lexecutor.close();
       }
       
       @Override
