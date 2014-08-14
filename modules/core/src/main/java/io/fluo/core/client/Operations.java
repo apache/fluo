@@ -40,15 +40,10 @@ import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import org.apache.accumulo.fate.zookeeper.ZooUtil.NodeExistsPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.ZooDefs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,39 +54,6 @@ public class Operations {
 
   private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-  private static boolean putData(CuratorFramework curator, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
-    if (policy == null)
-      policy = NodeExistsPolicy.FAIL;
-
-    while (true) {
-      try {
-        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zPath, data);
-        return true;
-      } catch (Exception nee) {
-        if(nee instanceof NodeExistsException) {
-          switch (policy) {
-            case SKIP:
-              return false;
-            case OVERWRITE:
-              try {
-                curator.setData().withVersion(-1).forPath(zPath, data);
-                return true;
-              } catch (Exception nne) {
-
-                if(nne instanceof NoNodeException)
-                  // node delete between create call and set data, so try create call again
-                  continue;
-                else
-                  throw new RuntimeException(nne);
-              }
-            default:
-              throw (NodeExistsException)nee;
-          }
-        } else
-          throw new RuntimeException(nee);
-      }
-    }
-  }
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
@@ -105,7 +67,7 @@ public class Operations {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       workerConfig.store(baos, "Java props");
 
-      putData(curator, ZookeeperConstants.workerConfigPath(zoodir), baos.toByteArray(), NodeExistsPolicy.OVERWRITE);
+      CuratorUtil.putData(curator, ZookeeperConstants.workerConfigPath(zoodir), baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
     }
   }
 
@@ -127,7 +89,7 @@ public class Operations {
       }
 
       byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-      putData(curator, ZookeeperConstants.observersPath(zoodir), serializedObservers, NodeExistsPolicy.OVERWRITE);
+      CuratorUtil.putData(curator, ZookeeperConstants.observersPath(zoodir), serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
     }
   }
 
@@ -142,15 +104,14 @@ public class Operations {
       curator.start();
 
       // TODO set Fluo data version
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zoodir, new byte[0]);
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.configPath(zoodir), new byte[0]);
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.tablePath(zoodir), table.getBytes("UTF-8"));
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.instanceNamePath(zoodir), accumuloInstanceName.getBytes("UTF-8"));
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.accumuloInstanceIdPath(zoodir), accumuloInstanceID.getBytes("UTF-8"));
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.fluoInstanceIdPath(zoodir), fluoInstanceID.getBytes("UTF-8"));
-
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.oraclePath(zoodir), new byte[0]);
-      curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(ZookeeperConstants.timestampPath(zoodir), new byte[] {'2'});
+      CuratorUtil.putData(curator, zoodir, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.configPath(zoodir), new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.tablePath(zoodir), table.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.instanceNamePath(zoodir), accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.accumuloInstanceIdPath(zoodir), accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.fluoInstanceIdPath(zoodir), fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.oraclePath(zoodir), new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.timestampPath(zoodir), new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
 
       createTable(table, conn);
     }

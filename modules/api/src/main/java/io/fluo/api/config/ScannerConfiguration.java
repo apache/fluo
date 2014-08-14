@@ -62,6 +62,7 @@ public class ScannerConfiguration implements Cloneable {
     return this;
   }
 
+
   public void clearColumns() {
     columns.clear();
   }
