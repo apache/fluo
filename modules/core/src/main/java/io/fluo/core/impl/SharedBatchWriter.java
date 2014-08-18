@@ -50,9 +50,6 @@ public class SharedBatchWriter {
               bw.addMutations(mutationBatch.mutations);
           }
 
-          // TODO the goal w/ this is that mutations written by separate transactions can be batched together.... however there is a drawback to this approach,
-          // after a transactions mutations are written it may have to wait for writes to other tservers... ideally we could batch writes to tserver from
-          // different transactions AND not have transactions wait on writes to unrelated tservers.... this is how the conditional writer works....
           bw.flush();
 
           for (MutationBatch mutationBatch : batches) {
@@ -79,7 +76,6 @@ public class SharedBatchWriter {
   }
 
   public void writeMutation(Mutation m) {
-    // TODO check if closed
     try {
       MutationBatch mb = new MutationBatch(m);
       mQueue.put(mb);
@@ -104,7 +100,6 @@ public class SharedBatchWriter {
   }
 
   public void close() {
-    //TODO check if closed
     try {
       mQueue.put(end);
       end.cdl.await();
