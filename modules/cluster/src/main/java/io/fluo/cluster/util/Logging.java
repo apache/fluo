@@ -27,7 +27,7 @@ import ch.qos.logback.core.util.StatusPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.fluo.api.config.ConnectionProperties.FLUO_PREFIX;
+import static io.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
 
 /**
  * Used to initialize Logging for cluster applications
@@ -35,6 +35,9 @@ import static io.fluo.api.config.ConnectionProperties.FLUO_PREFIX;
 public class Logging {
   
   private static Logger log = LoggerFactory.getLogger(Logging.class);
+  private static final String LOG_APPLICATION_PROP = FLUO_PREFIX + ".log.application";
+  private static final String LOG_DIR_PROP = FLUO_PREFIX + ".log.dir";
+  private static final String LOG_LOCAL_HOSTNAME_PROP = FLUO_PREFIX + ".log.local.hostname";
   
   public static void init(String application, String configDir, String logOutput) throws IOException {
     
@@ -49,11 +52,11 @@ public class Logging {
       }
     } else {
       
-      System.setProperty(FLUO_PREFIX + ".log.application", application);
-      System.setProperty(FLUO_PREFIX + ".log.dir.log", logOutput);
+      System.setProperty(LOG_APPLICATION_PROP, application);
+      System.setProperty(LOG_DIR_PROP, logOutput);
 
       String localhost = InetAddress.getLocalHost().getHostName();
-      System.setProperty(FLUO_PREFIX + ".log.ip.localhost.hostname", localhost);
+      System.setProperty(LOG_LOCAL_HOSTNAME_PROP, localhost);
  
       // Use a specific log config, if it exists
       logConfig = String.format("%s/logback-file-%s.xml", configDir, application);

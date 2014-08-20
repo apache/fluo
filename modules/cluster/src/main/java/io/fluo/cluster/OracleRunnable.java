@@ -14,39 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.yarn;
+package io.fluo.cluster;
+
+import java.io.File;
 
 import com.beust.jcommander.JCommander;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.Logging;
-import io.fluo.core.util.PropertyUtil;
+import io.fluo.core.impl.Environment;
+import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import io.fluo.api.config.WorkerProperties;
-
-import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.WorkerTask;
-
-/** Main run method of Fluo worker that can be called within
+/** 
+ * Main run method of Fluo oracle that can be called within
  * a Twill/YARN application or on its own as a Java application
  */
-public class WorkerRunnable extends AbstractTwillRunnable {
+public class OracleRunnable extends AbstractTwillRunnable {
 
-  private static Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
-  
+  private static Logger log = LoggerFactory.getLogger(OracleRunnable.class);
+
   @Override
   public void run() {
+    System.out.println("Starting Oracle");
     String[] args = { "-config-dir", "./conf"};
     run(args);
   }
-  
+
   public void run(String[] args) {
     try {
       RunnableOptions options = new RunnableOptions();
@@ -58,39 +54,39 @@ public class WorkerRunnable extends AbstractTwillRunnable {
       }
       options.validateConfig();
 
-      Logging.init("worker", options.getConfigDir(), options.getLogOutput());
+      Logging.init("oracle", options.getConfigDir(), options.getLogOutput());
 
-      Environment env = new Environment(PropertyUtil.loadProps(options.getFluoConfig()));
-
-      for (Entry<Object,Object> entry : env.getWorkerProperties().entrySet()) {
-        log.info("config " + entry.getKey() + " = " + entry.getValue());
+      FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
+      if (!config.hasRequiredOracleProps()) {
+        log.error("fluo.properties is missing required properties for oracle");
+        System.exit(-1);
       }
+      
+      Environment env = new Environment(config);
+      
+      log.info("Oracle configuration:");
+      env.getConfiguration().print();
 
-      int numThreads = Integer.parseInt(env.getWorkerProperties().getProperty(WorkerProperties.WORKER_NUM_THREADS_PROP));
+      OracleServer server = new OracleServer(env);
+      server.start();
 
-      ExecutorService tp = Executors.newFixedThreadPool(numThreads);
-      for (int i = 0; i < numThreads; i++) {
-        tp.submit(new WorkerTask(env, new AtomicBoolean(false)));
+      while (true) {
+        UtilWaitThread.sleep(10000);
       }
-
-      // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.
-
-      while (true)
-        UtilWaitThread.sleep(1000);
-
     } catch (Exception e) {
-      System.err.println("Exception running worker: "+ e.getMessage());
+      System.err.println("Exception running oracle: "+ e.getMessage());
       e.printStackTrace();
     }
   }
   
   @Override
   public void stop() {
-    log.info("Stopping Fluo worker");
+    log.info("Stopping Fluo oracle");
   }
-
-  public static void main(String[] args) throws Exception {
-    WorkerRunnable worker = new WorkerRunnable();
-    worker.run(args);
+  
+  public static void main(String[] args) {
+    OracleRunnable oracle = new OracleRunnable();
+    oracle.run(args);
   }
 }
+

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
-import io.fluo.api.config.OracleProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -31,9 +31,9 @@ public class FluoIT extends TestBaseImpl {
   
   @Test
   public void testFluoFactory() throws Exception {
-    Assert.assertNotNull(FluoFactory.newAdmin(props));
+    Assert.assertNotNull(FluoFactory.newAdmin(config));
     
-    FluoClient client = FluoFactory.newClient(props);
+    FluoClient client = FluoFactory.newClient(config);
     Assert.assertNotNull(client);
     Assert.assertNotNull(client.newLoaderExecutor());
     
@@ -346,7 +346,7 @@ public class FluoIT extends TestBaseImpl {
     
     tx.commit();
     
-    Environment env2 = new Environment(curator, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
+    Environment env2 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(env2);
@@ -354,7 +354,7 @@ public class FluoIT extends TestBaseImpl {
     Assert.assertEquals("20", tx2.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
     
-    Environment env3 = new Environment(curator, zkn, conn, OracleProperties.ORACLE_DEFAULT_PORT);
+    Environment env3 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(env3);

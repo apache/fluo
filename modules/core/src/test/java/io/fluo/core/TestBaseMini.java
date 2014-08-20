@@ -28,7 +28,7 @@ import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.MiniFluo;
 import io.fluo.api.client.Snapshot;
-import io.fluo.api.config.MiniFluoProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -36,11 +36,11 @@ import io.fluo.api.data.Column;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.format.FluoFormatter;
+import io.fluo.core.util.PortUtils;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
-import org.apache.accumulo.server.util.PortUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -51,7 +51,7 @@ import org.junit.BeforeClass;
 public class TestBaseMini {
   
   protected static Instance miniAccumulo;
-  protected static MiniFluoProperties props;
+  protected static FluoConfiguration config;
   protected static MiniFluo miniFluo;
   protected static AtomicInteger tableCounter = new AtomicInteger(1);
   protected static AtomicInteger next = new AtomicInteger();
@@ -81,24 +81,24 @@ public class TestBaseMini {
   public void setUpFluo() throws Exception {
     // TODO add helper code to make this shorter
     
-    props = new MiniFluoProperties();
-    props.setAccumuloInstance(miniAccumulo.getInstanceName());
-    props.setAccumuloUser(USER);
-    props.setAccumuloPassword(PASSWORD);
-    props.setZookeeperRoot("/stress" + next.getAndIncrement());
-    props.setZookeepers(miniAccumulo.getZooKeepers());
-    props.setClearZookeeper(true);
-    props.setAccumuloTable(getNextTableName());
-    props.setNumThreads(5);
-    props.setObservers(getObservers());
-    props.setOraclePort(PortUtils.getRandomFreePort());
+    config = new FluoConfiguration();
+    config.setAccumuloInstance(miniAccumulo.getInstanceName());
+    config.setAccumuloUser(USER);
+    config.setAccumuloPassword(PASSWORD);
+    config.setZookeeperRoot("/stress" + next.getAndIncrement());
+    config.setZookeepers(miniAccumulo.getZooKeepers());
+    config.setClearZookeeper(true);
+    config.setAccumuloTable(getNextTableName());
+    config.setWorkerThreads(5);
+    config.setObservers(getObservers());
+    config.setOraclePort(PortUtils.getRandomFreePort());
+  
+    FluoAdmin admin = FluoFactory.newAdmin(config);
+    admin.initialize();
+   
+    client = FluoFactory.newClient(config);
 
-    FluoAdmin admin = FluoFactory.newAdmin(props);
-    admin.initialize(props);
-
-    client = FluoFactory.newClient(props);
-
-    miniFluo = FluoFactory.newMiniFluo(props);
+    miniFluo = FluoFactory.newMiniFluo(config);
     miniFluo.start();
   }
   

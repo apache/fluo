@@ -20,7 +20,6 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,18 +28,18 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.fluo.api.config.ConnectionProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.OracleProperties;
-import io.fluo.api.config.TransactionConfiguration;
-import io.fluo.api.config.WorkerProperties;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.CuratorUtil;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
@@ -61,7 +60,7 @@ public class Environment implements Closeable {
   private String accumuloInstanceID;
   private String fluoInstanceID;
   private int oraclePort;
-  private Properties workerProps;
+  private FluoConfiguration config;
   private SharedResources resources;
   private long rollbackTime;
   
@@ -78,13 +77,19 @@ public class Environment implements Closeable {
   }
 
   //TODO: This constructor will get out of control quickly
-  public Environment(CuratorFramework curator , String zoodir, Connector conn, int oraclePort) throws Exception {
+  public Environment(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) throws Exception {
+    this.config = new FluoConfiguration();
     init(curator, zoodir, conn, oraclePort);
   }
 
-  private void init(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) throws Exception {
+  private void init(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) {
     this.zoodir = zoodir;
-    readConfig(curator);
+    
+    try {
+      readConfig(curator);
+    } catch (Exception e1) {
+      throw new IllegalStateException(e1);
+    }
 
     this.oraclePort = oraclePort;
     this.conn = conn;
@@ -95,59 +100,39 @@ public class Environment implements Closeable {
     if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
       throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
 
-    rollbackTime = Long.parseLong(getWorkerProperties().getProperty(TransactionConfiguration.ROLLBACK_TIME_PROP, 
-                                                          TransactionConfiguration.ROLLBACK_TIME_DEFAULT + ""));
+    rollbackTime = config.getTransactionRollbackTime();
 
-    this.resources = new SharedResources(this);
-  }
-  
-  /**
-   * @param props
-   */
-  public Environment(Properties props) throws Exception {
-
-    try (CuratorFramework curator = CuratorUtil.getCurator(props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP),
-        Integer.parseInt(props.getProperty(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP)))) {
-
-      String zooDir = props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP);
-
-      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
-          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(
-          props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP))
-      );
-
-      int oraclePort = Integer.parseInt(props.getProperty(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT + ""));
-
-      curator.start();
-
-      init(curator, zooDir, conn, oraclePort);
+    try {
+      this.resources = new SharedResources(this);
+    } catch (TableNotFoundException e2) {
+      throw new IllegalStateException(e2);
     }
   }
   
-  private static Properties load(File propFile) throws IOException {
-    Properties props = new Properties(Environment.getDefaultProperties());
-    props.load(new FileReader(propFile));
-    return props;
-  }
-  
-  public Environment(File propFile) throws Exception {
-    this(load(propFile));
-  }
+  /**
+   * @param properties
+   */
+  public Environment(FluoConfiguration configuration) {
+    this.config = configuration;
 
-  public static Properties getDefaultProperties() {
-    Properties props = new Properties();
-    props.put(ConnectionProperties.ZOOKEEPER_CONNECT_PROP, "localhost");
-    props.put(ConnectionProperties.ZOOKEEPER_ROOT_PROP, "/fluo");
-    props.put(ConnectionProperties.ZOOKEEPER_TIMEOUT_PROP, "30000");
-    props.put(ConnectionProperties.ACCUMULO_INSTANCE_PROP, "accumulo1");
-    props.put(ConnectionProperties.ACCUMULO_USER_PROP, "fluo");
-    props.put(ConnectionProperties.ACCUMULO_PASSWORD_PROP, "secret");
-    props.put(WorkerProperties.WORKER_INSTANCES_PROP, "1");
-    props.put(WorkerProperties.WORKER_MAX_MEMORY_PROP, "256");
-    props.put(OracleProperties.ORACLE_MAX_MEMORY_PROP, "256");
-    props.put(OracleProperties.ORACLE_PORT_PROP, OracleProperties.ORACLE_DEFAULT_PORT+"");
+    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
+
+      Connector conn;
+      try {
+        conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
+          .getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
+      } catch (AccumuloException | AccumuloSecurityException e) {
+        throw new IllegalStateException(e);
+      }
+
+      curator.start();
+
+      init(curator, config.getZookeeperRoot(), conn, config.getOraclePort());
+    }
+  }
     
-    return props;
+  public Environment(File propFile) throws Exception {
+    this(new FluoConfiguration(propFile));
   }
   
   /**
@@ -174,9 +159,10 @@ public class Environment implements Closeable {
     allObserversColumns.addAll(weakObservers.keySet());
     allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
 
-    bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.workerConfigPath(zoodir)));
-    this.workerProps = WorkerProperties.getDefaultProperties();
-    this.workerProps.load(bais);
+    bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.sharedConfigPath(zoodir)));
+    Properties sharedProps = new Properties(); 
+    sharedProps.load(bais);
+    config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
   }
 
   private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
@@ -261,8 +247,8 @@ public class Environment implements Closeable {
     return getConnector().getInstance().getZooKeepers();
   }
   
-  public Properties getWorkerProperties() {
-    return workerProps;
+  public FluoConfiguration getConfiguration() {
+    return config;
   }
 
   public long getRollbackTime() {

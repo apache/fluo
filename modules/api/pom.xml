@@ -38,12 +38,28 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <artifactId>commons-configuration</artifactId>
+      <groupId>commons-configuration</groupId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-configuration</artifactId>
+          <groupId>commons-configuration</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-configuration</artifactId>
+          <groupId>commons-configuration</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Test Dependencies -->

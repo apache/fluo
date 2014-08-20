@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.yarn;
+package io.fluo.cluster;
 
 import java.io.IOException;
+import java.util.Properties;
 
-import io.fluo.core.impl.Environment;
-
+import org.apache.commons.configuration.ConfigurationConverter;
 import com.beust.jcommander.Parameter;
+import io.fluo.api.config.FluoConfiguration;
 
 public class RunnableOptions {
   
@@ -37,14 +38,10 @@ public class RunnableOptions {
     return configDir;
   }
   
-  public String getFluoConfig() {
-    return configDir + "/connection.properties";
+  public String getFluoProps() {
+    return configDir + "/fluo.properties";
   }
-  
-  public String getInitConfig() {
-    return configDir+"/initialization.properties";
-  }
-  
+ 
   public String getLogOutput() {
     return logOutput;
   }
@@ -53,7 +50,8 @@ public class RunnableOptions {
     if (getConfigDir() == null) { 
       System.err.println("Please set -config-dir option to directory containing connection.properties file like below: ");
       System.err.println();
-      Environment.getDefaultProperties().store(System.err, "Fluo connection properties");
+      Properties defaults = ConfigurationConverter.getProperties(FluoConfiguration.getDefaultConfiguration());
+      defaults.store(System.err, "Fluo connection properties");
       System.exit(-1);
     }
   }

@@ -17,17 +17,14 @@
 package io.fluo.core.client;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Properties;
-import java.util.Set;
 
 import io.fluo.api.client.FluoAdmin;
-import io.fluo.api.config.ConnectionProperties;
-import io.fluo.api.config.InitializationProperties;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.config.TransactionConfiguration;
-import io.fluo.api.config.WorkerProperties;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
@@ -49,25 +46,25 @@ import org.slf4j.LoggerFactory;
 public class FluoAdminImpl implements FluoAdmin {
 
   private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
-
-  /**
-   * Initialize a Fluo instance
-   * 
-   * @param props see {@link io.fluo.api.config.InitializationProperties}
-   */
-  public void initialize(Properties props) throws AlreadyInitializedException {
+  private FluoConfiguration config;
+  
+  public FluoAdminImpl(FluoConfiguration config) {
+    this.config = config;
+    if (!config.hasRequiredAdminProps()) {
+      throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
+  }
+  
+  public void initialize() throws AlreadyInitializedException {
+    
     try {
-      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
-          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP),
-          new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
+      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
+          .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
 
-      if (Boolean.valueOf(props.getProperty(InitializationProperties.CLEAR_ZOOKEEPER_PROP, "false"))) {
-
-        String zookeepers = props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP);
-        try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+      if (config.getClearZookeeper()) {
+        try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
           curator.start();
-
-          String zkRoot = props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP);
+          String zkRoot = config.getZookeeperRoot();
           try {
             curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
           } catch(KeeperException.NoNodeException nne) {
@@ -78,19 +75,24 @@ public class FluoAdminImpl implements FluoAdmin {
         }
       }
 
-      Operations.initialize(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), props.getProperty(InitializationProperties.TABLE_PROP));
+      Operations.initialize(conn, config.getZookeeperRoot(), config.getAccumuloTable());
 
-      updateWorkerConfig(props);
+      updateSharedConfig();
+      
+      String accumuloClassPath = null;
+      try {
+        accumuloClassPath = config.getAccumuloClasspath();
+      } catch (NoSuchElementException e) { }
 
-      if (props.getProperty(InitializationProperties.CLASSPATH_PROP) != null) {
+      if (accumuloClassPath != null) {
         // TODO add fluo version to context name to make it unique
         String contextName = "fluo";
         conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo",
-            props.getProperty(InitializationProperties.CLASSPATH_PROP));
-        conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_CLASSPATH.getKey(), contextName);
+            config.getAccumuloClasspath());
+        conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
       }
 
-      conn.tableOperations().setProperty(props.getProperty(InitializationProperties.TABLE_PROP), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
+      conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException(nee);
     } catch (Exception e) {
@@ -100,34 +102,28 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  /**
-   * Update Worker configuration
-   * 
-   * @param props see {@link WorkerProperties}
-   */
-  public void updateWorkerConfig(Properties props) {
+  public void updateSharedConfig() {
+    
     try {
-      Connector conn = new ZooKeeperInstance(props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP),
-          props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP)).getConnector(props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP),
-          new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
+      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
+           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
 
-      Properties workerConfig = new Properties();
+      Properties sharedProps = new Properties();
 
       Map<Column,ObserverConfiguration> colObservers = new HashMap<Column,ObserverConfiguration>();
       Map<Column,ObserverConfiguration> weakObservers = new HashMap<Column,ObserverConfiguration>();
 
-      Set<Entry<Object,Object>> entries = props.entrySet();
-      for (Entry<Object,Object> entry : entries) {
-        String key = (String) entry.getKey();
-        if (key.startsWith(WorkerProperties.OBSERVER_PREFIX_PROP)) {
-          addObserver(colObservers, weakObservers, entry);
-        } else if (key.startsWith(WorkerProperties.WORKER_PREFIX) || key.startsWith(TransactionConfiguration.TRANSACTION_PREFIX)) {
-          workerConfig.setProperty((String) entry.getKey(), (String) entry.getValue());
+      Iterator<String> iter = config.getKeys();
+      while (iter.hasNext()) {
+        String key = iter.next();
+        if (key.startsWith(FluoConfiguration.OBSERVER_PREFIX)) {
+          addObserver(colObservers, weakObservers, config.getString(key));
+        } else if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
+          sharedProps.setProperty(key, Long.toString(config.getLong(key)));
         }
       }
-
-      Operations.updateObservers(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), colObservers, weakObservers);
-      Operations.updateWorkerConfig(conn, props.getProperty(ConnectionProperties.ZOOKEEPER_ROOT_PROP), workerConfig);
+      Operations.updateObservers(conn, config.getZookeeperRoot(), colObservers, weakObservers);
+      Operations.updateSharedConfig(conn, config.getZookeeperRoot(), sharedProps);
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -135,10 +131,10 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  private static void addObserver(Map<Column,ObserverConfiguration> observers, Map<Column,ObserverConfiguration> weakObservers, Entry<Object,Object> entry)
-      throws Exception {
-    String val = (String) entry.getValue();
-    String[] fields = val.split(",");
+  private static void addObserver(Map<Column,ObserverConfiguration> observers, 
+      Map<Column,ObserverConfiguration> weakObservers, String value) throws Exception {
+    
+    String[] fields = value.split(",");
 
     ObserverConfiguration observerConfig = new ObserverConfiguration(fields[0]);
 

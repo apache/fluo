@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import io.fluo.api.config.LoaderExecutorProperties;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.core.TestBaseMini;
@@ -79,11 +78,10 @@ public class TrieBasicIT extends TestBaseMini {
     
     log.info("Ingesting "+ingestNum+" unique numbers with a nodeSize of "+nodeSize+" bits");
     
-    LoaderExecutorProperties lep = new LoaderExecutorProperties(props);
-    lep.setNumThreads(0);
-    lep.setQueueSize(0);
+    config.setLoaderThreads(0);
+    config.setLoaderQueueSize(0);
     
-    try(LoaderExecutorImpl le = new LoaderExecutorImpl(lep)) {
+    try(LoaderExecutorImpl le = new LoaderExecutorImpl(config)) {
       Random random = new Random();
       Set<Integer> ingested = new HashSet<>();
       for (int i = 0; i < ingestNum; i++) {

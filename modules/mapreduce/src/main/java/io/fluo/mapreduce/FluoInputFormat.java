@@ -23,7 +23,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import io.fluo.api.config.ConnectionProperties;
+import org.apache.commons.configuration.ConfigurationConverter;
+
+import org.apache.commons.configuration.PropertiesConfiguration;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Span;
@@ -93,10 +96,10 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           Span span = SpanUtil.toSpan(ris.getRange());
           
           ByteArrayInputStream bais = new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY).getBytes("UTF-8"));
-          Properties props = new Properties();
+          PropertiesConfiguration props = new PropertiesConfiguration();
           props.load(bais);
           
-          env = new Environment(props);
+          env = new Environment(new FluoConfiguration(props));
           
           TransactionImpl ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1), null);
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
@@ -132,13 +135,13 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
    * 
    * @param conf
    * @param props
-   *          use {@link io.fluo.api.config.ConnectionProperties} to configure programmatically
+   *          use {@link io.fluo.api.config.FluoConfiguration} to configure programmatically
    */
   @SuppressWarnings("deprecation")
   public static void configure(Job conf, Properties props) {
     try {
-      
-      Environment env = new Environment(props);
+      FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
+      Environment env = new Environment(config);
       
       OracleClient client = OracleClient.getInstance(env);
       long ts = client.getTimestamp();
@@ -150,8 +153,8 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
       
       conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
       
-      AccumuloInputFormat.setZooKeeperInstance(conf, props.getProperty(ConnectionProperties.ACCUMULO_INSTANCE_PROP), props.getProperty(ConnectionProperties.ZOOKEEPER_CONNECT_PROP));
-      AccumuloInputFormat.setConnectorInfo(conf, props.getProperty(ConnectionProperties.ACCUMULO_USER_PROP), new PasswordToken(props.getProperty(ConnectionProperties.ACCUMULO_PASSWORD_PROP)));
+      AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getZookeepers());
+      AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
       AccumuloInputFormat.setInputTableName(conf, env.getTable());
       AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
       
