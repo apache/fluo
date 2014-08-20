@@ -6,7 +6,7 @@ Fluo
 A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
 Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
 [ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
-makes it possible to effeciently find notifications.  Theoretically this
+makes it possible to efficiently find notifications.  Theoretically, this
 prototype is to a point where it could run in a distributed manner.  But this
 has not been tested.  The pieces are in place, CAS is done on the tablet server
 and the Oracle is a service.  
@@ -60,19 +60,18 @@ First, copy the example configuration files and modify them for you environment.
 cd fluo-1.0.0-alpha-1-SNAPSHOT/conf
 cp examples/* .
 vim fluo-env.sh
-vim initialization.properties
-vim connection.properties
+vim fluo.properties
 ```
 
 Copy your observer jar to Fluo and set up notifications to your observer in
- `initialization.properties`.  Check out [phrasecount][7] to build an example
-observer jar and find instructions for configuring `initialization.properties`.
+ `fluo.properties`.  Check out [phrasecount][7] to build an example observer
+ jar and find instructions for configuring `fluo.properties`.
 
 ```
 OBSERVER_JAR=<location of observer jar>
 cd fluo-1.0.0-alpha-1-SNAPSHOT/
 cp $OBSERVER_JAR lib/observers
-vim conf/initialization.properties
+vim conf/fluo.properties
 ```
 
 Finally, initialize your instance which only needs to be called once and stores
@@ -90,18 +89,18 @@ These processes can either be run on a YARN cluster or started locally on each
 machine.
 
 The preferred method to run Fluo applications is using YARN which will start
-up multiple workers as configured in `connection.properties`.  To start a Fluo
-cluster in YARN, run following commands:
+up multiple workers as configured in `fluo.properties`.  To start a Fluo cluster 
+in YARN, run following commands:
 
 ```
 ./bin/oracle.sh start-yarn
 ./bin/worker.sh start-yarn
 ```
 
-The `start-yarn` commands above submit your Accimus applications to YARN.  
-Therefore, they work for a single-node or a large cluster.  By using YARN, you 
-no longer need to deploy the Fluo binaries to every node on your cluster or 
-start processes on every node.
+The `start-yarn` commands above submit your Fluo applications to YARN.  Therefore, 
+they work for a single-node or a large cluster.  By using YARN, you no longer need 
+to deploy the Fluo binaries to every node on your cluster or start processes on 
+every node.
 
 You can use `yarn application -list` to check the status of the applications. 
 Logs are viewable within YARN.  When finished, you can kill the applications
@@ -116,7 +115,7 @@ the following commands:
 ./bin/worker.sh start-local
 ```
 
-In a distributed enivornment, you will need to deploy the Fluo binary to 
+In a distributed environment, you will need to deploy the Fluo binary to 
 every node and start each process individually.
 
 To stop Fluo processes, run the following commands:
@@ -129,7 +128,7 @@ To stop Fluo processes, run the following commands:
 Tuning Accumulo
 ---------------
 
-Fluo will reread the same data frequenty when it checks conditions on
+Fluo will reread the same data frequently when it checks conditions on
 mutations.   When Fluo initializes a table it enables data caching to make
 this more efficient.  However you may need to increase the amount of memory
 available for caching in the tserver by increasing `tserver.cache.data.size`.

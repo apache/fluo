@@ -22,7 +22,7 @@ Run trie stress test on cluster
 If you want to run the trie stress on the cluster, first set up HDFS, YARN, Zookeeper, 
 and Accumulo. Next, initialize Fluo with following observer:
 ```
-io.fluo.worker.observer.0=io.fluo.stress.trie.NodeObserver
+io.fluo.observer.0=io.fluo.stress.trie.NodeObserver
 ```
 
 Next, build the module:
@@ -40,14 +40,14 @@ target/fluo-stress-1.0.0-alpha-1-SNAPSHOT-jar-with-dependencies.jar
 
 Copy fluo-stress-1.0.0-alpha-1-SNAPSHOT.jar to lib/observers in your Fluo deployment:
 ```
-cp target/fluo-stress-1.0.0-alpha-1-SNAPSHOT.jar $DEPLOY/lib/obervers
+cp target/fluo-stress-1.0.0-alpha-1-SNAPSHOT.jar $DEPLOY/lib/observers
 ```
 
 Finally, on a node where Hadoop is set up, run the following command to ingest 
 data into Fluo using fluo-stress-1.0.0-alpha-1-SNAPSHOT-jar-with-dependencies.jar:
 
 ```
-yarn jar <jarPath> io.fluo.stress.trie.NumberIngest <numMap> <numPerMap> <nodeSize> <connPath>
+yarn jar <jarPath> io.fluo.stress.trie.NumberIngest <numMap> <numPerMap> <nodeSize> <fluoProps>
 
 where:
 
@@ -55,5 +55,5 @@ jarPath = target/fluo-stress-1.0.0-alpha-1-SNAPSHOT-jar-with-dependencies.jar
 numMap = Number of ingest map tasks
 numPerMap = Number of integers ingested per map
 nodeSize = Size of node in bits which must be a divisor of 32/64
-connPath = Path to Fluo connection.properties
+fluoProps = Path to fluo.properties
 ```

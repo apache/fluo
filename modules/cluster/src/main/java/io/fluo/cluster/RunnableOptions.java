@@ -48,10 +48,10 @@ public class RunnableOptions {
   
   public void validateConfig() throws IOException {
     if (getConfigDir() == null) { 
-      System.err.println("Please set -config-dir option to directory containing connection.properties file like below: ");
+      System.err.println("Please set -config-dir option to directory containing fluo.properties file like below: ");
       System.err.println();
       Properties defaults = ConfigurationConverter.getProperties(FluoConfiguration.getDefaultConfiguration());
-      defaults.store(System.err, "Fluo connection properties");
+      defaults.store(System.err, "Fluo properties");
       System.exit(-1);
     }
   }
