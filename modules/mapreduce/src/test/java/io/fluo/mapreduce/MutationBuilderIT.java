@@ -69,7 +69,7 @@ public class MutationBuilderIT extends TestBaseImpl {
     tx1.mutate().row("row1").fam("cf1").qual("cq3").delete();
     tx1.mutate().row("row2").fam("cf1").qual("cq2").set("v7");
 
-    tx1.commit();
+    tx1.done();
 
     // tx2 should see not changes from tx1
     Assert.assertEquals("v1", tx2.get().row("row1").fam("cf1").qual("cq1").toString());

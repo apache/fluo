@@ -100,7 +100,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           
           env = new Environment(new FluoConfiguration(props));
           
-          TransactionImpl ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1), null);
+          TransactionImpl ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
@@ -142,8 +142,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
       FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
       Environment env = new Environment(config);
       
-      OracleClient client = OracleClient.getInstance(env);
-      long ts = client.getTimestamp();
+      long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
       
       conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
       

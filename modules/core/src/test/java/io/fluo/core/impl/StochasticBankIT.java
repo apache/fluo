@@ -104,7 +104,7 @@ public class StochasticBankIT extends TestBaseImpl {
       tx.mutate().row(fmtAcct(i)).col(balanceCol).set(1000);
     }
     
-    tx.commit();
+    tx.done();
   }
   
   private static String fmtAcct(int i) {
@@ -157,7 +157,7 @@ public class StochasticBankIT extends TestBaseImpl {
             break;
           }
           
-          tx.commit();
+          tx.done();
           break;
 
         } catch (StaleScanException sse) {

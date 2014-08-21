@@ -16,7 +16,14 @@
 package io.fluo.core.impl;
 
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.LongUtil;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
@@ -32,13 +39,6 @@ import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
-
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -65,7 +65,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row(from).col(balanceCol).set("" + (bal1 - amount));
     tx.mutate().row(to).col(balanceCol).set("" + (bal2 + amount));
     
-    tx.commit();
+    tx.done();
   }
 
   public static class NullObserver extends AbstractObserver {
@@ -110,9 +110,9 @@ public class FailureIT extends TestBaseImpl {
       tx.mutate().row(r + "").col(col2).set("0" + r + "1");
     }
     
-    tx.commit();
+    tx.done();
     
-    TransactorID t2 = new TransactorID(env);
+    TransactorNode t2 = new TransactorNode(env);
     TestTransaction tx2 = new TestTransaction(env, t2);
     
     for (int r = 0; r < 10; r++) {
@@ -172,9 +172,9 @@ public class FailureIT extends TestBaseImpl {
       tx.mutate().row(r + "").col(col2).set("0" + r + "1");
     }
     
-    tx.commit();
+    tx.done();
     
-    TransactorID t2 = new TransactorID(env);
+    TransactorNode t2 = new TransactorNode(env);
     TestTransaction tx2 = new TestTransaction(env, t2);
     
     for (int r = 0; r < 10; r++) {
@@ -218,7 +218,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     
@@ -275,7 +275,7 @@ public class FailureIT extends TestBaseImpl {
   }
   
   private void rollbackTest(boolean killTransactor) throws Exception {
-    TransactorID t1 = new TransactorID(env);
+    TransactorNode t1 = new TransactorNode(env);
 
     TestTransaction tx = new TestTransaction(env);
     
@@ -283,7 +283,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env, t1);
     
@@ -325,6 +325,7 @@ public class FailureIT extends TestBaseImpl {
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
       t1.close();
     }
+    tx3.close();
   }
   
   @Test
@@ -337,7 +338,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     
@@ -388,7 +389,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set("3");
     tx.mutate().row("url0000").col(typeLayer.bc().fam("doc").qual("content").vis()).set("abc def");
     
-    tx.commit();
+    tx.done();
 
     TestTransaction tx2 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
     tx2.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
@@ -434,12 +435,10 @@ public class FailureIT extends TestBaseImpl {
       tx4.commit();
       Assert.fail();
     } catch (AlreadyAcknowledgedException aae) {}
-
-
   }
   
   @Test
-  public void testStaleScan() throws Exception {
+  public void testStaleScanPrevention() throws Exception {
 
     TestTransaction tx = new TestTransaction(env);
     
@@ -447,7 +446,7 @@ public class FailureIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
@@ -459,12 +458,53 @@ public class FailureIT extends TestBaseImpl {
     
     conn.tableOperations().flush(table, null, null, true);
     
+    // Stale scan should not occur due to oldest active timestamp tracking in Zookeeper
+    try {
+      tx2.get().row("joe").col(balanceCol).toString();
+    } catch (StaleScanException sse) {
+      Assert.assertFalse(true);
+    }
+    
+    TestTransaction tx3 = new TestTransaction(env);
+    
+    Assert.assertEquals("9", tx3.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals("22", tx3.get().row("joe").col(balanceCol).toString());
+    Assert.assertEquals("59", tx3.get().row("jill").col(balanceCol).toString());
+  }
+  
+  @Test
+  public void testForcedStaleScan() throws Exception {
+
+    TestTransaction tx = new TestTransaction(env);
+    
+    tx.mutate().row("bob").col(balanceCol).set("10");
+    tx.mutate().row("joe").col(balanceCol).set("20");
+    tx.mutate().row("jill").col(balanceCol).set("60");
+    
+    tx.done();
+    
+    TestTransaction tx2 = new TestTransaction(env);
+    Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
+    
+    transfer(env, "joe", "jill", 1);
+    transfer(env, "joe", "bob", 1);
+    transfer(env, "bob", "joe", 2);
+    transfer(env, "jill", "joe", 2);
+    
+    // Force a stale scan be modifying the oldest active timestamp to a 
+    // more recent time in Zookeeper.  This disables timestamp tracking.
+    Long nextTs = new TestTransaction(env).getStartTs();
+    curator.setData().forPath(env.getSharedResources().getTimestampTracker().getNodePath(), 
+        LongUtil.toByteArray(nextTs));
+    
+    // GC iterator will clear data that tx2 wants to scan
+    conn.tableOperations().flush(table, null, null, true);
+    
+    // Tx2 should throw stale scan exception
     try {
       tx2.get().row("joe").col(balanceCol).toString();
       Assert.assertFalse(true);
-    } catch (StaleScanException sse) {
-      
-    }
+    } catch (StaleScanException sse) { }
     
     TestTransaction tx3 = new TestTransaction(env);
     

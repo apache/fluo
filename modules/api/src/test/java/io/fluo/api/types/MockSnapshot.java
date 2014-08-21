@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.exceptions;
+package io.fluo.api.types;
 
-/**
- * 
- */
-public class AlreadyAcknowledgedException extends CommitException {
+import io.fluo.api.client.Snapshot;
 
-  public AlreadyAcknowledgedException(String msg) {
-    super(msg);
+public class MockSnapshot extends MockSnapshotBase implements Snapshot {
+
+  MockSnapshot(String... entries) {
+    super(entries);
   }
-  
-  public AlreadyAcknowledgedException() {
-    super();
+
+  @Override
+  public void close() {
+    // no resources need to be closed
   }
 }

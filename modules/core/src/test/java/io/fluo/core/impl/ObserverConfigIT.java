@@ -101,7 +101,7 @@ public class ObserverConfigIT extends TestBaseImpl {
 
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("fam1").qual("col1").set("abcdefg");
-    tx1.commit();
+    tx1.done();
 
     runWorker();
 

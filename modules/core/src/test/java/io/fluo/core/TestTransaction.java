@@ -25,7 +25,7 @@ import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.impl.TransactorID;
+import io.fluo.core.impl.TransactorNode;
 import io.fluo.core.impl.TxStats;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -36,11 +36,12 @@ public class TestTransaction extends TypedTransaction {
 
   private TransactionImpl tx;
   
-  public TestTransaction(Environment env, TransactorID transactor) throws Exception {
-    this(new TransactionImpl(env, null, transactor), new StringEncoder());
+  @SuppressWarnings("resource")
+  public TestTransaction(Environment env, TransactorNode transactor) {
+    this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder());
   }
 
-  public TestTransaction(Environment env) throws Exception {
+  public TestTransaction(Environment env) {
     this(new TransactionImpl(env), new StringEncoder());
   }
 
@@ -49,18 +50,34 @@ public class TestTransaction extends TypedTransaction {
     this.tx = transactionImpl;
   }
 
-  public TestTransaction(Environment env, Bytes trow, Column tcol) throws Exception {
+  public TestTransaction(Environment env, Bytes trow, Column tcol) {
     this(new TransactionImpl(env, trow, tcol), new StringEncoder());
   }
 
-  public TestTransaction(Environment env, String trow, Column tcol) throws Exception {
+  public TestTransaction(Environment env, String trow, Column tcol) {
     this(new TransactionImpl(env, Bytes.wrap(trow), tcol), new StringEncoder());
   }
 
+  /**
+   * Calls commit() and close() on transaction
+   * @throws CommitException
+   */
+  public void done() throws CommitException {
+    try {
+      commit();
+    } finally {
+      close();
+    }
+  }
+  
   public void commit() throws CommitException {
     tx.commit();
   }
-
+  
+  public void close() {
+    tx.close();
+  }
+  
   public CommitData createCommitData() throws TableNotFoundException {
     return tx.createCommitData();
   }

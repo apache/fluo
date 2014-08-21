@@ -15,6 +15,7 @@
  */
 package io.fluo.core.impl;
 
+import io.fluo.accumulo.util.ZookeeperConstants;
 import io.fluo.core.TestBaseImpl;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -22,7 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 /** 
- * Tests transactor class
+ * Tests transactor classes
  */
 public class TransactorIT extends TestBaseImpl {
   
@@ -32,7 +33,7 @@ public class TransactorIT extends TestBaseImpl {
   
   @Rule
   public ExpectedException exception = ExpectedException.none();
-
+  
   @Test
   public void testTransactorAndCache() throws Exception {
     
@@ -41,13 +42,13 @@ public class TransactorIT extends TestBaseImpl {
     Assert.assertFalse(cache.checkExists(id2));
         
     // create 2 transactors
-    TransactorID t1 = new TransactorID(env);    
-    TransactorID t2 = new TransactorID(env);
+    TransactorNode t1 = new TransactorNode(env);    
+    TransactorNode t2 = new TransactorNode(env);
 
     // verify that they were created correctly
     assertNumOpen(2);
-    Assert.assertEquals(id1, t1.getLongID());
-    Assert.assertEquals(id2, t2.getLongID());
+    Assert.assertEquals(id1, t1.getTransactorID().getLongID());
+    Assert.assertEquals(id2, t2.getTransactorID().getLongID());
     Assert.assertTrue(checkExists(t1));
     Assert.assertTrue(checkExists(t2));
     Assert.assertArrayEquals("1".getBytes(), curator.getData().forPath(t1.getNodePath()));
@@ -84,16 +85,16 @@ public class TransactorIT extends TestBaseImpl {
   @Test
   public void testFailures() throws Exception {
     
-    TransactorID t1 = new TransactorID(env);  
+    TransactorNode t1 = new TransactorNode(env);  
     
     assertNumOpen(1);
-    Assert.assertEquals(id1, t1.getLongID());
+    Assert.assertEquals(id1, t1.getTransactorID().getLongID());
     Assert.assertTrue(checkExists(t1));
    
     // Test that node will be recreated if removed
     curator.delete().forPath(t1.getNodePath());
     
-    Assert.assertEquals(id1, t1.getLongID());
+    Assert.assertEquals(id1, t1.getTransactorID().getLongID());
     assertNumOpen(1);
     Assert.assertTrue(checkExists(t1));
     
@@ -104,7 +105,7 @@ public class TransactorIT extends TestBaseImpl {
     
     // Test for exception to be called
     exception.expect(IllegalStateException.class);
-    t1.getLongID();
+    t1.getTransactorID().getLongID();
   }
   
   @Test(timeout = 30000)
@@ -141,8 +142,17 @@ public class TransactorIT extends TestBaseImpl {
 
     cache.close();
   }
-
-  private boolean checkExists(TransactorID t) throws Exception {
+  
+  @Test
+  public void testTransactorID() {
+    TransactorID tid1 = new TransactorID(env);
+    Assert.assertEquals(id1, tid1.getLongID());
+    Assert.assertEquals(id2, env.getSharedResources().getTransactorID().getLongID());
+    TransactorID tid3 = new TransactorID(env);
+    Assert.assertEquals(new Long(3), tid3.getLongID());
+  }
+  
+  private boolean checkExists(TransactorNode t) throws Exception {
     return curator.checkExists().forPath(t.getNodePath()) != null;
   }
   

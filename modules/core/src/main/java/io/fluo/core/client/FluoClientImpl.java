@@ -57,12 +57,7 @@ public class FluoClientImpl implements FluoClient {
 
   @Override
   public Snapshot newSnapshot() {
-    try {
-      return new TransactionImpl(env);
-    } catch (Exception e) {
-      log.error("Failed to create a Snapshot");
-      throw new IllegalStateException(e);
-    }
+    return new TransactionImpl(env);
   }
 
   @Override

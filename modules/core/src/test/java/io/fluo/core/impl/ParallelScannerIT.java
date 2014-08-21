@@ -18,7 +18,7 @@ package io.fluo.core.impl;
 import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.api.types.TypedSnapshot.Value;
+import io.fluo.api.types.TypedSnapshotBase.Value;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
@@ -44,7 +44,7 @@ public class ParallelScannerIT extends TestBaseImpl {
     tx1.mutate().row("joe3").fam("vote").qual("election1").set("nay");
     tx1.mutate().row("joe3").fam("vote").qual("election2").set("nay");
 
-    tx1.commit();
+    tx1.done();
 
     final TestTransaction tx2 = new TestTransaction(env);
 
@@ -113,11 +113,11 @@ public class ParallelScannerIT extends TestBaseImpl {
     tx1.mutate().row(40).fam(7).qual(7).set(38);
     tx1.mutate().row(47).fam(7).qual(7).set(45);
 
-    tx1.commit();
+    tx1.done();
 
-    TransactorID transID1 = new TransactorID(env);
+    TransactorNode tNode1 = new TransactorNode(env);
 
-    TestTransaction tx2 = new TestTransaction(env, transID1);
+    TestTransaction tx2 = new TestTransaction(env, tNode1);
 
     tx2.mutate().row(5).fam(7).qual(7).set(7);
     tx2.mutate().row(12).fam(7).qual(7).set(14);
@@ -126,7 +126,7 @@ public class ParallelScannerIT extends TestBaseImpl {
     CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
 
-    TestTransaction tx3 = new TestTransaction(env, transID1);
+    TestTransaction tx3 = new TestTransaction(env, tNode1);
 
     tx3.mutate().row(26).fam(7).qual(7).set(28);
     tx3.mutate().row(33).fam(7).qual(7).set(35);
@@ -138,13 +138,13 @@ public class ParallelScannerIT extends TestBaseImpl {
     tx3.commitPrimaryColumn(cd3, commitTs);
 
     if (closeTransID)
-      transID1.close();
+      tNode1.close();
 
     check();
     check();
 
     if (!closeTransID)
-      transID1.close();
+      tNode1.close();
   }
 
   void check() throws Exception {

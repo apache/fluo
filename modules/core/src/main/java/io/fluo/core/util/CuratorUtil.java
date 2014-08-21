@@ -15,14 +15,21 @@
  */
 package io.fluo.core.util;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CuratorUtil {
+  
+  private static Logger log = LoggerFactory.getLogger(CuratorUtil.class);
 
   public enum NodeExistsPolicy {
     SKIP, OVERWRITE, FAIL
@@ -68,4 +75,25 @@ public class CuratorUtil {
     }
   }
 
+  /**
+   * Starts the ephemeral node and waits for it to be created
+   * 
+   * @param node Node to start
+   * @param maxWaitSec Maximum time in seconds to wait
+   */
+  public static void startAndWait(PersistentEphemeralNode node, int maxWaitSec) {
+    node.start();
+    int waitTime = 0;
+    try {
+      while (node.waitForInitialCreate(1, TimeUnit.SECONDS) == false) {
+        waitTime += 1;
+        log.info("Waited "+waitTime+" sec for ephmeral node to be created");
+        if (waitTime > maxWaitSec) {
+          throw new IllegalStateException("Failed to create ephemeral node");
+        }
+      }
+    } catch (InterruptedException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }

@@ -15,102 +15,58 @@
  */
 package io.fluo.core.impl;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
+import io.fluo.accumulo.util.ZookeeperConstants;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-/** A transactor performs transactions in Fluo.
- * This class gives a transactor a unique ID and registers the transactor 
- * in Zookeeper
+/**
+ * Identifier allocated from Zookeeper that uniquely identifies a transactor.  
+ * A transactor is any client the performs transactions in Fluo 
  */
-public class TransactorID implements Closeable {
+public class TransactorID {
   
-  public enum TrStatus { OPEN, CLOSED };
-  
-  private static Logger log = LoggerFactory.getLogger(TransactorID.class);
-  private Environment env;
-  private PersistentEphemeralNode node;
   private Long id;
-  private TrStatus status;
   
-  public TransactorID(Environment env) {
-    this.env = env;
-    try {
-      id = createID();
-      createEphemeralNode();
-      status = TrStatus.OPEN;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public TransactorID(CuratorFramework curator, String zkRoot) {
+    Preconditions.checkNotNull(curator);
+    Preconditions.checkNotNull(zkRoot);
+    id = createID(curator, zkRoot);
   }
   
+  public TransactorID(Environment env) {
+    this(env.getSharedResources().getCurator(), env.getZookeeperRoot());
+  }
+  
+  /**
+   * Retrieves Long representation of identifier
+   */
   public Long getLongID() {
-    if (status == TrStatus.CLOSED) {
-      throw new IllegalStateException("TransactorID is closed!");
-    }
     return id;
   }
   
-  public String getStringID() {
-    return LongUtil.longToString(getLongID());
-  }
-  
-  public TrStatus getStatus() {
-    return status;
-  }
-  
+  /**
+   * Outputs identifier as String (using max radix)
+   */
   @Override
-  public void close() throws IOException {
-    status = TrStatus.CLOSED;
-    node.close();
+  public String toString() {
+    return LongUtil.toMaxRadixString(getLongID());
   }
-  
-  @VisibleForTesting
-  public String getNodePath() {
-    return getNodePath(env, id);
-  }
-  
-  public static String getNodePath(Environment env, Long transactorId) {
-    return getNodeRoot(env) + "/" + LongUtil.longToString(transactorId);
-  }
-  
-  public static String getNodeRoot(Environment env) {
-    return env.getZookeeperRoot() + ZookeeperConstants.TRANSACTOR_NODES;
-  }
-  
-  private Long createID() throws Exception {
-    DistributedAtomicLong counter = new DistributedAtomicLong(
-        env.getSharedResources().getCurator(), 
-        env.getZookeeperRoot() + ZookeeperConstants.TRANSACTOR_COUNT,
-        new ExponentialBackoffRetry(1000, 10));
-    AtomicValue<Long> nextId = counter.increment();
-    while (nextId.succeeded() == false) {
-      nextId = counter.increment();
-    }
-    return nextId.postValue();
-  }
-  
-  private void createEphemeralNode() throws InterruptedException {
-    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), 
-        Mode.EPHEMERAL, getNodePath(), getStringID().getBytes());
-    node.start();
-    int waitTime = 0;
-    while (node.waitForInitialCreate(1, TimeUnit.SECONDS) == false) {
-      waitTime += 1;
-      log.info("Waited "+waitTime+" sec for ephmeral node to be created");
-      if (waitTime > 10) {
-        throw new RuntimeException("Failed to create transactor ephemeral node");
+      
+  private static Long createID(CuratorFramework curator, String zkRoot) {
+    try {
+      DistributedAtomicLong counter = new DistributedAtomicLong(curator,
+          zkRoot + ZookeeperConstants.TRANSACTOR_COUNT, new ExponentialBackoffRetry(1000, 10));
+      AtomicValue<Long> nextId = counter.increment();
+      while (nextId.succeeded() == false) {
+        nextId = counter.increment();
       }
+      return nextId.postValue();
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
     }
   }
 }

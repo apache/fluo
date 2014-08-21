@@ -16,12 +16,15 @@
 package io.fluo.core.oracle;
 
 import java.net.InetSocketAddress;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import io.fluo.core.impl.ZookeeperConstants;
-import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.CuratorCnxnListener;
-import io.fluo.core.thrift.OracleService;
 import com.google.common.annotations.VisibleForTesting;
+import io.fluo.accumulo.util.LongUtil;
+import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.core.impl.CuratorCnxnListener;
+import io.fluo.core.impl.Environment;
+import io.fluo.core.thrift.OracleService;
 import io.fluo.core.util.Halt;
 import io.fluo.core.util.HostUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -62,10 +65,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   
   private volatile long currentTs = 0;
   private volatile long maxTs = 0;
+  private long zkTs = 0;
   private final Environment env;
   private Thread serverThread;
   private THsHaServer server;
   private volatile boolean started = false;
+  private Timer timer;
 
   private LeaderSelector leaderSelector;
   private PathChildrenCache pathChildrenCache;
@@ -73,23 +78,41 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private CuratorCnxnListener cnxnListener;
   private Participant currentLeader;
 
-  private final String tsPath;
+  private final String maxTsPath;
+  private final String curTsPath;
   private final String oraclePath;
 
   private volatile boolean isLeader = false;
-
+  
   private static Logger log = LoggerFactory.getLogger(OracleServer.class);
 
   public OracleServer(Environment env) throws Exception {
     this.env = env;
     this.cnxnListener = new CuratorCnxnListener();
-    this.tsPath = ZookeeperConstants.timestampPath(env.getZookeeperRoot());
+    this.maxTsPath = ZookeeperConstants.oracleMaxTimestampPath(env.getZookeeperRoot());
+    this.curTsPath = ZookeeperConstants.oracleCurrentTimestampPath(env.getZookeeperRoot());
     this.oraclePath = ZookeeperConstants.oraclePath(env.getZookeeperRoot());
+    TimerTask tt = new TimerTask() {
+      @Override
+      public void run() {
+        long lastTs = currentTs-1;
+        if (isLeader && (zkTs != lastTs)) {
+          try {
+            curatorFramework.setData().forPath(curTsPath, LongUtil.toByteArray(lastTs));
+          } catch (Exception e) {
+            throw new IllegalStateException(e);
+          }
+          zkTs = lastTs;
+        }
+      }
+    };
+    timer = new Timer("Oracle timestamp timer", true);
+    timer.schedule(tt, ZookeeperConstants.ZK_UPDATE_PERIOD_MS, ZookeeperConstants.ZK_UPDATE_PERIOD_MS);
   }
 
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
-    byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(tsPath);
+    byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(maxTsPath);
 
     // TODO check that d is expected
     // TODO check that stil server when setting
@@ -97,15 +120,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     long newMax = Long.parseLong(new String(d)) + 1000;
 
-    curatorFramework.setData()
-        .withVersion(stat.getVersion())
-        .forPath(tsPath, (newMax + "").getBytes("UTF-8"));
-
+    curatorFramework.setData().withVersion(stat.getVersion())
+      .forPath(maxTsPath, LongUtil.toByteArray(newMax));
     maxTs = newMax;
-
+    
     if (!isLeader)
       throw new IllegalStateException();
-
   }
 
   @Override
@@ -266,8 +286,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       }
 
       synchronized (this) {
-        byte[] d = curatorFramework.getData().forPath(tsPath);
-        currentTs = maxTs = Long.parseLong(new String(d));
+        byte[] d = curatorFramework.getData().forPath(maxTsPath);
+        currentTs = maxTs = LongUtil.fromByteArray(d);
       }
 
       isLeader = true;

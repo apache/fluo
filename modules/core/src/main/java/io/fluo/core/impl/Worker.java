@@ -165,42 +165,49 @@ public class Worker {
         loggedFirst = true;
       }
 
-      while (true) {
-        TransactionImpl txi = null;
-        String status = "FAILED";
-        try {
-          txi = new TransactionImpl(env, row, col);
-          Transaction tx = txi;
-          if (TracingTransaction.isTracingEnabled())
-            tx = new TracingTransaction(tx);
+      TransactionImpl txi = null;
+      try {
+        while (true) {
+          String status = "FAILED";
+          try {
+            txi = new TransactionImpl(env, row, col);
+            Transaction tx = txi;
+            if (TracingTransaction.isTracingEnabled())
+              tx = new TracingTransaction(tx);
 
-          observer.process(tx, row, col);
-          txi.commit();
-          status = "COMMITTED";
-          break;
-        } catch (AlreadyAcknowledgedException aae) {
-          status = "AACKED";
-          return numProcessed;
-        } catch (CommitException e) {
-          // retry
-        } catch (Exception e) {
-          // this could be caused by multiple worker threads processing the same notification
-          // TODO this detection method has a race condition, notification could be recreated after being deleted... need to check notification timestamp
-          RowColumn rc = SpanUtil.toRowColumn(entry.getKey());
-          scanner.setRange(SpanUtil.toRange(new Span(rc, true, rc, true)));
-          if (scanner.iterator().hasNext()) {
-            // notification is still there, so maybe a bug in user code
-            throw e;
-          } else {
-            // no notification, so maybe another thread processed notification
-            log.debug("Failure processing notification concurrently ", e);
+            observer.process(tx, row, col);
+            txi.commit();
+            status = "COMMITTED";
+            break;
+          } catch (AlreadyAcknowledgedException aae) {
+            status = "AACKED";
             return numProcessed;
+          } catch (CommitException e) {
+            // retry
+          } catch (Exception e) {
+            // this could be caused by multiple worker threads processing the same notification
+            // TODO this detection method has a race condition, notification could be recreated after being deleted... need to check notification timestamp
+            RowColumn rc = SpanUtil.toRowColumn(entry.getKey());
+            scanner.setRange(SpanUtil.toRange(new Span(rc, true, rc, true)));
+            if (scanner.iterator().hasNext()) {
+              // notification is still there, so maybe a bug in user code
+              throw e;
+            } else {
+              // no notification, so maybe another thread processed notification
+              log.debug("Failure processing notification concurrently ", e);
+              return numProcessed;
+            }
+          } finally {
+            if (txi != null && TxLogger.isLoggingEnabled())
+              TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
           }
-        } finally {
-          if (txi != null && TxLogger.isLoggingEnabled())
-            TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+          // TODO if duplicate set detected, see if its because already acknowledged
         }
-        // TODO if duplicate set detected, see if its because already acknowledged
+      } finally {
+        // close after multiple commit attempts
+        if (txi != null) {
+          txi.close();
+        }
       }
       numProcessed++;
     }

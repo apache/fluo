@@ -25,12 +25,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.fluo.accumulo.util.LongUtil;
+import io.fluo.accumulo.util.ZookeeperConstants;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Provides cache of all Fluo transactors.
+/** 
+ * Provides cache of all Fluo transactors.
  * Used by clients to determine if transactor is running.
  */
 public class TransactorCache implements Closeable {
@@ -51,7 +53,7 @@ public class TransactorCache implements Closeable {
 
     this.env = env;
     cache = new PathChildrenCache(env.getSharedResources().getCurator(),
-        TransactorID.getNodeRoot(env), true);
+        ZookeeperConstants.transactorNodesRoot(env.getZookeeperRoot()), true);
     try {
       cache.start(StartMode.BUILD_INITIAL_CACHE);
       status = TcStatus.OPEN;
@@ -61,7 +63,7 @@ public class TransactorCache implements Closeable {
   }
   
   private void logTimedoutTransactor(Long transactorId, long lockTs, Long startTime) {
-    log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", LongUtil.longToString(transactorId),
+    log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", LongUtil.toMaxRadixString(transactorId),
         (System.currentTimeMillis() - startTime) / 1000.0, lockTs);
   }
 
@@ -99,7 +101,7 @@ public class TransactorCache implements Closeable {
   }
 
   public boolean checkExists(Long transactorId) {
-    return cache.getCurrentData(TransactorID.getNodePath(env, transactorId)) != null;
+    return cache.getCurrentData(TransactorNode.getNodePath(env, transactorId)) != null;
   }
   
   public TcStatus getStatus() {
@@ -107,8 +109,13 @@ public class TransactorCache implements Closeable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     status = TcStatus.CLOSED;
-    cache.close();
+    try {
+      cache.close();
+    } catch (IOException e) {
+      log.error("Failed to close cache");
+      throw new IllegalStateException(e);
+    }
   }
 }

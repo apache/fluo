@@ -23,7 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.fluo.core.impl.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperConstants;
 
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.CuratorCnxnListener;

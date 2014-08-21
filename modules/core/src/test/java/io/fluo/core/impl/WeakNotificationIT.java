@@ -84,17 +84,17 @@ public class WeakNotificationIT extends TestBaseImpl {
   public void testWeakNotification() throws Exception {
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("stat").qual("count").set(3);
-    tx1.commit();
+    tx1.done();
 
     TestTransaction tx2 = new TestTransaction(env);
     tx2.mutate().row("r1").fam("stats").qual("af89").set(5);
     tx2.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
-    tx2.commit();
+    tx2.done();
 
     TestTransaction tx3 = new TestTransaction(env);
     tx3.mutate().row("r1").fam("stats").qual("af99").set(7);
     tx3.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
-    tx3.commit();
+    tx3.done();
 
     runWorker();
 
@@ -135,7 +135,7 @@ public class WeakNotificationIT extends TestBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("stat").qual("count").set(3);
     tx1.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
-    tx1.commit();
+    tx1.done();
 
     // the following will loop forever if weak notification is not deleted
     runWorker();
@@ -146,7 +146,7 @@ public class WeakNotificationIT extends TestBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("stat").qual("count").set(3);
     tx1.mutate().row("r1").fam("stat").qual("foo").weaklyNotify();
-    tx1.commit();
+    tx1.done();
   }
 
 }
