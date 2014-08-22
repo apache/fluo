@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
@@ -34,7 +35,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.core.format.FluoFormatter;
 import io.fluo.core.util.PortUtils;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -50,6 +50,7 @@ import org.junit.BeforeClass;
 public class TestBaseMini {
   
   protected static Instance miniAccumulo;
+  protected static String accumuloClasspath;
   protected static FluoConfiguration config;
   protected static MiniFluo miniFluo;
   protected static AtomicInteger tableCounter = new AtomicInteger(1);
@@ -60,6 +61,7 @@ public class TestBaseMini {
   
   @BeforeClass
   public static void setUpAccumulo() throws FileNotFoundException {
+    accumuloClasspath = TestBaseImpl.getAccumuloClasspath();
     String instanceName = "plugin-it-instance";
     miniAccumulo = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
   }
@@ -91,6 +93,7 @@ public class TestBaseMini {
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
+    config.setAccumuloClasspath(accumuloClasspath);
   
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();

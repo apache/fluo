@@ -27,6 +27,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.fluo.accumulo.iterators.PrewriteIterator;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -37,7 +41,6 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.AlreadySetException;
 import io.fluo.core.exceptions.CommitException;
-import io.fluo.core.iterators.PrewriteIterator;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
@@ -211,8 +214,8 @@ public class TransactionImpl implements Transaction {
 
     ArgumentChecker.notNull(row, col, value);
     
-    if (col.getFamily().equals(ColumnUtil.NOTIFY_CF)) {
-      throw new IllegalArgumentException(ColumnUtil.NOTIFY_CF + " is a reserved family");
+    if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
+      throw new IllegalArgumentException(ColumnConstants.NOTIFY_CF + " is a reserved family");
     }
 
     // TODO copy?
@@ -275,9 +278,9 @@ public class TransactionImpl implements Transaction {
     
     if (val != null && val != DELETE)
       cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), 
-          col.getVisibilityParsed(), ColumnUtil.DATA_PREFIX | startTs, new Value(val.toArray()));
+          col.getVisibilityParsed(), ColumnConstants.DATA_PREFIX | startTs, new Value(val.toArray()));
     
-    cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnUtil.LOCK_PREFIX | startTs,
+    cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.LOCK_PREFIX | startTs,
         new Value(LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID())));
     
     return cm;
@@ -451,7 +454,7 @@ public class TransactionImpl implements Transaction {
       for (Entry<Bytes,Set<Column>> entry : weakNotifications.entrySet()) {
         Mutation m = new Mutation(ByteUtil.toText(entry.getKey()));
         for (Column col : entry.getValue()) {
-          m.put(ColumnUtil.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs, TransactionImpl.EMPTY);
+          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs, TransactionImpl.EMPTY);
         }
         mutations.add(m);
       }
@@ -522,9 +525,9 @@ public class TransactionImpl implements Transaction {
           PrewriteIterator.enableAckCheck(iterConf);
           Key key = ColumnUtil.checkColumn(env, iterConf, row, col).getKey();
           // TODO could key be null?
-          long colType = key.getTimestamp() & ColumnUtil.PREFIX_MASK;
+          long colType = key.getTimestamp() & ColumnConstants.PREFIX_MASK;
           
-          if (colType == ColumnUtil.ACK_PREFIX) {
+          if (colType == ColumnConstants.ACK_PREFIX) {
             return true;
           }
         }
@@ -583,7 +586,7 @@ public class TransactionImpl implements Transaction {
     for (Bytes row : cd.acceptedRows) {
       m = new Mutation(ByteUtil.toText(row));
       for (Column col : updates.get(row).keySet()) {
-        m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+        m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
             new Value(DelLockValue.encode(startTs, false, true)));
       }
       mutations.add(m);
@@ -595,9 +598,9 @@ public class TransactionImpl implements Transaction {
     m = new Mutation(ByteUtil.toText(cd.prow));
     // TODO timestamp?
     // TODO writing the primary column with a batch writer is iffy
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
         new Value(DelLockValue.encode(startTs, false, true)));
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnUtil.TX_DONE_PREFIX | startTs, new Value(EMPTY));
+    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | startTs, new Value(EMPTY));
     env.getSharedResources().getBatchWriter().writeMutation(m);
   }
   
@@ -617,7 +620,7 @@ public class TransactionImpl implements Transaction {
     
     if (weakRow != null) {
       Mutation m = new Mutation(ByteUtil.toText(weakRow));
-      m.putDelete(ColumnUtil.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
       mutations.add(m);
     }
 
@@ -625,7 +628,7 @@ public class TransactionImpl implements Transaction {
     
     // mark transaction as complete for garbage collection purposes
     Mutation m = new Mutation(ByteUtil.toText(cd.prow));
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnUtil.TX_DONE_PREFIX | commitTs, new Value(EMPTY));
+    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | commitTs, new Value(EMPTY));
     env.getSharedResources().getBatchWriter().writeMutationAsync(m);
     
     return true;
@@ -690,7 +693,7 @@ public class TransactionImpl implements Transaction {
         throw new RuntimeException(e);
       }
       Mutation m = new Mutation(ByteUtil.toText(weakRow));
-      m.putDelete(ColumnUtil.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
       env.getSharedResources().getBatchWriter().writeMutation(m);
     }
   }

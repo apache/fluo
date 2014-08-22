@@ -18,7 +18,6 @@ package io.fluo.core.client;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import io.fluo.api.client.FluoAdmin;
@@ -55,7 +54,6 @@ public class FluoAdminImpl implements FluoAdmin {
   }
   
   public void initialize() throws AlreadyInitializedException {
-    
     try {
       Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
@@ -78,18 +76,10 @@ public class FluoAdminImpl implements FluoAdmin {
 
       updateSharedConfig();
       
-      String accumuloClassPath = null;
-      try {
-        accumuloClassPath = config.getAccumuloClasspath();
-      } catch (NoSuchElementException e) { }
-
-      if (accumuloClassPath != null) {
-        // TODO add fluo version to context name to make it unique
-        String contextName = "fluo";
-        conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo",
-            config.getAccumuloClasspath());
-        conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
-      }
+      // TODO add fluo version to context name to make it unique
+      String contextName = "fluo";
+      conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo", config.getAccumuloClasspath());
+      conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
 
       conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     } catch (NodeExistsException nee) {

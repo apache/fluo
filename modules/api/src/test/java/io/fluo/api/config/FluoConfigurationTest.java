@@ -45,7 +45,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
     Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
   }
-  
+      
   @Test(expected = NoSuchElementException.class)
   public void testInstance() {
     base.getAccumuloInstance();
@@ -115,6 +115,7 @@ public class FluoConfigurationTest {
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
     config.setAccumuloTable("table");
+    config.setAccumuloClasspath("path");
     Assert.assertTrue(config.hasRequiredAdminProps());
   }
   
@@ -146,6 +147,7 @@ public class FluoConfigurationTest {
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
     config.setAccumuloTable("table");
+    config.setAccumuloClasspath("path");
     Assert.assertTrue(config.hasRequiredMiniFluoProps());
   }
 }

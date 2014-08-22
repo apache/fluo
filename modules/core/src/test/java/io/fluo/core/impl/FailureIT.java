@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
@@ -36,7 +37,6 @@ import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -400,7 +400,7 @@ public class FailureIT extends TestBaseImpl {
     Assert.assertEquals("3", tx3.get().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).toString());
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), Authorizations.EMPTY);
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnUtil.NOTIFY_CF));
+    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     Iterator<Entry<Key,Value>> iter = scanner.iterator();
     Assert.assertTrue(iter.hasNext());
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());

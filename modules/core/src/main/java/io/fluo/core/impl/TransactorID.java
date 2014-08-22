@@ -19,6 +19,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.fluo.accumulo.util.LongUtil;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
@@ -26,7 +28,6 @@ import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.common.annotations.VisibleForTesting;
 
 /** A transactor performs transactions in Fluo.
  * This class gives a transactor a unique ID and registers the transactor 
@@ -61,7 +62,7 @@ public class TransactorID implements Closeable {
   }
   
   public String getStringID() {
-    return longToString(getLongID());
+    return LongUtil.longToString(getLongID());
   }
   
   public TrStatus getStatus() {
@@ -79,12 +80,8 @@ public class TransactorID implements Closeable {
     return getNodePath(env, id);
   }
   
-  public static String longToString(Long transactorId) {
-    return Long.toString(transactorId, Character.MAX_RADIX);
-  }
-  
   public static String getNodePath(Environment env, Long transactorId) {
-    return getNodeRoot(env) + "/" + longToString(transactorId);
+    return getNodeRoot(env) + "/" + LongUtil.longToString(transactorId);
   }
   
   public static String getNodeRoot(Environment env) {

@@ -21,14 +21,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import io.fluo.accumulo.iterators.SnapshotIterator;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.core.exceptions.StaleScanException;
-import io.fluo.core.iterators.SnapshotIterator;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.SpanUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -142,9 +143,9 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
       while (iterator.hasNext()) {
         Entry<Key,Value> entry = iterator.next();
 
-        long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
+        long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 
-        if (colType == ColumnUtil.LOCK_PREFIX) {
+        if (colType == ColumnConstants.LOCK_PREFIX) {
           locks.add(entry);
         }
 
@@ -188,15 +189,15 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
       Entry<Key,Value> entry = iterator.next();
 
-      long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
+      long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 
-      if (colType == ColumnUtil.LOCK_PREFIX) {
+      if (colType == ColumnConstants.LOCK_PREFIX) {
         resolveLock(entry);
         continue mloop;
-      } else if (colType == ColumnUtil.DATA_PREFIX) {
+      } else if (colType == ColumnConstants.DATA_PREFIX) {
         stats.incrementEntriesReturned(1);
         return entry;
-      } else if (colType == ColumnUtil.WRITE_PREFIX) {
+      } else if (colType == ColumnConstants.WRITE_PREFIX) {
         if (WriteValue.isTruncated(entry.getValue().get())) {
           throw new StaleScanException();
         } else {

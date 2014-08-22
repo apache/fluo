@@ -371,6 +371,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     boolean valid = true;
     valid &= hasRequiredClientProps();
     valid &= contains(ADMIN_ACCUMULO_TABLE_PROP);
+    valid &= contains(ADMIN_ACCUMULO_CLASSPATH_PROP);
     return valid;
   }
   

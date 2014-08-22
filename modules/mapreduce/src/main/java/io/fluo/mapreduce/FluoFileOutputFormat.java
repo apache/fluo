@@ -17,11 +17,11 @@ package io.fluo.mapreduce;
 
 import java.io.IOException;
 
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.RowColumn;
-import io.fluo.core.impl.WriteValue;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Key;
@@ -57,8 +57,8 @@ public class FluoFileOutputFormat extends FileOutputFormat<RowColumn,Bytes> {
         Text qual = ByteUtil.toText(key.getColumn().getQualifier());
         Text vis = ByteUtil.toText(key.getColumn().getVisibility());
 
-        Key dataKey = new Key(row, fam, qual, vis, ColumnUtil.DATA_PREFIX | 0);
-        Key writeKey = new Key(row, fam, qual, vis, ColumnUtil.WRITE_PREFIX | 1);
+        Key dataKey = new Key(row, fam, qual, vis, ColumnConstants.DATA_PREFIX | 0);
+        Key writeKey = new Key(row, fam, qual, vis, ColumnConstants.WRITE_PREFIX | 1);
 
         accumuloRecordWriter.write(writeKey, new Value(WriteValue.encode(0, false, false)));
         accumuloRecordWriter.write(dataKey, new Value(value.toArray()));

@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.format;
+package io.fluo.accumulo.format;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import io.fluo.core.impl.DelLockValue;
-import io.fluo.core.impl.LockValue;
-import io.fluo.core.impl.WriteValue;
-
-import io.fluo.core.util.ColumnUtil;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.LockValue;
+import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.format.Formatter;
 
 /**
- * 
+ * Converts Accumulo table data to a human-readable Fluo format 
  */
 public class FluoFormatter implements Formatter {
   
@@ -49,17 +48,17 @@ public class FluoFormatter implements Formatter {
     long ts = key.getTimestamp();
     String type = "";
     
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.TX_DONE_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX)
       type = "TX_DONE";
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.DEL_LOCK_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX)
       type = "DEL_LOCK";
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.LOCK_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX)
       type = "LOCK";
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.DATA_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX)
       type = "DATA";
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.WRITE_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX)
       type = "WRITE";
-    if ((ts & ColumnUtil.PREFIX_MASK) == ColumnUtil.ACK_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX)
       type = "ACK";
     
     String val;
@@ -75,7 +74,7 @@ public class FluoFormatter implements Formatter {
     }
     
     return key.getRow() + " " + key.getColumnFamily() + ":" + key.getColumnQualifier() + " [" + key.getColumnVisibility() + "] "
-        + (ts & ColumnUtil.TIMESTAMP_MASK) + "-" + type + "\t" + val;
+        + (ts & ColumnConstants.TIMESTAMP_MASK) + "-" + type + "\t" + val;
   }
 
   public void remove() {

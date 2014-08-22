@@ -13,54 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.impl;
+package io.fluo.accumulo.values;
 
-import io.fluo.core.util.ByteUtil;
+import io.fluo.accumulo.util.ByteArrayUtil;
 
-public class DelLockValue {
+/**
+ * 
+ */
+public class WriteValue {
   private boolean primary;
-  private boolean rollback;
-  private long lockTime;
+  private boolean truncated;
+  long ts;
   
-  public DelLockValue(byte[] data) {
+  public WriteValue(byte[] data) {
     primary = isPrimary(data);
-    rollback = isRollback(data);
-    lockTime = getTimestamp(data);
-  }
-  
-  public long getTimestamp() {
-    return lockTime;
+    truncated = isTruncated(data);
+    ts = getTimestamp(data);
   }
   
   public boolean isPrimary() {
     return primary;
   }
+  
+  public boolean isTruncated() {
+    return truncated;
+  }
 
-  public boolean isRollback() {
-    return rollback;
+  public long getTimestamp() {
+    return ts;
   }
-  
-  public static byte[] encode(long ts, boolean primary, boolean rollback) {
-    byte ba[] = new byte[9];
-    ba[0] = (byte) ((primary ? 1 : 0) | (rollback ? 2 : 0));
-    ByteUtil.encode(ba, 1, ts);
-    return ba;
-  }
-  
+
   public String toString() {
-    return (rollback ? "ABORT " : "COMMIT ") + (primary ? "PRIMARY " : "") + lockTime;
+    return ts + (truncated ? " TRUNCATION" : "") + " " + (primary ? "PRIMARY" : "");
+  }
+
+  public static boolean isTruncated(byte[] data) {
+    return (data[0] & 0x02) == 2;
   }
   
   public static boolean isPrimary(byte[] data) {
     return (data[0] & 0x01) == 1;
   }
-  
-  public static boolean isRollback(byte[] data) {
-    return (data[0] & 0x02) == 2;
-  }
-  
+
   public static long getTimestamp(byte[] data) {
-    return ByteUtil.decodeLong(data, 1);
+    return ByteArrayUtil.decodeLong(data, 1);
   }
 
+  public static byte[] encode(long ts, boolean primary, boolean truncated) {
+    byte ba[] = new byte[9];
+    ba[0] = (byte) ((primary ? 1 : 0) | (truncated ? 2 : 0));
+    ByteArrayUtil.encode(ba, 1, ts);
+    return ba;
+  }
 }

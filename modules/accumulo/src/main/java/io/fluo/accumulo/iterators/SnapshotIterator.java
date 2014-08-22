@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.iterators;
+package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import io.fluo.core.impl.DelLockValue;
-import io.fluo.core.impl.WriteValue;
-import io.fluo.core.util.ColumnUtil;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -38,7 +38,7 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   
   private static final String TIMESTAMP_OPT = "timestampOpt";
-  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnUtil.NOTIFY_CF.toArray());
+  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   
   private SortedKeyValueIterator<Key,Value> source;
   private long snaptime;
@@ -59,12 +59,12 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
       curCol.set(source.getTopKey());
       
       while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-        long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
-        long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+        long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+        long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
         
-        if (colType == ColumnUtil.TX_DONE_PREFIX) {
+        if (colType == ColumnConstants.TX_DONE_PREFIX) {
           
-        } else if (colType == ColumnUtil.WRITE_PREFIX) {
+        } else if (colType == ColumnConstants.WRITE_PREFIX) {
           // TODO check of truncated writes
           
           long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
@@ -78,24 +78,24 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
             else if (WriteValue.isTruncated(source.getTopValue().get()))
               return;
           }
-        } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
+        } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
           long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
           
           if (timePtr > invalidationTime)
             invalidationTime = timePtr;
-        } else if (colType == ColumnUtil.LOCK_PREFIX) {
+        } else if (colType == ColumnConstants.LOCK_PREFIX) {
           if (ts > invalidationTime && ts <= snaptime) {
             // nothing supersedes this lock, therefore the column is locked
             return;
           }
-        } else if (colType == ColumnUtil.DATA_PREFIX) {
+        } else if (colType == ColumnConstants.DATA_PREFIX) {
           if (dataPointer == ts) {
             // found data for this column
             return;
           }
           
           // TODO could possibly seek to next col when ts < dataPointer
-        } else if (colType == ColumnUtil.ACK_PREFIX) {
+        } else if (colType == ColumnConstants.ACK_PREFIX) {
           
         } else {
           throw new IllegalArgumentException();
@@ -162,7 +162,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   }
   
   public static void setSnaptime(IteratorSetting cfg, long time) {
-    if (time < 0 || (ColumnUtil.PREFIX_MASK & time) != 0) {
+    if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
       throw new IllegalArgumentException();
     }
     cfg.addOption(TIMESTAMP_OPT, time + "");

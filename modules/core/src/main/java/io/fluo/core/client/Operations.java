@@ -27,13 +27,13 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import io.fluo.accumulo.format.FluoFormatter;
+import io.fluo.accumulo.iterators.GarbageCollectionIterator;
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
-import io.fluo.core.format.FluoFormatter;
 import io.fluo.core.impl.ZookeeperConstants;
-import io.fluo.core.iterators.GarbageCollectionIterator;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -47,12 +47,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Utility methods for initializing Zookeeper & Accumulo
  */
 public class Operations {
+  
+  private Operations() {}
 
   private static final Logger logger = LoggerFactory.getLogger(Operations.class);
-
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
@@ -152,7 +153,7 @@ public class Operations {
 
     conn.tableOperations().create(tableName, false);
     Map<String,Set<Text>> groups = new HashMap<String,Set<Text>>();
-    groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnUtil.NOTIFY_CF)));
+    groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
     conn.tableOperations().setLocalityGroups(tableName, groups);
     
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
@@ -162,5 +163,4 @@ public class Operations {
     
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
   }
-
 }
