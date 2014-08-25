@@ -19,13 +19,15 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.fluo.accumulo.util.ColumnConstants;
+
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
-import io.fluo.core.impl.DelLockValue;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
-import io.fluo.core.impl.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -38,18 +40,6 @@ import org.apache.accumulo.core.data.Value;
  */
 public class ColumnUtil {
   
-  public static final Bytes NOTIFY_CF = Bytes.wrap("ntfy");
-  
-  public static final long PREFIX_MASK = 0xe000000000000000l;
-  public static final long TX_DONE_PREFIX = 0x6000000000000000l;
-  public static final long WRITE_PREFIX = 0x4000000000000000l;
-  public static final long DEL_LOCK_PREFIX = 0x2000000000000000l;
-  public static final long LOCK_PREFIX = 0xe000000000000000l;
-  public static final long ACK_PREFIX = 0xc000000000000000l;
-  public static final long DATA_PREFIX = 0xa000000000000000l;
-  
-  public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
-
   private ColumnUtil() {}
 
   public static byte[] concatCFCQ(Column c) {
@@ -59,18 +49,18 @@ public class ColumnUtil {
   public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), WRITE_PREFIX | commitTs, new Value(WriteValue.encode(startTs, isPrimary, false)));
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.WRITE_PREFIX | commitTs, new Value(WriteValue.encode(startTs, isPrimary, false)));
     } else {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), DEL_LOCK_PREFIX | commitTs,
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | commitTs,
           new Value(DelLockValue.encode(startTs, isPrimary, false)));
     }
     
     if (isTrigger) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
-      m.putDelete(NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
+      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {
-      m.put(NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), commitTs, TransactionImpl.EMPTY);
+      m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), commitTs, TransactionImpl.EMPTY);
     }
   }
   

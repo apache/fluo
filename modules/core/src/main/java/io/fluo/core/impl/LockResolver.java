@@ -22,8 +22,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.fluo.accumulo.iterators.PrewriteIterator;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Column;
-import io.fluo.core.iterators.PrewriteIterator;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.SpanUtil;
@@ -53,7 +56,7 @@ public class LockResolver {
 
     for (Entry<Key,Value> lock : locks) {
       LockValue lockVal = new LockValue(lock.getValue().get());
-      PrimaryRowColumn prc = new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(), lock.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK);
+      PrimaryRowColumn prc = new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(), lock.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK);
 
       List<Entry<Key,Value>> lockList = groupedLocks.get(prc);
       if (lockList == null) {
@@ -112,7 +115,7 @@ public class LockResolver {
       for (Entry<Key,Value> entry : locks) {
 
         Long transactorId = new LockValue(entry.getValue().get()).getTransactor();
-        long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+        long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
         if (transactorCache.checkTimedout(transactorId, lockTs)) {
           locksToRecover.add(entry);
@@ -175,10 +178,10 @@ public class LockResolver {
       if (isPrimary(prc, entry.getKey()))
         continue;
 
-      long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+      long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
       Key k = entry.getKey();
-      mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnUtil.DEL_LOCK_PREFIX | startTs,
+      mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
           DelLockValue.encode(lockTs, false, true));
     }
 
@@ -199,7 +202,7 @@ public class LockResolver {
 
     // TODO sanity check on lockTs vs startTs
 
-    delLockMutation.put(prc.pcol.getFamily().toArray(), prc.pcol.getQualifier().toArray(), cv, ColumnUtil.DEL_LOCK_PREFIX | startTs,
+    delLockMutation.put(prc.pcol.getFamily().toArray(), prc.pcol.getQualifier().toArray(), cv, ColumnConstants.DEL_LOCK_PREFIX | startTs,
         DelLockValue.encode(prc.startTs, true, true));
 
     ConditionalWriter cw = null;
@@ -222,7 +225,7 @@ public class LockResolver {
       if (isPrimary(prc, entry.getKey()))
         continue;
 
-      long lockTs = entry.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+      long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       // TODO may be that a stronger sanity check that could be done here
       if (commitTs < lockTs) {
         throw new IllegalStateException("bad commitTs : " + entry.getKey() + " (" + commitTs + "<" + lockTs + ")");

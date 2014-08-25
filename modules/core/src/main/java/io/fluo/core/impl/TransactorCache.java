@@ -22,13 +22,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import io.fluo.accumulo.util.LongUtil;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 /** Provides cache of all Fluo transactors.
  * Used by clients to determine if transactor is running.
@@ -61,7 +61,7 @@ public class TransactorCache implements Closeable {
   }
   
   private void logTimedoutTransactor(Long transactorId, long lockTs, Long startTime) {
-    log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", TransactorID.longToString(transactorId),
+    log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", LongUtil.longToString(transactorId),
         (System.currentTimeMillis() - startTime) / 1000.0, lockTs);
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.iterators;
+package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import io.fluo.core.impl.DelLockValue;
-import io.fluo.core.impl.WriteValue;
-import io.fluo.core.util.ColumnUtil;
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.DelLockValue;
+import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -44,7 +44,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   // TODO this iterator should support the concept of oldest running scan, and have the ability to gather this from an external source.
 
   private static final String VERSION_OPT = "numVersions";
-  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnUtil.NOTIFY_CF.toArray());
+  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   private int numVersions;
   private SortedKeyValueIterator<Key,Value> source;
 
@@ -79,10 +79,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
 
     while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
-      long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnUtil.DATA_PREFIX) {
+      if (colType == ColumnConstants.DATA_PREFIX) {
         if (ts >= truncationTime)
           break;
       } else {
@@ -127,13 +127,13 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
     while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
 
-      long colType = source.getTopKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
-      long ts = source.getTopKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnUtil.TX_DONE_PREFIX) {
+      if (colType == ColumnConstants.TX_DONE_PREFIX) {
         keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
         completeTxs.add(ts);
-      } else if (colType == ColumnUtil.WRITE_PREFIX) {
+      } else if (colType == ColumnConstants.WRITE_PREFIX) {
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
         byte[] val = source.getTopValue().get();
@@ -168,7 +168,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
         writesSeen++;
 
-      } else if (colType == ColumnUtil.DEL_LOCK_PREFIX) {
+      } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
 
@@ -187,13 +187,13 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         } else if (complete) {
           completeTxs.remove(ts);
         }
-      } else if (colType == ColumnUtil.LOCK_PREFIX) {
+      } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime)
           keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
-      } else if (colType == ColumnUtil.DATA_PREFIX) {
+      } else if (colType == ColumnConstants.DATA_PREFIX) {
         // can stop looking
         break;
-      } else if (colType == ColumnUtil.ACK_PREFIX) {
+      } else if (colType == ColumnConstants.ACK_PREFIX) {
         // TODO determine which acks can be dropped
         keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
       } else {
@@ -204,9 +204,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
 
     for (KeyValue kv : keys) {
-      long colType = kv.key.getTimestamp() & ColumnUtil.PREFIX_MASK;
-      if (colType == ColumnUtil.TX_DONE_PREFIX) {
-        if (completeTxs.contains(kv.key.getTimestamp() & ColumnUtil.TIMESTAMP_MASK)) {
+      long colType = kv.key.getTimestamp() & ColumnConstants.PREFIX_MASK;
+      if (colType == ColumnConstants.TX_DONE_PREFIX) {
+        if (completeTxs.contains(kv.key.getTimestamp() & ColumnConstants.TIMESTAMP_MASK)) {
           keysFiltered.add(kv);
         }
       } else {

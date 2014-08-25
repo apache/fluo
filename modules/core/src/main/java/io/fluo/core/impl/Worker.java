@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import io.fluo.accumulo.iterators.NotificationSampleIterator;
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
@@ -31,9 +33,7 @@ import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.impl.RandomTabletChooser.TabletInfo;
-import io.fluo.core.iterators.NotificationSampleIterator;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
@@ -76,7 +76,7 @@ public class Worker {
     // TODO arbitrary number
     NotificationSampleIterator.setSampleSize(iterCfg, 256);
     scanner.addScanIterator(iterCfg);
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnUtil.NOTIFY_CF));
+    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     scanner.setRange(SpanUtil.toRange(new Span(start, false, end, true)));
 
     ArrayList<Bytes> sample = new ArrayList<Bytes>();
@@ -143,7 +143,7 @@ public class Worker {
     IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
     scanner.addScanIterator(iterCfg);
 
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnUtil.NOTIFY_CF));
+    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     scanner.setRange(SpanUtil.toRange(span));
 
     long numProcessed = 0;

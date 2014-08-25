@@ -17,9 +17,11 @@ package io.fluo.core.impl;
 
 import java.util.Map.Entry;
 
+import io.fluo.accumulo.util.ColumnConstants;
+
+import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
@@ -43,7 +45,7 @@ class PrimaryRowColumn {
 
     this.prow = lv.getPrimaryRow();
     this.pcol = lv.getPrimaryColumn();
-    this.startTs = lock.getKey().getTimestamp() & ColumnUtil.TIMESTAMP_MASK;
+    this.startTs = lock.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
   }
 
   public int weight() {

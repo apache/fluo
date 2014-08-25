@@ -66,6 +66,7 @@
 
   <modules>
     <module>modules/api</module>
+    <module>modules/accumulo</module>
     <module>modules/core</module>
     <module>modules/mapreduce</module>
     <module>modules/cluster</module>
@@ -156,6 +157,11 @@
       <dependency>
         <groupId>io.fluo</groupId>
         <artifactId>fluo-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-accumulo</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

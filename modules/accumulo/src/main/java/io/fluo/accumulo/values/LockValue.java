@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.impl;
+package io.fluo.accumulo.values;
 
 import java.util.List;
 
+import io.fluo.accumulo.util.ByteArrayUtil;
+import io.fluo.accumulo.util.LongUtil;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
@@ -45,7 +46,7 @@ public class LockValue {
     this.isWrite = (fields.get(4).byteAt(0) & 0x1) == 0x1;
     this.isDelete = (fields.get(4).byteAt(0) & 0x2) == 0x2;
     this.isTrigger = (fields.get(4).byteAt(0) & 0x4) == 0x4;
-    this.transactor = ByteUtil.decodeLong(fields.get(5).toArray());    
+    this.transactor = ByteArrayUtil.decodeLong(fields.get(5).toArray());    
   }
   
   public Bytes getPrimaryRow() {
@@ -82,11 +83,11 @@ public class LockValue {
     if (isTrigger)
       bools[0] |= 0x4;
     return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(), 
-        Bytes.wrap(bools), Bytes.wrap(ByteUtil.encode(transactor))).toArray();
+        Bytes.wrap(bools), Bytes.wrap(ByteArrayUtil.encode(transactor))).toArray();
   }
   
   public String toString() {
     return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") 
-        + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + TransactorID.longToString(transactor);
+        + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + LongUtil.longToString(transactor);
   }
 }

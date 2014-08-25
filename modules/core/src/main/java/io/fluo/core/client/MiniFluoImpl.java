@@ -20,13 +20,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.MiniFluo;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.WorkerTask;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.Scanner;
 
 /**
@@ -116,7 +116,7 @@ public class MiniFluoImpl implements MiniFluo {
   public void waitForObservers() {
     try {
       Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
-      scanner.fetchColumnFamily(ByteUtil.toText(ColumnUtil.NOTIFY_CF));
+      scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
       while (isProcessing(scanner)) {
         Thread.sleep(100);

@@ -55,6 +55,7 @@ public class FluoFactory {
    * io.fluo.client.accumulo.password
    * io.fluo.client.accumulo.instance
    * io.fluo.admin.accumulo.table
+   * io.fluo.admin.accumulo.classpath
    * 
    * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return FluoAdmin
@@ -73,6 +74,7 @@ public class FluoFactory {
    * io.fluo.client.accumulo.password
    * io.fluo.client.accumulo.instance
    * io.fluo.admin.accumulo.table
+   * io.fluo.admin.accumulo.classpath
    *
    * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return MiniFluo

@@ -24,11 +24,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -133,11 +134,11 @@ public class ParallelSnapshotScanner {
         Column col = new Column(cf, cq).setVisibility(new ColumnVisibility(entry
             .getKey().getColumnVisibilityData().toArray()));
 
-        long colType = entry.getKey().getTimestamp() & ColumnUtil.PREFIX_MASK;
+        long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 
-        if (colType == ColumnUtil.LOCK_PREFIX) {
+        if (colType == ColumnConstants.LOCK_PREFIX) {
           locks.add(entry);
-        } else if (colType == ColumnUtil.DATA_PREFIX) {
+        } else if (colType == ColumnConstants.DATA_PREFIX) {
           Map<Column,Bytes> cols = ret.get(row);
           if (cols == null) {
             cols = new HashMap<Column,Bytes>();
@@ -145,7 +146,7 @@ public class ParallelSnapshotScanner {
           }
 
           cols.put(col, Bytes.wrap(entry.getValue().get()));
-        } else if (colType == ColumnUtil.WRITE_PREFIX) {
+        } else if (colType == ColumnConstants.WRITE_PREFIX) {
           if (WriteValue.isTruncated(entry.getValue().get())) {
             throw new StaleScanException();
           } else {
