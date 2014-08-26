@@ -15,10 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-
 import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
@@ -27,6 +23,10 @@ import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
+
+import java.util.Arrays;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -78,10 +78,10 @@ public class ParallelScannerIT extends TestBaseImpl {
     
     TestTransaction tx3 = new TestTransaction(env);
 
-    Column e1Col = typeLayer.newColumn().fam("vote").qual("election1").vis();
+    Column e1Col = typeLayer.bc().fam("vote").qual("election1").vis();
     
     // normally when this test runs, some of the row/columns being read below will be locked for a bit
-    Map<String,Map<Column,Value>> votes = tx3.getd(Arrays.asList("bob9", "joe3", "sue4", "eve2"), Collections.singleton(e1Col));
+    Map<String,Map<Column,Value>> votes = tx3.get().rowsString(Arrays.asList("bob9", "joe3", "sue4", "eve2")).columns(e1Col).toStringMap();
     
     Assert.assertEquals("N", votes.get("bob9").get(e1Col).toString(""));
     Assert.assertEquals("nay", votes.get("joe3").get(e1Col).toString(""));
@@ -149,8 +149,8 @@ public class ParallelScannerIT extends TestBaseImpl {
 
   void check() throws Exception {
     TestTransaction tx = new TestTransaction(env);
-    Column scol = typeLayer.newColumn().fam(7).qual(7).vis();
-    Map<String,Map<Column,Value>> votes = tx.getd(Arrays.asList("5", "12", "19", "26", "33", "40", "47"), Collections.singleton(scol));
+    Column scol = typeLayer.bc().fam(7).qual(7).vis();
+    Map<String,Map<Column,Value>> votes = tx.get().rowsString(Arrays.asList("5", "12", "19", "26", "33", "40", "47")).columns(scol).toStringMap();
 
     // following should be rolled back
     Assert.assertEquals(3, votes.get("5").get(scol).toInteger(0));

@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.stress.trie;
+package io.fluo.api.types;
 
+import io.fluo.api.client.Transaction;
+import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.observer.AbstractObserver;
 
-import io.fluo.api.types.StringEncoder;
-import io.fluo.api.types.TypeLayer;
+public abstract class TypedObserver extends AbstractObserver {
 
-/**
- * 
- */
-public class Constants {
-  
-  public static final TypeLayer TYPEL = new TypeLayer(new StringEncoder());
+  private TypeLayer tl;
 
-  public static final Column COUNT_SEEN_COL = TYPEL.bc().fam("count").qual("seen").vis();
-  public static final Column COUNT_WAIT_COL = TYPEL.bc().fam("count").qual("wait").vis();
+  public TypedObserver() {
+    tl = new TypeLayer(new StringEncoder());
+  }
+
+  public TypedObserver(TypeLayer tl) {
+    this.tl = tl;
+  }
+
+  @Override
+  public void process(Transaction tx, Bytes row, Column col) {
+    process(tl.wrap(tx), row, col);
+  }
+
+  public abstract void process(TypedTransaction tx, Bytes row, Column col);
 }

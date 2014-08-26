@@ -28,5 +28,4 @@ public interface Transaction extends Snapshot {
   public abstract void set(Bytes row, Column col, Bytes value);
   
   public abstract void delete(Bytes row, Column col);
-  
 }

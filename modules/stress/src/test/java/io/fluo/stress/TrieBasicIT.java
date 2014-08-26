@@ -94,7 +94,7 @@ public class TrieBasicIT extends TestBaseMini {
 
       miniFluo.waitForObservers();
 
-      TypedSnapshot tsnap = TYPEL.snapshot(client.newSnapshot());
+      TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot());
 
       Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
           .col(COUNT_SEEN_COL).toInteger();

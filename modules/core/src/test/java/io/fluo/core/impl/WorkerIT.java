@@ -46,7 +46,7 @@ public class WorkerIT extends TestBaseImpl {
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  private static Column observedColumn = typeLayer.newColumn("attr", "lastupdate");
+  private static Column observedColumn = typeLayer.bc().fam("attr").qual("lastupdate").vis();
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
@@ -61,8 +61,8 @@ public class WorkerIT extends TestBaseImpl {
     public void process(Transaction tx, Bytes row, Column col) throws Exception {
       // get previously calculated degree
 
-      Bytes degree = tx.get(row, typeLayer.newColumn("attr", "degree"));
-      TypedTransaction ttx = typeLayer.transaction(tx);
+      Bytes degree = tx.get(row, typeLayer.bc().fam("attr").qual("degree").vis());
+      TypedTransaction ttx = typeLayer.wrap(tx);
 
       // calculate new degree
       int count = 0;
@@ -77,7 +77,7 @@ public class WorkerIT extends TestBaseImpl {
       String degree2 = "" + count;
 
       if (degree == null || !degree.toString().equals(degree2)) {
-        ttx.set(row, typeLayer.newColumn("attr", "degree"), Bytes.wrap(degree2));
+        ttx.set(row, typeLayer.bc().fam("attr").qual("degree").vis(), Bytes.wrap(degree2));
 
         // put new entry in degree index
         ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
@@ -104,16 +104,16 @@ public class WorkerIT extends TestBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
 
     // add a link between two nodes in a graph
-    tx1.mutate().row("N0003").col(typeLayer.newColumn("link", "N0040")).set("");
-    tx1.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+    tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
+    tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
     tx1.commit();
 
     TestTransaction tx2 = new TestTransaction(env);
 
     // add a link between two nodes in a graph
-    tx2.mutate().row("N0003").col(typeLayer.newColumn("link", "N0020")).set("");
-    tx2.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+    tx2.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0020").vis()).set("");
+    tx2.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
     tx2.commit();
 
@@ -121,12 +121,12 @@ public class WorkerIT extends TestBaseImpl {
 
     // verify observer updated degree index
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertEquals("2", tx3.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
-    Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
+    Assert.assertEquals("2", tx3.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
+    Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
 
     // add a link between two nodes in a graph
-    tx3.mutate().row("N0003").col(typeLayer.newColumn("link", "N0010")).set("");
-    tx3.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+    tx3.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0010").vis()).set("");
+    tx3.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
     tx3.commit();
 
     runWorker();
@@ -134,28 +134,28 @@ public class WorkerIT extends TestBaseImpl {
     // verify observer updated degree index. Should have deleted old index entry
     // and added a new one
     TestTransaction tx4 = new TestTransaction(env);
-    Assert.assertEquals("3", tx4.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
-    Assert.assertNull("", tx4.get().row("IDEG2").col(typeLayer.newColumn("node", "N0003")).toString());
-    Assert.assertEquals("", tx4.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
+    Assert.assertEquals("3", tx4.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
+    Assert.assertNull("", tx4.get().row("IDEG2").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
+    Assert.assertEquals("", tx4.get().row("IDEG3").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
 
     // test rollback
     TestTransaction tx5 = new TestTransaction(env);
-    tx5.mutate().row("N0003").col(typeLayer.newColumn("link", "N0030")).set("");
-    tx5.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+    tx5.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0030").vis()).set("");
+    tx5.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
     tx5.commit();
 
     TestTransaction tx6 = new TestTransaction(env);
-    tx6.mutate().row("N0003").col(typeLayer.newColumn("link", "N0050")).set("");
-    tx6.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+    tx6.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0050").vis()).set("");
+    tx6.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, Bytes.wrap("N0003"), typeLayer.newColumn("attr", "lastupdate"));
+    tx6.preCommit(cd, Bytes.wrap("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
 
     runWorker();
 
     TestTransaction tx7 = new TestTransaction(env);
-    Assert.assertEquals("4", tx7.get().row("N0003").col(typeLayer.newColumn("attr", "degree")).toString());
-    Assert.assertNull("", tx7.get().row("IDEG3").col(typeLayer.newColumn("node", "N0003")).toString());
-    Assert.assertEquals("", tx7.get().row("IDEG4").col(typeLayer.newColumn("node", "N0003")).toString());
+    Assert.assertEquals("4", tx7.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
+    Assert.assertNull("", tx7.get().row("IDEG3").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
+    Assert.assertEquals("", tx7.get().row("IDEG4").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
   }
 
   /*
@@ -163,14 +163,14 @@ public class WorkerIT extends TestBaseImpl {
    */
   public void testDiffObserverConfig() throws Exception {
     Column old = observedColumn;
-    observedColumn = typeLayer.newColumn("attr2", "lastupdate");
+    observedColumn = typeLayer.bc().fam("attr2").qual("lastupdate").vis();
     try {
 
       TestTransaction tx1 = new TestTransaction(env);
 
       // add a link between two nodes in a graph
-      tx1.mutate().row("N0003").col(typeLayer.newColumn("link", "N0040")).set("");
-      tx1.mutate().row("N0003").col(typeLayer.newColumn("attr", "lastupdate")).set(System.currentTimeMillis() + "");
+      tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
+      tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
       tx1.commit();
 

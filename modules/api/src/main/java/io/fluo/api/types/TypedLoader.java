@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.stress.trie;
+package io.fluo.api.types;
 
-import io.fluo.api.data.Column;
+import io.fluo.api.client.Loader;
+import io.fluo.api.client.Transaction;
 
-import io.fluo.api.types.StringEncoder;
-import io.fluo.api.types.TypeLayer;
+public abstract class TypedLoader implements Loader {
 
-/**
- * 
- */
-public class Constants {
-  
-  public static final TypeLayer TYPEL = new TypeLayer(new StringEncoder());
+  private TypeLayer tl;
 
-  public static final Column COUNT_SEEN_COL = TYPEL.bc().fam("count").qual("seen").vis();
-  public static final Column COUNT_WAIT_COL = TYPEL.bc().fam("count").qual("wait").vis();
+  public TypedLoader() {
+    tl = new TypeLayer(new StringEncoder());
+  }
+
+  public TypedLoader(TypeLayer tl) {
+    this.tl = tl;
+  }
+
+  @Override
+  public void load(Transaction tx) throws Exception {
+    load(tl.wrap(tx));
+  }
+
+  public abstract void load(TypedTransaction tx) throws Exception;
+
 }

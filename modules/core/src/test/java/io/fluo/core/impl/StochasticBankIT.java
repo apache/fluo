@@ -95,7 +95,7 @@ public class StochasticBankIT extends TestBaseImpl {
     runVerifier(env, numAccounts, 1);
   }
 
-  private static Column balanceCol = typeLayer.newColumn("data", "balance");
+  private static Column balanceCol = typeLayer.bc().fam("data").qual("balance").vis();
 
   private static void populate(Environment env, int numAccounts) throws Exception {
     TestTransaction tx = new TestTransaction(env);

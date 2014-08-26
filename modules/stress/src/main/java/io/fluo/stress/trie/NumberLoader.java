@@ -49,7 +49,7 @@ public class NumberLoader implements Loader {
   @Override
   public void load(Transaction tx) throws Exception {
     
-    TypedTransaction ttx = Constants.TYPEL.transaction(tx);
+    TypedTransaction ttx = Constants.TYPEL.wrap(tx);
     
     String rowId = new Node(number, level, nodeSize).getRowId();
         

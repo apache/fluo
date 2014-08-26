@@ -210,6 +210,11 @@
         <version>${logback.version}</version>
       </dependency>
       <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
         <groupId>commons-configuration</groupId>
         <artifactId>commons-configuration</artifactId>
         <version>1.10</version>
@@ -235,8 +240,8 @@
         <version>${accumulo.version}</version>
       </dependency>
       <dependency>
-        <artifactId>guava</artifactId>
         <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
         <version>13.0.1</version>
       </dependency>
       <dependency>

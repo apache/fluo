@@ -46,7 +46,7 @@ public class WeakNotificationIT extends TestBaseImpl {
 
     @Override
     public void process(Transaction tx, Bytes row, Column col) throws Exception {
-      TypedTransaction ttx = tl.transaction(tx);
+      TypedTransaction ttx = tl.wrap(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
       sc.setSpan(Span.exact(row, Bytes.wrap("stats")));
@@ -71,7 +71,7 @@ public class WeakNotificationIT extends TestBaseImpl {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(tl.newColumn("stat", "check"), NotificationType.WEAK);
+      return new ObservedColumn(tl.bc().fam("stat").qual("check").vis(), NotificationType.WEAK);
     }
   }
 
