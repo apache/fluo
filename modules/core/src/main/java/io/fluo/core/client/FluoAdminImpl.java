@@ -76,7 +76,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
       updateSharedConfig();
       
-      if (!config.getAccumuloClasspath().isEmpty()) {
+      if (!config.getAccumuloClasspath().trim().isEmpty()) {
         // TODO add fluo version to context name to make it unique
         String contextName = "fluo";
         conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo", config.getAccumuloClasspath());
