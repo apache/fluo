@@ -56,6 +56,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String ADMIN_ZOOKEEPER_CLEAR_PROP = ADMIN_PREFIX + ".zookeeper.clear";
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
+  public static final String ADMIN_ACCUMULO_CLASSPATH_DEFAULT = "";
   public static final String ADMIN_CLASS_PROP = ADMIN_PREFIX + ".class";
   public static final boolean ADMIN_ZOOKEEPER_CLEAR_DEFAULT = false;
   public static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
@@ -200,7 +201,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
   
   public String getAccumuloClasspath() {
-    return getString(ADMIN_ACCUMULO_CLASSPATH_PROP);
+    return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
   }
  
   public FluoConfiguration setClearZookeeper(boolean clear) {
@@ -371,7 +372,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     boolean valid = true;
     valid &= hasRequiredClientProps();
     valid &= contains(ADMIN_ACCUMULO_TABLE_PROP);
-    valid &= contains(ADMIN_ACCUMULO_CLASSPATH_PROP);
     return valid;
   }
   

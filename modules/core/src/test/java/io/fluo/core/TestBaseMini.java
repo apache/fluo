@@ -50,7 +50,6 @@ import org.junit.BeforeClass;
 public class TestBaseMini {
   
   protected static Instance miniAccumulo;
-  protected static String accumuloClasspath;
   protected static FluoConfiguration config;
   protected static MiniFluo miniFluo;
   protected static AtomicInteger tableCounter = new AtomicInteger(1);
@@ -61,7 +60,6 @@ public class TestBaseMini {
   
   @BeforeClass
   public static void setUpAccumulo() throws FileNotFoundException {
-    accumuloClasspath = TestBaseImpl.getAccumuloClasspath();
     String instanceName = "plugin-it-instance";
     miniAccumulo = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
   }
@@ -93,7 +91,6 @@ public class TestBaseMini {
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
-    config.setAccumuloClasspath(accumuloClasspath);
   
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();

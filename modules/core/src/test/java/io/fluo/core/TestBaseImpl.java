@@ -56,7 +56,6 @@ import org.junit.BeforeClass;
  */
 public class TestBaseImpl {
   protected static String secret = "ITSecret";
-  protected static String accumuloClasspath;
   protected static AtomicInteger next = new AtomicInteger();
   protected static Instance instance;
   protected static CuratorFramework curator;
@@ -103,18 +102,11 @@ public class TestBaseImpl {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    accumuloClasspath = getAccumuloClasspath();
     String instanceName = "plugin-it-instance";
     instance = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
     conn = instance.getConnector("root", new PasswordToken(secret));
     curator = CuratorUtil.getCurator(conn.getInstance().getZooKeepers(), 30000);
     curator.start();
-  }
-  
-  public static String getAccumuloClasspath() {
-    File apiJar = new File("modules/api/target/fluo-api-1.0.0-alpha-1-SNAPSHOT.jar");
-    File accumuloJar = new File("modules/accumulo/target/fluo-accumulo-1.0.0-alpha-1-SNAPSHOT.jar");
-    return apiJar.getAbsolutePath()+","+accumuloJar.getAbsolutePath();
   }
 
   @Before
@@ -132,7 +124,6 @@ public class TestBaseImpl {
     config.setZookeepers(instance.getZooKeepers());
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
-    config.setAccumuloClasspath(accumuloClasspath);
     
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
