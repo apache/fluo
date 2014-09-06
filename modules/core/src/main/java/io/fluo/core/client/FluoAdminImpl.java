@@ -76,10 +76,12 @@ public class FluoAdminImpl implements FluoAdmin {
 
       updateSharedConfig();
       
-      // TODO add fluo version to context name to make it unique
-      String contextName = "fluo";
-      conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo", config.getAccumuloClasspath());
-      conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
+      if (!config.getAccumuloClasspath().isEmpty()) {
+        // TODO add fluo version to context name to make it unique
+        String contextName = "fluo";
+        conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo", config.getAccumuloClasspath());
+        conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
+      }
 
       conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     } catch (NodeExistsException nee) {

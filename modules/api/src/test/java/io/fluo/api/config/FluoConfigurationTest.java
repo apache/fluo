@@ -35,6 +35,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.CLIENT_CLASS_DEFAULT, base.getClientClass());
     Assert.assertEquals(FluoConfiguration.ADMIN_ZOOKEEPER_CLEAR_DEFAULT, base.getClearZookeeper());
     Assert.assertEquals(FluoConfiguration.ADMIN_CLASS_DEFAULT, base.getAdminClass());
+    Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT, base.getAccumuloClasspath());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
     Assert.assertEquals(FluoConfiguration.WORKER_INSTANCES_DEFAULT, base.getWorkerInstances());
     Assert.assertEquals(FluoConfiguration.WORKER_MAX_MEMORY_MB_DEFAULT, base.getWorkerMaxMemory());
@@ -64,11 +65,6 @@ public class FluoConfigurationTest {
   @Test(expected = NoSuchElementException.class)
   public void testTable() {
     base.getAccumuloTable();
-  }
-  
-  @Test(expected = NoSuchElementException.class)
-  public void testAccumuloClasspath() {
-    base.getAccumuloClasspath();
   }
   
   @Test
@@ -115,7 +111,6 @@ public class FluoConfigurationTest {
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
     config.setAccumuloTable("table");
-    config.setAccumuloClasspath("path");
     Assert.assertTrue(config.hasRequiredAdminProps());
   }
   
@@ -147,7 +142,6 @@ public class FluoConfigurationTest {
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
     config.setAccumuloTable("table");
-    config.setAccumuloClasspath("path");
     Assert.assertTrue(config.hasRequiredMiniFluoProps());
   }
 }
