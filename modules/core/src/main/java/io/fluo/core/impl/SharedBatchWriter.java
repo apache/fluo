@@ -28,10 +28,10 @@ import org.apache.accumulo.core.data.Mutation;
 
 public class SharedBatchWriter {
 
-  private BatchWriter bw;
-  private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<MutationBatch>(1000);
-  private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
-  
+  private final ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<MutationBatch>(1000);
+  private final MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
+  private final BatchWriter bw;
+
   private static class MutationBatch {
 
     private List<Mutation> mutations;
@@ -85,6 +85,7 @@ public class SharedBatchWriter {
 
   public SharedBatchWriter(BatchWriter bw) {
     this.bw = bw;
+    // FIXME: leaks this
     Thread thread = new Thread(new FlushTask());
     thread.setDaemon(true);
     thread.start();

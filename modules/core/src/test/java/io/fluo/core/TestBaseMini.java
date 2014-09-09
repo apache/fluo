@@ -44,11 +44,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-/** 
+/**
  * Base Integration Test Class that uses MiniFluoImpl
  */
 public class TestBaseMini {
-  
+
   protected static Instance miniAccumulo;
   protected static FluoConfiguration config;
   protected static MiniFluo miniFluo;
@@ -57,21 +57,21 @@ public class TestBaseMini {
   protected static String USER = "root";
   protected static String PASSWORD = "ITSecret";
   protected static FluoClient client;
-  
+
   @BeforeClass
   public static void setUpAccumulo() throws FileNotFoundException {
     String instanceName = "plugin-it-instance";
     miniAccumulo = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
   }
-  
+
   public String getCurrTableName() {
     return "data" + tableCounter.get();
   }
-  
+
   public String getNextTableName() {
     return "data" + tableCounter.incrementAndGet();
   }
-  
+
   protected List<ObserverConfiguration> getObservers() {
     return Collections.emptyList();
   }
@@ -79,7 +79,7 @@ public class TestBaseMini {
   @Before
   public void setUpFluo() throws Exception {
     // TODO add helper code to make this shorter
-    
+
     config = new FluoConfiguration();
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
@@ -91,22 +91,22 @@ public class TestBaseMini {
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
-  
+
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
-   
+
     client = FluoFactory.newClient(config);
 
     miniFluo = FluoFactory.newMiniFluo(config);
     miniFluo.start();
   }
-  
+
   @After
   public void tearDownFluo() throws Exception {
     miniFluo.stop();
     client.close();
   }
-  
+
   @SuppressWarnings("deprecation")
   protected void printTable() throws Exception {
     Scanner scanner = miniAccumulo.getConnector(USER, PASSWORD).createScanner(getCurrTableName(), Authorizations.EMPTY);
@@ -117,9 +117,8 @@ public class TestBaseMini {
       System.out.println(af.next());
     }
   }
-  
-  protected void printSnapshot() throws Exception {
 
+  protected void printSnapshot() throws Exception {
     Snapshot s = client.newSnapshot();
     RowIterator iter = s.get(new ScannerConfiguration());
 
@@ -131,7 +130,7 @@ public class TestBaseMini {
         Entry<Column, Bytes> colEntry = citer.next();
         System.out.println(rowEntry.getKey()+" "+colEntry.getKey()+"\t"+colEntry.getValue());
       }
-    }  
+    }
     System.out.println("=== snapshot end ===");
   }
 }

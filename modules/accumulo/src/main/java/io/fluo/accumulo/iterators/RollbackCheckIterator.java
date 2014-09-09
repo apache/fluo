@@ -33,47 +33,47 @@ import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * 
+ *
  */
 public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
-  
+
   private SortedKeyValueIterator<Key,Value> source;
   private long lockTime;
-  
+
   boolean hasTop = false;
   boolean checkAck = false;
-  
+
   public static void setLocktime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
       throw new IllegalArgumentException();
     }
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
-  
+
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.lockTime = Long.parseLong(options.get(TIMESTAMP_OPT));
   }
-  
+
   public boolean hasTop() {
     return hasTop && source.hasTop();
   }
-  
+
   public void next() throws IOException {
     hasTop = false;
   }
-  
+
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
     IteratorUtil.maximizeStartKeyTimeStamp(range);
 
     source.seek(range, columnFamilies, inclusive);
-    
+
     Key curCol = new Key();
-    
+
     if (source.hasTop()) {
       curCol.set(source.getTopKey());
-      
+
       // TODO can this optimization cause problems?
       if (!curCol.equals(range.getStartKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
         return;
@@ -86,25 +86,25 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
     while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-      
+
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        
+
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
-        
+
         if (timePtr > invalidationTime)
           invalidationTime = timePtr;
-        
+
         if (lockTime == timePtr) {
           hasTop = true;
           return;
         }
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
-        
+
         if (timePtr > invalidationTime)
           invalidationTime = timePtr;
-        
+
         if (timePtr == lockTime) {
           hasTop = true;
           return;
@@ -124,19 +124,19 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
       } else {
         throw new IllegalArgumentException();
       }
-      
+
       source.next();
     }
   }
-  
+
   public Key getTopKey() {
     return source.getTopKey();
   }
-  
+
   public Value getTopValue() {
     return source.getTopValue();
   }
-  
+
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO Auto-generated method stub
     return null;

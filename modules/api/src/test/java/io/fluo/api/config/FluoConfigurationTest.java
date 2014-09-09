@@ -24,9 +24,9 @@ import org.junit.Test;
  * Unit test for FluoConfiguration class
  */
 public class FluoConfigurationTest {
-  
+
   private FluoConfiguration base = new FluoConfiguration();
-  
+
   @Test
   public void testDefaults() {
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT, base.getZookeepers());
@@ -46,27 +46,27 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
     Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
   }
-      
+
   @Test(expected = NoSuchElementException.class)
   public void testInstance() {
     base.getAccumuloInstance();
   }
-  
+
   @Test(expected = NoSuchElementException.class)
   public void testUser() {
     base.getAccumuloUser();
   }
-  
+
   @Test(expected = NoSuchElementException.class)
   public void testPassword() {
     base.getAccumuloPassword();
   }
-  
+
   @Test(expected = NoSuchElementException.class)
   public void testTable() {
     base.getAccumuloTable();
   }
-  
+
   @Test
   public void testSetGet() {
     FluoConfiguration config = new FluoConfiguration();
@@ -90,7 +90,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals("zoos", config.setZookeepers("zoos").getZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
   }
-  
+
   @Test
   public void testHasClientProps() {
     FluoConfiguration config = new FluoConfiguration();
@@ -102,7 +102,7 @@ public class FluoConfigurationTest {
     config.setAccumuloInstance("instance");
     Assert.assertTrue(config.hasRequiredClientProps());
   }
-  
+
   @Test
   public void testHasAdminProps() {
     FluoConfiguration config = new FluoConfiguration();
@@ -113,7 +113,7 @@ public class FluoConfigurationTest {
     config.setAccumuloTable("table");
     Assert.assertTrue(config.hasRequiredAdminProps());
   }
-  
+
   @Test
   public void testHasWorkerProps() {
     FluoConfiguration config = new FluoConfiguration();
@@ -123,7 +123,7 @@ public class FluoConfigurationTest {
     config.setAccumuloInstance("instance");
     Assert.assertTrue(config.hasRequiredWorkerProps());
   }
-  
+
   @Test
   public void testHasOracleProps() {
     FluoConfiguration config = new FluoConfiguration();
@@ -133,7 +133,7 @@ public class FluoConfigurationTest {
     config.setAccumuloInstance("instance");
     Assert.assertTrue(config.hasRequiredOracleProps());
   }
-  
+
   @Test
   public void testHasMiniFluoProps() {
     FluoConfiguration config = new FluoConfiguration();

@@ -21,7 +21,6 @@ import java.io.InputStreamReader;
 
 public class HostUtil {
 
-
   private HostUtil() {}
 
   public static String getHostName() throws IOException {
@@ -29,5 +28,4 @@ public class HostUtil {
     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
     return reader.readLine();
   }
-
 }

@@ -51,27 +51,27 @@ import org.slf4j.LoggerFactory;
  * and counts the number of unique numbers in that set.
  */
 public class NumberIngest {
-  
-  private static Logger log = LoggerFactory.getLogger(NumberIngest.class);
+
+  private static final Logger log = LoggerFactory.getLogger(NumberIngest.class);
   public static final String TRIE_NODE_SIZE_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.node.size";
-  
-  public static class IngestMapper extends MapReduceBase 
+
+  public static class IngestMapper extends MapReduceBase
       implements Mapper<LongWritable, Text, LongWritable, IntWritable> {
-    
+
     private final static IntWritable one = new IntWritable(1);
     private static LoaderExecutorImpl le;
     private static int nodeSize;
-    
-    public void configure(JobConf job) {      
+
+    public void configure(JobConf job) {
       FluoConfiguration props = new FluoConfiguration();
       props.setZookeepers(job.get(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP));
       props.setZookeeperRoot(job.get(FluoConfiguration.CLIENT_ZOOKEEPER_ROOT_PROP));
       props.setAccumuloInstance(job.get(FluoConfiguration.CLIENT_ACCUMULO_INSTANCE_PROP));
       props.setAccumuloUser(job.get(FluoConfiguration.CLIENT_ACCUMULO_USER_PROP));
       props.setAccumuloPassword(job.get(FluoConfiguration.CLIENT_ACCUMULO_PASSWORD_PROP));
-     
+
       nodeSize = job.getInt(TRIE_NODE_SIZE_PROP, 4);
-      
+
       try {
         le = new LoaderExecutorImpl(props);
       } catch (Exception e) {
@@ -85,10 +85,10 @@ public class NumberIngest {
     }
 
     @Override
-    public void map(LongWritable key, Text value, 
+    public void map(LongWritable key, Text value,
         OutputCollector<LongWritable,IntWritable> output, Reporter reporter) throws IOException {
       int totalNum = Integer.parseInt(value.toString().trim());
-      
+
       Random random = new Random();
       for (int i = 0; i < totalNum; i++) {
         Integer num = Math.abs(random.nextInt());
@@ -97,12 +97,12 @@ public class NumberIngest {
       }
     }
   }
-  
-  public static class UniqueReducer extends MapReduceBase 
+
+  public static class UniqueReducer extends MapReduceBase
         implements Reducer<LongWritable, IntWritable, LongWritable, Text> {
-    
+
     @Override
-    public void reduce(LongWritable key, Iterator<IntWritable> values, 
+    public void reduce(LongWritable key, Iterator<IntWritable> values,
         OutputCollector<LongWritable,Text> output, Reporter reporter) throws IOException {
       int sum = 0;
       while (values.hasNext()) {
@@ -111,27 +111,27 @@ public class NumberIngest {
       output.collect(key, new Text(Integer.toString(sum)));
     }
   }
-  
-  public static class CountMapper extends MapReduceBase 
+
+  public static class CountMapper extends MapReduceBase
       implements Mapper<LongWritable, Text, Text, LongWritable> {
 
     private final static Text count = new Text("COUNT");
     private final static LongWritable one = new LongWritable(1);
-    
+
     @Override
-    public void map(LongWritable key, Text value, 
+    public void map(LongWritable key, Text value,
         OutputCollector<Text,LongWritable> output, Reporter reporter) throws IOException {
         output.collect(count, one);
     }
   }
-  
-  public static class CountReducer extends MapReduceBase 
+
+  public static class CountReducer extends MapReduceBase
       implements Reducer<Text, LongWritable, Text, LongWritable> {
-    
+
     private static Logger log = LoggerFactory.getLogger(UniqueReducer.class);
 
     @Override
-    public void reduce(Text key, Iterator<LongWritable> values, 
+    public void reduce(Text key, Iterator<LongWritable> values,
         OutputCollector<Text,LongWritable> output, Reporter reporter) throws IOException {
       long sum = 0;
       while (values.hasNext()) {
@@ -141,22 +141,22 @@ public class NumberIngest {
       output.collect(key, new LongWritable(sum));
     }
   }
-    
+
   private static void loadConfig(JobConf conf, Properties props) {
     for (Entry<Object, Object> entry : props.entrySet()) {
       conf.set((String)entry.getKey(), (String)entry.getValue());
     }
   }
-  
+
   private static void setupHdfs(String hadoopPrefix, String testDir,
             int numMappers, int numPerMapper) throws IllegalArgumentException, IOException {
     Configuration config = new Configuration();
     config.addResource(new Path(hadoopPrefix+"/conf/core-site.xml"));
     config.addResource(new Path(hadoopPrefix+"/conf/hdfs-site.xml"));
     FileSystem hdfs = FileSystem.get(config);
-    
+
     String inputDir = testDir+"/input";
-    
+
     hdfs.mkdirs(new Path(inputDir));
     FSDataOutputStream fos = hdfs.create(new Path(inputDir+"/data"));
     for (int i = 0; i < numMappers; i++) {
@@ -164,7 +164,7 @@ public class NumberIngest {
     }
     fos.close();
   }
-    
+
   public static void main(String[] args) throws IOException, ConfigurationException {
 
     // Parse arguments
@@ -176,7 +176,7 @@ public class NumberIngest {
     int numPerMapper = Integer.parseInt(args[1]);
     int nodeSize = Integer.parseInt(args[2]);
     String fluoPropsPath = args[3];
-    
+
     String hadoopPrefix = System.getenv("HADOOP_PREFIX");
     if (hadoopPrefix == null) {
       hadoopPrefix = System.getenv("HADOOP_HOME");
@@ -185,44 +185,44 @@ public class NumberIngest {
         System.exit(-1);
       }
     }
-    
+
     // create test name
     String testId = String.format("test-%d", (new Date().getTime()/1000));
     String testDir = "/trie-stress/"+testId;
-    
+
     setupHdfs(hadoopPrefix, testDir, numMappers, numPerMapper);
-    
+
     JobConf ingestConf = new JobConf(NumberIngest.class);
     ingestConf.setJobName("NumberIngest");
-    
+
     FluoConfiguration config = new FluoConfiguration(new File(fluoPropsPath));
-    
+
     loadConfig(ingestConf, ConfigurationConverter.getProperties(config));
     ingestConf.setInt(TRIE_NODE_SIZE_PROP, nodeSize);
-    
+
     ingestConf.setOutputKeyClass(LongWritable.class);
     ingestConf.setOutputValueClass(IntWritable.class);
     ingestConf.setMapperClass(NumberIngest.IngestMapper.class);
     ingestConf.setReducerClass(NumberIngest.UniqueReducer.class);
-    
+
     FileInputFormat.setInputPaths(ingestConf, new Path(testDir+"/input/"));
     FileOutputFormat.setOutputPath(ingestConf, new Path(testDir+"/unique/"));
-    
+
     RunningJob ingestJob = JobClient.runJob(ingestConf);
     ingestJob.waitForCompletion();
     if (ingestJob.isSuccessful()) {
-      
+
       JobConf countConf = new JobConf(NumberIngest.class);
       countConf.setJobName("NumberCount");
-      
+
       countConf.setOutputKeyClass(Text.class);
       countConf.setOutputValueClass(LongWritable.class);
       countConf.setMapperClass(NumberIngest.CountMapper.class);
       countConf.setReducerClass(NumberIngest.CountReducer.class);
-      
+
       FileInputFormat.setInputPaths(countConf, new Path(testDir+"/unique/"));
       FileOutputFormat.setOutputPath(countConf, new Path(testDir+"/output/"));
-      
+
       RunningJob countJob = JobClient.runJob(countConf);
       countJob.waitForCompletion();
       if (countJob.isSuccessful()) {
@@ -235,7 +235,7 @@ public class NumberIngest {
     } else {
       log.error("Ingest job failed.  Skipping count job for "+testId);
     }
-    
+
     System.exit(-1);
   }
 }

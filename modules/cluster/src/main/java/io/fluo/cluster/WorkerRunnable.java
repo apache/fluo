@@ -30,20 +30,20 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
+/**
  * Main run method of Fluo worker that can be called within
  * a Twill/YARN application or on its own as a Java application
  */
 public class WorkerRunnable extends AbstractTwillRunnable {
 
   private static Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
-  
+
   @Override
   public void run() {
     String[] args = { "-config-dir", "./conf"};
     run(args);
   }
-  
+
   public void run(String[] args) {
     try {
       RunnableOptions options = new RunnableOptions();
@@ -62,7 +62,7 @@ public class WorkerRunnable extends AbstractTwillRunnable {
         log.error("fluo.properties is missing required properties for worker");
         System.exit(-1);
       }
-      
+
       Environment env = new Environment(config);
 
       log.info("Worker configuration:");
@@ -77,15 +77,16 @@ public class WorkerRunnable extends AbstractTwillRunnable {
 
       // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.
 
-      while (true)
+      while (true) {
         UtilWaitThread.sleep(1000);
+      }
 
     } catch (Exception e) {
       System.err.println("Exception running worker: "+ e.getMessage());
       e.printStackTrace();
     }
   }
-  
+
   @Override
   public void stop() {
     log.info("Stopping Fluo worker");

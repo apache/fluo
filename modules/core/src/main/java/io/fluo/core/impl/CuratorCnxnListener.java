@@ -27,7 +27,8 @@ public class CuratorCnxnListener implements ConnectionStateListener{
 		return isConnected;
 	}
 
-	@Override public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
+	@Override
+	public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
 		if(connectionState.equals(ConnectionState.CONNECTED) || connectionState.equals(ConnectionState.RECONNECTED))
 			isConnected = true;
 

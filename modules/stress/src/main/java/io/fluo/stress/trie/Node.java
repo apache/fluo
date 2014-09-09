@@ -20,17 +20,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 /** Utility class that represents trie node
  */
 public class Node {
-  
-  private Number number; 
-  private int level;
-  private int nodeSize;
-  
+
+  private final Number number;
+  private final int level;
+  private final int nodeSize;
+
   public Node(Number number, int level, int nodeSize) {
     this.number = number;
     this.level = level;
     this.nodeSize = nodeSize;
   }
-  
+
   public Node(String rowId) {
     checkArgument(validRowId(rowId), "Invalid row id - "+ rowId);
     String[] rowArgs = rowId.toString().split(":");
@@ -38,23 +38,23 @@ public class Node {
     this.nodeSize = Integer.parseInt(rowArgs[1]);
     this.number = parseNumber(rowArgs[2]);
   }
-  
+
   public Number getNumber() {
     return number;
   }
-  
+
   public int getLevel() {
     return level;
   }
-  
+
   public boolean isRoot() {
     return level == 0;
   }
-  
+
   public int getNodeSize() {
     return nodeSize;
   }
-  
+
   private Number parseNumber(String numStr) {
     if (numStr.equals("root")) {
       return null;
@@ -64,11 +64,11 @@ public class Node {
       return Integer.parseInt(numStr, 16);
     }
   }
-  
+
   public String getRowId() {
     if (level == 0) {
-      return String.format("00:%02d:root", nodeSize); 
-    } else { 
+      return String.format("00:%02d:root", nodeSize);
+    } else {
       if (number instanceof Integer) {
         return String.format("%02d:%02d:%08x", level, nodeSize, number);
       } else {
@@ -76,11 +76,11 @@ public class Node {
       }
     }
   }
-  
+
   public Node getParent() {
     if (level == 1) {
       return new Node(null, 0, nodeSize);
-    } else {   
+    } else {
       if (number instanceof Long) {
         int shift = (((64 / nodeSize) - level) * nodeSize) + nodeSize;
         Long parent = (number.longValue() >> shift) << shift;
@@ -90,15 +90,15 @@ public class Node {
         Integer parent = (number.intValue() >> shift) << shift;
         return new Node(parent, level-1, nodeSize);
       }
-    }  
+    }
   }
-    
+
   private boolean validRowId(String rowId) {
     String[] rowArgs = rowId.toString().split(":");
-    return ((rowArgs.length == 3) && (rowArgs[0] != null) 
+    return ((rowArgs.length == 3) && (rowArgs[0] != null)
         && (rowArgs[1] != null) && (rowArgs[2] != null));
   }
-  
+
   public static String generateRootId(int nodeSize) {
     return (new Node(null, 0, nodeSize)).getRowId();
   }

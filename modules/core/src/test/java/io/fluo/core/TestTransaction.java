@@ -34,8 +34,8 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 
 public class TestTransaction extends TypedTransaction {
 
-  private TransactionImpl tx;
-  
+  private final TransactionImpl tx;
+
   public TestTransaction(Environment env, TransactorID transactor) throws Exception {
     this(new TransactionImpl(env, null, transactor), new StringEncoder());
   }
@@ -85,7 +85,7 @@ public class TestTransaction extends TypedTransaction {
   public long getStartTs() {
     return tx.getStartTs();
   }
-  
+
   public TxStats getStats() {
     return tx.getStats();
   }

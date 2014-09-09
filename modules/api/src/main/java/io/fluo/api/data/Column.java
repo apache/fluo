@@ -27,9 +27,9 @@ import org.apache.hadoop.io.Writable;
  * Represents Column in Fluo
  */
 public class Column implements Writable {
-  
+
   public static final Column EMPTY = new Column();
-  
+
   private Bytes family = Bytes.EMPTY;
   private Bytes qualifier = Bytes.EMPTY;
   private Bytes visibility = Bytes.EMPTY;
@@ -39,7 +39,7 @@ public class Column implements Writable {
    * set to Bytes.EMPTY
    */
   public Column() {}
-  
+
   /**
    * Creates Column with family and sets qualifier and visibility
    * to Bytes.EMPTY
@@ -48,9 +48,9 @@ public class Column implements Writable {
     Preconditions.checkNotNull(family, "Family must not be null");
     this.family = family;
   }
-  
+
   /**
-   * Creates Column with family and sets qualifier and visibility 
+   * Creates Column with family and sets qualifier and visibility
    * to Bytes.EMPTY.  String parameter will be encoded as UTF-8.
    */
   public Column(String family) {
@@ -67,7 +67,7 @@ public class Column implements Writable {
     this.family = family;
     this.qualifier = qualifier;
   }
-  
+
   /**
    * Creates Column with family and qualifier and sets visibility
    * to Bytes.EMPTY.  String parameters will be encoded as UTF-8.
@@ -75,14 +75,14 @@ public class Column implements Writable {
   public Column(String family, String qualifier) {
     this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier));
   }
-  
-  /** 
+
+  /**
    * Creates Column with family, qualifier, and visibility
    */
   public Column(Bytes family, Bytes qualifier, ColumnVisibility cv) {
     this(family, qualifier, cv == null ? null : Bytes.wrap(cv.getExpression()));
   }
-  
+
   /**
    * Creates Column with family, qualifier, and visibility.
    * String parameters will be encoded as UTF-8.
@@ -90,8 +90,8 @@ public class Column implements Writable {
   public Column(String family, String qualifier, ColumnVisibility cv) {
     this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier), cv);
   }
-  
-  /** 
+
+  /**
    * Creates Column with family, qualifier, and visibility
    */
   public Column(Bytes family, Bytes qualifier, Bytes visibility) {
@@ -102,37 +102,37 @@ public class Column implements Writable {
     this.qualifier = qualifier;
     this.visibility = visibility;
   }
-  
-  /** 
+
+  /**
    * Creates Column with family, qualifier, and visibility.
    * String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier, String visibility) {
-    this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier), 
+    this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier),
         visibility == null ? null : Bytes.wrap(visibility));
   }
-  
+
   /**
    * Retrieves Family of Column
-   * 
-   * @return Bytes Family 
+   *
+   * @return Bytes Family
    */
   public Bytes getFamily() {
     return family;
   }
-  
+
   /**
    * Retrieves Qualifier of Column
-   * 
+   *
    * @return Bytes Qualifier
    */
   public Bytes getQualifier() {
     return qualifier;
   }
-  
+
   /**
    * Retrieves Visibility of Column
-   * 
+   *
    * @return Bytes Visibility
    */
   public Bytes getVisibility() {
@@ -141,9 +141,9 @@ public class Column implements Writable {
 
   /**
    * Sets visibility of Column
-   * TODO - should not have ColumnVisibility directly 
+   * TODO - should not have ColumnVisibility directly
    * in public API... wrap it
-   *  
+   *
    * @param cv ColumnVisibility
    * @return Column
    */
@@ -151,12 +151,12 @@ public class Column implements Writable {
     this.visibility = Bytes.wrap(cv.getExpression());
     return this;
   }
-  
+
   /**
    * Retries visibility parsed as ColumnVisibility
    * WARNING - Can caused performance issues as ColumnVisibility
    * is created every time
-   * 
+   *
    * @return ColumnVisibility
    */
   public ColumnVisibility getVisibilityParsed() {
@@ -167,12 +167,12 @@ public class Column implements Writable {
   public String toString() {
     return family + " " + qualifier + " " + visibility;
   }
-  
+
   @Override
   public int hashCode() {
     return family.hashCode() + qualifier.hashCode() + visibility.hashCode();
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (o instanceof Column) {
@@ -187,7 +187,7 @@ public class Column implements Writable {
   public void write(DataOutput out) throws IOException {
     Bytes.write(out, family);
     Bytes.write(out, qualifier);
-    Bytes.write(out, visibility);    
+    Bytes.write(out, visibility);
   }
 
   public void readFields(DataInput in) throws IOException {

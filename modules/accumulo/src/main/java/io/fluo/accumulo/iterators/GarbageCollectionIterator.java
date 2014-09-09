@@ -37,7 +37,7 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * This iterator cleans up old versions and uneeded column metadata. Its intended to be used only at compaction time.
+ * This iterator cleans up old versions and unneeded column metadata. It's intended to be used only at compaction time.
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
 

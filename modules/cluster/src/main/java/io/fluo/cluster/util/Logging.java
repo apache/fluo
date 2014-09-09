@@ -32,16 +32,16 @@ import static io.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
  * Used to initialize Logging for cluster applications
  */
 public class Logging {
-  
+
   private static Logger log = LoggerFactory.getLogger(Logging.class);
   private static final String LOG_APPLICATION_PROP = FLUO_PREFIX + ".log.application";
   private static final String LOG_DIR_PROP = FLUO_PREFIX + ".log.dir";
   private static final String LOG_LOCAL_HOSTNAME_PROP = FLUO_PREFIX + ".log.local.hostname";
-  
+
   public static void init(String application, String configDir, String logOutput) throws IOException {
-    
+
     String logConfig;
-    
+
     if (logOutput.equalsIgnoreCase("STDOUT")) {
       // Use a specific log config, if it exists
       logConfig = String.format("%s/logback-stdout-%s.xml", configDir, application);
@@ -50,30 +50,30 @@ public class Logging {
         logConfig = String.format("%s/logback-stdout.xml", configDir);
       }
     } else {
-      
+
       System.setProperty(LOG_APPLICATION_PROP, application);
       System.setProperty(LOG_DIR_PROP, logOutput);
 
       String localhost = InetAddress.getLocalHost().getHostName();
       System.setProperty(LOG_LOCAL_HOSTNAME_PROP, localhost);
- 
+
       // Use a specific log config, if it exists
       logConfig = String.format("%s/logback-file-%s.xml", configDir, application);
       if (!new File(logConfig).exists()) {
         // otherwise, use the generic config
         logConfig = String.format("%s/logback-file.xml", configDir);
       }
-    } 
-        
+    }
+
     // assume SLF4J is bound to logback in the current environment
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    
+
     try {
       JoranConfigurator configurator = new JoranConfigurator();
       configurator.setContext(context);
-      // Call context.reset() to clear any previous configuration, e.g. default 
+      // Call context.reset() to clear any previous configuration, e.g. default
       // configuration. For multi-step configuration, omit calling context.reset().
-      context.reset(); 
+      context.reset();
       configurator.doConfigure(logConfig);
     } catch (JoranException je) {
       // StatusPrinter will handle this
@@ -82,9 +82,9 @@ public class Logging {
 
     System.out.println("Logging to "+logOutput+" using config "+ logConfig);
     log.info("Initialized logging using config in "+ logConfig);
-    
+
     log.info("Starting "+application+" application");
-    
+
     // TODO print info about instance like zookeepers, zookeeper root
   }
 }

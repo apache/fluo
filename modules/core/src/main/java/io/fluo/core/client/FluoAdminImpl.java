@@ -28,7 +28,9 @@ import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
 import io.fluo.core.util.CuratorUtil;
+
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
@@ -45,14 +47,14 @@ public class FluoAdminImpl implements FluoAdmin {
 
   private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
   private FluoConfiguration config;
-  
+
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
   }
-  
+
   public void initialize() throws AlreadyInitializedException {
     try {
       Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
@@ -75,7 +77,7 @@ public class FluoAdminImpl implements FluoAdmin {
       Operations.initialize(conn, config.getZookeeperRoot(), config.getAccumuloTable());
 
       updateSharedConfig();
-      
+
       if (!config.getAccumuloClasspath().trim().isEmpty()) {
         // TODO add fluo version to context name to make it unique
         String contextName = "fluo";
@@ -94,10 +96,11 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public void updateSharedConfig() {
-    
+
     try {
-      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
-           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
+      PasswordToken token = new PasswordToken(config.getAccumuloPassword());
+      Instance instance = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers());
+      Connector conn = instance.getConnector(config.getAccumuloUser(), token);
 
       Properties sharedProps = new Properties();
 
@@ -122,9 +125,9 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  private static void addObserver(Map<Column,ObserverConfiguration> observers, 
+  private static void addObserver(Map<Column,ObserverConfiguration> observers,
       Map<Column,ObserverConfiguration> weakObservers, String value) throws Exception {
-    
+
     String[] fields = value.split(",");
 
     ObserverConfiguration observerConfig = new ObserverConfiguration(fields[0]);

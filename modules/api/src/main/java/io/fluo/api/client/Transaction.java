@@ -22,11 +22,11 @@ import io.fluo.api.data.Column;
  * Transaction interface
  */
 public interface Transaction extends Snapshot {
-  
+
   public abstract void setWeakNotification(Bytes row, Column col);
 
   public abstract void set(Bytes row, Column col, Bytes value);
-  
+
   public abstract void delete(Bytes row, Column col);
-  
+
 }

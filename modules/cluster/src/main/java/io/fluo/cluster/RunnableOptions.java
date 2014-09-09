@@ -23,30 +23,30 @@ import com.beust.jcommander.Parameter;
 import io.fluo.api.config.FluoConfiguration;
 
 public class RunnableOptions {
-  
+
   @Parameter(names = "-config-dir", description = "Location of fluo configuration files")
   private String configDir;
 
   @Parameter(names = "-log-output", description = "Location to output logging.  Set to directory or STDOUT (which is default) ")
   private String logOutput = "STDOUT";
-    
+
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   public boolean help;
-  
+
   public String getConfigDir() {
     return configDir;
   }
-  
+
   public String getFluoProps() {
     return configDir + "/fluo.properties";
   }
- 
+
   public String getLogOutput() {
     return logOutput;
   }
-  
+
   public void validateConfig() throws IOException {
-    if (getConfigDir() == null) { 
+    if (getConfigDir() == null) {
       System.err.println("Please set -config-dir option to directory containing fluo.properties file like below: ");
       System.err.println();
       Properties defaults = ConfigurationConverter.getProperties(FluoConfiguration.getDefaultConfiguration());

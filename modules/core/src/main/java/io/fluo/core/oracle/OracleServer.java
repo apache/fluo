@@ -57,12 +57,16 @@ import org.slf4j.LoggerFactory;
  * In the case where an oracle fails over, the next oracle will begin a new block of timestamps.
  */
 public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface, PathChildrenCacheListener {
-  
+
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
-  
+
   private volatile long currentTs = 0;
   private volatile long maxTs = 0;
   private final Environment env;
+  private final CuratorCnxnListener cnxnListener;
+  private final String tsPath;
+  private final String oraclePath;
+
   private Thread serverThread;
   private THsHaServer server;
   private volatile boolean started = false;
@@ -70,11 +74,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private LeaderSelector leaderSelector;
   private PathChildrenCache pathChildrenCache;
   private CuratorFramework curatorFramework;
-  private CuratorCnxnListener cnxnListener;
   private Participant currentLeader;
-
-  private final String tsPath;
-  private final String oraclePath;
 
   private volatile boolean isLeader = false;
 
@@ -92,7 +92,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(tsPath);
 
     // TODO check that d is expected
-    // TODO check that stil server when setting
+    // TODO check that still server when setting
     // TODO make num allocated variable... when a server first starts allocate a small amount... the longer it runs and the busier it is, allocate bigger blocks
 
     long newMax = Long.parseLong(new String(d)) + 1000;
@@ -103,23 +103,25 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     maxTs = newMax;
 
-    if (!isLeader)
+    if (!isLeader) {
       throw new IllegalStateException();
-
+    }
   }
 
   @Override
   public synchronized long getTimestamps(String id, int num) throws TException {
 
-    if (!started)
+    if (!started) {
       throw new IllegalStateException();
+    }
 
     if (!id.equals(env.getFluoInstanceID())) {
       throw new IllegalArgumentException();
     }
 
-    if (!isLeader)
+    if (!isLeader) {
       throw new IllegalStateException();
+    }
 
     try {
       while (num + currentTs >= maxTs) {
@@ -159,7 +161,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     server = new THsHaServer(serverArgs);
 
     Runnable st = new Runnable() {
-
       @Override
       public void run() {
         server.serve();
@@ -196,11 +197,11 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     pathChildrenCache.getListenable().addListener(this);
     pathChildrenCache.start();
 
-    while (!cnxnListener.isConnected())
+    while (!cnxnListener.isConnected()) {
       Thread.sleep(200);
+    }
 
     log.info("Listening " + addr);
-
     started = true;
   }
 
@@ -259,9 +260,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
         OracleService.Client client = getOracleClient(host, port);
         if(client != null) {
           try {
-            while(client.isLeader())
+            while(client.isLeader()) {
               Thread.sleep(500);
-          } catch(Exception e) {}
+            }
+          } catch(Exception e) {
+            // TODO: do something here?
+          }
         }
       }
 
@@ -272,8 +276,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
       isLeader = true;
 
-      while (started)
+      while (started) {
         Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that called this method
+      }
 
     } finally {
       isLeader = false;
@@ -292,8 +297,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
                             event.equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) ) {
         synchronized (this) {
           Participant participant = leaderSelector.getLeader();
-          if (isLeader(participant) && !leaderSelector.hasLeadership())    // in case current instance becomes leader, we want to know who came before it.
+          if (isLeader(participant) && !leaderSelector.hasLeadership()) {   // in case current instance becomes leader, we want to know who came before it.
             currentLeader = participant;
+          }
         }
       }
     } catch(InterruptedException e) {

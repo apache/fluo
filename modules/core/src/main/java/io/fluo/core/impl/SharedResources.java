@@ -30,48 +30,49 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
-/** 
+/**
  * Shared Fluo resources that must be closed
  */
 public class SharedResources implements Closeable {
 
-  private Environment env;
-  private BatchWriter bw;
-  private ConditionalWriter cw;
-  private SharedBatchWriter sbw;
-  private CuratorFramework curator;
+  private final Environment env;
+  private final BatchWriter bw;
+  private final ConditionalWriter cw;
+  private final SharedBatchWriter sbw;
+  private final CuratorFramework curator;
+  private final TxInfoCache txInfoCache;
   private TransactorID tid = null;
   private TransactorCache transactorCache = null;
   private volatile boolean isClosed = false;
-  private TxInfoCache txInfoCache;
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
-    curator = CuratorFrameworkFactory.newClient(env.getConnector().getInstance().getZooKeepers(), 
+    // TODO: encapsulate construction of CuratorFramework to a single Util function
+    curator = CuratorFrameworkFactory.newClient(env.getConnector().getInstance().getZooKeepers(),
         new ExponentialBackoffRetry(1000, 10));
     curator.start();
     bw = env.getConnector().createBatchWriter(env.getTable(), new BatchWriterConfig());
     sbw = new SharedBatchWriter(bw);
-    cw = env.getConnector().createConditionalWriter(env.getTable(), 
+    cw = env.getConnector().createConditionalWriter(env.getTable(),
         new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
     txInfoCache = new TxInfoCache(env);
   }
-  
+
   public SharedBatchWriter getBatchWriter() {
     checkIfClosed();
     return sbw;
   }
-  
+
   public ConditionalWriter getConditionalWriter() {
     checkIfClosed();
     return cw;
   }
-  
+
   public TxInfoCache getTxInfoCache() {
     checkIfClosed();
     return txInfoCache;
   }
-  
+
   public CuratorFramework getCurator() {
     checkIfClosed();
     return curator;
@@ -86,7 +87,7 @@ public class SharedResources implements Closeable {
     }
     return tid;
   }
-  
+
   public synchronized TransactorCache getTransactorCache() {
     checkIfClosed();
     if (transactorCache == null) {
@@ -96,7 +97,7 @@ public class SharedResources implements Closeable {
     }
     return transactorCache;
   }
-  
+
   @Override
   public synchronized void close() {
     isClosed = true;
@@ -123,7 +124,7 @@ public class SharedResources implements Closeable {
     }
     curator.close();
   }
-  
+
   private void checkIfClosed() {
     if (isClosed) {
       throw new IllegalStateException("SharedResources is closed!");

@@ -21,17 +21,16 @@ import io.fluo.api.data.Bytes;
  * Constants used extract data from columns
  */
 public class ColumnConstants {
-  
-  public static final long PREFIX_MASK = 0xe000000000000000l;
-  public static final long TX_DONE_PREFIX = 0x6000000000000000l;
-  public static final long WRITE_PREFIX = 0x4000000000000000l;
+  // TODO kturner says this order is important: document pls.
   public static final long DEL_LOCK_PREFIX = 0x2000000000000000l;
-  public static final long LOCK_PREFIX = 0xe000000000000000l;
-  public static final long ACK_PREFIX = 0xc000000000000000l;
-  public static final long DATA_PREFIX = 0xa000000000000000l;
-  public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
+  public static final long WRITE_PREFIX =    0x4000000000000000l;
+  public static final long TX_DONE_PREFIX =  0x6000000000000000l;
+  public static final long PREFIX_MASK =     0xe000000000000000l;
+  public static final long LOCK_PREFIX =     0xe000000000000000l;
+  public static final long DATA_PREFIX =     0xa000000000000000l;
+  public static final long ACK_PREFIX =      0xc000000000000000l;
+  public static final long TIMESTAMP_MASK =  0x1fffffffffffffffl;
   public static final Bytes NOTIFY_CF = Bytes.wrap("ntfy");
 
   private ColumnConstants() {}
-
 }

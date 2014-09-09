@@ -49,7 +49,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * This input format reads a consistent snapshot from a Fluo table.
  */
 public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
-  
+
   private static String TIMESTAMP_CONF_KEY = FluoInputFormat.class.getName() + ".timestamp";
   private static String PROPS_CONF_KEY = FluoInputFormat.class.getName() + ".props";
   private static String FAMS_CONF_KEY = FluoInputFormat.class.getName() + ".families";
@@ -59,50 +59,51 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   public RecordReader<Bytes,ColumnIterator> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
 
     return new RecordReader<Bytes,ColumnIterator>() {
-      
+
       private Entry<Bytes,ColumnIterator> entry;
       private RowIterator rowIter;
       private Environment env = null;
-      
+
       @Override
       public void close() throws IOException {
-        if (env != null)
+        if (env != null) {
           env.close();
+        }
       }
-      
+
       @Override
       public Bytes getCurrentKey() throws IOException, InterruptedException {
         return entry.getKey();
       }
-      
+
       @Override
       public ColumnIterator getCurrentValue() throws IOException, InterruptedException {
         return entry.getValue();
       }
-      
+
       @Override
       public float getProgress() throws IOException, InterruptedException {
         // TODO Auto-generated method stub
         return 0;
       }
-      
+
       @Override
       public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         try {
           // TODO this uses non public Accumulo API!
           RangeInputSplit ris = (RangeInputSplit) split;
-          
+
           Span span = SpanUtil.toSpan(ris.getRange());
-          
+
           ByteArrayInputStream bais = new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY).getBytes("UTF-8"));
           PropertiesConfiguration props = new PropertiesConfiguration();
           props.load(bais);
-          
+
           env = new Environment(new FluoConfiguration(props));
-          
+
           TransactionImpl ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1), null);
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
-          
+
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
             sc.fetchColumnFamily(Bytes.wrap(fam));
 
@@ -111,7 +112,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           throw new IOException(e);
         }
       }
-      
+
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
         if (rowIter.hasNext()) {
@@ -128,10 +129,10 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     return new AccumuloInputFormat().getSplits(context);
   }
-  
+
   /**
    * Configure properties needed to connect to a Fluo instance
-   * 
+   *
    * @param conf
    * @param props
    *          use {@link io.fluo.api.config.FluoConfiguration} to configure programmatically
@@ -141,22 +142,22 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
     try {
       FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
       Environment env = new Environment(config);
-      
+
       OracleClient client = OracleClient.getInstance(env);
       long ts = client.getTimestamp();
-      
+
       conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
-      
+
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       props.store(baos, "");
-      
+
       conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
-      
+
       AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getZookeepers());
       AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
       AccumuloInputFormat.setInputTableName(conf, env.getTable());
       AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
-      
+
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -178,6 +179,6 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
 
   // TODO let user set auths
   // TODO let user set ranges
-  
+
 
 }

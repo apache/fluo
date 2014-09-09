@@ -21,10 +21,10 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 
 /**
- * 
+ *
  */
 public class Constants {
-  
+
   public static final TypeLayer TYPEL = new TypeLayer(new StringEncoder());
 
   public static final Column COUNT_SEEN_COL = TYPEL.newColumn("count", "seen");

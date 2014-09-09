@@ -25,7 +25,7 @@ import org.junit.Test;
  * Tests SpanUtil Class
  */
 public class SpanUtilTest {
-  
+
   @Test
   public void testToKey() {
     Assert.assertEquals(null, SpanUtil.toKey(null));
@@ -34,7 +34,7 @@ public class SpanUtilTest {
     Assert.assertEquals(new Key("row", "cf", "cq"), SpanUtil.toKey(new RowColumn("row", new Column("cf", "cq"))));
     Assert.assertEquals(new Key("row", "cf", "cq", "cv"), SpanUtil.toKey(new RowColumn("row", new Column("cf", "cq", "cv"))));
   }
-  
+
   @Test
   public void testToRowColumn() {
     Assert.assertEquals(RowColumn.EMPTY, SpanUtil.toRowColumn(null));

@@ -27,7 +27,7 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
+/**
  * Main run method of Fluo oracle that can be called within
  * a Twill/YARN application or on its own as a Java application
  */
@@ -60,9 +60,9 @@ public class OracleRunnable extends AbstractTwillRunnable {
         log.error("fluo.properties is missing required properties for oracle");
         System.exit(-1);
       }
-      
+
       Environment env = new Environment(config);
-      
+
       log.info("Oracle configuration:");
       env.getConfiguration().print();
 
@@ -77,12 +77,12 @@ public class OracleRunnable extends AbstractTwillRunnable {
       e.printStackTrace();
     }
   }
-  
+
   @Override
   public void stop() {
     log.info("Stopping Fluo oracle");
   }
-  
+
   public static void main(String[] args) {
     OracleRunnable oracle = new OracleRunnable();
     oracle.run(args);

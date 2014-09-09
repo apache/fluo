@@ -198,7 +198,7 @@ public class TypeLayer {
   public TypedSnapshot snapshot(FluoClient client) {
     return snapshot(client.newSnapshot());
   }
-  
+
   public TypedSnapshot snapshot(Snapshot snap) {
     return new TypedSnapshot(snap, encoder, this);
   }

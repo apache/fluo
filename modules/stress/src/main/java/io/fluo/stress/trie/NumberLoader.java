@@ -25,19 +25,19 @@ import io.fluo.api.types.TypedTransaction;
 /** Executes load transactions of numbers into trie at leaf node level
  */
 public class NumberLoader implements Loader {
-  
-  private Number number;
-  private int level;
-  private int nodeSize;
-  
+
+  private final Number number;
+  private final int level;
+  private final int nodeSize;
+
   public NumberLoader(Integer num, int nodeSize) {
     checkArgument(num >= 0, "Only positive numbers accepted");
-    checkArgument((nodeSize <= 32) && ((32 % nodeSize) == 0), "nodeSize must be divisor of 32"); 
+    checkArgument((nodeSize <= 32) && ((32 % nodeSize) == 0), "nodeSize must be divisor of 32");
     this.number = num;
     this.nodeSize = nodeSize;
     this.level = 32 / nodeSize;
   }
-  
+
   public NumberLoader(Long num, int nodeSize) {
     checkArgument(num >= 0, "Only positive numbers accepted");
     checkArgument((nodeSize <= 64) && ((64 % nodeSize) == 0), "nodeSize must be divisor of 64");
@@ -45,14 +45,14 @@ public class NumberLoader implements Loader {
     this.nodeSize = nodeSize;
     this.level = 64 / nodeSize;
   }
-  
+
   @Override
   public void load(Transaction tx) throws Exception {
-    
+
     TypedTransaction ttx = Constants.TYPEL.transaction(tx);
-    
+
     String rowId = new Node(number, level, nodeSize).getRowId();
-        
+
     Integer seen = ttx.get().row(rowId).col(Constants.COUNT_SEEN_COL).toInteger(0);
     if (seen == 0) {
       Integer wait = ttx.get().row(rowId).col(Constants.COUNT_WAIT_COL).toInteger(0);

@@ -15,18 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import io.fluo.accumulo.iterators.PrewriteIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
@@ -44,6 +32,19 @@ import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -52,6 +53,7 @@ import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.ColumnUpdate;
 import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
@@ -60,38 +62,32 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.ArgumentChecker;
+import org.apache.hadoop.io.Text;
 
 /**
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction {
-  
+
   public static final byte[] EMPTY = new byte[0];
-  public static final Bytes EMPTY_BS = Bytes.wrap(EMPTY);
-  
   private static final Bytes DELETE = Bytes.wrap("special delete object");
-  
-  private long startTs;
-  
-  private Map<Bytes,Map<Column,Bytes>> updates;
-  private Map<Bytes,Set<Column>> weakNotifications;
-  Map<Bytes,Set<Column>> columnsRead = new HashMap<Bytes,Set<Column>>();
+
+  private final Environment env;
+  private final TxStats stats;
+  private final Map<Bytes,Set<Column>> columnsRead = new HashMap<Bytes,Set<Column>>();
+  private final Map<Bytes,Map<Column,Bytes>> updates;
+  private final Map<Bytes,Set<Column>> weakNotifications;
   private Bytes triggerRow;
   private Column triggerColumn;
   private Bytes weakRow;
   private Column weakColumn;
   private Set<Column> observedColumns;
   private boolean commitStarted = false;
-  private Environment env;
-  private TxStats stats;
   private TransactorID tid;
-  
+  private long startTs;
+
   public static byte[] toBytes(String s) {
-    try {
-      return s.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return s.getBytes(StandardCharsets.UTF_8);
   }
 
   public TransactionImpl(Environment env, Bytes triggerRow, Column triggerColumn, Long startTs, TransactorID tid) throws Exception {
@@ -99,7 +95,7 @@ public class TransactionImpl implements Transaction {
     this.observedColumns = env.getObservers().keySet();
     this.updates = new HashMap<Bytes,Map<Column,Bytes>>();
     this.weakNotifications = new HashMap<Bytes,Set<Column>>();
-    
+
     if (triggerColumn != null && env.getWeakObservers().containsKey(triggerColumn)) {
       this.weakRow = triggerRow;
       this.weakColumn = triggerColumn;
@@ -107,7 +103,7 @@ public class TransactionImpl implements Transaction {
       this.triggerRow = triggerRow;
       this.triggerColumn = triggerColumn;
     }
-    
+
     if (startTs == null)
       this.startTs = OracleClient.getInstance(env).getTimestamp();
     else {
@@ -115,7 +111,7 @@ public class TransactionImpl implements Transaction {
         throw new IllegalArgumentException();
       this.startTs = startTs;
     }
-    
+
     if (triggerRow != null) {
       Map<Column,Bytes> colUpdates = new HashMap<Column,Bytes>();
       colUpdates.put(triggerColumn, null);
@@ -125,7 +121,7 @@ public class TransactionImpl implements Transaction {
     this.stats = new TxStats();
     this.tid = tid;
   }
-  
+
   public TransactionImpl(Environment env, Bytes triggerRow, Column tiggerColumn) throws Exception {
     this(env, triggerRow, tiggerColumn, null, null);
   }
@@ -133,7 +129,7 @@ public class TransactionImpl implements Transaction {
   public TransactionImpl(Environment env) throws Exception {
     this(env, null, null, null, null);
   }
-  
+
   public TransactionImpl(Environment env, Long startTs, TransactorID tid) throws Exception {
     this(env, null, null, startTs, tid);
   }
@@ -153,9 +149,9 @@ public class TransactionImpl implements Transaction {
     for (Column column : columns) {
       config.fetchColumn(column.getFamily(), column.getQualifier());
     }
-    
+
     RowIterator iter = get(config);
-    
+
     Map<Column,Bytes> ret = new HashMap<Column,Bytes>();
 
     while (iter.hasNext()) {
@@ -168,13 +164,13 @@ public class TransactionImpl implements Transaction {
         }
       }
     }
-    
+
     // only update columns read after successful read
     updateColumnsRead(row, columns);
-    
+
     return ret;
   }
-    
+
   @Override
   public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
@@ -206,14 +202,14 @@ public class TransactionImpl implements Transaction {
 
     return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
-    
+
   @Override
   public void set(Bytes row, Column col, Bytes value) {
     if (commitStarted)
       throw new IllegalStateException("transaction committed");
 
     ArgumentChecker.notNull(row, col, value);
-    
+
     if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
       throw new IllegalArgumentException(ColumnConstants.NOTIFY_CF + " is a reserved family");
     }
@@ -225,13 +221,13 @@ public class TransactionImpl implements Transaction {
       colUpdates = new HashMap<Column,Bytes>();
       updates.put(row, colUpdates);
     }
-    
+
     if (colUpdates.get(col) != null) {
       throw new AlreadySetException("Value already set " + row + " " + col);
     }
     colUpdates.put(col, value);
   }
-  
+
 
   @Override
   public void setWeakNotification(Bytes row, Column col) {
@@ -259,33 +255,42 @@ public class TransactionImpl implements Transaction {
     ArgumentChecker.notNull(row, col);
     set(row, col, DELETE);
   }
-  
+
+  private static ByteSequence bs(Bytes b) {
+    return ByteUtil.toByteSequence(b);
+  }
+
+  private static Text t(Bytes b) {
+    return ByteUtil.toText(b);
+  }
+
   private ConditionalMutation prewrite(ConditionalMutation cm, Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn,
       boolean isTriggerRow) {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = isTriggerRow && col.equals(triggerColumn);
-    if (isTrigger)
+    if (isTrigger) {
       PrewriteIterator.enableAckCheck(iterConf);
-    
-    Condition cond = new Condition(ByteUtil.toByteSequence(col.getFamily()), ByteUtil.toByteSequence(col.getQualifier()))
-                      .setIterators(iterConf).setVisibility(col.getVisibilityParsed());
-    
-    if (cm == null)
-      cm = new ConditionalMutation(ByteUtil.toByteSequence(row), cond);
-    else
+    }
+
+    Condition cond = new Condition(bs(col.getFamily()), bs(col.getQualifier())).setIterators(iterConf).setVisibility(col.getVisibilityParsed());
+
+    if (cm == null) {
+      cm = new ConditionalMutation(bs(row), cond);
+    } else {
       cm.addCondition(cond);
-    
-    if (val != null && val != DELETE)
-      cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), 
-          col.getVisibilityParsed(), ColumnConstants.DATA_PREFIX | startTs, new Value(val.toArray()));
-    
-    cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.LOCK_PREFIX | startTs,
+    }
+
+    if (val != null && val != DELETE) {
+      cm.put(t(col.getFamily()), t(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DATA_PREFIX | startTs, new Value(val.toArray()));
+    }
+
+    cm.put(t(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.LOCK_PREFIX | startTs,
         new Value(LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID())));
-    
+
     return cm;
   }
-  
+
   private ConditionalMutation prewrite(Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
     return prewrite(null, row, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
@@ -303,23 +308,24 @@ public class TransactionImpl implements Transaction {
 
     private HashSet<Bytes> acceptedRows;
     private Map<Bytes,Set<Column>> rejected = new HashMap<Bytes,Set<Column>>();
-    
+
     private void addPrimaryToRejected() {
       rejected = Collections.singletonMap(prow, Collections.singleton(pcol));
     }
-    
+
     private void addToRejected(Bytes row, Set<Column> columns) {
       rejected = new HashMap<Bytes,Set<Column>>();
-      
+
       Set<Column> ret = rejected.put(row, columns);
-      if (ret != null)
+      if (ret != null) {
         throw new IllegalStateException();
+      }
     }
-    
+
     private Map<Bytes,Set<Column>> getRejected() {
-      if (rejected == null)
+      if (rejected == null) {
         return Collections.emptyMap();
-      
+      }
       return rejected;
     }
 
@@ -341,11 +347,12 @@ public class TransactionImpl implements Transaction {
     }
 
   }
-  
+
   public boolean preCommit(CommitData cd, Bytes primRow, Column primCol) throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
       AlreadyAcknowledgedException {
-    if (commitStarted)
+    if (commitStarted) {
       throw new IllegalStateException();
+    }
 
     commitStarted = true;
 
@@ -354,18 +361,19 @@ public class TransactionImpl implements Transaction {
     Map<Column,Bytes> colSet = updates.get(cd.prow);
     cd.pcol = primCol;
     cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0)
+    if (colSet.size() == 0) {
       updates.remove(cd.prow);
-    
+    }
+
     // try to lock primary column
     ConditionalMutation pcm = prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
-    
+
     Status mutationStatus = cd.cw.write(pcm).getStatus();
-    
+
     while (mutationStatus == Status.UNKNOWN) {
-      
+
       TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-      
+
       switch (txInfo.status) {
         case LOCKED:
           mutationStatus = Status.ACCEPTED;
@@ -378,12 +386,13 @@ public class TransactionImpl implements Transaction {
           // TODO handle case were data other tx has lock
           break;
         case COMMITTED:
+          // fall-through intended
         default:
           throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow + " " + cd.pcol);
-          
+
       }
     }
-    
+
     if (mutationStatus != Status.ACCEPTED) {
       cd.addPrimaryToRejected();
       if (checkForAckCollision(pcm)) {
@@ -391,27 +400,28 @@ public class TransactionImpl implements Transaction {
       }
       return false;
     }
-    
+
     // TODO if trigger is always primary row:col, then do not need checks elsewhere
     // try to lock other columns
     ArrayList<ConditionalMutation> mutations = new ArrayList<ConditionalMutation>();
-    
+
     for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
       ConditionalMutation cm = null;
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
-      
+
       for (Entry<Column,Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (cm == null)
+        if (cm == null) {
           cm = prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
-        else
+        } else {
           prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
+        }
       }
-      
+
       mutations.add(cm);
     }
-    
+
     cd.acceptedRows = new HashSet<Bytes>();
-    
+
     boolean ackCollision = false;
 
     Iterator<Result> resultsIter = cd.cw.write(mutations.iterator());
@@ -419,21 +429,22 @@ public class TransactionImpl implements Transaction {
       Result result = resultsIter.next();
       // TODO handle unknown?
       Bytes row = Bytes.wrap(result.getMutation().getRow());
-      if (result.getStatus() == Status.ACCEPTED)
+      if (result.getStatus() == Status.ACCEPTED) {
         cd.acceptedRows.add(row);
-      else {
+      } else {
         // TODO if trigger is always primary row:col, then do not need checks elsewhere
         ackCollision |= checkForAckCollision(result.getMutation());
         cd.addToRejected(row, updates.get(row).keySet());
       }
     }
-    
+
     if (cd.getRejected().size() > 0) {
       rollback(cd);
-      
-      if (ackCollision)
+
+      if (ackCollision) {
         throw new AlreadyAcknowledgedException();
-      
+      }
+
       return false;
     }
 
@@ -464,22 +475,22 @@ public class TransactionImpl implements Transaction {
 
   /**
    * This function helps handle the following case
-   * 
+   *
    * <OL>
    * <LI>TX1 locls r1 col1
    * <LI>TX1 fails before unlocking
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
-   * 
+   *
    * In this case TX2 would not roll back TX1, because it never read the column. This function attempts to handle this case if TX2 fails. Only doing this in
    * case of failures is cheaper than trying to always read unread columns.
-   * 
+   *
    * @param cd
    */
   private void readUnread(CommitData cd) throws Exception {
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user may not iterate over entire range
     Map<Bytes,Set<Column>> columnsToRead = new HashMap<Bytes,Set<Column>>();
-    
+
     for (Entry<Bytes,Set<Column>> entry : cd.getRejected().entrySet()) {
       Set<Column> rowColsRead = columnsRead.get(entry.getKey());
       if (rowColsRead == null) {
@@ -492,7 +503,7 @@ public class TransactionImpl implements Transaction {
         }
       }
     }
-    
+
     boolean cs = commitStarted;
     try {
       // TODO setting commitStarted false here is a bit of a hack... reuse code w/o doing this
@@ -506,34 +517,34 @@ public class TransactionImpl implements Transaction {
   }
 
   private boolean checkForAckCollision(ConditionalMutation cm) {
-    Bytes row = Bytes.wrap(cm.getRow());
+    final Bytes row = Bytes.wrap(cm.getRow());
 
     if (row.equals(triggerRow)) {
       List<ColumnUpdate> updates = cm.getUpdates();
-      
+
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
         Column col = new Column(Bytes.wrap(cu.getColumnFamily()), Bytes.wrap(cu.getColumnQualifier()))
             .setVisibility(new ColumnVisibility(cu.getColumnVisibility()));
         if (triggerColumn.equals(col)) {
-          
+
           // TODO this check will not detect ack when tx overlaps with another tx... it will instead the the lock release.. this may be ok, the worker will
           // retry the tx and then see the already ack exception
 
-          IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
+          final IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
           PrewriteIterator.setSnaptime(iterConf, startTs);
           PrewriteIterator.enableAckCheck(iterConf);
-          Key key = ColumnUtil.checkColumn(env, iterConf, row, col).getKey();
+          final Key key = ColumnUtil.checkColumn(env, iterConf, row, col).getKey();
           // TODO could key be null?
-          long colType = key.getTimestamp() & ColumnConstants.PREFIX_MASK;
-          
+          final long colType = key.getTimestamp() & ColumnConstants.PREFIX_MASK;
+
           if (colType == ColumnConstants.ACK_PREFIX) {
             return true;
           }
         }
       }
     }
-    
+
     return false;
   }
 
@@ -542,18 +553,18 @@ public class TransactionImpl implements Transaction {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
-    Condition lockCheck = new Condition(ByteUtil.toByteSequence(cd.pcol.getFamily()), 
-         ByteUtil.toByteSequence(cd.pcol.getQualifier())).setIterators(iterConf).setVisibility(cd.pcol.getVisibilityParsed())
+    Condition lockCheck = new Condition(bs(cd.pcol.getFamily()),
+         bs(cd.pcol.getQualifier())).setIterators(iterConf).setVisibility(cd.pcol.getVisibilityParsed())
         .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger, getTransactorID()));
-    ConditionalMutation delLockMutation = new ConditionalMutation(ByteUtil.toByteSequence(cd.prow), lockCheck);
+    ConditionalMutation delLockMutation = new ConditionalMutation(bs(cd.prow), lockCheck);
     ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE, startTs, commitTs, observedColumns, delLockMutation);
-    
+
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
-    
+
     while (mutationStatus == Status.UNKNOWN) {
-      
+
       TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-      
+
       switch (txInfo.status) {
         case COMMITTED:
           if (txInfo.commitTs != commitTs)
@@ -565,48 +576,47 @@ public class TransactionImpl implements Transaction {
           break;
         default:
           mutationStatus = Status.REJECTED;
+          break;
       }
     }
 
     if (mutationStatus != Status.ACCEPTED) {
       return false;
     }
-    
+
     return true;
   }
-  
+
   private void rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
     // roll back locks
-    
-    // TODO let rollback be done lazily? this makes GC more difficult
-    
-    Mutation m;
 
+    // TODO let rollback be done lazily? this makes GC more difficult
+    Mutation m;
     ArrayList<Mutation> mutations = new ArrayList<Mutation>(cd.acceptedRows.size());
     for (Bytes row : cd.acceptedRows) {
       m = new Mutation(ByteUtil.toText(row));
       for (Column col : updates.get(row).keySet()) {
-        m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
+        m.put(t(col.getFamily()), t(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
             new Value(DelLockValue.encode(startTs, false, true)));
       }
       mutations.add(m);
     }
-    
+
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
-    
+
     // mark transaction as complete for garbage collection purposes
-    m = new Mutation(ByteUtil.toText(cd.prow));
+    m = new Mutation(t(cd.prow));
     // TODO timestamp?
     // TODO writing the primary column with a batch writer is iffy
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
+    m.put(t(cd.pcol.getFamily()), t(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
         new Value(DelLockValue.encode(startTs, false, true)));
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | startTs, new Value(EMPTY));
+    m.put(t(cd.pcol.getFamily()), t(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | startTs, new Value(EMPTY));
     env.getSharedResources().getBatchWriter().writeMutation(m);
   }
-  
+
   public boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
     // delete locks and add writes for other columns
-    ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size() + 1);
+    List<Mutation> mutations = new ArrayList<Mutation>(updates.size() + 1);
     for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
       Mutation m = new Mutation(rowUpdates.getKey().toArray());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
@@ -614,10 +624,10 @@ public class TransactionImpl implements Transaction {
         ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null,
             colUpdates.getValue() == DELETE, startTs, commitTs, observedColumns, m);
       }
-      
+
       mutations.add(m);
     }
-    
+
     if (weakRow != null) {
       Mutation m = new Mutation(ByteUtil.toText(weakRow));
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
@@ -625,12 +635,12 @@ public class TransactionImpl implements Transaction {
     }
 
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
-    
+
     // mark transaction as complete for garbage collection purposes
     Mutation m = new Mutation(ByteUtil.toText(cd.prow));
     m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | commitTs, new Value(EMPTY));
     env.getSharedResources().getBatchWriter().writeMutationAsync(m);
-    
+
     return true;
   }
 
@@ -643,7 +653,7 @@ public class TransactionImpl implements Transaction {
   public void commit() throws CommitException {
     // TODO synchronize or detect concurrent use
     // TODO prevent multiple calls
-    
+
     if (updates.size() == 0) {
       deleteWeakRow();
       return;
@@ -653,13 +663,13 @@ public class TransactionImpl implements Transaction {
       stats.incrementEntriesSet(cols.size());
 
     CommitData cd = createCommitData();
-    
+
     try {
       if (!preCommit(cd)) {
         readUnread(cd);
         throw new CommitException();
       }
-      
+
       long commitTs = OracleClient.getInstance(env).getTimestamp();
       if (commitPrimaryColumn(cd, commitTs)) {
         finishCommit(cd, commitTs);
@@ -705,7 +715,7 @@ public class TransactionImpl implements Transaction {
   public long getStartTs() {
     return startTs;
   }
-  
+
   private Long getTransactorID() {
     if (tid == null) {
       tid = env.getSharedResources().getTransactorID();

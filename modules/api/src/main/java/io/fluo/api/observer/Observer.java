@@ -23,7 +23,7 @@ import io.fluo.api.data.Column;
 
 /**
  * An observer is created for each worker thread and re-used for the lifetime of a worker thread.
- * 
+ *
  * Consider extending {@link AbstractObserver} instead of implementing this. The abstract class will shield you from the addition of interface methods.
  */
 public interface Observer {
@@ -57,7 +57,7 @@ public interface Observer {
   /**
    * Its safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from whats passed to
    * {@link #init(Map)}, then the derivation process should be deterministic.
-   * 
+   *
    * @return The column that will trigger this observer. During initialization this information is stored in zookeeper so that workers have a consistent view.
    *         If a worker loads an Observer and the information returned differs from whats in zookeeper then an exception will be thrown.
    */

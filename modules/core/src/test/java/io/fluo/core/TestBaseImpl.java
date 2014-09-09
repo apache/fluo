@@ -67,7 +67,7 @@ public class TestBaseImpl {
   protected String zkn;
   protected FluoConfiguration config;
   protected FluoClient client;
-  
+
   protected List<ObserverConfiguration> getObservers() {
     return Collections.emptyList();
   }
@@ -84,8 +84,9 @@ public class TestBaseImpl {
         Scanner scanner = conn.createScanner(table, new Authorizations());
         scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
-        if (!scanner.iterator().hasNext())
+        if (!scanner.iterator().hasNext()) {
           break;
+        }
       }
     } finally {
       for (Observer observer : colObservers.values()) {
@@ -124,26 +125,26 @@ public class TestBaseImpl {
     config.setZookeepers(instance.getZooKeepers());
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
-    
+
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
-   
+
     client = FluoFactory.newClient(config);
 
     env = new Environment(curator, zkn, conn, PortUtils.getRandomFreePort());
-    
+
     oserver = new OracleServer(env);
     oserver.start();
   }
 
-  /** Utility method to create additional oracles (setup method 
+  /** Utility method to create additional oracles (setup method
    * will always create one oracle)
    */
   public OracleServer createExtraOracle(int port) throws Exception {
     Environment env = new Environment(curator, zkn, conn, port);
     return new OracleServer(env);
   }
-  
+
   @After
   public void tearDown() throws Exception {
     conn.tableOperations().delete(table);

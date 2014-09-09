@@ -36,9 +36,9 @@ import org.apache.hadoop.io.WritableUtils;
  * Represents a sequence of bytes in Fluo
  */
 public abstract class Bytes implements Comparable<Bytes> {
-  
+
   public static final Bytes EMPTY = Bytes.wrap(new byte[0]);
-  
+
   public Bytes() {}
 
   /**
@@ -72,7 +72,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @return byte array
    */
   public abstract byte[] toArray();
-  
+
   /**
    * Determines whether this sequence is backed by a byte array.
    *
@@ -128,7 +128,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param other Bytes
    * @return comparison result
    */
-  public int compareTo(Bytes other) {      
+  public int compareTo(Bytes other) {
     return compareBytes(this, other);
   }
 
@@ -156,7 +156,7 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   /**
    * Computes hash code of Bytes
-   * 
+   *
    * @return hash code
    */
   @Override
@@ -173,19 +173,19 @@ public abstract class Bytes implements Comparable<Bytes> {
     }
     return hash;
   }
-  
+
   /**
    * Wraps byte array as Bytes
-   * 
+   *
    * @param array byte array
    * @return Bytes
    */
   public static Bytes wrap(byte[] array) {
     return new ArrayBytes(array);
   }
-  
+
   /**
-   * Creates a Bytes object by wrapping a subsequence of the given byte array. 
+   * Creates a Bytes object by wrapping a subsequence of the given byte array.
    * The given byte array is used directly as the backing array, so later changes
    * made to the (relevant portion of the) array reflect into the new Byte array.
    *
@@ -199,37 +199,37 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   /**
    * Wraps ByteBuffer as Bytes
-   * 
+   *
    * @param bb ByteBuffer
    * @return Bytes
    */
   public static Bytes wrap(ByteBuffer bb) {
     return new ArrayBytes(bb);
   }
-  
+
   /**
    * Wraps a UTF-8 String as Bytes
-   * 
+   *
    * @param s String
    * @return Bytes
    */
   public static Bytes wrap(String s) {
     return new ArrayBytes(s);
   }
-  
+
   /**
    * Wraps a String with a given charset as Bytes
-   * 
+   *
    * @param s String
    * @return Bytes
    */
   public static Bytes wrap(String s, Charset c) {
     return new ArrayBytes(s, c);
   }
-  
+
   /**
-   * Writes Bytes to DataOutput 
-   * 
+   * Writes Bytes to DataOutput
+   *
    * @param out DataOutput
    * @param b Bytes
    * @throws IOException
@@ -247,7 +247,7 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   /**
    * Wraps data input as Bytes
-   * 
+   *
    * @param in DataInput
    * @return Bytes
    * @throws IOException
@@ -258,10 +258,10 @@ public abstract class Bytes implements Comparable<Bytes> {
     in.readFully(b);
     return wrap(b);
   }
-  
+
   /**
    * Concatenates of list of Bytes objects to create a byte array
-   * 
+   *
    * @param listOfBytes
    * @return Bytes
    */
@@ -270,7 +270,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       // TODO calculate exact array size needed
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(baos);
-      
+
       for (Bytes b : listOfBytes) {
         WritableUtils.writeVInt(dos, b.length());
         if (b.isBackedByArray()) {
@@ -279,17 +279,17 @@ public abstract class Bytes implements Comparable<Bytes> {
           dos.write(b.toArray());
         }
       }
-      
+
       dos.close();
       return wrap(baos.toByteArray());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
-  
+
   /**
    * Splits a bytes object into several bytes objects
-   * 
+   *
    * @param b Original bytes object
    * @return List of bytes objects
    */
@@ -299,11 +299,11 @@ public abstract class Bytes implements Comparable<Bytes> {
       bais = new ByteArrayInputStream(b.getBackingArray(), b.offset(), b.length());
     else
       bais = new ByteArrayInputStream(b.toArray());
-    
+
     DataInputStream dis = new DataInputStream(bais);
-    
+
     ArrayList<Bytes> ret = new ArrayList<Bytes>();
-    
+
     try {
       while (true) {
         int len = WritableUtils.readVInt(dis);
@@ -313,13 +313,13 @@ public abstract class Bytes implements Comparable<Bytes> {
         ret.add(wrap(field));
       }
     } catch (EOFException ee) {
-      
+
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     return ret;
   }
-  
+
   /**
   * An implementation of {@link Bytes} that uses a backing byte array.
   */
@@ -373,7 +373,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     private ArrayBytes(String s) {
       this(s.getBytes(StandardCharsets.UTF_8));
     }
-    
+
     /**
      * Creates a new ArrayBytes from the given string. The bytes are determined from
      * the string using the specified charset
@@ -406,7 +406,7 @@ public abstract class Bytes implements Comparable<Bytes> {
         buffer.get(data);
       }
     }
-    
+
     @Override
     public byte byteAt(int i) {
 
@@ -459,7 +459,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       return copy;
     }
 
-    /** 
+    /**
      * Creates UTF-8 String using Bytes data
      */
     public String toString() {

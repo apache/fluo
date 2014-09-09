@@ -34,20 +34,23 @@ import org.slf4j.LoggerFactory;
  * Used by clients to determine if transactor is running.
  */
 public class TransactorCache implements Closeable {
-  
+
   public enum TcStatus { OPEN, CLOSED };
-  
-  private Environment env;
-  private PathChildrenCache cache;
+
+  private final Environment env;
+  private final PathChildrenCache cache;
+  private final Cache<Long,AtomicLong> timeoutCache;
   private TcStatus status;
-  private Cache<Long,AtomicLong> timeoutCache;
-  
+
   private static Logger log = LoggerFactory.getLogger(TransactorCache.class);
 
   public TransactorCache(Environment env) {
 
-    timeoutCache = CacheBuilder.newBuilder().maximumSize(1 << 15).expireAfterAccess(TxInfoCache.CACHE_TIMEOUT_MIN, TimeUnit.MINUTES).concurrencyLevel(10)
-        .build();
+    timeoutCache = CacheBuilder.newBuilder()
+          .maximumSize(1 << 15)
+          .expireAfterAccess(TxInfoCache.CACHE_TIMEOUT_MIN, TimeUnit.MINUTES)
+          .concurrencyLevel(10)
+          .build();
 
     this.env = env;
     cache = new PathChildrenCache(env.getSharedResources().getCurator(),
@@ -59,7 +62,7 @@ public class TransactorCache implements Closeable {
       throw new RuntimeException(e);
     }
   }
-  
+
   private void logTimedoutTransactor(Long transactorId, long lockTs, Long startTime) {
     log.warn("Transactor ID {} was unresponsive for {} secs, marking as dead for lockTs <= {}", LongUtil.longToString(transactorId),
         (System.currentTimeMillis() - startTime) / 1000.0, lockTs);
@@ -101,7 +104,7 @@ public class TransactorCache implements Closeable {
   public boolean checkExists(Long transactorId) {
     return cache.getCurrentData(TransactorID.getNodePath(env, transactorId)) != null;
   }
-  
+
   public TcStatus getStatus() {
     return status;
   }

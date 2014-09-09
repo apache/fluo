@@ -34,10 +34,10 @@ import org.apache.accumulo.core.client.Scanner;
  */
 public class MiniFluoImpl implements MiniFluo {
 
+  private final AtomicBoolean shutdownFlag = new AtomicBoolean(false);
+  private final Environment env;
   private OracleServer oserver;
-  private Environment env;
   private ExecutorService tp;
-  private AtomicBoolean shutdownFlag;
 
   private int numProcessing = 0;
 
@@ -72,7 +72,6 @@ public class MiniFluoImpl implements MiniFluo {
     }
     try {
       env = new Environment(config);
-      shutdownFlag = new AtomicBoolean(false);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

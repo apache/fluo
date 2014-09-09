@@ -49,7 +49,7 @@ public class OracleIT extends TestBaseImpl {
 
   @Test
   public void testRestart() throws Exception {
-    OracleClient client = OracleClient.getInstance(env);
+    final OracleClient client = OracleClient.getInstance(env);
 
     long ts1 = client.getTimestamp();
     long ts2 = client.getTimestamp();
@@ -171,17 +171,19 @@ public class OracleIT extends TestBaseImpl {
 
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
-    
+
     OracleServer oserver2 = createExtraOracle(port2);
     OracleServer oserver3 = createExtraOracle(port3);
 
     oserver2.start();
-    while (!oserver2.isConnected())
+    while (!oserver2.isConnected()) {
       Thread.sleep(100);
+    }
 
     oserver3.start();
-    while (!oserver3.isConnected())
+    while (!oserver3.isConnected()) {
       Thread.sleep(100);
+    }
 
     OracleClient client = OracleClient.getInstance(env);
 
@@ -234,8 +236,9 @@ public class OracleIT extends TestBaseImpl {
 
     oserver.start();
 
-    while (!oserver.isConnected())
+    while (!oserver.isConnected()) {
       Thread.sleep(100);
+    }
 
     assertEquals(1002, client.getTimestamp());
 
@@ -254,27 +257,30 @@ public class OracleIT extends TestBaseImpl {
     ExecutorService tpool = Executors.newFixedThreadPool(numThreads);
     CountDownLatch cdl = new CountDownLatch(numThreads);
 
-    
+
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
-    
+
     OracleServer oserver2 = createExtraOracle(port2);
 
     oserver2.start();
-    while (!oserver2.isConnected())
+    while (!oserver2.isConnected()) {
       Thread.sleep(100);
+    }
 
     OracleServer oserver3 = createExtraOracle(port3);
 
     oserver3.start();
-    while (!oserver3.isConnected())
+    while (!oserver3.isConnected()) {
       Thread.sleep(100);
+    }
 
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
 
-      if(i == 10)
+      if(i == 10) {
         oserver.stop();
+      }
     }
 
     cdl.await();
@@ -289,8 +295,9 @@ public class OracleIT extends TestBaseImpl {
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
 
-      if(i == 5)
+      if(i == 5) {
         oserver2.stop();
+      }
     }
 
     cdl.await();

@@ -35,7 +35,7 @@ public class UtilWaitThread {
       Thread.currentThread().interrupt();
     }
   }
-  
+
   public static void sleep(long millis) {
     sleep(millis, new AtomicBoolean(false));
   }

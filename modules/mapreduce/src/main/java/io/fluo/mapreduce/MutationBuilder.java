@@ -27,7 +27,7 @@ import org.apache.hadoop.io.Text;
 
 /**
  * This class allows building Accumulo mutations that are in the Fluo data format. This class is intended to be used with {@link AccumuloOutputFormat}
- * inorder to seed an initialized Fluo table on which no transactions have executed.
+ * in order to seed an initialized Fluo table on which no transactions have executed.
  */
 
 public class MutationBuilder {

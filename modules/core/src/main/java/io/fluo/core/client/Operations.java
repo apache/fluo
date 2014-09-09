@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * Utility methods for initializing Zookeeper & Accumulo
  */
 public class Operations {
-  
+
   private Operations() {}
 
   private static final Logger logger = LoggerFactory.getLogger(Operations.class);
@@ -142,7 +142,7 @@ public class Operations {
       serializeObservers(dos, colObservers);
       serializeObservers(dos, weakObservers);
     }
-    
+
     byte[] serializedObservers = baos.toByteArray();
     return serializedObservers;
   }
@@ -155,12 +155,12 @@ public class Operations {
     Map<String,Set<Text>> groups = new HashMap<String,Set<Text>>();
     groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
     conn.tableOperations().setLocalityGroups(tableName, groups);
-    
+
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
     GarbageCollectionIterator.setNumVersions(gcIter, 2);
-    
+
     conn.tableOperations().attachIterator(tableName, gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
-    
+
     conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
   }
 }

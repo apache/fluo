@@ -19,16 +19,16 @@ package io.fluo.core.impl;
  * Zookeeper Constants
  */
 public class ZookeeperConstants {
-  
+
   public static final String CONFIG = "/config";
-  
+
   public static final String TABLE = CONFIG + "/accumulo.table";
   public static final String ACCUMULO_INSTANCE_NAME = CONFIG + "/accumulo.instance.name";
   public static final String ACCUMULO_INSTANCE_ID = CONFIG + "/accumulo.instance.id";
   public static final String FLUO_INSTANCE_ID = CONFIG + "/fluo.instance.id";
   public static final String OBSERVERS = CONFIG + "/fluo.observers";
   public static final String SHARED_CONFIG = CONFIG + "/shared.config";
-  
+
   public static final String ORACLE = "/oracle";
   public static final String TIMESTAMP = ORACLE + "/timestamp";
   public static final String ORACLE_SERVER = ORACLE + "/server";
@@ -36,7 +36,7 @@ public class ZookeeperConstants {
   public static final String TRANSACTOR = "/transactor";
   public static final String TRANSACTOR_COUNT = TRANSACTOR + "/count";
   public static final String TRANSACTOR_NODES = TRANSACTOR + "/nodes";
- 
+
   public static final String oraclePath(String zkPath) {
     return zkPath + ORACLE_SERVER;
   }

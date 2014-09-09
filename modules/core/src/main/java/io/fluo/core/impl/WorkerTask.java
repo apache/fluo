@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import io.fluo.core.util.UtilWaitThread;
 
 /**
- * 
+ *
  */
 public class WorkerTask implements Runnable {
 
@@ -34,8 +34,8 @@ public class WorkerTask implements Runnable {
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
   private static Logger log = LoggerFactory.getLogger(WorkerTask.class);
-  private Environment env;
-  private AtomicBoolean shutdownFlag;
+  private final  Environment env;
+  private final AtomicBoolean shutdownFlag;
 
   public WorkerTask(Environment env, AtomicBoolean shutdownFlag) {
     this.env = env;
@@ -69,12 +69,13 @@ public class WorkerTask implements Runnable {
           finishedProcessing(numProcessed);
         }
 
-        if (numProcessed > 0)
+        if (numProcessed > 0) {
           sleepTime = 0;
-        else if (sleepTime == 0)
+        } else if (sleepTime == 0) {
           sleepTime = 100;
-        else if (sleepTime < MAX_SLEEP_TIME)
+        } else if (sleepTime < MAX_SLEEP_TIME) {
           sleepTime = sleepTime + (long) (sleepTime * Math.random());
+        }
 
         log.debug("thread id:" + Thread.currentThread().getId() + "  numProcessed:" + numProcessed + "  sleepTime:" + sleepTime);
 

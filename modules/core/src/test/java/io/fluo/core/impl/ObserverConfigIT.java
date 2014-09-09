@@ -49,8 +49,9 @@ public class ObserverConfigIT extends TestBaseImpl {
       observedColumn = new ObservedColumn(tl.newColumn(ocTokens[0], ocTokens[1]), NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.wrap(config.get("outputCQ"));
       String swn = config.get("setWeakNotification");
-      if (swn != null && swn.equals("true"))
+      if (swn != null && swn.equals("true")) {
         setWeakNotification = true;
+      }
     }
 
     @Override
@@ -63,8 +64,9 @@ public class ObserverConfigIT extends TestBaseImpl {
 
       tx.set(row, outCol, in);
 
-      if (setWeakNotification)
+      if (setWeakNotification) {
         tx.setWeakNotification(row, outCol);
+      }
     }
 
     @Override
@@ -75,8 +77,9 @@ public class ObserverConfigIT extends TestBaseImpl {
 
   Map<String,String> newMap(String... args) {
     HashMap<String,String> ret = new HashMap<String,String>();
-    for (int i = 0; i < args.length; i += 2)
+    for (int i = 0; i < args.length; i += 2) {
       ret.put(args[i], args[i + 1]);
+    }
     return ret;
   }
 

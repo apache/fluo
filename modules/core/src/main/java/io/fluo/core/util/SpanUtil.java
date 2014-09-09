@@ -27,22 +27,22 @@ import org.apache.hadoop.io.Text;
  * Utility methods for manipulating Spans
  */
 public class SpanUtil {
-  
+
   private SpanUtil() {}
-  
+
   /**
    * Converts a Fluo Span to Accumulo Range
-   * 
+   *
    * @param span Span
    * @return Range
    */
   public static Range toRange(Span span) {
     return new Range(toKey(span.getStart()), span.isStartInclusive(), toKey(span.getEnd()), span.isEndInclusive());
   }
-  
+
   /**
    * Converts from a Fluo RowColumn to a Accumulo Key
-   * 
+   *
    * @param rc RowColumn
    * @return Key
    */
@@ -65,21 +65,21 @@ public class SpanUtil {
     Text cv = ByteUtil.toText(rc.getColumn().getVisibility());
     return new Key(row, cf, cq, cv);
   }
-  
+
   /**
    * Converts an Accumulo Range to a Fluo Span
-   * 
+   *
    * @param range Range
    * @return Span
    */
   public static Span toSpan(Range range) {
-    return new Span(toRowColumn(range.getStartKey()), range.isStartKeyInclusive(), 
+    return new Span(toRowColumn(range.getStartKey()), range.isStartKeyInclusive(),
                     toRowColumn(range.getEndKey()), range.isEndKeyInclusive());
   }
-  
+
   /**
    * Converts from an Accumulo Key to a Fluo RowColumn
-   * 
+   *
    * @param key Key
    * @return RowColumn
    */

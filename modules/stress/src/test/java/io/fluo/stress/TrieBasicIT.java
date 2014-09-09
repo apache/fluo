@@ -36,50 +36,50 @@ import org.slf4j.LoggerFactory;
 import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
 import static io.fluo.stress.trie.Constants.TYPEL;
 
-/** 
+/**
  * Tests Trie Stress Test using Basic Loader
  */
 public class TrieBasicIT extends TestBaseMini {
-  
+
   private static Logger log = LoggerFactory.getLogger(TrieBasicIT.class);
-  
+
   @Override
   protected List<ObserverConfiguration> getObservers() {
     return Collections.singletonList(new ObserverConfiguration(NodeObserver.class.getName()));
   }
-  
+
   @Test
   public void testBit32() throws Exception {
     runTrieTest(20, Integer.MAX_VALUE, 32);
   }
-  
+
   @Test
   public void testBit8() throws Exception {
     runTrieTest(25, Integer.MAX_VALUE, 8);
   }
-  
+
   @Test
   public void testBit4() throws Exception {
     runTrieTest(10, Integer.MAX_VALUE, 4);
   }
-  
+
   @Test
   public void testBit() throws Exception {
     runTrieTest(5, Integer.MAX_VALUE, 1);
   }
-  
+
   @Test
   public void testDuplicates() throws Exception {
     runTrieTest(20, 10, 4);
   }
-    
+
   private void runTrieTest(int ingestNum, int maxValue, int nodeSize) throws Exception {
-    
+
     log.info("Ingesting "+ingestNum+" unique numbers with a nodeSize of "+nodeSize+" bits");
-    
+
     config.setLoaderThreads(0);
     config.setLoaderQueueSize(0);
-    
+
     try(LoaderExecutorImpl le = new LoaderExecutorImpl(config)) {
       Random random = new Random();
       Set<Integer> ingested = new HashSet<>();
