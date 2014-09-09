@@ -16,8 +16,9 @@
 package io.fluo.core.exceptions;
 
 /**
- * 
+ *
  */
 public class CommitException extends Exception {
-  
+  private static final long serialVersionUID = 1L;
+
 }

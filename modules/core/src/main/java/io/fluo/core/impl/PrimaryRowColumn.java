@@ -30,9 +30,9 @@ import org.apache.accumulo.core.data.Value;
  */
 class PrimaryRowColumn {
 
-  Bytes prow;
-  Column pcol;
-  long startTs;
+  final Bytes prow;
+  final Column pcol;
+  final long startTs;
 
   public PrimaryRowColumn(Bytes prow, Column pcol, long startTs) {
     this.prow = prow;

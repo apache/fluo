@@ -26,7 +26,7 @@ import org.junit.Test;
  * Unit test for ByteUtil class
  */
 public class ByteUtilTest {
-  
+
   @Test
   public void testHadoopText() {
     String s1 = "test1";
@@ -35,7 +35,7 @@ public class ByteUtilTest {
     Assert.assertEquals(Bytes.wrap(s1), b1);
     Assert.assertEquals(t1, ByteUtil.toText(b1));
   }
-  
+
   @Test
   public void testByteSequence() {
     String s2 = "test2";
@@ -43,5 +43,5 @@ public class ByteUtilTest {
     Bytes b2 = ByteUtil.toBytes(bs2);
     Assert.assertEquals(Bytes.wrap(s2), b2);
     Assert.assertEquals(bs2, ByteUtil.toByteSequence(b2));
-  } 
+  }
 }

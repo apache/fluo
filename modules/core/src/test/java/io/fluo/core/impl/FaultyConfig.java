@@ -21,19 +21,19 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.test.FaultyConditionalWriter;
 
 /**
- * 
+ *
  */
 public class FaultyConfig extends Environment {
-  
-  private double up;
-  private double wp;
-  
+
+  private final double up;
+  private final double wp;
+
   public FaultyConfig(Environment env, double up, double wp) throws Exception {
     super(env);
     this.up = up;
     this.wp = wp;
   }
-  
+
   @Override
   public Connector getConnector() {
     return super.getConnector();

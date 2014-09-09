@@ -29,8 +29,8 @@ import org.apache.log4j.Logger;
 
 public class TracingTransaction implements Transaction {
 
-  private Transaction tx;
-  private long txid;
+  private final Transaction tx;
+  private final long txid;
 
   private static final Logger log = Logger.getLogger(TracingTransaction.class);
 

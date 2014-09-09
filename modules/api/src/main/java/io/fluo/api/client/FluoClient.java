@@ -18,16 +18,16 @@ package io.fluo.api.client;
 import java.io.Closeable;
 
 /**
- * Client interface for Fluo. Fluo clients will have shared resources 
- * used by all objects created by the client.  Therefore, close() must 
+ * Client interface for Fluo. Fluo clients will have shared resources
+ * used by all objects created by the client.  Therefore, close() must
  * called when you are finished using a client.
  */
 public interface FluoClient extends Closeable {
-  
+
   public LoaderExecutor newLoaderExecutor();
-  
+
   public Snapshot newSnapshot();
-  
+
   public void close();
-  
+
 }

@@ -24,7 +24,7 @@ import io.fluo.api.data.Column;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
- * 
+ *
  */
 public class LockValue {
 
@@ -37,26 +37,26 @@ public class LockValue {
 
   public LockValue(byte[] enc) {
     List<Bytes> fields = Bytes.split(Bytes.wrap(enc));
-    
+
     if (fields.size() != 6)
       throw new IllegalArgumentException("more fields than expected");
-    
+
     this.prow = fields.get(0);
     this.pcol = new Column(fields.get(1), fields.get(2)).setVisibility(new ColumnVisibility(fields.get(3).toArray()));
     this.isWrite = (fields.get(4).byteAt(0) & 0x1) == 0x1;
     this.isDelete = (fields.get(4).byteAt(0) & 0x2) == 0x2;
     this.isTrigger = (fields.get(4).byteAt(0) & 0x4) == 0x4;
-    this.transactor = ByteArrayUtil.decodeLong(fields.get(5).toArray());    
+    this.transactor = ByteArrayUtil.decodeLong(fields.get(5).toArray());
   }
-  
+
   public Bytes getPrimaryRow() {
     return prow;
   }
-  
+
   public Column getPrimaryColumn() {
     return pcol;
   }
-  
+
   public boolean isWrite() {
     return isWrite;
   }
@@ -64,11 +64,11 @@ public class LockValue {
   public boolean isDelete() {
     return isDelete;
   }
-  
+
   public boolean isTrigger() {
     return isTrigger;
   }
-  
+
   public Long getTransactor() {
     return transactor;
   }
@@ -82,12 +82,12 @@ public class LockValue {
       bools[0] |= 0x2;
     if (isTrigger)
       bools[0] |= 0x4;
-    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(), 
+    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(),
         Bytes.wrap(bools), Bytes.wrap(ByteArrayUtil.encode(transactor))).toArray();
   }
-  
+
   public String toString() {
-    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") 
+    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE")
         + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + LongUtil.longToString(transactor);
   }
 }

@@ -19,12 +19,12 @@ package io.fluo.api.client;
  * Interface that needs to be implemented to load data into Fluo
  */
 public interface Loader {
-  
+
   /**
    * Users implement this method to load data into Fluo using
    * the provided transaction.  The transaction will be committed
    * after method returns
-   * 
+   *
    * @param tx Transaction provided for loading data
    * @throws Exception
    */

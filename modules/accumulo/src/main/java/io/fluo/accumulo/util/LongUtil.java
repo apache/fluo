@@ -19,7 +19,7 @@ package io.fluo.accumulo.util;
  * Utilities for working with Java Long
  */
 public class LongUtil {
-  
+
   /**
    * Converts given Long to String using Max Radix
    */

@@ -29,21 +29,21 @@ import io.fluo.api.types.TypedTransaction;
  * node in trie
  */
 public class NodeObserver extends AbstractObserver {
-  
-  private static Logger log = LoggerFactory.getLogger(NodeObserver.class);
+
+  private static final Logger log = LoggerFactory.getLogger(NodeObserver.class);
 
   @Override
   public void process(Transaction tx, Bytes row, Column col) throws Exception {
-    
+
     TypedTransaction ttx = Constants.TYPEL.transaction(tx);
     Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);
-    
+
     if (childWait > 0) {
       Integer childSeen = ttx.get().row(row).col(Constants.COUNT_SEEN_COL).toInteger(0);
 
       ttx.mutate().row(row).col(Constants.COUNT_SEEN_COL).set(childSeen + childWait);
       ttx.mutate().row(row).col(Constants.COUNT_WAIT_COL).delete();
-      
+
       try {
         Node node = new Node(row.toString());
         if (node.isRoot() == false) {
@@ -54,10 +54,10 @@ public class NodeObserver extends AbstractObserver {
       } catch (IllegalArgumentException e) {
         log.error(e.getMessage());
         e.printStackTrace();
-      } 
+      }
     }
   }
-    
+
   @Override
   public ObservedColumn getObservedColumn() {
     return new ObservedColumn(Constants.COUNT_WAIT_COL, NotificationType.STRONG);

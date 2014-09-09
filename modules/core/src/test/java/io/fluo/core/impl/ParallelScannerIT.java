@@ -72,24 +72,24 @@ public class ParallelScannerIT extends TestBaseImpl {
         }
       }
     };
-    
+
     Thread commitThread = new Thread(finishCommitTask);
     commitThread.start();
-    
+
     TestTransaction tx3 = new TestTransaction(env);
 
     Column e1Col = typeLayer.newColumn().fam("vote").qual("election1").vis();
-    
+
     // normally when this test runs, some of the row/columns being read below will be locked for a bit
     Map<String,Map<Column,Value>> votes = tx3.getd(Arrays.asList("bob9", "joe3", "sue4", "eve2"), Collections.singleton(e1Col));
-    
+
     Assert.assertEquals("N", votes.get("bob9").get(e1Col).toString(""));
     Assert.assertEquals("nay", votes.get("joe3").get(e1Col).toString(""));
     Assert.assertEquals("+1", votes.get("sue4").get(e1Col).toString(""));
     Assert.assertEquals("no", votes.get("eve2").get(e1Col).toString(""));
     Assert.assertEquals(4, votes.size());
-    
-    
+
+
   }
 
   @Test
@@ -137,14 +137,16 @@ public class ParallelScannerIT extends TestBaseImpl {
     long commitTs = OracleClient.getInstance(env).getTimestamp();
     tx3.commitPrimaryColumn(cd3, commitTs);
 
-    if (closeTransID)
+    if (closeTransID) {
       transID1.close();
+    }
 
     check();
     check();
 
-    if (!closeTransID)
+    if (!closeTransID) {
       transID1.close();
+    }
   }
 
   void check() throws Exception {

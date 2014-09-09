@@ -16,8 +16,8 @@
 package io.fluo.core.exceptions;
 
 /**
- * 
+ *
  */
 public class AlreadyAcknowledgedException extends CommitException {
-  
+  private static final long serialVersionUID = 1L;
 }

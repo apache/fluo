@@ -23,7 +23,7 @@ public class LexicoEncoder implements Encoder {
 
   private IntegerLexicoder il = new IntegerLexicoder();
   private LongLexicoder ll = new LongLexicoder();
-  
+
   @Override
   public int decodeInteger(Bytes b) {
     return il.decode(b.toArray());

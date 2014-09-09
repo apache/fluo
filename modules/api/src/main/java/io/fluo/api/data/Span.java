@@ -21,20 +21,20 @@ import com.google.common.base.Preconditions;
  * Used to specify a span between two row/columns in a Fluo table
  */
 public class Span {
-    
+
   private RowColumn start = RowColumn.EMPTY;
   private boolean startInclusive = true;
   private RowColumn end = RowColumn.EMPTY;
   private boolean endInclusive = true;
-      
+
   /**
    * Constructs a span with infinite start & end
    */
   public Span() { }
-  
+
   /**
    * Construct a new Range using a builder class
-   * 
+   *
    * @param builder
    */
   public Span(Builder builder) {
@@ -55,7 +55,7 @@ public class Span {
       }
     }
   }
- 
+
   private static RowColumn buildRowColumn(KeyBuilder key) {
     if (key.infinite || key.row.equals(Bytes.EMPTY)) {
       return RowColumn.EMPTY;
@@ -68,11 +68,11 @@ public class Span {
     }
     return new RowColumn(key.row, new Column(key.cf, key.cq, key.cv));
   }
-  
+
   /**
    * Construct a new span from a start and end RowColumn.  Set either key
    * to RowColumn.EMPTY to indicate positive or negative infinite
-   * 
+   *
    * @param startKey Start key
    * @param startKeyInclusive Include start key in Range
    * @param endKey End Key
@@ -86,11 +86,11 @@ public class Span {
     this.end = end;
     this.endInclusive = endInclusive;
   }
-    
+
   /**
    * Construct a new Span from a start and end row.  Set either row to
    * Bytes.EMPTY to indicate positive or negative infinite.
-   * 
+   *
    * @param startRow Start row
    * @param startRowInclusive Start row inclusive
    * @param endRow End row
@@ -116,11 +116,11 @@ public class Span {
       }
     }
   }
-  
+
   /**
    * Construct a new Span from a start and end row.
    * Strings will be encoded as UTF-8.
-   * 
+   *
    * @param startRow Start row
    * @param startRowInclusive Start row inclusive
    * @param endRow End row
@@ -129,28 +129,28 @@ public class Span {
   public Span(String startRow, boolean startRowInclusive, String endRow, boolean endRowInclusive) {
     this(Bytes.wrap(startRow), startRowInclusive, Bytes.wrap(endRow), endRowInclusive);
   }
-    
+
   /**
-   * Return start RowColumn of Span. 
-   * 
+   * Return start RowColumn of Span.
+   *
    * @return start or RowColumn.EMPTY if infinite start
    */
   public RowColumn getStart() {
     return start;
   }
- 
+
   /**
    * Return end RowColumn of Span
-   * 
+   *
    * @return end or RowColumn.EMPTY if infinite end
    */
   public RowColumn getEnd() {
     return end;
   }
-  
+
   /**
    * Checks if start RowColumn is inclusive
-   * 
+   *
    * @return True if start key is inclusive
    */
   public boolean isStartInclusive() {
@@ -159,44 +159,44 @@ public class Span {
 
   /**
    * Check if end RowColumn is inclusive
-   * 
+   *
    * @return True if end key is inclusive
    */
   public boolean isEndInclusive() {
     return endInclusive;
   }
-        
+
   @Override
   public boolean equals(Object o) {
     if (o instanceof Span)
       return equals((Span) o);
     return false;
   }
-  
+
   /**
    * Checks if span is equal to another span
-   * 
+   *
    * @param other Span
    * @return true if equal
    */
   public boolean equals(Span other) {
-    return start.equals(other.start) && (startInclusive == other.startInclusive) 
+    return start.equals(other.start) && (startInclusive == other.startInclusive)
         && end.equals(other.end) && (endInclusive == other.endInclusive);
   }
-  
+
   @Override
   public String toString() {
-    return ((startInclusive && !start.equals(RowColumn.EMPTY)) ? "[" : "(") + (start.equals(RowColumn.EMPTY) ? "-inf" : start) + "," + 
+    return ((startInclusive && !start.equals(RowColumn.EMPTY)) ? "[" : "(") + (start.equals(RowColumn.EMPTY) ? "-inf" : start) + "," +
         (end.equals(RowColumn.EMPTY) ? "+inf" : end) + ((endInclusive && !end.equals(RowColumn.EMPTY)) ? "]" : ")");
   }
-  
+
   /**
    * Creates a span that covers an exact row
    */
   public static Span exact(Bytes row) {
     return new Span(row, true, row, true);
   }
-  
+
   /**
    * Creates a Span that covers an exact row.
    * String parameters will be encoded as UTF-8
@@ -204,7 +204,7 @@ public class Span {
   public static Span exact(String row) {
     return exact(Bytes.wrap(row));
   }
-  
+
   /**
    * Creates a Span that covers an exact row and column family
    */
@@ -212,7 +212,7 @@ public class Span {
     RowColumn start = new RowColumn(row, new Column(cf));
     return new Span(start, true, start.following(), false);
   }
-  
+
   /**
    * Creates a Span that covers an exact row and column family
    * String parameters will be encoded as UTF-8
@@ -220,7 +220,7 @@ public class Span {
   public static Span exact(String row, String cf) {
     return exact(Bytes.wrap(row), Bytes.wrap(cf));
   }
-  
+
   /**
    * Creates a Span that covers an exact row, column family, and column qualifier
    */
@@ -228,7 +228,7 @@ public class Span {
     RowColumn start = new RowColumn(row, new Column(cf, cq));
     return new Span(start, true, start.following(), false);
   }
-  
+
   /**
    * Creates a Span that covers an exact row, column family, and column qualifier
    * String parameters will be encoded as UTF-8
@@ -236,7 +236,7 @@ public class Span {
   public static Span exact(String row, String cf, String cq) {
     return exact(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq));
   }
-  
+
   /**
    * Creates a Span that covers an exact row, column family, column qualifier, and column visibility
    */
@@ -244,7 +244,7 @@ public class Span {
     RowColumn start = new RowColumn(row, new Column(cf, cq, cv));
     return new Span(start, true, start.following(), false);
   }
-  
+
   /**
    * Creates a Span that covers an exact row, column family, column qualifier, and column visibility
    * String parameters will be encoded as UTF-8
@@ -252,26 +252,26 @@ public class Span {
   public static Span exact(String row, String cf, String cq, String cv) {
     return exact(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq), Bytes.wrap(cv));
   }
-  
+
   private static Bytes followingPrefix(Bytes prefix) {
     byte[] prefixBytes = prefix.toArray();
-    
+
     // find the last byte in the array that is not 0xff
     int changeIndex = prefix.length() - 1;
     while (changeIndex >= 0 && prefixBytes[changeIndex] == (byte) 0xff)
       changeIndex--;
     if (changeIndex < 0)
       return null;
-    
+
     // copy prefix bytes into new array
     byte[] newBytes = new byte[changeIndex + 1];
     System.arraycopy(prefixBytes, 0, newBytes, 0, changeIndex + 1);
-    
+
     // increment the selected byte
     newBytes[changeIndex]++;
     return Bytes.wrap(newBytes);
   }
-  
+
   /**
    * Returns a Span that covers all rows beginning with a prefix
    */
@@ -279,7 +279,7 @@ public class Span {
     Bytes fp = followingPrefix(rowPrefix);
     return new Span(rowPrefix, true, fp == null ? Bytes.EMPTY : fp, false);
   }
-  
+
   /**
    * Returns a Span that covers all rows beginning with a prefix
    * String parameters will be encoded as UTF-8
@@ -287,7 +287,7 @@ public class Span {
   public static Span prefix(String rowPrefix) {
     return prefix(Bytes.wrap(rowPrefix));
   }
-  
+
   /**
    * Returns a Span that covers all column families beginning with a prefix within a given row
    */
@@ -296,7 +296,7 @@ public class Span {
     RowColumn end = (fp == null ? new RowColumn(row).following() : new RowColumn(row, new Column(fp)));
     return new Span(new RowColumn(row, new Column(cfPrefix)), true, end, false);
   }
-  
+
   /**
    * Returns a Span that covers all column families beginning with a prefix within a given row
    * String parameters will be encoded as UTF-8
@@ -304,7 +304,7 @@ public class Span {
   public static Span prefix(String row, String cfPrefix) {
     return prefix(Bytes.wrap(row), Bytes.wrap(cfPrefix));
   }
-  
+
   /**
    * Returns a Span that covers all column qualifiers beginning with a prefix within a given row
    * and column family
@@ -314,7 +314,7 @@ public class Span {
     RowColumn end = (fp == null ? new RowColumn(row, new Column(cf)).following() : new RowColumn(row, new Column(cf, fp)));
     return new Span(new RowColumn(row, new Column(cf, cqPrefix)), true, end, false);
   }
-  
+
   /**
    * Returns a Span that covers all column qualifiers beginning with a prefix within a given row
    * String parameters will be encoded as UTF-8
@@ -322,7 +322,7 @@ public class Span {
   public static Span prefix(String row, String cf, String cqPrefix) {
     return prefix(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cqPrefix));
   }
-  
+
   /**
    * Returns a Span that covers all column visibilities beginning with a prefix within a given row,
    * column family, and column qualifier.
@@ -332,7 +332,7 @@ public class Span {
     RowColumn end = (fp == null ? new RowColumn(row, new Column(cf, cq)).following() : new RowColumn(row, new Column(cf, cq, fp)));
     return new Span(new RowColumn(row, new Column(cf, cq, cvPrefix)), true, end, false);
   }
-  
+
   /**
    * Returns a Span that covers all column visibilities beginning with a prefix within a given row
    * String parameters will be encoded as UTF-8
@@ -340,7 +340,7 @@ public class Span {
   public static Span prefix(String row, String cf, String cq, String cvPrefix) {
     return prefix(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq), Bytes.wrap(cvPrefix));
   }
-  
+
   public static class KeyBuilder {
     protected Bytes row = Bytes.EMPTY;
     protected Bytes cf = Bytes.EMPTY;
@@ -349,12 +349,12 @@ public class Span {
     protected boolean inclusive = true;
     protected boolean infinite = true;
   }
-  
+
   public static class Builder {
-    
+
     private KeyBuilder start = new KeyBuilder();
     private KeyBuilder end = new KeyBuilder();
-    
+
     /**
      * Build start of Span starting with row
      */
@@ -363,14 +363,14 @@ public class Span {
       this.start.infinite = false;
       return new StartCFBuilder(this);
     }
-    
+
     /**
      * Build start of Span starting with row (will be encoded UTF-8)
      */
     public StartCFBuilder startRow(String row) {
       return startRow(Bytes.wrap(row));
     }
-    
+
     /**
      * Build end of Span starting with row
      */
@@ -379,41 +379,41 @@ public class Span {
       this.end.infinite = false;
       return new EndCFBuilder(this);
     }
-    
+
     /**
-     * Build end of Span starting with row (will be encoded UTF-8) 
+     * Build end of Span starting with row (will be encoded UTF-8)
      */
     public EndCFBuilder endRow(String row) {
       return endRow(Bytes.wrap(row));
     }
-        
+
     public Span build() {
       return new Span(this);
     }
   }
-    
+
   public static class StartBuilder {
-    
+
     protected Builder builder;
-    
+
     public StartBuilder(Builder builder) {
       this.builder = builder;
     }
-    
+
     /**
-     * Build Span end starting with row 
+     * Build Span end starting with row
      */
     public EndCFBuilder endRow(Bytes row) {
       return this.builder.endRow(row);
     }
-    
+
     /**
      * Build Span end starting with row (will be encoded UTF-8)
      */
     public EndCFBuilder endRow(String row) {
       return endRow(Bytes.wrap(row));
     }
-    
+
     /**
      * Exclude start from Span
      */
@@ -421,20 +421,20 @@ public class Span {
       this.builder.start.inclusive = false;
       return this;
     }
-    
+
     public Span build() {
       return new Span(builder);
     }
   }
-  
+
   public static class EndBuilder {
-    
+
     protected Builder builder;
-    
+
     public EndBuilder(Builder builder) {
       this.builder = builder;
     }
-        
+
     /**
      * Exclude end from Span
      */
@@ -442,7 +442,7 @@ public class Span {
       this.builder.end.inclusive = false;
       return this;
     }
-    
+
     /**
      * Build Span
      */
@@ -450,13 +450,13 @@ public class Span {
       return new Span(builder);
     }
   }
-    
+
   public static class StartCVBuilder extends StartBuilder {
-    
+
     public StartCVBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column visibility to Span start
      */
@@ -464,7 +464,7 @@ public class Span {
       this.builder.start.cv = cv;
       return new StartBuilder(this.builder);
     }
-    
+
     /**
      * Add column visibility (will be encoded UTF-8) to Span start
      */
@@ -472,13 +472,13 @@ public class Span {
       return cv(Bytes.wrap(cv));
     }
   }
-  
+
   public static class StartCQBuilder extends StartBuilder {
-    
+
     public StartCQBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column qualifier to Span start
      */
@@ -486,21 +486,21 @@ public class Span {
       this.builder.start.cq = cq;
       return new StartCVBuilder(this.builder);
     }
-    
+
     /**
-     * Add column qualifier (will be encoded UTF-8) to Span start 
+     * Add column qualifier (will be encoded UTF-8) to Span start
      */
     public StartCVBuilder cq(String cq) {
       return cq(Bytes.wrap(cq));
     }
   }
-  
+
   public static class StartCFBuilder extends StartBuilder {
-    
+
     public StartCFBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column family to Span start
      */
@@ -508,7 +508,7 @@ public class Span {
       this.builder.start.cf = cf;
       return new StartCQBuilder(this.builder);
     }
-    
+
     /**
      * Add column family (will be encoded UTF-8) to Span start
      */
@@ -516,13 +516,13 @@ public class Span {
       return cf(Bytes.wrap(cf));
     }
   }
-  
+
   public static class EndCVBuilder extends EndBuilder {
-    
+
     public EndCVBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column visibility to Span end
      */
@@ -530,7 +530,7 @@ public class Span {
       this.builder.end.cv = cv;
       return this;
     }
-    
+
     /**
      * Add column visibility (will be encoded UTF-8) to Span end
      */
@@ -538,13 +538,13 @@ public class Span {
       return cv(Bytes.wrap(cv));
     }
   }
-  
+
   public static class EndCQBuilder extends EndBuilder {
-    
+
     public EndCQBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column qualifier to Span end
      */
@@ -552,7 +552,7 @@ public class Span {
       this.builder.end.cq = cq;
       return new EndCVBuilder(this.builder);
     }
-    
+
     /**
      * Add column qualifier (will be encoded UTF-8) to Span end
      */
@@ -560,13 +560,13 @@ public class Span {
       return cq(Bytes.wrap(cq));
     }
   }
-  
+
   public static class EndCFBuilder extends EndBuilder {
-    
+
     public EndCFBuilder(Builder builder) {
       super(builder);
     }
-    
+
     /**
      * Add column family to an Span end
      */
@@ -574,7 +574,7 @@ public class Span {
       this.builder.end.cf = cf;
       return new EndCQBuilder(this.builder);
     }
-    
+
     /**
      * Add column family (will be encoded UTF-8) to an Span end
      */

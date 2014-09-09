@@ -33,42 +33,42 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * 
+ *
  */
 public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
-  
+
   private static final String TIMESTAMP_OPT = "timestampOpt";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
-  
+
   private SortedKeyValueIterator<Key,Value> source;
   private long snaptime;
   private boolean hasTop = false;
-  
+
   private Key curCol = new Key();
-  
+
   private void findTop() throws IOException {
     while (source.hasTop()) {
       long invalidationTime = -1;
       long dataPointer = -1;
-      
+
       if (source.getTopKey().getColumnFamilyData().equals(NOTIFY_CF_BS)) {
         source.next();
         continue;
       }
 
       curCol.set(source.getTopKey());
-      
+
       while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
         long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
         long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-        
+
         if (colType == ColumnConstants.TX_DONE_PREFIX) {
-          
+
         } else if (colType == ColumnConstants.WRITE_PREFIX) {
           // TODO check of truncated writes
-          
+
           long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
-          
+
           if (timePtr > invalidationTime)
             invalidationTime = timePtr;
 
@@ -80,7 +80,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
           }
         } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
           long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
-          
+
           if (timePtr > invalidationTime)
             invalidationTime = timePtr;
         } else if (colType == ColumnConstants.LOCK_PREFIX) {
@@ -93,44 +93,44 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
             // found data for this column
             return;
           }
-          
+
           // TODO could possibly seek to next col when ts < dataPointer
         } else if (colType == ColumnConstants.ACK_PREFIX) {
-          
+
         } else {
           throw new IllegalArgumentException();
         }
-        
+
         // TODO handle case where dataPointer >=0, but no data was found
         source.next();
       }
     }
   }
-  
+
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
     // TODO could require client to send version as a sanity check
   }
-  
+
   public boolean hasTop() {
     return hasTop && source.hasTop();
   }
-  
+
   public void next() throws IOException {
     Key nextCol = source.getTopKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
-    
+
     // TODO seek (consider data size)
     while (source.hasTop() && source.getTopKey().compareTo(nextCol) < 0) {
       source.next();
     }
-    
+
     findTop();
-    
+
   }
-  
+
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-    
+
     // handle continue case
     hasTop = true;
     if (range.getStartKey() != null && range.getStartKey().getTimestamp() != Long.MAX_VALUE && !range.isStartKeyInclusive()) {
@@ -141,26 +141,26 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
         range = new Range(nextCol, true, range.getEndKey(), range.isEndKeyInclusive());
       }
     }
-    
+
     // TODO could possibly exclude notification locality group
     source.seek(range, columnFamilies, inclusive);
-    
+
     findTop();
   }
-  
+
   public Key getTopKey() {
     return source.getTopKey();
   }
-  
+
   public Value getTopValue() {
     return source.getTopValue();
   }
-  
+
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO implement
     throw new UnsupportedOperationException();
   }
-  
+
   public static void setSnaptime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
       throw new IllegalArgumentException();

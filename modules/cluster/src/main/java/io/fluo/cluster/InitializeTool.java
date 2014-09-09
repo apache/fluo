@@ -28,11 +28,11 @@ import io.fluo.cluster.util.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
+/**
  * Initializes Fluo using properties in configuration files
  */
 public class InitializeTool {
-  
+
   private static Logger log = LoggerFactory.getLogger(InitializeTool.class);
 
   public static void main(String[] args) throws Exception {

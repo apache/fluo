@@ -30,24 +30,24 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.hadoop.io.Text;
 
 /**
- * 
+ *
  */
 public class RandomTabletChooser {
-  
+
   private static final long CACHE_TIME = 5 * 60 * 1000;
 
   static class TabletInfo {
-    Text start;
-    Text end;
-    Lock lock = new ReentrantLock();
+    final Text start;
+    final Text end;
+    final Lock lock = new ReentrantLock();
     long retryTime;
     long sleepTime = 100;
-    
+
     TabletInfo(Text start, Text end) {
       this.start = start;
       this.end = end;
     }
-    
+
     private int hashCode(Text t) {
       if (t == null)
         return 0;
@@ -57,38 +57,38 @@ public class RandomTabletChooser {
     public int hashCode() {
       return hashCode(start) + hashCode(end);
     }
-    
+
     private boolean equals(Text t1, Text t2) {
       if (t1 == t2)
         return true;
-      
+
       if (t1 == null || t2 == null)
         return false;
-      
+
       return t1.equals(t2);
     }
-    
+
     public boolean equals(Object o) {
       if (o instanceof TabletInfo) {
         TabletInfo oti = (TabletInfo) o;
-        
+
         if (equals(start, oti.start)) {
           return equals(end, oti.end);
         }
-        
+
         return false;
       }
-      
+
       return false;
     }
 
   }
-  
-  private Environment env;
+
+  private final Random rand = new Random();
+  private final Environment env;
   private List<TabletInfo> cachedTablets;
-  private Random rand = new Random();
   private long listSplitsTime = 0;
-  
+
   public RandomTabletChooser(Environment env) {
     this.env = env;
   }
@@ -96,17 +96,17 @@ public class RandomTabletChooser {
   private List<TabletInfo> listSplits() throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
     List<Text> splits = new ArrayList<Text>(env.getConnector().tableOperations().listSplits(env.getTable()));
     Collections.sort(splits);
-    
+
     List<TabletInfo> tablets = new ArrayList<RandomTabletChooser.TabletInfo>(splits.size() + 1);
     for (int i = 0; i < splits.size(); i++) {
       tablets.add(new TabletInfo(i == 0 ? null : splits.get(i - 1), splits.get(i)));
     }
-    
+
     tablets.add(new TabletInfo(splits.size() == 0 ? null : splits.get(splits.size() - 1), null));
     listSplitsTime = System.currentTimeMillis();
     return tablets;
   }
-  
+
   private synchronized List<TabletInfo> getTablets() throws Exception {
     if (cachedTablets == null) {
       cachedTablets = listSplits();
@@ -116,9 +116,9 @@ public class RandomTabletChooser {
       for (TabletInfo tabletInfo : cachedTablets) {
         oldTablets.put(tabletInfo, tabletInfo);
       }
-      
+
       List<TabletInfo> newTablets = new ArrayList<TabletInfo>(tablets.size());
-      
+
       for (TabletInfo tabletInfo : tablets) {
         TabletInfo oldTI = oldTablets.get(tabletInfo);
         if (oldTI != null)
@@ -126,10 +126,10 @@ public class RandomTabletChooser {
         else
           newTablets.add(tabletInfo);
       }
-      
+
       cachedTablets = newTablets;
     }
-    
+
     return cachedTablets;
   }
 
@@ -141,5 +141,5 @@ public class RandomTabletChooser {
     else
       return null;
   }
-  
+
 }

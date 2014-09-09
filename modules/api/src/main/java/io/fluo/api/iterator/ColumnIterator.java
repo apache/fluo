@@ -26,5 +26,5 @@ import io.fluo.api.data.Column;
  * Iterator for Fluo Columns
  */
 public interface ColumnIterator extends Iterator<Entry<Column,Bytes>> {
-  
+
 }

@@ -16,8 +16,8 @@
 package io.fluo.core.exceptions;
 
 /**
- * 
+ *
  */
 public class StaleScanException extends RuntimeException {
-  
+  private static final long serialVersionUID = 1L;
 }

@@ -26,5 +26,5 @@ import io.fluo.api.data.Bytes;
  * Iterator for Fluo rows
  */
 public interface RowIterator extends Iterator<Entry<Bytes,ColumnIterator>> {
-  
+
 }

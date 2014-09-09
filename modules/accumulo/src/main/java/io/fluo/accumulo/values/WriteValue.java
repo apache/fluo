@@ -18,23 +18,23 @@ package io.fluo.accumulo.values;
 import io.fluo.accumulo.util.ByteArrayUtil;
 
 /**
- * 
+ *
  */
 public class WriteValue {
   private boolean primary;
   private boolean truncated;
   long ts;
-  
+
   public WriteValue(byte[] data) {
     primary = isPrimary(data);
     truncated = isTruncated(data);
     ts = getTimestamp(data);
   }
-  
+
   public boolean isPrimary() {
     return primary;
   }
-  
+
   public boolean isTruncated() {
     return truncated;
   }
@@ -50,7 +50,7 @@ public class WriteValue {
   public static boolean isTruncated(byte[] data) {
     return (data[0] & 0x02) == 2;
   }
-  
+
   public static boolean isPrimary(byte[] data) {
     return (data[0] & 0x01) == 1;
   }

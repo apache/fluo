@@ -81,7 +81,7 @@ public class LockResolver {
 
   /**
    * Attempts to roll forward or roll back a set of locks encountered by a transaction reading data.
-   * 
+   *
    * @param env
    *          environment
    * @param startTs
@@ -233,7 +233,7 @@ public class LockResolver {
 
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
       Column col = SpanUtil.toRowColumn(entry.getKey()).getColumn();
-      
+
       LockValue lv = new LockValue(entry.getValue().get());
       ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, env.getObservers().keySet(), mut);
     }

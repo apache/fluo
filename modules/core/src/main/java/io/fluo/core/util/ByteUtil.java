@@ -25,16 +25,16 @@ import org.apache.hadoop.io.Text;
  * Bytes objects to external formats
  */
 public class ByteUtil {
-  
-  public static final byte[] EMPTY = new byte[0];
-  
+
+  private static final byte[] EMPTY = new byte[0];
+
   private ByteUtil() {}
 
 
 
   /**
    * Convert from Bytes to Hadoop Text object
-   * 
+   *
    * @param b Bytes
    * @return Text object
    */
@@ -47,20 +47,20 @@ public class ByteUtil {
       return new Text(b.toArray());
     }
   }
-  
+
   /**
    * Convert from Hadoop Text to Bytes object
-   * 
+   *
    * @param t Text
    * @return Bytes object
    */
   public static Bytes toBytes(Text t) {
     return Bytes.wrap(t.getBytes(), 0, t.getLength());
   }
-  
+
   /**
    * Convert from Bytes to ByteSequence object
-   * 
+   *
    * @param b Bytes
    * @return ByteSequence object
    */
@@ -71,7 +71,7 @@ public class ByteUtil {
       return new ArrayByteSequence(b.toArray());
     }
   }
-  
+
   /**
    * Converts from ByteSequence to Bytes. If the ByteSequenc has a backing
    * array, that array (and the buffer's offset and limit) are used.  Otherwise,

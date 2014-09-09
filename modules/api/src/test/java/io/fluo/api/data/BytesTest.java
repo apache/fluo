@@ -28,34 +28,34 @@ public class BytesTest {
 
   @Test
   public void testBytesWrap() {
-    
+
     String s1 = "test1";
     Bytes b1 = Bytes.wrap(s1);
     Assert.assertArrayEquals(s1.getBytes(), b1.toArray());
     Assert.assertEquals(s1, b1.toString());
-    
+
     String s2 = "test2";
     ByteBuffer bb = ByteBuffer.wrap(s2.getBytes());
     Bytes b2 = Bytes.wrap(bb);
     Assert.assertArrayEquals(s2.getBytes(), b2.toArray());
     Assert.assertEquals(s2, b2.toString());
-    
+
     String s3 = "test3";
     Bytes b3 = Bytes.wrap(s3.getBytes());
     Assert.assertArrayEquals(s3.getBytes(), b3.toArray());
     Assert.assertEquals(s3, b3.toString());
   }
-  
+
   @Test
   public void testConcatSplit() {
-    
+
     Bytes b1 = Bytes.wrap("str1");
     Bytes b2 = Bytes.wrap("string2");
     Bytes b3 = Bytes.wrap("s3");
     Bytes ball = Bytes.concat(b1, b2, b3);
-    
+
     List<Bytes> blist = Bytes.split(ball);
-    
+
     Assert.assertEquals(b1, blist.get(0));
     Assert.assertEquals(b2, blist.get(1));
     Assert.assertEquals(b3, blist.get(2));

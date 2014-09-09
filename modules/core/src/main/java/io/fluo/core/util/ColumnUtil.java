@@ -39,7 +39,7 @@ import org.apache.accumulo.core.data.Value;
  * Utilities for modifying columns in Fluo
  */
 public class ColumnUtil {
-  
+
   private ColumnUtil() {}
 
   public static byte[] concatCFCQ(Column c) {
@@ -54,7 +54,7 @@ public class ColumnUtil {
       m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | commitTs,
           new Value(DelLockValue.encode(startTs, isPrimary, false)));
     }
-    
+
     if (isTrigger) {
       m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
@@ -63,10 +63,10 @@ public class ColumnUtil {
       m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), commitTs, TransactionImpl.EMPTY);
     }
   }
-  
+
   public static Entry<Key,Value> checkColumn(Environment env, IteratorSetting iterConf, Bytes row, Column col) {
     Span span = Span.exact(row, col.getFamily(), col.getQualifier(), col.getVisibility());
-    
+
     Scanner scanner;
     try {
       // TODO reuse or share scanner
@@ -77,17 +77,17 @@ public class ColumnUtil {
     }
     scanner.setRange(SpanUtil.toRange(span));
     scanner.addScanIterator(iterConf);
-    
+
     Iterator<Entry<Key,Value>> iter = scanner.iterator();
     if (iter.hasNext()) {
       Entry<Key,Value> entry = iter.next();
-      
+
       Key k = entry.getKey();
       Bytes r = Bytes.wrap(k.getRowData().toArray());
       Bytes cf = Bytes.wrap(k.getColumnFamilyData().toArray());
       Bytes cq = Bytes.wrap(k.getColumnQualifierData().toArray());
       Bytes cv = Bytes.wrap(k.getColumnVisibilityData().toArray());
-      
+
       if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
           && cv.equals(col.getVisibility())) {
         return entry;
@@ -95,7 +95,7 @@ public class ColumnUtil {
         throw new RuntimeException("unexpected key " + k + " " + row + " " + col);
       }
     }
-    
+
     return null;
   }
 }

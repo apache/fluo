@@ -18,7 +18,7 @@ package io.fluo.api.client;
 import java.io.Closeable;
 
 /**
- * Executes Fluo Loader classes 
+ * Executes Fluo Loader classes
  */
 public interface LoaderExecutor extends Closeable {
 

@@ -40,17 +40,16 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * 
+ *
  */
 public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
-  private long startTs;
+  private final long startTs;
+  private final Environment env;
+  private final TxStats stats;
+  private ScannerConfiguration config;
   private Iterator<Entry<Key,Value>> iterator;
   private Entry<Key,Value> next;
-  private ScannerConfiguration config;
-
-  private Environment env;
-  private TxStats stats;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -63,7 +62,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.stats = stats;
     setUpIterator();
   }
-  
+
   private void setUpIterator() {
     Scanner scanner;
     try {
@@ -73,11 +72,11 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
     scanner.clearColumns();
     scanner.clearScanIterators();
-    
+
     scanner.setRange(SpanUtil.toRange(config.getSpan()));
 
     setupScanner(scanner, config.getColumns(), startTs);
-    
+
     this.iterator = scanner.iterator();
   }
 
@@ -89,30 +88,30 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
       }
     }
-    
+
     IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);
     scanner.addScanIterator(iterConf);
   }
-  
+
   public boolean hasNext() {
     if (next == null) {
       next = getNext();
     }
-    
+
     return next != null;
   }
-  
+
   public Entry<Key,Value> next() {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
-    
+
     Entry<Key,Value> tmp = next;
     next = null;
     return tmp;
   }
-  
+
   private void resetScanner(Span span) {
     try {
       config = (ScannerConfiguration) config.clone();

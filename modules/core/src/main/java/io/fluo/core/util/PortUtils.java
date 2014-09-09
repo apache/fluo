@@ -26,26 +26,28 @@ public class PortUtils {
   public static int getRandomFreePort() {
     Random r = new Random();
     int count = 0;
-    
+
     while (count < 13) {
       int port = r.nextInt((1 << 16) - 1024) + 1024;
-      
+
       ServerSocket so = null;
       try {
         so = new ServerSocket(port);
         so.setReuseAddress(true);
         return port;
       } catch (IOException ioe) {
-        
+        // TODO: should something be done here?
       } finally {
-        if (so != null)
+        if (so != null) {
           try {
             so.close();
-          } catch (IOException e) {}
+          } catch (IOException e) {
+            // TODO: should something be done here?
+          }
+        }
       }
-      
     }
-    
+
     throw new RuntimeException("Unable to find port");
   }
 }

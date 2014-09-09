@@ -28,15 +28,15 @@ public class FluoFactory {
   private static Logger log = LoggerFactory.getLogger(FluoFactory.class);
 
   /**
-   * Creates a Fluo client.  Configuration should contain properties 
-   * with client.* prefix.  Please review all client.* properties 
+   * Creates a Fluo client.  Configuration should contain properties
+   * with client.* prefix.  Please review all client.* properties
    * but many have a default.  At a minimum, configuration should
    * contain the following properties that have no default:
-   * 
+   *
    * io.fluo.client.accumulo.user
    * io.fluo.client.accumulo.password
    * io.fluo.client.accumulo.instance
-   * 
+   *
    * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return FluoClient
    */
@@ -44,19 +44,19 @@ public class FluoFactory {
     FluoConfiguration config = new FluoConfiguration(configuration);
     return buildClassWithConfig(config.getClientClass(), config);
   }
-  
+
   /**
-   * Creates a FluoAdmin client.  Configuration should contain properties 
-   * with client.* and admin.* prefix.  Please review all properties 
+   * Creates a FluoAdmin client.  Configuration should contain properties
+   * with client.* and admin.* prefix.  Please review all properties
    * but many have a default.  At a minimum, configuration should
    * contain the following properties that have no default:
-   * 
+   *
    * io.fluo.client.accumulo.user
    * io.fluo.client.accumulo.password
    * io.fluo.client.accumulo.instance
    * io.fluo.admin.accumulo.table
    * io.fluo.admin.accumulo.classpath
-   * 
+   *
    * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
    * @return FluoAdmin
    */
@@ -66,10 +66,10 @@ public class FluoFactory {
   }
 
   /**
-   * Creates a MiniFluo instance.  Please review all properties in 
-   * fluo.properties.  At a minimum, configuration should contain 
+   * Creates a MiniFluo instance.  Please review all properties in
+   * fluo.properties.  At a minimum, configuration should contain
    * the following properties that have no default:
-   * 
+   *
    * io.fluo.client.accumulo.user
    * io.fluo.client.accumulo.password
    * io.fluo.client.accumulo.instance

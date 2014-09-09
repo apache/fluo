@@ -53,10 +53,9 @@ public class Worker {
 
   private static Logger log = LoggerFactory.getLogger(Worker.class);
 
-  private Environment env;
-  private Random rand = new Random();
-
-  private RandomTabletChooser tabletChooser;
+  private final Environment env;
+  private final Random rand = new Random();
+  private final RandomTabletChooser tabletChooser;
 
   public Worker(Environment env, RandomTabletChooser tabletChooser) throws Exception {
     this.env = env;
@@ -81,11 +80,13 @@ public class Worker {
 
     ArrayList<Bytes> sample = new ArrayList<Bytes>();
 
-    for (Entry<Key,Value> entry : scanner)
+    for (Entry<Key,Value> entry : scanner) {
       sample.add(ByteUtil.toBytes(entry.getKey().getRow()));
+    }
 
-    if (sample.size() == 0)
+    if (sample.size() == 0) {
       return null;
+    }
 
     Bytes row = sample.get(rand.nextInt(sample.size()));
 
@@ -102,7 +103,7 @@ public class Worker {
         if (tablet.retryTime > System.currentTimeMillis()) {
           return null;
         }
-                
+
         Bytes start = tablet.start == null ? Bytes.EMPTY : ByteUtil.toBytes(tablet.start);
         Bytes end = tablet.end == null ? Bytes.EMPTY : ByteUtil.toBytes(tablet.end);
 
@@ -110,8 +111,9 @@ public class Worker {
         if (ret == null) {
           // remember if a tablet is empty an do not retry it for a bit... the more times empty, the longer the retry
           tablet.retryTime = tablet.sleepTime + System.currentTimeMillis();
-          if (tablet.sleepTime < MAX_SLEEP_TIME)
+          if (tablet.sleepTime < MAX_SLEEP_TIME) {
             tablet.sleepTime = tablet.sleepTime + (long) (tablet.sleepTime * Math.random());
+          }
         } else {
           tablet.retryTime = 0;
           tablet.sleepTime = 0;
@@ -133,8 +135,9 @@ public class Worker {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
 
     Span span = pickRandomStartPoint(scanner);
-    if (span == null)
+    if (span == null) {
       return 0;
+    }
 
     scanner.clearColumns();
     scanner.clearScanIterators();
@@ -171,8 +174,9 @@ public class Worker {
         try {
           txi = new TransactionImpl(env, row, col);
           Transaction tx = txi;
-          if (TracingTransaction.isTracingEnabled())
+          if (TracingTransaction.isTracingEnabled()) {
             tx = new TracingTransaction(tx);
+          }
 
           observer.process(tx, row, col);
           txi.commit();
@@ -197,8 +201,9 @@ public class Worker {
             return numProcessed;
           }
         } finally {
-          if (txi != null && TxLogger.isLoggingEnabled())
+          if (txi != null && TxLogger.isLoggingEnabled()) {
             TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+          }
         }
         // TODO if duplicate set detected, see if its because already acknowledged
       }
@@ -212,8 +217,9 @@ public class Worker {
     Observer observer = colObservers.get(col);
     if (observer == null) {
       ObserverConfiguration observerConfig = env.getObservers().get(col);
-      if (observerConfig == null)
+      if (observerConfig == null) {
         observerConfig = env.getWeakObservers().get(col);
+      }
 
       if (observerConfig != null) {
         observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();

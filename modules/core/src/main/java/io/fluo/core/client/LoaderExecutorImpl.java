@@ -34,12 +34,12 @@ import io.fluo.core.impl.LoadTask;
 public class LoaderExecutorImpl implements LoaderExecutor {
   private ExecutorService executor;
   private Semaphore semaphore;
-  
+
   private AtomicReference<Exception> exceptionRef = new AtomicReference<Exception>(null);
   private Environment env;
-  
+
   /**
-   * 
+   *
    * @param props
    *          To programmatically initialize use {@link io.fluo.api.config.FluoConfiguration}
    * @throws Exception
@@ -54,38 +54,41 @@ public class LoaderExecutorImpl implements LoaderExecutor {
       this.env = new Environment(config);
       return;
     }
-    
-    if (numThreads <= 0)
+
+    if (numThreads <= 0) {
       throw new IllegalArgumentException("numThreads must be positivie OR numThreads and queueSize must both be 0");
-    
-    if (queueSize < 0)
+    }
+
+    if (queueSize < 0) {
       throw new IllegalArgumentException("queueSize must be non-negative OR numThreads and queueSize must both be 0");
+    }
 
     this.env = new Environment(config);
     this.semaphore = new Semaphore(numThreads + queueSize);
     this.executor = Executors.newFixedThreadPool(numThreads);
   }
-  
+
   // TODO exception handling model
   @Override
   public void execute(Loader loader) {
-    
+
     if (executor == null) {
       new LoadTask(loader, env).run();
     } else {
-      if (exceptionRef.get() != null)
+      if (exceptionRef.get() != null) {
         throw new RuntimeException(exceptionRef.get());
-      
+      }
+
       final Runnable lt = new LoadTask(loader, env);
-      
+
       try {
         semaphore.acquire();
       } catch (InterruptedException e1) {
         throw new RuntimeException(e1);
       }
-      
+
       Runnable eht = new Runnable() {
-        
+
         @Override
         public void run() {
           try {
@@ -97,7 +100,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
           }
         }
       };
-      
+
       try {
         executor.execute(eht);
       } catch (RejectedExecutionException rje) {
@@ -119,11 +122,11 @@ public class LoaderExecutorImpl implements LoaderExecutor {
         }
       }
     }
-    
+
     env.getSharedResources().close();
 
     if (exceptionRef.get() != null)
       throw new RuntimeException(exceptionRef.get());
   }
-  
+
 }

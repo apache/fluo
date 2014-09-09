@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
  * Implementation of Fluo Client
  */
 public class FluoClientImpl implements FluoClient {
-  
+
   private static Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
   private FluoConfiguration config;
   private Environment env;
-  
+
   public FluoClientImpl(FluoConfiguration config) {
     this.config = config;
     if (!config.hasRequiredClientProps()) {

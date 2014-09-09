@@ -18,17 +18,18 @@ package io.fluo.core.oracle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.fluo.core.impl.ZookeeperConstants;
-
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.thrift.OracleService;
 import io.fluo.core.util.UtilWaitThread;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -122,7 +123,7 @@ public class OracleClient {
 
     private void doWork() {
 
-      ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
+      List<TimeRequest> request = new ArrayList<TimeRequest>();
 
       while (true) {
 
@@ -208,8 +209,9 @@ public class OracleClient {
     }
 
     private void close() {
-      if(transport.isOpen())
+      if(transport.isOpen()) {
         transport.close();
+      }
     }
 
     private boolean getLeaderAttempt() {
@@ -217,6 +219,7 @@ public class OracleClient {
       try {
         possibleLeader = leaderSelector.getLeader();
       } catch (KeeperException e) {
+        // TODO: should we do something here?
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -261,8 +264,8 @@ public class OracleClient {
 
   private static Map<String,OracleClient> clients = new HashMap<String,OracleClient>();
 
-  private Environment env;
-  private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<TimeRequest>(1000);
+  private final Environment env;
+  private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<TimeRequest>(1000);
 
   private OracleClient(Environment env) throws Exception {
     this.env = env;

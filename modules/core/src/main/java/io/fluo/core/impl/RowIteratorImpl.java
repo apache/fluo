@@ -29,32 +29,32 @@ import org.apache.accumulo.core.data.Value;
  * Implementation of RowIterator
  */
 public class RowIteratorImpl implements RowIterator {
-  
-  private org.apache.accumulo.core.client.RowIterator rowIter;
+
+  private final org.apache.accumulo.core.client.RowIterator rowIter;
 
   RowIteratorImpl(Iterator<Entry<Key,Value>> scanner) {
     rowIter = new org.apache.accumulo.core.client.RowIterator(scanner);
   }
-  
+
   public boolean hasNext() {
     return rowIter.hasNext();
   }
-  
+
   // TODO create custom class to return instead of entry
   public Entry<Bytes,ColumnIterator> next() {
     Iterator<Entry<Key,Value>> cols = rowIter.next();
-    
+
     Entry<Key,Value> entry = cols.next();
 
     final Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
     final ColumnIterator coliter = new ColumnIteratorImpl(entry, cols);
-    
+
     return new Entry<Bytes,ColumnIterator>() {
-      
+
       public Bytes getKey() {
         return row;
       }
-      
+
       public ColumnIterator getValue() {
         return coliter;
       }
@@ -65,9 +65,9 @@ public class RowIteratorImpl implements RowIterator {
     };
 
   }
-  
+
   public void remove() {
     rowIter.remove();
   }
-  
+
 }

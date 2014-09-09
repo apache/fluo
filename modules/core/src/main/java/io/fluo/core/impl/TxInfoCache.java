@@ -35,8 +35,8 @@ public class TxInfoCache {
     }
   }
 
-  private Cache<PrimaryRowColumn,TxInfo> cache;
-  private Environment env;
+  private final Cache<PrimaryRowColumn,TxInfo> cache;
+  private final Environment env;
 
   TxInfoCache(Environment env) {
     cache = CacheBuilder.newBuilder().expireAfterAccess(CACHE_TIMEOUT_MIN, TimeUnit.MINUTES).maximumWeight(10000000).weigher(new TxStatusWeigher())

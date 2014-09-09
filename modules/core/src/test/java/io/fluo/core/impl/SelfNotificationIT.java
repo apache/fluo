@@ -37,9 +37,9 @@ import org.junit.Test;
  * Test an observer notifying the column its observing.  This is a useful pattern for exporting data.
  */
 public class SelfNotificationIT extends TestBaseImpl {
-  
+
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
-  
+
   static final Column STAT_COUNT_COL = typeLayer.newColumn("stat", "count");
   static final Column EXPORT_CHECK_COL = typeLayer.newColumn("export", "check");
   static final Column EXPORT_COUNT_COL = typeLayer.newColumn("export", "count");
@@ -50,27 +50,27 @@ public class SelfNotificationIT extends TestBaseImpl {
   }
 
   static List<Integer> exports = new ArrayList<Integer>();
-  
+
   public static class ExportingObserver extends AbstractObserver {
-    
+
     @Override
     public void process(Transaction tx, Bytes row, Column col) throws Exception {
 
       TypedTransaction ttx = typeLayer.transaction(tx);
-       
+
       Integer currentCount = ttx.get().row(row).col(STAT_COUNT_COL).toInteger();
       Integer exportCount = ttx.get().row(row).col(EXPORT_COUNT_COL).toInteger();
-      
+
       if(exportCount != null){
         export(row, exportCount);
-        
+
         if(currentCount == null || exportCount.equals(currentCount)){
           ttx.mutate().row(row).col(EXPORT_COUNT_COL).delete();
         }else{
           ttx.mutate().row(row).col(EXPORT_COUNT_COL).set(currentCount);
           ttx.mutate().row(row).col(EXPORT_CHECK_COL).set();
         }
-        
+
       }
     }
 
@@ -83,47 +83,47 @@ public class SelfNotificationIT extends TestBaseImpl {
       return new ObservedColumn(EXPORT_COUNT_COL, NotificationType.STRONG);
     }
   }
-  
+
   @Test
   public void test1() throws Exception {
-    
+
     TestTransaction tx1 = new TestTransaction(env);
 
     tx1.mutate().row("r1").col(STAT_COUNT_COL).set(3);
     tx1.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     tx1.mutate().row("r1").col(EXPORT_COUNT_COL).set(3);
-    
+
     tx1.commit();
-    
+
     runWorker();
     Assert.assertEquals(Collections.singletonList(3), exports);
     exports.clear();
     runWorker();
     Assert.assertEquals(0, exports.size());
-   
+
     TestTransaction tx2 = new TestTransaction(env);
 
     Assert.assertNull(tx2.get().row("r1").col(EXPORT_COUNT_COL).toInteger());
-    
+
     tx2.mutate().row("r1").col(STAT_COUNT_COL).set(4);
     tx2.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     tx2.mutate().row("r1").col(EXPORT_COUNT_COL).set(4);
-    
+
     tx2.commit();
-    
+
     TestTransaction tx3 = new TestTransaction(env);
 
     tx3.mutate().row("r1").col(STAT_COUNT_COL).set(5);
     tx3.mutate().row("r1").col(EXPORT_CHECK_COL).set();
-    
+
     tx3.commit();
-    
+
     runWorker();
     Assert.assertEquals(Arrays.asList(4, 5), exports);
     exports.clear();
     runWorker();
     Assert.assertEquals(0, exports.size());
-    
+
   }
 
   // TODO test self notification w/ weak notifications

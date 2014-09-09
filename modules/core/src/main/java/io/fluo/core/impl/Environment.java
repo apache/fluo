@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.CuratorUtil;
+
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
@@ -47,7 +49,7 @@ import org.apache.zookeeper.KeeperException;
  * Holds common environment configuration and shared resources
  */
 public class Environment implements Closeable {
-  
+
   private String table;
   private Authorizations auths = new Authorizations();
   private String zoodir;
@@ -62,7 +64,7 @@ public class Environment implements Closeable {
   private FluoConfiguration config;
   private SharedResources resources;
   private long rollbackTime;
-  
+
   public Environment(Environment env) throws Exception {
     this.table = env.table;
     this.auths = env.auths;
@@ -83,7 +85,7 @@ public class Environment implements Closeable {
 
   private void init(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) {
     this.zoodir = zoodir;
-    
+
     try {
       readConfig(curator);
     } catch (Exception e1) {
@@ -107,7 +109,7 @@ public class Environment implements Closeable {
       throw new IllegalStateException(e2);
     }
   }
-  
+
   /**
    * @param properties
    */
@@ -129,28 +131,32 @@ public class Environment implements Closeable {
       init(curator, config.getZookeeperRoot(), conn, config.getOraclePort());
     }
   }
-    
+
   public Environment(File propFile) throws Exception {
     this(new FluoConfiguration(propFile));
   }
-  
+
+  private static String s(byte [] data) {
+    return new String(data, StandardCharsets.UTF_8);
+  }
+
   /**
    * read configuration from zookeeper
-   * 
+   *
    * @throws InterruptedException
    * @throws KeeperException
    */
   private void readConfig(CuratorFramework curator) throws Exception {
 
-    accumuloInstance = new String(curator.getData().forPath(ZookeeperConstants.instanceNamePath(zoodir)), "UTF-8");
-    accumuloInstanceID = new String(curator.getData().forPath(ZookeeperConstants.accumuloInstanceIdPath(zoodir)), "UTF-8");
-    fluoInstanceID = new String(curator.getData().forPath(ZookeeperConstants.fluoInstanceIdPath(zoodir)), "UTF-8");
+    accumuloInstance = s(curator.getData().forPath(ZookeeperConstants.instanceNamePath(zoodir)));
+    accumuloInstanceID = s(curator.getData().forPath(ZookeeperConstants.accumuloInstanceIdPath(zoodir)));
+    fluoInstanceID = s(curator.getData().forPath(ZookeeperConstants.fluoInstanceIdPath(zoodir)));
 
-    table = new String(curator.getData().forPath(ZookeeperConstants.tablePath(zoodir)), "UTF-8");
+    table = s(curator.getData().forPath(ZookeeperConstants.tablePath(zoodir)));
 
     ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.observersPath(zoodir)));
     DataInputStream dis = new DataInputStream(bais);
-    
+
     observers = Collections.unmodifiableMap(readObservers(dis));
     weakObservers = Collections.unmodifiableMap(readObservers(dis));
     allObserversColumns = new HashSet<Column>();
@@ -159,7 +165,7 @@ public class Environment implements Closeable {
     allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
 
     bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.sharedConfigPath(zoodir)));
-    Properties sharedProps = new Properties(); 
+    Properties sharedProps = new Properties();
     sharedProps.load(bais);
     config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
   }
@@ -167,7 +173,7 @@ public class Environment implements Closeable {
   private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
 
     HashMap<Column,ObserverConfiguration> omap = new HashMap<Column,ObserverConfiguration>();
-    
+
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = new Column();
@@ -186,7 +192,7 @@ public class Environment implements Closeable {
 
       omap.put(col, observerConfig);
     }
-    
+
     return omap;
   }
 
@@ -201,7 +207,7 @@ public class Environment implements Closeable {
       throw new RuntimeException(e);
     }
   }
-  
+
   public Authorizations getAuthorizations() {
     return auths;
   }
@@ -209,11 +215,11 @@ public class Environment implements Closeable {
   public String getAccumuloInstance() {
     return accumuloInstance;
   }
-  
+
   public String getAccumuloInstanceID() {
     return accumuloInstanceID;
   }
-  
+
   public String getFluoInstanceID() {
     return fluoInstanceID;
   }
@@ -229,11 +235,11 @@ public class Environment implements Closeable {
   public String getTable() {
     return table;
   }
-  
+
   public Connector getConnector() {
     return conn;
   }
-    
+
   public SharedResources getSharedResources() {
     return resources;
   }
@@ -241,11 +247,11 @@ public class Environment implements Closeable {
   public String getZookeeperRoot() {
     return zoodir;
   }
-  
+
   public String getZookeepers() {
     return getConnector().getInstance().getZooKeepers();
   }
-  
+
   public FluoConfiguration getConfiguration() {
     return config;
   }
@@ -253,7 +259,7 @@ public class Environment implements Closeable {
   public long getRollbackTime() {
     return rollbackTime;
   }
-  
+
   public int getOraclePort() {
     return oraclePort;
   }

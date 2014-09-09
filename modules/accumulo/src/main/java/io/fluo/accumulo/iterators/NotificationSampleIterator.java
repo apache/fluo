@@ -28,7 +28,7 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * 
+ *
  */
 public class NotificationSampleIterator implements SortedKeyValueIterator<Key,Value> {
 

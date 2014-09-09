@@ -33,29 +33,29 @@ import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * 
+ *
  */
 public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
   private static final String CHECK_ACK_OPT = "checkAckOpt";
-  
+
   private SortedKeyValueIterator<Key,Value> source;
   private long snaptime;
-  
+
   boolean hasTop = false;
   boolean checkAck = false;
-  
+
   public static void setSnaptime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
       throw new IllegalArgumentException();
     }
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
-  
+
   public static void enableAckCheck(IteratorSetting cfg) {
     cfg.addOption(CHECK_ACK_OPT, "true");
   }
-  
+
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
@@ -63,63 +63,63 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
       this.checkAck = Boolean.parseBoolean(options.get(CHECK_ACK_OPT));
     }
   }
-  
+
   public boolean hasTop() {
     return hasTop && source.hasTop();
   }
-  
+
   public void next() throws IOException {
     hasTop = false;
   }
-  
+
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
     IteratorUtil.maximizeStartKeyTimeStamp(range);
 
     source.seek(range, columnFamilies, inclusive);
-    
+
     Key curCol = new Key();
-    
+
     if (source.hasTop()) {
       curCol.set(source.getTopKey());
-      
+
       // TODO can this optimization cause problems?
       if (!curCol.equals(range.getStartKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
         return;
       }
     }
-    
+
     long invalidationTime = -1;
     long firstWrite = -1;
-    
+
     hasTop = false;
     while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-      
+
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        
+
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
-        
+
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
-        
+
         if (timePtr > invalidationTime)
           invalidationTime = timePtr;
-        
+
         if (firstWrite == -1) {
           firstWrite = ts;
         }
-        
+
         if (ts >= snaptime) {
           hasTop = true;
           return;
         }
-        
+
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
-        
+
         if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
-          
+
           // this delete marker will hide locks, so can not let a lock be written before it
           // TODO need unit test for this iterator... for this case
           if (timePtr >= snaptime) {
@@ -144,19 +144,19 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
       } else {
         throw new IllegalArgumentException();
       }
-      
+
       source.next();
     }
   }
-  
+
   public Key getTopKey() {
     return source.getTopKey();
   }
-  
+
   public Value getTopValue() {
     return source.getTopValue();
   }
-  
+
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO Auto-generated method stub
     return null;

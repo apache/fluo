@@ -17,6 +17,7 @@ package io.fluo.core.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import io.fluo.api.data.Column;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.UtilWaitThread;
+
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
@@ -40,15 +42,15 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class ParallelSnapshotScanner {
 
-  private Environment env;
-  private long startTs;
-  private HashSet<Bytes> unscannedRows;
-  private Set<Column> columns;
-  private TxStats stats;
+  private final Environment env;
+  private final long startTs;
+  private final HashSet<Bytes> unscannedRows;
+  private final Set<Column> columns;
+  private final TxStats stats;
 
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env, long startTs, TxStats stats) {
     this.unscannedRows = new HashSet<>(rows);
-    this.columns = columns;
+    this.columns = Collections.unmodifiableSet(columns);
     this.env = env;
     this.startTs = startTs;
     this.stats = stats;

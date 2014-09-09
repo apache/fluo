@@ -17,10 +17,10 @@
 package io.fluo.core.impl;
 
 public class TxStats {
+  private final long startTime;
   private long lockWaitTime = 0;
   private long entriesReturned = 0;
   private long entriesSet = 0;
-  private long startTime = 0;
   private long finishTime = 0;
   private long collisions = 0;
   // number of entries recovered from other transactions
@@ -55,11 +55,11 @@ public class TxStats {
   public long getRecovered() {
     return recovered;
   }
-  
+
   public long getDeadLocks() {
     return deadLocks;
   }
-  
+
   public long getTimedOutLocks() {
     return timedOutLocks;
   }
@@ -79,11 +79,11 @@ public class TxStats {
   void incrementCollisions(long c) {
     collisions += c;
   }
-  
+
   void incrementDeadLocks() {
     deadLocks++;
   }
-  
+
   void incrementTimedOutLocks() {
     timedOutLocks++;
   }
