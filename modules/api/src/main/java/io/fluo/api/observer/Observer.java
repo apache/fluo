@@ -55,7 +55,7 @@ public interface Observer {
   public void process(Transaction tx, Bytes row, Column col) throws Exception;
 
   /**
-   * Its safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from whats passed to
+   * It's safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from what's passed to
    * {@link #init(Map)}, then the derivation process should be deterministic.
    *
    * @return The column that will trigger this observer. During initialization this information is stored in zookeeper so that workers have a consistent view.
