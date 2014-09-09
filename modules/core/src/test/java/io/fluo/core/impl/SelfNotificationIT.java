@@ -40,9 +40,9 @@ public class SelfNotificationIT extends TestBaseImpl {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   
-  static final Column STAT_COUNT_COL = typeLayer.newColumn("stat", "count");
-  static final Column EXPORT_CHECK_COL = typeLayer.newColumn("export", "check");
-  static final Column EXPORT_COUNT_COL = typeLayer.newColumn("export", "count");
+  static final Column STAT_COUNT_COL = typeLayer.bc().fam("stat").qual("count").vis();
+  static final Column EXPORT_CHECK_COL = typeLayer.bc().fam("export").qual("check").vis();
+  static final Column EXPORT_COUNT_COL = typeLayer.bc().fam("export").qual("count").vis();
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
@@ -56,7 +56,7 @@ public class SelfNotificationIT extends TestBaseImpl {
     @Override
     public void process(Transaction tx, Bytes row, Column col) throws Exception {
 
-      TypedTransaction ttx = typeLayer.transaction(tx);
+      TypedTransaction ttx = typeLayer.wrap(tx);
        
       Integer currentCount = ttx.get().row(row).col(STAT_COUNT_COL).toInteger();
       Integer exportCount = ttx.get().row(row).col(EXPORT_COUNT_COL).toInteger();

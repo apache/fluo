@@ -18,9 +18,20 @@ package io.fluo.api.types;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.api.types.TypeLayer.RowAction;
-import io.fluo.api.types.TypeLayer.RowColumnBuilder;
+import io.fluo.api.types.TypeLayer.Data;
+import io.fluo.api.types.TypeLayer.FamilyMethods;
+import io.fluo.api.types.TypeLayer.QualifierMethods;
+import io.fluo.api.types.TypeLayer.RowMethods;
+
+import java.nio.ByteBuffer;
+
 import org.apache.accumulo.core.security.ColumnVisibility;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * See {@link TypeLayer} javadocs.
+ */
 
 public class TypedTransaction extends TypedSnapshot implements Transaction {
 
@@ -28,109 +39,92 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
   private Encoder encoder;
   private TypeLayer tl;
 
-  private class MutateKeyBuilder extends RowColumnBuilder<Mutator,VisibilityMutator> {
-
-    private Bytes row;
-    private Bytes cf;
-
-    @Override
-    void setRow(Bytes r) {
-      this.row = r;
-    }
-
-    @Override
-    void setFamily(Bytes f) {
-      this.cf = f;
-    }
-
-    @Override
-    VisibilityMutator setQualifier(Bytes q) {
-      return new VisibilityMutator(row, new Column(cf, q));
-    }
-
-    @Override
-    Mutator setColumn(Column c) {
-      return new Mutator(row, c);
-    }
-
-  }
-
   public class Mutator {
 
-    private Bytes row;
-    private Column col;
     private boolean set = false;
+    protected Data data;
+
+    public Mutator(Data data) {
+      this.data = data;
+    }
 
     void checkNotSet() {
       if (set)
         throw new IllegalStateException("Already set value");
     }
 
-    Mutator(Bytes row, Column column) {
-      this.row = row;
-      this.col = column;
+    public void set(Bytes bytes) {
+      checkNotSet();
+      tx.set(data.row, data.getCol(), bytes);
+      set = true;
     }
 
     public void set(String s) {
-      checkNotSet();
-      tx.set(row, col, encoder.encode(s));
-      set = true;
+      set(encoder.encode(s));
     }
 
     public void set(int i) {
-      checkNotSet();
-      tx.set(row, col, encoder.encode(i));
-      set = true;
+      set(encoder.encode(i));
     }
 
     public void set(long l) {
-      checkNotSet();
-      tx.set(row, col, encoder.encode(l));
-      set = true;
-    }
-
-    public void increment(int i) throws Exception {
-      checkNotSet();
-      Bytes val = tx.get(row, col);
-      int v = 0;
-      if (val != null)
-        v = encoder.decodeInteger(val);
-      tx.set(row, col, encoder.encode(v + i));
-    }
-
-    public void increment(long l) throws Exception {
-      checkNotSet();
-      Bytes val = tx.get(row, col);
-      long v = 0;
-      if (val != null)
-        v = encoder.decodeLong(val);
-      tx.set(row, col, encoder.encode(v + l));
+      set(encoder.encode(l));
     }
 
     public void set(byte[] ba) {
-      checkNotSet();
-      tx.set(row, col, Bytes.wrap(ba));
-      set = true;
+      set(Bytes.wrap(ba));
+    }
+
+    public void set(ByteBuffer bb) {
+      set(Bytes.wrap(bb));
     }
 
     /**
      * Set an empty value
      */
     public void set() {
+      set(Bytes.EMPTY);
+    }
+
+    /**
+     * Reads the current value of the row/column, adds i, sets the sum. If the row/column does not have a current value, then it defaults to zero.
+     * 
+     * @param i
+     * @throws Exception
+     */
+    public void increment(int i) throws Exception {
       checkNotSet();
-      tx.set(row, col, Bytes.wrap(new byte[0]));
-      set = true;
+      Bytes val = tx.get(data.row, data.getCol());
+      int v = 0;
+      if (val != null)
+        v = encoder.decodeInteger(val);
+      tx.set(data.row, data.getCol(), encoder.encode(v + i));
+    }
+
+    /**
+     * Reads the current value of the row/column, adds l, sets the sum. If the row/column does not have a current value, then it defaults to zero.
+     * 
+     * @param i
+     * @throws Exception
+     */
+    public void increment(long l) throws Exception {
+      checkNotSet();
+      Bytes val = tx.get(data.row, data.getCol());
+      long v = 0;
+      if (val != null)
+        v = encoder.decodeLong(val);
+      tx.set(data.row, data.getCol(), encoder.encode(v + l));
     }
 
     public void delete() {
       checkNotSet();
-      tx.delete(row, col);
+      tx.delete(data.row, data.getCol());
       set = true;
     }
 
     public void weaklyNotify() {
       checkNotSet();
-      tx.setWeakNotification(row, col);
+      tx.setWeakNotification(data.row, data.getCol());
       set = true;
     }
 
@@ -138,20 +132,84 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
 
   public class VisibilityMutator extends Mutator {
 
-    VisibilityMutator(Bytes row, Column column) {
-      super(row, column);
+    public VisibilityMutator(Data data) {
+      super(data);
+    }
+
+    public Mutator vis(String cv) {
+      checkNotSet();
+      data.vis = Bytes.wrap(cv);
+      return new Mutator(data);
+    }
+
+    public Mutator vis(Bytes cv) {
+      checkNotSet();
+      data.vis = cv;
+      return new Mutator(data);
+    }
+
+    public Mutator vis(byte[] cv) {
+      checkNotSet();
+      data.vis = Bytes.wrap(cv);
+      return new Mutator(data);
+    }
+
+    public Mutator vis(ByteBuffer cv) {
+      checkNotSet();
+      data.vis = Bytes.wrap(cv);
+      return new Mutator(data);
     }
 
     public Mutator vis(ColumnVisibility cv) {
       checkNotSet();
-      super.col.setVisibility(cv);
-      super.set = true;
-      return new Mutator(super.row, super.col);
+      data.vis = Bytes.wrap(cv.getExpression());
+      return new Mutator(data);
     }
   }
 
+  public class MutatorQualifierMethods extends QualifierMethods<VisibilityMutator> {
 
-  // TODO make private.. test depend on it
+    MutatorQualifierMethods(Data data) {
+      tl.super(data);
+    }
+
+    @Override
+    VisibilityMutator create(Data data) {
+      return new VisibilityMutator(data);
+    }
+  }
+
+  public class MutatorFamilyMethods extends FamilyMethods<MutatorQualifierMethods,Mutator> {
+
+    MutatorFamilyMethods(Data data) {
+      tl.super(data);
+    }
+
+    @Override
+    MutatorQualifierMethods create1(Data data) {
+      return new MutatorQualifierMethods(data);
+    }
+
+    @Override
+    Mutator create2(Data data) {
+      return new Mutator(data);
+    }
+  }
+
+  public class MutatorRowMethods extends RowMethods<MutatorFamilyMethods> {
+
+    MutatorRowMethods() {
+      tl.super();
+    }
+
+    @Override
+    MutatorFamilyMethods create(Data data) {
+      return new MutatorFamilyMethods(data);
+    }
+
+  }
+
+  @VisibleForTesting
   protected TypedTransaction(Transaction tx, Encoder encoder, TypeLayer tl) {
     super(tx, encoder, tl);
     this.tx = tx;
@@ -159,8 +217,8 @@ public class TypedTransaction extends TypedSnapshot implements Transaction {
     this.tl = tl;
   }
 
-  public RowAction<Mutator,VisibilityMutator,MutateKeyBuilder> mutate() {
-    return tl.new RowAction<Mutator,VisibilityMutator,MutateKeyBuilder>(new MutateKeyBuilder());
+  public MutatorRowMethods mutate() {
+    return new MutatorRowMethods();
   }
 
   @Override

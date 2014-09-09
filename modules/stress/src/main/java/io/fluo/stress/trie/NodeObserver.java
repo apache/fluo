@@ -35,7 +35,7 @@ public class NodeObserver extends AbstractObserver {
   @Override
   public void process(Transaction tx, Bytes row, Column col) throws Exception {
     
-    TypedTransaction ttx = Constants.TYPEL.transaction(tx);
+    TypedTransaction ttx = Constants.TYPEL.wrap(tx);
     Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);
     
     if (childWait > 0) {

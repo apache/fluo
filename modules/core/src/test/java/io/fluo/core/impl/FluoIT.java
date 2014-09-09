@@ -70,7 +70,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     
     tx.mutate().row("bob").col(balanceCol).set("10");
     tx.mutate().row("joe").col(balanceCol).set("20");
@@ -130,7 +130,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     
     tx.mutate().row("bob").col(balanceCol).set(10);
     tx.mutate().row("joe").col(balanceCol).set(20);
@@ -194,7 +194,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     
     tx.mutate().row("bob").col(balanceCol).set("10");
     tx.mutate().row("joe").col(balanceCol).set("20");
@@ -263,8 +263,8 @@ public class FluoIT extends TestBaseImpl {
   public void testAck2() throws Exception {
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.newColumn("account", "balance");
-    Column addrCol = typeLayer.newColumn("account", "addr");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
+    Column addrCol = typeLayer.bc().fam("account").qual("addr").vis();
 
     tx.mutate().row("bob").col(balanceCol).set("10");
     tx.mutate().row("joe").col(balanceCol).set("20");
@@ -315,7 +315,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     
     tx.mutate().row("bob").col(balanceCol).set("10");
     tx.mutate().row("joe").col(balanceCol).set("20");
@@ -350,7 +350,7 @@ public class FluoIT extends TestBaseImpl {
 
     env.setAuthorizations(new Authorizations("A", "B", "C"));
     
-    Column balanceCol = typeLayer.newColumn("account", "balance");
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     balanceCol.setVisibility(new ColumnVisibility("A|B"));
 
     TestTransaction tx = new TestTransaction(env);
@@ -383,15 +383,15 @@ public class FluoIT extends TestBaseImpl {
     // setting an acknowledged observed column in a transaction should not affect acknowledged status
     
     TestTransaction tx = new TestTransaction(env);
-    tx.mutate().row("d00001").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
-    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).set("");
-    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).set("");
-    tx.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
+    tx.mutate().row("d00001").col(typeLayer.bc().fam("data").qual("content").vis()).set("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
+    tx.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://a.com").vis()).set("");
+    tx.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://b.com").vis()).set("");
+    tx.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://c.com").vis()).set("");
     
-    tx.mutate().row("d00002").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
-    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://d.com")).set("");
-    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://e.com")).set("");
-    tx.mutate().row("d00002").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
+    tx.mutate().row("d00002").col(typeLayer.bc().fam("data").qual("content").vis()).set("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
+    tx.mutate().row("d00002").col(typeLayer.bc().fam("outlink").qual("http://d.com").vis()).set("");
+    tx.mutate().row("d00002").col(typeLayer.bc().fam("outlink").qual("http://e.com").vis()).set("");
+    tx.mutate().row("d00002").col(typeLayer.bc().fam("outlink").qual("http://c.com").vis()).set("");
     
     tx.commit();
     
@@ -399,11 +399,11 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx3 = new TestTransaction(env);
     
-    tx3.mutate().row("d00001").col(typeLayer.newColumn("data", "content")).set("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
-    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://a.com")).set("");
-    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://b.com")).delete();
-    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://c.com")).set("");
-    tx3.mutate().row("d00001").col(typeLayer.newColumn("outlink", "http://z.com")).set("");
+    tx3.mutate().row("d00001").col(typeLayer.bc().fam("data").qual("content").vis()).set("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
+    tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://a.com").vis()).set("");
+    tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://b.com").vis()).delete();
+    tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://c.com").vis()).set("");
+    tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://z.com").vis()).set("");
     
     tx3.commit();
     
@@ -417,9 +417,9 @@ public class FluoIT extends TestBaseImpl {
     }
     
     HashSet<Column> expected = new HashSet<Column>();
-    expected.add(typeLayer.newColumn("outlink", "http://a.com"));
-    expected.add(typeLayer.newColumn("outlink", "http://b.com"));
-    expected.add(typeLayer.newColumn("outlink", "http://c.com"));
+    expected.add(typeLayer.bc().fam("outlink").qual("http://a.com").vis());
+    expected.add(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
+    expected.add(typeLayer.bc().fam("outlink").qual("http://c.com").vis());
     
     Assert.assertEquals(expected, columns);
     
@@ -432,8 +432,8 @@ public class FluoIT extends TestBaseImpl {
         columns.add(citer.next().getKey());
       }
     }
-    expected.add(typeLayer.newColumn("outlink", "http://z.com"));
-    expected.remove(typeLayer.newColumn("outlink", "http://b.com"));
+    expected.add(typeLayer.bc().fam("outlink").qual("http://z.com").vis());
+    expected.remove(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
     Assert.assertEquals(expected, columns);
     
   }

@@ -15,24 +15,38 @@
  */
 package io.fluo.api.types;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import io.fluo.api.client.Snapshot;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.api.types.TypeLayer.RowAction;
-import io.fluo.api.types.TypeLayer.RowColumnBuilder;
+import io.fluo.api.types.TypeLayer.Data;
+import io.fluo.api.types.TypeLayer.FamilyMethods;
+import io.fluo.api.types.TypeLayer.QualifierMethods;
+import io.fluo.api.types.TypeLayer.RowMethods;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.collections.map.DefaultedMap;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
+
 //TODO need to refactor column to use Encoder
+
+/**
+ * See {@link TypeLayer} javadocs.
+ */
 
 public class TypedSnapshot implements Snapshot {
 
@@ -40,50 +54,47 @@ public class TypedSnapshot implements Snapshot {
   private Encoder encoder;
   private TypeLayer tl;
 
-  private class KeyBuilder extends RowColumnBuilder<Value,VisBytesDecoder> {
+  public class VisibilityMethods extends Value {
 
-    private Bytes family;
-    private Bytes row;
-
-    @Override
-    void setRow(Bytes r) {
-      this.row = r;
+    public VisibilityMethods(Data data) {
+      super(data);
     }
 
-    @Override
-    void setFamily(Bytes f) {
-      this.family = f;
+    public Value vis(Bytes cv) {
+      data.vis = cv;
+      return new Value(data);
     }
 
-    @Override
-    public VisBytesDecoder setQualifier(Bytes q) {
-      return new VisBytesDecoder(row, new Column(family, q));
+    public Value vis(byte[] cv) {
+      data.vis = Bytes.wrap(cv);
+      return new Value(data);
     }
 
-    @Override
-    public Value setColumn(Column c) {
-      try {
-        return new Value(snapshot.get(row, c));
-      } catch (Exception e) {
-        // TODO
-        if (e instanceof RuntimeException)
-          throw (RuntimeException) e;
-        throw new RuntimeException(e);
-      }
+    public Value vis(ByteBuffer bb) {
+      data.vis = Bytes.wrap(bb);
+      return new Value(data);
     }
 
+    public Value vis(String cv) {
+      data.vis = Bytes.wrap(cv);
+      return new Value(data);
+    }
+
+    public Value vis(ColumnVisibility cv) {
+      data.vis = Bytes.wrap(cv.flatten());
+      return new Value(data);
+    }
   }
 
-  public class VisBytesDecoder extends Value {
-
-    private Bytes row;
-    private Column col;
+  public class Value {
+    private Bytes bytes;
     private boolean gotBytes = false;
+    protected Data data;
 
-    Bytes getBytes() {
+    public Bytes getBytes() {
       if (!gotBytes) {
         try {
-          super.bytes = snapshot.get(row, col);
+          bytes = snapshot.get(data.row, data.getCol());
           gotBytes = true;
         } catch (Exception e) {
           if (e instanceof RuntimeException)
@@ -92,31 +103,17 @@ public class TypedSnapshot implements Snapshot {
         }
       }
 
-      return super.getBytes();
-    }
-
-    VisBytesDecoder(Bytes row, Column col) {
-      super(null);
-      this.row = row;
-      this.col = col;
-    }
-
-    public Value vis(ColumnVisibility cv) {
-      col.setVisibility(cv);
-      gotBytes = false;
-      return new Value(getBytes());
-    }
-  }
-
-  public class Value {
-    Bytes bytes;
-
-    Bytes getBytes() {
       return bytes;
     }
 
     private Value(Bytes bytes) {
       this.bytes = bytes;
+      this.gotBytes = true;
+    }
+
+    private Value(Data data) {
+      this.data = data;
+      this.gotBytes = false;
     }
 
     public Integer toInteger() {
@@ -137,7 +134,7 @@ public class TypedSnapshot implements Snapshot {
       return encoder.decodeLong(getBytes());
     }
 
-    public long toLong(int defaultValue) {
+    public long toLong(long defaultValue) {
       if (getBytes() == null)
         return defaultValue;
       return encoder.decodeLong(getBytes());
@@ -167,6 +164,234 @@ public class TypedSnapshot implements Snapshot {
         return defaultValue;
       return getBytes().toArray();
     }
+
+    public ByteBuffer toByteBuffer() {
+      if (getBytes() == null)
+        return null;
+      if (getBytes().isBackedByArray()) {
+        return ByteBuffer.wrap(getBytes().getBackingArray(), getBytes().offset(), getBytes().length());
+      } else {
+        return ByteBuffer.wrap(getBytes().toArray());
+      }
+    }
+
+    public ByteBuffer toByteBuffer(ByteBuffer defaultValue) {
+      if (getBytes() == null)
+        return defaultValue;
+      return toByteBuffer();
+    }
+
+    @Override
+    public int hashCode() {
+      if (getBytes() == null) {
+        return 0;
+      }
+
+      return getBytes().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof Value) {
+        Value ov = (Value) o;
+        if (getBytes() == null)
+          return ov.getBytes() == null;
+        else
+          return getBytes().equals(ov.getBytes());
+      }
+
+      return false;
+    }
+  }
+
+  public class ValueQualifierBuilder extends QualifierMethods<VisibilityMethods> {
+
+    ValueQualifierBuilder(Data data) {
+      tl.super(data);
+    }
+
+    @Override
+    VisibilityMethods create(Data data) {
+      return new VisibilityMethods(data);
+    }
+  }
+
+  public class ValueFamilyMethods extends FamilyMethods<ValueQualifierBuilder,Value> {
+
+    ValueFamilyMethods(Data data) {
+      tl.super(data);
+    }
+
+    @Override
+    ValueQualifierBuilder create1(Data data) {
+      return new ValueQualifierBuilder(data);
+    }
+
+    @Override
+    Value create2(Data data) {
+      return new Value(data);
+    }
+
+    public Map<Column,Value> columns(Set<Column> columns) {
+      try {
+        return wrap(snapshot.get(data.row, columns));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public Map<Column,Value> columns(Column... columns) {
+      try {
+        return wrap(snapshot.get(data.row, new HashSet<Column>(Arrays.asList(columns))));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  public class MapConverter {
+    private Collection<Bytes> rows;
+    private Set<Column> columns;
+
+    public MapConverter(Collection<Bytes> rows, Set<Column> columns) {
+      this.rows = rows;
+      this.columns = columns;
+    }
+
+    private Map<Bytes,Map<Column,Bytes>> getInput() {
+      try {
+        return snapshot.get(rows, columns);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private Map wrap2(Map m) {
+      return Collections.unmodifiableMap(DefaultedMap.decorate(m, new DefaultedMap(new Value((Bytes) null))));
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String,Map<Column,Value>> toStringMap() {
+      Map<Bytes,Map<Column,Bytes>> in = getInput();
+      Map<String,Map<Column,Value>> out = new HashMap<>();
+
+      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+        out.put(encoder.decodeString(rowEntry.getKey()), wrap(rowEntry.getValue()));
+
+      return wrap2(out);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<Long,Map<Column,Value>> toLongMap() {
+      Map<Bytes,Map<Column,Bytes>> in = getInput();
+      Map<Long,Map<Column,Value>> out = new HashMap<>();
+
+      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+        out.put(encoder.decodeLong(rowEntry.getKey()), wrap(rowEntry.getValue()));
+
+      return wrap2(out);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<Integer,Map<Column,Value>> toIntegerMap() {
+      Map<Bytes,Map<Column,Bytes>> in = getInput();
+      Map<Integer,Map<Column,Value>> out = new HashMap<>();
+
+      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+        out.put(encoder.decodeInteger(rowEntry.getKey()), wrap(rowEntry.getValue()));
+
+      return wrap2(out);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<Bytes,Map<Column,Value>> toBytesMap() {
+      Map<Bytes,Map<Column,Bytes>> in = getInput();
+      Map<Bytes,Map<Column,Value>> out = new HashMap<>();
+
+      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+        out.put(rowEntry.getKey(), wrap(rowEntry.getValue()));
+
+      return wrap2(out);
+    }
+  }
+
+  public class ColumnsMethods {
+    private Collection<Bytes> rows;
+
+    public ColumnsMethods(Collection<Bytes> rows) {
+      this.rows = rows;
+    }
+
+    public MapConverter columns(Set<Column> columns) {
+      return new MapConverter(rows, columns);
+    }
+
+    public MapConverter columns(Column... columns) {
+      return columns(new HashSet<Column>(Arrays.asList(columns)));
+    }
+  }
+
+  public class ValueRowMethods extends RowMethods<ValueFamilyMethods> {
+
+    ValueRowMethods() {
+      tl.super();
+    }
+
+    @Override
+    ValueFamilyMethods create(Data data) {
+      return new ValueFamilyMethods(data);
+    }
+
+    public ColumnsMethods rows(Collection<Bytes> rows) {
+      return new ColumnsMethods(rows);
+    }
+
+    public ColumnsMethods rowsString(Collection<String> rows) {
+      ArrayList<Bytes> conv = new ArrayList<>();
+      for (String row : rows) {
+        conv.add(encoder.encode(row));
+      }
+
+      return rows(conv);
+    }
+
+    public ColumnsMethods rowsLong(Collection<Long> rows) {
+      ArrayList<Bytes> conv = new ArrayList<>();
+      for (Long row : rows) {
+        conv.add(encoder.encode(row));
+      }
+
+      return rows(conv);
+    }
+
+    public ColumnsMethods rowsInteger(Collection<Integer> rows) {
+      ArrayList<Bytes> conv = new ArrayList<>();
+      for (Integer row : rows) {
+        conv.add(encoder.encode(row));
+      }
+
+      return rows(conv);
+    }
+
+    public ColumnsMethods rowsBytes(Collection<byte[]> rows) {
+      ArrayList<Bytes> conv = new ArrayList<>();
+      for (byte[] row : rows) {
+        conv.add(Bytes.wrap(row));
+      }
+
+      return rows(conv);
+    }
+
+    public ColumnsMethods rowsByteBuffers(Collection<ByteBuffer> rows) {
+      ArrayList<Bytes> conv = new ArrayList<>();
+      for (ByteBuffer row : rows) {
+        conv.add(Bytes.wrap(row));
+      }
+
+      return rows(conv);
+    }
+
   }
 
   TypedSnapshot(Snapshot snapshot, Encoder encoder, TypeLayer tl) {
@@ -195,46 +420,20 @@ public class TypedSnapshot implements Snapshot {
     return snapshot.get(rows, columns);
   }
 
-  public RowAction<Value,VisBytesDecoder,KeyBuilder> get() {
-    return tl.new RowAction<Value,VisBytesDecoder,KeyBuilder>(new KeyBuilder());
+  public ValueRowMethods get() {
+    return new ValueRowMethods();
   }
 
-
-  @SuppressWarnings("unchecked")
-  public Map<Column,Value> getd(Bytes row, Set<Column> columns) throws Exception {
-    Map<Column,Bytes> map = snapshot.get(row, columns);
-    Map<Column,Value> ret = new HashMap<Column,Value>();
-
-    Set<Entry<Column,Bytes>> es = map.entrySet();
-    for (Entry<Column,Bytes> entry : es) {
-      ret.put(entry.getKey(), new Value(entry.getValue()));
-    }
-
-    return DefaultedMap.decorate(ret, new Value(null));
-  }
-
-  public Map<Column,Value> getd(String row, Set<Column> columns) throws Exception {
-    return getd(encoder.encode(row), columns);
-  }
-
-  @SuppressWarnings("unchecked")
-  public Map<String,Map<Column,Value>> getd(Collection<String> rows, Set<Column> columns) throws Exception {
-    ArrayList<Bytes> bsRows = new ArrayList<Bytes>(rows.size());
-    for (String row : rows) {
-      bsRows.add(encoder.encode(row));
-    }
-
-    Map<Bytes,Map<Column,Bytes>> in = snapshot.get(bsRows, columns);
-    Map<String,Map<Column,Value>> out = new HashMap<String,Map<Column,Value>>();
-
-    for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet()) {
-      Map<Column,Value> outCols = new HashMap<Column,Value>();
-      for (Entry<Column,Bytes> colEntry : rowEntry.getValue().entrySet()) {
-        outCols.put(colEntry.getKey(), new Value(colEntry.getValue()));
+  @SuppressWarnings({"unchecked"})
+  private Map<Column,Value> wrap(Map<Column,Bytes> map) {
+    Map<Column,Value> ret = Maps.transformValues(map, new Function<Bytes,Value>() {
+      @Override
+      public Value apply(Bytes input) {
+        return new Value(input);
       }
-      out.put(encoder.decodeString(rowEntry.getKey()), DefaultedMap.decorate(outCols, new Value(null)));
-    }
+    });
 
-    return DefaultedMap.decorate(out, new DefaultedMap(new Value(null)));
+    return Collections.unmodifiableMap(DefaultedMap.decorate(ret, new Value((Bytes) null)));
   }
+
 }

@@ -46,7 +46,7 @@ public class ObserverConfigIT extends TestBaseImpl {
     @Override
     public void init(Map<String,String> config) {
       String ocTokens[] = config.get("observedCol").split(":");
-      observedColumn = new ObservedColumn(tl.newColumn(ocTokens[0], ocTokens[1]), NotificationType.valueOf(ocTokens[2]));
+      observedColumn = new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(), NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.wrap(config.get("outputCQ"));
       String swn = config.get("setWeakNotification");
       if (swn != null && swn.equals("true"))

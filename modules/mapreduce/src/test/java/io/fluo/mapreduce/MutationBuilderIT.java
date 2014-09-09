@@ -40,15 +40,15 @@ public class MutationBuilderIT extends TestBaseImpl {
     try {
 
       MutationBuilder mb1 = new MutationBuilder(Bytes.wrap("row1"));
-      mb1.put(tl.newColumn("cf1", "cq1"), Bytes.wrap("v1"));
-      mb1.put(tl.newColumn("cf1", "cq2"), Bytes.wrap("v2"));
-      mb1.put(tl.newColumn("cf1", "cq3"), Bytes.wrap("v3"));
+      mb1.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.wrap("v1"));
+      mb1.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.wrap("v2"));
+      mb1.put(tl.bc().fam("cf1").qual("cq3").vis(), Bytes.wrap("v3"));
 
       bw.addMutation(mb1.build());
 
       MutationBuilder mb2 = new MutationBuilder(Bytes.wrap("row2"));
-      mb2.put(tl.newColumn("cf1", "cq1"), Bytes.wrap("v4"));
-      mb2.put(tl.newColumn("cf1", "cq2"), Bytes.wrap("v5"));
+      mb2.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.wrap("v4"));
+      mb2.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.wrap("v5"));
 
       bw.addMutation(mb2.build());
 

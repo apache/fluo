@@ -15,11 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
 
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.Transaction;
@@ -37,6 +32,13 @@ import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -52,7 +54,7 @@ public class FailureIT extends TestBaseImpl {
   public ExpectedException exception = ExpectedException.none();
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
-  Column balanceCol = typeLayer.newColumn("account", "balance");
+  Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
     
   private void transfer(Environment env, String from, String to, int amount) throws Exception {
     TestTransaction tx = new TestTransaction(env);
@@ -73,7 +75,7 @@ public class FailureIT extends TestBaseImpl {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.newColumn("attr", "lastupdate"), NotificationType.STRONG);
+      return new ObservedColumn(typeLayer.bc().fam("attr").qual("lastupdate").vis(), NotificationType.STRONG);
     }
   }
 
@@ -98,8 +100,8 @@ public class FailureIT extends TestBaseImpl {
 
     // test writing lots of columns that need to be rolled back
 
-    Column col1 = typeLayer.newColumn("fam1", "q1");
-    Column col2 = typeLayer.newColumn("fam1", "q2");
+    Column col1 = typeLayer.bc().fam("fam1").qual("q1").vis();
+    Column col2 = typeLayer.bc().fam("fam1").qual("q2").vis();
     
     TestTransaction tx = new TestTransaction(env);
     
@@ -160,8 +162,8 @@ public class FailureIT extends TestBaseImpl {
   public void testRollforwardMany(boolean killTransactor) throws Exception {
     // test writing lots of columns that need to be rolled forward
 
-    Column col1 = typeLayer.newColumn("fam1", "q1");
-    Column col2 = typeLayer.newColumn("fam1", "q2");
+    Column col1 = typeLayer.bc().fam("fam1").qual("q1").vis();
+    Column col2 = typeLayer.bc().fam("fam1").qual("q2").vis();
     
     TestTransaction tx = new TestTransaction(env);
     
@@ -383,21 +385,21 @@ public class FailureIT extends TestBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).set("3");
-    tx.mutate().row("url0000").col(typeLayer.newColumn("doc", "content")).set("abc def");
+    tx.mutate().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set("3");
+    tx.mutate().row("url0000").col(typeLayer.bc().fam("doc").qual("content").vis()).set("abc def");
     
     tx.commit();
 
-    TestTransaction tx2 = new TestTransaction(env, "url0000", typeLayer.newColumn("attr", "lastupdate"));
-    tx2.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
-    tx2.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    TestTransaction tx2 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
+    tx2.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx2.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
     CommitData cd = tx2.createCommitData();
     tx2.preCommit(cd);
     
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertNull(tx3.get().row("idx:abc").col(typeLayer.newColumn("doc", "url")).toString());
-    Assert.assertNull(tx3.get().row("idx:def").col(typeLayer.newColumn("doc", "url")).toString());
-    Assert.assertEquals("3", tx3.get().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).toString());
+    Assert.assertNull(tx3.get().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
+    Assert.assertNull(tx3.get().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
+    Assert.assertEquals("3", tx3.get().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).toString());
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), Authorizations.EMPTY);
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
@@ -405,27 +407,27 @@ public class FailureIT extends TestBaseImpl {
     Assert.assertTrue(iter.hasNext());
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
     
-    TestTransaction tx5 = new TestTransaction(env, "url0000", typeLayer.newColumn("attr", "lastupdate"));
-    tx5.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
-    tx5.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    TestTransaction tx5 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
+    tx5.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx5.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
     cd = tx5.createCommitData();
-    Assert.assertTrue(tx5.preCommit(cd, Bytes.wrap("idx:abc"), typeLayer.newColumn("doc", "url")));
+    Assert.assertTrue(tx5.preCommit(cd, Bytes.wrap("idx:abc"), typeLayer.bc().fam("doc").qual("url").vis()));
     long commitTs = OracleClient.getInstance(env).getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
     
     // should roll tx5 forward
     TestTransaction tx6 = new TestTransaction(env);
-    Assert.assertEquals("3", tx6.get().row("url0000").col(typeLayer.newColumn("attr", "lastupdate")).toString());
-    Assert.assertEquals("url0000", tx6.get().row("idx:abc").col(typeLayer.newColumn("doc", "url")).toString());
-    Assert.assertEquals("url0000", tx6.get().row("idx:def").col(typeLayer.newColumn("doc", "url")).toString());
+    Assert.assertEquals("3", tx6.get().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).toString());
+    Assert.assertEquals("url0000", tx6.get().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
+    Assert.assertEquals("url0000", tx6.get().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
     
     iter = scanner.iterator();
     Assert.assertFalse(iter.hasNext());
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
-    TestTransaction tx4 = new TestTransaction(env, "url0000", typeLayer.newColumn("attr", "lastupdate"));
-    tx4.mutate().row("idx:abc").col(typeLayer.newColumn("doc", "url")).set("url0000");
-    tx4.mutate().row("idx:def").col(typeLayer.newColumn("doc", "url")).set("url0000");
+    TestTransaction tx4 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
+    tx4.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx4.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
 
     try {
       // should not go through if tx5 is properly rolled forward
@@ -458,7 +460,7 @@ public class FailureIT extends TestBaseImpl {
     conn.tableOperations().flush(table, null, null, true);
     
     try {
-      tx2.get().row("joe").col(balanceCol);
+      tx2.get().row("joe").col(balanceCol).toString();
       Assert.assertFalse(true);
     } catch (StaleScanException sse) {
       
