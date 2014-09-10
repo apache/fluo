@@ -396,7 +396,7 @@ public class Span {
     
     protected Builder builder;
     
-    public StartBuilder(Builder builder) {
+    private StartBuilder(Builder builder) {
       this.builder = builder;
     }
     
@@ -431,7 +431,7 @@ public class Span {
     
     protected Builder builder;
     
-    public EndBuilder(Builder builder) {
+    private EndBuilder(Builder builder) {
       this.builder = builder;
     }
         
@@ -453,14 +453,14 @@ public class Span {
     
   public static class StartCVBuilder extends StartBuilder {
     
-    public StartCVBuilder(Builder builder) {
+    private StartCVBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column visibility to Span start
      */
-    public StartBuilder cv(Bytes cv) {
+    public StartBuilder vis(Bytes cv) {
       this.builder.start.cv = cv;
       return new StartBuilder(this.builder);
     }
@@ -468,21 +468,21 @@ public class Span {
     /**
      * Add column visibility (will be encoded UTF-8) to Span start
      */
-    public StartBuilder cv(String cv) {
-      return cv(Bytes.wrap(cv));
+    public StartBuilder vis(String cv) {
+      return vis(Bytes.wrap(cv));
     }
   }
   
   public static class StartCQBuilder extends StartBuilder {
     
-    public StartCQBuilder(Builder builder) {
+    private StartCQBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column qualifier to Span start
      */
-    public StartCVBuilder cq(Bytes cq) {
+    public StartCVBuilder qual(Bytes cq) {
       this.builder.start.cq = cq;
       return new StartCVBuilder(this.builder);
     }
@@ -490,21 +490,21 @@ public class Span {
     /**
      * Add column qualifier (will be encoded UTF-8) to Span start 
      */
-    public StartCVBuilder cq(String cq) {
-      return cq(Bytes.wrap(cq));
+    public StartCVBuilder qual(String cq) {
+      return qual(Bytes.wrap(cq));
     }
   }
   
   public static class StartCFBuilder extends StartBuilder {
     
-    public StartCFBuilder(Builder builder) {
+    private StartCFBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column family to Span start
      */
-    public StartCQBuilder cf(Bytes cf) {
+    public StartCQBuilder fam(Bytes cf) {
       this.builder.start.cf = cf;
       return new StartCQBuilder(this.builder);
     }
@@ -512,21 +512,21 @@ public class Span {
     /**
      * Add column family (will be encoded UTF-8) to Span start
      */
-    public StartCQBuilder cf(String cf) {
-      return cf(Bytes.wrap(cf));
+    public StartCQBuilder fam(String cf) {
+      return fam(Bytes.wrap(cf));
     }
   }
   
   public static class EndCVBuilder extends EndBuilder {
     
-    public EndCVBuilder(Builder builder) {
+    private EndCVBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column visibility to Span end
      */
-    public EndBuilder cv(Bytes cv) {
+    public EndBuilder vis(Bytes cv) {
       this.builder.end.cv = cv;
       return this;
     }
@@ -534,21 +534,21 @@ public class Span {
     /**
      * Add column visibility (will be encoded UTF-8) to Span end
      */
-    public EndBuilder cv(String cv) {
-      return cv(Bytes.wrap(cv));
+    public EndBuilder vis(String cv) {
+      return vis(Bytes.wrap(cv));
     }
   }
   
   public static class EndCQBuilder extends EndBuilder {
     
-    public EndCQBuilder(Builder builder) {
+    private EndCQBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column qualifier to Span end
      */
-    public EndCVBuilder cq(Bytes cq) {
+    public EndCVBuilder qual(Bytes cq) {
       this.builder.end.cq = cq;
       return new EndCVBuilder(this.builder);
     }
@@ -556,21 +556,21 @@ public class Span {
     /**
      * Add column qualifier (will be encoded UTF-8) to Span end
      */
-    public EndCVBuilder cq(String cq) {
-      return cq(Bytes.wrap(cq));
+    public EndCVBuilder qual(String cq) {
+      return qual(Bytes.wrap(cq));
     }
   }
   
   public static class EndCFBuilder extends EndBuilder {
     
-    public EndCFBuilder(Builder builder) {
+    private EndCFBuilder(Builder builder) {
       super(builder);
     }
     
     /**
      * Add column family to an Span end
      */
-    public EndCQBuilder cf(Bytes cf) {
+    public EndCQBuilder fam(Bytes cf) {
       this.builder.end.cf = cf;
       return new EndCQBuilder(this.builder);
     }
@@ -578,8 +578,8 @@ public class Span {
     /**
      * Add column family (will be encoded UTF-8) to an Span end
      */
-    public EndCQBuilder cf(String cf) {
-      return cf(Bytes.wrap(cf));
+    public EndCQBuilder fam(String cf) {
+      return fam(Bytes.wrap(cf));
     }
   }
 }
