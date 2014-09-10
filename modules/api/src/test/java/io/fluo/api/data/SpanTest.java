@@ -73,10 +73,10 @@ public class SpanTest {
     RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b));
     RowColumn frc2 = rc2.following();
     
-    Assert.assertEquals(new Span(RowColumn.EMPTY, true, frc2, false), new Span.Builder().endRow(rw2b).cf(cf2b).build());
-    Assert.assertEquals(new Span(RowColumn.EMPTY, true, rc2, false), new Span.Builder().endRow(rw2b).cf(cf2b).exclusive().build());
-    Assert.assertEquals(new Span(rc1, true, RowColumn.EMPTY, true), new Span.Builder().startRow(rw1b).cf(cf1b).build());
-    Assert.assertEquals(new Span(frc1, true, RowColumn.EMPTY, true), new Span.Builder().startRow(rw1b).cf(cf1b).exclusive().build());   
+    Assert.assertEquals(new Span(RowColumn.EMPTY, true, frc2, false), new Span.Builder().endRow(rw2b).fam(cf2b).build());
+    Assert.assertEquals(new Span(RowColumn.EMPTY, true, rc2, false), new Span.Builder().endRow(rw2b).fam(cf2b).exclusive().build());
+    Assert.assertEquals(new Span(rc1, true, RowColumn.EMPTY, true), new Span.Builder().startRow(rw1b).fam(cf1b).build());
+    Assert.assertEquals(new Span(frc1, true, RowColumn.EMPTY, true), new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().build());   
   }
   
   @Test
@@ -87,13 +87,13 @@ public class SpanTest {
     RowColumn frc2 = rc2.following();
     
     Assert.assertEquals(new Span(rc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).endRow(rw2b).cf(cf2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).endRow(rw2b).fam(cf2b).build());
     Assert.assertEquals(new Span(rc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).endRow(rw2b).cf(cf2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).endRow(rw2b).fam(cf2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).exclusive().endRow(rw2b).cf(cf2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).build());
     Assert.assertEquals(new Span(frc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).exclusive().endRow(rw2b).cf(cf2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).exclusive().build());
   }
   
   @Test
@@ -104,13 +104,13 @@ public class SpanTest {
     RowColumn frc2 = rc2.following();
     
     Assert.assertEquals(new Span(rc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).endRow(rw2b).cf(cf2b).cq(cq2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b).build());
     Assert.assertEquals(new Span(rc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).endRow(rw2b).cf(cf2b).cq(cq2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).exclusive().endRow(rw2b).cf(cf2b).cq(cq2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).build());
     Assert.assertEquals(new Span(frc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).exclusive().endRow(rw2b).cf(cf2b).cq(cq2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).exclusive().build());
   }
   
   @Test
@@ -121,13 +121,13 @@ public class SpanTest {
     RowColumn frc2 = rc2.following();
     
     Assert.assertEquals(new Span(rc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).cv(cv1b).endRow(rw2b).cf(cf2b).cq(cq2b).cv(cv2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).build());
     Assert.assertEquals(new Span(rc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).cv(cv1b).endRow(rw2b).cf(cf2b).cq(cq2b).cv(cv2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).cv(cv1b).exclusive().endRow(rw2b).cf(cf2b).cq(cq2b).cv(cv2b).build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).build());
     Assert.assertEquals(new Span(frc1, true, rc2, false), 
-        new Span.Builder().startRow(rw1b).cf(cf1b).cq(cq1b).cv(cv1b).exclusive().endRow(rw2b).cf(cf2b).cq(cq2b).cv(cv2b).exclusive().build());
+        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).exclusive().build());
   }
   
   @Test
