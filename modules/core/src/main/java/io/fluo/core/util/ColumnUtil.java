@@ -33,6 +33,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * Utilities for modifying columns in Fluo
@@ -45,20 +46,25 @@ public class ColumnUtil {
     return Bytes.concat(c.getFamily(), c.getQualifier()).toArray();
   }
 
-  public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
+  static ColumnVisibility gv(Environment env, Column col) {
+    return env.getSharedResources().getVisCache().getCV(col);
+  }
+
+  public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs,
+      long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
-      Flutation.put(m, col, ColumnConstants.WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
+      Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
     } else {
-      Flutation.put(m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, isPrimary, false));
+      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, isPrimary, false));
     }
     
     if (isTrigger) {
-      Flutation.put(m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
+      Flutation.put(env, m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col), startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {
-      m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), commitTs, TransactionImpl.EMPTY);
+      m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col), commitTs, TransactionImpl.EMPTY);
     }
   }
   

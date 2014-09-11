@@ -19,11 +19,9 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.core.util.ByteUtil;
+import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Value;
-import org.apache.hadoop.io.Text;
 
 /**
  * This class allows building Accumulo mutations that are in the Fluo data format. This class is intended to be used with {@link AccumuloOutputFormat}
@@ -42,12 +40,8 @@ public class MutationBuilder {
   }
 
   public MutationBuilder put(Column col, Bytes value) {
-
-    Text fam = ByteUtil.toText(col.getFamily());
-    Text qual = ByteUtil.toText(col.getQualifier());
-
-    mutation.put(fam, qual, col.getVisibilityParsed(), ColumnConstants.DATA_PREFIX | 0, new Value(value.toArray()));
-    mutation.put(fam, qual, col.getVisibilityParsed(), ColumnConstants.WRITE_PREFIX | 1, new Value(WriteValue.encode(0, false, false)));
+    Flutation.put(mutation, col, ColumnConstants.DATA_PREFIX | 0, value.toArray());
+    Flutation.put(mutation, col, ColumnConstants.WRITE_PREFIX | 1, WriteValue.encode(0, false, false));
 
     return this;
   }

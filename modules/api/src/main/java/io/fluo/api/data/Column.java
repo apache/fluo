@@ -19,9 +19,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import com.google.common.base.Preconditions;
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Writable;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Represents Column in Fluo
@@ -75,22 +75,7 @@ public class Column implements Writable {
   public Column(String family, String qualifier) {
     this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier));
   }
-  
-  /** 
-   * Creates Column with family, qualifier, and visibility
-   */
-  public Column(Bytes family, Bytes qualifier, ColumnVisibility cv) {
-    this(family, qualifier, cv == null ? null : Bytes.wrap(cv.getExpression()));
-  }
-  
-  /**
-   * Creates Column with family, qualifier, and visibility.
-   * String parameters will be encoded as UTF-8.
-   */
-  public Column(String family, String qualifier, ColumnVisibility cv) {
-    this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier), cv);
-  }
-  
+
   /** 
    * Creates Column with family, qualifier, and visibility
    */
@@ -141,28 +126,22 @@ public class Column implements Writable {
 
   /**
    * Sets visibility of Column
-   * TODO - should not have ColumnVisibility directly 
-   * in public API... wrap it
-   *  
-   * @param cv ColumnVisibility
-   * @return Column
+   * 
    */
-  public Column setVisibility(ColumnVisibility cv) {
-    this.visibility = Bytes.wrap(cv.getExpression());
+  public Column setVisibility(String visibilty) {
+    this.visibility = Bytes.wrap(visibilty);
+    return this;
+  }
+
+  /**
+   * Sets visibility of Column
+   * 
+   */
+  public Column setVisibility(Bytes visibilty) {
+    this.visibility = visibilty;
     return this;
   }
   
-  /**
-   * Retries visibility parsed as ColumnVisibility
-   * WARNING - Can caused performance issues as ColumnVisibility
-   * is created every time
-   * 
-   * @return ColumnVisibility
-   */
-  public ColumnVisibility getVisibilityParsed() {
-    return new ColumnVisibility(visibility.toArray());
-  }
-
   @Override
   public String toString() {
     return family + " " + qualifier + " " + visibility;

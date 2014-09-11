@@ -154,12 +154,12 @@ public class Worker {
     for (Entry<Key,Value> entry : scanner) {
       List<Bytes> ca = Bytes.split(Bytes.wrap(entry.getKey().getColumnQualifierData().toArray()));
       Column col = new Column(ca.get(0), ca.get(1));
-      // TODO cache col vis
-      col.setVisibility(entry.getKey().getColumnVisibilityParsed());
+
+      col.setVisibility(ByteUtil.toBytes(entry.getKey().getColumnVisibilityData()));
 
       Observer observer = getObserver(colObservers, col);
 
-      Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
+      Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
 
       if (!loggedFirst) {
         log.debug("thread id: " + Thread.currentThread().getId() + "  row :" + row);

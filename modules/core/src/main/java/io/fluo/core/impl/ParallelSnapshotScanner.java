@@ -36,7 +36,6 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class ParallelSnapshotScanner {
 
@@ -130,9 +129,7 @@ public class ParallelSnapshotScanner {
         Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
         Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
 
-        // TODO cache col vis
-        Column col = new Column(cf, cq).setVisibility(new ColumnVisibility(entry
-            .getKey().getColumnVisibilityData().toArray()));
+        Column col = new Column(cf, cq).setVisibility(ByteUtil.toBytes(entry.getKey().getColumnVisibilityData()));
 
         long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 

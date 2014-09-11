@@ -25,7 +25,6 @@ import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
 import io.fluo.api.types.TypeLayer.QualifierMethods;
 import io.fluo.api.types.TypeLayer.RowMethods;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * See {@link TypeLayer} javadocs.
@@ -154,12 +153,6 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     public Mutator vis(ByteBuffer cv) {
       checkNotSet();
       data.vis = Bytes.wrap(cv);
-      return new Mutator(data);
-    }
-
-    public Mutator vis(ColumnVisibility cv) {
-      checkNotSet();
-      data.vis = Bytes.wrap(cv.getExpression());
       return new Mutator(data);
     }
   }

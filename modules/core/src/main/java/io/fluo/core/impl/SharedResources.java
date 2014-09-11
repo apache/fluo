@@ -45,6 +45,7 @@ public class SharedResources implements Closeable {
   private TimestampTracker tsTracker = null;
   private volatile boolean isClosed = false;
   private TxInfoCache txInfoCache;
+  private VisibilityCache visCache;
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
@@ -56,6 +57,7 @@ public class SharedResources implements Closeable {
     cw = env.getConnector().createConditionalWriter(env.getTable(), 
         new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
     txInfoCache = new TxInfoCache(env);
+    visCache = new VisibilityCache();
   }
   
   public SharedBatchWriter getBatchWriter() {
@@ -114,6 +116,11 @@ public class SharedResources implements Closeable {
     return transactorCache;
   }
   
+  public VisibilityCache getVisCache() {
+    checkIfClosed();
+    return visCache;
+  }
+
   @Override
   public synchronized void close() {
     isClosed = true;

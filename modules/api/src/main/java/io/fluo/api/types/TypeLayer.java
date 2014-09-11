@@ -22,7 +22,6 @@ import io.fluo.api.client.Transaction;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * A simple convenience layer for Fluo. This layer attempts to make the following common operations easier.
@@ -371,10 +370,6 @@ public class TypeLayer {
 
     public Column vis() {
       return new Column(data.family, data.qual);
-    }
-
-    public Column vis(ColumnVisibility cv) {
-      return new Column(data.family, data.qual, cv);
     }
 
     public Column vis(String cv) {

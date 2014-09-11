@@ -24,7 +24,6 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * Implementation of Column Iterator
@@ -58,8 +57,7 @@ public class ColumnIteratorImpl implements ColumnIterator {
     }
     Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
     Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-    // TODO cache colvis, pass cache in
-    ColumnVisibility cv = entry.getKey().getColumnVisibilityParsed();
+    Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
     
     final Column col = new Column(cf, cq).setVisibility(cv);
     final Bytes val = Bytes.wrap(entry.getValue().get());
