@@ -20,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import io.fluo.accumulo.util.ColumnConstants;
-
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
@@ -49,14 +48,13 @@ public class ColumnUtil {
   public static void commitColumn(boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.WRITE_PREFIX | commitTs, new Value(WriteValue.encode(startTs, isPrimary, false)));
+      Flutation.put(m, col, ColumnConstants.WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
     } else {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | commitTs,
-          new Value(DelLockValue.encode(startTs, isPrimary, false)));
+      Flutation.put(m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, isPrimary, false));
     }
     
     if (isTrigger) {
-      m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.ACK_PREFIX | startTs, new Value(TransactionImpl.EMPTY));
+      Flutation.put(m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {

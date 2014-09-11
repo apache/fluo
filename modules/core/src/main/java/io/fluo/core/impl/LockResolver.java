@@ -27,8 +27,9 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Column;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
+import io.fluo.core.util.ConditionalFlutation;
+import io.fluo.core.util.FluoCondition;
 import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -36,12 +37,9 @@ import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.accumulo.core.data.Condition;
-import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * This is utility code for either rolling forward or back failed transactions. A transaction is deemed to have failed if the reading transaction waited too
@@ -188,22 +186,15 @@ public class LockResolver {
   }
 
   private static boolean rollbackPrimary(Environment env, long startTs, PrimaryRowColumn prc, byte[] lockValue) {
-    // TODO use cached CV
-    ColumnVisibility cv = prc.pcol.getVisibilityParsed();
-
     // TODO review use of PrewriteIter here
 
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
-    // TODO cache col vis?
-    ConditionalMutation delLockMutation = new ConditionalMutation(ByteUtil.toByteSequence(prc.prow), new Condition(
-        ByteUtil.toByteSequence(prc.pcol.getFamily()), ByteUtil.toByteSequence(prc.pcol.getQualifier())).setIterators(iterConf).setVisibility(cv)
-        .setValue(lockValue));
+    ConditionalFlutation delLockMutation = new ConditionalFlutation(prc.prow, new FluoCondition(prc.pcol).setIterators(iterConf).setValue(lockValue));
 
     // TODO sanity check on lockTs vs startTs
 
-    delLockMutation.put(prc.pcol.getFamily().toArray(), prc.pcol.getQualifier().toArray(), cv, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(prc.startTs, true, true));
+    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(prc.startTs, true, true));
 
     ConditionalWriter cw = null;
 
