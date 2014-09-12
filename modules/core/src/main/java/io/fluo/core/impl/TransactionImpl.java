@@ -42,8 +42,10 @@ import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.AlreadySetException;
 import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.oracle.OracleClient;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
+import io.fluo.core.util.ConditionalFlutation;
+import io.fluo.core.util.FluoCondition;
+import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -57,7 +59,6 @@ import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.ArgumentChecker;
 
@@ -260,7 +261,7 @@ public class TransactionImpl implements Transaction {
     set(row, col, DELETE);
   }
   
-  private ConditionalMutation prewrite(ConditionalMutation cm, Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn,
+  private ConditionalFlutation prewrite(ConditionalFlutation cm, Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn,
       boolean isTriggerRow) {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
@@ -268,29 +269,26 @@ public class TransactionImpl implements Transaction {
     if (isTrigger)
       PrewriteIterator.enableAckCheck(iterConf);
     
-    Condition cond = new Condition(ByteUtil.toByteSequence(col.getFamily()), ByteUtil.toByteSequence(col.getQualifier()))
-                      .setIterators(iterConf).setVisibility(col.getVisibilityParsed());
+    Condition cond = new FluoCondition(col).setIterators(iterConf);
     
     if (cm == null)
-      cm = new ConditionalMutation(ByteUtil.toByteSequence(row), cond);
+      cm = new ConditionalFlutation(row, cond);
     else
       cm.addCondition(cond);
     
     if (val != null && val != DELETE)
-      cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), 
-          col.getVisibilityParsed(), ColumnConstants.DATA_PREFIX | startTs, new Value(val.toArray()));
-    
-    cm.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.LOCK_PREFIX | startTs,
-        new Value(LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID())));
+      cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
+
+    cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID()));
     
     return cm;
   }
   
-  private ConditionalMutation prewrite(Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
+  private ConditionalFlutation prewrite(Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
     return prewrite(null, row, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
 
-  private void prewrite(ConditionalMutation cm, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
+  private void prewrite(ConditionalFlutation cm, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
     prewrite(cm, null, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
 
@@ -394,10 +392,10 @@ public class TransactionImpl implements Transaction {
     
     // TODO if trigger is always primary row:col, then do not need checks elsewhere
     // try to lock other columns
-    ArrayList<ConditionalMutation> mutations = new ArrayList<ConditionalMutation>();
+    ArrayList<ConditionalMutation> mutations = new ArrayList<>();
     
     for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
-      ConditionalMutation cm = null;
+      ConditionalFlutation cm = null;
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       
       for (Entry<Column,Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
@@ -452,7 +450,7 @@ public class TransactionImpl implements Transaction {
       ArrayList<Mutation> mutations = new ArrayList<Mutation>();
 
       for (Entry<Bytes,Set<Column>> entry : weakNotifications.entrySet()) {
-        Mutation m = new Mutation(ByteUtil.toText(entry.getKey()));
+        Flutation m = new Flutation(entry.getKey());
         for (Column col : entry.getValue()) {
           m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), col.getVisibilityParsed(), startTs, TransactionImpl.EMPTY);
         }
@@ -542,10 +540,9 @@ public class TransactionImpl implements Transaction {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
-    Condition lockCheck = new Condition(ByteUtil.toByteSequence(cd.pcol.getFamily()), 
-         ByteUtil.toByteSequence(cd.pcol.getQualifier())).setIterators(iterConf).setVisibility(cd.pcol.getVisibilityParsed())
-        .setValue(LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger, getTransactorID()));
-    ConditionalMutation delLockMutation = new ConditionalMutation(ByteUtil.toByteSequence(cd.prow), lockCheck);
+    Condition lockCheck = new FluoCondition(cd.pcol).setIterators(iterConf).setValue(
+        LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger, getTransactorID()));
+    ConditionalMutation delLockMutation = new ConditionalFlutation(cd.prow, lockCheck);
     ColumnUtil.commitColumn(isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE, startTs, commitTs, observedColumns, delLockMutation);
     
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
@@ -580,14 +577,13 @@ public class TransactionImpl implements Transaction {
     
     // TODO let rollback be done lazily? this makes GC more difficult
     
-    Mutation m;
+    Flutation m;
 
     ArrayList<Mutation> mutations = new ArrayList<Mutation>(cd.acceptedRows.size());
     for (Bytes row : cd.acceptedRows) {
-      m = new Mutation(ByteUtil.toText(row));
+      m = new Flutation(row);
       for (Column col : updates.get(row).keySet()) {
-        m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
-            new Value(DelLockValue.encode(startTs, false, true)));
+        m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(startTs, false, true));
       }
       mutations.add(m);
     }
@@ -595,12 +591,11 @@ public class TransactionImpl implements Transaction {
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
     
     // mark transaction as complete for garbage collection purposes
-    m = new Mutation(ByteUtil.toText(cd.prow));
+    m = new Flutation(cd.prow);
     // TODO timestamp?
     // TODO writing the primary column with a batch writer is iffy
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        new Value(DelLockValue.encode(startTs, false, true)));
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | startTs, new Value(EMPTY));
+    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(startTs, false, true));
+    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
     env.getSharedResources().getBatchWriter().writeMutation(m);
   }
   
@@ -608,7 +603,7 @@ public class TransactionImpl implements Transaction {
     // delete locks and add writes for other columns
     ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size() + 1);
     for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
-      Mutation m = new Mutation(rowUpdates.getKey().toArray());
+      Flutation m = new Flutation(rowUpdates.getKey());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
       for (Entry<Column,Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
         ColumnUtil.commitColumn(isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null,
@@ -619,7 +614,7 @@ public class TransactionImpl implements Transaction {
     }
     
     if (weakRow != null) {
-      Mutation m = new Mutation(ByteUtil.toText(weakRow));
+      Flutation m = new Flutation(weakRow);
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
       mutations.add(m);
     }
@@ -627,8 +622,8 @@ public class TransactionImpl implements Transaction {
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
     
     // mark transaction as complete for garbage collection purposes
-    Mutation m = new Mutation(ByteUtil.toText(cd.prow));
-    m.put(ByteUtil.toText(cd.pcol.getFamily()), ByteUtil.toText(cd.pcol.getQualifier()), cd.pcol.getVisibilityParsed(), ColumnConstants.TX_DONE_PREFIX | commitTs, new Value(EMPTY));
+    Flutation m = new Flutation(cd.prow);
+    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
     env.getSharedResources().getBatchWriter().writeMutationAsync(m);
     
     return true;
@@ -692,7 +687,7 @@ public class TransactionImpl implements Transaction {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-      Mutation m = new Mutation(ByteUtil.toText(weakRow));
+      Flutation m = new Flutation(weakRow);
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), weakColumn.getVisibilityParsed(), commitTs);
       env.getSharedResources().getBatchWriter().writeMutation(m);
     }
