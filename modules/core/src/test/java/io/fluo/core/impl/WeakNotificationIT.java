@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -30,7 +30,7 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
@@ -45,8 +45,8 @@ public class WeakNotificationIT extends TestBaseImpl {
   public static class SimpleObserver extends AbstractObserver {
 
     @Override
-    public void process(Transaction tx, Bytes row, Column col) throws Exception {
-      TypedTransaction ttx = tl.wrap(tx);
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+      TypedTransactionBase ttx = tl.wrap(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
       sc.setSpan(Span.exact(row, Bytes.wrap("stats")));

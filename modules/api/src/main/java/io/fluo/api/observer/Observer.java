@@ -17,7 +17,7 @@ package io.fluo.api.observer;
 
 import java.util.Map;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
@@ -52,7 +52,7 @@ public interface Observer {
 
   public void init(Map<String,String> config) throws Exception;
 
-  public void process(Transaction tx, Bytes row, Column col) throws Exception;
+  public void process(TransactionBase tx, Bytes row, Column col) throws Exception;
 
   /**
    * Its safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from whats passed to

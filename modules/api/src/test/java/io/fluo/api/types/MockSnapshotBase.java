@@ -50,7 +50,7 @@ public class MockSnapshotBase implements SnapshotBase {
 
   @Override
   public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
-    Map<Column,Bytes> ret = new HashMap<Column,Bytes>();
+    Map<Column,Bytes> ret = new HashMap<>();
     Map<Column,Bytes> cols = getData.get(row);
     if (cols != null) {
       for (Column column : columns) {

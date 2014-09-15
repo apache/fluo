@@ -15,7 +15,7 @@
  */
 package io.fluo.api.types;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
@@ -33,9 +33,9 @@ public abstract class TypedObserver extends AbstractObserver {
   }
 
   @Override
-  public void process(Transaction tx, Bytes row, Column col) {
+  public void process(TransactionBase tx, Bytes row, Column col) {
     process(tl.wrap(tx), row, col);
   }
 
-  public abstract void process(TypedTransaction tx, Bytes row, Column col);
+  public abstract void process(TypedTransactionBase tx, Bytes row, Column col);
 }

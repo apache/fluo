@@ -15,13 +15,14 @@
  */
 package io.fluo.core;
 
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
-import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
@@ -32,7 +33,7 @@ import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 
-public class TestTransaction extends TypedTransaction {
+public class TestTransaction extends TypedTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
   
@@ -59,7 +60,8 @@ public class TestTransaction extends TypedTransaction {
   }
 
   /**
-   * Calls commit() and close() on transaction
+   * Calls commit() and then close()
+   * 
    * @throws CommitException
    */
   public void done() throws CommitException {

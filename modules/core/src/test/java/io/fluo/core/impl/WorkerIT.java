@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -30,7 +30,7 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
@@ -58,11 +58,11 @@ public class WorkerIT extends TestBaseImpl {
     @Override
     public void init(Map<String,String> config) {}
 
-    public void process(Transaction tx, Bytes row, Column col) throws Exception {
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
       // get previously calculated degree
 
       Bytes degree = tx.get(row, typeLayer.bc().fam("attr").qual("degree").vis());
-      TypedTransaction ttx = typeLayer.wrap(tx);
+      TypedTransactionBase ttx = typeLayer.wrap(tx);
 
       // calculate new degree
       int count = 0;

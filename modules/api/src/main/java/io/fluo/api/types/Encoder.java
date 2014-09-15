@@ -17,7 +17,11 @@ package io.fluo.api.types;
 
 import io.fluo.api.data.Bytes;
 
+/**
+ * Transforms Java primitives to and from bytes using desired encoding
+ */
 public interface Encoder {
+
   public int decodeInteger(Bytes b);
 
   public Bytes encode(int i);

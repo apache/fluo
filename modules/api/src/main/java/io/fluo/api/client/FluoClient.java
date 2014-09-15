@@ -28,6 +28,12 @@ public interface FluoClient extends Closeable {
   
   public Snapshot newSnapshot();
   
+  /**
+   * Creates and returns a {@link Transaction}. Unlike the transactions provided by the {@link Loader} and {@link Observer}, users will need to call
+   * {@link Transaction#commit()} and {@link Transaction#close()} on this transaction.
+   */
+  public Transaction newTransaction();
+
+  @Override
   public void close();
-  
 }

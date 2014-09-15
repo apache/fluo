@@ -15,7 +15,6 @@
  */
 package io.fluo.core.impl;
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,17 +23,17 @@ import java.util.Random;
 
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
-import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
@@ -71,7 +70,7 @@ public class FailureIT extends TestBaseImpl {
   public static class NullObserver extends AbstractObserver {
 
     @Override
-    public void process(Transaction tx, Bytes row, Column col) throws Exception {}
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {}
 
     @Override
     public ObservedColumn getObservedColumn() {

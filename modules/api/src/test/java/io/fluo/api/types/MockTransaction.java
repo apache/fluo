@@ -15,59 +15,22 @@
  */
 package io.fluo.api.types;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import io.fluo.api.client.Transaction;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.CommitException;
 
-/**
- * A very simple implementation of {@link Transaction} used for testing. All reads are serviced from {@link #getData}. Updates are stored in {@link #setData},
- * {@link #deletes}, or {@link #weakNotifications} depending on the update type.
- */
-public class MockTransaction extends MockSnapshotBase implements Transaction {
-
-  Map<Bytes,Map<Column,Bytes>> setData = new HashMap<>();
-  Map<Bytes,Set<Column>> deletes = new HashMap<>();
-  Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+public class MockTransaction extends MockTransactionBase implements Transaction {
 
   MockTransaction(String... entries) {
     super(entries);
   }
 
   @Override
-  public void setWeakNotification(Bytes row, Column col) {
-    Set<Column> cols = weakNotifications.get(row);
-    if (cols == null) {
-      cols = new HashSet<>();
-      weakNotifications.put(row, cols);
-    }
-
-    cols.add(col);
+  public void commit() throws CommitException {
+    // does nothing
   }
 
   @Override
-  public void set(Bytes row, Column col, Bytes value) {
-    Map<Column,Bytes> cols = setData.get(row);
-    if (cols == null) {
-      cols = new HashMap<>();
-      setData.put(row, cols);
-    }
-
-    cols.put(col, value);
-  }
-
-  @Override
-  public void delete(Bytes row, Column col) {
-    Set<Column> cols = deletes.get(row);
-    if (cols == null) {
-      cols = new HashSet<>();
-      deletes.put(row, cols);
-    }
-
-    cols.add(col);
+  public void close() {
+    // no resources to close
   }
 }

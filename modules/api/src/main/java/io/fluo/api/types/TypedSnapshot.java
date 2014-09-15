@@ -20,7 +20,7 @@ import io.fluo.api.client.Snapshot;
 /**
  * An AutoCloseable version of TypedSnapshotBase
  */
-public class TypedSnapshot extends TypedSnapshotBase implements AutoCloseable {
+public class TypedSnapshot extends TypedSnapshotBase implements Snapshot {
 
   private Snapshot cSnapshot;
 
@@ -29,6 +29,7 @@ public class TypedSnapshot extends TypedSnapshotBase implements AutoCloseable {
     cSnapshot = snapshot;
   }
 
+  @Override
   public void close() {
     cSnapshot.close();
   }

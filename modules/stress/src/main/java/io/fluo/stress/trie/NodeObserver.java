@@ -15,14 +15,14 @@
  */
 package io.fluo.stress.trie;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.types.TypedTransactionBase;
 
 /** Observer that looks for count:wait for nodes.  If found,
  * it increments count:seen and increments count:wait of parent
@@ -33,9 +33,9 @@ public class NodeObserver extends AbstractObserver {
   private static Logger log = LoggerFactory.getLogger(NodeObserver.class);
 
   @Override
-  public void process(Transaction tx, Bytes row, Column col) throws Exception {
+  public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
     
-    TypedTransaction ttx = Constants.TYPEL.wrap(tx);
+    TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
     Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);
     
     if (childWait > 0) {

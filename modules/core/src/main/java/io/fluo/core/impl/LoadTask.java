@@ -15,9 +15,10 @@
  */
 package io.fluo.core.impl;
 
-import io.fluo.core.exceptions.CommitException;
+import io.fluo.api.exceptions.CommitException;
+
 import io.fluo.api.client.Loader;
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ public class LoadTask implements Runnable {
         String status = "FAILED";
         try {
           txi = new TransactionImpl(env);
-          Transaction tx = txi;
+          TransactionBase tx = txi;
           if (TracingTransaction.isTracingEnabled())
             tx = new TracingTransaction(tx);
           loader.load(tx);
