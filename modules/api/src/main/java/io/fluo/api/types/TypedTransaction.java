@@ -15,6 +15,9 @@
  */
 package io.fluo.api.types;
 
+import java.nio.ByteBuffer;
+
+import com.google.common.annotations.VisibleForTesting;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -22,18 +25,12 @@ import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
 import io.fluo.api.types.TypeLayer.QualifierMethods;
 import io.fluo.api.types.TypeLayer.RowMethods;
-
-import java.nio.ByteBuffer;
-
 import org.apache.accumulo.core.security.ColumnVisibility;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * See {@link TypeLayer} javadocs.
  */
-
-public class TypedTransaction extends TypedSnapshot implements Transaction {
+public class TypedTransaction extends TypedSnapshotBase implements Transaction {
 
   private Transaction tx;
   private Encoder encoder;

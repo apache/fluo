@@ -88,6 +88,6 @@ public class LockValue {
   
   public String toString() {
     return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") 
-        + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + LongUtil.longToString(transactor);
+        + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + LongUtil.toMaxRadixString(transactor);
   }
 }

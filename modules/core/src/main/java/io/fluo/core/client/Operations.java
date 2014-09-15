@@ -30,9 +30,9 @@ import java.util.UUID;
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.accumulo.iterators.GarbageCollectionIterator;
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.ZookeeperConstants;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
-import io.fluo.core.impl.ZookeeperConstants;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
@@ -111,9 +111,10 @@ public class Operations {
       CuratorUtil.putData(curator, ZookeeperConstants.accumuloInstanceIdPath(zoodir), accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
       CuratorUtil.putData(curator, ZookeeperConstants.fluoInstanceIdPath(zoodir), fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
       CuratorUtil.putData(curator, ZookeeperConstants.oraclePath(zoodir), new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.timestampPath(zoodir), new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.oracleMaxTimestampPath(zoodir), new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperConstants.oracleCurrentTimestampPath(zoodir), new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
 
-      createTable(table, conn);
+      createTable(table, conn, zoodir);
     }
   }
 
@@ -147,7 +148,7 @@ public class Operations {
     return serializedObservers;
   }
 
-  private static void createTable(String tableName, Connector conn) throws Exception {
+  private static void createTable(String tableName, Connector conn, String zoodir) throws Exception {
     // TODO may need to configure an iterator that squishes multiple notifications to one at compaction time since versioning iterator is not configured for
     // table...
 
@@ -157,7 +158,8 @@ public class Operations {
     conn.tableOperations().setLocalityGroups(tableName, groups);
     
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setNumVersions(gcIter, 2);
+    GarbageCollectionIterator.setZookeepers(gcIter, conn.getInstance().getZooKeepers());
+    GarbageCollectionIterator.setZookeeperRoot(gcIter, zoodir);
     
     conn.tableOperations().attachIterator(tableName, gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
     

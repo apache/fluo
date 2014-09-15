@@ -15,15 +15,54 @@
  */
 package io.fluo.accumulo.util;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Utilities for working with Java Long
  */
 public class LongUtil {
   
+  private LongUtil() {}
+  
   /**
-   * Converts given Long to String using Max Radix
+   * Converts given Long to String using max radix
    */
-  public static String longToString(Long value) {
+  public static String toMaxRadixString(Long value) {
     return Long.toString(value, Character.MAX_RADIX);
+  }
+  
+  /**
+   * Converts from given String to Long using max radix
+   */
+  public static Long fromMaxRadixString(String value) {
+    return Long.parseLong(value, Character.MAX_RADIX);
+  }
+  
+  /**
+   * Converts given Long to max radix byte array
+   */
+  public static byte[] toMaxRadixByteArray(Long value) {
+    return toMaxRadixString(value).getBytes(StandardCharsets.UTF_8);
+  }
+  
+  /**
+   * Converts given max radix byte array to Long
+   */
+  public static Long fromMaxRadixByteArray(byte[] value) {
+    return fromMaxRadixString(new String(value, StandardCharsets.UTF_8));
+  }
+  
+  /** 
+   * Convert given Long to byte array
+   */
+  public static byte[] toByteArray(Long value) {
+    return value.toString().getBytes(StandardCharsets.UTF_8);
+  }
+  
+  /**
+   * Convert given byte array to Long
+   */
+  public static Long fromByteArray(byte[] value) {
+    return Long.parseLong(new String(value, StandardCharsets.UTF_8));
   }
 }

@@ -107,7 +107,7 @@ public class WorkerIT extends TestBaseImpl {
     tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
     tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
-    tx1.commit();
+    tx1.done();
 
     TestTransaction tx2 = new TestTransaction(env);
 
@@ -115,7 +115,7 @@ public class WorkerIT extends TestBaseImpl {
     tx2.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0020").vis()).set("");
     tx2.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
-    tx2.commit();
+    tx2.done();
 
     runWorker();
 
@@ -127,7 +127,7 @@ public class WorkerIT extends TestBaseImpl {
     // add a link between two nodes in a graph
     tx3.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0010").vis()).set("");
     tx3.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
-    tx3.commit();
+    tx3.done();
 
     runWorker();
 
@@ -142,7 +142,7 @@ public class WorkerIT extends TestBaseImpl {
     TestTransaction tx5 = new TestTransaction(env);
     tx5.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0030").vis()).set("");
     tx5.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
-    tx5.commit();
+    tx5.done();
 
     TestTransaction tx6 = new TestTransaction(env);
     tx6.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0050").vis()).set("");
@@ -172,7 +172,7 @@ public class WorkerIT extends TestBaseImpl {
       tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
       tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
 
-      tx1.commit();
+      tx1.done();
 
       runWorker();
 

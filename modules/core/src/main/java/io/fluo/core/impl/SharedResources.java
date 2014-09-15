@@ -16,10 +16,9 @@
 package io.fluo.core.impl;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import io.fluo.core.impl.TransactorCache.TcStatus;
-import io.fluo.core.impl.TransactorID.TrStatus;
+import io.fluo.core.impl.TransactorNode.TrStatus;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -41,7 +40,9 @@ public class SharedResources implements Closeable {
   private SharedBatchWriter sbw;
   private CuratorFramework curator;
   private TransactorID tid = null;
+  private TransactorNode tnode = null;
   private TransactorCache transactorCache = null;
+  private TimestampTracker tsTracker = null;
   private volatile boolean isClosed = false;
   private TxInfoCache txInfoCache;
 
@@ -76,15 +77,31 @@ public class SharedResources implements Closeable {
     checkIfClosed();
     return curator;
   }
-
+  
   public synchronized TransactorID getTransactorID() {
     checkIfClosed();
     if (tid == null) {
       tid = new TransactorID(env);
-    } else if (tid.getStatus() == TrStatus.CLOSED) {
-      throw new IllegalStateException("Transactor is closed!");
     }
     return tid;
+  }
+  
+  public synchronized TimestampTracker getTimestampTracker() {
+    checkIfClosed();
+    if (tsTracker == null) {
+      tsTracker = new TimestampTracker(env, getTransactorID());
+    }
+    return tsTracker;
+  }
+  
+  public synchronized TransactorNode getTransactorNode() {
+    checkIfClosed();
+    if (tnode == null) {
+      tnode = new TransactorNode(env, getTransactorID());
+    } else if (tnode.getStatus() == TrStatus.CLOSED) {
+      throw new IllegalStateException("TransactorNode is closed!");
+    }
+    return tnode;
   }
   
   public synchronized TransactorCache getTransactorCache() {
@@ -100,19 +117,14 @@ public class SharedResources implements Closeable {
   @Override
   public synchronized void close() {
     isClosed = true;
-    if (tid != null) {
-      try {
-        tid.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    if (tnode != null) {
+      tnode.close();
+    }
+    if (tsTracker != null) {
+      tsTracker.close();
     }
     if (transactorCache != null) {
-      try {
-        transactorCache.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      transactorCache.close();
     }
     cw.close();
     sbw.close();

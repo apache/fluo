@@ -107,7 +107,7 @@ public class FluoFileOutputFormatIT extends TestBaseImpl {
     tx1.mutate().row("a").fam("b").qual("c").set("3");
     tx1.mutate().row("d").fam("b").qual("c").delete();
 
-    tx1.commit();
+    tx1.done();
 
     // should not see changes from tx1
     Assert.assertEquals("1", tx2.get().row("a").fam("b").qual("c").toString());

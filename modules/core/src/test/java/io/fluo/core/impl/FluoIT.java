@@ -76,7 +76,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     tx = new TestTransaction(env);
     
@@ -98,7 +98,7 @@ public class FluoIT extends TestBaseImpl {
     tx2.mutate().row("bob").col(balanceCol).set((Long.parseLong(bal3) - 5) + "");
     tx2.mutate().row("jill").col(balanceCol).set((Long.parseLong(bal4) + 5) + "");
     
-    tx2.commit();
+    tx2.done();
     assertCommitFails(tx);
     
     TestTransaction tx3 = new TestTransaction(env);
@@ -137,7 +137,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("jill").col(balanceCol).set(60);
     tx.mutate().row("jane").col(balanceCol).set(0);
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx1 = new TestTransaction(env);
     
@@ -149,11 +149,11 @@ public class FluoIT extends TestBaseImpl {
 
     long bal1 = tx1.get().row("bob").col(balanceCol).toLong();
     
-    tx2.commit();
+    tx2.done();
     
     TestTransaction txd = new TestTransaction(env);
     txd.mutate().row("jane").col(balanceCol).delete();
-    txd.commit();
+    txd.done();
     
     long bal2 = tx1.get().row("joe").col(balanceCol).toLong();
     long bal3 = tx1.get().row("jill").col(balanceCol).toLong();
@@ -173,7 +173,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx4 = new TestTransaction(env);
     tx4.mutate().row("jane").col(balanceCol).set(3);
-    tx4.commit();
+    tx4.done();
     
     Assert.assertEquals(5l, tx3.get().row("bob").col(balanceCol).toLong(0));
     Assert.assertEquals(15l, tx3.get().row("joe").col(balanceCol).toLong(0));
@@ -200,7 +200,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx1 = new TestTransaction(env, "joe", balanceCol);
     tx1.get().row("joe").col(balanceCol);
@@ -210,7 +210,7 @@ public class FluoIT extends TestBaseImpl {
     tx2.get().row("joe").col(balanceCol);
     tx2.mutate().row("bob").col(balanceCol).set("11");
     
-    tx1.commit();
+    tx1.done();
     assertCommitFails(tx2);
     
     TestTransaction tx3 = new TestTransaction(env);
@@ -222,7 +222,7 @@ public class FluoIT extends TestBaseImpl {
     // update joe, so it can be acknowledged again
     tx3.mutate().row("joe").col(balanceCol).set("21");
     
-    tx3.commit();
+    tx3.done();
     
     TestTransaction tx4 = new TestTransaction(env, "joe", balanceCol);
     tx4.get().row("joe").col(balanceCol);
@@ -233,7 +233,7 @@ public class FluoIT extends TestBaseImpl {
     tx5.mutate().row("bob").col(balanceCol).set("11");
     
     // make the 2nd transaction to start commit 1st
-    tx5.commit();
+    tx5.done();
     assertCommitFails(tx4);
     
     TestTransaction tx6 = new TestTransaction(env);
@@ -270,7 +270,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
 
-    tx.commit();
+    tx.done();
 
     TestTransaction tx1 = new TestTransaction(env, "bob", balanceCol);
     TestTransaction tx2 = new TestTransaction(env, "bob", balanceCol);
@@ -321,7 +321,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env, "joe", balanceCol);
     tx2.get().row("joe").col(balanceCol);
@@ -332,7 +332,7 @@ public class FluoIT extends TestBaseImpl {
     tx1.get().row("joe").col(balanceCol);
     tx1.mutate().row("jill").col(balanceCol).set("61");
     
-    tx1.commit();
+    tx1.done();
     assertCommitFails(tx2);
     
     TestTransaction tx3 = new TestTransaction(env);
@@ -359,7 +359,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("joe").col(balanceCol).set("20");
     tx.mutate().row("jill").col(balanceCol).set("60");
     
-    tx.commit();
+    tx.done();
     
     Environment env2 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env2.setAuthorizations(new Authorizations("B"));
@@ -393,7 +393,7 @@ public class FluoIT extends TestBaseImpl {
     tx.mutate().row("d00002").col(typeLayer.bc().fam("outlink").qual("http://e.com").vis()).set("");
     tx.mutate().row("d00002").col(typeLayer.bc().fam("outlink").qual("http://c.com").vis()).set("");
     
-    tx.commit();
+    tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     
@@ -405,7 +405,7 @@ public class FluoIT extends TestBaseImpl {
     tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://c.com").vis()).set("");
     tx3.mutate().row("d00001").col(typeLayer.bc().fam("outlink").qual("http://z.com").vis()).set("");
     
-    tx3.commit();
+    tx3.done();
     
     HashSet<Column> columns = new HashSet<Column>();
     RowIterator riter = tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), Bytes.wrap("outlink"))));

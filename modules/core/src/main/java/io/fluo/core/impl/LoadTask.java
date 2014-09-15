@@ -37,26 +37,33 @@ public class LoadTask implements Runnable {
   
   @Override
   public void run() {
-    while (true) {
-      TransactionImpl txi = null;
-      String status = "FAILED";
-      try {
-        txi = new TransactionImpl(env);
-        Transaction tx = txi;
-        if (TracingTransaction.isTracingEnabled())
-          tx = new TracingTransaction(tx);
-        loader.load(tx);
-        txi.commit();
-        status = "COMMITTED";
-        return;
-      } catch (CommitException e) {
-        // retry
-      } catch (Exception e) {
-        log.error("Failed to execute loader " + loader, e);
-        throw new RuntimeException(e);
-      } finally {
-        if (txi != null)
-          TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
+    TransactionImpl txi = null;
+    try {
+      while (true) {
+        String status = "FAILED";
+        try {
+          txi = new TransactionImpl(env);
+          Transaction tx = txi;
+          if (TracingTransaction.isTracingEnabled())
+            tx = new TracingTransaction(tx);
+          loader.load(tx);
+          txi.commit();
+          status = "COMMITTED";
+          return;
+        } catch (CommitException e) {
+          // retry
+        } catch (Exception e) {
+          log.error("Failed to execute loader " + loader, e);
+          throw new RuntimeException(e);
+        } finally {
+          if (txi != null)
+            TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
+        }
+      }
+    } finally {
+      // close after multiple possible commit attempts
+      if (txi != null) {
+        txi.close();
       }
     }
   }

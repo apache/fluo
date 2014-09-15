@@ -93,7 +93,7 @@ public class SelfNotificationIT extends TestBaseImpl {
     tx1.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     tx1.mutate().row("r1").col(EXPORT_COUNT_COL).set(3);
     
-    tx1.commit();
+    tx1.done();
     
     runWorker();
     Assert.assertEquals(Collections.singletonList(3), exports);
@@ -109,14 +109,14 @@ public class SelfNotificationIT extends TestBaseImpl {
     tx2.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     tx2.mutate().row("r1").col(EXPORT_COUNT_COL).set(4);
     
-    tx2.commit();
+    tx2.done();
     
     TestTransaction tx3 = new TestTransaction(env);
 
     tx3.mutate().row("r1").col(STAT_COUNT_COL).set(5);
     tx3.mutate().row("r1").col(EXPORT_CHECK_COL).set();
     
-    tx3.commit();
+    tx3.done();
     
     runWorker();
     Assert.assertEquals(Arrays.asList(4, 5), exports);

@@ -15,20 +15,17 @@
  */
 package io.fluo.api.types;
 
-import io.fluo.api.client.Snapshot;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
-import io.fluo.api.types.TypedSnapshot.Value;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableSet;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
+import io.fluo.api.types.TypedSnapshotBase.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableSet;
 
 public class TypeLayerTest {
 
@@ -130,17 +127,16 @@ public class TypeLayerTest {
     Assert.assertEquals(new Column("f0", "q0").setVisibility(new ColumnVisibility("A&C")), tl.bc().fam("f0").qual("q0").vis("A&C".getBytes()));
     Assert.assertEquals(new Column("5", "7").setVisibility(new ColumnVisibility("A&D")), tl.bc().fam(5).qual(7).vis(Bytes.wrap("A&D")));
     Assert.assertEquals(new Column("5", "7").setVisibility(new ColumnVisibility("A&D")), tl.bc().fam(5).qual(7).vis(ByteBuffer.wrap("A&D".getBytes())));
-
   }
 
   @Test
   public void testRead() throws Exception {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
+    MockSnapshot ms = new MockSnapshot("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
         "13,9:19,20", "13,9:20,20");
 
-    TypedSnapshot tts = tl.wrap((Snapshot) tt);
+    TypedSnapshot tts = tl.wrap(ms);
 
     Assert.assertEquals("v1", tts.get().row("r1").fam("cf1").qual("cq1").toString());
     Assert.assertEquals("v1", tts.get().row("r1").fam("cf1").qual("cq1").toString("b"));

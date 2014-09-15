@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -37,15 +38,15 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * This iterator cleans up old versions and uneeded column metadata. Its intended to be used only at compaction time.
+ * This iterator cleans up old versions and unneeded column metadata. 
+ * It's intended to be used only at compaction time.
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
 
-  // TODO this iterator should support the concept of oldest running scan, and have the ability to gather this from an external source.
-
-  private static final String VERSION_OPT = "numVersions";
+  private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
+  private static final String ZOOKEEPER_ROOT_OPT = "zookeeper.root";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
-  private int numVersions;
+  private Long oldestActiveTs;
   private SortedKeyValueIterator<Key,Value> source;
 
   private ArrayList<KeyValue> keys = new ArrayList<KeyValue>();
@@ -59,9 +60,13 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     if (env.getIteratorScope() == IteratorScope.scan) {
       throw new IllegalArgumentException();
     }
-
     this.source = source;
-    this.numVersions = Integer.parseInt(options.get(VERSION_OPT));
+    String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
+    String zkRoot = options.get(ZOOKEEPER_ROOT_OPT);
+    if (zookeepers == null || zkRoot == null) {
+      throw new IllegalArgumentException("A configuration item for GC iterator was not set");
+    }
+    oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers, zkRoot);
   }
 
   public boolean hasTop() {
@@ -110,8 +115,8 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
     long invalidationTime = -1;
 
-    int writesSeen = 0;
     boolean truncationSeen = false;
+    boolean oldestSeen = false;
     truncationTime = -1;
 
     position = 0;
@@ -141,14 +146,17 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
         if (WriteValue.isPrimary(val) && !complete)
           keep = true;
-
-        if (writesSeen < numVersions && !truncationSeen) {
+        
+        if (!oldestSeen && !truncationSeen) {
           keep = true;
+          
+          if (timePtr < oldestActiveTs)
+            oldestSeen = true;
 
           if (WriteValue.isTruncated(val))
             truncationSeen = true;
 
-          if (writesSeen == numVersions - 1 || truncationSeen) {
+          if (oldestSeen || truncationSeen) {
             if (truncationTime != -1)
               throw new IllegalStateException();
 
@@ -165,9 +173,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         } else if (complete) {
           completeTxs.remove(ts);
         }
-
-        writesSeen++;
-
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
@@ -239,9 +244,12 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
   }
-
-  public static void setNumVersions(IteratorSetting gcIter, int nv) {
-    gcIter.addOption(VERSION_OPT, nv + "");
+  
+  public static void setZookeepers(IteratorSetting gcIter, String zookeepers) {
+    gcIter.addOption(ZOOKEEPER_CONNECT_OPT, zookeepers);
   }
-
+  
+  public static void setZookeeperRoot(IteratorSetting gcIter, String zkRoot) {
+    gcIter.addOption(ZOOKEEPER_ROOT_OPT, zkRoot);
+  }
 }

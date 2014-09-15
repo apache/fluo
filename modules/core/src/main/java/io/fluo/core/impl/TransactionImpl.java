@@ -15,7 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,10 +26,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.fluo.accumulo.iterators.PrewriteIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
+import io.fluo.api.client.Snapshot;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -65,41 +67,33 @@ import org.apache.accumulo.core.util.ArgumentChecker;
 /**
  * Transaction implementation
  */
-public class TransactionImpl implements Transaction {
+public class TransactionImpl implements Transaction, Snapshot {
   
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.wrap(EMPTY);
-  
   private static final Bytes DELETE = Bytes.wrap("special delete object");
+  private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED };
   
   private long startTs;
-  
-  private Map<Bytes,Map<Column,Bytes>> updates;
-  private Map<Bytes,Set<Column>> weakNotifications;
+  private Map<Bytes,Map<Column,Bytes>> updates = new HashMap<Bytes,Map<Column,Bytes>>();;
+  private Map<Bytes,Set<Column>> weakNotifications = new HashMap<Bytes,Set<Column>>();
   Map<Bytes,Set<Column>> columnsRead = new HashMap<Bytes,Set<Column>>();
   private Bytes triggerRow;
   private Column triggerColumn;
   private Bytes weakRow;
   private Column weakColumn;
   private Set<Column> observedColumns;
-  private boolean commitStarted = false;
   private Environment env;
-  private TxStats stats;
-  private TransactorID tid;
+  private TxStats stats = new TxStats();
+  private TransactorNode tnode = null;
+  private TxStatus status = TxStatus.OPEN;
   
-  public static byte[] toBytes(String s) {
-    try {
-      return s.getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public TransactionImpl(Environment env, Bytes triggerRow, Column triggerColumn, Long startTs, TransactorID tid) throws Exception {
+  public TransactionImpl(Environment env, Bytes triggerRow, Column triggerColumn, long startTs) {
+    Preconditions.checkNotNull(env, "environment cannot be null");
+    Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
+    this.startTs = startTs;
     this.observedColumns = env.getObservers().keySet();
-    this.updates = new HashMap<Bytes,Map<Column,Bytes>>();
-    this.weakNotifications = new HashMap<Bytes,Set<Column>>();
     
     if (triggerColumn != null && env.getWeakObservers().containsKey(triggerColumn)) {
       this.weakRow = triggerRow;
@@ -109,44 +103,44 @@ public class TransactionImpl implements Transaction {
       this.triggerColumn = triggerColumn;
     }
     
-    if (startTs == null)
-      this.startTs = OracleClient.getInstance(env).getTimestamp();
-    else {
-      if (startTs < 0)
-        throw new IllegalArgumentException();
-      this.startTs = startTs;
-    }
-    
     if (triggerRow != null) {
       Map<Column,Bytes> colUpdates = new HashMap<Column,Bytes>();
       colUpdates.put(triggerColumn, null);
       updates.put(triggerRow, colUpdates);
     }
-
-    this.stats = new TxStats();
-    this.tid = tid;
   }
   
-  public TransactionImpl(Environment env, Bytes triggerRow, Column tiggerColumn) throws Exception {
-    this(env, triggerRow, tiggerColumn, null, null);
+  public TransactionImpl(Environment env, Bytes triggerRow, Column tiggerColumn) {
+    this(env, triggerRow, tiggerColumn, allocateTimestamp(env));
   }
 
-  public TransactionImpl(Environment env) throws Exception {
-    this(env, null, null, null, null);
+  public TransactionImpl(Environment env) {
+    this(env, null, null, allocateTimestamp(env));
   }
   
-  public TransactionImpl(Environment env, Long startTs, TransactorID tid) throws Exception {
-    this(env, null, null, startTs, tid);
+  public TransactionImpl(Environment env, long startTs) {
+    this(env, null, null, startTs);
+  }
+    
+  private static Long allocateTimestamp(Environment env) {
+    return env.getSharedResources().getTimestampTracker().allocateTimestamp();
   }
 
   @Override
   public Bytes get(Bytes row, Column column) throws Exception {
+    checkIfOpen();
     // TODO cache? precache?
     return get(row, Collections.singleton(column)).get(column);
   }
 
   @Override
   public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
+    checkIfOpen();
+    return getImpl(row, columns);
+  }
+  
+  private Map<Column,Bytes> getImpl(Bytes row, Set<Column> columns) throws Exception {
+    
     // TODO push visibility filtering to server side?
 
     ScannerConfiguration config = new ScannerConfiguration();
@@ -155,7 +149,7 @@ public class TransactionImpl implements Transaction {
       config.fetchColumn(column.getFamily(), column.getQualifier());
     }
     
-    RowIterator iter = get(config);
+    RowIterator iter = getImpl(config);
     
     Map<Column,Bytes> ret = new HashMap<Column,Bytes>();
 
@@ -178,6 +172,7 @@ public class TransactionImpl implements Transaction {
     
   @Override
   public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
+    checkIfOpen();
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
 
     Map<Bytes,Map<Column,Bytes>> ret = pss.scan();
@@ -202,17 +197,17 @@ public class TransactionImpl implements Transaction {
 
   @Override
   public RowIterator get(ScannerConfiguration config) throws Exception {
-    if (commitStarted)
-      throw new IllegalStateException("transaction committed");
-
+    checkIfOpen();
+    return getImpl(config);
+  }
+  
+  private RowIterator getImpl(ScannerConfiguration config) throws Exception {
     return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
     
   @Override
   public void set(Bytes row, Column col, Bytes value) {
-    if (commitStarted)
-      throw new IllegalStateException("transaction committed");
-
+    checkIfOpen();
     ArgumentChecker.notNull(row, col, value);
     
     if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
@@ -236,9 +231,7 @@ public class TransactionImpl implements Transaction {
 
   @Override
   public void setWeakNotification(Bytes row, Column col) {
-    if (commitStarted)
-      throw new IllegalStateException("transaction committed");
-
+    checkIfOpen();
     // TODO do not use ArgumentChecked
     // TODO anlyze code to see what non-public Accumulo APIs are used
     ArgumentChecker.notNull(row, col);
@@ -257,6 +250,7 @@ public class TransactionImpl implements Transaction {
 
   @Override
   public void delete(Bytes row, Column col) {
+    checkIfOpen();
     ArgumentChecker.notNull(row, col);
     set(row, col, DELETE);
   }
@@ -342,10 +336,9 @@ public class TransactionImpl implements Transaction {
   
   public boolean preCommit(CommitData cd, Bytes primRow, Column primCol) throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
       AlreadyAcknowledgedException {
-    if (commitStarted)
-      throw new IllegalStateException();
-
-    commitStarted = true;
+    
+    checkIfOpen();
+    status = TxStatus.COMMIT_STARTED;
 
     // get a primary column
     cd.prow = primRow;
@@ -490,16 +483,9 @@ public class TransactionImpl implements Transaction {
         }
       }
     }
-    
-    boolean cs = commitStarted;
-    try {
-      // TODO setting commitStarted false here is a bit of a hack... reuse code w/o doing this
-      commitStarted = false;
-      for (Entry<Bytes,Set<Column>> entry : columnsToRead.entrySet()) {
-        get(entry.getKey(), entry.getValue());
-      }
-    } finally {
-      commitStarted = cs;
+
+    for (Entry<Bytes,Set<Column>> entry : columnsToRead.entrySet()) {
+      getImpl(entry.getKey(), entry.getValue());
     }
   }
 
@@ -635,9 +621,13 @@ public class TransactionImpl implements Transaction {
     return cd;
   }
 
-  public void commit() throws CommitException {
-    // TODO synchronize or detect concurrent use
-    // TODO prevent multiple calls
+  public synchronized void commit() throws CommitException {
+    
+    if (status == TxStatus.CLOSED) {
+      throw new CommitException("Transaction was previously closed");
+    } else if (status == TxStatus.COMMITTED) {
+      throw new CommitException("Transaction was previously committed");
+    }
     
     if (updates.size() == 0) {
       deleteWeakRow();
@@ -652,7 +642,7 @@ public class TransactionImpl implements Transaction {
     try {
       if (!preCommit(cd)) {
         readUnread(cd);
-        throw new CommitException();
+        throw new CommitException("Pre-commit failed");
       }
       
       long commitTs = OracleClient.getInstance(env).getTimestamp();
@@ -660,7 +650,7 @@ public class TransactionImpl implements Transaction {
         finishCommit(cd, commitTs);
       } else {
         // TODO write TX_DONE
-        throw new CommitException();
+        throw new CommitException("Commit failed");
       }
 
     } catch (CommitException e) {
@@ -674,6 +664,7 @@ public class TransactionImpl implements Transaction {
       for (Set<Column> cols : cd.getRejected().values()) {
         stats.incrementCollisions(cols.size());
       }
+      status = TxStatus.COMMITTED;
     }
   }
 
@@ -701,10 +692,45 @@ public class TransactionImpl implements Transaction {
     return startTs;
   }
   
+  /**
+   * Sets the transactor of this transaction
+   * 
+   * @param transactor
+   * @return this Transaction
+   */
+  @VisibleForTesting
+  public TransactionImpl setTransactor(TransactorNode tnode) {
+    this.tnode = tnode;
+    return this;
+  }
+  
+  /**
+   * Retrieves transactor ID by first getting/creating
+   * transactor (which is only done until necessary)
+   */
   private Long getTransactorID() {
-    if (tid == null) {
-      tid = env.getSharedResources().getTransactorID();
+    if (tnode == null) {
+      tnode = env.getSharedResources().getTransactorNode();
     }
-    return tid.getLongID();
+    return tnode.getTransactorID().getLongID();
+  }
+
+  @Override
+  public synchronized void close() {
+    if (status != TxStatus.CLOSED) {
+      status = TxStatus.CLOSED;
+      env.getSharedResources().getTimestampTracker().removeTimestamp(startTs);
+    }
+  }
+  
+  private synchronized void checkIfOpen() {
+    if (status != TxStatus.OPEN) {
+      throw new IllegalStateException("Transation is no longer open! status = " + status);
+    }
+  }
+  
+  @Override
+  protected void finalize() throws Throwable {
+    close();
   }
 }

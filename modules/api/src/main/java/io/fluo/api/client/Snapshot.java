@@ -15,25 +15,14 @@
  */
 package io.fluo.api.client;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-import io.fluo.api.config.ScannerConfiguration;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
-import io.fluo.api.iterator.RowIterator;
-
 /**
- * Implementations of this interface should provide snapshot isolation across rows when reading from a table.
+ * An AutoCloseable version of SnapshotBase. 
+ * See {@link io.fluo.api.client.SnapshotBase} for available methods.
  */
-public interface Snapshot {
-
-  public abstract Bytes get(Bytes row, Column column) throws Exception;
-
-  public abstract Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception;
-
-  public abstract Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception;
-
-  public abstract RowIterator get(ScannerConfiguration config) throws Exception;
+public interface Snapshot extends SnapshotBase, AutoCloseable {
+  
+  @Override
+  public void close();
+  
+  // See SnapshotBase for other methods
 }

@@ -15,18 +15,26 @@
  */
 package io.fluo.api.client;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.iterator.RowIterator;
 
 /**
- * Enables users to read and write to a Fluo table at certain point in time.
- * See {@link io.fluo.api.client.SnapshotBase} for available read methods.
+ * Allows users to read from a Fluo table at a certain point in time
  */
-public interface Transaction extends SnapshotBase {
+public interface SnapshotBase {
   
-  public void setWeakNotification(Bytes row, Column col);
+  public Bytes get(Bytes row, Column column) throws Exception;
 
-  public void set(Bytes row, Column col, Bytes value);
-  
-  public void delete(Bytes row, Column col);
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception;
+
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception;
+
+  public RowIterator get(ScannerConfiguration config) throws Exception;
+
 }

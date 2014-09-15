@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.exceptions;
+package io.fluo.accumulo.util;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * 
+ * Tests LongUtil class
  */
-public class AlreadyAcknowledgedException extends CommitException {
+public class LongUtilTest {
 
-  public AlreadyAcknowledgedException(String msg) {
-    super(msg);
-  }
-  
-  public AlreadyAcknowledgedException() {
-    super();
+  @Test
+  public void testAll() {
+    Long longVal = new Long("34886");
+    String radixStr = LongUtil.toMaxRadixString(longVal);
+    Assert.assertEquals("qx2", radixStr);
+    Assert.assertEquals(longVal, LongUtil.fromMaxRadixString(radixStr));
+    Assert.assertEquals(longVal, LongUtil.fromMaxRadixByteArray(LongUtil.toMaxRadixByteArray(longVal)));
+
+    longVal = new Long("63832");
+    Assert.assertEquals(longVal, LongUtil.fromByteArray(LongUtil.toByteArray(longVal)));
   }
 }
