@@ -79,7 +79,7 @@ public class Worker {
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     scanner.setRange(SpanUtil.toRange(new Span(start, false, end, true)));
 
-    ArrayList<Bytes> sample = new ArrayList<Bytes>();
+    ArrayList<Bytes> sample = new ArrayList<>();
 
     for (Entry<Key,Value> entry : scanner)
       sample.add(ByteUtil.toBytes(entry.getKey().getRow()));

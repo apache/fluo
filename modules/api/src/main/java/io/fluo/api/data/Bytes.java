@@ -302,7 +302,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     
     DataInputStream dis = new DataInputStream(bais);
     
-    ArrayList<Bytes> ret = new ArrayList<Bytes>();
+    ArrayList<Bytes> ret = new ArrayList<>();
     
     try {
       while (true) {

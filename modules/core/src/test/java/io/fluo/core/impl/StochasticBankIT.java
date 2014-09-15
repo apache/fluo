@@ -64,7 +64,7 @@ public class StochasticBankIT extends TestBaseImpl {
     
     int numAccounts = 5000;
     
-    TreeSet<Text> splits = new TreeSet<Text>();
+    TreeSet<Text> splits = new TreeSet<>();
     splits.add(new Text(fmtAcct(numAccounts / 4)));
     splits.add(new Text(fmtAcct(numAccounts / 2)));
     splits.add(new Text(fmtAcct(3 * numAccounts / 4)));
@@ -113,7 +113,7 @@ public class StochasticBankIT extends TestBaseImpl {
 
   private static List<Thread> startTransfers(final Environment env, final int numAccounts, int numThreads, final AtomicBoolean runFlag) {
     
-    ArrayList<Thread> threads = new ArrayList<Thread>();
+    ArrayList<Thread> threads = new ArrayList<>();
     
     for (int i = 0; i < numThreads; i++) {
       Runnable task = new Runnable() {
@@ -267,7 +267,7 @@ public class StochasticBankIT extends TestBaseImpl {
   }
   
   private static HashMap<String,String> toMap(TestTransaction tx) throws Exception {
-    HashMap<String,String> map = new HashMap<String,String>();
+    HashMap<String,String> map = new HashMap<>();
     
     RowIterator iter = tx.get(new ScannerConfiguration());
     while (iter.hasNext()) {

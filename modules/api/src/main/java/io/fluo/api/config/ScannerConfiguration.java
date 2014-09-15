@@ -31,7 +31,7 @@ public class ScannerConfiguration implements Cloneable {
 
   private Span span = new Span();
   // TODO use a set
-  private ArrayList<Column> columns = new ArrayList<Column>();
+  private ArrayList<Column> columns = new ArrayList<>();
 
   public ScannerConfiguration setSpan(Span span) {
     this.span = span;

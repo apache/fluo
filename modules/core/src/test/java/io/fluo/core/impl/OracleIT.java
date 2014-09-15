@@ -138,7 +138,7 @@ public class OracleIT extends TestBaseImpl {
 
     cdl.await();
 
-    TreeSet<Long> ts1 = new TreeSet<Long>(output);
+    TreeSet<Long> ts1 = new TreeSet<>(output);
 
     assertEquals(numThreads * numTimes, ts1.size());
 
@@ -151,7 +151,7 @@ public class OracleIT extends TestBaseImpl {
 
     cdl.await();
 
-    TreeSet<Long> ts2 = new TreeSet<Long>(output);
+    TreeSet<Long> ts2 = new TreeSet<>(output);
 
     assertEquals(numThreads * numTimes, ts2.size());
     assertTrue(ts1.last() < ts2.first());
@@ -279,7 +279,7 @@ public class OracleIT extends TestBaseImpl {
 
     cdl.await();
 
-    TreeSet<Long> ts1 = new TreeSet<Long>(output);
+    TreeSet<Long> ts1 = new TreeSet<>(output);
 
     assertEquals(numThreads * numTimes, ts1.size());
 
@@ -295,7 +295,7 @@ public class OracleIT extends TestBaseImpl {
 
     cdl.await();
 
-    TreeSet<Long> ts2 = new TreeSet<Long>(output);
+    TreeSet<Long> ts2 = new TreeSet<>(output);
 
     assertEquals(numThreads * numTimes, ts2.size());
     assertTrue(ts1.last() < ts2.first());

@@ -35,7 +35,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
   private ExecutorService executor;
   private Semaphore semaphore;
   
-  private AtomicReference<Exception> exceptionRef = new AtomicReference<Exception>(null);
+  private AtomicReference<Exception> exceptionRef = new AtomicReference<>(null);
   private Environment env;
   
   /**

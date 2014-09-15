@@ -49,7 +49,7 @@ public class SelfNotificationIT extends TestBaseImpl {
     return Collections.singletonList(new ObserverConfiguration(ExportingObserver.class.getName()));
   }
 
-  static List<Integer> exports = new ArrayList<Integer>();
+  static List<Integer> exports = new ArrayList<>();
   
   public static class ExportingObserver extends AbstractObserver {
     

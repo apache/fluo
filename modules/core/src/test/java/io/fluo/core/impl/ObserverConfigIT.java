@@ -74,7 +74,7 @@ public class ObserverConfigIT extends TestBaseImpl {
   }
 
   Map<String,String> newMap(String... args) {
-    HashMap<String,String> ret = new HashMap<String,String>();
+    HashMap<String,String> ret = new HashMap<>();
     for (int i = 0; i < args.length; i += 2)
       ret.put(args[i], args[i + 1]);
     return ret;
@@ -82,7 +82,7 @@ public class ObserverConfigIT extends TestBaseImpl {
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
-    List<ObserverConfiguration> observers = new ArrayList<ObserverConfiguration>();
+    List<ObserverConfiguration> observers = new ArrayList<>();
 
     observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col1:" + NotificationType.STRONG,
         "outputCQ", "col2")));

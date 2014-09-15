@@ -49,9 +49,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   private Long oldestActiveTs;
   private SortedKeyValueIterator<Key,Value> source;
 
-  private ArrayList<KeyValue> keys = new ArrayList<KeyValue>();
-  private ArrayList<KeyValue> keysFiltered = new ArrayList<KeyValue>();
-  private HashSet<Long> completeTxs = new HashSet<Long>();
+  private ArrayList<KeyValue> keys = new ArrayList<>();
+  private ArrayList<KeyValue> keysFiltered = new ArrayList<>();
+  private HashSet<Long> completeTxs = new HashSet<>();
   private Key curCol = new Key();
   private long truncationTime;
   private int position = 0;

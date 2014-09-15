@@ -407,7 +407,7 @@ public class FluoIT extends TestBaseImpl {
     
     tx3.done();
     
-    HashSet<Column> columns = new HashSet<Column>();
+    HashSet<Column> columns = new HashSet<>();
     RowIterator riter = tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), Bytes.wrap("outlink"))));
     while (riter.hasNext()) {
       ColumnIterator citer = riter.next().getValue();
@@ -416,7 +416,7 @@ public class FluoIT extends TestBaseImpl {
       }
     }
     
-    HashSet<Column> expected = new HashSet<Column>();
+    HashSet<Column> expected = new HashSet<>();
     expected.add(typeLayer.bc().fam("outlink").qual("http://a.com").vis());
     expected.add(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
     expected.add(typeLayer.bc().fam("outlink").qual("http://c.com").vis());

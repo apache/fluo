@@ -67,7 +67,7 @@ public class ParallelSnapshotScanner {
     scanner.clearColumns();
     scanner.clearScanIterators();
 
-    List<Range> ranges = new ArrayList<Range>(rows.size());
+    List<Range> ranges = new ArrayList<>(rows.size());
 
     for (Bytes row : rows) {
       ranges.add(Range.exact(ByteUtil.toText(row)));
@@ -75,7 +75,7 @@ public class ParallelSnapshotScanner {
 
     scanner.setRanges(ranges);
 
-    SnapshotScanner.setupScanner(scanner, new ArrayList<Column>(columns), startTs);
+    SnapshotScanner.setupScanner(scanner, new ArrayList<>(columns), startTs);
 
     return scanner;
   }
@@ -85,10 +85,10 @@ public class ParallelSnapshotScanner {
     long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
     long startTime = System.currentTimeMillis();
 
-    Map<Bytes,Map<Column,Bytes>> ret = new HashMap<Bytes,Map<Column,Bytes>>();
+    Map<Bytes,Map<Column,Bytes>> ret = new HashMap<>();
 
     while (true) {
-      List<Entry<Key,Value>> locks = new ArrayList<Entry<Key,Value>>();
+      List<Entry<Key,Value>> locks = new ArrayList<>();
 
       scan(ret, locks);
 
@@ -141,7 +141,7 @@ public class ParallelSnapshotScanner {
         } else if (colType == ColumnConstants.DATA_PREFIX) {
           Map<Column,Bytes> cols = ret.get(row);
           if (cols == null) {
-            cols = new HashMap<Column,Bytes>();
+            cols = new HashMap<>();
             ret.put(row, cols);
           }
 

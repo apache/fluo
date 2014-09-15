@@ -154,7 +154,7 @@ public class Environment implements Closeable {
     
     observers = Collections.unmodifiableMap(readObservers(dis));
     weakObservers = Collections.unmodifiableMap(readObservers(dis));
-    allObserversColumns = new HashSet<Column>();
+    allObserversColumns = new HashSet<>();
     allObserversColumns.addAll(observers.keySet());
     allObserversColumns.addAll(weakObservers.keySet());
     allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
@@ -167,14 +167,14 @@ public class Environment implements Closeable {
 
   private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
 
-    HashMap<Column,ObserverConfiguration> omap = new HashMap<Column,ObserverConfiguration>();
+    HashMap<Column,ObserverConfiguration> omap = new HashMap<>();
     
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = new Column();
       col.readFields(dis);
       String clazz = dis.readUTF();
-      Map<String,String> params = new HashMap<String,String>();
+      Map<String,String> params = new HashMap<>();
       int numParams = WritableUtils.readVInt(dis);
       for (int j = 0; j < numParams; j++) {
         String k = dis.readUTF();
