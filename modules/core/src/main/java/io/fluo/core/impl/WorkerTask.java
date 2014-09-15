@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.Observer;
+import io.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.fluo.core.util.UtilWaitThread;
 
 /**
  * 
@@ -55,7 +55,7 @@ public class WorkerTask implements Runnable {
 
     long sleepTime = 0;
 
-    Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+    Map<Column,Observer> colObservers = new HashMap<>();
 
     try {
       while (!shutdownFlag.get()) {

@@ -24,9 +24,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.fluo.accumulo.util.ZookeeperConstants;
-
-import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.CuratorCnxnListener;
+import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.curator.framework.CuratorFramework;
@@ -122,7 +121,7 @@ public class OracleClient {
 
     private void doWork() {
 
-      ArrayList<TimeRequest> request = new ArrayList<TimeRequest>();
+      ArrayList<TimeRequest> request = new ArrayList<>();
 
       while (true) {
 
@@ -259,10 +258,10 @@ public class OracleClient {
     }
   }
 
-  private static Map<String,OracleClient> clients = new HashMap<String,OracleClient>();
+  private static Map<String,OracleClient> clients = new HashMap<>();
 
   private Environment env;
-  private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<TimeRequest>(1000);
+  private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
 
   private OracleClient(Environment env) throws Exception {
     this.env = env;

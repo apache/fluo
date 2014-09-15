@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Mutation;
 public class SharedBatchWriter {
 
   private BatchWriter bw;
-  private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<MutationBatch>(1000);
+  private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<>(1000);
   private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
   
   private static class MutationBatch {
@@ -56,7 +56,7 @@ public class SharedBatchWriter {
       while (keepRunning) {
         try {
 
-          ArrayList<MutationBatch> batches = new ArrayList<MutationBatch>();
+          ArrayList<MutationBatch> batches = new ArrayList<>();
           batches.add(mQueue.take());
           mQueue.drainTo(batches);
 

@@ -153,7 +153,7 @@ public class Operations {
     // table...
 
     conn.tableOperations().create(tableName, false);
-    Map<String,Set<Text>> groups = new HashMap<String,Set<Text>>();
+    Map<String,Set<Text>> groups = new HashMap<>();
     groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
     conn.tableOperations().setLocalityGroups(tableName, groups);
     

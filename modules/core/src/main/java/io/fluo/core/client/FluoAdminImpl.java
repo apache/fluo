@@ -101,8 +101,8 @@ public class FluoAdminImpl implements FluoAdmin {
 
       Properties sharedProps = new Properties();
 
-      Map<Column,ObserverConfiguration> colObservers = new HashMap<Column,ObserverConfiguration>();
-      Map<Column,ObserverConfiguration> weakObservers = new HashMap<Column,ObserverConfiguration>();
+      Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
+      Map<Column,ObserverConfiguration> weakObservers = new HashMap<>();
 
       Iterator<String> iter = config.getKeys();
       while (iter.hasNext()) {
@@ -129,7 +129,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
     ObserverConfiguration observerConfig = new ObserverConfiguration(fields[0]);
 
-    Map<String,String> params = new HashMap<String,String>();
+    Map<String,String> params = new HashMap<>();
     for (int i = 1; i < fields.length; i++) {
       String[] kv = fields[i].split("=");
       params.put(kv[0], kv[1]);

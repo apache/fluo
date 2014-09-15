@@ -94,10 +94,10 @@ public class RandomTabletChooser {
   }
 
   private List<TabletInfo> listSplits() throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
-    List<Text> splits = new ArrayList<Text>(env.getConnector().tableOperations().listSplits(env.getTable()));
+    List<Text> splits = new ArrayList<>(env.getConnector().tableOperations().listSplits(env.getTable()));
     Collections.sort(splits);
     
-    List<TabletInfo> tablets = new ArrayList<RandomTabletChooser.TabletInfo>(splits.size() + 1);
+    List<TabletInfo> tablets = new ArrayList<>(splits.size() + 1);
     for (int i = 0; i < splits.size(); i++) {
       tablets.add(new TabletInfo(i == 0 ? null : splits.get(i - 1), splits.get(i)));
     }
@@ -112,12 +112,12 @@ public class RandomTabletChooser {
       cachedTablets = listSplits();
     } else if (System.currentTimeMillis() - listSplitsTime > CACHE_TIME) {
       List<TabletInfo> tablets = listSplits();
-      Map<TabletInfo,TabletInfo> oldTablets = new HashMap<TabletInfo,TabletInfo>();
+      Map<TabletInfo,TabletInfo> oldTablets = new HashMap<>();
       for (TabletInfo tabletInfo : cachedTablets) {
         oldTablets.put(tabletInfo, tabletInfo);
       }
       
-      List<TabletInfo> newTablets = new ArrayList<TabletInfo>(tablets.size());
+      List<TabletInfo> newTablets = new ArrayList<>(tablets.size());
       
       for (TabletInfo tabletInfo : tablets) {
         TabletInfo oldTI = oldTablets.get(tabletInfo);

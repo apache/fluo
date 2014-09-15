@@ -81,7 +81,7 @@ public class FailureIT extends TestBaseImpl {
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
-    List<ObserverConfiguration> observed = new ArrayList<ObserverConfiguration>();
+    List<ObserverConfiguration> observed = new ArrayList<>();
     observed.add(new ObserverConfiguration(NullObserver.class.getName()));
     return observed;
   }

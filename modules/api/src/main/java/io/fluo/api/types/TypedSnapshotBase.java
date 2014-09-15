@@ -239,7 +239,7 @@ public class TypedSnapshotBase implements SnapshotBase {
 
     public Map<Column,Value> columns(Column... columns) {
       try {
-        return wrap(snapshot.get(data.row, new HashSet<Column>(Arrays.asList(columns))));
+        return wrap(snapshot.get(data.row, new HashSet<>(Arrays.asList(columns))));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -325,7 +325,7 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
 
     public MapConverter columns(Column... columns) {
-      return columns(new HashSet<Column>(Arrays.asList(columns)));
+      return columns(new HashSet<>(Arrays.asList(columns)));
     }
   }
 

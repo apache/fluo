@@ -17,11 +17,11 @@ package io.fluo.core.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
-import java.util.NoSuchElementException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -45,7 +45,7 @@ public class TimestampTracker implements Closeable {
   private static final Logger log = LoggerFactory.getLogger(TimestampTracker.class);
   private long zkTimestamp = -1;
   private final Environment env;
-  private SortedSet<Long> timestamps = new TreeSet<Long>();
+  private SortedSet<Long> timestamps = new TreeSet<>();
   private PersistentEphemeralNode node = null;
   private final TransactorID tid;
   private TrackerStatus status;  // tracks status of object and not zookeeper

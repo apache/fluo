@@ -75,7 +75,7 @@ public class TestBaseImpl {
   protected void runWorker() throws Exception, TableNotFoundException {
     // TODO pass a tablet chooser that returns first tablet
     Worker worker = new Worker(env, new RandomTabletChooser(env));
-    Map<Column,Observer> colObservers = new HashMap<Column,Observer>();
+    Map<Column,Observer> colObservers = new HashMap<>();
     try {
       while (true) {
         worker.processUpdates(colObservers);

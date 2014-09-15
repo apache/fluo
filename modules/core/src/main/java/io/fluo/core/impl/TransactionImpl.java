@@ -75,9 +75,9 @@ public class TransactionImpl implements Transaction, Snapshot {
   private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED };
   
   private long startTs;
-  private Map<Bytes,Map<Column,Bytes>> updates = new HashMap<Bytes,Map<Column,Bytes>>();;
-  private Map<Bytes,Set<Column>> weakNotifications = new HashMap<Bytes,Set<Column>>();
-  Map<Bytes,Set<Column>> columnsRead = new HashMap<Bytes,Set<Column>>();
+  private Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();;
+  private Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+  Map<Bytes,Set<Column>> columnsRead = new HashMap<>();
   private Bytes triggerRow;
   private Column triggerColumn;
   private Bytes weakRow;
@@ -104,7 +104,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
     
     if (triggerRow != null) {
-      Map<Column,Bytes> colUpdates = new HashMap<Column,Bytes>();
+      Map<Column,Bytes> colUpdates = new HashMap<>();
       colUpdates.put(triggerColumn, null);
       updates.put(triggerRow, colUpdates);
     }
@@ -151,7 +151,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     
     RowIterator iter = getImpl(config);
     
-    Map<Column,Bytes> ret = new HashMap<Column,Bytes>();
+    Map<Column,Bytes> ret = new HashMap<>();
 
     while (iter.hasNext()) {
       Entry<Bytes,ColumnIterator> entry = iter.next();
@@ -187,7 +187,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   private void updateColumnsRead(Bytes row, Set<Column> columns) {
     Set<Column> colsRead = columnsRead.get(row);
     if (colsRead == null) {
-      colsRead = new HashSet<Column>();
+      colsRead = new HashSet<>();
       columnsRead.put(row, colsRead);
     }
     colsRead.addAll(columns);
@@ -218,7 +218,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     Map<Column,Bytes> colUpdates = updates.get(row);
     if (colUpdates == null) {
-      colUpdates = new HashMap<Column,Bytes>();
+      colUpdates = new HashMap<>();
       updates.put(row, colUpdates);
     }
     
@@ -241,7 +241,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     Set<Column> columns = weakNotifications.get(row);
     if (columns == null) {
-      columns = new HashSet<Column>();
+      columns = new HashSet<>();
       weakNotifications.put(row, columns);
     }
 
@@ -294,14 +294,14 @@ public class TransactionImpl implements Transaction, Snapshot {
     private Bytes pval;
 
     private HashSet<Bytes> acceptedRows;
-    private Map<Bytes,Set<Column>> rejected = new HashMap<Bytes,Set<Column>>();
+    private Map<Bytes,Set<Column>> rejected = new HashMap<>();
     
     private void addPrimaryToRejected() {
       rejected = Collections.singletonMap(prow, Collections.singleton(pcol));
     }
     
     private void addToRejected(Bytes row, Set<Column> columns) {
-      rejected = new HashMap<Bytes,Set<Column>>();
+      rejected = new HashMap<>();
       
       Set<Column> ret = rejected.put(row, columns);
       if (ret != null)
@@ -401,7 +401,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       mutations.add(cm);
     }
     
-    cd.acceptedRows = new HashSet<Bytes>();
+    cd.acceptedRows = new HashSet<>();
     
     boolean ackCollision = false;
 
@@ -440,7 +440,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   private void writeWeakNotifications() {
     if (weakNotifications.size() > 0) {
       SharedBatchWriter sbw = env.getSharedResources().getBatchWriter();
-      ArrayList<Mutation> mutations = new ArrayList<Mutation>();
+      ArrayList<Mutation> mutations = new ArrayList<>();
 
       for (Entry<Bytes,Set<Column>> entry : weakNotifications.entrySet()) {
         Flutation m = new Flutation(entry.getKey());
@@ -469,14 +469,14 @@ public class TransactionImpl implements Transaction, Snapshot {
    */
   private void readUnread(CommitData cd) throws Exception {
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user may not iterate over entire range
-    Map<Bytes,Set<Column>> columnsToRead = new HashMap<Bytes,Set<Column>>();
+    Map<Bytes,Set<Column>> columnsToRead = new HashMap<>();
     
     for (Entry<Bytes,Set<Column>> entry : cd.getRejected().entrySet()) {
       Set<Column> rowColsRead = columnsRead.get(entry.getKey());
       if (rowColsRead == null) {
         columnsToRead.put(entry.getKey(), entry.getValue());
       } else {
-        HashSet<Column> colsToRead = new HashSet<Column>(entry.getValue());
+        HashSet<Column> colsToRead = new HashSet<>(entry.getValue());
         colsToRead.removeAll(rowColsRead);
         if (colsToRead.size() > 0) {
           columnsToRead.put(entry.getKey(), colsToRead);
@@ -565,7 +565,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     
     Flutation m;
 
-    ArrayList<Mutation> mutations = new ArrayList<Mutation>(cd.acceptedRows.size());
+    ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
     for (Bytes row : cd.acceptedRows) {
       m = new Flutation(row);
       for (Column col : updates.get(row).keySet()) {
@@ -587,7 +587,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   
   public boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
     // delete locks and add writes for other columns
-    ArrayList<Mutation> mutations = new ArrayList<Mutation>(updates.size() + 1);
+    ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
     for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
       Flutation m = new Flutation(rowUpdates.getKey());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
