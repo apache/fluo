@@ -24,7 +24,7 @@ import org.apache.hadoop.io.Writable;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents Column in Fluo
+ * Represents Column in Fluo.
  */
 public class Column implements Writable {
   

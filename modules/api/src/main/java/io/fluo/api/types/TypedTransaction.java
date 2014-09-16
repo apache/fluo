@@ -19,6 +19,9 @@ import com.google.common.annotations.VisibleForTesting;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.exceptions.CommitException;
 
+/**
+ * A {@link Transaction} that uses a {@link TypeLayer}
+ */
 public class TypedTransaction extends TypedTransactionBase implements Transaction {
 
   private Transaction cTx;

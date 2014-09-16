@@ -15,11 +15,23 @@
  */
 package io.fluo.api.client;
 
+/**
+ * A test and development instance of Fluo containing its own Oracle and Worker
+ */
 public interface MiniFluo {
 
+  /**
+   * Starts MiniFluo
+   */
   void start();
 
+  /**
+   * Stops MiniFluo
+   */
   void stop();
 
+  /**
+   * Waits for all observers to finish. This method is usually called by test code before verification.
+   */
   void waitForObservers();
 }

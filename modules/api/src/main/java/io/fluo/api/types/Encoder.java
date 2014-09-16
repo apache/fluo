@@ -22,15 +22,33 @@ import io.fluo.api.data.Bytes;
  */
 public interface Encoder {
 
+  /**
+   * Decodes an integer from {@link Bytes}
+   */
   public int decodeInteger(Bytes b);
 
+  /**
+   * Encodes an integer to {@link Bytes}
+   */
   public Bytes encode(int i);
 
+  /**
+   * Decodes a long from {@link Bytes}
+   */
   public long decodeLong(Bytes b);
 
+  /**
+   * Encodes a long to {@link Bytes}
+   */
   public Bytes encode(long l);
 
+  /**
+   * Decodes a String from {@link Bytes}
+   */
   public String decodeString(Bytes b);
 
+  /**
+   * Encodes a String to {@link Bytes}
+   */
   public Bytes encode(String s);
 }

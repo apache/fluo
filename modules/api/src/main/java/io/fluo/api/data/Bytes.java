@@ -30,10 +30,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.WritableUtils;
 
 /**
- * Represents a sequence of bytes in Fluo
+ * Represents bytes in Fluo. Similar to an Accumulo {@link ByteSequence}
  */
 public abstract class Bytes implements Comparable<Bytes> {
   

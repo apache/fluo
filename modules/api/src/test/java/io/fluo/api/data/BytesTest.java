@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Unit test for Bytes class
+ * Unit test for {@link Bytes}
  */
 public class BytesTest {
 

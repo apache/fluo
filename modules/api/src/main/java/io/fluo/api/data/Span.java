@@ -18,7 +18,7 @@ package io.fluo.api.data;
 import com.google.common.base.Preconditions;
 
 /**
- * Used to specify a span between two row/columns in a Fluo table
+ * Used to specify a span between two row/columns in a Fluo table. Similar to an Accumulo Range.
  */
 public class Span {
     

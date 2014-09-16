@@ -15,12 +15,19 @@
  */
 package io.fluo.api.client;
 
-import java.io.Closeable;
-
 /**
- * Executes Fluo Loader classes 
+ * Executes provided {@link Loader} objects to load data into Fluo. {@link LoaderExecutor#close()} should be called when finished.
  */
-public interface LoaderExecutor extends Closeable {
+public interface LoaderExecutor extends AutoCloseable {
 
+  /**
+   * Executes {@link Loader} implemented by users
+   */
   public void execute(Loader loader);
+
+  /**
+   * Closes resources
+   */
+  @Override
+  public void close();
 }

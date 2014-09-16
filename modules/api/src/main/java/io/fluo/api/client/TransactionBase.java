@@ -19,14 +19,23 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
 /**
- * Enables users to read and write to a Fluo table at certain point in time.
- * See {@link io.fluo.api.client.SnapshotBase} for available read methods.
+ * Enables users to read and write to a Fluo table at certain point in time. TransactionBase extends {@link SnapshotBase} to include methods for writing to
+ * Fluo.
  */
 public interface TransactionBase extends SnapshotBase {
   
+  /**
+   * Sets a weak notification at the given row and {@link Column}
+   */
   public void setWeakNotification(Bytes row, Column col);
 
+  /**
+   * Sets a value (in {@link Bytes}) at the given row and {@link Column}
+   */
   public void set(Bytes row, Column col, Bytes value);
   
+  /**
+   * Deletes the value at the given row and {@link Column}
+   */
   public void delete(Bytes row, Column col);
 }

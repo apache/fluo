@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Unit test for FluoConfiguration class
+ * Unit test for {@link FluoConfiguration}
  */
 public class FluoConfigurationTest {
   

@@ -42,7 +42,7 @@ import org.apache.commons.collections.map.DefaultedMap;
 //TODO need to refactor column to use Encoder
 
 /**
- * See {@link TypeLayer} javadocs.
+ * A {@link SnapshotBase} that uses a {@link TypeLayer}
  */
 public class TypedSnapshotBase implements SnapshotBase {
 

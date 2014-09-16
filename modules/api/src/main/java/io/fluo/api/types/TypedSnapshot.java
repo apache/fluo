@@ -18,7 +18,7 @@ package io.fluo.api.types;
 import io.fluo.api.client.Snapshot;
 
 /**
- * An AutoCloseable version of TypedSnapshotBase
+ * A {@link Snapshot} that uses a {@link TypeLayer}
  */
 public class TypedSnapshot extends TypedSnapshotBase implements Snapshot {
 

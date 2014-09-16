@@ -22,9 +22,9 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
 /**
- * An observer is created for each worker thread and re-used for the lifetime of a worker thread.
- * 
- * Consider extending {@link AbstractObserver} instead of implementing this. The abstract class will shield you from the addition of interface methods.
+ * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the {@link #process(TransactionBase, Bytes, Column)} method. An
+ * observer is created for each worker thread and reused for the lifetime of a worker thread. Consider extending {@link AbstractObserver} as it will let you
+ * optionally implement {@link #init(Map)} and {@link #close()}. The abstract class will also shield you from the addition of interface methods.
  */
 public interface Observer {
 
@@ -32,6 +32,9 @@ public interface Observer {
     WEAK, STRONG
   }
 
+  /**
+   * A {@link Column} and {@link NotificationType} pair
+   */
   public static class ObservedColumn {
     private Column col;
     private NotificationType notificationType;
@@ -50,18 +53,28 @@ public interface Observer {
     }
   }
 
+  /**
+   * Implemented by user to initialize Observer
+   */
   public void init(Map<String,String> config) throws Exception;
 
+  /**
+   * Implemented by users to process notifications on a {@link ObservedColumn}. If a notification occurs, this method passes the user a {@link TransactionBase}
+   * as well as the row and {@link Column} where the notification occurred. The user can use the {@TransactionBase} to read and write to Fluo.
+   * After this method returns, {@link TransactionBase} will be committed and closed by Fluo.
+   */
   public void process(TransactionBase tx, Bytes row, Column col) throws Exception;
 
   /**
-   * Its safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from whats passed to
+   * Implemented by user to return an {@link ObservedColumn} that will trigger this observer. During initialization, this information is stored in zookeeper so
+   * that workers have a consistent view. If a worker loads an Observer and the information returned differs from what is in zookeeper then an exception will be
+   * thrown. It is safe to assume that {@link #init(Map)} will be called before this method. If the return value of the method is derived from what is passed to
    * {@link #init(Map)}, then the derivation process should be deterministic.
-   * 
-   * @return The column that will trigger this observer. During initialization this information is stored in zookeeper so that workers have a consistent view.
-   *         If a worker loads an Observer and the information returned differs from whats in zookeeper then an exception will be thrown.
    */
   public ObservedColumn getObservedColumn();
 
+  /**
+   * Implemented by user to close resources used by Observer
+   */
   public void close();
 }
