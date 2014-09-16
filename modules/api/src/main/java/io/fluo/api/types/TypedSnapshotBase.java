@@ -37,7 +37,6 @@ import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
 import io.fluo.api.types.TypeLayer.QualifierMethods;
 import io.fluo.api.types.TypeLayer.RowMethods;
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.collections.map.DefaultedMap;
 
 //TODO need to refactor column to use Encoder
@@ -74,11 +73,6 @@ public class TypedSnapshotBase implements SnapshotBase {
 
     public Value vis(String cv) {
       data.vis = Bytes.wrap(cv);
-      return new Value(data);
-    }
-
-    public Value vis(ColumnVisibility cv) {
-      data.vis = Bytes.wrap(cv.flatten());
       return new Value(data);
     }
   }

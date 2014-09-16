@@ -26,7 +26,6 @@ import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.RowIterator;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class MockSnapshotBase implements SnapshotBase {
 
@@ -101,7 +100,7 @@ public class MockSnapshotBase implements SnapshotBase {
 
       Column col = new Column(colFields[0], colFields[1]);
       if (colFields.length == 3)
-        col.setVisibility(new ColumnVisibility(colFields[2]));
+        col.setVisibility(colFields[2]);
 
       Bytes val;
       if (rcv.length == 2)
@@ -139,7 +138,7 @@ public class MockSnapshotBase implements SnapshotBase {
 
       Column col = new Column(colFields[0], colFields[1]);
       if (colFields.length == 3)
-        col.setVisibility(new ColumnVisibility(colFields[2]));
+        col.setVisibility(colFields[2]);
 
       Set<Column> cols = ret.get(row);
       if (cols == null) {

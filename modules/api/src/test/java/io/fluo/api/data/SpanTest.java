@@ -15,7 +15,6 @@
  */
 package io.fluo.api.data;
 
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -115,9 +114,9 @@ public class SpanTest {
   
   @Test
   public void testRowCFCQCVRange() {
-    RowColumn rc1 = new RowColumn(rw1b, new Column(cf1b, cq1b, new ColumnVisibility(cv1s)));
+    RowColumn rc1 = new RowColumn(rw1b, new Column(cf1b, cq1b, Bytes.wrap(cv1s)));
     RowColumn frc1 = rc1.following();
-    RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b, new ColumnVisibility(cv2s)));
+    RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b, Bytes.wrap(cv2s)));
     RowColumn frc2 = rc2.following();
     
     Assert.assertEquals(new Span(rc1, true, frc2, false), 

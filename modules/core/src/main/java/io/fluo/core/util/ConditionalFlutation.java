@@ -18,20 +18,24 @@ package io.fluo.core.util;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-
+import io.fluo.core.impl.Environment;
 import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
 
 public class ConditionalFlutation extends ConditionalMutation {
-  public ConditionalFlutation(Bytes row) {
+  private Environment env;
+
+  public ConditionalFlutation(Environment env, Bytes row) {
     super(ByteUtil.toByteSequence(row));
+    this.env = env;
   }
 
-  public ConditionalFlutation(Bytes row, Condition lockCheck) {
-    super(ByteUtil.toByteSequence(row), lockCheck);
+  public ConditionalFlutation(Environment env, Bytes row, Condition condition) {
+    super(ByteUtil.toByteSequence(row), condition);
+    this.env = env;
   }
 
   public void put(Column col, long ts, byte[] val) {
-    Flutation.put(this, col, ts, val);
+    Flutation.put(env, this, col, ts, val);
   }
 }

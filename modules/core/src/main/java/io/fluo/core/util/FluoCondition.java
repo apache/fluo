@@ -17,14 +17,15 @@
 package io.fluo.core.util;
 
 import io.fluo.api.data.Column;
+import io.fluo.core.impl.Environment;
 import org.apache.accumulo.core.data.Condition;
 
 public class FluoCondition extends Condition {
 
-  public FluoCondition(Column col) {
+  public FluoCondition(Environment env, Column col) {
     super(ByteUtil.toByteSequence(col.getFamily()), ByteUtil.toByteSequence(col.getQualifier()));
     if (col.getVisibility().length() > 0) {
-      setVisibility(col.getVisibilityParsed());
+      setVisibility(env.getSharedResources().getVisCache().getCV(col));
     }
   }
 

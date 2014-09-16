@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
-import org.apache.accumulo.core.util.ArgumentChecker;
 
 /**
  * Configures Scanner
@@ -49,14 +49,14 @@ public class ScannerConfiguration implements Cloneable {
   // TODO document SnapshotIterator
 
   public ScannerConfiguration fetchColumnFamily(Bytes col) {
-    ArgumentChecker.notNull(col);
+    Preconditions.checkNotNull(col);
     // TODO causes NPE w/ set, add unit test
     columns.add(new Column(col, null));
     return this;
   }
 
   public ScannerConfiguration fetchColumn(Bytes colFam, Bytes colQual) {
-    ArgumentChecker.notNull(colFam, colQual);
+    Preconditions.checkNotNull(colFam, colQual);
     columns.add(new Column(colFam, colQual));
     return this;
   }

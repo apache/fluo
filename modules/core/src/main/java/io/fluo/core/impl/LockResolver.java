@@ -190,7 +190,7 @@ public class LockResolver {
 
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
-    ConditionalFlutation delLockMutation = new ConditionalFlutation(prc.prow, new FluoCondition(prc.pcol).setIterators(iterConf).setValue(lockValue));
+    ConditionalFlutation delLockMutation = new ConditionalFlutation(env, prc.prow, new FluoCondition(env, prc.pcol).setIterators(iterConf).setValue(lockValue));
 
     // TODO sanity check on lockTs vs startTs
 
@@ -226,7 +226,7 @@ public class LockResolver {
       Column col = SpanUtil.toRowColumn(entry.getKey()).getColumn();
       
       LockValue lv = new LockValue(entry.getValue().get());
-      ColumnUtil.commitColumn(lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, env.getObservers().keySet(), mut);
+      ColumnUtil.commitColumn(env, lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, env.getObservers().keySet(), mut);
     }
 
   }

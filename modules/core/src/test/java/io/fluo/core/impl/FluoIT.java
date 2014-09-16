@@ -36,7 +36,6 @@ import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -351,7 +350,7 @@ public class FluoIT extends TestBaseImpl {
     env.setAuthorizations(new Authorizations("A", "B", "C"));
     
     Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-    balanceCol.setVisibility(new ColumnVisibility("A|B"));
+    balanceCol.setVisibility("A|B");
 
     TestTransaction tx = new TestTransaction(env);
     

@@ -18,20 +18,38 @@ package io.fluo.core.util;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-
+import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.VisibilityCache;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class Flutation extends Mutation {
-  public Flutation(Bytes row) {
+
+  private Environment env;
+
+  public Flutation(Environment env, Bytes row) {
     super(ByteUtil.toText(row));
+    this.env = env;
   }
 
   public void put(Column col, long ts, byte[] val) {
-    put(this, col, ts, val);
+    put(env, this, col, ts, val);
   }
 
   public static void put(Mutation m, Column col, long ts, byte[] val) {
-    m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), col.getVisibilityParsed(), ts, new Value(val));
+    put(null, m, col, ts, val);
+  }
+
+  public static void put(Environment env, Mutation m, Column col, long ts, byte[] val) {
+    ColumnVisibility cv;
+    if (env != null)
+      cv = env.getSharedResources().getVisCache().getCV(col.getVisibility());
+    else if (col.getVisibility().length() == 0)
+      cv = VisibilityCache.EMPTY_VIS;
+    else
+      cv = new ColumnVisibility(ByteUtil.toText(col.getVisibility()));
+
+    m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), cv, ts, new Value(val));
   }
 }

@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableSet;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.types.TypedSnapshotBase.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,36 +75,31 @@ public class TypeLayerTest {
     Assert.assertEquals("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A".getBytes()).toString());
     Assert.assertEquals("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(Bytes.wrap("A")).toString());
     Assert.assertEquals("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A".getBytes())).toString());
-    Assert.assertEquals("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A")).toString());
 
     Assert.assertNull("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A&B").toString());
     Assert.assertNull("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A&B".getBytes()).toString());
     Assert.assertNull("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(Bytes.wrap("A&B")).toString());
     Assert.assertNull("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&B".getBytes())).toString());
-    Assert.assertNull("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&B")).toString());
 
     Assert.assertEquals("v3", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A&B").toString("v3"));
     Assert.assertEquals("v3", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A&B".getBytes()).toString("v3"));
     Assert.assertEquals("v3", ttx.get().row("r1").fam("cf1").qual("cq1").vis(Bytes.wrap("A&B")).toString("v3"));
     Assert.assertEquals("v3", ttx.get().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&B".getBytes())).toString("v3"));
-    Assert.assertEquals("v3", ttx.get().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&B")).toString("v3"));
 
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis("A&B").set(3);
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis("A&C".getBytes()).set(4);
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(Bytes.wrap("A&D")).set(5);
-    ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&E")).set(6);
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&F".getBytes())).set(7);
 
-    Assert.assertEquals(MockTransactionBase.toRCVM("r1,cf1:cq1:A&B,3", "r1,cf1:cq1:A&C,4", "r1,cf1:cq1:A&D,5", "r1,cf1:cq1:A&E,6", "r1,cf1:cq1:A&F,7"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("r1,cf1:cq1:A&B,3", "r1,cf1:cq1:A&C,4", "r1,cf1:cq1:A&D,5", "r1,cf1:cq1:A&F,7"), tt.setData);
     tt.setData.clear();
 
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis("A&B").delete();
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis("A&C".getBytes()).delete();
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(Bytes.wrap("A&D")).delete();
-    ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&E")).delete();
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&F".getBytes())).delete();
 
-    Assert.assertEquals(MockTransactionBase.toRCM("r1,cf1:cq1:A&B", "r1,cf1:cq1:A&C", "r1,cf1:cq1:A&D", "r1,cf1:cq1:A&E", "r1,cf1:cq1:A&F"), tt.deletes);
+    Assert.assertEquals(MockTransactionBase.toRCM("r1,cf1:cq1:A&B", "r1,cf1:cq1:A&C", "r1,cf1:cq1:A&D", "r1,cf1:cq1:A&F"), tt.deletes);
     tt.deletes.clear();
     Assert.assertEquals(0, tt.setData.size());
     Assert.assertEquals(0, tt.weakNotifications.size());
@@ -123,10 +117,10 @@ public class TypeLayerTest {
     Assert.assertEquals(new Column("5", "7"), tl.bc().fam(Bytes.wrap("5")).qual(Bytes.wrap("7")).vis());
     Assert.assertEquals(new Column("5", "7"), tl.bc().fam(ByteBuffer.wrap("5".getBytes())).qual(ByteBuffer.wrap("7".getBytes())).vis());
 
-    Assert.assertEquals(new Column("f0", "q0").setVisibility(new ColumnVisibility("A&B")), tl.bc().fam("f0".getBytes()).qual("q0".getBytes()).vis("A&B"));
-    Assert.assertEquals(new Column("f0", "q0").setVisibility(new ColumnVisibility("A&C")), tl.bc().fam("f0").qual("q0").vis("A&C".getBytes()));
-    Assert.assertEquals(new Column("5", "7").setVisibility(new ColumnVisibility("A&D")), tl.bc().fam(5).qual(7).vis(Bytes.wrap("A&D")));
-    Assert.assertEquals(new Column("5", "7").setVisibility(new ColumnVisibility("A&D")), tl.bc().fam(5).qual(7).vis(ByteBuffer.wrap("A&D".getBytes())));
+    Assert.assertEquals(new Column("f0", "q0").setVisibility("A&B"), tl.bc().fam("f0".getBytes()).qual("q0".getBytes()).vis("A&B"));
+    Assert.assertEquals(new Column("f0", "q0").setVisibility("A&C"), tl.bc().fam("f0").qual("q0").vis("A&C".getBytes()));
+    Assert.assertEquals(new Column("5", "7").setVisibility("A&D"), tl.bc().fam(5).qual(7).vis(Bytes.wrap("A&D")));
+    Assert.assertEquals(new Column("5", "7").setVisibility("A&D"), tl.bc().fam(5).qual(7).vis(ByteBuffer.wrap("A&D".getBytes())));
   }
 
   @Test
