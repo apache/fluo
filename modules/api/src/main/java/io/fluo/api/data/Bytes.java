@@ -128,6 +128,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param other Bytes
    * @return comparison result
    */
+  @Override
   public int compareTo(Bytes other) {      
     return compareBytes(this, other);
   }
@@ -462,6 +463,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     /** 
      * Creates UTF-8 String using Bytes data
      */
+    @Override
     public String toString() {
       return new String(data, offset, length, StandardCharsets.UTF_8);
     }

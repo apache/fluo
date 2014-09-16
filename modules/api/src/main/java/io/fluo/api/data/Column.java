@@ -19,9 +19,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.io.Writable;
-
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.io.Writable;
 
 /**
  * Represents Column in Fluo
@@ -163,12 +162,14 @@ public class Column implements Writable {
   }
 
   // TODO remove from public API
+  @Override
   public void write(DataOutput out) throws IOException {
     Bytes.write(out, family);
     Bytes.write(out, qualifier);
     Bytes.write(out, visibility);    
   }
 
+  @Override
   public void readFields(DataInput in) throws IOException {
     family = Bytes.read(in);
     qualifier = Bytes.read(in);

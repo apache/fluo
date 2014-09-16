@@ -107,16 +107,19 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
     }
   }
   
+  @Override
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
     // TODO could require client to send version as a sanity check
   }
   
+  @Override
   public boolean hasTop() {
     return hasTop && source.hasTop();
   }
   
+  @Override
   public void next() throws IOException {
     Key nextCol = source.getTopKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
     
@@ -129,6 +132,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
     
   }
   
+  @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
     
     // handle continue case
@@ -148,14 +152,17 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
     findTop();
   }
   
+  @Override
   public Key getTopKey() {
     return source.getTopKey();
   }
   
+  @Override
   public Value getTopValue() {
     return source.getTopValue();
   }
   
+  @Override
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO implement
     throw new UnsupportedOperationException();

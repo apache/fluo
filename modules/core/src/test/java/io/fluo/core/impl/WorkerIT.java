@@ -58,6 +58,7 @@ public class WorkerIT extends TestBaseImpl {
     @Override
     public void init(Map<String,String> config) {}
 
+    @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
       // get previously calculated degree
 

@@ -20,6 +20,8 @@ package io.fluo.core.exceptions;
  */
 public class AlreadySetException extends RuntimeException {
   
+  private static final long serialVersionUID = 1L;
+
   /**
    * @param string
    */

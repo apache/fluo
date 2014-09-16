@@ -51,19 +51,23 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
   
+  @Override
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     this.source = source;
     this.lockTime = Long.parseLong(options.get(TIMESTAMP_OPT));
   }
   
+  @Override
   public boolean hasTop() {
     return hasTop && source.hasTop();
   }
   
+  @Override
   public void next() throws IOException {
     hasTop = false;
   }
   
+  @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
     IteratorUtil.maximizeStartKeyTimeStamp(range);
 
@@ -129,14 +133,17 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key,Value> 
     }
   }
   
+  @Override
   public Key getTopKey() {
     return source.getTopKey();
   }
   
+  @Override
   public Value getTopValue() {
     return source.getTopValue();
   }
   
+  @Override
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO Auto-generated method stub
     return null;

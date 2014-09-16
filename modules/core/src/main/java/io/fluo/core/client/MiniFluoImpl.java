@@ -78,6 +78,7 @@ public class MiniFluoImpl implements MiniFluo {
     }
   }
 
+  @Override
   public void start() {
     // TODO check if already started
     try {
@@ -96,6 +97,7 @@ public class MiniFluoImpl implements MiniFluo {
     }
   }
 
+  @Override
   public void stop() {
 
     try {
@@ -113,6 +115,7 @@ public class MiniFluoImpl implements MiniFluo {
     }
   }
 
+  @Override
   public void waitForObservers() {
     try {
       Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());

@@ -50,6 +50,7 @@ public class OracleApp implements TwillApplication {
     this.config = config;
   }
        
+  @Override
   public TwillSpecification configure() {   
     int maxMemoryMB = config.getOracleMaxMemory();
     

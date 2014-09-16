@@ -47,6 +47,7 @@ public class DelLockValue {
     return ba;
   }
   
+  @Override
   public String toString() {
     return (rollback ? "ABORT " : "COMMIT ") + (primary ? "PRIMARY " : "") + lockTime;
   }

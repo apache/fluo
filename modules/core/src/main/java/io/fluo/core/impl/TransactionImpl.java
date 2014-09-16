@@ -328,10 +328,10 @@ public class TransactionImpl implements Transaction, Snapshot {
       return rejected;
     }
 
+    @Override
     public String toString() {
       return prow + " " + pcol + " " + pval + " " + rejected.size();
     }
-
   }
 
   public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException, AlreadyAcknowledgedException {
@@ -641,6 +641,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     return cd;
   }
 
+  @Override
   public synchronized void commit() throws CommitException {
     
     if (status == TxStatus.CLOSED) {

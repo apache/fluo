@@ -22,6 +22,8 @@ import io.fluo.api.exceptions.CommitException;
  */
 public class AlreadyAcknowledgedException extends CommitException {
 
+  private static final long serialVersionUID = 1L;
+
   public AlreadyAcknowledgedException(String msg) {
     super(msg);
   }

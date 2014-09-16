@@ -72,6 +72,7 @@ public class OracleClient {
 
     private TTransport transport;
 
+    @Override
     public void run() {
 
       String zkPath = ZookeeperConstants.oraclePath(env.getZookeeperRoot());

@@ -85,6 +85,7 @@ public class LockValue {
         Bytes.wrap(bools), Bytes.wrap(ByteArrayUtil.encode(transactor))).toArray();
   }
   
+  @Override
   public String toString() {
     return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " " + (isDelete ? "DELETE" : "NOT_DELETE") 
         + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER") + " " + LongUtil.toMaxRadixString(transactor);

@@ -43,6 +43,7 @@ public class WriteValue {
     return ts;
   }
 
+  @Override
   public String toString() {
     return ts + (truncated ? " TRUNCATION" : "") + " " + (primary ? "PRIMARY" : "");
   }
