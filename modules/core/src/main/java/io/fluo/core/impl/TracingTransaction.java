@@ -20,16 +20,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.RowIterator;
 import org.apache.log4j.Logger;
 
-public class TracingTransaction implements Transaction {
+public class TracingTransaction implements TransactionBase {
 
-  private Transaction tx;
+  private TransactionBase tx;
   private long txid;
 
   private static final Logger log = Logger.getLogger(TracingTransaction.class);
@@ -41,7 +41,7 @@ public class TracingTransaction implements Transaction {
     log.trace(String.format(prefix + format, args));
   }
 
-  public TracingTransaction(Transaction tx) {
+  public TracingTransaction(TransactionBase tx) {
     this.tx = tx;
     this.txid = nextTxid.getAndIncrement();
   }

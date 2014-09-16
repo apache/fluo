@@ -19,8 +19,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import io.fluo.api.client.Loader;
 
-import io.fluo.api.client.Transaction;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.client.TransactionBase;
+import io.fluo.api.types.TypedTransactionBase;
 
 /** Executes load transactions of numbers into trie at leaf node level
  */
@@ -47,9 +47,9 @@ public class NumberLoader implements Loader {
   }
   
   @Override
-  public void load(Transaction tx) throws Exception {
+  public void load(TransactionBase tx) throws Exception {
     
-    TypedTransaction ttx = Constants.TYPEL.wrap(tx);
+    TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
     
     String rowId = new Node(number, level, nodeSize).getRowId();
         

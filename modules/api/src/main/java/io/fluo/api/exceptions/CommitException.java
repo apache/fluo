@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.exceptions;
+package io.fluo.api.exceptions;
 
 /**
- * 
+ * Exception thrown when a Transaction commit fails
  */
 public class CommitException extends Exception {
   
+  private static final long serialVersionUID = 1L;
+
   public CommitException(String msg) {
     super(msg);
   }

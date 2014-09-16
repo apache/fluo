@@ -21,9 +21,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import io.fluo.api.exceptions.CommitException;
+
 import io.fluo.accumulo.iterators.NotificationSampleIterator;
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -31,7 +33,6 @@ import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
-import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.impl.RandomTabletChooser.TabletInfo;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.SpanUtil;
@@ -171,7 +172,7 @@ public class Worker {
           String status = "FAILED";
           try {
             txi = new TransactionImpl(env, row, col);
-            Transaction tx = txi;
+            TransactionBase tx = txi;
             if (TracingTransaction.isTracingEnabled())
               tx = new TracingTransaction(tx);
 

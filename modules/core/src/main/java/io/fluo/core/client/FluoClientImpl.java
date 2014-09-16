@@ -18,6 +18,7 @@ package io.fluo.core.client;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.client.Snapshot;
+import io.fluo.api.client.Transaction;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
@@ -57,6 +58,11 @@ public class FluoClientImpl implements FluoClient {
 
   @Override
   public Snapshot newSnapshot() {
+    return new TransactionImpl(env);
+  }
+
+  @Override
+  public Transaction newTransaction() {
     return new TransactionImpl(env);
   }
 

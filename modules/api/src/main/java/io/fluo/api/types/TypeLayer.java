@@ -15,13 +15,13 @@
  */
 package io.fluo.api.types;
 
-import io.fluo.api.client.Snapshot;
-import io.fluo.api.client.Transaction;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
-
 import java.nio.ByteBuffer;
 
+import io.fluo.api.client.Snapshot;
+import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
@@ -91,7 +91,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
  * </pre>
  * 
  * <p>
- * Alternatively, the same thing can be written using a {@link TypedTransaction} in the following way. Because row(), fam(), qual(), and set() each take many
+ * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the following way. Because row(), fam(), qual(), and set() each take many
  * different types, this enables many different permutations that would not be achievable with overloading.
  * </p>
  * 
@@ -127,7 +127,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
  * </pre>
  * 
  * <p>
- * Alternatively, the same thing can be written using a {@link TypedTransaction} in the following way. This code avoids the null check by supplying a default
+ * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the following way. This code avoids the null check by supplying a default
  * value of zero.
  * </p>
  * 
@@ -171,7 +171,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
  * </pre>
  * 
  * <p>
- * With {@link TypedTransaction} if no default value is supplied, then the null is passed through.
+ * With {@link TypedTransactionBase} if no default value is supplied, then the null is passed through.
  * </p>
  * 
  * <pre>
@@ -431,6 +431,10 @@ public class TypeLayer {
 
   public TypedSnapshot wrap(Snapshot snap) {
     return new TypedSnapshot(snap, encoder, this);
+  }
+
+  public TypedTransactionBase wrap(TransactionBase tx) {
+    return new TypedTransactionBase(tx, encoder, this);
   }
 
   public TypedTransaction wrap(Transaction tx) {

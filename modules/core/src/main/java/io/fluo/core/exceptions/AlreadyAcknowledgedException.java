@@ -15,6 +15,8 @@
  */
 package io.fluo.core.exceptions;
 
+import io.fluo.api.exceptions.CommitException;
+
 /**
  * 
  */

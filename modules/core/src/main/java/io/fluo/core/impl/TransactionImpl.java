@@ -38,11 +38,11 @@ import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
+import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.AlreadySetException;
-import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.ConditionalFlutation;
@@ -728,7 +728,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       throw new IllegalStateException("Transation is no longer open! status = " + status);
     }
   }
-  
+
   @Override
   protected void finalize() throws Throwable {
     close();

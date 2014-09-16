@@ -16,7 +16,7 @@
 package io.fluo.api.types;
 
 import io.fluo.api.client.Loader;
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 
 public abstract class TypedLoader implements Loader {
 
@@ -31,10 +31,10 @@ public abstract class TypedLoader implements Loader {
   }
 
   @Override
-  public void load(Transaction tx) throws Exception {
+  public void load(TransactionBase tx) throws Exception {
     load(tl.wrap(tx));
   }
 
-  public abstract void load(TypedTransaction tx) throws Exception;
+  public abstract void load(TypedTransactionBase tx) throws Exception;
 
 }

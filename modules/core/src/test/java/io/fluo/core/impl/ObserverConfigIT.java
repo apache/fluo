@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -54,7 +54,7 @@ public class ObserverConfigIT extends TestBaseImpl {
     }
 
     @Override
-    public void process(Transaction tx, Bytes row, Column col) throws Exception {
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
       Bytes in = tx.get(row, col);
       tx.delete(row, col);

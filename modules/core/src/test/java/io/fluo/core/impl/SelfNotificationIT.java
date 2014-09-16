@@ -20,14 +20,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.fluo.api.client.Transaction;
+import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.api.types.TypedTransaction;
+import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import org.junit.Assert;
@@ -54,9 +54,9 @@ public class SelfNotificationIT extends TestBaseImpl {
   public static class ExportingObserver extends AbstractObserver {
     
     @Override
-    public void process(Transaction tx, Bytes row, Column col) throws Exception {
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
-      TypedTransaction ttx = typeLayer.wrap(tx);
+      TypedTransactionBase ttx = typeLayer.wrap(tx);
        
       Integer currentCount = ttx.get().row(row).col(STAT_COUNT_COL).toInteger();
       Integer exportCount = ttx.get().row(row).col(EXPORT_COUNT_COL).toInteger();

@@ -21,8 +21,9 @@ package io.fluo.api.client;
  */
 public interface Snapshot extends SnapshotBase, AutoCloseable {
   
+  /**
+   * Closes snapshot resources
+   */
   @Override
   public void close();
-  
-  // See SnapshotBase for other methods
 }

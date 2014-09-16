@@ -29,6 +29,8 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.fluo.api.exceptions.CommitException;
+
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -39,7 +41,6 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
-import io.fluo.core.exceptions.CommitException;
 import io.fluo.core.exceptions.StaleScanException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;

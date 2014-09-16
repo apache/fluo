@@ -33,10 +33,10 @@ public class TypeLayerTest {
   public void testColumns() throws Exception {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
+    MockTransactionBase tt = new MockTransactionBase("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
         "13,9:19,20", "13,9:20,20");
 
-    TypedTransaction ttx = tl.wrap(tt);
+    TypedTransactionBase ttx = tl.wrap(tt);
 
     Map<Column,Value> results = ttx.get().row("r2").columns(ImmutableSet.of(new Column("cf2", "6"), new Column("cf2", "7")));
 
@@ -67,9 +67,9 @@ public class TypeLayerTest {
   public void testVis() throws Exception {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("r1,cf1:cq1:A,v1", "r1,cf1:cq2:A&B,v2");
+    MockTransactionBase tt = new MockTransactionBase("r1,cf1:cq1:A,v1", "r1,cf1:cq2:A&B,v2");
 
-    TypedTransaction ttx = tl.wrap(tt);
+    TypedTransactionBase ttx = tl.wrap(tt);
 
     Assert.assertNull(ttx.get().row("r1").fam("cf1").qual("cq1").toString());
     Assert.assertEquals("v1", ttx.get().row("r1").fam("cf1").qual("cq1").vis("A").toString());
@@ -96,7 +96,7 @@ public class TypeLayerTest {
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&E")).set(6);
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&F".getBytes())).set(7);
 
-    Assert.assertEquals(MockTransaction.toRCVM("r1,cf1:cq1:A&B,3", "r1,cf1:cq1:A&C,4", "r1,cf1:cq1:A&D,5", "r1,cf1:cq1:A&E,6", "r1,cf1:cq1:A&F,7"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("r1,cf1:cq1:A&B,3", "r1,cf1:cq1:A&C,4", "r1,cf1:cq1:A&D,5", "r1,cf1:cq1:A&E,6", "r1,cf1:cq1:A&F,7"), tt.setData);
     tt.setData.clear();
 
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis("A&B").delete();
@@ -105,7 +105,7 @@ public class TypeLayerTest {
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(new ColumnVisibility("A&E")).delete();
     ttx.mutate().row("r1").fam("cf1").qual("cq1").vis(ByteBuffer.wrap("A&F".getBytes())).delete();
 
-    Assert.assertEquals(MockTransaction.toRCM("r1,cf1:cq1:A&B", "r1,cf1:cq1:A&C", "r1,cf1:cq1:A&D", "r1,cf1:cq1:A&E", "r1,cf1:cq1:A&F"), tt.deletes);
+    Assert.assertEquals(MockTransactionBase.toRCM("r1,cf1:cq1:A&B", "r1,cf1:cq1:A&C", "r1,cf1:cq1:A&D", "r1,cf1:cq1:A&E", "r1,cf1:cq1:A&F"), tt.deletes);
     tt.deletes.clear();
     Assert.assertEquals(0, tt.setData.size());
     Assert.assertEquals(0, tt.weakNotifications.size());
@@ -198,10 +198,10 @@ public class TypeLayerTest {
 
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
+    MockTransactionBase tt = new MockTransactionBase("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
         "13,9:19,20", "13,9:20,20");
 
-    TypedTransaction ttx = tl.wrap(tt);
+    TypedTransactionBase ttx = tl.wrap(tt);
 
     // test increments data
     ttx.mutate().row("13").fam("9").qual("17").increment(1);
@@ -212,7 +212,7 @@ public class TypeLayerTest {
     ttx.mutate().row("13").col(new Column("9", "22")).increment(6); // increment non existant
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("23".getBytes())).increment(7); // increment non existant
 
-    Assert.assertEquals(MockTransaction.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23", "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23", "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);
     tt.setData.clear();
 
     // test increments long
@@ -224,7 +224,7 @@ public class TypeLayerTest {
     ttx.mutate().row("13").col(new Column("9", "22")).increment(6l); // increment non existant
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("23".getBytes())).increment(7l); // increment non existant
 
-    Assert.assertEquals(MockTransaction.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23", "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23", "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);
     tt.setData.clear();
 
     // test setting data
@@ -236,7 +236,7 @@ public class TypeLayerTest {
     ttx.mutate().row("13").col(new Column("9", "21")).set("7".getBytes());
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("22".getBytes())).set(ByteBuffer.wrap("8".getBytes()));
 
-    Assert.assertEquals(MockTransaction.toRCVM("13,9:16,", "13,9:17,3", "13,9:18,4", "13,9:19,5", "13,9:20,6", "13,9:21,7", "13,9:22,8"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("13,9:16,", "13,9:17,3", "13,9:18,4", "13,9:19,5", "13,9:20,6", "13,9:21,7", "13,9:22,8"), tt.setData);
     tt.setData.clear();
 
     // test deleting data
@@ -247,7 +247,7 @@ public class TypeLayerTest {
     ttx.mutate().row("13").col(new Column("9", "21")).delete();
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("22".getBytes())).delete();
 
-    Assert.assertEquals(MockTransaction.toRCM("13,9:17", "13,9:18", "13,9:19", "13,9:20", "13,9:21", "13,9:22"), tt.deletes);
+    Assert.assertEquals(MockTransactionBase.toRCM("13,9:17", "13,9:18", "13,9:19", "13,9:20", "13,9:21", "13,9:22"), tt.deletes);
     tt.deletes.clear();
     Assert.assertEquals(0, tt.setData.size());
     Assert.assertEquals(0, tt.weakNotifications.size());
@@ -260,7 +260,7 @@ public class TypeLayerTest {
     ttx.mutate().row("13").col(new Column("9", "21")).weaklyNotify();
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("22".getBytes())).weaklyNotify();
 
-    Assert.assertEquals(MockTransaction.toRCM("13,9:17", "13,9:18", "13,9:19", "13,9:20", "13,9:21", "13,9:22"), tt.weakNotifications);
+    Assert.assertEquals(MockTransactionBase.toRCM("13,9:17", "13,9:18", "13,9:19", "13,9:20", "13,9:21", "13,9:22"), tt.weakNotifications);
     tt.weakNotifications.clear();
     Assert.assertEquals(0, tt.setData.size());
     Assert.assertEquals(0, tt.deletes.size());
@@ -270,9 +270,9 @@ public class TypeLayerTest {
   public void testMultiRow() throws Exception {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("11,cf1:cq1,1", "11,cf1:cq2,2", "12,cf1:cq1,3", "12,cf1:cq2,4", "13,cf1:cq1,5", "13,cf1:cq2,6");
+    MockTransactionBase tt = new MockTransactionBase("11,cf1:cq1,1", "11,cf1:cq2,2", "12,cf1:cq1,3", "12,cf1:cq2,4", "13,cf1:cq1,5", "13,cf1:cq2,6");
 
-    TypedTransaction ttx = tl.wrap(tt);
+    TypedTransactionBase ttx = tl.wrap(tt);
 
     Bytes br1 = Bytes.wrap("11");
     Bytes br2 = Bytes.wrap("12");
@@ -349,10 +349,10 @@ public class TypeLayerTest {
   public void testBasic() throws Exception {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
-    MockTransaction tt = new MockTransaction("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
+    MockTransactionBase tt = new MockTransactionBase("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
         "13,9:19,20", "13,9:20,20");
 
-    TypedTransaction ttx = tl.wrap(tt);
+    TypedTransactionBase ttx = tl.wrap(tt);
 
     Assert.assertEquals(Bytes.wrap("12"), ttx.get(Bytes.wrap("r2"), new Column("cf2", "7")));
     Assert.assertNull(ttx.get(Bytes.wrap("r2"), new Column("cf2", "9")));
@@ -366,19 +366,19 @@ public class TypeLayerTest {
     Assert.assertEquals(0, map.size());
 
     ttx.set(Bytes.wrap("r6"), new Column("cf2", "7"), Bytes.wrap("3"));
-    Assert.assertEquals(MockTransaction.toRCVM("r6,cf2:7,3"), tt.setData);
+    Assert.assertEquals(MockTransactionBase.toRCVM("r6,cf2:7,3"), tt.setData);
     tt.setData.clear();
 
     Map<Bytes,Map<Column,Bytes>> map2 = ttx.get(ImmutableSet.of(Bytes.wrap("r1"), Bytes.wrap("r2")),
         ImmutableSet.of(new Column("cf1", "cq1"), new Column("cf2", "8")));
-    Assert.assertEquals(MockTransaction.toRCVM("r1,cf1:cq1,v1", "r2,cf2:8,13"), map2);
+    Assert.assertEquals(MockTransactionBase.toRCVM("r1,cf1:cq1,v1", "r2,cf2:8,13"), map2);
 
     ttx.delete(Bytes.wrap("r6"), new Column("cf2", "7"));
-    Assert.assertEquals(MockTransaction.toRCM("r6,cf2:7"), tt.deletes);
+    Assert.assertEquals(MockTransactionBase.toRCM("r6,cf2:7"), tt.deletes);
     tt.deletes.clear();
 
     ttx.setWeakNotification(Bytes.wrap("r6"), new Column("cf2", "8"));
-    Assert.assertEquals(MockTransaction.toRCM("r6,cf2:8"), tt.weakNotifications);
+    Assert.assertEquals(MockTransactionBase.toRCM("r6,cf2:8"), tt.weakNotifications);
     tt.weakNotifications.clear();
 
   }

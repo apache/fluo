@@ -21,12 +21,12 @@ package io.fluo.api.client;
 public interface Loader {
   
   /**
-   * Users implement this method to load data into Fluo using
-   * the provided transaction.  The transaction will be committed
-   * after method returns
+   * Users implement this method to load data into Fluo using the provided transaction. The transaction will be committed and closed by Fluo after the load()
+   * method returns
    * 
-   * @param tx Transaction provided for loading data
+   * @param tx
+   *          Transaction provided for loading data
    * @throws Exception
    */
-  public abstract void load(Transaction tx) throws Exception;
+  public void load(TransactionBase tx) throws Exception;
 }

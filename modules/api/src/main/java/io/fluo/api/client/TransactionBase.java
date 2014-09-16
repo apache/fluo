@@ -15,24 +15,18 @@
  */
 package io.fluo.api.client;
 
-import io.fluo.api.exceptions.CommitException;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
 
 /**
- * Transaction extends TransactionBase to include the commit() and close() methods as users are responsible for committing and closing resources when using
- * Transaction. See {@link io.fluo.api.client.TransactionBase} for more methods.
+ * Enables users to read and write to a Fluo table at certain point in time.
+ * See {@link io.fluo.api.client.SnapshotBase} for available read methods.
  */
-public interface Transaction extends TransactionBase, AutoCloseable {
+public interface TransactionBase extends SnapshotBase {
+  
+  public void setWeakNotification(Bytes row, Column col);
 
-  /**
-   * Commits transaction
-   * 
-   * @throws CommitException
-   */
-  public void commit() throws CommitException;
-
-  /**
-   * Closes transaction resources
-   */
-  @Override
-  public void close();
+  public void set(Bytes row, Column col, Bytes value);
+  
+  public void delete(Bytes row, Column col);
 }
