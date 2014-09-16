@@ -62,6 +62,7 @@ public class NumberIngest {
     private static LoaderExecutorImpl le;
     private static int nodeSize;
     
+    @Override
     public void configure(JobConf job) {      
       FluoConfiguration props = new FluoConfiguration();
       props.setZookeepers(job.get(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP));

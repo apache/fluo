@@ -56,6 +56,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   private long truncationTime;
   private int position = 0;
 
+  @Override
   public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
     if (env.getIteratorScope() == IteratorScope.scan) {
       throw new IllegalArgumentException();
@@ -69,10 +70,12 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers, zkRoot);
   }
 
+  @Override
   public boolean hasTop() {
     return position < keysFiltered.size() || source.hasTop();
   }
 
+  @Override
   public void next() throws IOException {
     if (position < keysFiltered.size() - 1) {
       position++;
@@ -103,6 +106,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
   }
 
+  @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
     source.seek(range, columnFamilies, inclusive);
 
@@ -224,6 +228,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
   }
 
+  @Override
   public Key getTopKey() {
     if (position < keysFiltered.size()) {
       return keysFiltered.get(position).key;
@@ -232,6 +237,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
   }
 
+  @Override
   public Value getTopValue() {
     if (position < keysFiltered.size()) {
       return new Value(keysFiltered.get(position).value);
@@ -240,6 +246,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
   }
 
+  @Override
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();

@@ -18,7 +18,6 @@ package io.fluo.core.impl;
 import java.util.Map.Entry;
 
 import io.fluo.accumulo.util.ColumnConstants;
-
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -52,6 +51,7 @@ class PrimaryRowColumn {
     return 32 + prow.length() + pcol.getFamily().length() + pcol.getQualifier().length() + pcol.getVisibility().length();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof PrimaryRowColumn) {
       PrimaryRowColumn ock = (PrimaryRowColumn) o;
@@ -61,10 +61,12 @@ class PrimaryRowColumn {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return prow.hashCode() + pcol.hashCode() + Long.valueOf(startTs).hashCode();
   }
 
+  @Override
   public String toString() {
     return prow + " " + pcol + " " + startTs;
   }

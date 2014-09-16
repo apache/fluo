@@ -26,6 +26,7 @@ public class Halt {
 
   public static void halt(final String msg) {
     halt(0, new Runnable() {
+      @Override
       public void run() {
         log.fatal(msg);
       }
@@ -34,6 +35,7 @@ public class Halt {
 
   public static void halt(final String msg, int status) {
     halt(status, new Runnable() {
+      @Override
       public void run() {
         log.fatal(msg);
       }
@@ -44,6 +46,7 @@ public class Halt {
     try {
       // give ourselves a little time to try and do something
       new Daemon() {
+        @Override
         public void run() {
           UtilWaitThread.sleep(100);
           Runtime.getRuntime().halt(status);

@@ -42,11 +42,13 @@ public class ColumnIteratorImpl implements ColumnIterator {
     this.scanner = cols;
   }
 
+  @Override
   public boolean hasNext() {
     return firstEntry != null || scanner.hasNext();
   }
   
   // TODO create custom class to return instead of entry
+  @Override
   public Entry<Column,Bytes> next() {
     Entry<Key,Value> entry;
     if (firstEntry != null) {
@@ -64,22 +66,25 @@ public class ColumnIteratorImpl implements ColumnIterator {
 
     return new Entry<Column,Bytes>() {
       
+      @Override
       public Bytes setValue(Bytes value) {
         throw new UnsupportedOperationException();
       }
       
+      @Override
       public Bytes getValue() {
         return val;
       }
       
+      @Override
       public Column getKey() {
         return col;
       }
     };
   }
   
+  @Override
   public void remove() {
     scanner.remove();
   }
-  
 }

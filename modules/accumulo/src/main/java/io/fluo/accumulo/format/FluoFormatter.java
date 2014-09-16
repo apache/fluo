@@ -33,10 +33,12 @@ public class FluoFormatter implements Formatter {
   
   private Iterator<Entry<Key,Value>> scanner;
   
+  @Override
   public boolean hasNext() {
     return scanner.hasNext();
   }
   
+  @Override
   public String next() {
     Entry<Key,Value> entry = scanner.next();
     return toString(entry);
@@ -77,12 +79,13 @@ public class FluoFormatter implements Formatter {
         + (ts & ColumnConstants.TIMESTAMP_MASK) + "-" + type + "\t" + val;
   }
 
+  @Override
   public void remove() {
     scanner.remove();
   }
   
+  @Override
   public void initialize(Iterable<Entry<Key,Value>> scanner, boolean printTimestamps) {
     this.scanner = scanner.iterator();
   }
-  
 }

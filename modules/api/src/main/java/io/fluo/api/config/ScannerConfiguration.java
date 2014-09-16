@@ -66,6 +66,7 @@ public class ScannerConfiguration implements Cloneable {
     columns.clear();
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public Object clone() throws CloneNotSupportedException {
     ScannerConfiguration sc = (ScannerConfiguration) super.clone();

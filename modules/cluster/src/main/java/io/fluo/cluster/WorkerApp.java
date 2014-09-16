@@ -51,6 +51,7 @@ public class WorkerApp implements TwillApplication {
     this.config = config;
   }
        
+  @Override
   public TwillSpecification configure() { 
     int numInstances = config.getWorkerInstances();
     int maxMemoryMB = config.getWorkerMaxMemory();

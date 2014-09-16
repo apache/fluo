@@ -18,10 +18,9 @@ package io.fluo.core.impl;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import io.fluo.api.iterator.ColumnIterator;
-
-import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.data.Bytes;
+import io.fluo.api.iterator.ColumnIterator;
+import io.fluo.api.iterator.RowIterator;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
@@ -36,11 +35,13 @@ public class RowIteratorImpl implements RowIterator {
     rowIter = new org.apache.accumulo.core.client.RowIterator(scanner);
   }
   
+  @Override
   public boolean hasNext() {
     return rowIter.hasNext();
   }
   
   // TODO create custom class to return instead of entry
+  @Override
   public Entry<Bytes,ColumnIterator> next() {
     Iterator<Entry<Key,Value>> cols = rowIter.next();
     
@@ -51,14 +52,17 @@ public class RowIteratorImpl implements RowIterator {
     
     return new Entry<Bytes,ColumnIterator>() {
       
+      @Override
       public Bytes getKey() {
         return row;
       }
       
+      @Override
       public ColumnIterator getValue() {
         return coliter;
       }
 
+      @Override
       public ColumnIterator setValue(ColumnIterator value) {
         throw new UnsupportedOperationException();
       }
@@ -66,8 +70,8 @@ public class RowIteratorImpl implements RowIterator {
 
   }
   
+  @Override
   public void remove() {
     rowIter.remove();
   }
-  
 }

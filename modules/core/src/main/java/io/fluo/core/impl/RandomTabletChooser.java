@@ -54,6 +54,7 @@ public class RandomTabletChooser {
       return t.hashCode();
     }
 
+    @Override
     public int hashCode() {
       return hashCode(start) + hashCode(end);
     }
@@ -68,6 +69,7 @@ public class RandomTabletChooser {
       return t1.equals(t2);
     }
     
+    @Override
     public boolean equals(Object o) {
       if (o instanceof TabletInfo) {
         TabletInfo oti = (TabletInfo) o;
@@ -141,5 +143,4 @@ public class RandomTabletChooser {
     else
       return null;
   }
-  
 }

@@ -95,6 +95,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     scanner.addScanIterator(iterConf);
   }
   
+  @Override
   public boolean hasNext() {
     if (next == null) {
       next = getNext();
@@ -103,6 +104,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     return next != null;
   }
   
+  @Override
   public Entry<Key,Value> next() {
     if (!hasNext()) {
       throw new NoSuchElementException();
@@ -209,6 +211,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
   }
 
+  @Override
   public void remove() {
     iterator.remove();
   }

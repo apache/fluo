@@ -29,12 +29,11 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.fluo.api.exceptions.CommitException;
-
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.types.StringEncoder;
@@ -120,6 +119,7 @@ public class StochasticBankIT extends TestBaseImpl {
       Runnable task = new Runnable() {
         Random rand = new Random();
         
+        @Override
         public void run() {
           while (runFlag.get()) {
             int acct1 = rand.nextInt(numAccounts);

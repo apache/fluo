@@ -53,6 +53,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
   
+  @Override
   public void initialize() throws AlreadyInitializedException {
     try {
       Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
@@ -93,6 +94,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
+  @Override
   public void updateSharedConfig() {
     
     try {
