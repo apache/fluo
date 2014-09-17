@@ -15,7 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * determine if a transactor has died and its transactions can
  * be rolled back.
  */
-public class TransactorNode implements Closeable {
+public class TransactorNode implements AutoCloseable {
 
   public enum TrStatus { OPEN, CLOSED };
 

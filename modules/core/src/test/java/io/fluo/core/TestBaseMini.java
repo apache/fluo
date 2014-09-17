@@ -119,19 +119,19 @@ public class TestBaseMini {
   }
   
   protected void printSnapshot() throws Exception {
+    try (Snapshot s = client.newSnapshot()) {
+      RowIterator iter = s.get(new ScannerConfiguration());
 
-    Snapshot s = client.newSnapshot();
-    RowIterator iter = s.get(new ScannerConfiguration());
-
-    System.out.println("== snapshot start ==");
-    while (iter.hasNext()) {
-      Entry<Bytes, ColumnIterator> rowEntry = iter.next();
-      ColumnIterator citer = rowEntry.getValue();
-      while (citer.hasNext()) {
-        Entry<Column, Bytes> colEntry = citer.next();
-        System.out.println(rowEntry.getKey()+" "+colEntry.getKey()+"\t"+colEntry.getValue());
+      System.out.println("== snapshot start ==");
+      while (iter.hasNext()) {
+        Entry<Bytes,ColumnIterator> rowEntry = iter.next();
+        ColumnIterator citer = rowEntry.getValue();
+        while (citer.hasNext()) {
+          Entry<Column,Bytes> colEntry = citer.next();
+          System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t" + colEntry.getValue());
+        }
       }
-    }  
-    System.out.println("=== snapshot end ===");
+      System.out.println("=== snapshot end ===");
+    }
   }
 }

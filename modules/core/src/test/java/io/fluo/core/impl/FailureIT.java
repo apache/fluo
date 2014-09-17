@@ -111,6 +111,7 @@ public class FailureIT extends TestBaseImpl {
     
     tx.done();
     
+    @SuppressWarnings("resource")
     TransactorNode t2 = new TransactorNode(env);
     TestTransaction tx2 = new TestTransaction(env, t2);
     
@@ -173,6 +174,7 @@ public class FailureIT extends TestBaseImpl {
     
     tx.done();
     
+    @SuppressWarnings("resource")
     TransactorNode t2 = new TransactorNode(env);
     TestTransaction tx2 = new TestTransaction(env, t2);
     
@@ -274,6 +276,7 @@ public class FailureIT extends TestBaseImpl {
   }
   
   private void rollbackTest(boolean killTransactor) throws Exception {
+    @SuppressWarnings("resource")
     TransactorNode t1 = new TransactorNode(env);
 
     TestTransaction tx = new TestTransaction(env);

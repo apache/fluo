@@ -16,7 +16,6 @@
 package io.fluo.core.impl;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +46,7 @@ import org.apache.zookeeper.KeeperException;
 /**
  * Holds common environment configuration and shared resources
  */
-public class Environment implements Closeable {
+public class Environment implements AutoCloseable {
   
   private String table;
   private Authorizations auths = new Authorizations();

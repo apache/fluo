@@ -52,7 +52,6 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   private static String PROPS_CONF_KEY = FluoInputFormat.class.getName() + ".props";
   private static String FAMS_CONF_KEY = FluoInputFormat.class.getName() + ".families";
 
-
   @Override
   public RecordReader<Bytes,ColumnIterator> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
 
@@ -61,11 +60,16 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
       private Entry<Bytes,ColumnIterator> entry;
       private RowIterator rowIter;
       private Environment env = null;
+      private TransactionImpl ti = null;
       
       @Override
       public void close() throws IOException {
-        if (env != null)
+        if (env != null) {
           env.close();
+        }
+        if (ti != null) {
+          ti.close();
+        }
       }
       
       @Override
@@ -98,7 +102,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           
           env = new Environment(new FluoConfiguration(props));
           
-          TransactionImpl ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
+          ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
@@ -138,22 +142,19 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   public static void configure(Job conf, Properties props) {
     try {
       FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
-      Environment env = new Environment(config);
-      
-      long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
-      
-      conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
-      
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      props.store(baos, "");
-      
-      conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
-      
-      AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getZookeepers());
-      AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
-      AccumuloInputFormat.setInputTableName(conf, env.getTable());
-      AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
-      
+      try (Environment env = new Environment(config)) {
+        long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
+        conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        props.store(baos, "");
+        conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
+
+        AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getZookeepers());
+        AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
+        AccumuloInputFormat.setInputTableName(conf, env.getTable());
+        AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -175,6 +176,4 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
 
   // TODO let user set auths
   // TODO let user set ranges
-  
-
 }

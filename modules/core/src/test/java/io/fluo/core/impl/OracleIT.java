@@ -109,9 +109,10 @@ public class OracleIT extends TestBaseImpl {
     Socket socket = new Socket();
     socket.connect(new InetSocketAddress(HostUtil.getHostName(), env.getOraclePort()));
     OutputStream outstream = socket .getOutputStream();
-    PrintWriter out = new PrintWriter(outstream);
-    out.print("abcd");
-    out.flush();
+    try (PrintWriter out = new PrintWriter(outstream)) {
+      out.print("abcd");
+      out.flush();
+    }
 
     socket.close();
 
@@ -171,9 +172,9 @@ public class OracleIT extends TestBaseImpl {
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
 
-    OracleServer oserver2 = createExtraOracle(port2);
-    OracleServer oserver3 = createExtraOracle(port3);
-
+    TestOracle oserver2 = createExtraOracle(port2);
+    TestOracle oserver3 = createExtraOracle(port3);
+    
     oserver2.start();
     sleepUntilConnected(oserver2);
 
@@ -198,11 +199,13 @@ public class OracleIT extends TestBaseImpl {
 
     oserver2.stop();
     sleepWhileConnected(oserver2);
+    oserver2.close();
 
     assertEquals(2002, client.getTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
 
     oserver3.stop();
+    oserver3.close();
   }
 
   /**
@@ -257,12 +260,12 @@ public class OracleIT extends TestBaseImpl {
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
 
-    OracleServer oserver2 = createExtraOracle(port2);
+    TestOracle oserver2 = createExtraOracle(port2);
 
     oserver2.start();
     sleepUntilConnected(oserver2);
 
-    OracleServer oserver3 = createExtraOracle(port3);
+    TestOracle oserver3 = createExtraOracle(port3);
 
     oserver3.start();
     sleepUntilConnected(oserver3);
@@ -286,9 +289,11 @@ public class OracleIT extends TestBaseImpl {
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
 
-      if(i == 5)
+      if (i == 5) {
         oserver2.stop();
+      }
     }
+    oserver2.close();
 
     cdl.await();
 
@@ -299,6 +304,7 @@ public class OracleIT extends TestBaseImpl {
 
     tpool.shutdown();
     oserver3.stop();
+    oserver3.close();
   }
 
   private void sleepWhileConnected(OracleServer oserver) throws InterruptedException {

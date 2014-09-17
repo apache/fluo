@@ -20,11 +20,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.fluo.api.config.FluoConfiguration;
-
-import org.apache.commons.configuration.ConfigurationConverter;
 import io.fluo.api.client.Loader;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.client.LoaderExecutorImpl;
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -80,25 +79,22 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
     
     FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
     
-    final LoaderExecutorImpl lexecutor;
-    try {
-      lexecutor = new LoaderExecutorImpl(config);
+    try (final LoaderExecutorImpl lexecutor = new LoaderExecutorImpl(config)) {
+      return new RecordWriter<Loader,NullWritable>() {
+
+        @Override
+        public void close(TaskAttemptContext conext) throws IOException, InterruptedException {
+          lexecutor.close();
+        }
+
+        @Override
+        public void write(Loader loader, NullWritable nullw) throws IOException, InterruptedException {
+          lexecutor.execute(loader);
+        }
+      };
     } catch (Exception e) {
       throw new IOException(e);
     }
-    
-    return new RecordWriter<Loader,NullWritable>() {
-      
-      @Override
-      public void close(TaskAttemptContext conext) throws IOException, InterruptedException {
-        lexecutor.close();
-      }
-      
-      @Override
-      public void write(Loader loader, NullWritable nullw) throws IOException, InterruptedException {
-        lexecutor.execute(loader);
-      }
-    };
   }
   
   /**

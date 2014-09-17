@@ -91,7 +91,7 @@ public class LockResolver {
    *          the wall time that the transaction that encountered the lock first saw the lock
    * @return true if all locks passed in were resolved (rolled forward or back)
    */
-
+  @SuppressWarnings("resource")
   static boolean resolveLocks(Environment env, long startTs, TxStats stats, List<Entry<Key,Value>> locks, long startTime) {
     // check if transactor is still alive
 
@@ -168,7 +168,6 @@ public class LockResolver {
       env.getSharedResources().getBatchWriter().writeMutations(new ArrayList<>(mutations.values()));
 
     return numResolved == locks.size();
-
   }
 
   private static void rollback(Environment env, long startTs, PrimaryRowColumn prc, List<Entry<Key,Value>> value, Map<ByteSequence,Mutation> mutations) {

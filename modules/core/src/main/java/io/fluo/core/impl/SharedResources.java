@@ -15,8 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.Closeable;
-
 import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -32,7 +30,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 /** 
  * Shared Fluo resources that must be closed
  */
-public class SharedResources implements Closeable {
+public class SharedResources implements AutoCloseable {
 
   private Environment env;
   private BatchWriter bw;

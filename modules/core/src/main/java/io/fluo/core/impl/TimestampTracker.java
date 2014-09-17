@@ -15,7 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
@@ -38,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Allocates timestamps from Oracle for transactions and tracks 
  * the oldest active timestamp in Zookeeper for garbage collection
  */
-public class TimestampTracker implements Closeable {
+public class TimestampTracker implements AutoCloseable {
 
   public static enum TrackerStatus { IDLE, BUSY, CLOSED };
 
