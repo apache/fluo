@@ -20,6 +20,9 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
 
+/**
+ * An {@link AbstractObserver} that uses a {@link TypeLayer}
+ */
 public abstract class TypedObserver extends AbstractObserver {
 
   private TypeLayer tl;

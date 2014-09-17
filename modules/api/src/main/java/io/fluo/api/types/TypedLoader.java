@@ -18,6 +18,9 @@ package io.fluo.api.types;
 import io.fluo.api.client.Loader;
 import io.fluo.api.client.TransactionBase;
 
+/**
+ * A {@link Loader} that uses a {@link TypeLayer}
+ */
 public abstract class TypedLoader implements Loader {
 
   private TypeLayer tl;

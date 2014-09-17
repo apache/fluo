@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Fluo configuration helper class
+ * Configuration helper class for Fluo. FluoConfiguration extends {@link CompositeConfiguration}.
  */
 public class FluoConfiguration extends CompositeConfiguration {
   
@@ -233,6 +233,9 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getInt(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
   }
 
+  /**
+   * Sets the {@link ObserverConfiguration} for observers
+   */
   public FluoConfiguration setObservers(List<ObserverConfiguration> observers) {
     
     Iterator<String> iter1 = getKeys(OBSERVER_PREFIX);

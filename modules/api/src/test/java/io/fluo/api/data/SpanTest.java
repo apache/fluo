@@ -19,7 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests Span class
+ * Unit test for {@link Span}
  */
 public class SpanTest {
   

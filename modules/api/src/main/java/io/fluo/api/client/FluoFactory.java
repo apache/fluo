@@ -21,24 +21,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Factory for creating Fluo client objects
+ * Factory for creating {@link FluoClient}, {@link FluoAdmin}, and {@link MiniFluo}. All factory methods take a configuration object which can be built using
+ * {@link FluoConfiguration}.
  */
 public class FluoFactory {
 
   private static Logger log = LoggerFactory.getLogger(FluoFactory.class);
 
   /**
-   * Creates a Fluo client.  Configuration should contain properties 
-   * with client.* prefix.  Please review all client.* properties 
-   * but many have a default.  At a minimum, configuration should
-   * contain the following properties that have no default:
-   * 
-   * io.fluo.client.accumulo.user
-   * io.fluo.client.accumulo.password
-   * io.fluo.client.accumulo.instance
-   * 
-   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
-   * @return FluoClient
+   * Creates a {@link FluoClient} for reading and writing data to Fluo. {@link FluoClient#close()} should be called when you are finished using it.
+   * Configuration (see {@link FluoConfiguration}) should contain properties with client.* prefix. Please review all client.* properties but many have a
+   * default. At a minimum, configuration should contain the following properties that have no default: io.fluo.client.accumulo.user,
+   * io.fluo.client.accumulo.password, io.fluo.client.accumulo.instance
    */
   public static FluoClient newClient(Configuration configuration) {
     FluoConfiguration config = new FluoConfiguration(configuration);
@@ -46,19 +40,10 @@ public class FluoFactory {
   }
   
   /**
-   * Creates a FluoAdmin client.  Configuration should contain properties 
-   * with client.* and admin.* prefix.  Please review all properties 
-   * but many have a default.  At a minimum, configuration should
-   * contain the following properties that have no default:
-   * 
-   * io.fluo.client.accumulo.user
-   * io.fluo.client.accumulo.password
-   * io.fluo.client.accumulo.instance
-   * io.fluo.admin.accumulo.table
+   * Creates a {@link FluoAdmin} client for administering Fluo. Configuration (see {@link FluoConfiguration}) should contain properties with client.* and
+   * admin.* prefix. Please review all properties but many have a default. At a minimum, configuration should contain the following properties that have no
+   * default: io.fluo.client.accumulo.user, io.fluo.client.accumulo.password, io.fluo.client.accumulo.instance, io.fluo.admin.accumulo.table,
    * io.fluo.admin.accumulo.classpath
-   * 
-   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
-   * @return FluoAdmin
    */
   public static FluoAdmin newAdmin(Configuration configuration) {
     FluoConfiguration config = new FluoConfiguration(configuration);
@@ -66,18 +51,9 @@ public class FluoFactory {
   }
 
   /**
-   * Creates a MiniFluo instance.  Please review all properties in 
-   * fluo.properties.  At a minimum, configuration should contain 
-   * the following properties that have no default:
-   * 
-   * io.fluo.client.accumulo.user
-   * io.fluo.client.accumulo.password
-   * io.fluo.client.accumulo.instance
-   * io.fluo.admin.accumulo.table
-   * io.fluo.admin.accumulo.classpath
-   *
-   * @param configuration see {@link io.fluo.api.config.FluoConfiguration}
-   * @return MiniFluo
+   * Creates a {@link MiniFluo} which is a test and development instance of Fluo. Please review all properties in fluo.properties. At a minimum, configuration
+   * (see {@link FluoConfiguration}) should contain the following properties that have no default: io.fluo.client.accumulo.user,
+   * io.fluo.client.accumulo.password, io.fluo.client.accumulo.instance, io.fluo.admin.accumulo.table, io.fluo.admin.accumulo.classpath
    */
   public static MiniFluo newMiniFluo(Configuration configuration) {
     FluoConfiguration config = new FluoConfiguration(configuration);

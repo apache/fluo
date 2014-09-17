@@ -19,11 +19,10 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import io.fluo.api.data.Bytes;
-
 import io.fluo.api.data.Column;
 
 /**
- * Iterator for Fluo Columns
+ * Iterator for Fluo columns
  */
 public interface ColumnIterator extends Iterator<Entry<Column,Bytes>> {
   

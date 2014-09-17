@@ -16,10 +16,14 @@
 package io.fluo.api.client;
 
 /**
- * Fluo Administration
+ * Provides methods for initializing and administering a Fluo instance.
  */
 public interface FluoAdmin {
   
+  /**
+   * Exception that is thrown if Fluo instance was already initialized. An instance is already initialized if the root directory set by the property
+   * io.fluo.client.zookeeper.root exists in Zookeeper. If this directory can be reinitialized and overwritten set io.fluo.client.zookeeper.clear to true
+   */
   public static class AlreadyInitializedException extends Exception {
     private static final long serialVersionUID = 1L;
 
@@ -29,19 +33,15 @@ public interface FluoAdmin {
   }
 
   /**
-   * Initializes Fluo instance and stores shared configuration
-   * in Zookeeper.  Shared configuration consists of properties 
-   * with observer.* and transaction.* prefix.
-   * 
-   * @throws AlreadyInitializedException if Fluo instance exists
+   * Initializes Fluo instance and stores shared configuration in Zookeeper. Shared configuration consists of properties with observer.* and transaction.*
+   * prefix. Throws {@link AlreadyInitializedException} if Fluo instance was already initialized in zookeeper. If you want initialize zookeeper again, set
+   * io.fluo.client.zookeeper.clear to true
    */
   public void initialize() throws AlreadyInitializedException;
 
   /**
-   * Updates shared configuration in Zookeeper. Shared configuration
-   * consists of properties with observer.* and transaction.* prefix.
-   * This method is called if a user has previously called initialize() 
-   * but wants changes to shared configuration updated in Zookeeper
+   * Updates shared configuration in Zookeeper. Shared configuration consists of properties with observer.* and transaction.* prefix. This method is called if a
+   * user has previously called initialize() but wants changes to shared configuration updated in Zookeeper
    */
   public void updateSharedConfig();
 }

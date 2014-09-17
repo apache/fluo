@@ -18,8 +18,7 @@ package io.fluo.api.data;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents a Row & Column in Fluo. 
- * Similiar to an Accumulo Key.
+ * Represents a Row & Column in Fluo. Similar to an Accumulo Key.
  */
 public class RowColumn {
   

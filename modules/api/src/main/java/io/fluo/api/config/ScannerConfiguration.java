@@ -20,12 +20,13 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
+import io.fluo.api.client.SnapshotBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
 
 /**
- * Configures Scanner
+ * Contains configuration for a {@link Snapshot} scanner. Passed to {@link SnapshotBase#get(ScannerConfiguration)}.
  */
 public class ScannerConfiguration implements Cloneable {
 
@@ -33,35 +34,52 @@ public class ScannerConfiguration implements Cloneable {
   // TODO use a set
   private ArrayList<Column> columns = new ArrayList<>();
 
+  /**
+   * Sets {@link Span} for ScannerConfiguration
+   */
   public ScannerConfiguration setSpan(Span span) {
     this.span = span;
     return this;
   }
 
+  /**
+   * Retrieves {@link Span} for ScannerConfiguration
+   */
   public Span getSpan() {
     return span;
   }
 
+  /**
+   * List of all {@link Column}s that scanner will retrieve
+   */
   public List<Column> getColumns() {
     return Collections.unmodifiableList(columns);
   }
 
   // TODO document SnapshotIterator
 
-  public ScannerConfiguration fetchColumnFamily(Bytes col) {
-    Preconditions.checkNotNull(col);
+  /**
+   * Configures scanner to retrieve columns with the family
+   */
+  public ScannerConfiguration fetchColumnFamily(Bytes fam) {
+    Preconditions.checkNotNull(fam);
     // TODO causes NPE w/ set, add unit test
-    columns.add(new Column(col, null));
+    columns.add(new Column(fam, null));
     return this;
   }
 
-  public ScannerConfiguration fetchColumn(Bytes colFam, Bytes colQual) {
-    Preconditions.checkNotNull(colFam, colQual);
-    columns.add(new Column(colFam, colQual));
+  /**
+   * Configures scanner to retrieve columns with the given family and qualifier
+   */
+  public ScannerConfiguration fetchColumn(Bytes fam, Bytes qual) {
+    Preconditions.checkNotNull(fam, qual);
+    columns.add(new Column(fam, qual));
     return this;
   }
 
-
+  /**
+   * Clears all fetched column settings
+   */
   public void clearColumns() {
     columns.clear();
   }

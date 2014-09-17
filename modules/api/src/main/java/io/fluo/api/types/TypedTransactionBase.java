@@ -27,7 +27,7 @@ import io.fluo.api.types.TypeLayer.QualifierMethods;
 import io.fluo.api.types.TypeLayer.RowMethods;
 
 /**
- * See {@link TypeLayer} javadocs.
+ * A {@link TransactionBase} that uses a {@link TypeLayer}
  */
 public class TypedTransactionBase extends TypedSnapshotBase implements TransactionBase {
 

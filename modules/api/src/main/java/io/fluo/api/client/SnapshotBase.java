@@ -29,12 +29,24 @@ import io.fluo.api.iterator.RowIterator;
  */
 public interface SnapshotBase {
   
+  /**
+   * Retrieves the value (in {@link Bytes}) stored at a given row and {@link Column}. Returns null if does not exist.
+   */
   public Bytes get(Bytes row, Column column) throws Exception;
 
+  /**
+   * Given a row and set of {@link Column}s, retrieves a map contains the values at those {@link Column}s. Only columns that exist will be returned in map.
+   */
   public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception;
 
+  /**
+   * Given a collection of rows and set of {@link Column}s, retrieves a map contains the values at those rows and {@link Column}s. Only rows and columns that
+   * exists will be returned in map.
+   */
   public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception;
 
+  /**
+   * Retrieves a {@link RowIterator} with the given {@link ScannerConfiguration}
+   */
   public RowIterator get(ScannerConfiguration config) throws Exception;
-
 }

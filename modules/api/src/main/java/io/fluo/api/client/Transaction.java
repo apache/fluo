@@ -18,20 +18,18 @@ package io.fluo.api.client;
 import io.fluo.api.exceptions.CommitException;
 
 /**
- * Transaction extends TransactionBase to include the commit() and close() methods as users are responsible for committing and closing resources when using
- * Transaction. See {@link io.fluo.api.client.TransactionBase} for more methods.
+ * Enables users to read and write to Fluo at a certain point in time. Transaction extends {@link TransactionBase} to include the {@link #commit()} and
+ * {@link #close()} methods as users are responsible for committing and closing resources when using Transaction.
  */
 public interface Transaction extends TransactionBase, AutoCloseable {
 
   /**
-   * Commits transaction
-   * 
-   * @throws CommitException
+   * Commits the transaction. A {@link CommitException} will be thrown if the commit failed.
    */
   public void commit() throws CommitException;
 
   /**
-   * Closes transaction resources
+   * Closes resources
    */
   @Override
   public void close();

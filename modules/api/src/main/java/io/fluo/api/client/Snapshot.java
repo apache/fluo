@@ -16,13 +16,13 @@
 package io.fluo.api.client;
 
 /**
- * An AutoCloseable version of SnapshotBase. 
- * See {@link io.fluo.api.client.SnapshotBase} for available methods.
+ * Allows users to read from a Fluo table at a certain point in time. Snapshot extends {@link SnapshotBase} to include a {@link #close} method which must be
+ * called when you are finished using it.
  */
 public interface Snapshot extends SnapshotBase, AutoCloseable {
   
   /**
-   * Closes snapshot resources
+   * Closes resources
    */
   @Override
   public void close();

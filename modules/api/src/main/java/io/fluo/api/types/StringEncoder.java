@@ -17,6 +17,9 @@ package io.fluo.api.types;
 
 import io.fluo.api.data.Bytes;
 
+/**
+ * Transforms Java primitives to and from bytes using a String encoding
+ */
 public class StringEncoder implements Encoder {
 
   @Override

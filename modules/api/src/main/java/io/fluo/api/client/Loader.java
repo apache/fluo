@@ -16,17 +16,13 @@
 package io.fluo.api.client;
 
 /**
- * Interface that needs to be implemented to load data into Fluo
+ * Interface that is implemented by users to load data into Fluo. Loader classes are executed by a {@link LoaderExecutor}.
  */
 public interface Loader {
   
   /**
-   * Users implement this method to load data into Fluo using the provided transaction. The transaction will be committed and closed by Fluo after the load()
-   * method returns
-   * 
-   * @param tx
-   *          Transaction provided for loading data
-   * @throws Exception
+   * Users implement this method to load data into Fluo using the provided {@link TransactionBase}. The transaction will be committed and closed by Fluo after
+   * this method returns
    */
   public void load(TransactionBase tx) throws Exception;
 }
