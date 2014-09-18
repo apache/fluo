@@ -29,6 +29,11 @@
   <packaging>jar</packaging>
 
   <name>API</name>
+  <description>
+    This module contains all API code.  External dependencies should be limited.  Any changes to
+    public methods should be avoided.  While the API module does not have compile time dependency
+    on fluo-core, you must include fluo-core as a run-time dependency.
+  </description>
 
   <build>
     <plugins>

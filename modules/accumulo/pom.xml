@@ -29,6 +29,12 @@
   <packaging>jar</packaging>
 
   <name>Accumulo Extensions</name>
+  <description>
+    This module contains all Fluo code that is run by Accumulo.  This includes iterators and formatters.
+    Given that this module produces a JAR that needs to be included on the Accumulo classpath, external 
+    dependencies should be limited.  Some utility classes in this module are not only used by iterators
+    but also used by fluo-core.
+  </description>
 
   <build>
     <plugins>

@@ -29,6 +29,10 @@
   <packaging>pom</packaging>
 
   <name>Distribution</name>
+  <description>
+    This module produces a tarball distribution of Fluo.  It contains all of the default configuration
+    and scripts required for the distribution. 
+  </description>
 
   <!-- NOTE: These dependency declarations are only required to sort this
     project to the end of the line in the multimodule build. Since we only include 

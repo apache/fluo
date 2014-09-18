@@ -29,6 +29,13 @@
   <packaging>jar</packaging>
 
   <name>Stress</name>
+  <description>
+    This module contains Fluo stress tests.  Stress tests are different than integration tests in
+    that they are designed to run on a cluster while integration tests only run on MiniFluo in a 
+    local environment.  This module produces the jar needed to run a stress test on a cluster.
+    Currently, this module only has one stress test (the Trie test) but other tests could be added 
+    to this module in the future.  
+  </description>
 
   <profiles>
     <profile>
