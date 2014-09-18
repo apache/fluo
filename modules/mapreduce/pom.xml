@@ -29,6 +29,9 @@
   <packaging>jar</packaging>
 
   <name>MapReduce</name>
+  <description>
+    This module provides utility code for MapReduce jobs that read from or write to a Fluo table.    
+  </description>
 
   <profiles>
     <profile>
