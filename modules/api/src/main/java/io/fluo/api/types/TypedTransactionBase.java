@@ -67,6 +67,18 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       set(encoder.encode(l));
     }
 
+    public void set(float f) {
+      set(encoder.encode(f));
+    }
+
+    public void set(double d) {
+      set(encoder.encode(d));
+    }
+
+    public void set(boolean b) {
+      set(encoder.encode(b));
+    }
+
     public void set(byte[] ba) {
       set(Bytes.wrap(ba));
     }

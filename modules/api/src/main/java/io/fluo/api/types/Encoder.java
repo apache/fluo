@@ -51,4 +51,34 @@ public interface Encoder {
    * Encodes a String to {@link Bytes}
    */
   public Bytes encode(String s);
+
+  /**
+   * Decodes a float from {@link Bytes}
+   */
+  public float decodeFloat(Bytes b);
+
+  /**
+   * Encodes a float to {@link Bytes}
+   */
+  public Bytes encode(float f);
+
+  /**
+   * Decodes a double from {@link Bytes}
+   */
+  public double decodeDouble(Bytes b);
+
+  /**
+   * Encodes a double to {@link Bytes}
+   */
+  public Bytes encode(double d);
+
+  /**
+   * Decodes a boolean from {@link Bytes}
+   */
+  public boolean decodeBoolean(Bytes b);
+
+  /**
+   * Encodes a boolean to {@link Bytes}
+   */
+  public Bytes encode(boolean b);
 }
