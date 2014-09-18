@@ -128,7 +128,7 @@ public class TypeLayerTest {
     TypeLayer tl = new TypeLayer(new StringEncoder());
 
     MockSnapshot ms = new MockSnapshot("r1,cf1:cq1,v1", "r1,cf1:cq2,v2", "r1,cf1:cq3,9", "r2,cf2:7,12", "r2,cf2:8,13", "13,9:17,20", "13,9:18,20",
-        "13,9:19,20", "13,9:20,20");
+        "13,9:19,20", "13,9:20,20", "r3,cf3:cq3,28.195", "r4,cf4:cq4,true");
 
     TypedSnapshot tts = tl.wrap(ms);
 
@@ -136,6 +136,10 @@ public class TypeLayerTest {
     Assert.assertEquals("v1", tts.get().row("r1").fam("cf1").qual("cq1").toString("b"));
     Assert.assertEquals("13", tts.get().row("r2").fam("cf2").qual("8").toString());
     Assert.assertEquals("13", tts.get().row("r2").fam("cf2").qual("8").toString("b"));
+    Assert.assertEquals("28.195", tts.get().row("r3").fam("cf3").qual("cq3").toString());
+    Assert.assertEquals("28.195", tts.get().row("r3").fam("cf3").qual("cq3").toString("b"));
+    Assert.assertEquals("true", tts.get().row("r4").fam("cf4").qual("cq4").toString());
+    Assert.assertEquals("true", tts.get().row("r4").fam("cf4").qual("cq4").toString("b"));
 
     // try converting to different types
     Assert.assertEquals("13", tts.get().row("r2").fam("cf2").qual(8).toString());
@@ -164,6 +168,18 @@ public class TypeLayerTest {
     Assert.assertEquals("14", new String(tts.get().row("r2").col(new Column("cf3", "8")).toBytes("14".getBytes())));
     Assert.assertNull(tts.get().row("r2").col(new Column("cf3", "8")).toByteBuffer());
     Assert.assertEquals("14", Bytes.wrap(tts.get().row("r2").col(new Column("cf3", "8")).toByteBuffer(ByteBuffer.wrap("14".getBytes()))).toString());
+
+    // test float & double
+    Assert.assertEquals((Float) 28.195f, tts.get().row("r3").fam("cf3").qual("cq3").toFloat());
+    Assert.assertEquals(28.195f, tts.get().row("r3").fam("cf3").qual("cq3").toFloat(39.383f), 0.0);
+    Assert.assertEquals((Double) 28.195d, tts.get().row("r3").fam("cf3").qual("cq3").toDouble());
+    Assert.assertEquals(28.195d, tts.get().row("r3").fam("cf3").qual("cq3").toDouble(39.383d), 0.0);
+
+    // test boolean
+    Assert.assertEquals((Boolean) true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean());
+    Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean());
+    Assert.assertEquals((Boolean) true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean(false));
+    Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean(false));
 
     // try different types for row
     Assert.assertEquals("20", tts.get().row(13).fam("9").qual("17").toString());
@@ -229,8 +245,13 @@ public class TypeLayerTest {
     ttx.mutate().row("13").fam("9").qual("20".getBytes()).set("6".getBytes());
     ttx.mutate().row("13").col(new Column("9", "21")).set("7".getBytes());
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("22".getBytes())).set(ByteBuffer.wrap("8".getBytes()));
+    ttx.mutate().row("13").fam("9").qual("23").set(2.54f);
+    ttx.mutate().row("13").fam("9").qual("24").set(-6.135d);
+    ttx.mutate().row("13").fam("9").qual("25").set(false);
 
-    Assert.assertEquals(MockTransactionBase.toRCVM("13,9:16,", "13,9:17,3", "13,9:18,4", "13,9:19,5", "13,9:20,6", "13,9:21,7", "13,9:22,8"), tt.setData);
+    Assert.assertEquals(
+MockTransactionBase.toRCVM("13,9:16,", "13,9:17,3", "13,9:18,4", "13,9:19,5", "13,9:20,6", "13,9:21,7", "13,9:22,8", "13,9:23,2.54",
+        "13,9:24,-6.135", "13,9:25,false"), tt.setData);
     tt.setData.clear();
 
     // test deleting data

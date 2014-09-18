@@ -51,4 +51,34 @@ public class StringEncoder implements Encoder {
   public Bytes encode(String s) {
     return Bytes.wrap(s);
   }
+
+  @Override
+  public float decodeFloat(Bytes b) {
+    return Float.parseFloat(decodeString(b));
+  }
+
+  @Override
+  public Bytes encode(float f) {
+    return encode(Float.toString(f));
+  }
+
+  @Override
+  public double decodeDouble(Bytes b) {
+    return Double.parseDouble(decodeString(b));
+  }
+
+  @Override
+  public Bytes encode(double d) {
+    return encode(Double.toString(d));
+  }
+
+  @Override
+  public boolean decodeBoolean(Bytes b) {
+    return Boolean.parseBoolean(decodeString(b));
+  }
+
+  @Override
+  public Bytes encode(boolean b) {
+    return encode(Boolean.toString(b));
+  }
 }

@@ -144,6 +144,42 @@ public class TypedSnapshotBase implements SnapshotBase {
       return encoder.decodeString(getBytes());
     }
 
+    public Float toFloat() {
+      if (getBytes() == null)
+        return null;
+      return encoder.decodeFloat(getBytes());
+    }
+
+    public float toFloat(float defaultValue) {
+      if (getBytes() == null)
+        return defaultValue;
+      return encoder.decodeFloat(getBytes());
+    }
+
+    public Double toDouble() {
+      if (getBytes() == null)
+        return null;
+      return encoder.decodeDouble(getBytes());
+    }
+
+    public double toDouble(double defaultValue) {
+      if (getBytes() == null)
+        return defaultValue;
+      return encoder.decodeDouble(getBytes());
+    }
+
+    public Boolean toBoolean() {
+      if (getBytes() == null)
+        return null;
+      return encoder.decodeBoolean(getBytes());
+    }
+
+    public boolean toBoolean(boolean defaultValue) {
+      if (getBytes() == null)
+        return defaultValue;
+      return encoder.decodeBoolean(getBytes());
+    }
+
     public byte[] toBytes() {
       if (getBytes() == null)
         return null;
