@@ -15,7 +15,6 @@
  */
 package io.fluo.core.impl;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * Provides cache of all Fluo transactors.
  * Used by clients to determine if transactor is running.
  */
-public class TransactorCache implements Closeable {
+public class TransactorCache implements AutoCloseable {
   
   public enum TcStatus { OPEN, CLOSED };
   

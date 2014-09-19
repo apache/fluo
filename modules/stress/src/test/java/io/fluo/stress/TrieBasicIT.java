@@ -94,21 +94,18 @@ public class TrieBasicIT extends TestBaseMini {
 
       miniFluo.waitForObservers();
 
-      TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot());
-
-      Integer result = tsnap.get().row(Node.generateRootId(nodeSize))
-          .col(COUNT_SEEN_COL).toInteger();
-      if (result == null) {
-        log.error("Could not find root node");
-        printSnapshot();
+      try (TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot())) {
+        Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
+        if (result == null) {
+          log.error("Could not find root node");
+          printSnapshot();
+        }
+        if (!result.equals(uniqueNum)) {
+          log.error("Count (" + result + ") at root node does not match expected (" + uniqueNum + "):");
+          printSnapshot();
+        }
+        Assert.assertEquals(uniqueNum, result.intValue());
       }
-
-      if (!result.equals(uniqueNum)) {
-        log.error("Count ("+result+") at root node does not match expected ("+uniqueNum+"):");
-        printSnapshot();
-      }
-
-      Assert.assertEquals(uniqueNum, result.intValue());
     }
   }
 }

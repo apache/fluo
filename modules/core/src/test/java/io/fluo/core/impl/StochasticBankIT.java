@@ -56,6 +56,7 @@ public class StochasticBankIT extends TestBaseImpl {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();
 
+  @SuppressWarnings("resource")
   @Test
   public void testConcurrency() throws Exception {
 
@@ -77,10 +78,15 @@ public class StochasticBankIT extends TestBaseImpl {
     
     Random rand = new Random();
     Environment tenv = env;
+    boolean close = false;
     if (rand.nextBoolean()) {
       tenv = new FaultyConfig(env, (rand.nextDouble() * .4) + .1, .50);
+      close = true;
     }
     List<Thread> threads = startTransfers(tenv, numAccounts, 20, runFlag);
+    if (close) {
+      tenv.close();
+    }
     
     runVerifier(env, numAccounts, 100);
     

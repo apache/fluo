@@ -42,6 +42,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder());
   }
 
+  @SuppressWarnings("resource")
   public TestTransaction(Environment env) {
     this(new TransactionImpl(env), new StringEncoder());
   }
@@ -51,10 +52,12 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     this.tx = transactionImpl;
   }
 
+  @SuppressWarnings("resource")
   public TestTransaction(Environment env, Bytes trow, Column tcol) {
     this(new TransactionImpl(env, trow, tcol), new StringEncoder());
   }
 
+  @SuppressWarnings("resource")
   public TestTransaction(Environment env, String trow, Column tcol) {
     this(new TransactionImpl(env, Bytes.wrap(trow), tcol), new StringEncoder());
   }

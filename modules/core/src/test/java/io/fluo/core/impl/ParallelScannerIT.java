@@ -15,6 +15,9 @@
  */
 package io.fluo.core.impl;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
@@ -23,10 +26,6 @@ import io.fluo.core.TestBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
-
-import java.util.Arrays;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -115,6 +114,7 @@ public class ParallelScannerIT extends TestBaseImpl {
 
     tx1.done();
 
+    @SuppressWarnings("resource")
     TransactorNode tNode1 = new TransactorNode(env);
 
     TestTransaction tx2 = new TestTransaction(env, tNode1);

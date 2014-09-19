@@ -201,6 +201,9 @@ public class TypeLayerTest {
     Assert.assertEquals("20", tts.get().row("13").fam("9").qual(17).toString());
     Assert.assertEquals("20", tts.get().row("13").fam("9").qual("17".getBytes()).toString());
     Assert.assertEquals("20", tts.get().row("13").fam("9").qual(ByteBuffer.wrap("17".getBytes())).toString());
+
+    ms.close();
+    tts.close();
   }
 
   @Test

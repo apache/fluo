@@ -30,6 +30,7 @@ public class TimestampTrackerIT extends TestBaseImpl {
 
   @Test(expected = NoSuchElementException.class)
   public void testTsNoElement() {
+    @SuppressWarnings("resource")
     TimestampTracker tracker = env.getSharedResources().getTimestampTracker();
     Assert.assertTrue(tracker.isEmpty());
     tracker.getOldestActiveTimestamp();

@@ -54,6 +54,8 @@ public class TrieMapRedIT extends TestBaseMini {
   }
   
   @Before
+  @SuppressWarnings("resource")
+  // resources closed by driver
   public void setUp() {
     driver = PipelineMapReduceDriver.newPipelineMapReduceDriver();
     driver.addMapReduce(new NumberIngest.IngestMapper(), new NumberIngest.UniqueReducer());
@@ -83,16 +85,15 @@ public class TrieMapRedIT extends TestBaseMini {
 
     miniFluo.waitForObservers();
 
-    TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot());
-
-    Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
-    if (result == null) { 
-      log.error("Could not find root node");
-    } else if (!result.equals(total)) {
-      log.error("Count ("+result+") at root node does not match expected ("+total+"):");
+    try (TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot())) {
+      Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
+      if (result == null) {
+        log.error("Could not find root node");
+      } else if (!result.equals(total)) {
+        log.error("Count (" + result + ") at root node does not match expected (" + total + "):");
+      }
+      Assert.assertEquals(total.intValue(), result.intValue());
     }
-
-    Assert.assertEquals(total.intValue(), result.intValue());
   }
   
   private static void loadConfig(Configuration conf, Properties props) {

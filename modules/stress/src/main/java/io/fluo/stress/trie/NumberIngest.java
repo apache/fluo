@@ -154,16 +154,17 @@ public class NumberIngest {
     Configuration config = new Configuration();
     config.addResource(new Path(hadoopPrefix+"/conf/core-site.xml"));
     config.addResource(new Path(hadoopPrefix+"/conf/hdfs-site.xml"));
+    @SuppressWarnings("resource")
     FileSystem hdfs = FileSystem.get(config);
     
     String inputDir = testDir+"/input";
     
     hdfs.mkdirs(new Path(inputDir));
-    FSDataOutputStream fos = hdfs.create(new Path(inputDir+"/data"));
-    for (int i = 0; i < numMappers; i++) {
-      fos.writeUTF(Integer.toString(numPerMapper)+"\n");
+    try (FSDataOutputStream fos = hdfs.create(new Path(inputDir + "/data"))) {
+      for (int i = 0; i < numMappers; i++) {
+        fos.writeUTF(Integer.toString(numPerMapper) + "\n");
+      }
     }
-    fos.close();
   }
     
   public static void main(String[] args) throws IOException, ConfigurationException {

@@ -68,6 +68,26 @@ public class TestBaseImpl {
   protected FluoConfiguration config;
   protected FluoClient client;
   
+  protected class TestOracle extends OracleServer implements AutoCloseable {
+
+    Environment env;
+
+    TestOracle(Environment env) throws Exception {
+      super(env);
+      this.env = env;
+    }
+
+    @SuppressWarnings("resource")
+    TestOracle(int port) throws Exception {
+      this(new Environment(curator, zkn, conn, port));
+    }
+
+    @Override
+    public void close() throws Exception {
+      env.close();
+    }
+  }
+
   protected List<ObserverConfiguration> getObservers() {
     return Collections.emptyList();
   }
@@ -136,12 +156,11 @@ public class TestBaseImpl {
     oserver.start();
   }
 
-  /** Utility method to create additional oracles (setup method 
-   * will always create one oracle)
+  /**
+   * Utility method to create additional oracles (setup method will always create one oracle)
    */
-  public OracleServer createExtraOracle(int port) throws Exception {
-    Environment env = new Environment(curator, zkn, conn, port);
-    return new OracleServer(env);
+  public TestOracle createExtraOracle(int port) throws Exception {
+    return new TestOracle(port);
   }
   
   @After

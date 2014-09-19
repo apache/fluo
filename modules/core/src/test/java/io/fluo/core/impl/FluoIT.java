@@ -46,15 +46,16 @@ public class FluoIT extends TestBaseImpl {
   @Test
   public void testFluoFactory() throws Exception {
     Assert.assertNotNull(FluoFactory.newAdmin(config));
-    
-    FluoClient client = FluoFactory.newClient(config);
-    Assert.assertNotNull(client);
-    Assert.assertNotNull(client.newLoaderExecutor());
-    
-    Snapshot s = client.newSnapshot();
-    Assert.assertNotNull(s);
-    s.get(Bytes.wrap("test"), new Column(Bytes.wrap("cf"), Bytes.wrap("cq")));
-    client.close();
+
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      Assert.assertNotNull(client);
+      Assert.assertNotNull(client.newLoaderExecutor());
+
+      try (Snapshot s = client.newSnapshot()) {
+        Assert.assertNotNull(s);
+        s.get(Bytes.wrap("test"), new Column(Bytes.wrap("cf"), Bytes.wrap("cq")));
+      }
+    }
   }
 
   @Test
@@ -367,6 +368,7 @@ public class FluoIT extends TestBaseImpl {
     Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
     Assert.assertEquals("20", tx2.get().row("joe").col(balanceCol).toString());
     Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
+    env2.close();
     
     Environment env3 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env3.setAuthorizations(new Authorizations("C"));
@@ -375,6 +377,7 @@ public class FluoIT extends TestBaseImpl {
     Assert.assertNull(tx3.get().row("bob").col(balanceCol).toString());
     Assert.assertNull(tx3.get().row("joe").col(balanceCol).toString());
     Assert.assertNull(tx3.get().row("jill").col(balanceCol).toString());
+    env3.close();
   }
 
   @Test
