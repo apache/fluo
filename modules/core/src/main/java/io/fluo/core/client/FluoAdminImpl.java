@@ -56,10 +56,21 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void initialize() throws AlreadyInitializedException {
     try {
+
       Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
 
-      if (config.getClearZookeeper()) {
+      /**
+       * Currently, getAllowReinitialize assumes the user is okay removing the table if a table with
+       * the given name already exists. This is not a long term solution, it was done for
+       */
+      if (config.getAllowReinitialize()) {
+
+        if(conn.tableOperations().exists(config.getAccumuloTable())) {
+          logger.warn("Removing current table " + config.getAccumuloTable() + " because it already exists.");
+          conn.tableOperations().delete(config.getAccumuloTable());
+        }
+
         try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
           curator.start();
           String zkRoot = config.getZookeeperRoot();
@@ -71,6 +82,13 @@ public class FluoAdminImpl implements FluoAdmin {
             throw new RuntimeException(e);
           }
         }
+      } else {
+        if(conn.tableOperations().exists(config.getAccumuloTable())) {
+          logger.error("The specified Fluo table " + config.getAccumuloTable() + " already exists and " +
+              FluoConfiguration.ADMIN_ALLOW_REINITIALIZE_PROP +
+               " is set to false. Instance initialization failed.");
+        }
+
       }
 
       Operations.initialize(conn, config.getZookeeperRoot(), config.getAccumuloTable());
