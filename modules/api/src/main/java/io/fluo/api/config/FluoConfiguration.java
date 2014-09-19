@@ -53,12 +53,12 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   // Administration
   public static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
-  public static final String ADMIN_ZOOKEEPER_CLEAR_PROP = ADMIN_PREFIX + ".zookeeper.clear";
+  public static final String ADMIN_ALLOW_REINITIALIZE_PROP = ADMIN_PREFIX + ".allow.reinitialize";
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
   public static final String ADMIN_ACCUMULO_CLASSPATH_DEFAULT = "";
   public static final String ADMIN_CLASS_PROP = ADMIN_PREFIX + ".class";
-  public static final boolean ADMIN_ZOOKEEPER_CLEAR_DEFAULT = false;
+  public static final boolean ADMIN_ALLOW_REINITIALIZE_DEFAULT = false;
   public static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
   
   // Worker 
@@ -204,13 +204,13 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
   }
  
-  public FluoConfiguration setClearZookeeper(boolean clear) {
-    setProperty(ADMIN_ZOOKEEPER_CLEAR_PROP, clear);
+  public FluoConfiguration setAllowReinitialize(boolean allowReinitialize) {
+    setProperty(ADMIN_ALLOW_REINITIALIZE_PROP, allowReinitialize);
     return this;
   }
   
-  public boolean getClearZookeeper() {
-    return getBoolean(ADMIN_ZOOKEEPER_CLEAR_PROP, ADMIN_ZOOKEEPER_CLEAR_DEFAULT);
+  public boolean getAllowReinitialize() {
+    return getBoolean(ADMIN_ALLOW_REINITIALIZE_PROP, ADMIN_ALLOW_REINITIALIZE_DEFAULT);
   }
   
   public FluoConfiguration setAdminClass(String adminClass) {
@@ -429,7 +429,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(CLIENT_ZOOKEEPER_ROOT_PROP, CLIENT_ZOOKEEPER_ROOT_DEFAULT);
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
     config.setProperty(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
-    config.setProperty(ADMIN_ZOOKEEPER_CLEAR_PROP, ADMIN_ZOOKEEPER_CLEAR_DEFAULT);
+    config.setProperty(ADMIN_ALLOW_REINITIALIZE_PROP, ADMIN_ALLOW_REINITIALIZE_DEFAULT);
     config.setProperty(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
     config.setProperty(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);

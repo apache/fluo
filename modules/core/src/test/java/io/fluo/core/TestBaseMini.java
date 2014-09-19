@@ -86,7 +86,7 @@ public class TestBaseMini {
     config.setAccumuloPassword(PASSWORD);
     config.setZookeeperRoot("/stress" + next.getAndIncrement());
     config.setZookeepers(miniAccumulo.getZooKeepers());
-    config.setClearZookeeper(true);
+    config.setAllowReinitialize(true);
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
