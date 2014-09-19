@@ -166,22 +166,19 @@ public class OracleIT extends TestBaseImpl {
   @Test
   public void failover_newTimestampRequested() throws Exception {
 
-    while (!oserver.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver);
 
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
-    
+
     OracleServer oserver2 = createExtraOracle(port2);
     OracleServer oserver3 = createExtraOracle(port3);
 
     oserver2.start();
-    while (!oserver2.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver2);
 
     oserver3.start();
-    while (!oserver3.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver3);
 
     OracleClient client = OracleClient.getInstance(env);
 
@@ -194,14 +191,14 @@ public class OracleIT extends TestBaseImpl {
     assertTrue(client.getOracle().endsWith(Integer.toString(env.getOraclePort())));
 
     oserver.stop();
+    sleepWhileConnected(oserver);
 
-    Thread.sleep(1000);
     assertEquals(1002, client.getTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port2)));
 
     oserver2.stop();
+    sleepWhileConnected(oserver2);
 
-    Thread.sleep(1000);
     assertEquals(2002, client.getTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
 
@@ -215,8 +212,7 @@ public class OracleIT extends TestBaseImpl {
   @Test
   public void singleOracle_goesAwayAndComesBack() throws Exception {
 
-    while (!oserver.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver);
 
     OracleClient client = OracleClient.getInstance(env);
 
@@ -227,15 +223,18 @@ public class OracleIT extends TestBaseImpl {
     }
 
     oserver.stop();
+    sleepWhileConnected(oserver);
 
-    Thread.sleep(2000);
+    int count = 0;
+    while(count < 5 && client.getOracle() != null) {
+      Thread.sleep(1000);
+      count++;
+    }
 
     assertNull(client.getOracle());
 
     oserver.start();
-
-    while (!oserver.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver);
 
     assertEquals(1002, client.getTimestamp());
 
@@ -254,21 +253,19 @@ public class OracleIT extends TestBaseImpl {
     ExecutorService tpool = Executors.newFixedThreadPool(numThreads);
     CountDownLatch cdl = new CountDownLatch(numThreads);
 
-    
+
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
-    
+
     OracleServer oserver2 = createExtraOracle(port2);
 
     oserver2.start();
-    while (!oserver2.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver2);
 
     OracleServer oserver3 = createExtraOracle(port3);
 
     oserver3.start();
-    while (!oserver3.isConnected())
-      Thread.sleep(100);
+    sleepUntilConnected(oserver3);
 
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
@@ -303,4 +300,15 @@ public class OracleIT extends TestBaseImpl {
     tpool.shutdown();
     oserver3.stop();
   }
+
+  private void sleepWhileConnected(OracleServer oserver) throws InterruptedException {
+    while(oserver.isConnected())
+      Thread.sleep(100);
+  }
+
+  private void sleepUntilConnected(OracleServer oserver) throws InterruptedException {
+    while(!oserver.isConnected())
+      Thread.sleep(100);
+  }
+
 }
