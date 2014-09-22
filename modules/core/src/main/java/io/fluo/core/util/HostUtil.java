@@ -27,7 +27,16 @@ public class HostUtil {
   public static String getHostName() throws IOException {
     Process p = Runtime.getRuntime().exec("hostname");
     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-    return reader.readLine();
+    String result = reader.readLine();
+    try {
+      int exitCode = p.waitFor();
+      if (exitCode != 0) {
+        throw new IOException("Non-zero return from hostname process: " + result);
+      }
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+    return result;
   }
 
 }
