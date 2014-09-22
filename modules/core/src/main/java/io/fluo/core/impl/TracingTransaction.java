@@ -89,7 +89,7 @@ public class TracingTransaction implements TransactionBase {
   }
 
   @Override
-  public void delete(Bytes row, Column col) {
+  public void delete(Bytes row, Column col) throws AlreadySetException {
     log("delete(%s, %s)", row, col);
     tx.delete(row, col);
   }

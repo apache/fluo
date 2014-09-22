@@ -262,7 +262,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
-  public void delete(Bytes row, Column col) {
+  public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
     ArgumentChecker.notNull(row, col);
     set(row, col, DELETE);
