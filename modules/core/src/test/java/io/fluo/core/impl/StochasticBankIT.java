@@ -78,15 +78,11 @@ public class StochasticBankIT extends TestBaseImpl {
     
     Random rand = new Random();
     Environment tenv = env;
-    boolean close = false;
-    if (rand.nextBoolean()) {
+
+    if (rand.nextBoolean())
       tenv = new FaultyConfig(env, (rand.nextDouble() * .4) + .1, .50);
-      close = true;
-    }
+
     List<Thread> threads = startTransfers(tenv, numAccounts, 20, runFlag);
-    if (close) {
-      tenv.close();
-    }
     
     runVerifier(env, numAccounts, 100);
     
@@ -97,6 +93,7 @@ public class StochasticBankIT extends TestBaseImpl {
     }
     
     System.out.println("txCount : " + txCount.get());
+    Assert.assertTrue("txCount : " + txCount.get(), txCount.get() > 0);
     
     runVerifier(env, numAccounts, 1);
   }

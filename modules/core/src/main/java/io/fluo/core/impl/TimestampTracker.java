@@ -39,49 +39,68 @@ import org.slf4j.LoggerFactory;
  */
 public class TimestampTracker implements AutoCloseable {
 
-  public static enum TrackerStatus { IDLE, BUSY, CLOSED };
-
   private static final Logger log = LoggerFactory.getLogger(TimestampTracker.class);
-  private long zkTimestamp = -1;
+  private volatile long zkTimestamp = -1;
   private final Environment env;
   private SortedSet<Long> timestamps = new TreeSet<>();
-  private PersistentEphemeralNode node = null;
+  private volatile PersistentEphemeralNode node = null;
   private final TransactorID tid;
-  private TrackerStatus status;  // tracks status of object and not zookeeper
   private final Timer timer;
 
+  private boolean closed = false;
+  private int allocationsInProgress = 0;
+  private boolean updatingZk = false;
+
   public TimestampTracker(Environment env, TransactorID tid, long updatePeriodMs) {
-    Preconditions.checkNotNull(env, "environment cannot null");
-    Preconditions.checkNotNull(tid, "tid cannot null");
+    Preconditions.checkNotNull(env, "environment cannot be null");
+    Preconditions.checkNotNull(tid, "tid cannot be null");
     Preconditions.checkArgument(updatePeriodMs > 0, "update period must be positive");
     this.env = env;
     this.tid = tid;
-    status = TrackerStatus.IDLE;
+
     TimerTask tt = new TimerTask() {
+
+      private int sawZeroCount = 0;
+
       @Override
       public void run() {
         try {
-          boolean update = false;
           long ts = 0;
 
           synchronized(TimestampTracker.this) {
-            if (status == TrackerStatus.CLOSED) {
+            if (closed)
               return;
-            } else if (status == TrackerStatus.BUSY) {
-              update = true;
-              ts = getOldestActiveTimestamp();
-            } else if (status == TrackerStatus.IDLE) {
-              closeZkNode();
+
+            if (allocationsInProgress > 0) {
+              sawZeroCount = 0;
+              if (timestamps.size() > 0) {
+                if (updatingZk)
+                  throw new IllegalStateException("expected updatingZk to be false");
+                ts = timestamps.first();
+                updatingZk = true;
+              }
+            } else if (allocationsInProgress == 0) {
+              sawZeroCount++;
+              if (sawZeroCount >= 2) {
+                sawZeroCount = 0;
+                closeZkNode();
+              }
             } else {
-              log.error("Unknown status encountered in Zookeeper update thread");
-              return;
+              throw new IllegalStateException("allocationsInProgress = " + allocationsInProgress);
             }
+
           }
 
           // update can be done outside of sync block as timer has one thread and future
           // executions of run method will block until this method returns
-          if (update) {
-            updateZkNode(ts);
+          if (updatingZk) {
+            try {
+              updateZkNode(ts);
+            } finally {
+              synchronized (TimestampTracker.this) {
+                updatingZk = false;
+              }
+            }
           }
         } catch (Exception e) {
           log.error("Exception occurred in Zookeeper update thread", e);
@@ -99,39 +118,49 @@ public class TimestampTracker implements AutoCloseable {
   /**
    * Allocate a timestamp
    */
-  public synchronized long allocateTimestamp() {
-    // initialize zookeeper if idle and node does not exist
-    Preconditions.checkState(status != TrackerStatus.CLOSED, "tracker is closed");
-    if ((status == TrackerStatus.IDLE) && (node == null)) {
-      // initialize zookeeper node first with a timestamp
-      long initialTs = getTimestamp();
+  public long allocateTimestamp() {
+
+    synchronized (this) {
+      Preconditions.checkState(!closed, "tracker closed ");
+
       if (node == null) {
-        updateZkNode(initialTs);
+        Preconditions.checkState(allocationsInProgress == 0, "expected allocationsInProgress == 0 when node == null");
+        Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
+
+        createZkNode(getTimestamp());
       }
+
+      allocationsInProgress++;
+    }
+
+    try {
+      long ts = getTimestamp();
+
+      synchronized (this) {
+        timestamps.add(ts);
+      }
+
+      return ts;
+    } catch (RuntimeException re) {
+      synchronized (this) {
+        allocationsInProgress--;
+      }
+      throw re;
     } 
-
-    // retrieve timestamp to return
-    long ts = getTimestamp();
-
-    // update timestamp set and status
-    timestamps.add(ts);
-    status = TrackerStatus.BUSY;
-
-    return ts;
   }
 
   /**
    * Remove a timestamp (of completed transaction)
    */
   public synchronized void removeTimestamp(long ts) throws NoSuchElementException {
-    Preconditions.checkState(status == TrackerStatus.BUSY, "tracker should be busy");
+    Preconditions.checkState(!closed, "tracker closed ");
+    Preconditions.checkState(allocationsInProgress > 0, "allocationsInProgress should be > 0 " + allocationsInProgress);
     Preconditions.checkNotNull(node);
     if (timestamps.remove(ts) == false) {
       throw new NoSuchElementException("Timestamp "+ts+" was previously removed or does not exist");
     }
-    if (timestamps.isEmpty()) {
-      status = TrackerStatus.IDLE;
-    }
+
+    allocationsInProgress--;
   }
 
   private long getTimestamp() {
@@ -142,12 +171,15 @@ public class TimestampTracker implements AutoCloseable {
     }
   }
 
+  private void createZkNode(long ts) {
+    Preconditions.checkState(node == null, "expected node to be null");
+    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL, getNodePath(), LongUtil.toByteArray(ts));
+    CuratorUtil.startAndWait(node, 10);
+    zkTimestamp = ts;
+  }
+
   private void updateZkNode(long ts) {
-    if (node == null) {
-      node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), 
-          Mode.EPHEMERAL, getNodePath(), LongUtil.toByteArray(ts));
-      CuratorUtil.startAndWait(node, 10);
-    } else if (ts != zkTimestamp) {
+    if (ts != zkTimestamp) {
       try {
         node.setData(LongUtil.toByteArray(ts));
       } catch (Exception e) {
@@ -171,10 +203,16 @@ public class TimestampTracker implements AutoCloseable {
 
   @VisibleForTesting
   synchronized void updateZkNode() {
-    if (status == TrackerStatus.BUSY) {
-      updateZkNode(getOldestActiveTimestamp());
-    } else if (status == TrackerStatus.IDLE) {
+    Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
+
+    if (allocationsInProgress > 0) {
+      if (timestamps.size() > 0) {
+        updateZkNode(timestamps.first());
+      }
+    } else if (allocationsInProgress == 0) {
       closeZkNode();
+    } else {
+      throw new IllegalStateException("allocationsInProgress = " + allocationsInProgress);
     }
   }
 
@@ -200,8 +238,8 @@ public class TimestampTracker implements AutoCloseable {
 
   @Override
   public synchronized void close() {
-    Preconditions.checkState(status != TrackerStatus.CLOSED, "tracker already closed");
-    status = TrackerStatus.CLOSED;
+    Preconditions.checkState(!closed, "tracker already closed");
+    closed = true;
     timer.cancel();
     closeZkNode();
   }
