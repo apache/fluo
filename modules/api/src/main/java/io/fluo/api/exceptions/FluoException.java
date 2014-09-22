@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.exceptions;
+package io.fluo.api.exceptions;
 
 /**
- * 
+ * Base exception class for Fluo. All other exceptions extend this class.
  */
-public class AlreadySetException extends RuntimeException {
-  
+public class FluoException extends RuntimeException {
+
   private static final long serialVersionUID = 1L;
 
-  /**
-   * @param string
-   */
-  public AlreadySetException(String msg) {
+  public FluoException(String msg) {
     super(msg);
   }
-  
+
+  public FluoException() {
+    super();
+  }
 }

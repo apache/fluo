@@ -16,17 +16,17 @@
 package io.fluo.api.exceptions;
 
 /**
- * Exception thrown when {@link io.fluo.api.client.Transaction#commit()} fails
+ * Thrown if {@link io.fluo.api.client.Transaction#set(Bytes, Column, Bytes)} is called multiple times for the same row and column
  */
-public class CommitException extends FluoException {
+public class AlreadySetException extends FluoException {
   
   private static final long serialVersionUID = 1L;
 
-  public CommitException(String msg) {
+  public AlreadySetException(String msg) {
     super(msg);
   }
   
-  public CommitException() {
+  public AlreadySetException() {
     super();
   }
 }

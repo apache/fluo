@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
 import io.fluo.api.types.TypeLayer.QualifierMethods;
@@ -49,7 +50,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
         throw new IllegalStateException("Already set value");
     }
 
-    public void set(Bytes bytes) {
+    public void set(Bytes bytes) throws AlreadySetException {
       checkNotSet();
       tx.set(data.row, data.getCol(), bytes);
       set = true;
@@ -224,7 +225,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   }
 
   @Override
-  public void set(Bytes row, Column col, Bytes value) {
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     tx.set(row, col, value);
   }
 
