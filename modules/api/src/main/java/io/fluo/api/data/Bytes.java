@@ -329,9 +329,9 @@ public abstract class Bytes implements Comparable<Bytes> {
 
     private static final long serialVersionUID = 1L;
 
-    protected byte data[];
-    protected int offset;
-    protected int length;
+    protected final byte data[];
+    protected final int offset;
+    protected final int length;
 
     /**
      * Creates a new ArrayBytes. The given byte array is used directly as the

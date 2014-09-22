@@ -57,9 +57,9 @@ public class ColumnIteratorImpl implements ColumnIterator {
     } else {
       entry = scanner.next();
     }
-    Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
-    Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-    Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
+    final Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
+    final Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
+    final Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
     
     final Column col = new Column(cf, cq).setVisibility(cv);
     final Bytes val = Bytes.wrap(entry.getValue().get());

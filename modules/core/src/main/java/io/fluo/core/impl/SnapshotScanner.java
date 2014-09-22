@@ -44,13 +44,13 @@ import org.apache.accumulo.core.data.Value;
  */
 public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
-  private long startTs;
+  private final long startTs;
+  private final Environment env;
+  private final TxStats stats;
+
   private Iterator<Entry<Key,Value>> iterator;
   private Entry<Key,Value> next;
   private ScannerConfiguration config;
-
-  private Environment env;
-  private TxStats stats;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable

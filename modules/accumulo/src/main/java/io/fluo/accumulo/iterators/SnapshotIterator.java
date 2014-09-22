@@ -44,7 +44,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   private long snaptime;
   private boolean hasTop = false;
   
-  private Key curCol = new Key();
+  private final Key curCol = new Key();
   
   private void findTop() throws IOException {
     while (source.hasTop()) {

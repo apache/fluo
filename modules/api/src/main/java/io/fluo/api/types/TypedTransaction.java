@@ -24,7 +24,7 @@ import io.fluo.api.exceptions.CommitException;
  */
 public class TypedTransaction extends TypedTransactionBase implements Transaction {
 
-  private Transaction cTx;
+  private final Transaction cTx;
 
   @VisibleForTesting
   protected TypedTransaction(Transaction tx, Encoder encoder, TypeLayer tl) {

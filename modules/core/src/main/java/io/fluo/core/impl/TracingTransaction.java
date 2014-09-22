@@ -29,13 +29,12 @@ import org.apache.log4j.Logger;
 
 public class TracingTransaction implements TransactionBase {
 
-  private TransactionBase tx;
-  private long txid;
-
   private static final Logger log = Logger.getLogger(TracingTransaction.class);
+  private static final AtomicLong nextTxid = new AtomicLong(0);
 
-  private static AtomicLong nextTxid = new AtomicLong(0);
-
+  private final TransactionBase tx;
+  private final long txid;
+  
   private void log(String format, Object... args) {
     String prefix = "txid:" + txid + " ";
     log.trace(String.format(prefix + format, args));

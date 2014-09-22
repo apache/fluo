@@ -52,12 +52,12 @@ public class Worker {
   // TODO arbitrary
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
-  private static Logger log = LoggerFactory.getLogger(Worker.class);
+  private static final Logger log = LoggerFactory.getLogger(Worker.class);
 
-  private Environment env;
-  private Random rand = new Random();
+  private final Environment env;
+  private final Random rand = new Random();
 
-  private RandomTabletChooser tabletChooser;
+  private final RandomTabletChooser tabletChooser;
 
   public Worker(Environment env, RandomTabletChooser tabletChooser) throws Exception {
     this.env = env;

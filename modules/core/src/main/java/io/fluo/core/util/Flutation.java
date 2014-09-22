@@ -26,7 +26,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class Flutation extends Mutation {
 
-  private Environment env;
+  private final Environment env;
 
   public Flutation(Environment env, Bytes row) {
     super(ByteUtil.toText(row));

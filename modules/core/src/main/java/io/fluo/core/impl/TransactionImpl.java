@@ -74,17 +74,17 @@ public class TransactionImpl implements Transaction, Snapshot {
   private static final Bytes DELETE = Bytes.wrap("special delete object");
   private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED };
   
-  private long startTs;
-  private Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();;
-  private Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
-  Map<Bytes,Set<Column>> columnsRead = new HashMap<>();
+  private final long startTs;
+  private final Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();;
+  private final Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+  private final Set<Column> observedColumns;
+  private final Environment env;
+  final Map<Bytes,Set<Column>> columnsRead = new HashMap<>();
+  private final TxStats stats = new TxStats();
   private Bytes triggerRow;
   private Column triggerColumn;
   private Bytes weakRow;
   private Column weakColumn;
-  private Set<Column> observedColumns;
-  private Environment env;
-  private TxStats stats = new TxStats();
   private TransactorNode tnode = null;
   private TxStatus status = TxStatus.OPEN;
 

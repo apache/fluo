@@ -18,9 +18,9 @@ package io.fluo.accumulo.values;
 import io.fluo.accumulo.util.ByteArrayUtil;
 
 public class DelLockValue {
-  private boolean primary;
-  private boolean rollback;
-  private long lockTime;
+  private final boolean primary;
+  private final boolean rollback;
+  private final long lockTime;
   
   public DelLockValue(byte[] data) {
     primary = isPrimary(data);

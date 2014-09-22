@@ -42,7 +42,7 @@ public class TimestampTracker implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(TimestampTracker.class);
   private volatile long zkTimestamp = -1;
   private final Environment env;
-  private SortedSet<Long> timestamps = new TreeSet<>();
+  private final SortedSet<Long> timestamps = new TreeSet<>();
   private volatile PersistentEphemeralNode node = null;
   private final TransactorID tid;
   private final Timer timer;

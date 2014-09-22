@@ -33,7 +33,7 @@ import static io.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
  */
 public class Logging {
   
-  private static Logger log = LoggerFactory.getLogger(Logging.class);
+  private static final Logger log = LoggerFactory.getLogger(Logging.class);
   private static final String LOG_APPLICATION_PROP = FLUO_PREFIX + ".log.application";
   private static final String LOG_DIR_PROP = FLUO_PREFIX + ".log.dir";
   private static final String LOG_LOCAL_HOSTNAME_PROP = FLUO_PREFIX + ".log.local.hostname";

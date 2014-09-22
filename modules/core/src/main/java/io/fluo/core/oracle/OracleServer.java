@@ -61,17 +61,20 @@ import org.slf4j.LoggerFactory;
  */
 public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface, PathChildrenCacheListener {
   
+  private static final Logger log = LoggerFactory.getLogger(OracleServer.class);
+
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
   
-  private volatile long currentTs = 0;
-  private volatile long maxTs = 0;
-  private long zkTs = 0;
   private final Environment env;
+  private final Timer timer;
+
   private Thread serverThread;
   private THsHaServer server;
+  private volatile long currentTs = 0;
+  private volatile long maxTs = 0;
   private volatile boolean started = false;
-  private Timer timer;
-
+  private long zkTs = 0;
+  
   private LeaderSelector leaderSelector;
   private PathChildrenCache pathChildrenCache;
   private CuratorFramework curatorFramework;
@@ -84,8 +87,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   private volatile boolean isLeader = false;
   
-  private static Logger log = LoggerFactory.getLogger(OracleServer.class);
-
   public OracleServer(Environment env) throws Exception {
     this.env = env;
     this.cnxnListener = new CuratorCnxnListener();

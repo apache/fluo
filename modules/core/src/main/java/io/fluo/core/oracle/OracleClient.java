@@ -259,10 +259,10 @@ public class OracleClient {
     }
   }
 
-  private static Map<String,OracleClient> clients = new HashMap<>();
+  private final static Map<String,OracleClient> clients = new HashMap<>();
 
-  private Environment env;
-  private ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
+  private final Environment env;
+  private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
 
   private OracleClient(Environment env) throws Exception {
     this.env = env;
@@ -294,7 +294,7 @@ public class OracleClient {
    * @return
    */
   public static synchronized OracleClient getInstance(Environment env) {
-    // this key differintiates between different instances of Accumulo and Fluo
+    // this key differentiates between different instances of Accumulo and Fluo
     String key = env.getFluoInstanceID();
 
     OracleClient client = clients.get(key);

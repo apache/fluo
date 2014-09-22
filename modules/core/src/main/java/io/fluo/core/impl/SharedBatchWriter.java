@@ -28,7 +28,7 @@ import org.apache.accumulo.core.data.Mutation;
 
 public class SharedBatchWriter {
 
-  private BatchWriter bw;
+  private final BatchWriter bw;
   private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<>(1000);
   private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
   

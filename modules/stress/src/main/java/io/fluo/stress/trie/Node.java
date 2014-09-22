@@ -21,9 +21,9 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Node {
   
-  private Number number; 
-  private int level;
-  private int nodeSize;
+  private final Number number; 
+  private final int level;
+  private final int nodeSize;
   
   public Node(Number number, int level, int nodeSize) {
     this.number = number;

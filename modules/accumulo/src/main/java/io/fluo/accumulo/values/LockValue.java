@@ -27,12 +27,12 @@ import io.fluo.api.data.Column;
  */
 public class LockValue {
 
-  private Bytes prow;
-  private Column pcol;
-  private boolean isWrite;
-  private boolean isDelete;
-  private boolean isTrigger;
-  private Long transactor;
+  private final Bytes prow;
+  private final Column pcol;
+  private final boolean isWrite;
+  private final boolean isDelete;
+  private final boolean isTrigger;
+  private final Long transactor;
 
   public LockValue(byte[] enc) {
     List<Bytes> fields = Bytes.split(Bytes.wrap(enc));

@@ -33,9 +33,9 @@ public class WorkerTask implements Runnable {
   // TODO max sleep time should probably be a function of the total number of threads in the system
   private static long MAX_SLEEP_TIME = 5 * 60 * 1000;
 
-  private static Logger log = LoggerFactory.getLogger(WorkerTask.class);
-  private Environment env;
-  private AtomicBoolean shutdownFlag;
+  private static final Logger log = LoggerFactory.getLogger(WorkerTask.class);
+  private final Environment env;
+  private final AtomicBoolean shutdownFlag;
 
   public WorkerTask(Environment env, AtomicBoolean shutdownFlag) {
     this.env = env;

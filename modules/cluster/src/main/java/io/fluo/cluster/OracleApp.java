@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory;
  */
 public class OracleApp implements TwillApplication {
   
-  private static Logger log = LoggerFactory.getLogger(OracleApp.class);
-  private OracleAppOptions options;
+  private static final Logger log = LoggerFactory.getLogger(OracleApp.class);
+  private final OracleAppOptions options;
   private FluoConfiguration config;
   
   public OracleApp(OracleAppOptions options, FluoConfiguration config) {

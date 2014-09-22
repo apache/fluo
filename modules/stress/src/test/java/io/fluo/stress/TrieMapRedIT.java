@@ -45,7 +45,7 @@ import static io.fluo.stress.trie.Constants.TYPEL;
  */
 public class TrieMapRedIT extends TestBaseMini {
   
-  private static Logger log = LoggerFactory.getLogger(TrieMapRedIT.class);
+  private static final Logger log = LoggerFactory.getLogger(TrieMapRedIT.class);
   private PipelineMapReduceDriver<LongWritable, Text, Text, LongWritable> driver;
   
   @Override

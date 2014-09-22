@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OracleRunnable extends AbstractTwillRunnable {
 
-  private static Logger log = LoggerFactory.getLogger(OracleRunnable.class);
+  private static final Logger log = LoggerFactory.getLogger(OracleRunnable.class);
 
   @Override
   public void run() {

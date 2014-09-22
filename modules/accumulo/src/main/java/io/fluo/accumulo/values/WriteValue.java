@@ -21,9 +21,9 @@ import io.fluo.accumulo.util.ByteArrayUtil;
  * 
  */
 public class WriteValue {
-  private boolean primary;
-  private boolean truncated;
-  long ts;
+  private final boolean primary;
+  private final boolean truncated;
+  private final long ts;
   
   public WriteValue(byte[] data) {
     primary = isPrimary(data);

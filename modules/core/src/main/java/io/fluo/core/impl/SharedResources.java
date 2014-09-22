@@ -32,18 +32,18 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
  */
 public class SharedResources implements AutoCloseable {
 
-  private Environment env;
-  private BatchWriter bw;
-  private ConditionalWriter cw;
-  private SharedBatchWriter sbw;
-  private CuratorFramework curator;
+  private final Environment env;
+  private final BatchWriter bw;
+  private final ConditionalWriter cw;
+  private final SharedBatchWriter sbw;
+  private final CuratorFramework curator;
   private TransactorID tid = null;
   private TransactorNode tnode = null;
   private TransactorCache transactorCache = null;
   private TimestampTracker tsTracker = null;
   private volatile boolean isClosed = false;
-  private TxInfoCache txInfoCache;
-  private VisibilityCache visCache;
+  private final TxInfoCache txInfoCache;
+  private final VisibilityCache visCache;
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;

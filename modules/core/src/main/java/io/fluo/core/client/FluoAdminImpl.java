@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class FluoAdminImpl implements FluoAdmin {
 
   private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
-  private FluoConfiguration config;
+  private final FluoConfiguration config;
   
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;

@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Value;
  */
 public class RowIteratorImpl implements RowIterator {
   
-  private org.apache.accumulo.core.client.RowIterator rowIter;
+  private final org.apache.accumulo.core.client.RowIterator rowIter;
 
   RowIteratorImpl(Iterator<Entry<Key,Value>> scanner) {
     rowIter = new org.apache.accumulo.core.client.RowIterator(scanner);

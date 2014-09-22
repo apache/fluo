@@ -22,7 +22,7 @@ import io.fluo.api.client.Snapshot;
  */
 public class TypedSnapshot extends TypedSnapshotBase implements Snapshot {
 
-  private Snapshot cSnapshot;
+  private final Snapshot cSnapshot;
 
   TypedSnapshot(Snapshot snapshot, Encoder encoder, TypeLayer tl) {
     super(snapshot, encoder, tl);

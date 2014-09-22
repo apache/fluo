@@ -32,11 +32,11 @@ import io.fluo.core.impl.LoadTask;
  * Implementation of LoaderExecutor
  */
 public class LoaderExecutorImpl implements LoaderExecutor {
-  private ExecutorService executor;
-  private Semaphore semaphore;
+  private final ExecutorService executor;
+  private final Semaphore semaphore;
   
-  private AtomicReference<Exception> exceptionRef = new AtomicReference<>(null);
-  private Environment env;
+  private final AtomicReference<Exception> exceptionRef = new AtomicReference<>(null);
+  private final Environment env;
   
   /**
    * 
@@ -52,6 +52,8 @@ public class LoaderExecutorImpl implements LoaderExecutor {
   private LoaderExecutorImpl(FluoConfiguration config, int numThreads, int queueSize) {
     if (numThreads == 0 && queueSize == 0) {
       this.env = new Environment(config);
+      this.executor = null;
+      this.semaphore = null;
       return;
     }
     

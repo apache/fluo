@@ -29,7 +29,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
  */
 public class TransactorID {
   
-  private Long id;
+  private final Long id;
   
   public TransactorID(CuratorFramework curator, String zkRoot) {
     Preconditions.checkNotNull(curator);
