@@ -24,7 +24,7 @@ import io.fluo.api.observer.AbstractObserver;
  * Used to pass configuration to an {@link AbstractObserver}. Set using {@link FluoConfiguration#setObservers(java.util.List)}
  */
 public class ObserverConfiguration {
-  private String className;
+  private final String className;
   private Map<String,String> params = Collections.emptyMap();
 
   public ObserverConfiguration(String className) {

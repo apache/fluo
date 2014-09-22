@@ -95,10 +95,10 @@ public class Operations {
 
   public static void initialize(Connector conn, String zoodir, String table) throws Exception {
 
-    String zookeepers = conn.getInstance().getZooKeepers();
-    String accumuloInstanceName = conn.getInstance().getInstanceName();
-    String accumuloInstanceID = conn.getInstance().getInstanceID();
-    String fluoInstanceID = UUID.randomUUID().toString();
+    final String zookeepers = conn.getInstance().getZooKeepers();
+    final String accumuloInstanceName = conn.getInstance().getInstanceName();
+    final String accumuloInstanceID = conn.getInstance().getInstanceID();
+    final String fluoInstanceID = UUID.randomUUID().toString();
 
     try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
       curator.start();

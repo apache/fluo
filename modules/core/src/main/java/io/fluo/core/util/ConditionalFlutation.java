@@ -23,7 +23,7 @@ import org.apache.accumulo.core.data.Condition;
 import org.apache.accumulo.core.data.ConditionalMutation;
 
 public class ConditionalFlutation extends ConditionalMutation {
-  private Environment env;
+  private final Environment env;
 
   public ConditionalFlutation(Environment env, Bytes row) {
     super(ByteUtil.toByteSequence(row));

@@ -25,7 +25,7 @@ import io.fluo.api.observer.AbstractObserver;
  */
 public abstract class TypedObserver extends AbstractObserver {
 
-  private TypeLayer tl;
+  private final TypeLayer tl;
 
   public TypedObserver() {
     tl = new TypeLayer(new StringEncoder());

@@ -36,8 +36,8 @@ public interface Observer {
    * A {@link Column} and {@link NotificationType} pair
    */
   public static class ObservedColumn {
-    private Column col;
-    private NotificationType notificationType;
+    private final Column col;
+    private final NotificationType notificationType;
 
     public ObservedColumn(Column col, NotificationType notificationType) {
       this.col = col;

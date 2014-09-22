@@ -30,9 +30,9 @@ import io.fluo.api.data.Column;
  */
 public class MockTransactionBase extends MockSnapshotBase implements TransactionBase {
 
-  Map<Bytes,Map<Column,Bytes>> setData = new HashMap<>();
-  Map<Bytes,Set<Column>> deletes = new HashMap<>();
-  Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+  final Map<Bytes,Map<Column,Bytes>> setData = new HashMap<>();
+  final Map<Bytes,Set<Column>> deletes = new HashMap<>();
+  final Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
 
   MockTransactionBase(String... entries) {
     super(entries);

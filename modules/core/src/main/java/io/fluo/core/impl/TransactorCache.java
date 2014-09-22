@@ -38,12 +38,12 @@ public class TransactorCache implements AutoCloseable {
   
   public enum TcStatus { OPEN, CLOSED };
   
-  private Environment env;
-  private PathChildrenCache cache;
+  private final Environment env;
+  private final PathChildrenCache cache;
+  private final Cache<Long,AtomicLong> timeoutCache;
   private TcStatus status;
-  private Cache<Long,AtomicLong> timeoutCache;
   
-  private static Logger log = LoggerFactory.getLogger(TransactorCache.class);
+  private static final Logger log = LoggerFactory.getLogger(TransactorCache.class);
 
   public TransactorCache(Environment env) {
 

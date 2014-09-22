@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TxLogger {
-  private static Logger log = LoggerFactory.getLogger(TxLogger.class);
+  private static final Logger log = LoggerFactory.getLogger(TxLogger.class);
 
   static void logTx(String status, String clazz, TxStats stats) {
     logTx(status, clazz, stats, null);

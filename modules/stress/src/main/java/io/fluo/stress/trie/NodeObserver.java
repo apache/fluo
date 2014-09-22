@@ -30,13 +30,13 @@ import io.fluo.api.types.TypedTransactionBase;
  */
 public class NodeObserver extends AbstractObserver {
   
-  private static Logger log = LoggerFactory.getLogger(NodeObserver.class);
+  private static final Logger log = LoggerFactory.getLogger(NodeObserver.class);
 
   @Override
   public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
     
-    TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
-    Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);
+    final TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
+    final Integer childWait = ttx.get().row(row).col(Constants.COUNT_WAIT_COL).toInteger(0);
     
     if (childWait > 0) {
       Integer childSeen = ttx.get().row(row).col(Constants.COUNT_SEEN_COL).toInteger(0);

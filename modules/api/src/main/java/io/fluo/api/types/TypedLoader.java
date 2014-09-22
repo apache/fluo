@@ -23,7 +23,7 @@ import io.fluo.api.client.TransactionBase;
  */
 public abstract class TypedLoader implements Loader {
 
-  private TypeLayer tl;
+  private final TypeLayer tl;
 
   public TypedLoader() {
     tl = new TypeLayer(new StringEncoder());

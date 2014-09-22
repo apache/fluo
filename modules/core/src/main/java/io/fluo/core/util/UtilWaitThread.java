@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UtilWaitThread {
-  private static Logger log = LoggerFactory.getLogger(UtilWaitThread.class);
+  private static final Logger log = LoggerFactory.getLogger(UtilWaitThread.class);
 
   private UtilWaitThread() {}
 

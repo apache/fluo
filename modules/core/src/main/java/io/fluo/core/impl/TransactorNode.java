@@ -35,7 +35,7 @@ public class TransactorNode implements AutoCloseable {
 
   public enum TrStatus { OPEN, CLOSED };
 
-  private static Logger log = LoggerFactory.getLogger(TransactorNode.class);
+  private static final Logger log = LoggerFactory.getLogger(TransactorNode.class);
   private Environment env;
   private PersistentEphemeralNode node;
   private TransactorID tid;

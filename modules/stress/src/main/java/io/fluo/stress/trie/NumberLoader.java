@@ -26,9 +26,9 @@ import io.fluo.api.types.TypedTransactionBase;
  */
 public class NumberLoader implements Loader {
   
-  private Number number;
-  private int level;
-  private int nodeSize;
+  private final Number number;
+  private final int level;
+  private final int nodeSize;
   
   public NumberLoader(Integer num, int nodeSize) {
     checkArgument(num >= 0, "Only positive numbers accepted");

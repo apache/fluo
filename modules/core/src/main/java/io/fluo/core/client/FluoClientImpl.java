@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FluoClientImpl implements FluoClient {
   
-  private static Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
+  private static final Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
   private FluoConfiguration config;
   private Environment env;
   

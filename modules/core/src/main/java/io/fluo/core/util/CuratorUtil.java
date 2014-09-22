@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class CuratorUtil {
   
-  private static Logger log = LoggerFactory.getLogger(CuratorUtil.class);
+  private static final Logger log = LoggerFactory.getLogger(CuratorUtil.class);
 
   public enum NodeExistsPolicy {
     SKIP, OVERWRITE, FAIL

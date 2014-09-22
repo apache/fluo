@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WorkerRunnable extends AbstractTwillRunnable {
 
-  private static Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
+  private static final Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
   
   @Override
   public void run() {

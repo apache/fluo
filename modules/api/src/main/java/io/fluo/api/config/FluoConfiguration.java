@@ -33,12 +33,12 @@ import org.slf4j.LoggerFactory;
  */
 public class FluoConfiguration extends CompositeConfiguration {
   
-  private static Logger log = LoggerFactory.getLogger(FluoConfiguration.class);
+  private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.class);
   
   public static final String FLUO_PREFIX = "io.fluo";
 
   // Client properties
-  public static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
+  private static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
   public static final String CLIENT_ACCUMULO_PASSWORD_PROP = CLIENT_PREFIX + ".accumulo.password";
   public static final String CLIENT_ACCUMULO_USER_PROP = CLIENT_PREFIX + ".accumulo.user";
   public static final String CLIENT_ACCUMULO_INSTANCE_PROP = CLIENT_PREFIX + ".accumulo.instance";
@@ -52,7 +52,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
   
   // Administration
-  public static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
+  private static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
   public static final String ADMIN_ALLOW_REINITIALIZE_PROP = ADMIN_PREFIX + ".allow.reinitialize";
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
@@ -62,7 +62,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
   
   // Worker 
-  public static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
+  private static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
   public static final String WORKER_NUM_THREADS_PROP = WORKER_PREFIX + ".num.threads";
   public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
   public static final String WORKER_MAX_MEMORY_MB_PROP = WORKER_PREFIX + ".max.memory.mb";
@@ -71,21 +71,21 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final int WORKER_MAX_MEMORY_MB_DEFAULT = 256;
   
   // Loader 
-  public static final String LOADER_PREFIX = FLUO_PREFIX + ".loader";
+  private static final String LOADER_PREFIX = FLUO_PREFIX + ".loader";
   public static final String LOADER_NUM_THREADS_PROP = LOADER_PREFIX + ".num.threads";
   public static final String LOADER_QUEUE_SIZE_PROP = LOADER_PREFIX + ".queue.size";
   public static final int LOADER_NUM_THREADS_DEFAULT = 10;
   public static final int LOADER_QUEUE_SIZE_DEFAULT = 10;
   
   // Oracle
-  public static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
+  private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
   public static final String ORACLE_PORT_PROP = ORACLE_PREFIX + ".port";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
   public static final int ORACLE_PORT_DEFAULT = 9913;
   public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 256;
   
   // MiniFluo
-  public static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
+  private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
   public static final String MINI_CLASS_PROP = MINI_PREFIX + ".class";
   public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.MiniFluoImpl";
   
@@ -94,7 +94,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String OBSERVER_PREFIX = FLUO_PREFIX + ".observer.";
   
   // Transaction 
-  public static final String TRANSACTION_PREFIX = FLUO_PREFIX + ".tx";
+  private static final String TRANSACTION_PREFIX = FLUO_PREFIX + ".tx";
   public static final String TRANSACTION_ROLLBACK_TIME_PROP = TRANSACTION_PREFIX + ".rollback.time";
   public static final long TRANSACTION_ROLLBACK_TIME_DEFAULT = 300000;
   

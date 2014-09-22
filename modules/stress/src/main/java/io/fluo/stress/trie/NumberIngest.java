@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public class NumberIngest {
   
-  private static Logger log = LoggerFactory.getLogger(NumberIngest.class);
+  private static final Logger log = LoggerFactory.getLogger(NumberIngest.class);
   public static final String TRIE_NODE_SIZE_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.node.size";
   
   public static class IngestMapper extends MapReduceBase 
@@ -129,7 +129,7 @@ public class NumberIngest {
   public static class CountReducer extends MapReduceBase 
       implements Reducer<Text, LongWritable, Text, LongWritable> {
     
-    private static Logger log = LoggerFactory.getLogger(UniqueReducer.class);
+    private static final Logger log = LoggerFactory.getLogger(UniqueReducer.class);
 
     @Override
     public void reduce(Text key, Iterator<LongWritable> values, 

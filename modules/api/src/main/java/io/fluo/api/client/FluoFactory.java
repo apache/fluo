@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FluoFactory {
 
-  private static Logger log = LoggerFactory.getLogger(FluoFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(FluoFactory.class);
 
   /**
    * Creates a {@link FluoClient} for reading and writing data to Fluo. {@link FluoClient#close()} should be called when you are finished using it.

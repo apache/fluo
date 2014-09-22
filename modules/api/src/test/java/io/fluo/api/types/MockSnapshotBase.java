@@ -29,7 +29,7 @@ import io.fluo.api.iterator.RowIterator;
 
 public class MockSnapshotBase implements SnapshotBase {
 
-  Map<Bytes,Map<Column,Bytes>> getData = new HashMap<>();
+  final Map<Bytes,Map<Column,Bytes>> getData;
 
   /**
    * Initializes {@link #getData} using {@link #toRCVM(String...)}

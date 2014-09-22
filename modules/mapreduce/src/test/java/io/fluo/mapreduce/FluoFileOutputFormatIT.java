@@ -44,7 +44,7 @@ import io.fluo.api.data.Column;
 
 public class FluoFileOutputFormatIT extends TestBaseImpl {
 
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+  static final TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
   public static class TestMapper extends Mapper<LongWritable,Text,RowColumn,Bytes> {
 

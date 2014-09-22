@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class InitializeTool {
   
-  private static Logger log = LoggerFactory.getLogger(InitializeTool.class);
+  private static final Logger log = LoggerFactory.getLogger(InitializeTool.class);
 
   public static void main(String[] args) throws Exception {
 

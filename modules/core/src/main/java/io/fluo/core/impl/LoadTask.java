@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
  */
 public class LoadTask implements Runnable {
   
-  private static Logger log = LoggerFactory.getLogger(LoadTask.class);
-  private Loader loader;
-  private Environment env;
+  private static final Logger log = LoggerFactory.getLogger(LoadTask.class);
+  private final Loader loader;
+  private final Environment env;
   
   public LoadTask(Loader loader, Environment env) {
     this.loader = loader;

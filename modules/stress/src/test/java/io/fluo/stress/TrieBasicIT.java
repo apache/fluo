@@ -41,7 +41,7 @@ import static io.fluo.stress.trie.Constants.TYPEL;
  */
 public class TrieBasicIT extends TestBaseMini {
   
-  private static Logger log = LoggerFactory.getLogger(TrieBasicIT.class);
+  private static final Logger log = LoggerFactory.getLogger(TrieBasicIT.class);
   
   @Override
   protected List<ObserverConfiguration> getObservers() {

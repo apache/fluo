@@ -37,7 +37,7 @@ public class ZookeeperUtil {
    * Retrieves the oldest active timestamp in Fluo by scanning zookeeper
    * 
    * @param zookeepers Zookeeper connection string
-   * @param zkPath Zookeeer root path
+   * @param zkPath Zookeeper root path
    * @return Oldest active timestamp or oldest possible ts (-1) if not found
    */
   public static long getOldestTimestamp(String zookeepers, String zkPath) {

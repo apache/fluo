@@ -36,10 +36,15 @@ public class RandomTabletChooser {
   
   private static final long CACHE_TIME = 5 * 60 * 1000;
 
+  private final Environment env;
+  private final Random rand = new Random();
+  private List<TabletInfo> cachedTablets;
+  private long listSplitsTime = 0;
+  
   static class TabletInfo {
-    Text start;
-    Text end;
-    Lock lock = new ReentrantLock();
+    final Text start;
+    final Text end;
+    final Lock lock = new ReentrantLock();
     long retryTime;
     long sleepTime = 100;
     
@@ -85,11 +90,6 @@ public class RandomTabletChooser {
     }
 
   }
-  
-  private Environment env;
-  private List<TabletInfo> cachedTablets;
-  private Random rand = new Random();
-  private long listSplitsTime = 0;
   
   public RandomTabletChooser(Environment env) {
     this.env = env;

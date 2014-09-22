@@ -29,7 +29,7 @@ import io.fluo.api.types.TypeLayer;
 
 public class MutationBuilderIT extends TestBaseImpl {
 
-  static TypeLayer tl = new TypeLayer(new StringEncoder());
+  static final TypeLayer tl = new TypeLayer(new StringEncoder());
 
   @Test
   public void testBatchWrite() throws Exception {

@@ -72,7 +72,8 @@ public class Column implements Writable {
    * to Bytes.EMPTY.  String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier) {
-    this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier));
+    this(family == null ? null : Bytes.wrap(family), 
+         qualifier == null ? null : Bytes.wrap(qualifier));
   }
 
   /** 
@@ -92,8 +93,9 @@ public class Column implements Writable {
    * String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier, String visibility) {
-    this(family == null ? null : Bytes.wrap(family), qualifier == null ? null : Bytes.wrap(qualifier), 
-        visibility == null ? null : Bytes.wrap(visibility));
+    this(family == null ? null : Bytes.wrap(family), 
+         qualifier == null ? null : Bytes.wrap(qualifier), 
+         visibility == null ? null : Bytes.wrap(visibility));
   }
   
   /**

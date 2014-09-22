@@ -31,9 +31,9 @@ import io.fluo.api.types.TypeLayer.RowMethods;
  */
 public class TypedTransactionBase extends TypedSnapshotBase implements TransactionBase {
 
-  private TransactionBase tx;
-  private Encoder encoder;
-  private TypeLayer tl;
+  private final TransactionBase tx;
+  private final Encoder encoder;
+  private final TypeLayer tl;
 
   public class Mutator {
 

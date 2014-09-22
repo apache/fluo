@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WorkerApp implements TwillApplication {
   
-  private static Logger log = LoggerFactory.getLogger(WorkerApp.class);
+  private static final Logger log = LoggerFactory.getLogger(WorkerApp.class);
   private AppOptions options;
   private FluoConfiguration config;
   
