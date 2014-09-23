@@ -17,6 +17,7 @@ package io.fluo.api.client;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.AlreadySetException;
 
 /**
  * Enables users to read and write to a Fluo table at certain point in time. TransactionBase extends {@link SnapshotBase} to include methods for writing to
@@ -32,7 +33,7 @@ public interface TransactionBase extends SnapshotBase {
   /**
    * Sets a value (in {@link Bytes}) at the given row and {@link Column}
    */
-  public void set(Bytes row, Column col, Bytes value);
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException;
   
   /**
    * Deletes the value at the given row and {@link Column}

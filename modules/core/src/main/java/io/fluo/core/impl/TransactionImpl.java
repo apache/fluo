@@ -38,11 +38,11 @@ import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
+import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
-import io.fluo.core.exceptions.AlreadySetException;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.ConditionalFlutation;
@@ -215,7 +215,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
     
   @Override
-  public void set(Bytes row, Column col, Bytes value) {
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     checkIfOpen();
     ArgumentChecker.notNull(row, col, value);
     
@@ -262,7 +262,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
-  public void delete(Bytes row, Column col) {
+  public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
     ArgumentChecker.notNull(row, col);
     set(row, col, DELETE);

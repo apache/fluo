@@ -24,6 +24,7 @@ import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.iterator.RowIterator;
 import org.apache.log4j.Logger;
 
@@ -81,13 +82,13 @@ public class TracingTransaction implements TransactionBase {
   }
 
   @Override
-  public void set(Bytes row, Column col, Bytes value) {
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     log("set(%s, %s, %s)", row, col, value);
     tx.set(row, col, value);
   }
 
   @Override
-  public void delete(Bytes row, Column col) {
+  public void delete(Bytes row, Column col) throws AlreadySetException {
     log("delete(%s, %s)", row, col);
     tx.delete(row, col);
   }

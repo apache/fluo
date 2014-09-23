@@ -15,11 +15,24 @@
  */
 package io.fluo.core.exceptions;
 
+import io.fluo.accumulo.iterators.GarbageCollectionIterator;
+import io.fluo.api.exceptions.FluoException;
+import io.fluo.core.impl.TimestampTracker;
+
 /**
- * 
+ * This exception is thrown if a table has aged off data necessary to complete a scan at a certain timestamp. This exception should never be thrown now that
+ * clients use the {@link TimestampTracker} to maintain their oldest active timestamp in Zookeeper. The {@link GarbageCollectionIterator} will determine the
+ * oldest active timestamp of all clients before data is aged off.
  */
-public class StaleScanException extends RuntimeException {
+public class StaleScanException extends FluoException {
 
   private static final long serialVersionUID = 1L;
   
+  public StaleScanException(String msg) {
+    super(msg);
+  }
+
+  public StaleScanException() {
+    super();
+  }
 }

@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
 import io.fluo.api.types.TypeLayer.QualifierMethods;
@@ -49,48 +50,48 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
         throw new IllegalStateException("Already set value");
     }
 
-    public void set(Bytes bytes) {
+    public void set(Bytes bytes) throws AlreadySetException {
       checkNotSet();
       tx.set(data.row, data.getCol(), bytes);
       set = true;
     }
 
-    public void set(String s) {
+    public void set(String s) throws AlreadySetException {
       set(encoder.encode(s));
     }
 
-    public void set(int i) {
+    public void set(int i) throws AlreadySetException {
       set(encoder.encode(i));
     }
 
-    public void set(long l) {
+    public void set(long l) throws AlreadySetException {
       set(encoder.encode(l));
     }
 
-    public void set(float f) {
+    public void set(float f) throws AlreadySetException {
       set(encoder.encode(f));
     }
 
-    public void set(double d) {
+    public void set(double d) throws AlreadySetException {
       set(encoder.encode(d));
     }
 
-    public void set(boolean b) {
+    public void set(boolean b) throws AlreadySetException {
       set(encoder.encode(b));
     }
 
-    public void set(byte[] ba) {
+    public void set(byte[] ba) throws AlreadySetException {
       set(Bytes.wrap(ba));
     }
 
-    public void set(ByteBuffer bb) {
+    public void set(ByteBuffer bb) throws AlreadySetException {
       set(Bytes.wrap(bb));
     }
 
     /**
      * Set an empty value
      */
-    public void set() {
+    public void set() throws AlreadySetException {
       set(Bytes.EMPTY);
     }
 
@@ -124,7 +125,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       tx.set(data.row, data.getCol(), encoder.encode(v + l));
     }
 
-    public void delete() {
+    public void delete() throws AlreadySetException {
       checkNotSet();
       tx.delete(data.row, data.getCol());
       set = true;
@@ -224,7 +225,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   }
 
   @Override
-  public void set(Bytes row, Column col, Bytes value) {
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     tx.set(row, col, value);
   }
 
@@ -234,7 +235,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   }
 
   @Override
-  public void delete(Bytes row, Column col) {
+  public void delete(Bytes row, Column col) throws AlreadySetException {
     tx.delete(row, col);
   }
 }
