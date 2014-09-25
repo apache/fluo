@@ -140,8 +140,8 @@ Fluo will run many client threads, will want to ensure the tablet server
 has enough threads.  Should probably increase the
 `tserver.server.threads.minimum` Accumulo setting.
 
-Group commit in Accumulo 1.6.0 is broken, the patch on [ACCUMULO-2766][8] can
-be applied to fix this.  
+Using at least Accumulo 1.6.1 is recommended because multiple performance bugs
+were fixed.
 
 Additional Documentation
 ------------------------
@@ -154,5 +154,4 @@ Additional Documentation
 [3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
 [5]: https://issues.apache.org/jira/browse/ACCUMULO-112
 [7]: https://github.com/fluo-io/phrasecount
-[8]: https://issues.apache.org/jira/browse/ACCUMULO-2766
 
