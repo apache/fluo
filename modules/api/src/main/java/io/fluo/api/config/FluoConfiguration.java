@@ -112,7 +112,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   public FluoConfiguration(File propertiesFile) {
     this();
     try {
-      addConfiguration(new PropertiesConfiguration(propertiesFile));
+      PropertiesConfiguration config = new PropertiesConfiguration();
+      // disabled to prevent accumulo classpath value from being shortened
+      config.setDelimiterParsingDisabled(true);
+      config.load(propertiesFile);
+      addConfiguration(config);
     } catch (ConfigurationException e) {
       throw new IllegalArgumentException(e);
     }

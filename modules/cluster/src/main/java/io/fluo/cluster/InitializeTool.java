@@ -47,6 +47,8 @@ public class InitializeTool {
     options.validateConfig();
 
     Logging.init("init", options.getConfigDir(), options.getLogOutput());
+    
+    log.info("Initalizing Fluo using the following properties file: "+options.getFluoProps());
 
     FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
     if (!config.hasRequiredAdminProps()) {
