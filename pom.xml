@@ -35,8 +35,8 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:https://github.com/fluo-io/fluo.git</connection>
-    <developerConnection>scm:https://github.com/fluo-io/fluo.git</developerConnection>
+    <connection>scm:git:git@github.com:fluo-io/fluo.git</connection>
+    <developerConnection>scm:git:git@github.com:fluo-io/fluo.git</developerConnection>
     <tag>${project.version}</tag>
     <url>https://github.com/fluo-io/fluo.git</url>
   </scm>
