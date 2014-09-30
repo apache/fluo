@@ -20,7 +20,7 @@
   <parent>
     <groupId>io.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
-    <version>fluo-1.0.0-beta-1</version>
+    <version>fluo-1.0.0-beta-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-cluster</artifactId>

@@ -4,7 +4,7 @@
 
   <groupId>io.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
-  <version>fluo-1.0.0-beta-1</version>
+  <version>fluo-1.0.0-beta-1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Parent</name>
@@ -116,6 +116,22 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5</version>
+          <configuration>
+            <arguments>-Pfull,sign</arguments>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <goals>clean deploy</goals>
+            <preparationGoals>clean verify</preparationGoals>
+            <tagNameFormat>@{project.version}</tagNameFormat>
+            <releaseProfiles>seal-jars</releaseProfiles>
+            <useReleaseProfile>false</useReleaseProfile>
+            <pushChanges>false</pushChanges>
+            <localCheckout>true</localCheckout>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
