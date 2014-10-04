@@ -332,6 +332,56 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.apache.resources</groupId>
+                <artifactId>apache-source-release-assembly-descriptor</artifactId>
+                <version>1.0.4</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>source-release-assembly</id>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <phase>validate</phase>
+                <configuration>
+                  <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                  <finalName>fluo-${project.version}</finalName>
+                  <descriptorRefs>
+                    <descriptorRef>source-release-zip-tar</descriptorRef>
+                  </descriptorRefs>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>rename-source-release-assembly</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>validate</phase>
+                <configuration>
+                  <executable>mv</executable>
+                  <workingDirectory>${project.build.directory}</workingDirectory>
+                  <commandlineArgs>fluo-${project.version}-source-release.tar.gz fluo-${project.version}-src.tar.gz</commandlineArgs>
+                  <successCodes>
+                    <successCode>0</successCode>
+                    <successCode>1</successCode>
+                  </successCodes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
             <artifactId>maven-source-plugin</artifactId>
             <executions>
               <execution>
