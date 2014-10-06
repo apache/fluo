@@ -25,6 +25,7 @@
   
   <logger name="io.fluo" level="debug"/>
   <logger name="org.apache.zookeeper" level="error"/>
+  <logger name="org.apache.twill.yarn.YarnTwillRunnerService" level="error"/>
 
   <root level="info">
     <appender-ref ref="STDOUT" />
