@@ -39,6 +39,7 @@
         <include>LICENSE</include>
         <include>AUTHORS</include>
         <include>CHANGES</include>
+        <include>README.md</include>
       </includes>
     </fileSet>
     <fileSet>
