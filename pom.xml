@@ -2,6 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>15</version>
+  </parent>
+
   <groupId>io.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
   <version>1.0.0-beta-1-SNAPSHOT</version>
@@ -78,7 +84,6 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
@@ -89,7 +94,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.15</version>
           <executions>
             <execution>
               <id>run-integration-tests</id>
@@ -103,7 +107,6 @@
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.10</version>
           <configuration>
             <excludes>
               <exclude>**/README.md</exclude>
@@ -120,7 +123,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.5</version>
           <configuration>
             <arguments>-Pfull,sign</arguments>
             <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -313,7 +315,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -338,7 +339,6 @@
               <dependency>
                 <groupId>org.apache.apache.resources</groupId>
                 <artifactId>apache-source-release-assembly-descriptor</artifactId>
-                <version>1.0.4</version>
               </dependency>
             </dependencies>
             <executions>
