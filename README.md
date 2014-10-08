@@ -1,28 +1,45 @@
+<!---
+Copyright 2014 Fluo authors (see AUTHORS)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
 
 Fluo
-========
+====
 
 [![Build Status](https://travis-ci.org/fluo-io/fluo.svg?branch=master)](https://travis-ci.org/fluo-io/fluo)
 
-A [Percolator][2] prototype  for [Accumulo][1].  This prototype relies on 
-Accumulo 1.6.0 which has [ACCUMULO-1000][3] and [ACCUMULO-112][5].
-[ACCUMULO-1000][3] makes cross row transactions possible and  [ACCUMULO-112][5]
-makes it possible to efficiently find notifications.  Theoretically, this
-prototype is to a point where it could run in a distributed manner.  But this
-has not been tested.  The pieces are in place, CAS is done on the tablet server
-and the Oracle is a service.  
+**Fluo is transaction layer that enables incremental processsing on big data.**
 
-There is a lot that needs to be done.  If you are interested in contributing
-send me an email or check out the issues.
+Fluo is an implementation of [Percolator] built on [Accumulo] than runs in [YARN].
 
-If you want to experiment with Fluo, check out the [phrasecount][7] example.
-This example is a simple end-to-end application that is super easy to run.  It
-also has handling for real world problems like high cardinality phrases.
+Fluo is not yet recommended for production use.
+
+Check out the [Fluo project website](http://fluo.io) for news and general information.
+
+Quickstart
+----------
+
+If you are new to Fluo, the best way to get started is to follow the [quickstart]
+example which starts a local Fluo instance (called MiniFluo).  By using MiniFluo,
+you can avoid configuring and running your own Fluo instance. For a more comprehensive
+Fluo application, check out the [phrasecount] example.
 
 Building Fluo
------------------
+-------------
 
-Using Maven, you can build Fluo with the following steps.
+If you have [Git], [Maven], and [Java](version 7+) installed, run these commands
+to build Fluo:
 
 ```
 git clone https://github.com/fluo-io/fluo.git
@@ -30,128 +47,46 @@ cd fluo
 mvn package
 ```
 
-Running `mvn package` will build a tar ball that contains all of the
-dependencies needed at runtime.  Currently the tar ball is targeted towards
-Hadoop 2.3.0 and Accumulo 1.6.0.  If you have different versions installed on
-your cluster, you can try passing the following options to maven package.
-Other versions of Hadoop and Accumulo may not work, please open a bug if you
-run into problems.
+Running a Fluo Instance
+-----------------------
 
-```
-mvn package -Daccumulo.version=1.6.1-SNAPSHOT -Dhadoop.version=2.4.0
-```
+If you are new to Fluo, consider using MiniFluo (follow the [quickstart] example)
+for test and development before running your own Fluo instance.
 
-Once the tarball is built, deploy it using the command below which can be modified
-to a directory of your choice (rather than `/opt`).
+If you would like to run your own Fluo instance, you will need [Accumulo] 
+(version 1.6+), [Hadoop] (version 2.2+), and [Zookeeper] installed and running
+on your local machine or cluster.
 
-```
-tar -C /opt -xvzf modules/distribution/target/fluo-1.0.0-alpha-1-SNAPSHOT-bin.tar.gz
-```
+Follow the [installation instructions](docs/installation.md) to set up and run a Fluo instance.
 
-Configuring Fluo
---------------------
+Running Fluo applications
+-------------------------
 
-To configure and run Fluo, you will need a running Accumulo instance as well 
-as an observer jar to run with Fluo.  If you have not created your own observer
-jar, you can build an observer jar using the [phrasecount][7] example.
+Once you have Fluo installed and running on your cluster, you can now run
+Fluo applications. 
 
-First, copy the example configuration files and modify them for you environment.
+Fluo applications consist of clients and observers. If you are new to Fluo,
+consider first building and running the [phrasecount] application on your 
+Fluo instance. Otherwise, follow the [application docs](docs/applications.md)
+to create your own Fluo client or observer.
 
-```
-cd fluo-1.0.0-alpha-1-SNAPSHOT/conf
-cp examples/* .
-vim fluo-env.sh
-vim fluo.properties
-```
+Testing
+-------
 
-Copy your observer jar to Fluo and set up notifications to your observer in
- `fluo.properties`.  Check out [phrasecount][7] to build an example observer
- jar and find instructions for configuring `fluo.properties`.
-
-```
-OBSERVER_JAR=<location of observer jar>
-cd fluo-1.0.0-alpha-1-SNAPSHOT/
-cp $OBSERVER_JAR lib/observers
-vim conf/fluo.properties
-```
-
-Finally, initialize your instance which only needs to be called once and stores
- configuration in zookeeper.
-
-```
-./bin/initialize.sh
-```
-
-Running Fluo
-----------------
-
-A Fluo instance consists of 1 oracle process and multiple worker processes.
-These processes can either be run on a YARN cluster or started locally on each
-machine.
-
-The preferred method to run Fluo applications is using YARN which will start
-up multiple workers as configured in `fluo.properties`.  To start a Fluo cluster 
-in YARN, run following commands:
-
-```
-./bin/oracle.sh start-yarn
-./bin/worker.sh start-yarn
-```
-
-The `start-yarn` commands above submit your Fluo applications to YARN.  Therefore, 
-they work for a single-node or a large cluster.  By using YARN, you no longer need 
-to deploy the Fluo binaries to every node on your cluster or start processes on 
-every node.
-
-You can use `yarn application -list` to check the status of the applications. 
-Logs are viewable within YARN.  When finished, you can kill the applications
-using `yarn application -kill <Application ID>`.  The application ID can be
-found using the list command.
-
-If you do not have YARN set up, you can start a local Fluo process using
-the following commands:
-
-```
-./bin/oracle.sh start-local
-./bin/worker.sh start-local
-```
-
-In a distributed environment, you will need to deploy the Fluo binary to 
-every node and start each process individually.
-
-To stop Fluo processes, run the following commands:
-
-```
-./bin/worker.sh stop-local
-./bin/oracle.sh stop-local
-```
-
-Tuning Accumulo
----------------
-
-Fluo will reread the same data frequently when it checks conditions on
-mutations.   When Fluo initializes a table it enables data caching to make
-this more efficient.  However you may need to increase the amount of memory
-available for caching in the tserver by increasing `tserver.cache.data.size`.
-Increasing this may require increasing the maximum tserver java heap size in
-`accumulo-env.sh`.  
-
-Fluo will run many client threads, will want to ensure the tablet server
-has enough threads.  Should probably increase the
-`tserver.server.threads.minimum` Accumulo setting.
-
-Using at least Accumulo 1.6.1 is recommended because multiple performance bugs
-were fixed.
-
-Additional Documentation
-------------------------
-
-[Stress Testing](modules/stress/README.md)
+Fluo has a test suite that consists of the following:
+* Units tests which are run by `mvn package`
+* Integration tests which are run using `mvn verify`.  These tests start
+a local Fluo instance (called MiniFluo) and run against it.
+* [Stress tests](modules/stress/README.md) which are designed to run on a 
+Fluo cluster.
 
 
-[1]: http://accumulo.apache.org
-[2]: http://research.google.com/pubs/pub36726.html
-[3]: https://issues.apache.org/jira/browse/ACCUMULO-1000
-[5]: https://issues.apache.org/jira/browse/ACCUMULO-112
-[7]: https://github.com/fluo-io/phrasecount
-
+[Accumulo]: http://accumulo.apache.org
+[Percolator]: http://research.google.com/pubs/pub36726.html
+[YARN]: http://hadoop.apache.org/docs/r2.5.1/hadoop-yarn/hadoop-yarn-site/YARN.html
+[Zookeeper]: http://zookeeper.apache.org/
+[quickstart]: http://fluo.io/quickstart/
+[phrasecount]: https://github.com/fluo-io/phrasecount
+[Git]: http://git-scm.com/
+[Java]: https://www.oracle.com/java/index.html
+[Maven]: http://maven.apache.org/
