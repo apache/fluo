@@ -159,12 +159,14 @@
       </plugins>
     </pluginManagement>
     <plugins>
+
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
+
 
   <dependencyManagement>
     <dependencies>
@@ -354,29 +356,7 @@
                   <descriptorRefs>
                     <descriptorRef>source-release-zip-tar</descriptorRef>
                   </descriptorRefs>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <inherited>false</inherited>
-            <executions>
-              <execution>
-                <id>rename-source-release-assembly</id>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <phase>validate</phase>
-                <configuration>
-                  <executable>mv</executable>
-                  <workingDirectory>${project.build.directory}</workingDirectory>
-                  <commandlineArgs>fluo-${project.version}-source-release.tar.gz fluo-${project.version}-src.tar.gz</commandlineArgs>
-                  <successCodes>
-                    <successCode>0</successCode>
-                    <successCode>1</successCode>
-                  </successCodes>
+                  <attach>false</attach>
                 </configuration>
               </execution>
             </executions>
@@ -393,6 +373,7 @@
             </executions>
           </plugin>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <executions>
               <execution>
@@ -407,5 +388,6 @@
       </build>
     </profile>
   </profiles>
-  
+
+
 </project>
