@@ -15,3 +15,11 @@ language: java
 jdk:
   - oraclejdk7
 script: mvn verify
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#fluo"
+    on_success: always
+    on_failure: always
+    use_notice: true
+    skip_join: true
