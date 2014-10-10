@@ -15,90 +15,107 @@
  */
 package io.fluo.stress;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
 
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.types.TypedSnapshot;
 import io.fluo.core.TestBaseMini;
-import io.fluo.stress.trie.Node;
+import io.fluo.stress.trie.Generate;
+import io.fluo.stress.trie.Load;
 import io.fluo.stress.trie.NodeObserver;
-import io.fluo.stress.trie.NumberIngest;
+import io.fluo.stress.trie.Print;
+import io.fluo.stress.trie.Unique;
 import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mrunit.PipelineMapReduceDriver;
+import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.util.ToolRunner;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static io.fluo.stress.trie.Constants.COUNT_SEEN_COL;
-import static io.fluo.stress.trie.Constants.TYPEL;
 
 /** 
  * Tests Trie Stress Test using MapReduce Ingest
  */
 public class TrieMapRedIT extends TestBaseMini {
   
-  private static final Logger log = LoggerFactory.getLogger(TrieMapRedIT.class);
-  private PipelineMapReduceDriver<LongWritable, Text, Text, LongWritable> driver;
-  
   @Override
   protected List<ObserverConfiguration> getObservers() {
     return Collections.singletonList(new ObserverConfiguration(NodeObserver.class.getName()));
   }
-  
-  @Before
-  @SuppressWarnings("resource")
-  // resources closed by driver
-  public void setUp() {
-    driver = PipelineMapReduceDriver.newPipelineMapReduceDriver();
-    driver.addMapReduce(new NumberIngest.IngestMapper(), new NumberIngest.UniqueReducer());
-    driver.addMapReduce(new NumberIngest.CountMapper(), new NumberIngest.CountReducer());
+
+  private void generate(int numMappers, int numPerMapper, int max, File out1) throws Exception {
+    int ret = ToolRunner.run(new Generate(), new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", "" + numMappers,
+        numPerMapper + "", max + "", out1.toURI().toString()});
+    Assert.assertEquals(0, ret);
+
   }
-  
+
+  private void load(int nodeSize, File fluoPropsFile, File out1) throws Exception {
+    int ret = ToolRunner.run(new Load(),
+ new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", nodeSize + "",
+        fluoPropsFile.getAbsolutePath(), out1.toURI().toString()});
+    Assert.assertEquals(0, ret);
+  }
+
+  private int unique(File... dirs) throws Exception {
+
+    ArrayList<String> args = new ArrayList<>(Arrays.asList("-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///"));
+    for (File dir : dirs) {
+      args.add(dir.toURI().toString());
+    }
+
+    int ret = ToolRunner.run(new Unique(), args.toArray(new String[args.size()]));
+    Assert.assertEquals(0, ret);
+    return Unique.getNumUnique();
+  }
+
   @Test
   public void testIngest() throws Exception {
-    runMapRedTest(2, 10, 4);
-  }
-  
-  public void runMapRedTest(Integer mappers, Integer numPerMapper, Integer nodeSize) throws Exception {
-    
-    Configuration driverConfig = driver.getConfiguration();
-    driverConfig.setInt(NumberIngest.TRIE_NODE_SIZE_PROP, nodeSize);
-    loadConfig(driverConfig, ConfigurationConverter.getProperties(config));
-    
-    Integer total = mappers * numPerMapper;
-    for (int i=0; i < mappers; i++) {
-      driver.addInput(new LongWritable(i), new Text(numPerMapper.toString()));
-    }
-    driver.withOutput(new Text("COUNT"), new LongWritable(total));
-    driver.runTest();
-    
-    // TODO - If sleep is removed test sometimes fails
-    Thread.sleep(4000);
+    // runMapRedTest(2, 10, 4);
+
+    File testDir = new File("target/MRIT");
+    FileUtils.deleteQuietly(testDir);
+    testDir.mkdirs();
+    File fluoPropsFile = new File(testDir, "fluo.props");
+
+    BufferedWriter propOut = new BufferedWriter(new FileWriter(fluoPropsFile));
+    ConfigurationConverter.getProperties(config).store(propOut, "");
+    propOut.close();
+
+    File out1 = new File(testDir, "nums-1");
+
+    generate(2, 100, 500, out1);
+    load(8, fluoPropsFile, out1);
+    int ucount = unique(out1);
+
+    Assert.assertTrue(ucount > 0);
 
     miniFluo.waitForObservers();
 
-    try (TypedSnapshot tsnap = TYPEL.wrap(client.newSnapshot())) {
-      Integer result = tsnap.get().row(Node.generateRootId(nodeSize)).col(COUNT_SEEN_COL).toInteger();
-      if (result == null) {
-        log.error("Could not find root node");
-      } else if (!result.equals(total)) {
-        log.error("Count (" + result + ") at root node does not match expected (" + total + "):");
-      }
-      Assert.assertEquals(total.intValue(), result.intValue());
-    }
-  }
-  
-  private static void loadConfig(Configuration conf, Properties props) {
-    for (Entry<Object, Object> entry : props.entrySet()) {
-      conf.set((String)entry.getKey(), (String)entry.getValue());
-    }
+    Assert.assertEquals(new Print.Stats(0, ucount, false), Print.getStats(config, 8));
+
+    // reload same data
+    load(8, fluoPropsFile, out1);
+
+    miniFluo.waitForObservers();
+
+    Assert.assertEquals(new Print.Stats(0, ucount, false), Print.getStats(config, 8));
+
+    // load some new data
+    File out2 = new File(testDir, "nums-2");
+    generate(2, 100, 500, out2);
+    load(8, fluoPropsFile, out2);
+    int ucount2 = unique(out1, out2);
+    Assert.assertTrue(ucount2 > ucount); // used > because the probability that no new numbers are chosen is exceedingly small
+
+    miniFluo.waitForObservers();
+
+    Assert.assertEquals(new Print.Stats(0, ucount2, false), Print.getStats(config, 8));
+
+    System.out.println("done");
+
   }
 }

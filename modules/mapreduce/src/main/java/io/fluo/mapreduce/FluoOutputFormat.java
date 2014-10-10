@@ -79,7 +79,8 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
     
     FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
     
-    try (final LoaderExecutorImpl lexecutor = new LoaderExecutorImpl(config)) {
+    try {
+      final LoaderExecutorImpl lexecutor = new LoaderExecutorImpl(config);
       return new RecordWriter<Loader,NullWritable>() {
 
         @Override
