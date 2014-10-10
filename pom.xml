@@ -28,6 +28,14 @@
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
+  <mailingLists>
+    <mailingList>
+      <name>Dev</name>
+      <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
+      <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
+      <post>fluo-dev@googlegroups.com</post>
+    </mailingList>
+  </mailingLists>
   <developers>
     <developer>
       <name>Keith Turner</name>
