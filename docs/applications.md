@@ -64,6 +64,8 @@ Once you have [FluoConfiguration] object, pass it to the `newClient()` method of
 FluoClient client = FluoFactory.newClient(config)
 ```
 
+It may help to reference the [API javadocs][API] while you are learning the Fluo API.
+
 Creating a Fluo observer
 ------------------------
 
@@ -80,3 +82,4 @@ To create an observer, follow these steps:
 [FluoConfiguration]: modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
 [AbstractObserver]: modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
 [fluo.properties]: modules/distribution/src/main/config/fluo.properties
+[API]: http://fluo.io/apidocs/
