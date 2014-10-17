@@ -18,13 +18,11 @@ package io.fluo.cluster;
 import java.io.File;
 
 import com.beust.jcommander.JCommander;
-
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.Logging;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +44,9 @@ public class InitializeTool {
     }
     options.validateConfig();
 
-    Logging.init("init", options.getConfigDir(), options.getLogOutput());
+    Logging.init("init", options.getConfigDir(), options.getLogOutput(), false);
     
-    log.info("Initalizing Fluo using the following properties file: "+options.getFluoProps());
+    log.info("Initalizing Fluo instance using the properties at "+options.getFluoProps());
 
     FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
     if (!config.hasRequiredAdminProps()) {

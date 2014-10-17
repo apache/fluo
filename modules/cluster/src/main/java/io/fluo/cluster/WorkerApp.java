@@ -16,113 +16,56 @@
 package io.fluo.cluster;
 
 import java.io.File;
-import java.net.URI;
 
-import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.Logging;
-import io.fluo.core.impl.Environment;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import io.fluo.cluster.util.ClusterUtil;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillPreparer;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder.MoreFile;
-import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
- * Tool to start a distributed Fluo workers in YARN
+/**
+ * Represents Fluo worker application in Twill
  */
 public class WorkerApp implements TwillApplication {
-  
+
   private static final Logger log = LoggerFactory.getLogger(WorkerApp.class);
-  private AppOptions options;
-  private FluoConfiguration config;
-  
-  public WorkerApp(AppOptions options, FluoConfiguration config) {
-    this.options = options;
+  private final FluoConfiguration config;
+  private final String fluoHome;
+
+  public WorkerApp(FluoConfiguration config, String fluoHome) {
     this.config = config;
+    this.fluoHome = fluoHome;
   }
-       
+
   @Override
   public TwillSpecification configure() { 
     int numInstances = config.getWorkerInstances();
     int maxMemoryMB = config.getWorkerMaxMemory();
-    
+
     ResourceSpecification workerResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)
         .setMemory(maxMemoryMB, SizeUnit.MEGA)
         .setInstances(numInstances).build();
-    
-    log.info("Starting "+numInstances+" workers with "+maxMemoryMB+"MB of memory");
 
-    MoreFile moreFile = TwillSpecification.Builder.with() 
-        .setName("FluoWorker").withRunnable()
-        .add(new WorkerRunnable(), workerResources)
-        .withLocalFiles()
-        .add("./conf/fluo.properties", new File(String.format("%s/conf/fluo.properties", options.getFluoHome())));
+    log.info("Configuring " + numInstances + " Fluo workers with " + maxMemoryMB + "MB of memory per instance.");
 
-    File confDir = new File(String.format("%s/conf", options.getFluoHome()));
+    MoreFile moreFile = TwillSpecification.Builder.with()
+        .setName(ClusterUtil.WORKER_APP_NAME)
+        .withRunnable().add(new WorkerRunnable(), workerResources)
+        .withLocalFiles().add("./conf/fluo.properties", new File(String.format("%s/conf/fluo.properties", fluoHome)));
+
+    File confDir = new File(String.format("%s/conf", fluoHome));
     for (File f : confDir.listFiles()) {
       if (f.isFile() && (f.getName().equals("fluo.properties") == false)) {
+        log.trace("Adding config file - " + f.getName());
         moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
       }
     }
 
     return moreFile.apply().anyOrder().build();
-  }
-
-  public static void main(String[] args) throws ConfigurationException, Exception {
-    
-    AppOptions options = new AppOptions();
-    JCommander jcommand = new JCommander(options, args);
-
-    if (options.displayHelp()) {
-      jcommand.usage();
-      System.exit(-1);
-    }
-    
-    Logging.init("worker", options.getFluoHome() + "/conf", "STDOUT");
-    
-    File configFile = new File(options.getFluoHome() + "/conf/fluo.properties");
-    FluoConfiguration config = new FluoConfiguration(configFile);
-    if (!config.hasRequiredWorkerProps()) {
-      log.error("fluo.properties is missing required properties for worker");
-      System.exit(-1);
-    }
-    Environment env = new Environment(config);
-    
-    YarnConfiguration yarnConfig = new YarnConfiguration();
-    yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/core-site.xml"));
-    yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/yarn-site.xml"));
-        
-    TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, env.getZookeepers()); 
-    twillRunner.startAndWait(); 
-    
-    TwillPreparer preparer = twillRunner.prepare(new WorkerApp(options, config)); 
-   
-    // Add any observer jars found in lib observers
-    File observerDir = new File(options.getFluoHome()+"/lib/observers");
-    for (File f : observerDir.listFiles()) {
-      String jarPath = "file:"+f.getCanonicalPath();
-      log.debug("Adding observer jar "+jarPath+" to YARN app");
-      preparer.withResources(new URI(jarPath));
-    }
-        
-    TwillController controller = preparer.start();
-    controller.start();
-    
-    while (controller.isRunning() == false) {
-      Thread.sleep(2000);
-    }
-    env.close();
-    System.exit(0);
   }
 }

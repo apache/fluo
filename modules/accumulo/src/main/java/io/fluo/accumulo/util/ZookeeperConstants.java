@@ -39,6 +39,10 @@ public class ZookeeperConstants {
   public static final String TRANSACTOR_NODES = TRANSACTOR + "/nodes";
   public static final String TRANSACTOR_TIMESTAMPS = TRANSACTOR + "/timestamps";
   
+  public static final String TWILL = "/twill";
+  public static final String TWILL_ORACLE_ID = TWILL + "/oracle.id";
+  public static final String TWILL_WORKER_ID = TWILL + "/worker.id";
+  
   // Time period that each client will update ZK with their oldest active timestamp
   // If period is too short, Zookeeper may be overloaded.  If too long, garbage collection
   // may keep older versions of table data unnecessarily.
@@ -91,4 +95,12 @@ public class ZookeeperConstants {
   public static final String transactorNodesRoot(String zkPath) {
     return zkPath + TRANSACTOR_NODES;
   }  
+  
+  public static final String twillOracleIdPath(String zkPath) {
+	return zkPath + TWILL_ORACLE_ID;  
+  }
+  
+  public static final String twillWorkerIdPath(String zkPath) {
+    return zkPath + TWILL_WORKER_ID;
+  }
 }

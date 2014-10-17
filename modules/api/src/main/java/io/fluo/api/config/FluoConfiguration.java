@@ -80,8 +80,10 @@ public class FluoConfiguration extends CompositeConfiguration {
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
   public static final String ORACLE_PORT_PROP = ORACLE_PREFIX + ".port";
+  public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
   public static final int ORACLE_PORT_DEFAULT = 9913;
+  public static final int ORACLE_INSTANCES_DEFAULT = 1;
   public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 256;
   
   // MiniFluo
@@ -326,6 +328,15 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   public int getOraclePort() {
     return getInt(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
+  }
+  
+  public FluoConfiguration setOracleInstances(int oracleInstances) {
+	  setProperty(ORACLE_INSTANCES_PROP, oracleInstances);
+	  return this;
+  }
+
+  public int getOracleInstances() {
+	  return getInt(ORACLE_INSTANCES_PROP, ORACLE_INSTANCES_DEFAULT);
   }
   
   public FluoConfiguration setMiniClass(String miniClass) {

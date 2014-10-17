@@ -39,6 +39,10 @@ public class Logging {
   private static final String LOG_LOCAL_HOSTNAME_PROP = FLUO_PREFIX + ".log.local.hostname";
   
   public static void init(String application, String configDir, String logOutput) throws IOException {
+    init(application, configDir, logOutput, true);
+  }
+
+  public static void init(String application, String configDir, String logOutput, boolean debug) throws IOException {
     
     String logConfig;
     
@@ -80,10 +84,11 @@ public class Logging {
     }
     StatusPrinter.printInCaseOfErrorsOrWarnings(context);
 
-    System.out.println("Logging to "+logOutput+" using config "+ logConfig);
-    log.info("Initialized logging using config in "+ logConfig);
-    
-    log.info("Starting "+application+" application");
+    if (debug) {
+      System.out.println("Logging to " + logOutput + " using config " + logConfig);
+      log.info("Initialized logging using config in " + logConfig);
+      log.info("Starting " + application + " application");
+    }
     
     // TODO print info about instance like zookeepers, zookeeper root
   }

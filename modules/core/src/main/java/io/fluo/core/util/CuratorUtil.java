@@ -17,6 +17,7 @@ package io.fluo.core.util;
 
 import java.util.concurrent.TimeUnit;
 
+import io.fluo.api.config.FluoConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
@@ -36,6 +37,10 @@ public class CuratorUtil {
   }
 
   private CuratorUtil() {}
+
+  public static CuratorFramework getCurator(FluoConfiguration config) {
+    return getCurator(config.getZookeepers(), config.getZookeeperTimeout());
+  }
 
   public static CuratorFramework getCurator(String zookeepers, int timeout) {
     return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout, new ExponentialBackoffRetry(1000, 10));

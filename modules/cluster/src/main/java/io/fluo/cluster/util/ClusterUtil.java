@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.util;
 
-public class YarnConstants {
+/**
+ * Contains constants and utility methods for managing Fluo cluster
+ */
+public class ClusterUtil {
 
-  private YarnConstants() {}
+  public static final String ORACLE_APP_NAME = "FluoOracle";
 
-  public static final int DEFAULT_NUM_ORACLES = 1;
+  public static final String WORKER_APP_NAME = "FluoWorker";
+
 }

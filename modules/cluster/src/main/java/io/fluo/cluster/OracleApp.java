@@ -17,103 +17,56 @@ package io.fluo.cluster;
 
 import java.io.File;
 
-import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.Logging;
-import io.fluo.core.impl.Environment;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import io.fluo.cluster.util.ClusterUtil;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillPreparer;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder.MoreFile;
-import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
- * Tool to start a Fluo oracle in YARN
+/**
+ * Represents Fluo oracle application in Twill
  */
 public class OracleApp implements TwillApplication {
   
   private static final Logger log = LoggerFactory.getLogger(OracleApp.class);
-  private final OracleAppOptions options;
-  private FluoConfiguration config;
   
-  public OracleApp(OracleAppOptions options, FluoConfiguration config) {
-    this.options = options;
+  private final FluoConfiguration config;
+  private final String fluoHome;
+  
+  public OracleApp(FluoConfiguration config, String fluoHome) {
     this.config = config;
+    this.fluoHome = fluoHome;
   }
        
   @Override
   public TwillSpecification configure() {   
     int maxMemoryMB = config.getOracleMaxMemory();
     
-    log.info("Starting a fluo oracle with "+maxMemoryMB+"MB of memory");
+    log.info("Configuring "+config.getOracleInstances()+" Fluo oracles with " + maxMemoryMB + "MB of memory per instance.");
     
     ResourceSpecification oracleResources = ResourceSpecification.Builder.with()
         .setVirtualCores(1)
         .setMemory(maxMemoryMB, SizeUnit.MEGA)
-        .setInstances(options.getNumberOfOracles()).build();
+        .setInstances(config.getOracleInstances()).build();
 
     MoreFile moreFile = TwillSpecification.Builder.with() 
-        .setName("FluoOracle").withRunnable()
+        .setName(ClusterUtil.ORACLE_APP_NAME).withRunnable()
         .add(new OracleRunnable(), oracleResources)
         .withLocalFiles()
-        .add("./conf/fluo.properties", new File(String.format("%s/conf/fluo.properties", options.getFluoHome())));
+        .add("./conf/fluo.properties", new File(String.format("%s/conf/fluo.properties", fluoHome)));
 
-    File confDir = new File(String.format("%s/conf", options.getFluoHome()));
+    File confDir = new File(String.format("%s/conf", fluoHome));
     for (File f : confDir.listFiles()) {
       if (f.isFile() && (f.getName().equals("fluo.properties") == false)) {
-        log.info("Adding config file - "+f.getName());
+        log.trace("Adding config file - " + f.getName());
         moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
       }
     }
 
     return moreFile.apply().anyOrder().build();
-  }
-
-  public static void main(String[] args) throws ConfigurationException, Exception {
-    
-    OracleAppOptions options = new OracleAppOptions();
-    JCommander jcommand = new JCommander(options, args);
-
-    if (options.displayHelp()) {
-      jcommand.usage();
-      System.exit(-1);
-    }
-    
-    Logging.init("oracle", options.getFluoHome()+"/conf", "STDOUT");
-    
-    File configFile = new File(options.getFluoHome() + "/conf/fluo.properties");
-    FluoConfiguration config = new FluoConfiguration(configFile);
-    if (!config.hasRequiredOracleProps()) {
-      log.error("fluo.properties is missing required properties for oracle");
-      System.exit(-1);
-    }
-    Environment env = new Environment(config);
-    
-    YarnConfiguration yarnConfig = new YarnConfiguration();
-    yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/core-site.xml"));
-    yarnConfig.addResource(new Path(options.getHadoopPrefix()+"/etc/hadoop/yarn-site.xml"));
-        
-    TwillRunnerService twillRunner = new YarnTwillRunnerService(yarnConfig, env.getZookeepers()); 
-    twillRunner.startAndWait();
-    
-    TwillPreparer preparer = twillRunner.prepare(new OracleApp(options, config)); 
-    
-    TwillController controller = preparer.start();
-    controller.start();
-
-    while (controller.isRunning() == false)
-      Thread.sleep(2000);
-
-    env.close();
-    System.exit(0);
   }
 }
