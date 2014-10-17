@@ -29,7 +29,7 @@ Obtaining a distribution
 ------------------------
 
 Before you can install Fluo, you will need to obtain a distribution tarball that
-works for your enviroment. Fluo distributions are built for specific releases
+works for your environment. Fluo distributions are built for specific releases
 of Hadoop and Accumulo. If you are using Accumulo 1.6.1 and Hadoop 2.3.0,
 you can download the [latest release][release].  If you need a release for a
 different environment or one built from the master branch, follow these steps:
@@ -85,14 +85,33 @@ vim conf/fluo.properties
 ```
 
 Finally, if you configured [fluo.properties] for observers, copy any jars containing these
-observer classes to ```lib/observers``` of your Fluo installation.
+observer classes to `lib/observers` of your Fluo installation.
+
+Fluo command script
+-------------------
+
+The Fluo command script is located at `bin/fluo` of your Fluo installation.  All Fluo
+commands are invoked by this script.  
+
+Modify and add the following to your `~/.bashrc` if you want to be able to execute the
+fluo script from any directory:
+```
+export PATH=/path/to/fluo-1.0.0-beta-1-SNAPSHOT/bin:$PATH
+```
+
+Source your `.bashrc` for the changes to take effect and test the script
+```
+source ~/.bashrc
+fluo
+```
+Running the script without any arguments prints a description of all commands.
 
 Initializing Fluo
 -----------------
 
 After Fluo is installed and configured, initialize your instance:
 ```
-./bin/initialize.sh
+fluo init
 ```
 This only needs to be called once and stores configuration in Zookeeper.
 
@@ -103,27 +122,29 @@ A Fluo instance consists of one oracle process and multiple worker processes.
 These processes can either be run on a YARN cluster or started locally on each
 machine.
 
-The preferred method to run Fluo applications is using YARN which will start
+The preferred method to run a Fluo instance is using YARN which will start
 up multiple workers as configured in [fluo.properties].  To start a Fluo cluster 
-in YARN, run following commands:
+in YARN, run following command:
 ```
-./bin/oracle.sh start-yarn
-./bin/worker.sh start-yarn
+fluo yarn start
 ```
 
-The `start-yarn` commands above submit your Fluo applications to YARN.  Therefore, 
-they work for a single-node or a large cluster.  By using YARN, you no longer need 
-to deploy the Fluo binaries to every node on your cluster or start processes on 
-every node.
+The start command above will work for a single-node or a large cluster.  By
+using YARN, you no longer need to deploy the Fluo binaries to every node on your
+cluster or start processes on every node.
 
-You can use `yarn application -list` to check the status of the applications. 
-Logs are viewable within YARN.  
+You can use the following command to check the status of your instance:
+```
+fluo yarn status
+```
+You can also use `yarn application -list` to check the status of your Fluo instance
+in YARN.  Logs are viewable within YARN.  
 
 If you do not have YARN set up, you can start a local Fluo process using
 the following commands:
 ```
-./bin/oracle.sh start-local
-./bin/worker.sh start-local
+fluo local start-oracle
+fluo local start-worker
 ```
 
 In a distributed environment, you will need to deploy the Fluo binary to 
@@ -132,17 +153,21 @@ every node and start each process individually.
 Stopping Fluo
 -------------
 
-If you are using YARN, you will need stop your Oracle and Worker applications
-using YARN.  In YARN, you can stop them by using the command 
-`yarn application -kill <Application ID>`.  The application IDs can be
-found using the list command `yarn application -list`.
+If you are using YARN, use the following command to stop your Fluo instance:
+```
+fluo yarn stop
+```
+If stop fails, there is also a kill command.
+```
+fluo yarn kill
+```
 
 If you are not using YARN, use the following commands to stop a local Fluo
-process.  In a distributed enviornment, these command will need to be run
+process.  In a distributed environment, these command will need to be run
 on every machine where processes are running:
 ```
-./bin/worker.sh stop-local
-./bin/oracle.sh stop-local
+fluo local stop-worker
+fluo local stop-oracle
 ```
 
 Tuning Accumulo

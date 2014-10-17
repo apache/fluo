@@ -25,6 +25,24 @@ bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 script=$( basename "$SOURCE" )
 # Stop: Resolve Script Directory
 
-. "$bin"/config.sh
+. "$bin"/impl/config.sh
 
-java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" io.fluo.cluster.InitializeTool -config-dir $FLUO_CONF_DIR
+case "$1" in
+init)
+  "$bin"/impl/init.sh "${*:2}"
+	;;
+yarn)
+  "$bin"/impl/yarn.sh "${*:2}"
+	;;
+local)
+  "$bin"/impl/local.sh "${*:2}"
+	;;
+*)
+	echo -e "Usage: fluo <command> (<argument>)\n"
+  echo -e "Possible commands:\n"
+	echo "  init      Initializes Fluo instance using conf/fluo.properties"
+	echo "  yarn      Administers Fluo instance in YARN"
+	echo "  local     Administers Fluo instance on local machine"
+  echo " " 
+	exit 1
+esac

@@ -17,23 +17,37 @@ package io.fluo.cluster;
 
 import com.beust.jcommander.Parameter;
 
-public class AppOptions {
+public class YarnAdminOptions {
+    
+  @Parameter(names = "-fluo-conf", description = "Location of fluo config dir", required = true)
+  protected String fluoConf;
   
-  @Parameter(names = "-fluo-home", description = "Location of fluo home", required = true)
-  protected String fluoHome;
+  @Parameter(names = "-fluo-lib", description = "Location of fluo lib dir", required = true)
+  protected String fluoLib;
 
   @Parameter(names = "-hadoop-prefix", description = "Location of hadoop prefix", required = true)
   protected String hadoopPrefix;
   
+  @Parameter(names = "-command", required = true) 
+  protected String command;
+
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   protected boolean help;
 
-  public String getFluoHome() {
-    return fluoHome;
+  public String getFluoConf() {
+    return fluoConf;
+  }
+  
+  public String getFluoLib() {
+    return fluoLib;
   }
   
   public String getHadoopPrefix() {
     return hadoopPrefix;
+  }
+  
+  public String getCommand() {	
+    return command;
   }
 
   public boolean displayHelp() {

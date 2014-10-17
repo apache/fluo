@@ -25,6 +25,10 @@
   
   <logger name="io.fluo" level="debug"/>
   <logger name="org.apache.zookeeper" level="error"/>
+  <logger name="org.apache.curator" level="error"/>
+  <logger name="org.apache.hadoop.util.NativeCodeLoader" level="error"/>
+  <logger name="org.apache.hadoop.yarn.client.RMProxy" level="warn"/>
+  <logger name="org.apache.twill" level="warn"/>
   <logger name="org.apache.twill.yarn.YarnTwillRunnerService" level="error"/>
 
   <root level="info">

@@ -38,6 +38,8 @@ public class WorkerRunnable extends AbstractTwillRunnable {
 
   private static final Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
   
+  public static String WORKER_NAME = "FluoWorker";
+  
   @Override
   public void run() {
     String[] args = { "-config-dir", "./conf"};

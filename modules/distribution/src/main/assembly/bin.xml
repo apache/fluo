@@ -61,7 +61,7 @@
       <outputDirectory>bin</outputDirectory>
       <fileMode>755</fileMode>
       <includes>
-        <include>*</include>
+        <include>*/**</include>
       </includes>
     </fileSet>
     <fileSet>

@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
  * a Twill/YARN application or on its own as a Java application
  */
 public class OracleRunnable extends AbstractTwillRunnable {
+  
+  public static String ORACLE_NAME = "FluoOracle";
 
   private static final Logger log = LoggerFactory.getLogger(OracleRunnable.class);
 

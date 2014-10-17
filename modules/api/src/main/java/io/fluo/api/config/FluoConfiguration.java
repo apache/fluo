@@ -66,9 +66,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String WORKER_NUM_THREADS_PROP = WORKER_PREFIX + ".num.threads";
   public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
   public static final String WORKER_MAX_MEMORY_MB_PROP = WORKER_PREFIX + ".max.memory.mb";
+  public static final String WORKER_NUM_CORES_PROP = WORKER_PREFIX + ".num.cores";
   public static final int WORKER_NUM_THREADS_DEFAULT = 10;
   public static final int WORKER_INSTANCES_DEFAULT = 1;
   public static final int WORKER_MAX_MEMORY_MB_DEFAULT = 256;
+  public static final int WORKER_NUM_CORES_DEFAULT = 1;
   
   // Loader 
   private static final String LOADER_PREFIX = FLUO_PREFIX + ".loader";
@@ -80,9 +82,13 @@ public class FluoConfiguration extends CompositeConfiguration {
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
   public static final String ORACLE_PORT_PROP = ORACLE_PREFIX + ".port";
+  public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
+  public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
   public static final int ORACLE_PORT_DEFAULT = 9913;
+  public static final int ORACLE_INSTANCES_DEFAULT = 1;
   public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 256;
+  public static final int ORACLE_NUM_CORES_DEFAULT = 1;
   
   // MiniFluo
   private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
@@ -292,6 +298,15 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getInt(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
   }
   
+  public FluoConfiguration setWorkerNumCores(int numCores) {
+    setProperty(WORKER_NUM_CORES_PROP, numCores);
+    return this;
+  }
+  
+  public int getWorkerNumCores() {
+    return getInt(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
+  }
+  
   public FluoConfiguration setLoaderThreads(int numThreads) {
     setProperty(LOADER_NUM_THREADS_PROP, numThreads);
     return this;
@@ -326,6 +341,24 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   public int getOraclePort() {
     return getInt(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
+  }
+  
+  public FluoConfiguration setOracleInstances(int oracleInstances) {
+	  setProperty(ORACLE_INSTANCES_PROP, oracleInstances);
+	  return this;
+  }
+
+  public int getOracleInstances() {
+	  return getInt(ORACLE_INSTANCES_PROP, ORACLE_INSTANCES_DEFAULT);
+  }
+  
+  public FluoConfiguration setOracleNumCores(int numCores) {
+    setProperty(ORACLE_NUM_CORES_PROP, numCores);
+    return this;
+  }
+  
+  public int getOracleNumCores() {
+    return getInt(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
   }
   
   public FluoConfiguration setMiniClass(String miniClass) {
@@ -438,11 +471,13 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
     config.setProperty(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
     config.setProperty(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
+    config.setProperty(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
     config.setProperty(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
     config.setProperty(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
     config.setProperty(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
     config.setProperty(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
     config.setProperty(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
+    config.setProperty(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
     config.setProperty(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 }
