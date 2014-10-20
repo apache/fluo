@@ -61,6 +61,20 @@ max       = Generate random numbers between 0 and max
 out dir   = Output directory
 ```
 
+Before loading data, consider splitting the Accumulo table using the following
+command.
+
+```
+java -cp <jarPath> io.fluo.stress.trie.Split <fluo props> <num tablets> <max> <node size>
+
+where:
+
+fluoProps   = Path to fluo.properties
+num tablets = Num tablets to create for lowest level of tree.  May create less tablets for higher levels.
+max         = The maximum passed to Generate
+node size   = Size of node in bits which must be a divisor of 32/64
+```
+
 After generating random numbers, load them into Fluo with the following
 command.  This command starts a map reduce job that executes load transactions.
 Loading the same directory multiple times should not result in incorrect
@@ -71,8 +85,6 @@ yarn jar <jarPath> io.fluo.stress.trie.Load <node size> <fluo props> <input dir>
 
 where:
 
-node size = Size of node in bits which must be a divisor of 32/64
-fluoProps = Path to fluo.properties
 input dir = A directory with file created by io.fluo.stress.trie.Generate
 ```
 
