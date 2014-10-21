@@ -107,23 +107,28 @@ The preferred method to run Fluo applications is using YARN which will start
 up multiple workers as configured in [fluo.properties].  To start a Fluo cluster 
 in YARN, run following commands:
 ```
-./bin/oracle.sh start-yarn
-./bin/worker.sh start-yarn
+./bin/yarn-oracle.sh start
+./bin/yarn-worker.sh start
 ```
 
-The `start-yarn` commands above submit your Fluo applications to YARN.  Therefore, 
+The `start` commands above submit your Fluo applications to YARN.  Therefore, 
 they work for a single-node or a large cluster.  By using YARN, you no longer need 
 to deploy the Fluo binaries to every node on your cluster or start processes on 
 every node.
 
-You can use `yarn application -list` to check the status of the applications. 
-Logs are viewable within YARN.  
+You can use the following commands to check the status of the applications:
+```
+./bin/yarn-oracle.sh status
+./bin/yarn-worker.sh status
+```
+You can also use `yarn application -list` to check the status of the applications 
+in YARN.  Logs are viewable within YARN.  
 
 If you do not have YARN set up, you can start a local Fluo process using
 the following commands:
 ```
-./bin/oracle.sh start-local
-./bin/worker.sh start-local
+./bin/local-oracle.sh start
+./bin/local-worker.sh start
 ```
 
 In a distributed environment, you will need to deploy the Fluo binary to 
@@ -132,17 +137,22 @@ every node and start each process individually.
 Stopping Fluo
 -------------
 
-If you are using YARN, you will need stop your Oracle and Worker applications
-using YARN.  In YARN, you can stop them by using the command 
-`yarn application -kill <Application ID>`.  The application IDs can be
-found using the list command `yarn application -list`.
+If you are using YARN, use the followign commands to stop your Oracle and 
+Worker applications:
+```
+./bin/yarn-worker.sh stop
+./bin/yarn-oracle.sh stop
+```
+If these commands fail, there is a `kill` command.  You can also kill these 
+applications through YARN using `yarn application -kill <Application ID>`. 
+The application IDs can be found using the list command `yarn application -list`.
 
 If you are not using YARN, use the following commands to stop a local Fluo
-process.  In a distributed enviornment, these command will need to be run
+process.  In a distributed environment, these command will need to be run
 on every machine where processes are running:
 ```
-./bin/worker.sh stop-local
-./bin/oracle.sh stop-local
+./bin/local-worker.sh stop
+./bin/local-oracle.sh stop
 ```
 
 Tuning Accumulo

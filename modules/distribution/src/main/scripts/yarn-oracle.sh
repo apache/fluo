@@ -27,26 +27,27 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/config.sh
 
-LOGHOST=$(hostname)
-SERVICE="oracle"
-
 if [[ -z $HADOOP_PREFIX ]]; then
   echo "HADOOP_PREFIX needs to be set!"
   exit 1
 fi
 
+ADMIN_OPTS="-fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX -application FluoOracle"
+
 case "$1" in
-start-yarn)
-  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.OracleApp -fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX
+start)
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.ClusterAdmin $ADMIN_OPTS -command start
 	;;
-start-local)
-  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.OracleRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+stop)
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.ClusterAdmin $ADMIN_OPTS -command stop
 	;;
-stop-local)
-	kill `jps -m | grep OracleRunnable | cut -f 1 -d ' '`
+kill)
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.ClusterAdmin $ADMIN_OPTS -command kill
+	;;
+status)
+  java -cp "$FLUO_HOME/lib/*" io.fluo.cluster.ClusterAdmin $ADMIN_OPTS -command status
 	;;
 *)
-	echo $"Usage: $0 start-yarn|start-local|stop-local"
+	echo $"Usage: $0 start|stop|kill|status"
 	exit 1
 esac
-

@@ -17,7 +17,7 @@ package io.fluo.cluster;
 
 import com.beust.jcommander.Parameter;
 
-public class AppOptions {
+public class ClusterAdminOptions {
   
   @Parameter(names = "-fluo-home", description = "Location of fluo home", required = true)
   protected String fluoHome;
@@ -25,6 +25,12 @@ public class AppOptions {
   @Parameter(names = "-hadoop-prefix", description = "Location of hadoop prefix", required = true)
   protected String hadoopPrefix;
   
+  @Parameter(names = "-application", required = true)
+  protected String application;
+  
+  @Parameter(names = "-command", required = true) 
+  protected String command;
+
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   protected boolean help;
 
@@ -34,6 +40,14 @@ public class AppOptions {
   
   public String getHadoopPrefix() {
     return hadoopPrefix;
+  }
+  
+  public String getApplication() {
+    return application;
+  }
+
+  public String getCommand() {	
+    return command;
   }
 
   public boolean displayHelp() {

@@ -30,23 +30,15 @@ script=$( basename "$SOURCE" )
 LOGHOST=$(hostname)
 SERVICE="worker"
 
-if [[ -z $HADOOP_PREFIX ]]; then
-  echo "HADOOP_PREFIX needs to be set!"
-  exit 1
-fi
-
 case "$1" in
-start-yarn)
-  java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" io.fluo.cluster.WorkerApp -fluo-home $FLUO_HOME -hadoop-prefix $HADOOP_PREFIX
-	;;
-start-local)
+start)
   java -cp "$FLUO_HOME/lib/*:$FLUO_HOME/lib/observers/*" io.fluo.cluster.WorkerRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR  >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
-stop-local)
+stop)
 	kill `jps -m | grep WorkerRunnable | cut -f 1 -d ' '`
 	;;
 *)
-	echo $"Usage: $0 start-yarn|start-local|stop-local"
+	echo $"Usage: $0 start|stop"
 	exit 1
 esac
 
