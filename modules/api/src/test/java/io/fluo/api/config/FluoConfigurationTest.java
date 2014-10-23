@@ -40,11 +40,14 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
     Assert.assertEquals(FluoConfiguration.WORKER_INSTANCES_DEFAULT, base.getWorkerInstances());
     Assert.assertEquals(FluoConfiguration.WORKER_MAX_MEMORY_MB_DEFAULT, base.getWorkerMaxMemory());
+    Assert.assertEquals(FluoConfiguration.WORKER_NUM_CORES_DEFAULT, base.getWorkerNumCores());
     Assert.assertEquals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_DEFAULT, base.getTransactionRollbackTime());
     Assert.assertEquals(FluoConfiguration.LOADER_NUM_THREADS_DEFAULT, base.getLoaderThreads());
     Assert.assertEquals(FluoConfiguration.LOADER_QUEUE_SIZE_DEFAULT, base.getLoaderQueueSize());
     Assert.assertEquals(FluoConfiguration.ORACLE_PORT_DEFAULT, base.getOraclePort());
+    Assert.assertEquals(FluoConfiguration.ORACLE_INSTANCES_DEFAULT, base.getOracleInstances());
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
+    Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
     Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
   }
       
@@ -84,12 +87,15 @@ public class FluoConfigurationTest {
     Assert.assertEquals("mini", config.setMiniClass("mini").getMiniClass());
     Assert.assertEquals(8, config.setOracleMaxMemory(8).getOracleMaxMemory());
     Assert.assertEquals(9, config.setOraclePort(9).getOraclePort());
+    Assert.assertEquals(10, config.setOracleInstances(10).getOracleInstances());
     Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
     Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
     Assert.assertEquals("root", config.setZookeeperRoot("root").getZookeeperRoot());
     Assert.assertEquals("zoos", config.setZookeepers("zoos").getZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
+    Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
+    Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
   }
   
   @Test

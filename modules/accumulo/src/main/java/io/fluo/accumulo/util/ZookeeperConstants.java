@@ -39,6 +39,12 @@ public class ZookeeperConstants {
   public static final String TRANSACTOR_NODES = TRANSACTOR + "/nodes";
   public static final String TRANSACTOR_TIMESTAMPS = TRANSACTOR + "/timestamps";
   
+  public static final String YARN = "/yarn";
+  public static final String YARN_TWILL_ID = YARN + "/twill.id";
+  public static final String YARN_APP_ID = YARN + "/app.id";
+  
+  public static final String TWILL = "/twill";
+  
   // Time period that each client will update ZK with their oldest active timestamp
   // If period is too short, Zookeeper may be overloaded.  If too long, garbage collection
   // may keep older versions of table data unnecessarily.
@@ -91,4 +97,12 @@ public class ZookeeperConstants {
   public static final String transactorNodesRoot(String zkPath) {
     return zkPath + TRANSACTOR_NODES;
   }  
+  
+  public static final String yarnTwillIdPath(String zkPath) {
+	return zkPath + YARN_TWILL_ID;  
+  }
+  
+  public static final String yarnAppIdPath(String zkPath) {
+    return zkPath + YARN_APP_ID;
+  }
 }
