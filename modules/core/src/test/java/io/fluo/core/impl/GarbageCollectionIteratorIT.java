@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.BankUtil;
 import io.fluo.core.TestBaseImpl;
@@ -57,7 +57,7 @@ public class GarbageCollectionIteratorIT extends TestBaseImpl {
     TestTransaction tx2 = new TestTransaction(env);
 
     env.getSharedResources().getTimestampTracker().updateZkNode();
-    long oldestTs = ZookeeperUtil.getOldestTimestamp(env.getZookeepers(), env.getZookeeperRoot());
+    long oldestTs = ZookeeperUtil.getOldestTimestamp(config.getZookeepers());
     Assert.assertEquals(tx2.getStartTs(), oldestTs);
 
     // Force a garbage collection
@@ -80,12 +80,12 @@ public class GarbageCollectionIteratorIT extends TestBaseImpl {
     Logger.getLogger(ZookeeperUtil.class).setLevel(Level.FATAL);
     
     // verify that oracle initial current ts
-    Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(env.getZookeepers(), env.getZookeeperRoot()));
+    Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));
     // delete the oracle current timestamp path
-    curator.delete().forPath(ZookeeperConstants.oracleCurrentTimestampPath(env.getZookeeperRoot()));
+    curator.delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
     // verify that oldest possible is returned
     Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE, 
-        ZookeeperUtil.getOldestTimestamp(env.getZookeepers(), env.getZookeeperRoot()));
+        ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));
     
     // set level back 
     Logger.getLogger(ZookeeperUtil.class).setLevel(curLevel);

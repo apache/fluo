@@ -15,8 +15,13 @@
  */
 package io.fluo.core.client;
 
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
+import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import io.fluo.core.TestBaseImpl;
+import io.fluo.core.util.CuratorUtil;
+import org.apache.curator.framework.CuratorFramework;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -41,7 +46,51 @@ public class FluoAdminImplIT extends TestBaseImpl {
     } catch(FluoAdmin.AlreadyInitializedException e) { }
 
     assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
-
   }
 
+  @Test
+  public void testInitializeWithNoChroot() throws AlreadyInitializedException {
+
+    config.setAllowReinitialize(true);
+    
+    for (String host : new String[]{"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
+      config.setZookeepers(host);
+      FluoAdmin fluoAdmin = new FluoAdminImpl(config);
+      try {
+        fluoAdmin.initialize();
+        fail("This should have failed");
+      } catch (IllegalArgumentException e) { }
+    }
+  }
+  
+  @Test
+  public void testInitializeLongChroot() throws Exception {
+
+    String zk = config.getZookeepers();
+    String longPath = "/very/long/path";
+    config.setAllowReinitialize(true);
+    config.setZookeepers(zk + longPath);
+
+    FluoAdmin fluoAdmin = new FluoAdminImpl(config);
+    fluoAdmin.initialize();
+    
+    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
+        config.getZookeeperTimeout())) {
+      curator.start();
+      Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath)));
+    }
+    
+    String longPath2 = "/very/long/path2";
+    config.setZookeepers(zk + longPath2);
+
+    fluoAdmin = new FluoAdminImpl(config);
+    fluoAdmin.initialize();
+    
+    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
+        config.getZookeeperTimeout())) {
+      curator.start();
+      Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath2)));
+      Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath)));
+    }
+  }
 }

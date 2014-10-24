@@ -17,7 +17,7 @@ package io.fluo.core.impl;
 
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
@@ -31,14 +31,13 @@ public class TransactorID {
   
   private final Long id;
   
-  public TransactorID(CuratorFramework curator, String zkRoot) {
+  public TransactorID(CuratorFramework curator) {
     Preconditions.checkNotNull(curator);
-    Preconditions.checkNotNull(zkRoot);
-    id = createID(curator, zkRoot);
+    id = createID(curator);
   }
   
   public TransactorID(Environment env) {
-    this(env.getSharedResources().getCurator(), env.getZookeeperRoot());
+    this(env.getSharedResources().getCurator());
   }
   
   /**
@@ -56,10 +55,9 @@ public class TransactorID {
     return LongUtil.toMaxRadixString(getLongID());
   }
       
-  private static Long createID(CuratorFramework curator, String zkRoot) {
+  private static Long createID(CuratorFramework curator) {
     try {
-      DistributedAtomicLong counter = new DistributedAtomicLong(curator,
-          zkRoot + ZookeeperConstants.TRANSACTOR_COUNT, new ExponentialBackoffRetry(1000, 10));
+      DistributedAtomicLong counter = new DistributedAtomicLong(curator, ZookeeperPath.TRANSACTOR_COUNT, new ExponentialBackoffRetry(1000, 10));
       AtomicValue<Long> nextId = counter.increment();
       while (nextId.succeeded() == false) {
         nextId = counter.increment();

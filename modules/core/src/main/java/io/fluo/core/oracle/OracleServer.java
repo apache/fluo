@@ -21,7 +21,8 @@ import java.util.TimerTask;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
@@ -90,9 +91,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public OracleServer(Environment env) throws Exception {
     this.env = env;
     this.cnxnListener = new CuratorCnxnListener();
-    this.maxTsPath = ZookeeperConstants.oracleMaxTimestampPath(env.getZookeeperRoot());
-    this.curTsPath = ZookeeperConstants.oracleCurrentTimestampPath(env.getZookeeperRoot());
-    this.oraclePath = ZookeeperConstants.oraclePath(env.getZookeeperRoot());
+    this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
+    this.curTsPath = ZookeeperPath.ORACLE_CUR_TIMESTAMP;
+    this.oraclePath = ZookeeperPath.ORACLE_SERVER;
     TimerTask tt = new TimerTask() {
       @Override
       public void run() {
@@ -108,7 +109,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       }
     };
     timer = new Timer("Oracle timestamp timer", true);
-    timer.schedule(tt, ZookeeperConstants.ZK_UPDATE_PERIOD_MS, ZookeeperConstants.ZK_UPDATE_PERIOD_MS);
+    timer.schedule(tt, ZookeeperUtil.ZK_UPDATE_PERIOD_MS, ZookeeperUtil.ZK_UPDATE_PERIOD_MS);
   }
 
   private void allocateTimestamp() throws Exception {
@@ -200,14 +201,14 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     InetSocketAddress addr = startServer();
 
-    curatorFramework = CuratorFrameworkFactory.newClient(env.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
+    curatorFramework = CuratorFrameworkFactory.newClient(env.getConfiguration().getZookeepers(), new ExponentialBackoffRetry(1000, 10));
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
 
     while (!cnxnListener.isConnected())
       Thread.sleep(200);
 
-    leaderSelector = new LeaderSelector(curatorFramework, env.getZookeeperRoot() + ZookeeperConstants.ORACLE_SERVER, this);
+    leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
     String leaderId = HostUtil.getHostName() + ":" + addr.getPort();
     leaderSelector.setId(leaderId);
     log.info("Leader ID = " + leaderId);

@@ -56,6 +56,7 @@ public class Print {
       this.sawOtherNodes = son;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o instanceof Stats) {
         Stats os = (Stats) o;

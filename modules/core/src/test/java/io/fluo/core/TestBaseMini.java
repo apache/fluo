@@ -80,12 +80,15 @@ public class TestBaseMini {
   public void setUpFluo() throws Exception {
     // TODO add helper code to make this shorter
     
+    String zkRoot = "/mini-test" + next.getAndIncrement();
+    
     config = new FluoConfiguration();
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
-    config.setZookeeperRoot("/stress" + next.getAndIncrement());
-    config.setZookeepers(miniAccumulo.getZooKeepers());
+    config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
+    config.setZookeepers(miniAccumulo.getZooKeepers() + zkRoot);
+    
     config.setAllowReinitialize(true);
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);

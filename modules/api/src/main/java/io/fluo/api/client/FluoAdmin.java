@@ -22,7 +22,7 @@ public interface FluoAdmin {
   
   /**
    * Exception that is thrown if Fluo instance was already initialized. An instance is already initialized if the root directory set by the property
-   * io.fluo.client.zookeeper.root exists in Zookeeper. If this directory can be reinitialized and overwritten set io.fluo.client.zookeeper.clear to true
+   * io.fluo.client.zookeeper.connect exists in Zookeeper. If this directory can be reinitialized and overwritten set io.fluo.client.zookeeper.clear to true
    */
   public static class AlreadyInitializedException extends Exception {
     private static final long serialVersionUID = 1L;

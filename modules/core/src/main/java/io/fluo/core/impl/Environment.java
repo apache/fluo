@@ -26,7 +26,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.fluo.accumulo.util.ZookeeperConstants;
+import com.google.common.annotations.VisibleForTesting;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
@@ -50,7 +51,6 @@ public class Environment implements AutoCloseable {
   
   private String table;
   private Authorizations auths = new Authorizations();
-  private String zoodir;
   private String accumuloInstance;
   private Map<Column,ObserverConfiguration> observers;
   private Map<Column,ObserverConfiguration> weakObservers;
@@ -63,27 +63,67 @@ public class Environment implements AutoCloseable {
   private SharedResources resources;
   private long rollbackTime;
   
+  /**
+   * Constructs an environment from another environment
+   * @param env
+   * @throws Exception
+   */
   public Environment(Environment env) throws Exception {
     this.table = env.table;
     this.auths = env.auths;
-    this.zoodir = env.zoodir;
     this.accumuloInstance = env.accumuloInstance;
-    this.fluoInstanceID = env.fluoInstanceID;
-    this.accumuloInstanceID = env.accumuloInstanceID;
     this.observers = env.observers;
+    this.weakObservers = env.weakObservers;
+    this.allObserversColumns = env.allObserversColumns;
     this.conn = env.conn;
+    this.accumuloInstanceID = env.accumuloInstanceID;
+    this.fluoInstanceID = env.fluoInstanceID;
+    this.observers = env.observers;
+    this.oraclePort = env.oraclePort;
+    this.config = env.config;
     this.resources = new SharedResources(this);
+    this.rollbackTime = env.rollbackTime;
   }
 
-  //TODO: This constructor will get out of control quickly
-  public Environment(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) throws Exception {
-    this.config = new FluoConfiguration();
-    init(curator, zoodir, conn, oraclePort);
-  }
-
-  private void init(CuratorFramework curator, String zoodir, Connector conn, int oraclePort) {
-    this.zoodir = zoodir;
+  /**
+   * Constructs an environment from given FluoConfiguration
+   * @param configuration Configuration used to configure environment
+   */
+  public Environment(FluoConfiguration configuration) {
+    this.config = configuration;
     
+    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
+
+      Connector conn;
+      try {
+        conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
+          .getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
+      } catch (AccumuloException | AccumuloSecurityException e) {
+        throw new IllegalStateException(e);
+      }
+
+      curator.start();
+
+      init(curator, conn, config.getOraclePort());
+    }
+  }
+    
+  /**
+   * Constructs environment from fluo.properties file
+   * @param propFile fluo.properties File
+   * @throws Exception
+   */
+  public Environment(File propFile) throws Exception {
+    this(new FluoConfiguration(propFile));
+  }
+  
+  @VisibleForTesting
+  public Environment(FluoConfiguration config, CuratorFramework curator, Connector conn, int oraclePort) throws Exception {
+    this.config = config;
+    init(curator, conn, oraclePort);
+  }
+  
+  private void init(CuratorFramework curator, Connector conn, int oraclePort) {
     try {
       readConfig(curator);
     } catch (Exception e1) {
@@ -109,46 +149,20 @@ public class Environment implements AutoCloseable {
   }
   
   /**
-   * @param properties
-   */
-  public Environment(FluoConfiguration configuration) {
-    this.config = configuration;
-
-    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
-
-      Connector conn;
-      try {
-        conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
-          .getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
-      } catch (AccumuloException | AccumuloSecurityException e) {
-        throw new IllegalStateException(e);
-      }
-
-      curator.start();
-
-      init(curator, config.getZookeeperRoot(), conn, config.getOraclePort());
-    }
-  }
-    
-  public Environment(File propFile) throws Exception {
-    this(new FluoConfiguration(propFile));
-  }
-  
-  /**
    * read configuration from zookeeper
    * 
    * @throws InterruptedException
    * @throws KeeperException
    */
   private void readConfig(CuratorFramework curator) throws Exception {
+    
+    accumuloInstance = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME), "UTF-8");
+    accumuloInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
+    fluoInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_INSTANCE_ID), "UTF-8");
 
-    accumuloInstance = new String(curator.getData().forPath(ZookeeperConstants.instanceNamePath(zoodir)), "UTF-8");
-    accumuloInstanceID = new String(curator.getData().forPath(ZookeeperConstants.accumuloInstanceIdPath(zoodir)), "UTF-8");
-    fluoInstanceID = new String(curator.getData().forPath(ZookeeperConstants.fluoInstanceIdPath(zoodir)), "UTF-8");
+    table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
 
-    table = new String(curator.getData().forPath(ZookeeperConstants.tablePath(zoodir)), "UTF-8");
-
-    ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.observersPath(zoodir)));
+    ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
     DataInputStream dis = new DataInputStream(bais);
     
     observers = Collections.unmodifiableMap(readObservers(dis));
@@ -158,7 +172,7 @@ public class Environment implements AutoCloseable {
     allObserversColumns.addAll(weakObservers.keySet());
     allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
 
-    bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperConstants.sharedConfigPath(zoodir)));
+    bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
     Properties sharedProps = new Properties(); 
     sharedProps.load(bais);
     config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
@@ -237,15 +251,7 @@ public class Environment implements AutoCloseable {
   public SharedResources getSharedResources() {
     return resources;
   }
-
-  public String getZookeeperRoot() {
-    return zoodir;
-  }
-  
-  public String getZookeepers() {
-    return getConnector().getInstance().getZooKeepers();
-  }
-  
+    
   public FluoConfiguration getConfiguration() {
     return config;
   }

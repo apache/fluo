@@ -114,8 +114,5 @@ public class TrieMapRedIT extends TestBaseMini {
     miniFluo.waitForObservers();
 
     Assert.assertEquals(new Print.Stats(0, ucount2, false), Print.getStats(config, 8));
-
-    System.out.println("done");
-
   }
 }

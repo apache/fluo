@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
 import org.slf4j.Logger;
@@ -51,8 +51,7 @@ public class TransactorCache implements AutoCloseable {
         .build();
 
     this.env = env;
-    cache = new PathChildrenCache(env.getSharedResources().getCurator(),
-        ZookeeperConstants.transactorNodesRoot(env.getZookeeperRoot()), true);
+    cache = new PathChildrenCache(env.getSharedResources().getCurator(), ZookeeperPath.TRANSACTOR_NODES, true);
     try {
       cache.start(StartMode.BUILD_INITIAL_CACHE);
       status = TcStatus.OPEN;

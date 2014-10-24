@@ -42,13 +42,13 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String CLIENT_ACCUMULO_PASSWORD_PROP = CLIENT_PREFIX + ".accumulo.password";
   public static final String CLIENT_ACCUMULO_USER_PROP = CLIENT_PREFIX + ".accumulo.user";
   public static final String CLIENT_ACCUMULO_INSTANCE_PROP = CLIENT_PREFIX + ".accumulo.instance";
-  public static final String CLIENT_ZOOKEEPER_ROOT_PROP = CLIENT_PREFIX + ".zookeeper.root";
+  public static final String CLIENT_ACCUMULO_ZOOKEEPERS_PROP = CLIENT_PREFIX + ".accumulo.zookeepers";
   public static final String CLIENT_ZOOKEEPER_TIMEOUT_PROP = CLIENT_PREFIX + ".zookeeper.timeout";
   public static final String CLIENT_ZOOKEEPER_CONNECT_PROP = CLIENT_PREFIX + ".zookeeper.connect";
   public static final String CLIENT_CLASS_PROP = CLIENT_PREFIX + ".class";
-  public static final String CLIENT_ZOOKEEPER_ROOT_DEFAULT = "/fluo";
   public static final int CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT = 30000;
-  public static final String CLIENT_ZOOKEEPER_CONNECT_DEFAULT = "localhost";
+  public static final String CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT = "localhost";
+  public static final String CLIENT_ZOOKEEPER_CONNECT_DEFAULT = "localhost/fluo";
   public static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
   
   // Administration
@@ -145,16 +145,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public int getZookeeperTimeout() {
     return getInt(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
   }
-  
-  public FluoConfiguration setZookeeperRoot(String zookeeperRoot) {
-    setProperty(CLIENT_ZOOKEEPER_ROOT_PROP, zookeeperRoot);
-    return this;
-  }
-  
-  public String getZookeeperRoot() {
-    return getString(CLIENT_ZOOKEEPER_ROOT_PROP, CLIENT_ZOOKEEPER_ROOT_DEFAULT);
-  }
-  
+    
   public FluoConfiguration setAccumuloInstance(String accumuloInstance) {
     setProperty(CLIENT_ACCUMULO_INSTANCE_PROP, accumuloInstance);
     return this;
@@ -180,6 +171,15 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   public String getAccumuloPassword() {
     return getString(CLIENT_ACCUMULO_PASSWORD_PROP);
+  }
+  
+  public FluoConfiguration setAccumuloZookeepers(String zookeepers) {
+    setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, zookeepers);
+    return this;
+  }
+  
+  public String getAccumuloZookeepers() {
+    return getString(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
   }
   
   public FluoConfiguration setClientClass(String clientClass) {
@@ -463,8 +463,8 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
   public static void setDefaultConfiguration(Configuration config) {
     config.setProperty(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
-    config.setProperty(CLIENT_ZOOKEEPER_ROOT_PROP, CLIENT_ZOOKEEPER_ROOT_DEFAULT);
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
+    config.setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
     config.setProperty(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
     config.setProperty(ADMIN_ALLOW_REINITIALIZE_PROP, ADMIN_ALLOW_REINITIALIZE_DEFAULT);
     config.setProperty(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);

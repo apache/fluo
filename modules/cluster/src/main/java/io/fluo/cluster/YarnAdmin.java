@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service.State;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.Logging;
 import io.fluo.core.util.CuratorUtil;
@@ -93,7 +93,7 @@ public class YarnAdmin {
 
     // set twill run id zookeeper
     String twillId = controller.getRunId().toString();
-    CuratorUtil.putData(curator, twillIdPath(), twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.YARN_TWILL_ID, twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     
     while (controller.isRunning() == false) {
       Thread.sleep(500);
@@ -101,7 +101,7 @@ public class YarnAdmin {
     
     // set app id in zookeeper
     String appId = controller.getResourceReport().getApplicationId();
-    CuratorUtil.putData(curator, appIdPath(), appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.YARN_APP_ID, appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     
     log.info("Started Fluo instance in YARN " + getAppInfo());
   }
@@ -172,30 +172,22 @@ public class YarnAdmin {
   private static String getFullInfo() throws Exception {
     return "(yarn id = " + getAppId() + ", twill id = "+ getTwillId() + ")";
   }
-
-  private static String twillIdPath() {
-    return ZookeeperConstants.yarnTwillIdPath(config.getZookeeperRoot());
-  }
    
   private static boolean twillIdExists() throws Exception {
-    return curator.checkExists().forPath(twillIdPath()) != null;
+    return curator.checkExists().forPath(ZookeeperPath.YARN_TWILL_ID) != null;
   }
 
   private static String getTwillId() throws Exception {
-    return new String(curator.getData().forPath(twillIdPath()), StandardCharsets.UTF_8);
+    return new String(curator.getData().forPath(ZookeeperPath.YARN_TWILL_ID), StandardCharsets.UTF_8);
   }
 
   private static void deleteZkData() throws Exception {
-    curator.delete().forPath(twillIdPath());
-    curator.delete().forPath(appIdPath());
+    curator.delete().forPath(ZookeeperPath.YARN_TWILL_ID);
+    curator.delete().forPath(ZookeeperPath.YARN_APP_ID);
   }
-  
-  private static String appIdPath() {
-    return ZookeeperConstants.yarnAppIdPath(config.getZookeeperRoot());
-  }
-   
+     
   private static String getAppId() throws Exception {
-    return new String(curator.getData().forPath(appIdPath()), StandardCharsets.UTF_8);
+    return new String(curator.getData().forPath(ZookeeperPath.YARN_APP_ID), StandardCharsets.UTF_8);
   }
 
   public static void main(String[] args) throws ConfigurationException, Exception {
@@ -222,7 +214,7 @@ public class YarnAdmin {
       yarnConfig.addResource(new Path(options.getHadoopPrefix() + "/etc/hadoop/yarn-site.xml"));
 
       try {
-        twillRunner = new YarnTwillRunnerService(yarnConfig, config.getZookeepers() + ZookeeperConstants.TWILL);
+        twillRunner = new YarnTwillRunnerService(yarnConfig, config.getZookeepers() + ZookeeperPath.TWILL);
         twillRunner.startAndWait();
 
         // sleep to give twill time to retrieve state from zookeeper

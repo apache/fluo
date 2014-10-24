@@ -50,7 +50,6 @@ public class Split {
 
   }
 
-
   private static TreeSet<Text> genSplits(int level, int numTablets, long max, int nodeSize) {
 
     TreeSet<Text> splits = new TreeSet<>();
@@ -68,9 +67,8 @@ public class Split {
   }
 
   private static void addSplits(FluoConfiguration config, TreeSet<Text> splits) throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers());
+    ZooKeeperInstance zki = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers());
     Connector conn = zki.getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
     conn.tableOperations().addSplits(config.getAccumuloTable(), splits);
   }
-
 }

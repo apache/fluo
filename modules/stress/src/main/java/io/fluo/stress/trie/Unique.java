@@ -89,7 +89,7 @@ public class Unique extends Configured implements Tool {
     runningJob.waitForCompletion();
     numUnique = (int) runningJob.getCounters().getCounter(Stats.UNIQUE);
     
-    System.out.println("numUnique : "+numUnique);
+    log.debug("numUnique : "+numUnique);
     
     return runningJob.isSuccessful() ? 0 : -1;
     
