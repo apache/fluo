@@ -137,6 +137,11 @@ You can use the following command to check the status of your instance:
 ```
 fluo yarn status
 ```
+
+For more detailed information on the YARN containers running Fluo:
+```
+fluo yarn info
+```
 You can also use `yarn application -list` to check the status of your Fluo instance
 in YARN.  Logs are viewable within YARN.  
 
