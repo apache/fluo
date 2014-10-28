@@ -59,7 +59,7 @@ public class Operations {
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
-  public static void updateSharedConfig(FluoConfiguration config, Connector conn, Properties sharedProps) throws Exception {
+  public static void updateSharedConfig(FluoConfiguration config, Properties sharedProps) throws Exception {
 
     try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
 
@@ -72,7 +72,7 @@ public class Operations {
     }
   }
 
-  public static void updateObservers(FluoConfiguration config, Connector conn, Map<Column,ObserverConfiguration> colObservers,
+  public static void updateObservers(FluoConfiguration config, Map<Column,ObserverConfiguration> colObservers,
       Map<Column,ObserverConfiguration> weakObservers) throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode

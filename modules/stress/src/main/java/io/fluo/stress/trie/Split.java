@@ -20,9 +20,8 @@ import java.io.File;
 import java.util.TreeSet;
 
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.core.util.AccumuloUtil;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.hadoop.io.Text;
 
 public class Split {
@@ -67,8 +66,7 @@ public class Split {
   }
 
   private static void addSplits(FluoConfiguration config, TreeSet<Text> splits) throws Exception {
-    ZooKeeperInstance zki = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers());
-    Connector conn = zki.getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
+    Connector conn = AccumuloUtil.getConnector(config);
     conn.tableOperations().addSplits(config.getAccumuloTable(), splits);
   }
 }

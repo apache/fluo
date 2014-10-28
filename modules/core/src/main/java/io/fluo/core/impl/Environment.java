@@ -31,13 +31,10 @@ import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
+import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.CuratorUtil;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.curator.framework.CuratorFramework;
@@ -93,18 +90,9 @@ public class Environment implements AutoCloseable {
     this.config = configuration;
     
     try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
-
-      Connector conn;
-      try {
-        conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
-          .getConnector(config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
-      } catch (AccumuloException | AccumuloSecurityException e) {
-        throw new IllegalStateException(e);
-      }
-
       curator.start();
-
-      init(curator, conn, config.getOraclePort());
+      
+      init(curator, AccumuloUtil.getConnector(config), config.getOraclePort());
     }
   }
     
