@@ -143,7 +143,7 @@ public class TestBaseImpl {
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
     
-    curator = CuratorUtil.getCurator(config.getZookeepers(), 30000);
+    curator = CuratorUtil.newFluoCurator(config);
     curator.start();
     
     FluoAdmin admin = FluoFactory.newAdmin(config);

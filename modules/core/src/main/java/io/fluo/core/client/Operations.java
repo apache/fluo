@@ -61,8 +61,7 @@ public class Operations {
 
   public static void updateSharedConfig(FluoConfiguration config, Properties sharedProps) throws Exception {
 
-    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
-
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -76,7 +75,7 @@ public class Operations {
       Map<Column,ObserverConfiguration> weakObservers) throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode
-    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();
 
       String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS;
@@ -100,14 +99,14 @@ public class Operations {
     final String fluoInstanceID = UUID.randomUUID().toString();
     
     // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
-    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 30000)) {
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();
       String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
       CuratorUtil.putData(curator, zkRoot, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
     }
 
     // Initialize Zookeeper & Accumulo for this Fluo instance
-    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();
 
       // TODO set Fluo data version

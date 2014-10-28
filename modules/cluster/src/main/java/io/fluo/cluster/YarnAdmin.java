@@ -228,7 +228,7 @@ public class YarnAdmin {
     config = new FluoConfiguration(configFile);
 
     try {
-      curator = CuratorUtil.getCurator(config);
+      curator = CuratorUtil.newFluoCurator(config);
       curator.start();
 
       YarnConfiguration yarnConfig = new YarnConfiguration();
