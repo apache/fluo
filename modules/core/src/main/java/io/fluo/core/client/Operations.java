@@ -30,7 +30,9 @@ import java.util.UUID;
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.accumulo.iterators.GarbageCollectionIterator;
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.accumulo.util.ZookeeperUtil;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.ByteUtil;
@@ -57,29 +59,27 @@ public class Operations {
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
-  public static void updateSharedConfig(Connector conn, String zoodir, Properties sharedProps) throws Exception {
+  public static void updateSharedConfig(FluoConfiguration config, Connector conn, Properties sharedProps) throws Exception {
 
-    String zookeepers = conn.getInstance().getZooKeepers();
-    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
 
       curator.start();
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       sharedProps.store(baos, "Shared java props");
 
-      CuratorUtil.putData(curator, ZookeeperConstants.sharedConfigPath(zoodir), baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
     }
   }
 
-  public static void updateObservers(Connector conn, String zoodir, Map<Column,ObserverConfiguration> colObservers,
+  public static void updateObservers(FluoConfiguration config, Connector conn, Map<Column,ObserverConfiguration> colObservers,
       Map<Column,ObserverConfiguration> weakObservers) throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode
-    String zookeepers = conn.getInstance().getZooKeepers();
-    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
       curator.start();
 
-      String observerPath = ZookeeperConstants.observersPath(zoodir);
+      String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS;
       try {
         curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
       } catch(NoNodeException nne) {
@@ -89,32 +89,38 @@ public class Operations {
       }
 
       byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-      CuratorUtil.putData(curator, ZookeeperConstants.observersPath(zoodir), serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
+      CuratorUtil.putData(curator, observerPath, serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
     }
   }
 
-  public static void initialize(Connector conn, String zoodir, String table) throws Exception {
+  public static void initialize(FluoConfiguration config, Connector conn) throws Exception {
 
-    final String zookeepers = conn.getInstance().getZooKeepers();
     final String accumuloInstanceName = conn.getInstance().getInstanceName();
     final String accumuloInstanceID = conn.getInstance().getInstanceID();
     final String fluoInstanceID = UUID.randomUUID().toString();
+    
+    // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
+    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 30000)) {
+      curator.start();
+      String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
+      CuratorUtil.putData(curator, zkRoot, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+    }
 
-    try (CuratorFramework curator = CuratorUtil.getCurator(zookeepers, 30000)) {
+    // Initialize Zookeeper & Accumulo for this Fluo instance
+    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), 30000)) {
       curator.start();
 
       // TODO set Fluo data version
-      CuratorUtil.putData(curator, zoodir, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.configPath(zoodir), new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.tablePath(zoodir), table.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.instanceNamePath(zoodir), accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.accumuloInstanceIdPath(zoodir), accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.fluoInstanceIdPath(zoodir), fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.oraclePath(zoodir), new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.oracleMaxTimestampPath(zoodir), new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperConstants.oracleCurrentTimestampPath(zoodir), new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable().getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_INSTANCE_ID, fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_SERVER, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
 
-      createTable(table, conn, zoodir);
+      createTable(config, conn);
     }
   }
 
@@ -148,21 +154,20 @@ public class Operations {
     return serializedObservers;
   }
 
-  private static void createTable(String tableName, Connector conn, String zoodir) throws Exception {
+  private static void createTable(FluoConfiguration config, Connector conn) throws Exception {
     // TODO may need to configure an iterator that squishes multiple notifications to one at compaction time since versioning iterator is not configured for
     // table...
 
-    conn.tableOperations().create(tableName, false);
+    conn.tableOperations().create(config.getAccumuloTable(), false);
     Map<String,Set<Text>> groups = new HashMap<>();
     groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
-    conn.tableOperations().setLocalityGroups(tableName, groups);
+    conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
     
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setZookeepers(gcIter, conn.getInstance().getZooKeepers());
-    GarbageCollectionIterator.setZookeeperRoot(gcIter, zoodir);
+    GarbageCollectionIterator.setZookeepers(gcIter, config.getZookeepers());
     
-    conn.tableOperations().attachIterator(tableName, gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
+    conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
     
-    conn.tableOperations().setProperty(tableName, Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
+    conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
   }
 }

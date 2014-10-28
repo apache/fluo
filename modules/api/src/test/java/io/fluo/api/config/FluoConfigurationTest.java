@@ -31,8 +31,8 @@ public class FluoConfigurationTest {
   @Test
   public void testDefaults() {
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT, base.getZookeepers());
-    Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_ROOT_DEFAULT, base.getZookeeperRoot());
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT, base.getZookeeperTimeout());
+    Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
     Assert.assertEquals(FluoConfiguration.CLIENT_CLASS_DEFAULT, base.getClientClass());
     Assert.assertEquals(FluoConfiguration.ADMIN_ALLOW_REINITIALIZE_DEFAULT, base.getAllowReinitialize());
     Assert.assertEquals(FluoConfiguration.ADMIN_CLASS_DEFAULT, base.getAdminClass());
@@ -91,8 +91,8 @@ public class FluoConfigurationTest {
     Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
     Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
-    Assert.assertEquals("root", config.setZookeeperRoot("root").getZookeeperRoot());
-    Assert.assertEquals("zoos", config.setZookeepers("zoos").getZookeepers());
+    Assert.assertEquals("zoos1", config.setZookeepers("zoos1").getZookeepers());
+    Assert.assertEquals("zoos2", config.setAccumuloZookeepers("zoos2").getAccumuloZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
     Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
     Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
@@ -161,7 +161,8 @@ public class FluoConfigurationTest {
     // make sure classpath contains comma.  otherwise it was shortened
     Assert.assertTrue(config.getAccumuloClasspath().contains(","));
     // check for values set in prop file
-    Assert.assertEquals("localhost", config.getZookeepers());
+    Assert.assertEquals("localhost/fluo", config.getZookeepers());
+    Assert.assertEquals("localhost", config.getAccumuloZookeepers());
     Assert.assertEquals("", config.getAccumuloUser());
     Assert.assertEquals("", config.getAccumuloPassword());
     Assert.assertEquals("", config.getAccumuloTable());

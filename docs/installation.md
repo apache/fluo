@@ -175,6 +175,15 @@ fluo local stop-worker
 fluo local stop-oracle
 ```
 
+Running Multiple Fluo Instances
+-------------------------------
+
+Multiple Fluo instances can be run on the same cluster as long as each instance
+has a different Zookeeper chroot (set by `io.fluo.client.zookeeper.connect`) as
+well as a different Accumulo table (set by `io.fluo.admin.accumulo.table`). Untar
+your Fluo distribution into seperate directories for each instance and follow the
+installation instructions on each instance.
+
 Tuning Accumulo
 ---------------
 

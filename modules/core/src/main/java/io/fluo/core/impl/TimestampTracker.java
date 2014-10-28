@@ -22,10 +22,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import io.fluo.accumulo.util.ZookeeperUtil;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
@@ -112,7 +114,7 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   public TimestampTracker(Environment env, TransactorID tid) {
-    this(env, tid, ZookeeperConstants.ZK_UPDATE_PERIOD_MS);
+    this(env, tid, ZookeeperUtil.ZK_UPDATE_PERIOD_MS);
   }
 
   /**
@@ -233,7 +235,7 @@ public class TimestampTracker implements AutoCloseable {
 
   @VisibleForTesting
   String getNodePath() {
-    return ZookeeperConstants.transactorTsRoot(env.getZookeeperRoot()) + "/" + tid.toString();
+    return ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + tid.toString();
   }
 
   @Override

@@ -44,7 +44,6 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
 
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
-  private static final String ZOOKEEPER_ROOT_OPT = "zookeeper.root";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   private Long oldestActiveTs;
   private SortedKeyValueIterator<Key,Value> source;
@@ -63,11 +62,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
     this.source = source;
     String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
-    String zkRoot = options.get(ZOOKEEPER_ROOT_OPT);
-    if (zookeepers == null || zkRoot == null) {
+    if (zookeepers == null) {
       throw new IllegalArgumentException("A configuration item for GC iterator was not set");
     }
-    oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers, zkRoot);
+    oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);
   }
 
   @Override
@@ -254,9 +252,5 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   
   public static void setZookeepers(IteratorSetting gcIter, String zookeepers) {
     gcIter.addOption(ZOOKEEPER_CONNECT_OPT, zookeepers);
-  }
-  
-  public static void setZookeeperRoot(IteratorSetting gcIter, String zkRoot) {
-    gcIter.addOption(ZOOKEEPER_ROOT_OPT, zkRoot);
   }
 }

@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
@@ -102,7 +102,6 @@ public class TransactorNode implements AutoCloseable {
   }
 
   public static String getNodePath(Environment env, Long transactorId) {
-    return ZookeeperConstants.transactorNodesRoot(env.getZookeeperRoot()) + 
-        "/" + LongUtil.toMaxRadixString(transactorId);
+    return ZookeeperPath.TRANSACTOR_NODES + "/" + LongUtil.toMaxRadixString(transactorId);
   }
 }

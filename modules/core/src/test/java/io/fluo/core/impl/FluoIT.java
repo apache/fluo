@@ -346,7 +346,7 @@ public class FluoIT extends TestBaseImpl {
   @Test
   public void testVisibility() throws Exception {
 
-    conn.securityOperations().changeUserAuthorizations("root", new Authorizations("A", "B", "C"));
+    conn.securityOperations().changeUserAuthorizations(USER, new Authorizations("A", "B", "C"));
 
     env.setAuthorizations(new Authorizations("A", "B", "C"));
     
@@ -361,7 +361,7 @@ public class FluoIT extends TestBaseImpl {
     
     tx.done();
     
-    Environment env2 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
+    Environment env2 = new Environment(config, curator, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(env2);
@@ -370,7 +370,7 @@ public class FluoIT extends TestBaseImpl {
     Assert.assertEquals("60", tx2.get().row("jill").col(balanceCol).toString());
     env2.close();
     
-    Environment env3 = new Environment(curator, zkn, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
+    Environment env3 = new Environment(config, curator, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
     env3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(env3);

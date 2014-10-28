@@ -55,7 +55,8 @@ import org.junit.BeforeClass;
  * Base Integration Test exposing underlying implementation
  */
 public class TestBaseImpl {
-  protected static String secret = "ITSecret";
+  protected final static String USER = "root";
+  protected final static String PASSWORD = "ITSecret";
   protected static AtomicInteger next = new AtomicInteger();
   protected static Instance instance;
   protected static CuratorFramework curator;
@@ -64,7 +65,6 @@ public class TestBaseImpl {
   protected Environment env;
   protected String table;
   protected OracleServer oserver;
-  protected String zkn;
   protected FluoConfiguration config;
   protected FluoClient client;
   
@@ -79,7 +79,7 @@ public class TestBaseImpl {
 
     @SuppressWarnings("resource")
     TestOracle(int port) throws Exception {
-      this(new Environment(curator, zkn, conn, port));
+      this(new Environment(config, curator, conn, port));
     }
 
     @Override
@@ -124,33 +124,34 @@ public class TestBaseImpl {
   public static void setUp() throws Exception {
     String instanceName = "plugin-it-instance";
     instance = new MiniAccumuloInstance(instanceName, new File("target/accumulo-maven-plugin/" + instanceName));
-    conn = instance.getConnector("root", new PasswordToken(secret));
-    curator = CuratorUtil.getCurator(conn.getInstance().getZooKeepers(), 30000);
-    curator.start();
+    conn = instance.getConnector(USER, new PasswordToken(PASSWORD));
   }
 
   @Before
   public void setup() throws Exception {
 
     table = "table" + next.getAndIncrement();
-    zkn = "/test" + next.getAndIncrement();
+    String zkRoot = "/impl-test" + next.getAndIncrement();
 
     config = new FluoConfiguration();
     config.setAccumuloInstance(instance.getInstanceName());
-    config.setAccumuloUser("root");
-    config.setAccumuloPassword(secret);
+    config.setAccumuloUser(USER);
+    config.setAccumuloPassword(PASSWORD);
     config.setAccumuloTable(table);
-    config.setZookeeperRoot(zkn);
-    config.setZookeepers(instance.getZooKeepers());
+    config.setAccumuloZookeepers(instance.getZooKeepers());
+    config.setZookeepers(instance.getZooKeepers() + zkRoot);
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
+    
+    curator = CuratorUtil.getCurator(config.getZookeepers(), 30000);
+    curator.start();
     
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
    
     client = FluoFactory.newClient(config);
 
-    env = new Environment(curator, zkn, conn, PortUtils.getRandomFreePort());
+    env = new Environment(config, curator, conn, PortUtils.getRandomFreePort());
     
     oserver = new OracleServer(env);
     oserver.start();
@@ -170,6 +171,7 @@ public class TestBaseImpl {
       oserver.stop();
     env.close();
     client.close();
+    curator.close();
   }
 
   protected void printTable() throws Exception {

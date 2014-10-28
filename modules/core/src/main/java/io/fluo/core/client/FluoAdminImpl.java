@@ -20,6 +20,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.base.Preconditions;
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
@@ -57,8 +59,11 @@ public class FluoAdminImpl implements FluoAdmin {
   public void initialize() throws AlreadyInitializedException {
     try {
 
-      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
+      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
+      
+      Preconditions.checkArgument(ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/") == false, 
+          "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
 
       /**
        * Currently, getAllowReinitialize assumes the user is okay removing the table if a table with
@@ -66,19 +71,23 @@ public class FluoAdminImpl implements FluoAdmin {
        */
       if (config.getAllowReinitialize()) {
 
+        // Remove accumulo table if it exists
         if(conn.tableOperations().exists(config.getAccumuloTable())) {
           logger.warn("Removing current table " + config.getAccumuloTable() + " because it already exists.");
           conn.tableOperations().delete(config.getAccumuloTable());
         }
-
-        try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
+        
+        // Remove Zookeeper root node
+        try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
+            config.getZookeeperTimeout())) {
           curator.start();
-          String zkRoot = config.getZookeeperRoot();
           try {
+            String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
             curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
+            logger.info("Deleted zookeeper path - "+ config.getZookeepers());
           } catch(KeeperException.NoNodeException nne) {
           } catch(Exception e) {
-            logger.error("An error occurred deleting Zookeeper node. node=[" + zkRoot + "], error=[" + e.getMessage() + "]");
+            logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
             throw new RuntimeException(e);
           }
         }
@@ -88,10 +97,9 @@ public class FluoAdminImpl implements FluoAdmin {
               FluoConfiguration.ADMIN_ALLOW_REINITIALIZE_PROP +
                " is set to false. Instance initialization failed.");
         }
-
       }
 
-      Operations.initialize(conn, config.getZookeeperRoot(), config.getAccumuloTable());
+      Operations.initialize(config, conn);
 
       updateSharedConfig();
       
@@ -116,7 +124,7 @@ public class FluoAdminImpl implements FluoAdmin {
   public void updateSharedConfig() {
     
     try {
-      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getZookeepers())
+      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
            .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
 
       Properties sharedProps = new Properties();
@@ -133,8 +141,8 @@ public class FluoAdminImpl implements FluoAdmin {
           sharedProps.setProperty(key, Long.toString(config.getLong(key)));
         }
       }
-      Operations.updateObservers(conn, config.getZookeeperRoot(), colObservers, weakObservers);
-      Operations.updateSharedConfig(conn, config.getZookeeperRoot(), sharedProps);
+      Operations.updateObservers(config, conn, colObservers, weakObservers);
+      Operations.updateSharedConfig(config, conn, sharedProps);
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;

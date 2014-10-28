@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Helper methods for retrieving oldest active timestamp from Zookeeper
+ * Helper methods for Zookeeper
  */
 public class ZookeeperUtil {
 
@@ -31,16 +31,44 @@ public class ZookeeperUtil {
 
   public static final long OLDEST_POSSIBLE = -1;
 
+  // Time period that each client will update ZK with their oldest active timestamp
+  // If period is too short, Zookeeper may be overloaded.  If too long, garbage collection
+  // may keep older versions of table data unnecessarily.
+  public static long ZK_UPDATE_PERIOD_MS = 60000;
+
   private ZookeeperUtil() {}
+  
+  /**
+   * Parses server section of Zookeeper connection string 
+   */
+  public static String parseServers(String zookeepers) {
+    int slashIndex = zookeepers.indexOf("/");
+    if (slashIndex != -1) {
+      return zookeepers.substring(0, slashIndex);
+    }
+    return zookeepers;
+  }
+
+  /**
+   * Parses chroot section of Zookeeper connection string 
+   * @param zookeepers
+   * @return Returns root path or "/" if none found
+   */
+  public static String parseRoot(String zookeepers) {
+    int slashIndex = zookeepers.indexOf("/");
+    if (slashIndex != -1) {
+      return zookeepers.substring(slashIndex).trim();
+    }
+    return "/";
+  }
 
   /**
    * Retrieves the oldest active timestamp in Fluo by scanning zookeeper
    * 
    * @param zookeepers Zookeeper connection string
-   * @param zkPath Zookeeper root path
    * @return Oldest active timestamp or oldest possible ts (-1) if not found
    */
-  public static long getOldestTimestamp(String zookeepers, String zkPath) {
+  public static long getOldestTimestamp(String zookeepers) {
     long oldestTs = Long.MAX_VALUE;
     boolean nodeFound = false;
 
@@ -49,7 +77,7 @@ public class ZookeeperUtil {
       zk = new ZooKeeper(zookeepers, 30000, null);
 
       // Try to find oldest active timestamp of transactors 
-      String tsRootPath = ZookeeperConstants.transactorTsRoot(zkPath);
+      String tsRootPath = ZookeeperPath.TRANSACTOR_TIMESTAMPS;
       try {
         if (zk.exists(tsRootPath, false) != null) { 
           for (String child : zk.getChildren(tsRootPath, false)) {
@@ -68,7 +96,7 @@ public class ZookeeperUtil {
       // If no transactors found, lookup oldest active timestamp set by oracle in zookeeper
       if (nodeFound == false) {
         try {
-          byte[] d = zk.getData(ZookeeperConstants.oracleCurrentTimestampPath(zkPath), false, null);
+          byte[] d = zk.getData(ZookeeperPath.ORACLE_CUR_TIMESTAMP, false, null);
           oldestTs = LongUtil.fromByteArray(d);
           nodeFound = true;
         } catch (KeeperException | InterruptedException e) {

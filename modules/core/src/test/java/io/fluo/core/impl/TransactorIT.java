@@ -15,7 +15,7 @@
  */
 package io.fluo.core.impl;
 
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.TestBaseImpl;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -157,7 +157,7 @@ public class TransactorIT extends TestBaseImpl {
   }
   
   private int getNumOpen() throws Exception {
-    return curator.getChildren().forPath(env.getZookeeperRoot()+ZookeeperConstants.TRANSACTOR_NODES).size();
+    return curator.getChildren().forPath(ZookeeperPath.TRANSACTOR_NODES).size();
   }
   
   private void assertNumOpen(int expected) throws Exception {

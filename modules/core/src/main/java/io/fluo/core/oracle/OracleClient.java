@@ -23,7 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.fluo.accumulo.util.ZookeeperConstants;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
@@ -74,11 +74,9 @@ public class OracleClient {
 
     @Override
     public void run() {
-
-      String zkPath = ZookeeperConstants.oraclePath(env.getZookeeperRoot());
-
+      
       try {
-        curatorFramework = CuratorFrameworkFactory.newClient(env.getConnector().getInstance().getZooKeepers(), new ExponentialBackoffRetry(1000, 10));
+        curatorFramework = CuratorFrameworkFactory.newClient(env.getConfiguration().getZookeepers(), new ExponentialBackoffRetry(1000, 10));
         CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
         curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
         curatorFramework.start();
@@ -86,11 +84,11 @@ public class OracleClient {
         while (!cnxnListener.isConnected())
           Thread.sleep(200);
 
-        pathChildrenCache = new PathChildrenCache(curatorFramework, zkPath, true);
+        pathChildrenCache = new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
         pathChildrenCache.getListenable().addListener(this);
         pathChildrenCache.start();
 
-        leaderSelector = new LeaderSelector(curatorFramework, zkPath, this);
+        leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
 
         connect();
         doWork();
