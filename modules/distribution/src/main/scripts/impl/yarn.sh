@@ -47,12 +47,16 @@ kill)
 status)
   java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command status
 	;;
+info)
+  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command info
+	;;
 *)
 	echo -e "Usage: fluo yarn <argument>\n"
   echo -e "Possible arguments:\n"
   echo "  start     Start Fluo instance in YARN"
   echo "  stop      Stops Fluo instance in YARN"
-  echo "  status    Provides status of Fluo instance in YARN"
+  echo "  status    Prints status of Fluo instance in YARN"
+  echo "  info      Prints information on Fluo containers"
   echo "  kill      Kills Fluo instance in YARN"
   exit 1
 esac

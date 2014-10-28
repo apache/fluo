@@ -18,6 +18,7 @@ package io.fluo.cluster;
 import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
@@ -32,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.internal.RunIds;
 import org.apache.twill.yarn.YarnTwillRunnerService;
@@ -63,7 +65,8 @@ public class YarnAdmin {
 
       TwillController controller = twillRunner.lookup(FLUO_APP_NAME, RunIds.fromString(runId));
       if ((controller != null) && controller.isRunning()) {
-        System.err.println("WARNING - A YARN application is already running for this Fluo instance!  Please stop it before starting a new one.");
+        System.err.println("WARNING - A YARN application " + getAppInfo()
+            + " is already running for this Fluo instance!  Please stop it using 'fluo yarn stop' before starting a new one.");
         System.exit(-1);
       } else {
         logExistsButNotRunning();
@@ -135,12 +138,21 @@ public class YarnAdmin {
     }
     deleteZkData();
   }
-    
-  private static void status() throws Exception {
+  
+  private static void printResources(Collection<TwillRunResources> resourcesList) {
+    System.out.println("Instance  Host            Cores  MaxMemory  Container ID");
+    System.out.println("--------  ----            -----  ---------  ------------");
+    for (TwillRunResources resources : resourcesList) {
+      System.out.format("%-9s %-15s %-6s %4s MB    %s\n", resources.getInstanceId(), resources.getHost(), resources.getVirtualCores(), resources.getMemoryMB(),
+          resources.getContainerId());
+    }
+  }
+
+  private static void status(boolean extraInfo) throws Exception {
     if (twillIdExists() == false) {
       System.out.println("A Fluo instance is not running in YARN.");
       return;
-    } 
+    }
     String twillId = getTwillId();
     TwillController controller = twillRunner.lookup(FLUO_APP_NAME, RunIds.fromString(twillId));
     if (controller == null) {
@@ -148,7 +160,17 @@ public class YarnAdmin {
       System.err.println("You can clean up this reference by running 'fluo yarn stop' or 'fluo yarn kill'.");
     } else {
       State state = controller.state();
-      System.out.println("A Fluo instance is " + state + " in YARN " + getFullInfo());      
+      System.out.println("A Fluo instance is " + state + " in YARN " + getFullInfo());
+
+      if (extraInfo) {
+        Collection<TwillRunResources> resources = controller.getResourceReport().getRunnableResources(OracleRunnable.ORACLE_NAME);
+        System.out.println("\nFluo has " + resources.size() + " oracles:\n");
+        printResources(resources);
+
+        resources = controller.getResourceReport().getRunnableResources(WorkerRunnable.WORKER_NAME);
+        System.out.println("\nFluo has " + resources.size() + " workers:\n");
+        printResources(resources);
+      }
     }
   }
   
@@ -239,7 +261,10 @@ public class YarnAdmin {
             kill();
             break;
           case "status":
-            status();
+            status(false);
+            break;
+          case "info":
+            status(true);
             break;
           default:
             log.error("Unknown command: " + options.getCommand());
