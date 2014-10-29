@@ -29,10 +29,9 @@ import io.fluo.api.data.Column;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
+import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -58,9 +57,6 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void initialize() throws AlreadyInitializedException {
     try {
-
-      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
-          .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
       
       Preconditions.checkArgument(ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/") == false, 
           "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
@@ -69,6 +65,7 @@ public class FluoAdminImpl implements FluoAdmin {
        * Currently, getAllowReinitialize assumes the user is okay removing the table if a table with
        * the given name already exists. This is not a long term solution, it was done for
        */
+      Connector conn = AccumuloUtil.getConnector(config);
       if (config.getAllowReinitialize()) {
 
         // Remove accumulo table if it exists
@@ -124,9 +121,6 @@ public class FluoAdminImpl implements FluoAdmin {
   public void updateSharedConfig() {
     
     try {
-      Connector conn = new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
-           .getConnector(config.getAccumuloUser(),new PasswordToken(config.getAccumuloPassword()));
-
       Properties sharedProps = new Properties();
 
       Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
@@ -141,8 +135,8 @@ public class FluoAdminImpl implements FluoAdmin {
           sharedProps.setProperty(key, Long.toString(config.getLong(key)));
         }
       }
-      Operations.updateObservers(config, conn, colObservers, weakObservers);
-      Operations.updateSharedConfig(config, conn, sharedProps);
+      Operations.updateObservers(config, colObservers, weakObservers);
+      Operations.updateSharedConfig(config, sharedProps);
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
