@@ -74,8 +74,7 @@ public class FluoAdminImplIT extends TestBaseImpl {
     FluoAdmin fluoAdmin = new FluoAdminImpl(config);
     fluoAdmin.initialize();
     
-    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
-        config.getZookeeperTimeout())) {
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();
       Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath)));
     }
@@ -86,8 +85,7 @@ public class FluoAdminImplIT extends TestBaseImpl {
     fluoAdmin = new FluoAdminImpl(config);
     fluoAdmin.initialize();
     
-    try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
-        config.getZookeeperTimeout())) {
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();
       Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath2)));
       Assert.assertNotNull(curator.checkExists().forPath(ZookeeperUtil.parseRoot(zk + longPath)));

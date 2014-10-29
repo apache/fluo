@@ -17,6 +17,7 @@ package io.fluo.core.util;
 
 import java.util.concurrent.TimeUnit;
 
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.config.FluoConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -38,11 +39,24 @@ public class CuratorUtil {
 
   private CuratorUtil() {}
 
-  public static CuratorFramework getCurator(FluoConfiguration config) {
-    return getCurator(config.getZookeepers(), config.getZookeeperTimeout());
+  /**
+   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo chroot.
+   */
+  public static CuratorFramework newFluoCurator(FluoConfiguration config) {
+    return newCurator(config.getZookeepers(), config.getZookeeperTimeout());
   }
 
-  public static CuratorFramework getCurator(String zookeepers, int timeout) {
+  /**
+   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at root "/" of Zoookeper.
+   */
+  public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
+    return newCurator(ZookeeperUtil.parseServers(config.getZookeepers()), config.getZookeeperTimeout());
+  }
+  
+  /**
+   * Creates a curator built using the given zookeeper connection string & timeout
+   */
+  public static CuratorFramework newCurator(String zookeepers, int timeout) {
     return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout, new ExponentialBackoffRetry(1000, 10));
   }
 

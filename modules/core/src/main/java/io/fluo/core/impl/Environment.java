@@ -89,7 +89,7 @@ public class Environment implements AutoCloseable {
   public Environment(FluoConfiguration configuration) {
     this.config = configuration;
     
-    try (CuratorFramework curator = CuratorUtil.getCurator(config.getZookeepers(), config.getZookeeperTimeout())) {
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();
       
       init(curator, AccumuloUtil.getConnector(config), config.getOraclePort());

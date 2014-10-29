@@ -75,8 +75,7 @@ public class FluoAdminImpl implements FluoAdmin {
         }
         
         // Remove Zookeeper root node
-        try (CuratorFramework curator = CuratorUtil.getCurator(ZookeeperUtil.parseServers(config.getZookeepers()), 
-            config.getZookeeperTimeout())) {
+        try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
           curator.start();
           try {
             String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
