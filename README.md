@@ -50,14 +50,15 @@ mvn package
 Running a Fluo Instance
 -----------------------
 
-If you are new to Fluo, consider using MiniFluo (follow the [quickstart] example)
-for test and development before running your own Fluo instance.
+If you are new to Fluo, consider following the [quickstart] example which runs a development 
+Fluo instance along with a sample Fluo application.
 
-If you would like to run your own Fluo instance, you will need [Accumulo] 
-(version 1.6+), [Hadoop] (version 2.2+), and [Zookeeper] installed and running
-on your local machine or cluster.
+If you would like to run your own Fluo instance, follow one of the installation instructions below:
 
-Follow the [installation instructions](docs/installation.md) to set up and run a Fluo instance.
+* [Test & development instructions](docs/test-dev-install.md) - sets up a MiniFluo instance that
+is easy to install but should only be used for testing and development.
+* [Production instructions](docs/production-install.md) - sets up a Fluo instance on local 
+machine or cluster where Accumulo, Hadoop, and Zookeeper are installed and running.
 
 Running Fluo applications
 -------------------------
@@ -90,6 +91,7 @@ information.
 
 
 [Accumulo]: http://accumulo.apache.org
+[Hadoop]: http://hadoop.apache.org
 [Percolator]: http://research.google.com/pubs/pub36726.html
 [YARN]: http://hadoop.apache.org/docs/r2.5.1/hadoop-yarn/hadoop-yarn-site/YARN.html
 [Zookeeper]: http://zookeeper.apache.org/

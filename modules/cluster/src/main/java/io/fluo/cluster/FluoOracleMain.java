@@ -17,38 +17,39 @@ package io.fluo.cluster;
 
 import java.io.File;
 
+import io.fluo.cluster.util.MainOptions;
+
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.Logging;
+import io.fluo.cluster.util.LogbackUtil;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.UtilWaitThread;
-import io.fluo.core.worker.NotificationFinder;
-import io.fluo.core.worker.NotificationFinderFactory;
-import io.fluo.core.worker.NotificationProcessor;
 import io.fluo.metrics.config.Reporters;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** 
- * Main run method of Fluo worker that can be called within
+ * Main run method of Fluo oracle that can be called within
  * a Twill/YARN application or on its own as a Java application
  */
-public class WorkerRunnable extends AbstractTwillRunnable {
+public class FluoOracleMain extends AbstractTwillRunnable {
+  
+  public static String ORACLE_NAME = "FluoOracle";
 
-  private static final Logger log = LoggerFactory.getLogger(WorkerRunnable.class);
-  
-  public static String WORKER_NAME = "FluoWorker";
-  
+  private static final Logger log = LoggerFactory.getLogger(FluoOracleMain.class);
+
   @Override
   public void run() {
+    System.out.println("Starting Oracle");
     String[] args = { "-config-dir", "./conf"};
     run(args);
   }
-  
+
   public void run(String[] args) {
     try {
-      RunnableOptions options = new RunnableOptions();
+      MainOptions options = new MainOptions();
       JCommander jcommand = new JCommander(options, args);
 
       if (options.help) {
@@ -57,40 +58,41 @@ public class WorkerRunnable extends AbstractTwillRunnable {
       }
       options.validateConfig();
 
-      Logging.init("worker", options.getConfigDir(), options.getLogOutput());
+      LogbackUtil.init("oracle", options.getConfigDir(), options.getLogOutput());
 
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
-      if (!config.hasRequiredWorkerProps()) {
-        log.error("fluo.properties is missing required properties for worker");
+      if (!config.hasRequiredOracleProps()) {
+        log.error("fluo.properties is missing required properties for oracle");
         System.exit(-1);
       }
       
       try (Environment env = new Environment(config);
           Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
-        log.info("Worker configuration:");
+        log.info("Oracle configuration:");
         env.getConfiguration().print();
-     
-        NotificationProcessor np = new NotificationProcessor(env);
-        NotificationFinder notificationFinder = NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
-        notificationFinder.init(env, np);
-        notificationFinder.start();
 
-        while (true)
-          UtilWaitThread.sleep(1000);
+        OracleServer server = new OracleServer(env);
+        server.start();
+
+        while (true) {
+          UtilWaitThread.sleep(10000);
+        }
       }
+
     } catch (Exception e) {
-      System.err.println("Exception running worker: "+ e.getMessage());
+      System.err.println("Exception running oracle: "+ e.getMessage());
       e.printStackTrace();
     }
   }
   
   @Override
   public void stop() {
-    log.info("Stopping Fluo worker");
+    log.info("Stopping Fluo oracle");
   }
-
-  public static void main(String[] args) throws Exception {
-    WorkerRunnable worker = new WorkerRunnable();
-    worker.run(args);
+  
+  public static void main(String[] args) {
+    FluoOracleMain oracle = new FluoOracleMain();
+    oracle.run(args);
   }
 }
+

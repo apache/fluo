@@ -16,6 +16,7 @@
 package io.fluo.api.client;
 
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.api.mini.MiniFluo;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,15 +52,17 @@ public class FluoFactory {
   }
 
   /**
-   * Creates a {@link MiniFluo} which is a test and development instance of Fluo. Please review all properties in fluo.properties. At a minimum, configuration
-   * (see {@link FluoConfiguration}) should contain the following properties that have no default: io.fluo.client.accumulo.user,
-   * io.fluo.client.accumulo.password, io.fluo.client.accumulo.instance, io.fluo.admin.accumulo.table, io.fluo.admin.accumulo.classpath
+   * Creates a {@link MiniFluo} using the provided configuration.
+   * 
+   * Configuration (see {@link FluoConfiguration}) should either contain the property io.fluo.mini.start.accumulo (set to true) to indicate that MiniFluo should
+   * start its own Accumulo instance or it should contain the following properties if it is connecting to an existing instance: io.fluo.client.accumulo.user,
+   * io.fluo.client.accumulo.password, io.fluo.client.accumulo.instance, io.fluo.admin.accumulo.table
    */
   public static MiniFluo newMiniFluo(Configuration configuration) {
     FluoConfiguration config = new FluoConfiguration(configuration);
     return buildClassWithConfig(config.getMiniClass(), config);
   }
-
+  
   @SuppressWarnings("unchecked")
   private static <T>T buildClassWithConfig(String clazz, Configuration config) {
     try {

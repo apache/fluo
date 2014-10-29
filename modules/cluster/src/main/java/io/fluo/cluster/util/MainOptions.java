@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.util;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -22,9 +22,9 @@ import org.apache.commons.configuration.ConfigurationConverter;
 import com.beust.jcommander.Parameter;
 import io.fluo.api.config.FluoConfiguration;
 
-public class RunnableOptions {
+public class MainOptions {
   
-  @Parameter(names = "-config-dir", description = "Location of fluo configuration files")
+  @Parameter(names = "-config-dir", description = "Location of Fluo configuration directory")
   private String configDir;
 
   @Parameter(names = "-log-output", description = "Location to output logging.  Set to directory or STDOUT (which is default) ")

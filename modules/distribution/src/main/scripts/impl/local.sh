@@ -29,20 +29,23 @@ script=$( basename "$SOURCE" )
 
 LOGHOST=$(hostname)
 
+LOCAL_OPTS="-config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR"
+LOCAL_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*"
+
 case "$1" in
 start-oracle)
   SERVICE="oracle"
-  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.OracleRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -cp "$LOCAL_LIB" io.fluo.cluster.FluoOracleMain $LOCAL_OPTS >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
 stop-oracle)
-	kill `jps -m | grep OracleRunnable | cut -f 1 -d ' '`
+	kill `jps -m | grep FluoOracleMain | cut -f 1 -d ' '`
 	;;
 start-worker)
   SERVICE="worker"
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.WorkerRunnable -config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR  >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -cp "$LOCAL_LIB:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.FluoWorkerMain $LOCAL_OPTS >${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
 	;;
 stop-worker)
-	kill `jps -m | grep WorkerRunnable | cut -f 1 -d ' '`
+	kill `jps -m | grep FluoWorkerMain | cut -f 1 -d ' '`
 	;;
 *)
 	echo -e "Usage: fluo local <argument>\n"

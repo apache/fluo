@@ -14,8 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-Installation
-============
+Production Installation
+=======================
+
+Below are instructions for running Fluo in a production environment.  If you 
+are only looking to run Fluo in test/development environment, check out the
+[test and development installation instructions](test-dev-install.md).  
+
+Requirements
+------------
 
 Before you install Fluo, you will need the following installed and running on
 your local machine or cluster:

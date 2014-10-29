@@ -19,10 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
-import ch.qos.logback.core.util.StatusPrinter;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +28,9 @@ import static io.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
 /**
  * Used to initialize Logging for cluster applications
  */
-public class Logging {
+public class Log4jUtil {
   
-  private static final Logger log = LoggerFactory.getLogger(Logging.class);
+  private static final Logger log = LoggerFactory.getLogger(Log4jUtil.class);
   private static final String LOG_APPLICATION_PROP = FLUO_PREFIX + ".log.application";
   private static final String LOG_DIR_PROP = FLUO_PREFIX + ".log.dir";
   private static final String LOG_LOCAL_HOSTNAME_PROP = FLUO_PREFIX + ".log.local.hostname";
@@ -47,49 +44,29 @@ public class Logging {
     String logConfig;
     
     if (logOutput.equalsIgnoreCase("STDOUT")) {
-      // Use a specific log config, if it exists
-      logConfig = String.format("%s/logback-stdout-%s.xml", configDir, application);
-      if (!new File(logConfig).exists()) {
-        // otherwise, use the generic config
-        logConfig = String.format("%s/logback-stdout.xml", configDir);
-      }
+      logConfig = String.format("%s/log4j-stdout.xml", configDir);
     } else {
-      
+
       System.setProperty(LOG_APPLICATION_PROP, application);
       System.setProperty(LOG_DIR_PROP, logOutput);
 
       String localhost = InetAddress.getLocalHost().getHostName();
       System.setProperty(LOG_LOCAL_HOSTNAME_PROP, localhost);
- 
+
       // Use a specific log config, if it exists
-      logConfig = String.format("%s/logback-file-%s.xml", configDir, application);
+      logConfig = String.format("%s/log4j-file-%s.xml", configDir, application);
       if (!new File(logConfig).exists()) {
         // otherwise, use the generic config
-        logConfig = String.format("%s/logback-file.xml", configDir);
+        logConfig = String.format("%s/log4j-file.xml", configDir);
       }
-    } 
-        
-    // assume SLF4J is bound to logback in the current environment
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    
-    try {
-      JoranConfigurator configurator = new JoranConfigurator();
-      configurator.setContext(context);
-      // Call context.reset() to clear any previous configuration, e.g. default 
-      // configuration. For multi-step configuration, omit calling context.reset().
-      context.reset(); 
-      configurator.doConfigure(logConfig);
-    } catch (JoranException je) {
-      // StatusPrinter will handle this
     }
-    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+        
+    DOMConfigurator.configureAndWatch(logConfig, 5000);
 
     if (debug) {
       System.out.println("Logging to " + logOutput + " using config " + logConfig);
       log.info("Initialized logging using config in " + logConfig);
       log.info("Starting " + application + " application");
     }
-    
-    // TODO print info about instance like zookeepers, zookeeper root
   }
 }

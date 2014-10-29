@@ -27,10 +27,30 @@ script=$( basename "$SOURCE" )
 
 . "$impl"/config.sh
 
-if [[ -z "$1" ]]; then
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.FluoInitializeMain -config-dir $FLUO_CONF_DIR
-else
-  echo -e "Usage: fluo init (<argument>)\n"
-  echo -e "Optional arguments:\n"
-  echo "  -h, --help   Print this help message"
-fi
+LOGHOST=$(hostname)
+SERVICE="mini"
+MINI_OPTS="-config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR"
+MINI_OUT=${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out
+MINI_ERR=${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err
+MINI_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/log4j/*"
+
+case "$1" in
+start)
+  echo -n "Starting MiniFluo..."
+  java -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.mini.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
+  echo "DONE"
+	;;
+stop)
+  echo -n "Stopping MiniFluo..."
+	kill `jps -m | grep MiniFluoMain | cut -f 1 -d ' '`
+  java -cp "$MINI_LIB" io.fluo.cluster.mini.MiniAdmin -config-dir $FLUO_CONF_DIR -command stop
+  echo "DONE"
+	;;
+*)
+	echo -e "Usage: fluo mini <argument>\n"
+  echo -e "Possible arguments:\n"
+  echo "  start       Starts MiniFluo instance on local machine"
+  echo "  stop        Stops MiniFluo instance on local machine"
+  echo " " 
+  exit 1
+esac
