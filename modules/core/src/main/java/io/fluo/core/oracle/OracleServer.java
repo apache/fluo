@@ -19,6 +19,9 @@ import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import io.fluo.core.metrics.MetricNames;
+
+import com.codahale.metrics.Histogram;
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
@@ -64,6 +67,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   
   private static final Logger log = LoggerFactory.getLogger(OracleServer.class);
 
+  private final Histogram stampsHistogram;
+
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
   
   private final Environment env;
@@ -90,6 +95,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   
   public OracleServer(Environment env) throws Exception {
     this.env = env;
+
+    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(MetricNames.ORACLE_SERVER_STAMPS);
+
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
     this.curTsPath = ZookeeperPath.ORACLE_CUR_TIMESTAMP;
@@ -131,8 +139,16 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   @Override
-  public synchronized long getTimestamps(String id, int num) throws TException {
+  public long getTimestamps(String id, int num) throws TException {
+    long start = _getTimestamps(id, num);
 
+    // do this outside of sync
+    stampsHistogram.update(num);
+
+    return start;
+  }
+
+  private synchronized long _getTimestamps(String id, int num) throws TException {
     if (!started)
       throw new IllegalStateException();
 

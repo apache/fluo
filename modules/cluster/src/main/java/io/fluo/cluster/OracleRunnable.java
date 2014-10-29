@@ -23,6 +23,7 @@ import io.fluo.cluster.util.Logging;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.UtilWaitThread;
+import io.fluo.metrics.config.Reporters;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,17 +64,19 @@ public class OracleRunnable extends AbstractTwillRunnable {
         System.exit(-1);
       }
       
-      Environment env = new Environment(config);
-      
-      log.info("Oracle configuration:");
-      env.getConfiguration().print();
+      try (Environment env = new Environment(config);
+          Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
+        log.info("Oracle configuration:");
+        env.getConfiguration().print();
 
-      OracleServer server = new OracleServer(env);
-      server.start();
+        OracleServer server = new OracleServer(env);
+        server.start();
 
-      while (true) {
-        UtilWaitThread.sleep(10000);
+        while (true) {
+          UtilWaitThread.sleep(10000);
+        }
       }
+
     } catch (Exception e) {
       System.err.println("Exception running oracle: "+ e.getMessage());
       e.printStackTrace();

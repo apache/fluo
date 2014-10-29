@@ -15,6 +15,7 @@
  */
 package io.fluo.core.impl;
 
+import com.codahale.metrics.MetricRegistry;
 import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -44,6 +45,7 @@ public class SharedResources implements AutoCloseable {
   private volatile boolean isClosed = false;
   private final TxInfoCache txInfoCache;
   private final VisibilityCache visCache;
+  private final MetricRegistry metricRegistry;
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
@@ -56,6 +58,7 @@ public class SharedResources implements AutoCloseable {
         new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
+    metricRegistry = new MetricRegistry();
   }
   
   public SharedBatchWriter getBatchWriter() {
@@ -117,6 +120,10 @@ public class SharedResources implements AutoCloseable {
   public VisibilityCache getVisCache() {
     checkIfClosed();
     return visCache;
+  }
+
+  public MetricRegistry getMetricRegistry() {
+    return metricRegistry;
   }
 
   @Override

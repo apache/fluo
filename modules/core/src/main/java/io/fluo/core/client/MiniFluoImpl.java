@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.MiniFluo;
@@ -34,12 +35,16 @@ import org.apache.accumulo.core.client.Scanner;
  */
 public class MiniFluoImpl implements MiniFluo {
 
+  private static final AtomicInteger reporterCounter = new AtomicInteger(1);
+
   private final Environment env;
   private final AtomicBoolean shutdownFlag = new AtomicBoolean(false);
   private OracleServer oserver;
   private ExecutorService tp;
 
   private int numProcessing = 0;
+
+  private AutoCloseable reporter;
 
   private class MiniWorkerTask extends WorkerTask {
 
@@ -81,6 +86,8 @@ public class MiniFluoImpl implements MiniFluo {
   public void start() {
     // TODO check if already started
     try {
+      reporter = FluoClientImpl.setupReporters(env, "mini", reporterCounter);
+
       oserver = new OracleServer(env);
       oserver.start();
 
@@ -107,7 +114,9 @@ public class MiniFluoImpl implements MiniFluo {
         while (!tp.awaitTermination(1, TimeUnit.SECONDS)) {
 
         }
-        env.getSharedResources().close();
+        env.close();
+
+        reporter.close();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);

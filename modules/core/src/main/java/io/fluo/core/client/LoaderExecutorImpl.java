@@ -38,20 +38,13 @@ public class LoaderExecutorImpl implements LoaderExecutor {
   private final AtomicReference<Exception> exceptionRef = new AtomicReference<>(null);
   private final Environment env;
   
-  /**
-   * 
-   * @param props
-   *          To programmatically initialize use {@link io.fluo.api.config.FluoConfiguration}
-   * @throws Exception
-   */
-
-  public LoaderExecutorImpl(FluoConfiguration config) {
-    this(config, config.getLoaderThreads(), config.getLoaderQueueSize());
+  public LoaderExecutorImpl(FluoConfiguration config, Environment env) {
+    this(config, config.getLoaderThreads(), config.getLoaderQueueSize(), env);
   }
 
-  private LoaderExecutorImpl(FluoConfiguration config, int numThreads, int queueSize) {
+  private LoaderExecutorImpl(FluoConfiguration config, int numThreads, int queueSize, Environment env) {
     if (numThreads == 0 && queueSize == 0) {
-      this.env = new Environment(config);
+      this.env = env;
       this.executor = null;
       this.semaphore = null;
       return;
@@ -63,7 +56,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
     if (queueSize < 0)
       throw new IllegalArgumentException("queueSize must be non-negative OR numThreads and queueSize must both be 0");
 
-    this.env = new Environment(config);
+    this.env = env;
     this.semaphore = new Semaphore(numThreads + queueSize);
     this.executor = Executors.newFixedThreadPool(numThreads);
   }
@@ -121,8 +114,6 @@ public class LoaderExecutorImpl implements LoaderExecutor {
         }
       }
     }
-    
-    env.getSharedResources().close();
 
     if (exceptionRef.get() != null)
       throw new RuntimeException(exceptionRef.get());

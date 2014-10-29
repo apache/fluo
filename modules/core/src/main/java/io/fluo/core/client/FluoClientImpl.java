@@ -15,6 +15,8 @@
  */
 package io.fluo.core.client;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.client.Snapshot;
@@ -22,6 +24,7 @@ import io.fluo.api.client.Transaction;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
+import io.fluo.core.metrics.ReporterUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +34,15 @@ import org.slf4j.LoggerFactory;
 public class FluoClientImpl implements FluoClient {
   
   private static final Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
+  private static final AtomicInteger reporterCounter = new AtomicInteger(1);
+
   private FluoConfiguration config;
   private Environment env;
+  private AutoCloseable reporter;
+
+  static final AutoCloseable setupReporters(Environment env, String id, AtomicInteger reporterCounter) {
+    return ReporterUtil.setupReporters(env, FluoConfiguration.FLUO_PREFIX + "." + id + "." + reporterCounter.getAndIncrement());
+  }
   
   public FluoClientImpl(FluoConfiguration config) {
     this.config = config;
@@ -44,12 +54,14 @@ public class FluoClientImpl implements FluoClient {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
+
+    reporter = setupReporters(env, "client", reporterCounter);
   }
 
   @Override
   public LoaderExecutor newLoaderExecutor() {
     try {
-      return new LoaderExecutorImpl(config);
+      return new LoaderExecutorImpl(config, env);
     } catch (Exception e) {
       log.error("Failed to create a LoaderExecutor");
       throw new IllegalStateException(e);
@@ -69,5 +81,10 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public void close() {
     env.close();
+    try {
+      reporter.close();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

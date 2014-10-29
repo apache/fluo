@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import io.fluo.api.exceptions.CommitException;
-
 import io.fluo.accumulo.iterators.NotificationSampleIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.TransactionBase;
@@ -31,6 +29,7 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
+import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.RandomTabletChooser.TabletInfo;
@@ -169,7 +168,7 @@ public class Worker {
       TransactionImpl txi = null;
       try {
         while (true) {
-          String status = "FAILED";
+          String status = "UNKNOWN";
           try {
             txi = new TransactionImpl(env, row, col);
             TransactionBase tx = txi;
@@ -185,22 +184,28 @@ public class Worker {
             return numProcessed;
           } catch (CommitException e) {
             // retry
+            status = "COMMIT_EXCEPTION";
           } catch (Exception e) {
             // this could be caused by multiple worker threads processing the same notification
             // TODO this detection method has a race condition, notification could be recreated after being deleted... need to check notification timestamp
             RowColumn rc = SpanUtil.toRowColumn(entry.getKey());
             scanner.setRange(SpanUtil.toRange(new Span(rc, true, rc, true)));
             if (scanner.iterator().hasNext()) {
+              status = "ERROR";
               // notification is still there, so maybe a bug in user code
               throw e;
             } else {
+              status = "ERROR_NONTFY";
               // no notification, so maybe another thread processed notification
               log.debug("Failure processing notification concurrently ", e);
               return numProcessed;
             }
           } finally {
-            if (txi != null && TxLogger.isLoggingEnabled())
-              TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+            if (txi != null) {
+              txi.getStats().report(status, observer.getClass(), env.getSharedResources().getMetricRegistry());
+              if (TxLogger.isLoggingEnabled())
+                TxLogger.logTx(status, observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+            }
           }
           // TODO if duplicate set detected, see if its because already acknowledged
         }

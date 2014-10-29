@@ -64,11 +64,12 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
       
       @Override
       public void close() throws IOException {
-        if (env != null) {
-          env.close();
-        }
         if (ti != null) {
           ti.close();
+        }
+
+        if (env != null) {
+          env.close();
         }
       }
       

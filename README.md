@@ -80,6 +80,14 @@ a local Fluo instance (called MiniFluo) and run against it.
 * [Stress tests](modules/stress/README.md) which are designed to run on a 
 Fluo cluster.
 
+Metrics
+-------
+
+Fluo is instrumented using [Dropwizard metrics][Metrics].   Fluo metrics are
+visible via JMX or can be configured to be sent to graphing tools like Graphite
+and Ganglia.  See the [metrics documentation](docs/metrics.md) for more
+information.
+
 
 [Accumulo]: http://accumulo.apache.org
 [Percolator]: http://research.google.com/pubs/pub36726.html
@@ -90,3 +98,5 @@ Fluo cluster.
 [Git]: http://git-scm.com/
 [Java]: https://www.oracle.com/java/index.html
 [Maven]: http://maven.apache.org/
+[Metrics]: https://dropwizard.github.io/metrics/3.1.0/
+
