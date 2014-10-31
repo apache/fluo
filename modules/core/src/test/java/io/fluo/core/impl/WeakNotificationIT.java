@@ -30,15 +30,16 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
+import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.TestBaseMini;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class WeakNotificationIT extends TestBaseImpl {
+public class WeakNotificationIT extends TestBaseMini {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
@@ -82,6 +83,8 @@ public class WeakNotificationIT extends TestBaseImpl {
 
   @Test
   public void testWeakNotification() throws Exception {
+    Environment env = new Environment(config);
+    
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("stat").qual("count").set(3);
     tx1.done();
@@ -96,7 +99,7 @@ public class WeakNotificationIT extends TestBaseImpl {
     tx3.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
     tx3.done();
 
-    runWorker();
+    miniFluo.waitForObservers();
 
     TestTransaction tx4 = new TestTransaction(env);
     Assert.assertEquals(15, tx4.get().row("r1").fam("stat").qual("count").toInteger(0));
@@ -123,30 +126,34 @@ public class WeakNotificationIT extends TestBaseImpl {
     tx6.finishCommit(cd6, commitTs6);
     tx5.finishCommit(cd5, commitTs5);
 
-    runWorker();
+    miniFluo.waitForObservers();
 
     TestTransaction tx7 = new TestTransaction(env);
     Assert.assertEquals(39, tx7.get().row("r1").fam("stat").qual("count").toInteger(0));
+    
+    env.close();
   }
 
   @Test(timeout = 30000)
   public void testNOOP() throws Exception {
     // if an observer makes not updates in a transaction, it should still delete the weak notification
-    TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("r1").fam("stat").qual("count").set(3);
-    tx1.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
-    tx1.done();
+    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+      tx1.mutate().row("r1").fam("stat").qual("count").set(3);
+      tx1.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+      tx1.commit();
+    }
 
     // the following will loop forever if weak notification is not deleted
-    runWorker();
+    miniFluo.waitForObservers();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testBadColumn() throws Exception {
-    TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("r1").fam("stat").qual("count").set(3);
-    tx1.mutate().row("r1").fam("stat").qual("foo").weaklyNotify();
-    tx1.done();
+    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+      tx1.mutate().row("r1").fam("stat").qual("count").set(3);
+      tx1.mutate().row("r1").fam("stat").qual("foo").weaklyNotify();
+      tx1.commit();
+    }
   }
 
 }

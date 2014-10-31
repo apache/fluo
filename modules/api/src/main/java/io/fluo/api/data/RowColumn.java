@@ -109,6 +109,11 @@ public class RowColumn {
     return false;
   }
   
+  @Override
+  public int hashCode(){
+    return row.hashCode() + col.hashCode();
+  }
+  
   /**
    * Returns a RowColumn following the current one
    * 

@@ -16,16 +16,15 @@
 package io.fluo.cluster;
 
 import java.io.File;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.Logging;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.WorkerTask;
 import io.fluo.core.util.UtilWaitThread;
+import io.fluo.core.worker.NotificationFinder;
+import io.fluo.core.worker.NotificationFinderFactory;
+import io.fluo.core.worker.NotificationProcessor;
 import io.fluo.metrics.config.Reporters;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
@@ -70,15 +69,11 @@ public class WorkerRunnable extends AbstractTwillRunnable {
           Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
         log.info("Worker configuration:");
         env.getConfiguration().print();
-
-        int numThreads = config.getWorkerThreads();
-
-        ExecutorService tp = Executors.newFixedThreadPool(numThreads);
-        for (int i = 0; i < numThreads; i++) {
-          tp.submit(new WorkerTask(env, new AtomicBoolean(false)));
-        }
-
-        // TODO push work onto a queue for each notification found instead of having each thread scan for notifications.
+     
+        NotificationProcessor np = new NotificationProcessor(env);
+        NotificationFinder notificationFinder = NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
+        notificationFinder.init(env, np);
+        notificationFinder.start();
 
         while (true)
           UtilWaitThread.sleep(1000);

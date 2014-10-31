@@ -15,19 +15,18 @@
  */
 package io.fluo.core.client;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.MiniFluo;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.WorkerTask;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.ByteUtil;
+import io.fluo.core.worker.NotificationFinder;
+import io.fluo.core.worker.NotificationFinderFactory;
+import io.fluo.core.worker.NotificationProcessor;
 import org.apache.accumulo.core.client.Scanner;
 
 /**
@@ -38,35 +37,40 @@ public class MiniFluoImpl implements MiniFluo {
   private static final AtomicInteger reporterCounter = new AtomicInteger(1);
 
   private final Environment env;
-  private final AtomicBoolean shutdownFlag = new AtomicBoolean(false);
   private OracleServer oserver;
-  private ExecutorService tp;
 
   private int numProcessing = 0;
+  private MiniNotificationProcessor mnp;
+  private NotificationFinder notificationFinder;
 
   private AutoCloseable reporter;
 
-  private class MiniWorkerTask extends WorkerTask {
+  private class MiniNotificationProcessor extends NotificationProcessor {
 
-    public MiniWorkerTask(Environment env, AtomicBoolean shutdownFlag) {
-      super(env, shutdownFlag);
+    public MiniNotificationProcessor(Environment env) {
+      super(env);
     }
-
+    
     @Override
-    public void startedProcessing() {
+    protected void workAdded(){
       synchronized (MiniFluoImpl.this) {
         numProcessing++;
       }
     }
-
+    
     @Override
-    public void finishedProcessing(long numProcessed) {
+    protected void workFinished(){
       synchronized (MiniFluoImpl.this) {
         numProcessing--;
       }
     }
   }
-
+ 
+  @VisibleForTesting
+  public NotificationProcessor getNotificationProcessor() {
+    return mnp;
+  }
+  
   private synchronized boolean isProcessing(Scanner scanner) {
     return scanner.iterator().hasNext() || numProcessing > 0;
   }
@@ -91,13 +95,10 @@ public class MiniFluoImpl implements MiniFluo {
       oserver = new OracleServer(env);
       oserver.start();
 
-      int numThreads = env.getConfiguration().getWorkerThreads();
-
-      tp = Executors.newFixedThreadPool(numThreads);
-      for (int i = 0; i < numThreads; i++) {
-        tp.submit(new MiniWorkerTask(env, shutdownFlag));
-      }
-
+      mnp = new MiniNotificationProcessor(env);
+      notificationFinder = NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
+      notificationFinder.init(env, mnp);
+      notificationFinder.start();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -108,14 +109,10 @@ public class MiniFluoImpl implements MiniFluo {
 
     try {
       if (oserver != null) {
+        notificationFinder.stop();
+        mnp.close(); 
         oserver.stop();
-        shutdownFlag.set(true);
-        tp.shutdownNow();
-        while (!tp.awaitTermination(1, TimeUnit.SECONDS)) {
-
-        }
         env.close();
-
         reporter.close();
       }
     } catch (Exception e) {

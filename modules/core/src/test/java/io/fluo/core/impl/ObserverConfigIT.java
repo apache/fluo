@@ -28,12 +28,13 @@ import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.TestBaseImpl;
-import io.fluo.core.TestTransaction;
+import io.fluo.api.types.TypedSnapshot;
+import io.fluo.api.types.TypedTransaction;
+import io.fluo.core.TestBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ObserverConfigIT extends TestBaseImpl {
+public class ObserverConfigIT extends TestBaseMini {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
@@ -98,18 +99,19 @@ public class ObserverConfigIT extends TestBaseImpl {
 
   @Test
   public void testObserverConfig() throws Exception {
-
-    TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("r1").fam("fam1").qual("col1").set("abcdefg");
-    tx1.done();
-
-    runWorker();
-
-    TestTransaction tx2 = new TestTransaction(env);
-    Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col1").toString());
-    Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col2").toString());
-    Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col3").toString());
-    Assert.assertEquals("abcdefg", tx2.get().row("r1").fam("fam1").qual("col4").toString());
+    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+      tx1.mutate().row("r1").fam("fam1").qual("col1").set("abcdefg");
+      tx1.commit();
+    }
+    
+    miniFluo.waitForObservers();
+    
+    try(TypedSnapshot tx2 = tl.wrap(client.newSnapshot())){
+      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col1").toString());
+      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col2").toString());
+      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col3").toString());
+      Assert.assertEquals("abcdefg", tx2.get().row("r1").fam("fam1").qual("col4").toString());
+    }
   }
 
 }

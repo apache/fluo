@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.fluo.accumulo.format.FluoFormatter;
@@ -95,6 +96,8 @@ public class TestBaseMini {
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
   
+    config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
+    
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
    

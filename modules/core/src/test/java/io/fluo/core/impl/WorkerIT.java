@@ -30,17 +30,23 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
+import io.fluo.api.types.TypedSnapshot;
+import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.TestBaseMini;
 import io.fluo.core.TestTransaction;
+import io.fluo.core.client.MiniFluoImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
+import io.fluo.core.worker.NotificationFinder;
+import io.fluo.core.worker.Observers;
+import io.fluo.core.worker.finder.hash.HashNotificationFinder;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
  */
-public class WorkerIT extends TestBaseImpl {
+public class WorkerIT extends TestBaseMini {
 
   private static final Bytes NODE_CF = Bytes.wrap("node");
 
@@ -102,80 +108,65 @@ public class WorkerIT extends TestBaseImpl {
   @Test
   public void test1() throws Exception {
 
-    TestTransaction tx1 = new TestTransaction(env);
+    Environment env = new Environment(config);
+  
+    addLink("N0003", "N0040");
+    addLink("N0003", "N0020");
 
-    // add a link between two nodes in a graph
-    tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
-    tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
-
-    tx1.done();
-
-    TestTransaction tx2 = new TestTransaction(env);
-
-    // add a link between two nodes in a graph
-    tx2.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0020").vis()).set("");
-    tx2.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
-
-    tx2.done();
-
-    runWorker();
+    miniFluo.waitForObservers();
 
     // verify observer updated degree index
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertEquals("2", tx3.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
-    Assert.assertEquals("", tx3.get().row("IDEG2").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
+    Assert.assertEquals("2", tx3.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertEquals("", tx3.get().row("IDEG2").fam("node").qual("N0003").toString());
 
     // add a link between two nodes in a graph
-    tx3.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0010").vis()).set("");
-    tx3.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
+    tx3.mutate().row("N0003").fam("link").qual("N0010").set("");
+    tx3.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
     tx3.done();
 
-    runWorker();
+    miniFluo.waitForObservers();
 
     // verify observer updated degree index. Should have deleted old index entry
     // and added a new one
     TestTransaction tx4 = new TestTransaction(env);
-    Assert.assertEquals("3", tx4.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
-    Assert.assertNull("", tx4.get().row("IDEG2").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
-    Assert.assertEquals("", tx4.get().row("IDEG3").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
+    Assert.assertEquals("3", tx4.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertNull("", tx4.get().row("IDEG2").fam("node").qual("N0003").toString());
+    Assert.assertEquals("", tx4.get().row("IDEG3").fam("node").qual("N0003").toString());
 
     // test rollback
     TestTransaction tx5 = new TestTransaction(env);
-    tx5.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0030").vis()).set("");
-    tx5.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
+    tx5.mutate().row("N0003").fam("link").qual("N0030").set("");
+    tx5.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
     tx5.done();
 
     TestTransaction tx6 = new TestTransaction(env);
-    tx6.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0050").vis()).set("");
-    tx6.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
+    tx6.mutate().row("N0003").fam("link").qual("N0050").set("");
+    tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
     tx6.preCommit(cd, Bytes.wrap("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
 
-    runWorker();
+    miniFluo.waitForObservers();
 
     TestTransaction tx7 = new TestTransaction(env);
-    Assert.assertEquals("4", tx7.get().row("N0003").col(typeLayer.bc().fam("attr").qual("degree").vis()).toString());
-    Assert.assertNull("", tx7.get().row("IDEG3").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
-    Assert.assertEquals("", tx7.get().row("IDEG4").col(typeLayer.bc().fam("node").qual("N0003").vis()).toString());
+    Assert.assertEquals("4", tx7.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertNull("", tx7.get().row("IDEG3").fam("node").qual("N0003").toString());
+    Assert.assertEquals("", tx7.get().row("IDEG4").fam("node").qual("N0003").toString());
+    
+    env.close();
   }
 
   /*
    * test when the configured column of an observer stored in zk differs from what the class returns
    */
+  @Test
   public void testDiffObserverConfig() throws Exception {
     Column old = observedColumn;
     observedColumn = typeLayer.bc().fam("attr2").qual("lastupdate").vis();
     try {
-
-      TestTransaction tx1 = new TestTransaction(env);
-
-      // add a link between two nodes in a graph
-      tx1.mutate().row("N0003").col(typeLayer.bc().fam("link").qual("N0040").vis()).set("");
-      tx1.mutate().row("N0003").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set(System.currentTimeMillis() + "");
-
-      tx1.done();
-
-      runWorker();
+      try(Environment env = new Environment(config); Observers observers = new Observers(env)){
+        observers.getObserver(typeLayer.bc().fam("attr").qual("lastupdate").vis());
+      }
 
       Assert.fail();
 
@@ -186,5 +177,60 @@ public class WorkerIT extends TestBaseImpl {
     }
   }
 
+  private void addLink(String from, String to){
+    try(TypedTransaction tx = typeLayer.wrap(client.newTransaction())){
+      tx.mutate().row(from).fam("link").qual(to).set("");
+      tx.mutate().row(from).fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
+      tx.commit();
+    }
+  }
+  
+  @Test
+  public void testMultipleFinders(){
+    
+    try(Environment env = new Environment(config)){
+    
+      NotificationFinder nf1 = new HashNotificationFinder();
+      nf1.init(env, ((MiniFluoImpl)miniFluo).getNotificationProcessor());
+      nf1.start();
+      
+      NotificationFinder nf2 = new HashNotificationFinder();
+      nf2.init(env, ((MiniFluoImpl)miniFluo).getNotificationProcessor());
+      nf2.start();
+      
+      for(int i = 0; i< 10; i++){
+        addLink("N0003", "N00"+i+"0");
+      }
+      
+      miniFluo.waitForObservers();
+      
+      try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
+        Assert.assertEquals("10", snap.get().row("N0003").fam("attr").qual("degree").toString());
+        Assert.assertEquals("", snap.get().row("IDEG10").fam("node").qual("N0003").toString());
+      }
+      
+      nf2.stop();
+      
+      for(int i = 1; i< 10; i++){
+        addLink("N0003", "N0"+i+"00");
+      }
+      
+      miniFluo.waitForObservers();
+      
+      try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
+        Assert.assertEquals("19", snap.get().row("N0003").fam("attr").qual("degree").toString());
+        Assert.assertEquals("", snap.get().row("IDEG19").fam("node").qual("N0003").toString());
+        Assert.assertNull(snap.get().row("IDEG10").fam("node").qual("N0003").toString());
+      }
+      
+      nf1.stop();
+      
+    }
+    
+    
+    
+  }
+  
+  
   // TODO test that observers trigger on delete
 }

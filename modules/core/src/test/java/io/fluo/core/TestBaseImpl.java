@@ -17,32 +17,23 @@ package io.fluo.core;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.fluo.accumulo.format.FluoFormatter;
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.api.data.Column;
-import io.fluo.api.observer.Observer;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.RandomTabletChooser;
-import io.fluo.core.impl.Worker;
 import io.fluo.core.oracle.OracleServer;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.PortUtils;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
@@ -90,34 +81,6 @@ public class TestBaseImpl {
 
   protected List<ObserverConfiguration> getObservers() {
     return Collections.emptyList();
-  }
-
-  protected void runWorker() throws Exception, TableNotFoundException {
-    // TODO pass a tablet chooser that returns first tablet
-    Worker worker = new Worker(env, new RandomTabletChooser(env));
-    Map<Column,Observer> colObservers = new HashMap<>();
-    try {
-      while (true) {
-        worker.processUpdates(colObservers);
-
-        // there should not be any notifcations
-        Scanner scanner = conn.createScanner(table, new Authorizations());
-        scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
-
-        if (!scanner.iterator().hasNext())
-          break;
-      }
-    } finally {
-      for (Observer observer : colObservers.values()) {
-        try {
-          observer.close();
-        } catch (RuntimeException e) {
-          throw e;
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
   }
 
   @BeforeClass
