@@ -23,6 +23,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.fluo.core.metrics.MetricNames;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
@@ -55,6 +59,9 @@ import org.slf4j.LoggerFactory;
 public class OracleClient {
 
   public static final Logger log = LoggerFactory.getLogger(OracleClient.class);
+
+  private final Timer responseTimer;
+  private final Histogram stampsHistogram;
 
   private Participant currentLeader;
 
@@ -141,6 +148,8 @@ public class OracleClient {
                 localClient = client;
               }
 
+              Context timerContext = responseTimer.time();
+
               start = localClient.getTimestamps(env.getFluoInstanceID(), request.size());
 
               String leaderId = getOracle();
@@ -148,6 +157,9 @@ public class OracleClient {
                 reconnect();
                 continue;
               }
+
+              stampsHistogram.update(request.size());
+              timerContext.close();
 
               break;
 
@@ -264,6 +276,9 @@ public class OracleClient {
 
   private OracleClient(Environment env) throws Exception {
     this.env = env;
+
+    responseTimer = env.getSharedResources().getMetricRegistry().timer(MetricNames.ORACLE_CLIENT_GET_STAMPS);
+    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(MetricNames.ORCALE_CLIENT_STAMPS);
 
     // TODO make thread exit if idle for a bit, and start one when request arrives
     Thread thread = new Thread(new TimestampRetriever());

@@ -75,6 +75,7 @@
     <logback.version>1.0.13</logback.version>
     <slf4j.version>1.7.7</slf4j.version>
     <zookeeper.version>3.4.6</zookeeper.version>
+    <dropwizard.version>0.7.1</dropwizard.version>
 
     <!-- Other Properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -84,6 +85,7 @@
     <module>modules/api</module>
     <module>modules/accumulo</module>
     <module>modules/core</module>
+    <module>modules/metrics</module>
     <module>modules/mapreduce</module>
     <module>modules/cluster</module>
     <module>modules/stress</module>
@@ -132,6 +134,8 @@
           <configuration>
             <excludes>
               <exclude>**/README.md</exclude>
+              <exclude>**/metrics.yaml</exclude>
+              <exclude>**/services/io.fluo.core.metrics.ReporterStarter</exclude>
             </excludes>
           </configuration>
           <executions>
@@ -195,6 +199,31 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-configuration</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-metrics</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency> 
+        <groupId>io.dropwizard</groupId> 
+        <artifactId>dropwizard-metrics-ganglia</artifactId>
+        <version>${dropwizard.version}</version> 
+      </dependency>
+      <dependency> 
+        <groupId>io.dropwizard</groupId> 
+        <artifactId>dropwizard-metrics-graphite</artifactId>
+        <version>${dropwizard.version}</version> 
+      </dependency>      
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>3.1.0</version>
+      </dependency>
+      <dependency>
         <groupId>io.fluo</groupId>
         <artifactId>fluo-api</artifactId>
         <version>${project.version}</version>
@@ -212,6 +241,11 @@
       <dependency>
         <groupId>io.fluo</groupId>
         <artifactId>fluo-mapreduce</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-metrics</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

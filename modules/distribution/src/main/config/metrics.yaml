@@ -1,0 +1,6 @@
+---
+#Edit this file to configure which reporter Fluo uses for dropwizard-metrics.   
+#see https://dropwizard.github.io/dropwizard/manual/configuration.html#metrics
+frequency: 60 seconds
+reporters:
+  - type: console

@@ -25,6 +25,7 @@ import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.core.TestBaseMini;
 import io.fluo.core.client.LoaderExecutorImpl;
+import io.fluo.core.impl.Environment;
 import io.fluo.stress.trie.Node;
 import io.fluo.stress.trie.NodeObserver;
 import io.fluo.stress.trie.NumberLoader;
@@ -80,7 +81,7 @@ public class TrieBasicIT extends TestBaseMini {
     config.setLoaderThreads(0);
     config.setLoaderQueueSize(0);
     
-    try(LoaderExecutorImpl le = new LoaderExecutorImpl(config)) {
+    try(Environment env = new Environment(config); LoaderExecutorImpl le = new LoaderExecutorImpl(config, env)) {
       Random random = new Random();
       Set<Integer> ingested = new HashSet<>();
       for (int i = 0; i < ingestNum; i++) {

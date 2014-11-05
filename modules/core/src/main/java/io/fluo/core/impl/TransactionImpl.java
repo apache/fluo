@@ -652,6 +652,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     
     if (updates.size() == 0) {
       deleteWeakRow();
+      stats.setFinishTime(System.currentTimeMillis());
       return;
     }
 

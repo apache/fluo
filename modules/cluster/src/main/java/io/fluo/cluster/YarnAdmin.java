@@ -79,8 +79,22 @@ public class YarnAdmin {
       System.exit(-1);
     }
     preparer = twillRunner.prepare(new FluoTwillApp(config, options.getFluoConf()));
+    
+    // Add jars from fluo lib/ directory that are not being loaded by Twill. 
+    // TODO Load entire directory rather than select jars.  Waiting on TWILL-108.  See FLUO-314.
+    File libDir = new File(options.getFluoLib());
+    for (File f : libDir.listFiles()) {
+      if (f.getName().startsWith("hibernate-validator") ||
+          f.getName().startsWith("javax.el-api") ||
+          f.getName().startsWith("jboss-logging") ||
+          f.getName().startsWith("classmate")) {
+        String jarPath = "file:" + f.getCanonicalPath();
+        log.debug("Adding library jar (" + f.getName() + ") to Fluo instance.");
+        preparer.withResources(new URI(jarPath));
+      }
+    }
 
-    // Add any observer jars found in lib observers
+    // Add any observer jars found in lib/observers
     File observerDir = new File(options.getFluoLib() + OBSERVER_DIR);
     for (File f : observerDir.listFiles()) {
       String jarPath = "file:" + f.getCanonicalPath();

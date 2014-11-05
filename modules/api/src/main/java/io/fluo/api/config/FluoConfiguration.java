@@ -15,12 +15,19 @@
  */
 package io.fluo.api.config;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.bind.DatatypeConverter;
+
+import com.google.common.base.Charsets;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -104,6 +111,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String TRANSACTION_ROLLBACK_TIME_PROP = TRANSACTION_PREFIX + ".rollback.time";
   public static final long TRANSACTION_ROLLBACK_TIME_DEFAULT = 300000;
   
+  // Metrics
+  public static final String METRICS_YAML_BASE64 = FLUO_PREFIX + ".metrics.yaml.base64";
+  public static final String METRICS_YAML_BASE64_DEFAULT = DatatypeConverter.printBase64Binary("---\nfrequency: 60 seconds\n".getBytes(Charsets.UTF_8))
+      .replace("\n", "");
+
   public FluoConfiguration() {
     super();
     setThrowExceptionOnMissing(true);
@@ -369,7 +381,58 @@ public class FluoConfiguration extends CompositeConfiguration {
   public String getMiniClass() {
     return getString(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
-      
+
+  /**
+   * Base64 encodes yaml and stores it in metrics yaml base64 property
+   * 
+   * @param in
+   *          yaml input
+   */
+  public void setMetricsYaml(InputStream in) {
+    byte data[] = new byte[4096];
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    int len;
+    try {
+      while ((len = in.read(data)) > 0) {
+        baos.write(data, 0, len);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    setProperty(METRICS_YAML_BASE64, DatatypeConverter.printBase64Binary(baos.toByteArray()).replace("\n", ""));
+  }
+
+  /**
+   * This property must be base64 encoded. If you have raw yaml, then consider using {@link #setMetricsYaml(InputStream)} which will do the base64 encoding for
+   * you.
+   * 
+   * @param base64Yaml
+   *          A base64 encoded yaml metrics config.
+   */
+  public void setMetricsYamlBase64(String base64Yaml) {
+    setProperty(METRICS_YAML_BASE64, base64Yaml);
+  }
+
+  /**
+   * Consider using {@link #getMetricsYaml()} wich will automatically decode the base 64 value of this property.
+   * 
+   * @return base64 encoded yaml metrics config.
+   */
+
+  public String getMetricsYamlBase64() {
+    return getString(METRICS_YAML_BASE64, METRICS_YAML_BASE64_DEFAULT);
+  }
+
+  /**
+   * This method will decode the base64 yaml metrics config.
+   * 
+   * @return stream that can be used to read yaml
+   */
+  public InputStream getMetricsYaml() {
+    return new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(getMetricsYamlBase64()));
+  }
+
   protected void setDefault(String key, String val) {
     if (getProperty(key) == null)
       setProperty(key, val);

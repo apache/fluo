@@ -15,10 +15,9 @@
  */
 package io.fluo.core.impl;
 
-import io.fluo.api.exceptions.CommitException;
-
 import io.fluo.api.client.Loader;
 import io.fluo.api.client.TransactionBase;
+import io.fluo.api.exceptions.CommitException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public class LoadTask implements Runnable {
     TransactionImpl txi = null;
     try {
       while (true) {
-        String status = "FAILED";
+        String status = "UNKNOWN";
         try {
           txi = new TransactionImpl(env);
           TransactionBase tx = txi;
@@ -52,13 +51,17 @@ public class LoadTask implements Runnable {
           status = "COMMITTED";
           return;
         } catch (CommitException e) {
+          status = "COMMIT_EXCEPTION";
           // retry
         } catch (Exception e) {
+          status = "ERROR";
           log.error("Failed to execute loader " + loader, e);
           throw new RuntimeException(e);
         } finally {
-          if (txi != null)
+          if (txi != null) {
+            txi.getStats().report(status, loader.getClass(), env.getSharedResources().getMetricRegistry());
             TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
+          }
         }
       }
     } finally {

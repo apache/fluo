@@ -20,7 +20,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import io.fluo.api.client.FluoClient;
+import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Loader;
+import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.client.LoaderExecutorImpl;
 import org.apache.commons.configuration.ConfigurationConverter;
@@ -80,12 +83,18 @@ public class FluoOutputFormat extends OutputFormat<Loader,NullWritable> {
     FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
     
     try {
-      final LoaderExecutorImpl lexecutor = new LoaderExecutorImpl(config);
+      final FluoClient client = FluoFactory.newClient(config);
+      final LoaderExecutor lexecutor = client.newLoaderExecutor();
+
       return new RecordWriter<Loader,NullWritable>() {
 
         @Override
         public void close(TaskAttemptContext conext) throws IOException, InterruptedException {
-          lexecutor.close();
+          try {
+            lexecutor.close();
+          } finally {
+            client.close();
+          }
         }
 
         @Override
