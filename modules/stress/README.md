@@ -65,14 +65,12 @@ Before loading data, consider splitting the Accumulo table using the following
 command.
 
 ```
-java -cp <jarPath> io.fluo.stress.trie.Split <fluo props> <num tablets> <max> <node size>
+java -cp <jarPath> io.fluo.stress.trie.Split <fluo props> <num tablets>
 
 where:
 
 fluoProps   = Path to fluo.properties
 num tablets = Num tablets to create for lowest level of tree.  May create less tablets for higher levels.
-max         = The maximum passed to Generate
-node size   = Size of node in bits which must be a divisor of 32/64
 ```
 
 After generating random numbers, load them into Fluo with the following
@@ -86,6 +84,7 @@ yarn jar <jarPath> io.fluo.stress.trie.Load <node size> <fluo props> <input dir>
 where:
 
 input dir = A directory with file created by io.fluo.stress.trie.Generate
+node size = Size of node in bits which must be a divisor of 32/64
 ```
 
 After loading data, run the following command to check the status of the
