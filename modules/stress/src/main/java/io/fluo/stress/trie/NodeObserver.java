@@ -16,13 +16,12 @@
 package io.fluo.stress.trie;
 
 import io.fluo.api.client.TransactionBase;
-
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
+import io.fluo.api.types.TypedTransactionBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.fluo.api.types.TypedTransactionBase;
 
 /** Observer that looks for count:wait for nodes.  If found,
  * it increments count:seen and increments count:wait of parent

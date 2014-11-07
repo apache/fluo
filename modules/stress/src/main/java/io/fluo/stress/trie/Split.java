@@ -19,6 +19,7 @@ package io.fluo.stress.trie;
 import java.io.File;
 import java.util.TreeSet;
 
+import com.google.common.base.Strings;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.util.AccumuloUtil;
 import org.apache.accumulo.core.client.Connector;
@@ -27,38 +28,27 @@ import org.apache.hadoop.io.Text;
 public class Split {
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 4) {
-      System.err.println("Usage: " + Split.class.getSimpleName() + " <fluo props> <num tablets> <max> <node size>");
+    if (args.length != 2) {
+      System.err.println("Usage: " + Split.class.getSimpleName() + " <fluo props> <num tablets>");
       System.exit(-1);
     }
 
     FluoConfiguration config = new FluoConfiguration(new File(args[0]));
     int numTablets = Integer.parseInt(args[1]);
-    long max = Long.parseLong(args[2]);
-    int nodeSize = Integer.parseInt(args[3]);
 
-    int level = 64 / nodeSize;
-
-    while (numTablets > 0) {
-      TreeSet<Text> splits = genSplits(level, numTablets, max, nodeSize);
-      addSplits(config, splits);
-
-      numTablets >>= nodeSize;
-      level--;
-    }
-
+    TreeSet<Text> splits = genSplits(numTablets);
+    addSplits(config, splits);
   }
 
-  private static TreeSet<Text> genSplits(int level, int numTablets, long max, int nodeSize) {
+  private static TreeSet<Text> genSplits(int numTablets) {
 
     TreeSet<Text> splits = new TreeSet<>();
 
     int numSplits = numTablets - 1;
-    long distance = (max / numTablets) + 1;
-    long split = distance;
+    int distance = (((int)Math.pow(Character.MAX_RADIX, Node.HASH_LEN)-1) / numTablets) + 1;
+    int split = distance;
     for (int i = 0; i < numSplits; i++) {
-      Node node = new Node(split, level, nodeSize);
-      splits.add(new Text(node.getRowId()));
+      splits.add(new Text(Strings.padStart(Integer.toString(split, Character.MAX_RADIX), Node.HASH_LEN, '0')));
       split += distance;
     }
 

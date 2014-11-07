@@ -15,6 +15,9 @@
  */
 package io.fluo.stress.trie;
 
+import com.google.common.base.Strings;
+import com.google.common.hash.Hashing;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /** Utility class that represents trie node
@@ -25,6 +28,8 @@ public class Node {
   private final int level;
   private final int nodeSize;
   
+  static final int HASH_LEN=4;
+  
   public Node(Number number, int level, int nodeSize) {
     this.number = number;
     this.level = level;
@@ -32,11 +37,11 @@ public class Node {
   }
   
   public Node(String rowId) {
-    checkArgument(validRowId(rowId), "Invalid row id - "+ rowId);
-    String[] rowArgs = rowId.toString().split(":");
-    this.level = Integer.parseInt(rowArgs[0]);
-    this.nodeSize = Integer.parseInt(rowArgs[1]);
-    this.number = parseNumber(rowArgs[2]);
+    String[] rowArgs = rowId.split(":");
+    checkArgument(validRowId(rowArgs), "Invalid row id - "+ rowId);
+    this.level = Integer.parseInt(rowArgs[1]);
+    this.nodeSize = Integer.parseInt(rowArgs[2]);
+    this.number = parseNumber(rowArgs[3]);
   }
   
   public Number getNumber() {
@@ -65,14 +70,23 @@ public class Node {
     }
   }
   
+  private String genHash(){
+    long num = (number == null)? 0l : number.longValue();
+    int hash = Hashing.murmur3_32().newHasher().putInt(level).putInt(nodeSize).putLong(num).hash().asInt();
+    hash = hash & 0x7fffffff;
+    //base 36 gives a lot more bins in 4 bytes than hex, but it still human readable which is nice for debugging.
+    String hashString = Strings.padStart(Integer.toString(hash, Character.MAX_RADIX), HASH_LEN, '0');
+    return hashString.substring(hashString.length() - HASH_LEN);
+  }
+  
   public String getRowId() {
     if (level == 0) {
-      return String.format("00:%02d:root", nodeSize); 
+      return String.format("%s:00:%02d:root", genHash(), nodeSize); 
     } else { 
       if (number instanceof Integer) {
-        return String.format("%02d:%02d:%08x", level, nodeSize, number);
+        return String.format("%s:%02d:%02d:%08x", genHash(), level, nodeSize, number);
       } else {
-        return String.format("%02d:%02d:%016x", level, nodeSize, number);
+        return String.format("%s:%02d:%02d:%016x", genHash(), level, nodeSize, number);
       }
     }
   }
@@ -93,10 +107,8 @@ public class Node {
     }  
   }
     
-  private boolean validRowId(String rowId) {
-    String[] rowArgs = rowId.toString().split(":");
-    return ((rowArgs.length == 3) && (rowArgs[0] != null) 
-        && (rowArgs[1] != null) && (rowArgs[2] != null));
+  private boolean validRowId(String[] rowArgs) {
+    return ((rowArgs.length == 4) && (rowArgs[0] != null) && (rowArgs[1] != null) && (rowArgs[2] != null) && (rowArgs[3] != null));
   }
   
   public static String generateRootId(int nodeSize) {
