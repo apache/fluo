@@ -17,7 +17,9 @@ package io.fluo.api.config;
 
 import java.io.File;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 
+import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -186,4 +188,17 @@ public class FluoConfigurationTest {
     byte[] bytes2 = IOUtils.toByteArray(config.getMetricsYaml());
     Assert.assertArrayEquals(bytes1, bytes2);
   }
+  
+  @Test
+  public void testMultipleZookeepers(){
+    Properties props = new Properties();
+    props.setProperty(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_PROP, "zk1,zk2,zk3");
+    props.setProperty(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP, "zk1,zk2,zk3/fluo");
+    
+    //ran into a bug where this particular constructor was truncating everything after zk1
+    FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
+    Assert.assertEquals("zk1,zk2,zk3", config.getAccumuloZookeepers());
+    Assert.assertEquals("zk1,zk2,zk3/fluo", config.getZookeepers());
+  }
+  
 }
