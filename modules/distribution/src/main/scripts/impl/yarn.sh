@@ -33,22 +33,23 @@ if [[ -z $HADOOP_PREFIX ]]; then
 fi
 
 ADMIN_OPTS="-fluo-conf $FLUO_CONF_DIR -fluo-lib $FLUO_LIB_DIR -hadoop-prefix $HADOOP_PREFIX"
+ADMIN_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*"
 
 case "$1" in
 start)
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command start
+  java -cp "$ADMIN_LIB:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.yarn.YarnAdmin $ADMIN_OPTS -command start
 	;;
 stop)
-  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command stop
+  java -cp "$ADMIN_LIB" io.fluo.cluster.yarn.YarnAdmin $ADMIN_OPTS -command stop
 	;;
 kill)
-  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command kill
+  java -cp "$ADMIN_LIB" io.fluo.cluster.yarn.YarnAdmin $ADMIN_OPTS -command kill
 	;;
 status)
-  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command status
+  java -cp "$ADMIN_LIB" io.fluo.cluster.yarn.YarnAdmin $ADMIN_OPTS -command status
 	;;
 info)
-  java -cp "$FLUO_LIB_DIR/*" io.fluo.cluster.YarnAdmin $ADMIN_OPTS -command info
+  java -cp "$ADMIN_LIB" io.fluo.cluster.yarn.YarnAdmin $ADMIN_OPTS -command info
 	;;
 *)
 	echo -e "Usage: fluo yarn <argument>\n"

@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.yarn;
 
 import java.io.File;
 
+import io.fluo.cluster.FluoWorkerMain;
+
+import io.fluo.cluster.FluoOracleMain;
 import io.fluo.api.config.FluoConfiguration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
@@ -83,7 +86,7 @@ public class FluoTwillApp implements TwillApplication {
         .setMemory(config.getOracleMaxMemory(), SizeUnit.MEGA)
         .setInstances(config.getOracleInstances()).build();
     
-    LocalFileAdder fileAdder = moreRunnable.add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources).withLocalFiles();
+    LocalFileAdder fileAdder = moreRunnable.add(FluoOracleMain.ORACLE_NAME, new FluoOracleMain(), oracleResources).withLocalFiles();
     RunnableSetter runnableSetter = addConfigFiles(fileAdder).apply();
     
     // Configure Worker
@@ -92,10 +95,10 @@ public class FluoTwillApp implements TwillApplication {
         .setMemory(config.getWorkerMaxMemory(), SizeUnit.MEGA)
         .setInstances(config.getWorkerInstances()).build();
     
-    fileAdder = runnableSetter.add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources).withLocalFiles();
+    fileAdder = runnableSetter.add(FluoWorkerMain.WORKER_NAME, new FluoWorkerMain(), workerResources).withLocalFiles();
     runnableSetter = addConfigFiles(fileAdder).apply();
    
     // Set runnable order, build and return TwillSpecification
-    return runnableSetter.withOrder().begin(OracleRunnable.ORACLE_NAME).nextWhenStarted(WorkerRunnable.WORKER_NAME).build();
+    return runnableSetter.withOrder().begin(FluoOracleMain.ORACLE_NAME).nextWhenStarted(FluoWorkerMain.WORKER_NAME).build();
   }
 }

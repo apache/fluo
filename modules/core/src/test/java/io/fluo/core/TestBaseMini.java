@@ -27,7 +27,6 @@ import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
-import io.fluo.api.client.MiniFluo;
 import io.fluo.api.client.Snapshot;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
@@ -36,6 +35,7 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.api.mini.MiniFluo;
 import io.fluo.core.util.PortUtils;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
@@ -95,6 +95,7 @@ public class TestBaseMini {
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
+    config.setMiniStartAccumulo(false);
   
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     
@@ -104,12 +105,11 @@ public class TestBaseMini {
     client = FluoFactory.newClient(config);
 
     miniFluo = FluoFactory.newMiniFluo(config);
-    miniFluo.start();
   }
   
   @After
   public void tearDownFluo() throws Exception {
-    miniFluo.stop();
+    miniFluo.close();
     client.close();
   }
   

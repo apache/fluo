@@ -51,6 +51,8 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
     Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
     Assert.assertEquals(FluoConfiguration.METRICS_YAML_BASE64_DEFAULT, base.getMetricsYamlBase64());
+    Assert.assertEquals(FluoConfiguration.MINI_START_ACCUMULO_DEFAULT, base.getMiniStartAccumulo());
+    Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
   }
       
   @Test(expected = NoSuchElementException.class)
@@ -98,6 +100,8 @@ public class FluoConfigurationTest {
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
     Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
     Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
+    Assert.assertFalse(config.setMiniStartAccumulo(false).getMiniStartAccumulo());
+    Assert.assertEquals("mydata", config.setMiniDataDir("mydata").getMiniDataDir());
   }
   
   @Test
@@ -146,8 +150,11 @@ public class FluoConfigurationTest {
   @Test
   public void testHasMiniFluoProps() {
     FluoConfiguration config = new FluoConfiguration();
-    Assert.assertFalse(config.hasRequiredMiniFluoProps());
+    Assert.assertTrue(config.hasRequiredMiniFluoProps());
     config.setAccumuloUser("user");
+    Assert.assertFalse(config.hasRequiredMiniFluoProps());
+    config.setMiniStartAccumulo(false);
+    Assert.assertFalse(config.hasRequiredMiniFluoProps());
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
     config.setAccumuloTable("table");

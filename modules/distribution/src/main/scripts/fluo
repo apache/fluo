@@ -37,12 +37,16 @@ yarn)
 local)
   "$bin"/impl/local.sh "${*:2}"
 	;;
+mini)
+  "$bin"/impl/mini.sh "${*:2}"
+	;;
 *)
 	echo -e "Usage: fluo <command> (<argument>)\n"
   echo -e "Possible commands:\n"
-	echo "  init      Initializes Fluo instance using conf/fluo.properties"
+	echo "  init      Initializes a Fluo instance using conf/fluo.properties"
 	echo "  yarn      Administers Fluo instance in YARN"
 	echo "  local     Administers Fluo instance on local machine"
+	echo "  mini      Administers MiniFluo instance"
   echo " " 
 	exit 1
 esac

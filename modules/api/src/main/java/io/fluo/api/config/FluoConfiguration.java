@@ -100,7 +100,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   // MiniFluo
   private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
   public static final String MINI_CLASS_PROP = MINI_PREFIX + ".class";
-  public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.MiniFluoImpl";
+  public static final String MINI_START_ACCUMULO_PROP = MINI_PREFIX + ".start.accumulo";
+  public static final String MINI_DATA_DIR_PROP = MINI_PREFIX + ".data.dir";
+  public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".core.mini.MiniFluoImpl";
+  public static final boolean MINI_START_ACCUMULO_DEFAULT = true;
+  public static final String MINI_DATA_DIR_DEFAULT = "${env:FLUO_HOME}/mini"; 
   
   /** The properties below get loaded into/from Zookeeper */
   // Observer
@@ -433,6 +437,24 @@ public class FluoConfiguration extends CompositeConfiguration {
     return new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(getMetricsYamlBase64()));
   }
 
+  public FluoConfiguration setMiniStartAccumulo(boolean startAccumulo) {
+    setProperty(MINI_START_ACCUMULO_PROP, startAccumulo);
+    return this;
+  }
+  
+  public boolean getMiniStartAccumulo() {
+    return getBoolean(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
+  }
+  
+  public FluoConfiguration setMiniDataDir(String dataDir) {
+    setProperty(MINI_DATA_DIR_PROP, dataDir);
+    return this;
+  }
+  
+  public String getMiniDataDir() {
+    return getString(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
+  }
+      
   protected void setDefault(String key, String val) {
     if (getProperty(key) == null)
       setProperty(key, val);
@@ -452,6 +474,14 @@ public class FluoConfiguration extends CompositeConfiguration {
   private boolean contains(String key) {
     if (containsKey(key) == false) {
       log.info(key + " is not set");
+      return false;
+    }
+    return true;
+  }
+  
+  private boolean verifyStringPropNotSet(String key) {
+    if (containsKey(key) && !getString(key).isEmpty()) {
+      log.info(key + " should not be set");
       return false;
     }
     return true;
@@ -501,11 +531,35 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
   public boolean hasRequiredMiniFluoProps() {
     boolean valid = true;
-    valid &= hasRequiredClientProps();
-    valid &= hasRequiredAdminProps();
-    valid &= hasRequiredOracleProps();
-    valid &= hasRequiredWorkerProps();
+    if (getMiniStartAccumulo()) {
+      // ensure that client properties are not set since we are using MiniAccumulo
+      valid &= verifyStringPropNotSet(CLIENT_ACCUMULO_USER_PROP);
+      valid &= verifyStringPropNotSet(CLIENT_ACCUMULO_PASSWORD_PROP);
+      valid &= verifyStringPropNotSet(CLIENT_ACCUMULO_INSTANCE_PROP);
+      valid &= verifyStringPropNotSet(CLIENT_ACCUMULO_ZOOKEEPERS_PROP);
+      valid &= verifyStringPropNotSet(CLIENT_ZOOKEEPER_CONNECT_PROP);
+      if (valid == false) {
+        log.error("Client properties should not be set in your configuration if MiniFluo is configured to start its own accumulo (indicated by io.fluo.mini.start.accumulo being set to true)");
+      }
+    } else {
+      valid &= hasRequiredClientProps();
+      valid &= hasRequiredAdminProps();
+      valid &= hasRequiredOracleProps();
+      valid &= hasRequiredWorkerProps();
+    } 
     return valid;
+  }
+  
+  public Configuration getClientConfiguration() {
+    Configuration clientConfig = new CompositeConfiguration();
+    Iterator<String> iter = getKeys();
+    while (iter.hasNext()){
+      String key = iter.next();
+      if (key.startsWith(CLIENT_PREFIX)) {
+        clientConfig.setProperty(key, getProperty(key));
+      }
+    }
+    return clientConfig;
   }
   
   /**
@@ -542,5 +596,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
     config.setProperty(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
     config.setProperty(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
+    config.setProperty(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
+    config.setProperty(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }
 }

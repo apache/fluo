@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.yarn;
 
 import java.io.File;
 import java.net.URI;
@@ -25,7 +25,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service.State;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.Logging;
+import io.fluo.cluster.FluoOracleMain;
+import io.fluo.cluster.FluoWorkerMain;
+import io.fluo.cluster.util.LogbackUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.curator.framework.CuratorFramework;
@@ -40,7 +42,7 @@ import org.apache.twill.yarn.YarnTwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.fluo.cluster.FluoTwillApp.FLUO_APP_NAME;
+import static io.fluo.cluster.yarn.FluoTwillApp.FLUO_APP_NAME;
 
 /**
  * Administers Fluo on YARN cluster
@@ -51,7 +53,7 @@ public class YarnAdmin {
   
   public static final String OBSERVER_DIR = "/observers";
 
-  private static YarnAdminOptions options;
+  private static YarnOptions options;
   private static FluoConfiguration config;
   private static TwillRunnerService twillRunner;
   private static CuratorFramework curator;
@@ -89,7 +91,7 @@ public class YarnAdmin {
           f.getName().startsWith("jboss-logging") ||
           f.getName().startsWith("classmate")) {
         String jarPath = "file:" + f.getCanonicalPath();
-        log.debug("Adding library jar (" + f.getName() + ") to Fluo instance.");
+        log.trace("Adding library jar (" + f.getName() + ") to Fluo instance.");
         preparer.withResources(new URI(jarPath));
       }
     }
@@ -177,11 +179,11 @@ public class YarnAdmin {
       System.out.println("A Fluo instance is " + state + " in YARN " + getFullInfo());
 
       if (extraInfo) {
-        Collection<TwillRunResources> resources = controller.getResourceReport().getRunnableResources(OracleRunnable.ORACLE_NAME);
+        Collection<TwillRunResources> resources = controller.getResourceReport().getRunnableResources(FluoOracleMain.ORACLE_NAME);
         System.out.println("\nFluo has " + resources.size() + " oracles:\n");
         printResources(resources);
 
-        resources = controller.getResourceReport().getRunnableResources(WorkerRunnable.WORKER_NAME);
+        resources = controller.getResourceReport().getRunnableResources(FluoWorkerMain.WORKER_NAME);
         System.out.println("\nFluo has " + resources.size() + " workers:\n");
         printResources(resources);
       }
@@ -228,7 +230,7 @@ public class YarnAdmin {
 
   public static void main(String[] args) throws ConfigurationException, Exception {
 
-    options = new YarnAdminOptions();
+    options = new YarnOptions();
     JCommander jcommand = new JCommander(options, args);
 
     if (options.displayHelp()) {
@@ -236,7 +238,7 @@ public class YarnAdmin {
       System.exit(-1);
     }
 
-    Logging.init("ClusterAdmin", options.getFluoConf(), "STDOUT", false);
+    LogbackUtil.init("ClusterAdmin", options.getFluoConf(), "STDOUT", false);
 
     File configFile = new File(options.getFluoConf() + "/fluo.properties");
     config = new FluoConfiguration(configFile);

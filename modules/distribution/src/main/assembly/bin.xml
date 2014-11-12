@@ -28,6 +28,40 @@
       <scope>runtime</scope>
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
+      <excludes>
+      	<exclude>*:slf4j-log4j12</exclude>
+      	<exclude>*:log4j</exclude>
+     	<exclude>*:logback-classic</exclude>
+      	<exclude>*:logback-core</exclude>
+      	<exclude>*:log4j-over-slf4j</exclude>
+      </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>lib/log4j</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <includes>
+      	<include>*:slf4j-log4j12</include>
+      	<include>*:log4j</include>
+      </includes>
+    </dependencySet>
+  	<dependencySet>
+      <outputDirectory>lib/logback</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <includes>
+      	<include>*:logback-classic</include>
+      	<include>*:logback-core</include>
+      	<include>*:log4j-over-slf4j</include>
+      </includes>
     </dependencySet>
   </dependencySets>
 
@@ -40,13 +74,6 @@
         <include>AUTHORS</include>
         <include>CHANGES</include>
         <include>README.md</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>*.jar</include>
       </includes>
     </fileSet>
     <fileSet>

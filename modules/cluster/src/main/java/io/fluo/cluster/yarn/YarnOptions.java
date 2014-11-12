@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.yarn;
 
 import com.beust.jcommander.Parameter;
 
-public class YarnAdminOptions {
+public class YarnOptions {
     
   @Parameter(names = "-fluo-conf", description = "Location of fluo config dir", required = true)
   protected String fluoConf;

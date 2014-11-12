@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.client;
+package io.fluo.api.mini;
+
+import org.apache.commons.configuration.Configuration;
 
 /**
  * A test and development instance of Fluo containing its own Oracle and Worker
  */
-public interface MiniFluo {
-
+public interface MiniFluo extends AutoCloseable {
+  
   /**
-   * Starts MiniFluo
+   * Retrieves the configuration required to connect to MiniFluo instance.
    */
-  void start();
-
-  /**
-   * Stops MiniFluo
-   */
-  void stop();
+  Configuration getClientConfiguration();
 
   /**
    * Waits for all observers to finish. This method is usually called by test code before verification.
