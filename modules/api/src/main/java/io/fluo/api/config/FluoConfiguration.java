@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.base.Charsets;
+import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -124,6 +125,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   public FluoConfiguration(Configuration configuration) {
     this();
+    if(configuration instanceof AbstractConfiguration){
+      AbstractConfiguration aconf = (AbstractConfiguration) configuration;
+      aconf.setDelimiterParsingDisabled(true);
+    }
+    
     addConfiguration(configuration);
   }
   
