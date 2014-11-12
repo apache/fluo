@@ -26,7 +26,7 @@ public class TxLogger {
     logTx(status, clazz, stats, null);
   }
 
-  static void logTx(String status, String clazz, TxStats stats, String trigger) {
+  public static void logTx(String status, String clazz, TxStats stats, String trigger) {
     if (log.isTraceEnabled()) {
       String triggerMsg = "";
       if (trigger != null)

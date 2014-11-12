@@ -13,44 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.impl;
+
+package io.fluo.core.worker;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.base.Supplier;
+import io.fluo.core.impl.Environment;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.io.Text;
 
-/**
- * 
- */
-public class RandomTabletChooser {
-  
+public class TabletInfoCache<T, S extends Supplier<T>> {
   private static final long CACHE_TIME = 5 * 60 * 1000;
 
   private final Environment env;
-  private final Random rand = new Random();
-  private List<TabletInfo> cachedTablets;
+  private List<TabletInfo<T>> cachedTablets;
   private long listSplitsTime = 0;
+  private S supplier;
   
-  static class TabletInfo {
-    final Text start;
-    final Text end;
-    final Lock lock = new ReentrantLock();
-    long retryTime;
-    long sleepTime = 100;
+  public static class TabletInfo<T> {
+    private final Text start;
+    private final Text end;
+    private T data;
     
-    TabletInfo(Text start, Text end) {
+    TabletInfo(Text start, Text end, T data) {
       this.start = start;
       this.end = end;
+      this.data = data;
     }
     
     private int hashCode(Text t) {
@@ -77,6 +73,7 @@ public class RandomTabletChooser {
     @Override
     public boolean equals(Object o) {
       if (o instanceof TabletInfo) {
+        @SuppressWarnings("rawtypes")
         TabletInfo oti = (TabletInfo) o;
         
         if (equals(start, oti.start)) {
@@ -89,40 +86,56 @@ public class RandomTabletChooser {
       return false;
     }
 
+    public Text getStart(){
+      return start;
+    }
+    
+    public Text getEnd(){
+      return end;
+    }
+    
+    public T getData(){
+      return data;
+    }
+
+    public Range getRange() {
+      return new Range(start, false, end, true);
+    }
   }
   
-  public RandomTabletChooser(Environment env) {
+  public TabletInfoCache(Environment env, S supplier) {
     this.env = env;
+    this.supplier = supplier;
   }
 
-  private List<TabletInfo> listSplits() throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
+  private List<TabletInfo<T>> listSplits() throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
     List<Text> splits = new ArrayList<>(env.getConnector().tableOperations().listSplits(env.getTable()));
     Collections.sort(splits);
     
-    List<TabletInfo> tablets = new ArrayList<>(splits.size() + 1);
+    List<TabletInfo<T>> tablets = new ArrayList<>(splits.size() + 1);
     for (int i = 0; i < splits.size(); i++) {
-      tablets.add(new TabletInfo(i == 0 ? null : splits.get(i - 1), splits.get(i)));
+      tablets.add(new TabletInfo<>(i == 0 ? null : splits.get(i - 1), splits.get(i), supplier.get()));
     }
     
-    tablets.add(new TabletInfo(splits.size() == 0 ? null : splits.get(splits.size() - 1), null));
+    tablets.add(new TabletInfo<>(splits.size() == 0 ? null : splits.get(splits.size() - 1), null, supplier.get()));
     listSplitsTime = System.currentTimeMillis();
     return tablets;
   }
   
-  private synchronized List<TabletInfo> getTablets() throws Exception {
+  public synchronized List<TabletInfo<T>> getTablets() throws Exception {
     if (cachedTablets == null) {
       cachedTablets = listSplits();
     } else if (System.currentTimeMillis() - listSplitsTime > CACHE_TIME) {
-      List<TabletInfo> tablets = listSplits();
-      Map<TabletInfo,TabletInfo> oldTablets = new HashMap<>();
-      for (TabletInfo tabletInfo : cachedTablets) {
+      List<TabletInfo<T>> tablets = listSplits();
+      Map<TabletInfo<T>,TabletInfo<T>> oldTablets = new HashMap<>();
+      for (TabletInfo<T> tabletInfo : cachedTablets) {
         oldTablets.put(tabletInfo, tabletInfo);
       }
       
-      List<TabletInfo> newTablets = new ArrayList<>(tablets.size());
+      List<TabletInfo<T>> newTablets = new ArrayList<>(tablets.size());
       
-      for (TabletInfo tabletInfo : tablets) {
-        TabletInfo oldTI = oldTablets.get(tabletInfo);
+      for (TabletInfo<T> tabletInfo : tablets) {
+        TabletInfo<T> oldTI = oldTablets.get(tabletInfo);
         if (oldTI != null)
           newTablets.add(oldTI);
         else
@@ -132,15 +145,6 @@ public class RandomTabletChooser {
       cachedTablets = newTablets;
     }
     
-    return cachedTablets;
-  }
-
-  synchronized TabletInfo getRandomTablet() throws Exception {
-    List<TabletInfo> tablets = getTablets();
-    TabletInfo ti = tablets.get(rand.nextInt(tablets.size()));
-    if (ti.lock.tryLock())
-      return ti;
-    else
-      return null;
+    return Collections.unmodifiableList(cachedTablets);
   }
 }

@@ -43,5 +43,6 @@ public class ZookeeperPath {
   public static final String YARN_APP_ID = YARN + "/app.id";
   
   public static final String TWILL = "/twill";
+  public static final String FINDERS = "/finders";
 
 }

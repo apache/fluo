@@ -93,7 +93,7 @@ public class TracingTransaction implements TransactionBase {
     tx.delete(row, col);
   }
 
-  static boolean isTracingEnabled() {
+  public static boolean isTracingEnabled() {
     return log.isTraceEnabled();
   }
 }

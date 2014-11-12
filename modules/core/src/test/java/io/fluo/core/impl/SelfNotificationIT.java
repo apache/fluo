@@ -27,16 +27,16 @@ import io.fluo.api.data.Column;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
+import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseImpl;
-import io.fluo.core.TestTransaction;
+import io.fluo.core.TestBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Test an observer notifying the column its observing.  This is a useful pattern for exporting data.
  */
-public class SelfNotificationIT extends TestBaseImpl {
+public class SelfNotificationIT extends TestBaseMini {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   
@@ -57,10 +57,10 @@ public class SelfNotificationIT extends TestBaseImpl {
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
       TypedTransactionBase ttx = typeLayer.wrap(tx);
-       
+
       Integer currentCount = ttx.get().row(row).col(STAT_COUNT_COL).toInteger();
       Integer exportCount = ttx.get().row(row).col(EXPORT_COUNT_COL).toInteger();
-      
+
       if(exportCount != null){
         export(row, exportCount);
         
@@ -87,41 +87,34 @@ public class SelfNotificationIT extends TestBaseImpl {
   @Test
   public void test1() throws Exception {
     
-    TestTransaction tx1 = new TestTransaction(env);
-
-    tx1.mutate().row("r1").col(STAT_COUNT_COL).set(3);
-    tx1.mutate().row("r1").col(EXPORT_CHECK_COL).set();
-    tx1.mutate().row("r1").col(EXPORT_COUNT_COL).set(3);
+    try(TypedTransaction tx1 = typeLayer.wrap(client.newTransaction())){
+      tx1.mutate().row("r1").col(STAT_COUNT_COL).set(3);
+      tx1.mutate().row("r1").col(EXPORT_CHECK_COL).set();
+      tx1.mutate().row("r1").col(EXPORT_COUNT_COL).set(3);
+      tx1.commit();
+    }
     
-    tx1.done();
+    miniFluo.waitForObservers();
     
-    runWorker();
     Assert.assertEquals(Collections.singletonList(3), exports);
     exports.clear();
-    runWorker();
+    miniFluo.waitForObservers();
     Assert.assertEquals(0, exports.size());
    
-    TestTransaction tx2 = new TestTransaction(env);
+    try(TypedTransaction tx2 = typeLayer.wrap(client.newTransaction())){
+      Assert.assertNull(tx2.get().row("r1").col(EXPORT_COUNT_COL).toInteger());
+    
+      tx2.mutate().row("r1").col(STAT_COUNT_COL).set(5);
+      tx2.mutate().row("r1").col(EXPORT_CHECK_COL).set();
+      tx2.mutate().row("r1").col(EXPORT_COUNT_COL).set(4);
+    
+      tx2.commit();
+    }
 
-    Assert.assertNull(tx2.get().row("r1").col(EXPORT_COUNT_COL).toInteger());
-    
-    tx2.mutate().row("r1").col(STAT_COUNT_COL).set(4);
-    tx2.mutate().row("r1").col(EXPORT_CHECK_COL).set();
-    tx2.mutate().row("r1").col(EXPORT_COUNT_COL).set(4);
-    
-    tx2.done();
-    
-    TestTransaction tx3 = new TestTransaction(env);
-
-    tx3.mutate().row("r1").col(STAT_COUNT_COL).set(5);
-    tx3.mutate().row("r1").col(EXPORT_CHECK_COL).set();
-    
-    tx3.done();
-    
-    runWorker();
+    miniFluo.waitForObservers();
     Assert.assertEquals(Arrays.asList(4, 5), exports);
     exports.clear();
-    runWorker();
+    miniFluo.waitForObservers();
     Assert.assertEquals(0, exports.size());
     
   }
