@@ -76,7 +76,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String WORKER_NUM_CORES_PROP = WORKER_PREFIX + ".num.cores";
   public static final int WORKER_NUM_THREADS_DEFAULT = 10;
   public static final int WORKER_INSTANCES_DEFAULT = 1;
-  public static final int WORKER_MAX_MEMORY_MB_DEFAULT = 256;
+  public static final int WORKER_MAX_MEMORY_MB_DEFAULT = 1024;
   public static final int WORKER_NUM_CORES_DEFAULT = 1;
   
   // Loader 
@@ -94,7 +94,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
   public static final int ORACLE_PORT_DEFAULT = 9913;
   public static final int ORACLE_INSTANCES_DEFAULT = 1;
-  public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 256;
+  public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 512;
   public static final int ORACLE_NUM_CORES_DEFAULT = 1;
   
   // MiniFluo
