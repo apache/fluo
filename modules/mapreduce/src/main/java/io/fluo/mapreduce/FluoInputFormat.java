@@ -151,7 +151,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
         props.store(baos, "");
         conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
 
-        AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getZookeepers());
+        AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getAccumuloZookeepers());
         AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
         AccumuloInputFormat.setInputTableName(conf, env.getTable());
         AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
