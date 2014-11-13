@@ -103,7 +103,7 @@ class ScanTask implements Runnable {
         
         long sleepTime = Math.max(0, minRetryTime - System.currentTimeMillis());
         
-        log.debug("Scanned {} of {} tablets, processed {} notifications, sleeping {} ", tabletsScanned, tablets.size(), notifications, sleepTime);
+        log.debug("Scanned {} of {} tablets, found {} new notifications, sleeping {} ", tabletsScanned, tablets.size(), notifications, sleepTime);
         
         UtilWaitThread.sleep(sleepTime, stopped);  
         
