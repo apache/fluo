@@ -59,7 +59,7 @@ public class LoadTask implements Runnable {
           throw new RuntimeException(e);
         } finally {
           if (txi != null) {
-            txi.getStats().report(status, loader.getClass(), env.getSharedResources().getMetricRegistry());
+            txi.getStats().report(env.getMeticNames(), status, loader.getClass(), env.getSharedResources().getMetricRegistry());
             TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
           }
         }

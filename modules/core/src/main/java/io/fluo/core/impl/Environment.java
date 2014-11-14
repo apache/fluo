@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +33,7 @@ import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
+import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
@@ -59,6 +62,7 @@ public class Environment implements AutoCloseable {
   private FluoConfiguration config;
   private SharedResources resources;
   private long rollbackTime;
+  private MetricNames metricNames;
   
   /**
    * Constructs an environment from another environment
@@ -252,6 +256,30 @@ public class Environment implements AutoCloseable {
     return oraclePort;
   }
 
+  public synchronized MetricNames getMeticNames(){
+    if(metricNames == null){
+      String mid = System.getProperty(MetricNames.METRICS_ID_PROP);
+      if(mid == null){
+        try {
+          String hostname = InetAddress.getLocalHost().getHostName();
+          int idx = hostname.indexOf('.');
+          if(idx > 0){
+            hostname = hostname.substring(0, idx);
+          }
+          mid = hostname+"_"+getSharedResources().getTransactorID();
+        } catch (UnknownHostException e) {
+         throw new RuntimeException(e);
+        }
+      }
+      
+      mid = mid.replace('.', '_');
+      
+      metricNames = new MetricNames(mid);
+    }
+    return metricNames;
+  }
+  
+  
   @Override
   public void close() {
     resources.close();

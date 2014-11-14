@@ -20,22 +20,86 @@ import io.fluo.api.config.FluoConfiguration;
 
 public class MetricNames {
 
-  public static final String WORKER_PREFIX = FluoConfiguration.FLUO_PREFIX +".worker.";
-  public static final String NOTIFICATION_QUEUED = WORKER_PREFIX + "notifications.queued";
+  private final String txLockWait;
+  private final String txTime;
+  private final String txCollisions;
+  private final String txSet;
+  private final String txRead;
+  private final String txLocksTimedOut;
+  private final String txLocksDead;
+  private final String txStatus;
   
-  public static final String ORCALE_CLIENT_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.client.stamps";
-  public static final String ORACLE_CLIENT_GET_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.client.rpc.getStamps.time";
-  public static final String ORACLE_SERVER_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.server.stamps";
+  private final String notificationsQueued;
+  
+  private final String oracleClientStamps;
+  private final String oracleClientRpc;
+  private final String oracleServerStamps;
+  
+  
+  public static final String METRICS_ID_PROP = FluoConfiguration.FLUO_PREFIX+".metrics.id";
+  
+  public MetricNames(String hostId){
+    txLockWait = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.lockWait.";
+    txTime = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.time.";
+    txCollisions = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.collisions.";
+    txSet = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.set.";
+    txRead = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.read.";
+    txLocksTimedOut = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.locks.timedout.";
+    txLocksDead = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.locks.dead.";
+    txStatus = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.status.";
 
-  public static final String TX_PREFIX = FluoConfiguration.FLUO_PREFIX + ".tx.";
-  public static final String TX_LOCKWAIT = MetricNames.TX_PREFIX + "lockWait.";
-  public static final String TX_TIME = MetricNames.TX_PREFIX + "time.";
-  public static final String TX_COLLISIONS = MetricNames.TX_PREFIX + "collisions.";
-  public static final String TX_SET = MetricNames.TX_PREFIX + "set.";
-  public static final String TX_READ = MetricNames.TX_PREFIX + "read.";
-  public static final String TX_LOCKS_TIMEDOUT = MetricNames.TX_PREFIX + "locks.timedout.";
-  public static final String TX_LOCKS_DEAD = MetricNames.TX_PREFIX + "locks.dead.";
-  public static final String TX_STATUS = MetricNames.TX_PREFIX + "status.";
+    notificationsQueued = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".worker.notifications.queued";
+
+    oracleClientStamps = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.client.stamps";
+    oracleClientRpc = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.client.rpc.getStamps.time";
+    oracleServerStamps = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.server.stamps";
+  }
   
-  
+  public String getTxLockwait() {
+    return txLockWait;
+  }
+
+  public String getTxTime() {
+    return txTime;
+  }
+
+  public String getTxCollisions() {
+    return txCollisions;
+  }
+
+  public String getTxSet() {
+    return txSet;
+  }
+
+  public String getTxRead() {
+    return txRead;
+  }
+
+  public String getTxLocksTimedout() {
+    return txLocksTimedOut;
+  }
+
+  public String getTxLocksDead() {
+    return txLocksDead;
+  }
+
+  public String getTxStatus() {
+    return txStatus;
+  }
+
+  public String getNotificationQueued() {
+    return notificationsQueued;
+  }
+
+  public String getOrcaleClientStamps() {
+    return oracleClientStamps;
+  }
+
+  public String getOracleClientGetStamps() {
+    return oracleClientRpc;
+  }
+
+  public String getOracleServerStamps() {
+    return oracleServerStamps;
+  }
 }

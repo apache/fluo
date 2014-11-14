@@ -27,8 +27,8 @@ import org.junit.rules.ExpectedException;
  */
 public class TransactorIT extends TestBaseImpl {
   
-  public static Long id1 = new Long(1);
-  public static Long id2 = new Long(2);
+  public static Long id1 = new Long(2);
+  public static Long id2 = new Long(3);
   public static long NUM_OPEN_TIMEOUT_MS = 1000;
   
   @Rule
@@ -51,8 +51,8 @@ public class TransactorIT extends TestBaseImpl {
     Assert.assertEquals(id2, t2.getTransactorID().getLongID());
     Assert.assertTrue(checkExists(t1));
     Assert.assertTrue(checkExists(t2));
-    Assert.assertArrayEquals("1".getBytes(), curator.getData().forPath(t1.getNodePath()));
-    Assert.assertArrayEquals("2".getBytes(), curator.getData().forPath(t2.getNodePath()));
+    Assert.assertArrayEquals("2".getBytes(), curator.getData().forPath(t1.getNodePath()));
+    Assert.assertArrayEquals("3".getBytes(), curator.getData().forPath(t2.getNodePath()));
     
     // verify the cache
     Assert.assertTrue(cache.checkExists(id1));
@@ -147,9 +147,9 @@ public class TransactorIT extends TestBaseImpl {
   public void testTransactorID() {
     TransactorID tid1 = new TransactorID(env);
     Assert.assertEquals(id1, tid1.getLongID());
-    Assert.assertEquals(id2, env.getSharedResources().getTransactorID().getLongID());
+    Assert.assertEquals((Long)(id1-1), env.getSharedResources().getTransactorID().getLongID());
     TransactorID tid3 = new TransactorID(env);
-    Assert.assertEquals(new Long(3), tid3.getLongID());
+    Assert.assertEquals(id2, tid3.getLongID());
   }
   
   private boolean checkExists(TransactorNode t) throws Exception {

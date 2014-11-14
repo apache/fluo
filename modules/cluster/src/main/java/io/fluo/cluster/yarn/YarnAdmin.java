@@ -89,6 +89,7 @@ public class YarnAdmin {
       if (f.getName().startsWith("hibernate-validator") ||
           f.getName().startsWith("javax.el-api") ||
           f.getName().startsWith("jboss-logging") ||
+          f.getName().contains("graphite") ||
           f.getName().startsWith("classmate")) {
         String jarPath = "file:" + f.getCanonicalPath();
         log.trace("Adding library jar (" + f.getName() + ") to Fluo instance.");

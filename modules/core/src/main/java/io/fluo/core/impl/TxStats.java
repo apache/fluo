@@ -101,19 +101,19 @@ public class TxStats {
     finishTime = t;
   }
 
-  public void report(String status, Class<?> execClass, MetricRegistry registry) {
+  public void report(MetricNames names, String status, Class<?> execClass, MetricRegistry registry) {
     String sn = execClass.getSimpleName();
     if (getLockWaitTime() > 0)
-      registry.timer(MetricNames.TX_LOCKWAIT + sn).update(getLockWaitTime(), TimeUnit.MILLISECONDS);
-    registry.timer(MetricNames.TX_TIME + sn).update(getTime(), TimeUnit.MILLISECONDS);
+      registry.timer(names.getTxLockwait() + sn).update(getLockWaitTime(), TimeUnit.MILLISECONDS);
+    registry.timer(names.getTxTime() + sn).update(getTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0)
-      registry.histogram(MetricNames.TX_COLLISIONS + sn).update(getCollisions());
-    registry.histogram(MetricNames.TX_SET + sn).update(getEntriesSet());
-    registry.histogram(MetricNames.TX_READ + sn).update(getEntriesReturned());
+      registry.histogram(names.getTxCollisions() + sn).update(getCollisions());
+    registry.histogram(names.getTxSet() + sn).update(getEntriesSet());
+    registry.histogram(names.getTxRead() + sn).update(getEntriesReturned());
     if (getTimedOutLocks() > 0)
-      registry.histogram(MetricNames.TX_LOCKS_TIMEDOUT + sn).update(getTimedOutLocks());
+      registry.histogram(names.getTxLocksTimedout() + sn).update(getTimedOutLocks());
     if (getDeadLocks() > 0)
-      registry.histogram(MetricNames.TX_LOCKS_DEAD + sn).update(getDeadLocks());
-    registry.counter(MetricNames.TX_STATUS + status.toLowerCase() + "." + sn).inc();
+      registry.histogram(names.getTxLocksDead() + sn).update(getDeadLocks());
+    registry.counter(names.getTxStatus() + status.toLowerCase() + "." + sn).inc();
   }
 }
