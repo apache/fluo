@@ -95,6 +95,7 @@ shortened to `i.f`.
 |i.f.oracle.client.rpc.getStamps.time     | [Timer][T]     | *WHEN:* For each request for stamps to the server. *WHAT:* Time RPC call to oracle took |
 |i.f.oracle.client.stamps                 | [Histogram][H] | *WHEN:* For each request for stamps to the server. *WHAT:*  The number of stamps requested. |
 |i.f.oracle.server.stamps                 | [Histogram][H] | *WHEN:* For each request for stamps from a client.  *WHAT:* The number of stamps requested    |
+|i.f.worker.notifications.queued          | [Gauge][G]     | *WHAT:* The current number of notifications queued for processing    |
 
 The table above outlines when a particular metric is updated and whats updated.
 The use of *COND* indicates that the metric is not always updated.   For
@@ -112,3 +113,4 @@ be 2 and the mean would be (5+3)/2.
 [T]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#timers
 [C]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#counters
 [H]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#histograms
+[G]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#gauges

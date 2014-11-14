@@ -25,10 +25,12 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.Gauge;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.metrics.MetricNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,11 @@ public class NotificationProcessor implements AutoCloseable {
         queue);
     this.tracker = new NotificationTracker();
     this.observers = new Observers(env);
+    env.getSharedResources().getMetricRegistry().register(MetricNames.NOTIFICATION_QUEUED, new Gauge<Integer>() {
+      @Override
+      public Integer getValue() {
+        return queue.size();
+      }});
   }
   
   //little utility class that tracks all notifications in queue
