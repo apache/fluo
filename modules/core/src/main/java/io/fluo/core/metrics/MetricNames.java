@@ -20,6 +20,9 @@ import io.fluo.api.config.FluoConfiguration;
 
 public class MetricNames {
 
+  public static final String WORKER_PREFIX = FluoConfiguration.FLUO_PREFIX +".worker.";
+  public static final String NOTIFICATION_QUEUED = WORKER_PREFIX + "notifications.queued";
+  
   public static final String ORCALE_CLIENT_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.client.stamps";
   public static final String ORACLE_CLIENT_GET_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.client.rpc.getStamps.time";
   public static final String ORACLE_SERVER_STAMPS = FluoConfiguration.FLUO_PREFIX + ".oracle.server.stamps";
