@@ -17,11 +17,10 @@ package io.fluo.cluster;
 
 import java.io.File;
 
-import io.fluo.cluster.util.MainOptions;
-
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.LogbackUtil;
+import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.NotificationFinder;
@@ -49,8 +48,8 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
   }
   
   public void run(String[] args) {
+    MainOptions options = new MainOptions();
     try {
-      MainOptions options = new MainOptions();
       JCommander jcommand = new JCommander(options, args);
 
       if (options.help) {
@@ -60,7 +59,13 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       options.validateConfig();
 
       LogbackUtil.init("worker", options.getConfigDir(), options.getLogOutput());
+    } catch (Exception e) {
+      System.err.println("Exception while starting FluoWorker: "+ e.getMessage());
+      e.printStackTrace();
+      System.exit(-1);
+    }
 
+    try {
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
       if (!config.hasRequiredWorkerProps()) {
         log.error("fluo.properties is missing required properties for worker");
@@ -77,13 +82,15 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
         notificationFinder.init(env, np);
         notificationFinder.start();
 
-        while (true)
+        while (true) {
           UtilWaitThread.sleep(1000);
+        }
       }
     } catch (Exception e) {
-      System.err.println("Exception running worker: "+ e.getMessage());
-      e.printStackTrace();
+      log.error("Exception running FluoWorker: ", e);
     }
+    
+    log.info("FluoWorker is exiting.");
   }
   
   @Override
