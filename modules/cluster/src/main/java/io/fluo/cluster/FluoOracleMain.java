@@ -17,11 +17,10 @@ package io.fluo.cluster;
 
 import java.io.File;
 
-import io.fluo.cluster.util.MainOptions;
-
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.LogbackUtil;
+import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.UtilWaitThread;
@@ -30,9 +29,8 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** 
- * Main run method of Fluo oracle that can be called within
- * a Twill/YARN application or on its own as a Java application
+/**
+ * Main method of Fluo oracle that can be called within a Twill/YARN application or on its own as a Java application
  */
 public class FluoOracleMain extends AbstractTwillRunnable {
   
@@ -48,8 +46,8 @@ public class FluoOracleMain extends AbstractTwillRunnable {
   }
 
   public void run(String[] args) {
+    MainOptions options = new MainOptions();
     try {
-      MainOptions options = new MainOptions();
       JCommander jcommand = new JCommander(options, args);
 
       if (options.help) {
@@ -59,7 +57,13 @@ public class FluoOracleMain extends AbstractTwillRunnable {
       options.validateConfig();
 
       LogbackUtil.init("oracle", options.getConfigDir(), options.getLogOutput());
+    } catch (Exception e) {
+      System.err.println("Exception while starting FluoOracle: "+ e.getMessage());
+      e.printStackTrace();
+      System.exit(-1);
+    }
 
+    try {
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
       if (!config.hasRequiredOracleProps()) {
         log.error("fluo.properties is missing required properties for oracle");
@@ -80,9 +84,10 @@ public class FluoOracleMain extends AbstractTwillRunnable {
       }
 
     } catch (Exception e) {
-      System.err.println("Exception running oracle: "+ e.getMessage());
-      e.printStackTrace();
+      log.error("Exception running FluoOracle: ", e);
     }
+    
+    log.info("FluoOracle is exiting.");
   }
   
   @Override
