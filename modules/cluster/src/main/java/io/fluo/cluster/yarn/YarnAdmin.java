@@ -117,12 +117,22 @@ public class YarnAdmin {
     while (controller.isRunning() == false) {
       Thread.sleep(500);
     }
-    
     // set app id in zookeeper
     String appId = controller.getResourceReport().getApplicationId();
     CuratorUtil.putData(curator, ZookeeperPath.YARN_APP_ID, appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     
-    log.info("Started Fluo instance in YARN " + getAppInfo());
+    log.info("Fluo instance is running in YARN " + getAppInfo());
+    
+    log.info("Waiting for all desired containers to start...");
+    int checks = 0;
+    while (allContainersRunning(controller) == false) {
+      Thread.sleep(500);
+      checks++;
+      if (checks == 30) {
+        log.warn("Still waiting... YARN may not have enough resources available for this instance.  Use ctrl-c to stop waiting and check status using 'fluo yarn info'.");
+      }
+    }
+    log.info("Fluo instance is running all desired containers in YARN " + getAppInfo());
   }
   
   private static void stop() throws Exception {
@@ -155,15 +165,16 @@ public class YarnAdmin {
     deleteZkData();
   }
   
-  private static void printResources(Collection<TwillRunResources> resourcesList) {
-    System.out.println("Instance  Host            Cores  MaxMemory  Container ID");
-    System.out.println("--------  ----            -----  ---------  ------------");
-    for (TwillRunResources resources : resourcesList) {
-      System.out.format("%-9s %-15s %-6s %4s MB    %s\n", resources.getInstanceId(), resources.getHost(), resources.getVirtualCores(), resources.getMemoryMB(),
-          resources.getContainerId());
-    }
+  private static boolean allContainersRunning(TwillController controller) {
+    return TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) == config.getOracleInstances()
+        && TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) == config.getWorkerInstances();
   }
-
+  
+  private static String containerStatus(TwillController controller) {
+    return "" + TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) + " of " + config.getOracleInstances() +
+        " Oracle containers and " + TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) + " of " + config.getWorkerInstances() + " Worker containers";
+  }
+  
   private static void status(boolean extraInfo) throws Exception {
     if (twillIdExists() == false) {
       System.out.println("A Fluo instance is not running in YARN.");
@@ -177,15 +188,19 @@ public class YarnAdmin {
     } else {
       State state = controller.state();
       System.out.println("A Fluo instance is " + state + " in YARN " + getFullInfo());
+      
+      if (state.equals(State.RUNNING) && (allContainersRunning(controller) == false)) {
+        System.out.println("\nWARNING - Fluo is not running all desired containers!  YARN may not have enough available resources.  Fluo is currently running " + containerStatus(controller));
+      }
 
       if (extraInfo) {
         Collection<TwillRunResources> resources = controller.getResourceReport().getRunnableResources(FluoOracleMain.ORACLE_NAME);
-        System.out.println("\nFluo has " + resources.size() + " oracles:\n");
-        printResources(resources);
+        System.out.println("\nFluo has " + resources.size() + " of " + config.getOracleInstances() + " desired Oracle containers:\n");
+        TwillUtil.printResources(resources);
 
         resources = controller.getResourceReport().getRunnableResources(FluoWorkerMain.WORKER_NAME);
-        System.out.println("\nFluo has " + resources.size() + " workers:\n");
-        printResources(resources);
+        System.out.println("\nFluo has " + resources.size() + " of " + config.getWorkerInstances() + " desired Worker containers:\n");
+        TwillUtil.printResources(resources);
       }
     }
   }
