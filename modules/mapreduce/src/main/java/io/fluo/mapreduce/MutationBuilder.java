@@ -15,13 +15,17 @@
  */
 package io.fluo.mapreduce;
 
+import java.nio.charset.StandardCharsets;
+
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.hadoop.io.Text;
 
 /**
  * This class allows building Accumulo mutations that are in the Fluo data format. This class is intended to be used with {@link AccumuloOutputFormat}
@@ -32,6 +36,18 @@ public class MutationBuilder {
 
   private Mutation mutation;
 
+  /**
+   * 
+   * @param row Will be encoded using UTF-8
+   */
+  public MutationBuilder(CharSequence row) {
+    mutation = new Mutation(row);
+  }
+  
+  public MutationBuilder(Text row) {
+    mutation = new Mutation(row);
+  }
+  
   public MutationBuilder(Bytes row) {
     if (row.isBackedByArray())
       mutation = new Mutation(row.getBackingArray(), row.offset(), row.length());
@@ -39,14 +55,34 @@ public class MutationBuilder {
       mutation = new Mutation(row.toArray());
   }
 
-  public MutationBuilder put(Column col, Bytes value) {
-    Flutation.put(mutation, col, ColumnConstants.DATA_PREFIX | 0, value.toArray());
-    Flutation.put(mutation, col, ColumnConstants.WRITE_PREFIX | 1, WriteValue.encode(0, false, false));
-
-    return this;
+  public MutationBuilder(byte[] row) {
+    mutation = new Mutation(row);
   }
 
-  Mutation build() {
+  /**
+   * 
+   * @param value Will be encoded using UTF-8
+   * @return
+   */
+  public MutationBuilder put(Column col, CharSequence value) {
+    return put(col, value.toString().getBytes(StandardCharsets.UTF_8));
+  }
+  
+  public MutationBuilder put(Column col, Text value) {
+    return put(col, ByteUtil.toBytes(value));
+  }
+  
+  public MutationBuilder put(Column col, Bytes value) {
+    return put(col, value.toArray());
+  }
+
+  public MutationBuilder put(Column col, byte[] value) {
+    Flutation.put(mutation, col, ColumnConstants.DATA_PREFIX | 0, value);
+    Flutation.put(mutation, col, ColumnConstants.WRITE_PREFIX | 1, WriteValue.encode(0, false, false));
+    return this;
+  }
+  
+  public Mutation build() {
     Mutation ret = mutation;
     mutation = null;
     return ret;

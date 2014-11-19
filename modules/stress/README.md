@@ -72,19 +72,30 @@ where:
 fluoProps   = Path to fluo.properties
 num tablets = Num tablets to create for lowest level of tree.  May create less tablets for higher levels.
 ```
-
-After generating random numbers, load them into Fluo with the following
-command.  This command starts a map reduce job that executes load transactions.
-Loading the same directory multiple times should not result in incorrect
-counts.
+After generating random numbers, load them into Fluo with one of the following
+commands.  When the Fluo table is empty, you can use the command below to
+initialize it using map reduce.  This simulates the case where a user has a lot
+of initial data to load into Fluo.  This command should only be run when the
+table is empty because it writes directly to the Fluo table w/o using
+transactions.  
 
 ```
-yarn jar <jarPath> io.fluo.stress.trie.Load <node size> <fluo props> <input dir>
+yarn jar <jarPath> io.fluo.stress.trie.Init <nodeSize> <fluo props> <input dir> <tmp dir>
 
 where:
 
 input dir = A directory with file created by io.fluo.stress.trie.Generate
 node size = Size of node in bits which must be a divisor of 32/64
+tmp dir   = This command runs two map reduce jobs and needs an intermediate directory to store data.
+```
+
+While `Init`requires an empty Fluo table, `Load` can be run on a table with
+existing data. It starts a map reduce job that executes load transactions.
+Loading the same directory multiple times should not result in incorrect
+counts.
+
+```
+yarn jar <jarPath> io.fluo.stress.trie.Load <node size> <fluo props> <input dir>
 ```
 
 After loading data, run the following command to check the status of the
@@ -109,15 +120,42 @@ yarn jar <jarPath> io.fluo.stress.trie.Unique <input dir>{ <input dir>}
 ```
 
 Using these commands, one should be able to execute a test like the following.
-This test scenario excercise incremental loading of data and reloading data.
+This test scenario loads a lot of data directly into Accumulo w/o transactions
+and then incrementally loads smaller amounts of data using transactions.
+ 
+```bash
+#!/bin/bash
+STRESS_JAR=/changeme/fluo-stress-1.0.0-beta-1-SNAPSHOT-jar-with-dependencies.jar
+FLUO_PROPS=$FLUO_HOME/conf/fluo.properties
+NODE_SIZE=8
+MAX=$((10**9))
+SPLITS=68
+MAPS=17
+REDUCES=17
+GEN_INIT=$((10**6))
+GEN_INCR=$((10**3))
 
- 1. Generate 10,000 random numbers between 0 and 10^6 storing in DIR1
- 2. Load DIR1 into Fluo
- 3. Generate 10,000 random numbers between 0 and 10^6 storing in DIR2
- 4. Load DIR2 into Fluo
- 5. Run Print to see number of unique integers in fluo
- 6. Run Unique map reduce job on DIR1 and DIR2 to see expected number of unique integers
- 7. Load DIR1 into Fluo
- 8. Verify number of unique did not change
+hadoop fs -rm -r /stress/
+#add splits to Fluo table
+java -cp $STRESS_JAR io.fluo.stress.trie.Split $FLUO_PROPS $SPLITS
 
+#generate and load intial data using map reduce writing directly to table
+yarn jar $STRESS_JAR io.fluo.stress.trie.Generate $MAPS $((GEN_INIT / MAPS)) $MAX /stress/init
+yarn jar $STRESS_JAR io.fluo.stress.trie.Init -Dmapreduce.job.reduces=$REDUCES $NODE_SIZE $FLUO_PROPS\ 
+         /stress/init /stress/initTmp
+hadoop fs -rm -r /stress/initTmp
+
+#load data incrementally
+for i in {1..10}; do
+  yarn jar $STRESS_JAR io.fluo.stress.trie.Generate $MAPS $((GEN_INCR / MAPS)) $MAX /stress/$i
+  yarn jar $STRESS_JAR io.fluo.stress.trie.Load $NODE_SIZE $FLUO_PROPS /stress/$i
+  #TODO could reload the same dataset sometimes, maybe when i%5 == 0 or something
+  sleep 30
+done
+
+#print unique counts 
+yarn jar $STRESS_JAR io.fluo.stress.trie.Unique -Dmapreduce.job.reduces=$REDUCES /stress/*
+java -cp $STRESS_JAR io.fluo.stress.trie.Print $FLUO_PROPS $NODE_SIZE
+
+```
 

@@ -70,6 +70,8 @@ public class Load extends Configured implements Tool {
 
     Job job = Job.getInstance(getConf());
 
+    job.setJobName(Load.class.getName());
+    
     job.setJarByClass(Load.class);
 
     job.getConfiguration().setInt(TRIE_NODE_SIZE_PROP, nodeSize);
