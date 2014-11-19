@@ -23,7 +23,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.fluo.core.metrics.MetricNames;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
@@ -277,8 +276,8 @@ public class OracleClient {
   private OracleClient(Environment env) throws Exception {
     this.env = env;
 
-    responseTimer = env.getSharedResources().getMetricRegistry().timer(MetricNames.ORACLE_CLIENT_GET_STAMPS);
-    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(MetricNames.ORCALE_CLIENT_STAMPS);
+    responseTimer = env.getSharedResources().getMetricRegistry().timer(env.getMeticNames().getOracleClientGetStamps());
+    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(env.getMeticNames().getOrcaleClientStamps());
 
     // TODO make thread exit if idle for a bit, and start one when request arrives
     Thread thread = new Thread(new TimestampRetriever());

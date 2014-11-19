@@ -30,7 +30,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.metrics.MetricNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public class NotificationProcessor implements AutoCloseable {
         queue);
     this.tracker = new NotificationTracker();
     this.observers = new Observers(env);
-    env.getSharedResources().getMetricRegistry().register(MetricNames.NOTIFICATION_QUEUED, new Gauge<Integer>() {
+    env.getSharedResources().getMetricRegistry().register(env.getMeticNames().getNotificationQueued(), new Gauge<Integer>() {
       @Override
       public Integer getValue() {
         return queue.size();

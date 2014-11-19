@@ -73,7 +73,7 @@ public class WorkTask implements Runnable {
           break;
         } finally {
           if (txi != null) {
-            txi.getStats().report(status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
+            txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
             if (TxLogger.isLoggingEnabled())
               TxLogger.logTx(status.toString(), observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
           }

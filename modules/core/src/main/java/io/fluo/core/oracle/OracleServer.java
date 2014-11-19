@@ -19,8 +19,6 @@ import java.net.InetSocketAddress;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import io.fluo.core.metrics.MetricNames;
-
 import com.codahale.metrics.Histogram;
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.LongUtil;
@@ -96,7 +94,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public OracleServer(Environment env) throws Exception {
     this.env = env;
 
-    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(MetricNames.ORACLE_SERVER_STAMPS);
+    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(env.getMeticNames().getOracleServerStamps());
 
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;

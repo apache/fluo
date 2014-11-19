@@ -22,12 +22,14 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.LogbackUtil;
 import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationFinderFactory;
 import io.fluo.core.worker.NotificationProcessor;
 import io.fluo.metrics.config.Reporters;
 import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +72,11 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       if (!config.hasRequiredWorkerProps()) {
         log.error("fluo.properties is missing required properties for worker");
         System.exit(-1);
+      }
+ 
+      TwillContext context = getContext();
+      if(context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null){
+        System.setProperty(MetricNames.METRICS_ID_PROP, "worker-"+context.getInstanceId());
       }
       
       try (Environment env = new Environment(config);
