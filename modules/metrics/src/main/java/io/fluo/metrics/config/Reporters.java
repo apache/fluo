@@ -86,7 +86,7 @@ public class Reporters implements AutoCloseable {
       for (ReporterFactory reporterFactory : reporters) {
         ScheduledReporter reporter = reporterFactory.build(registry);
         reporter.start(metricsFactory.getFrequency().toMilliseconds(), TimeUnit.MILLISECONDS);
-        log.info("Started reporter " + reporter.getClass().getName());
+        log.debug("Started reporter " + reporter.getClass().getName());
         reporterList.add(reporter);
       }
     }
@@ -96,7 +96,7 @@ public class Reporters implements AutoCloseable {
       domain = FluoConfiguration.FLUO_PREFIX;
     JmxReporter jmxReporter = JmxReporter.forRegistry(registry).inDomain(domain).build();
     jmxReporter.start();
-    log.info("Started reporter " + jmxReporter.getClass().getName());
+    log.debug("Started reporter " + jmxReporter.getClass().getName());
     reporterList.add(jmxReporter);
 
     return reporterList;

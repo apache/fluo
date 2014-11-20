@@ -40,6 +40,9 @@ local)
 mini)
   "$bin"/impl/mini.sh "${*:2}"
 	;;
+scan)
+  "$bin"/impl/scan.sh "${*:2}"
+	;;
 *)
 	echo -e "Usage: fluo <command> (<argument>)\n"
   echo -e "Possible commands:\n"
@@ -47,6 +50,7 @@ mini)
 	echo "  yarn      Administers Fluo instance in YARN"
 	echo "  local     Administers Fluo instance on local machine"
 	echo "  mini      Administers MiniFluo instance"
+	echo "  scan      Prints snapshot of data in Fluo instance"
   echo " " 
 	exit 1
 esac

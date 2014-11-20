@@ -152,6 +152,10 @@ fluo yarn info
 You can also use `yarn application -list` to check the status of your Fluo instance
 in YARN.  Logs are viewable within YARN.  
 
+When you have data in your fluo instance, you can view it using the command `fluo scan`.
+Pipe the output to `less` using the command `fluo scan | less` if you want to page 
+through the data.
+
 If you do not have YARN set up, you can start a local Fluo process using
 the following commands:
 ```
