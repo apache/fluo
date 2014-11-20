@@ -26,6 +26,7 @@ import java.util.List;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.core.TestBaseMini;
 import io.fluo.stress.trie.Generate;
+import io.fluo.stress.trie.Init;
 import io.fluo.stress.trie.Load;
 import io.fluo.stress.trie.NodeObserver;
 import io.fluo.stress.trie.Print;
@@ -50,13 +51,19 @@ public class TrieMapRedIT extends TestBaseMini {
     int ret = ToolRunner.run(new Generate(), new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", "" + numMappers,
         numPerMapper + "", max + "", out1.toURI().toString()});
     Assert.assertEquals(0, ret);
-
   }
 
-  private void load(int nodeSize, File fluoPropsFile, File out1) throws Exception {
-    int ret = ToolRunner.run(new Load(),
- new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", nodeSize + "",
-        fluoPropsFile.getAbsolutePath(), out1.toURI().toString()});
+  private void load(int nodeSize, File fluoPropsFile, File input) throws Exception {
+    int ret = ToolRunner
+        .run(new Load(), new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", nodeSize + "", fluoPropsFile.getAbsolutePath(),
+            input.toURI().toString()});
+    Assert.assertEquals(0, ret);
+  }
+
+  private void init(int nodeSize, File fluoPropsFile, File input, File tmp) throws Exception {
+    int ret = ToolRunner
+        .run(new Init(), new String[] {"-D", "mapred.job.tracker=local", "-D", "fs.defaultFS=file:///", nodeSize + "", fluoPropsFile.getAbsolutePath(),
+            input.toURI().toString(), tmp.toURI().toString()});
     Assert.assertEquals(0, ret);
   }
 
@@ -74,8 +81,6 @@ public class TrieMapRedIT extends TestBaseMini {
 
   @Test
   public void testIngest() throws Exception {
-    // runMapRedTest(2, 10, 4);
-
     File testDir = new File("target/MRIT");
     FileUtils.deleteQuietly(testDir);
     testDir.mkdirs();
@@ -88,7 +93,7 @@ public class TrieMapRedIT extends TestBaseMini {
     File out1 = new File(testDir, "nums-1");
 
     generate(2, 100, 500, out1);
-    load(8, fluoPropsFile, out1);
+    init(8, fluoPropsFile, out1, new File(testDir, "initTmp"));
     int ucount = unique(out1);
 
     Assert.assertTrue(ucount > 0);
@@ -114,5 +119,15 @@ public class TrieMapRedIT extends TestBaseMini {
     miniFluo.waitForObservers();
 
     Assert.assertEquals(new Print.Stats(0, ucount2, false), Print.getStats(config, 8));
+    
+    File out3 = new File(testDir, "nums-3");
+    generate(2, 100, 500, out3);
+    load(8, fluoPropsFile, out3);
+    int ucount3 = unique(out1, out2, out3);
+    Assert.assertTrue(ucount3 > ucount2); // used > because the probability that no new numbers are chosen is exceedingly small
+
+    miniFluo.waitForObservers();
+
+    Assert.assertEquals(new Print.Stats(0, ucount3, false), Print.getStats(config, 8));
   }
 }
