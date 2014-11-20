@@ -27,7 +27,7 @@ class TabletData {
       if(sleepTime == 0)
         sleepTime = 100;
       else if (sleepTime < ScanTask.MAX_SLEEP_TIME)
-        sleepTime = sleepTime + (long) (sleepTime * Math.random());
+        sleepTime = (long) (1.5 * sleepTime) + (long) (sleepTime * Math.random());
     } else {
       retryTime = 0;
       sleepTime = 0;

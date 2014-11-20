@@ -53,6 +53,8 @@ class ScanTask implements Runnable {
   private final AtomicBoolean stopped;
   private final TabletInfoCache<TabletData,Supplier<TabletData>> tabletInfoCache;
   private final Environment env;
+
+  static long MIN_SLEEP_TIME = 5000;
   static long MAX_SLEEP_TIME = 5 * 60 * 1000;
   static long STABALIZE_TIME = 10 * 1000;
 
@@ -68,8 +70,16 @@ class ScanTask implements Runnable {
   }
  
   public void run() {
+    
+    int qSize = hwf.getWorkerQueue().size();
+    
     while(!stopped.get()){
       try{
+         
+        while(hwf.getWorkerQueue().size() > qSize/2 && !stopped.get()){
+          UtilWaitThread.sleep(50, stopped);
+        }
+
         // break scan work into a lot of ranges that are randomly ordered. This has a few benefits. Ensures different workers are scanning different tablets.
         // Allows checking local state more frequently in the case where work is not present in many tablets. Allows less frequent scanning of tablets that are
         // usually empty.
@@ -101,11 +111,12 @@ class ScanTask implements Runnable {
           waitForFindersToStabalize();
         }
         
-        long sleepTime = Math.max(0, minRetryTime - System.currentTimeMillis());
+        long sleepTime = Math.max(MIN_SLEEP_TIME, minRetryTime - System.currentTimeMillis());
         
-        log.debug("Scanned {} of {} tablets, found {} new notifications, sleeping {} ", tabletsScanned, tablets.size(), notifications, sleepTime);
-        
-        UtilWaitThread.sleep(sleepTime, stopped);  
+        qSize = hwf.getWorkerQueue().size();
+        log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})", tabletsScanned, tablets.size(), notifications, qSize);
+
+        UtilWaitThread.sleep(sleepTime, stopped);
         
       }catch(Exception e){
         if(isInterruptedException(e))
