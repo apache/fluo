@@ -31,6 +31,8 @@ public class NodeObserver extends AbstractObserver {
   
   private static final Logger log = LoggerFactory.getLogger(NodeObserver.class);
 
+  private int stopLevel = 0;
+  
   @Override
   public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
     
@@ -45,7 +47,7 @@ public class NodeObserver extends AbstractObserver {
       
       try {
         Node node = new Node(row.toString());
-        if (node.isRoot() == false) {
+        if (node.getLevel() > stopLevel) {
           Node parent = node.getParent();
           Integer parentWait = ttx.get().row(parent.getRowId()).col(Constants.COUNT_WAIT_COL).toInteger(0);
           ttx.mutate().row(parent.getRowId()).col(Constants.COUNT_WAIT_COL).set(parentWait + childWait);
@@ -56,7 +58,12 @@ public class NodeObserver extends AbstractObserver {
       } 
     }
   }
-    
+  
+  @Override
+  public void init(Context context) throws Exception {
+    stopLevel = context.getAppConfiguration().getInt(Constants.STOP_LEVEL_PROP);
+  }
+  
   @Override
   public ObservedColumn getObservedColumn() {
     return new ObservedColumn(Constants.COUNT_WAIT_COL, NotificationType.STRONG);

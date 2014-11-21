@@ -17,9 +17,7 @@
 package io.fluo.stress.trie;
 
 import java.io.File;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
@@ -28,75 +26,69 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.Span;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.api.types.TypedSnapshot;
 import org.apache.commons.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Print {
 
-  private static final Logger log = LoggerFactory.getLogger(Print.class);
-
   public static class Stats {
-    public int totalWait = 0;
-    public int rootValue = 0;
+    public long totalWait = 0;
+    public long totalSeen = 0;
+    public long nodes;
     public boolean sawOtherNodes = false;
-    public Map<Integer,Integer> levelWait = new TreeMap<>();
-    public Map<Integer,Integer> nodesPerLevel = new TreeMap<>();
 
     public Stats() {
 
     }
 
-    public Stats(int tw, int rv, boolean son) {
+    public Stats(long tw, long ts, boolean son) {
       this.totalWait = tw;
-      this.rootValue = rv;
+      this.totalSeen = ts;
       this.sawOtherNodes = son;
     }
 
+    public Stats(long tw, long ts, long nodes, boolean son) {
+      this.totalWait = tw;
+      this.totalSeen = ts;
+      this.nodes = nodes;
+      this.sawOtherNodes = son;
+    }
+    
     @Override
     public boolean equals(Object o) {
       if (o instanceof Stats) {
         Stats os = (Stats) o;
 
-        return totalWait == os.totalWait && rootValue == os.rootValue && sawOtherNodes == os.sawOtherNodes && levelWait.equals(os.levelWait)
-            && nodesPerLevel.equals(os.nodesPerLevel);
+        return totalWait == os.totalWait && totalSeen == os.totalSeen &&  sawOtherNodes == os.sawOtherNodes;
       }
 
       return false;
     }
-
-    public void incrementLevelWait(int level, int amt) {
-      Integer current = levelWait.get(level);
-      if (current == null)
-        current = 0;
-      levelWait.put(level, current + amt);
-
-      current = nodesPerLevel.get(level);
-      if (current == null)
-        current = 0;
-      nodesPerLevel.put(level, current + 1);
-    }
-
   }
 
-  public static Stats getStats(Configuration config, int nodeSize) throws Exception {
+  public static Stats getStats(Configuration config) throws Exception {
 
     try (FluoClient client = FluoFactory.newClient(config); Snapshot snap = client.newSnapshot()) {
 
+      int level = client.getAppConfiguration().getInt(Constants.STOP_LEVEL_PROP);
+      int nodeSize = client.getAppConfiguration().getInt(Constants.NODE_SIZE_PROP);
+      
       ScannerConfiguration scanConfig = new ScannerConfiguration();
+      scanConfig.setSpan(Span.prefix(String.format("%02d:", level)));
+      scanConfig.fetchColumn(Constants.COUNT_SEEN_COL.getFamily(), Constants.COUNT_SEEN_COL.getQualifier());
       scanConfig.fetchColumn(Constants.COUNT_WAIT_COL.getFamily(), Constants.COUNT_WAIT_COL.getQualifier());
 
       RowIterator rowIter = snap.get(scanConfig);
 
-      int totalWait = 0;
+      long totalSeen = 0;
+      long totalWait = 0;
 
       int otherNodeSizes = 0;
-
-      Stats stats = new Stats();
-
+      
+      long nodes = 0;
+      
       while (rowIter.hasNext()) {
         Entry<Bytes,ColumnIterator> rowEntry = rowIter.next();
         String row = rowEntry.getKey().toString();
@@ -104,47 +96,38 @@ public class Print {
 
         if (node.getNodeSize() == nodeSize) {
           ColumnIterator colIter = rowEntry.getValue();
-          while (colIter.hasNext()) {
-            Entry<Column,Bytes> col = colIter.next();
-            int wait = Integer.parseInt(col.getValue().toString());
-            totalWait += wait;
-            stats.incrementLevelWait(node.getLevel(), wait);
+          while(colIter.hasNext()){
+            Entry<Column,Bytes> colEntry = colIter.next();
+            if(colEntry.getKey().equals(Constants.COUNT_SEEN_COL)){
+              totalSeen += Long.parseLong(colEntry.getValue().toString());
+            }else{
+              totalWait += Long.parseLong(colEntry.getValue().toString());
+            }
           }
+          
+          nodes++;
         } else {
           otherNodeSizes++;
         }
       }
-
-      String rootRow = Node.generateRootId(nodeSize);
-      TypedSnapshot tsnap = Constants.TYPEL.wrap(snap);
-
-      stats.totalWait = totalWait;
-      stats.rootValue = tsnap.get().row(rootRow).col(Constants.COUNT_SEEN_COL).toInteger(0);
-      stats.sawOtherNodes = otherNodeSizes != 0;
-
-      return stats;
+      
+      return new Stats(totalWait, totalSeen, nodes, otherNodeSizes != 0);
     }
 
   }
 
   public static void main(String[] args) throws Exception {
 
-    if (args.length != 2) {
-      log.error("Usage: " + Print.class.getSimpleName() + "<fluo props> <node size>");
+    if (args.length != 1) {
+      System.err.println("Usage: " + Print.class.getSimpleName() + " <fluo props>");
       System.exit(-1);
     }
+    
+    Stats stats = getStats(new FluoConfiguration(new File(args[0])));
 
-    int nodeSize = Integer.parseInt(args[1]);
-
-    System.out.println("Scanning wait column ....");
-    Stats stats = getStats(new FluoConfiguration(new File(args[0])), nodeSize);
-
-    for (Entry<Integer,Integer> entry : stats.levelWait.entrySet()) {
-      System.out.println("Level " + entry.getKey() + " wait : " + entry.getValue() + " #nodes:" + stats.nodesPerLevel.get(entry.getKey()));
-    }
-
-    System.out.println("Total wait : " + stats.totalWait);
-    System.out.println("Root value : " + stats.rootValue);
+    System.out.println("Total at root : " + (stats.totalSeen + stats.totalWait));
+    System.out.println("Nodes Scanned : " + stats.nodes);
+    
     if (stats.sawOtherNodes) {
       System.err.println("WARN : Other node sizes were seen and ignored.");
     }

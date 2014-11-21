@@ -39,7 +39,7 @@ public class Node {
   public Node(String rowId) {
     String[] rowArgs = rowId.split(":");
     checkArgument(validRowId(rowArgs), "Invalid row id - "+ rowId);
-    this.level = Integer.parseInt(rowArgs[1]);
+    this.level = Integer.parseInt(rowArgs[0]);
     this.nodeSize = Integer.parseInt(rowArgs[2]);
     this.number = parseNumber(rowArgs[3]);
   }
@@ -81,12 +81,12 @@ public class Node {
   
   public String getRowId() {
     if (level == 0) {
-      return String.format("%s:00:%02d:root", genHash(), nodeSize); 
+      return String.format("00:%s:%02d:root", genHash(), nodeSize); 
     } else { 
       if (number instanceof Integer) {
-        return String.format("%s:%02d:%02d:%08x", genHash(), level, nodeSize, number);
+        return String.format("%02d:%s:%02d:%08x", level, genHash(), nodeSize, number);
       } else {
-        return String.format("%s:%02d:%02d:%016x", genHash(), level, nodeSize, number);
+        return String.format("%02d:%s:%02d:%016x", level, genHash(), nodeSize, number);
       }
     }
   }

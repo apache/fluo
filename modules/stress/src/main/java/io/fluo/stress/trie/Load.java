@@ -39,42 +39,30 @@ public class Load extends Configured implements Tool {
 
   private static final Logger log = LoggerFactory.getLogger(Load.class);
 
-  public static final String TRIE_NODE_SIZE_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.node.size";
-
   public static class LoadMapper extends Mapper<LongWritable,NullWritable,Loader,NullWritable> {
-
-    private int nodeSize;
-
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-      nodeSize = context.getConfiguration().getInt(TRIE_NODE_SIZE_PROP, 0);
-    }
 
     @Override
     protected void map(LongWritable key, NullWritable val, Context context) throws IOException, InterruptedException {
-      context.write(new NumberLoader(key.get(), nodeSize), val);
+      context.write(new NumberLoader(key.get()), val);
     }
   }
 
   @Override
   public int run(String[] args) throws Exception {
 
-    if (args.length != 3) {
-      log.error("Usage: " + this.getClass().getSimpleName() + "<nodeSize> <fluoProps> <input dir>");
+    if (args.length != 2) {
+      log.error("Usage: " + this.getClass().getSimpleName() + "<fluoProps> <input dir>");
       System.exit(-1);
     }
 
-    int nodeSize = Integer.parseInt(args[0]);
-    FluoConfiguration props = new FluoConfiguration(new File(args[1]));
-    Path input = new Path(args[2]);
+    FluoConfiguration props = new FluoConfiguration(new File(args[0]));
+    Path input = new Path(args[1]);
 
     Job job = Job.getInstance(getConf());
 
     job.setJobName(Load.class.getName());
     
     job.setJarByClass(Load.class);
-
-    job.getConfiguration().setInt(TRIE_NODE_SIZE_PROP, nodeSize);
 
     job.setInputFormatClass(SequenceFileInputFormat.class);
     SequenceFileInputFormat.addInputPath(job, input);

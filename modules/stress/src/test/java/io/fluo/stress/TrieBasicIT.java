@@ -26,9 +26,11 @@ import io.fluo.api.types.TypedSnapshot;
 import io.fluo.core.TestBaseMini;
 import io.fluo.core.client.LoaderExecutorImpl;
 import io.fluo.core.impl.Environment;
+import io.fluo.stress.trie.Constants;
 import io.fluo.stress.trie.Node;
 import io.fluo.stress.trie.NodeObserver;
 import io.fluo.stress.trie.NumberLoader;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -47,6 +49,11 @@ public class TrieBasicIT extends TestBaseMini {
   @Override
   protected List<ObserverConfiguration> getObservers() {
     return Collections.singletonList(new ObserverConfiguration(NodeObserver.class.getName()));
+  }
+  
+  @Override
+  protected void setAppConfig(Configuration config){
+    config.setProperty(Constants.STOP_LEVEL_PROP, 0);
   }
   
   @Test

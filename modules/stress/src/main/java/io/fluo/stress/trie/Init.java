@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 
+import io.fluo.api.client.FluoClient;
+import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.RowColumn;
@@ -46,6 +48,9 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class Init  extends Configured implements Tool {
 
+  public static final String TRIE_STOP_LEVEL_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.stopLevel";
+  public static final String TRIE_NODE_SIZE_PROP = FluoConfiguration.FLUO_PREFIX + ".stress.trie.node.size";
+  
   public static class UniqueReducer extends Reducer<LongWritable,NullWritable,LongWritable,NullWritable>{
     @Override
     protected void reduce(LongWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {      
@@ -56,6 +61,7 @@ public class Init  extends Configured implements Tool {
   
   public static class InitMapper extends Mapper<LongWritable,NullWritable,Text,LongWritable> {
 
+    private int stopLevel;
     private int nodeSize;
     private static final LongWritable ONE = new LongWritable(1);
     
@@ -63,7 +69,8 @@ public class Init  extends Configured implements Tool {
     
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-      nodeSize = context.getConfiguration().getInt(Load.TRIE_NODE_SIZE_PROP, 0);
+      nodeSize = context.getConfiguration().getInt(TRIE_NODE_SIZE_PROP, 0);
+      stopLevel = context.getConfiguration().getInt(TRIE_STOP_LEVEL_PROP, 0);
     }
 
     @Override
@@ -72,7 +79,7 @@ public class Init  extends Configured implements Tool {
       while (node != null) {
         outputKey.set(node.getRowId());
         context.write(outputKey, ONE);
-        if (node.isRoot())
+        if (node.getLevel() <= stopLevel)
           node = null;
         else
           node = node.getParent();
@@ -110,24 +117,30 @@ public class Init  extends Configured implements Tool {
       context.write(rowCol, Bytes.wrap(sum+""));
     }
   }
-  
+
   @Override
   public int run(String[] args) throws Exception {
-    if (args.length != 4) {
-      System.err.println("Usage: " + this.getClass().getSimpleName() + " <nodeSize> <fluoProps> <input dir> <tmp dir>");
+    if (args.length != 3) {
+      System.err.println("Usage: " + this.getClass().getSimpleName() + " <fluoProps> <input dir> <tmp dir>");
       System.exit(-1);
     }
 
-    int nodeSize = Integer.parseInt(args[0]);
-    FluoConfiguration props = new FluoConfiguration(new File(args[1]));
-    Path input = new Path(args[2]);
-    Path tmp = new Path(args[3]);
+    FluoConfiguration props = new FluoConfiguration(new File(args[0]));
+    Path input = new Path(args[1]);
+    Path tmp = new Path(args[2]);
+    
+    int stopLevel;
+    int nodeSize;
+    try(FluoClient client = FluoFactory.newClient(props)){
+      nodeSize = client.getAppConfiguration().getInt(Constants.NODE_SIZE_PROP);
+      stopLevel = client.getAppConfiguration().getInt(Constants.STOP_LEVEL_PROP);
+    }
     
     int ret = unique(input, new Path(tmp,"nums"));
     if(ret != 0)
       return ret;
     
-    return buildTree(nodeSize, props, tmp);
+    return buildTree(nodeSize, props, tmp, stopLevel);
   }
 
   private int unique(Path input, Path tmp) throws Exception {
@@ -152,7 +165,7 @@ public class Init  extends Configured implements Tool {
     
   }
 
-  private int buildTree(int nodeSize, FluoConfiguration props, Path tmp) throws Exception {
+  private int buildTree(int nodeSize, FluoConfiguration props, Path tmp, int stopLevel) throws Exception {
     Job job = Job.getInstance(getConf());
 
     job.setJarByClass(Init.class);
@@ -162,7 +175,8 @@ public class Init  extends Configured implements Tool {
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(LongWritable.class);
     
-    job.getConfiguration().setInt(Load.TRIE_NODE_SIZE_PROP, nodeSize);
+    job.getConfiguration().setInt(TRIE_NODE_SIZE_PROP, nodeSize);
+    job.getConfiguration().setInt(TRIE_STOP_LEVEL_PROP, stopLevel);
 
     job.setInputFormatClass(SequenceFileInputFormat.class);
     SequenceFileInputFormat.addInputPath(job, new Path(tmp, "nums"));
