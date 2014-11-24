@@ -18,6 +18,8 @@ package io.fluo.core.client;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
+import io.fluo.api.client.FluoAdmin.InitOpts;
+import io.fluo.api.client.FluoAdmin.TableExistsException;
 import io.fluo.core.TestBaseImpl;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.CuratorFramework;
@@ -30,34 +32,46 @@ import static org.junit.Assert.fail;
 public class FluoAdminImplIT extends TestBaseImpl {
 
   @Test
-  public void testInitializeTwiceFails() throws FluoAdmin.AlreadyInitializedException {
+  public void testInitializeTwiceFails() throws AlreadyInitializedException, TableExistsException {
 
     FluoAdmin fluoAdmin = new FluoAdminImpl(config);
 
-    config.setAllowReinitialize(true);
+    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+    
+    fluoAdmin.initialize(opts);
+    fluoAdmin.initialize(opts);
 
-    fluoAdmin.initialize();
-    fluoAdmin.initialize();
-
-    config.setAllowReinitialize(false);
+    opts.setClearZookeeper(false).setClearTable(false);
     try {
-      fluoAdmin.initialize();
+      fluoAdmin.initialize(opts);
       fail("This should have failed");
-    } catch(FluoAdmin.AlreadyInitializedException e) { }
+    } catch (AlreadyInitializedException e) { }
+    
+    opts.setClearZookeeper(false).setClearTable(true);
+    try {
+      fluoAdmin.initialize(opts);
+      fail("This should have failed");
+    } catch (AlreadyInitializedException e) { }
+    
+    opts.setClearZookeeper(true).setClearTable(false);
+    try {
+      fluoAdmin.initialize(opts);
+      fail("This should have failed");
+    } catch (TableExistsException e) { }
 
     assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
   }
 
   @Test
-  public void testInitializeWithNoChroot() throws AlreadyInitializedException {
+  public void testInitializeWithNoChroot() throws AlreadyInitializedException, TableExistsException {
 
-    config.setAllowReinitialize(true);
+    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
     
     for (String host : new String[]{"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
       config.setZookeepers(host);
       FluoAdmin fluoAdmin = new FluoAdminImpl(config);
       try {
-        fluoAdmin.initialize();
+        fluoAdmin.initialize(opts);
         fail("This should have failed");
       } catch (IllegalArgumentException e) { }
     }
@@ -68,11 +82,12 @@ public class FluoAdminImplIT extends TestBaseImpl {
 
     String zk = config.getZookeepers();
     String longPath = "/very/long/path";
-    config.setAllowReinitialize(true);
     config.setZookeepers(zk + longPath);
 
     FluoAdmin fluoAdmin = new FluoAdminImpl(config);
-    fluoAdmin.initialize();
+    InitOpts opts = new InitOpts();
+    opts.setClearZookeeper(true).setClearTable(true);
+    fluoAdmin.initialize(opts);
     
     try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();
@@ -83,7 +98,7 @@ public class FluoAdminImplIT extends TestBaseImpl {
     config.setZookeepers(zk + longPath2);
 
     fluoAdmin = new FluoAdminImpl(config);
-    fluoAdmin.initialize();
+    fluoAdmin.initialize(opts);
     
     try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();

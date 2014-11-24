@@ -37,7 +37,6 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT, base.getZookeeperTimeout());
     Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
     Assert.assertEquals(FluoConfiguration.CLIENT_CLASS_DEFAULT, base.getClientClass());
-    Assert.assertEquals(FluoConfiguration.ADMIN_ALLOW_REINITIALIZE_DEFAULT, base.getAllowReinitialize());
     Assert.assertEquals(FluoConfiguration.ADMIN_CLASS_DEFAULT, base.getAdminClass());
     Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT, base.getAccumuloClasspath());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
@@ -86,7 +85,6 @@ public class FluoConfigurationTest {
     Assert.assertEquals("table", config.setAccumuloTable("table").getAccumuloTable());
     Assert.assertEquals("user", config.setAccumuloUser("user").getAccumuloUser());
     Assert.assertEquals("admin", config.setAdminClass("admin").getAdminClass());
-    Assert.assertTrue(config.setAllowReinitialize(true).getAllowReinitialize());
     Assert.assertEquals("client", config.setClientClass("client").getClientClass());
     Assert.assertEquals(4, config.setLoaderQueueSize(4).getLoaderQueueSize());
     Assert.assertEquals(7, config.setLoaderThreads(7).getLoaderThreads());

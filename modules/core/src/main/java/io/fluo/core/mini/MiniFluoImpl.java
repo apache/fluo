@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.mini.MiniFluo;
@@ -148,7 +149,8 @@ public class MiniFluoImpl implements MiniFluo {
         config.setAccumuloTable("fluo");
       }
 
-      FluoFactory.newAdmin(config).initialize();
+      InitOpts opts = new InitOpts();
+      FluoFactory.newAdmin(config).initialize(opts);
       
       File miniProps = new File(clientPropsPath(config));
       PropertiesConfiguration connConfig = new PropertiesConfiguration();

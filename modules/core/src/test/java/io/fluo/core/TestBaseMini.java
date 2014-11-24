@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoAdmin;
+import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -92,8 +93,6 @@ public class TestBaseMini {
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
     config.setZookeepers(miniAccumulo.getZooKeepers() + zkRoot);
-    
-    config.setAllowReinitialize(true);
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
@@ -105,7 +104,8 @@ public class TestBaseMini {
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     
     FluoAdmin admin = FluoFactory.newAdmin(config);
-    admin.initialize();
+    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+    admin.initialize(opts);
    
     config.getAppConfiguration().clear();
     

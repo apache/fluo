@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoAdmin;
+import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
@@ -110,7 +111,8 @@ public class TestBaseImpl {
     curator.start();
     
     FluoAdmin admin = FluoFactory.newAdmin(config);
-    admin.initialize();
+    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+    admin.initialize(opts);
    
     client = FluoFactory.newClient(config);
 

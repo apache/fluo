@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.base.Preconditions;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
@@ -57,50 +58,50 @@ public class FluoAdminImpl implements FluoAdmin {
   }
   
   @Override
-  public void initialize() throws AlreadyInitializedException {
-    try {
-      
-      Preconditions.checkArgument(ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/") == false, 
-          "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
+  public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException {
+    Preconditions.checkArgument(ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/") == false, 
+        "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
 
-      /**
-       * Currently, getAllowReinitialize assumes the user is okay removing the table if a table with
-       * the given name already exists. This is not a long term solution, it was done for
-       */
-      Connector conn = AccumuloUtil.getConnector(config);
-      if (config.getAllowReinitialize()) {
+    if (zookeeperInitialized(config) && !opts.getClearZookeeper()) {
+      throw new AlreadyInitializedException("Fluo instance already initialized at " + config.getZookeepers());
+    }
 
-        // Remove accumulo table if it exists
-        if(conn.tableOperations().exists(config.getAccumuloTable())) {
-          logger.warn("Removing current table " + config.getAccumuloTable() + " because it already exists.");
-          conn.tableOperations().delete(config.getAccumuloTable());
-        }
-        
-        // Remove Zookeeper root node
-        try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-          curator.start();
-          try {
-            String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
-            curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
-            logger.info("Deleted zookeeper path - "+ config.getZookeepers());
-          } catch(KeeperException.NoNodeException nne) {
-          } catch(Exception e) {
-            logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
-            throw new RuntimeException(e);
-          }
-        }
-      } else {
-        if(conn.tableOperations().exists(config.getAccumuloTable())) {
-          logger.error("The specified Fluo table " + config.getAccumuloTable() + " already exists and " +
-              FluoConfiguration.ADMIN_ALLOW_REINITIALIZE_PROP +
-               " is set to false. Instance initialization failed.");
-        }
+    Connector conn = AccumuloUtil.getConnector(config);
+    boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
+    if (tableExists && !opts.getClearTable()) {
+      throw new TableExistsException("Accumulo table already exists " + config.getAccumuloTable());
+    }
+
+    // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
+
+    if (tableExists) {
+      logger.info("Accumulo table {} will be dropped and created as requested by user", config.getAccumuloTable());
+      try {
+        conn.tableOperations().delete(config.getAccumuloTable());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
+    }
 
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
+      curator.start();
+      try {
+        String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
+        if (curator.checkExists().forPath(zkRoot) != null) { 
+          logger.info("Clearing Fluo instance in Zookeeper at {}", config.getZookeepers());
+          curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
+        }
+      } catch(KeeperException.NoNodeException nne) {
+      } catch(Exception e) {
+        logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
+        throw new RuntimeException(e);
+      }
+    }
+
+    try {
       Operations.initialize(config, conn);
-
       updateSharedConfig();
-      
+
       if (!config.getAccumuloClasspath().trim().isEmpty()) {
         // TODO add fluo version to context name to make it unique
         String contextName = "fluo";
@@ -110,7 +111,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
       conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
     } catch (NodeExistsException nee) {
-      throw new AlreadyInitializedException(nee);
+      throw new AlreadyInitializedException();
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -174,5 +175,37 @@ public class FluoAdminImpl implements FluoAdmin {
       observers.put(observedCol.getColumn(), observerConfig);
     else
       weakObservers.put(observedCol.getColumn(), observerConfig);
+  }
+  
+  public static boolean oracleExists(FluoConfiguration config) {
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
+      curator.start();
+      try {
+        if (curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) == null) {
+          return false;
+        } else {
+          return !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    } 
+  }
+  
+  public static boolean zookeeperInitialized(FluoConfiguration config) {
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
+      curator.start();
+      String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
+      try {
+        return curator.checkExists().forPath(zkRoot) != null;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    } 
+  }
+  
+  public static boolean accumuloTableExists(FluoConfiguration config) {
+    Connector conn = AccumuloUtil.getConnector(config);
+    return conn.tableOperations().exists(config.getAccumuloTable());
   }
 }
