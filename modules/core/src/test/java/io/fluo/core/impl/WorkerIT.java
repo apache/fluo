@@ -17,7 +17,6 @@ package io.fluo.core.impl;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
@@ -62,7 +61,7 @@ public class WorkerIT extends TestBaseMini {
   public static class DegreeIndexer implements Observer {
 
     @Override
-    public void init(Map<String,String> config) {}
+    public void init(Context context) {}
 
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {

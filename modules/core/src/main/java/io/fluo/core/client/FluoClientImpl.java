@@ -25,6 +25,7 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.metrics.ReporterUtil;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,11 @@ public class FluoClientImpl implements FluoClient {
     return new TransactionImpl(env);
   }
 
+  @Override
+  public Configuration getAppConfiguration() {
+    return env.getAppConfiguration();
+  }
+  
   @Override
   public void close() {
     env.close();

@@ -15,14 +15,23 @@
  */
 package io.fluo.api.client;
 
+import org.apache.commons.configuration.Configuration;
+
 /**
  * Interface that is implemented by users to load data into Fluo. Loader classes are executed by a {@link LoaderExecutor}.
  */
 public interface Loader {
   
+  public static interface Context {
+    /**
+     * @return A configuration object with application configuration like that returned by {@link FluoClient#getAppConfiguration()}
+     */
+    public Configuration getAppConfiguration();
+  }
+  
   /**
    * Users implement this method to load data into Fluo using the provided {@link TransactionBase}. The transaction will be committed and closed by Fluo after
    * this method returns
    */
-  public void load(TransactionBase tx) throws Exception;
+  public void load(TransactionBase tx, Context context) throws Exception;
 }

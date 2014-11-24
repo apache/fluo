@@ -28,11 +28,13 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.base.Charsets;
+import io.fluo.api.client.FluoClient;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.SubsetConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +114,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String OBSERVER_PREFIX = FLUO_PREFIX + ".observer.";
   
   // Transaction 
-  private static final String TRANSACTION_PREFIX = FLUO_PREFIX + ".tx";
+  public static final String TRANSACTION_PREFIX = FLUO_PREFIX + ".tx";
   public static final String TRANSACTION_ROLLBACK_TIME_PROP = TRANSACTION_PREFIX + ".rollback.time";
   public static final long TRANSACTION_ROLLBACK_TIME_DEFAULT = 300000;
   
@@ -121,6 +123,9 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String METRICS_YAML_BASE64_DEFAULT = DatatypeConverter.printBase64Binary("---\nfrequency: 60 seconds\n".getBytes(Charsets.UTF_8))
       .replace("\n", "");
 
+  //application config
+  public static final String APP_PREFIX = FLUO_PREFIX + ".app";
+  
   public FluoConfiguration() {
     super();
     setThrowExceptionOnMissing(true);
@@ -392,6 +397,15 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getString(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 
+  /**
+   * @return A {@link SubsetConfiguration} using the prefix {@value #APP_PREFIX}. Any change made to subset will be reflected in this configuration, but with
+   *         the prefix added. This method is useful for setting application configuration before initialization. For reading application configration after
+   *         initialization, see {@link FluoClient#getAppConfiguration()}
+   */
+  public Configuration getAppConfiguration(){
+    return subset(APP_PREFIX);
+  }
+  
   /**
    * Base64 encodes yaml and stores it in metrics yaml base64 property
    * 

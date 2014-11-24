@@ -41,6 +41,7 @@ import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
+import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -77,10 +78,12 @@ public class TestBaseMini {
     return Collections.emptyList();
   }
 
+  protected void setAppConfig(Configuration config){
+    
+  }
+  
   @Before
   public void setUpFluo() throws Exception {
-    // TODO add helper code to make this shorter
-    
     String zkRoot = "/mini-test" + next.getAndIncrement();
     
     config = new FluoConfiguration();
@@ -97,11 +100,15 @@ public class TestBaseMini {
     config.setOraclePort(PortUtils.getRandomFreePort());
     config.setMiniStartAccumulo(false);
   
+    setAppConfig(config.getAppConfiguration());
+    
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     
     FluoAdmin admin = FluoFactory.newAdmin(config);
     admin.initialize();
    
+    config.getAppConfiguration().clear();
+    
     client = FluoFactory.newClient(config);
 
     miniFluo = FluoFactory.newMiniFluo(config);

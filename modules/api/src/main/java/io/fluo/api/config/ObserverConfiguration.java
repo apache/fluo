@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import io.fluo.api.observer.AbstractObserver;
+import io.fluo.api.observer.Observer;
 
 /**
  * Used to pass configuration to an {@link AbstractObserver}. Set using {@link FluoConfiguration#setObservers(java.util.List)}
@@ -35,6 +36,14 @@ public class ObserverConfiguration {
     return className;
   }
 
+  /**
+   * For configuration thats the same across multiple observers consider using Application configuration. 
+   * 
+   * @param params Parameters that should be passed to {@link Observer#init(io.fluo.api.observer.Observer.Context)}
+   * @return
+   * 
+   * @see FluoConfiguration#getAppConfiguration()
+   */
   public ObserverConfiguration setParameters(Map<String,String> params) {
     if (params == null)
       throw new IllegalArgumentException();

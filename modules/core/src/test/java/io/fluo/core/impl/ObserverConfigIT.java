@@ -45,11 +45,11 @@ public class ObserverConfigIT extends TestBaseMini {
     private boolean setWeakNotification = false;
 
     @Override
-    public void init(Map<String,String> config) {
-      String ocTokens[] = config.get("observedCol").split(":");
+    public void init(Context context) {
+      String ocTokens[] = context.getParameters().get("observedCol").split(":");
       observedColumn = new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(), NotificationType.valueOf(ocTokens[2]));
-      outputCQ = Bytes.wrap(config.get("outputCQ"));
-      String swn = config.get("setWeakNotification");
+      outputCQ = Bytes.wrap(context.getParameters().get("outputCQ"));
+      String swn = context.getParameters().get("setWeakNotification");
       if (swn != null && swn.equals("true"))
         setWeakNotification = true;
     }
