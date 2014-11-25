@@ -124,10 +124,11 @@ public class ScanTask implements Runnable {
         long sleepTime = Math.max(min_sleep_time, minRetryTime - System.currentTimeMillis());
         
         qSize = hwf.getWorkerQueue().size();
-        if(!stopped.get())
-          log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})", tabletsScanned, tablets.size(), notifications, qSize);
 
-        UtilWaitThread.sleep(sleepTime, stopped);
+        log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})", tabletsScanned, tablets.size(), notifications, qSize);
+        
+        if (!stopped.get())
+          UtilWaitThread.sleep(sleepTime, stopped);
         
       }catch(Exception e){
         if(isInterruptedException(e))
