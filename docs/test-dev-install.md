@@ -118,6 +118,9 @@ Due to MiniFluo starting its own cluster, it generates and writes a `client.prop
 file to its data directory.  This file can be used by Fluo clients to connect
 to the MiniFluo instance.
 
+When you have data in your fluo instance, you can view it using the command `fluo scan`.
+Pipe the output to `less` using the command `fluo scan | less` if you want to page 
+through the data.
 
 Stopping MiniFluo
 -----------------

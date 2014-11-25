@@ -25,6 +25,7 @@ import io.fluo.accumulo.iterators.SnapshotIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.config.ScannerConfiguration;
+import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
@@ -40,7 +41,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * 
+ * Allows users to iterate over entries of a {@link Snapshot} 
  */
 public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
@@ -73,7 +74,6 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     }
     scanner.clearColumns();
     scanner.clearScanIterators();
-    
     scanner.setRange(SpanUtil.toRange(config.getSpan()));
 
     setupScanner(scanner, config.getColumns(), startTs);
@@ -83,7 +83,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   static void setupScanner(ScannerBase scanner, List<Column> columns, long startTs) {
     for (Column col : columns) {
-      if (col.getQualifier() != null) {
+      if (!col.getQualifier().equals(Bytes.EMPTY)) {
         scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
       } else {
         scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));

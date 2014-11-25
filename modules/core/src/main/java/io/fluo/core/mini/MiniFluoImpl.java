@@ -117,6 +117,10 @@ public class MiniFluoImpl implements MiniFluo {
     }
   }
   
+  public static String clientPropsPath(FluoConfiguration config) {
+    return config.getMiniDataDir() + "/client.properties";
+  }
+  
   private void startMiniAccumulo() {
     try {
       // start mini accumulo cluster
@@ -141,7 +145,7 @@ public class MiniFluoImpl implements MiniFluo {
 
       FluoFactory.newAdmin(config).initialize();
       
-      File miniProps = new File(config.getMiniDataDir()+"/client.properties");
+      File miniProps = new File(clientPropsPath(config));
       PropertiesConfiguration connConfig = new PropertiesConfiguration();
       connConfig.append(config.getClientConfiguration());
       connConfig.save(miniProps);

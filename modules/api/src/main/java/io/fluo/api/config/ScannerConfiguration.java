@@ -63,8 +63,7 @@ public class ScannerConfiguration implements Cloneable {
    */
   public ScannerConfiguration fetchColumnFamily(Bytes fam) {
     Preconditions.checkNotNull(fam);
-    // TODO causes NPE w/ set, add unit test
-    columns.add(new Column(fam, null));
+    columns.add(new Column(fam));
     return this;
   }
 
