@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.google.common.base.Supplier;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.impl.Environment;
@@ -44,7 +45,7 @@ import org.apache.accumulo.core.iterators.user.VersioningIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ScanTask implements Runnable {
+public class ScanTask implements Runnable {
   
   private static final Logger log = LoggerFactory.getLogger(ScanTask.class);
   
@@ -54,10 +55,16 @@ class ScanTask implements Runnable {
   private final TabletInfoCache<TabletData,Supplier<TabletData>> tabletInfoCache;
   private final Environment env;
 
-  static long MIN_SLEEP_TIME = 5000;
-  static long MAX_SLEEP_TIME = 5 * 60 * 1000;
+  public static final String MIN_SLEEP_TIME_PROP = FluoConfiguration.FLUO_PREFIX+".impl."+ScanTask.class.getSimpleName()+".minSleep";
+  public static final String MAX_SLEEP_TIME_PROP = FluoConfiguration.FLUO_PREFIX+".impl."+ScanTask.class.getSimpleName()+".maxSleep";
+  
+  
   static long STABALIZE_TIME = 10 * 1000;
-
+  
+  private long min_sleep_time;
+  private long max_sleep_time;
+  
+  
   ScanTask(HashNotificationFinder hashWorkFinder, Environment env, AtomicBoolean stopped) {
     this.hwf = hashWorkFinder;
     this.tabletInfoCache = new TabletInfoCache<TabletData,Supplier<TabletData>>(env, new Supplier<TabletData>() {
@@ -67,6 +74,9 @@ class ScanTask implements Runnable {
       }});
     this.env = env;
     this.stopped = stopped;
+    
+    min_sleep_time = env.getConfiguration().getInt(MIN_SLEEP_TIME_PROP, 5000);
+    max_sleep_time = env.getConfiguration().getInt(MAX_SLEEP_TIME_PROP, 5 * 60 * 1000);
   }
  
   public void run() {
@@ -86,7 +96,7 @@ class ScanTask implements Runnable {
         List<TabletInfo<TabletData>> tablets = new ArrayList<>(tabletInfoCache.getTablets());
         Collections.shuffle(tablets, rand);
         
-        long minRetryTime = MAX_SLEEP_TIME + System.currentTimeMillis();
+        long minRetryTime = max_sleep_time + System.currentTimeMillis();
         int notifications = 0;
         int tabletsScanned = 0;
         try{
@@ -98,7 +108,7 @@ class ScanTask implements Runnable {
                 count = scan(modParams, tabletInfo.getRange());
                 tabletsScanned++;
               }
-              tabletInfo.getData().updateScanCount(count);
+              tabletInfo.getData().updateScanCount(count, max_sleep_time);
               notifications += count;
               if(stopped.get())
                 break;
@@ -111,10 +121,11 @@ class ScanTask implements Runnable {
           waitForFindersToStabalize();
         }
         
-        long sleepTime = Math.max(MIN_SLEEP_TIME, minRetryTime - System.currentTimeMillis());
+        long sleepTime = Math.max(min_sleep_time, minRetryTime - System.currentTimeMillis());
         
         qSize = hwf.getWorkerQueue().size();
-        log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})", tabletsScanned, tablets.size(), notifications, qSize);
+        if(!stopped.get())
+          log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})", tabletsScanned, tablets.size(), notifications, qSize);
 
         UtilWaitThread.sleep(sleepTime, stopped);
         
