@@ -218,4 +218,4 @@ were fixed.
 [Java]: https://www.oracle.com/java/index.html
 [release]: https://github.com/fluo-io/fluo/releases
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[fluo.properties]: modules/distribution/src/main/config/fluo.properties
+[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties

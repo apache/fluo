@@ -77,9 +77,9 @@ To create an observer, follow these steps:
 4. Restart your Fluo instance so that your Fluo workers load the new observer.
 
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[FluoFactory]: modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
-[FluoClient]: modules/api/src/main/java/io/fluo/api/client/FluoClient.java
-[FluoConfiguration]: modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
-[AbstractObserver]: modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
-[fluo.properties]: modules/distribution/src/main/config/fluo.properties
+[FluoFactory]: ../modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
+[FluoClient]: ../modules/api/src/main/java/io/fluo/api/client/FluoClient.java
+[FluoConfiguration]: ../modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
+[AbstractObserver]: ../modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
+[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: http://fluo.io/apidocs/
