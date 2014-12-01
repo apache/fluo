@@ -40,6 +40,47 @@ import org.slf4j.LoggerFactory;
  */
 public class Scan {
   
+  public static ScannerConfiguration buildScanConfig(ScanOptions options) {
+    ScannerConfiguration scanConfig = new ScannerConfiguration();
+    
+    if ((options.getExactRow() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getRowPrefix() != null))) {
+      throw new IllegalArgumentException("You cannot specify an exact row with a start/end row or row prefix!");
+    }
+    
+    if ((options.getRowPrefix() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getExactRow() != null))) {
+      throw new IllegalArgumentException("You cannot specify an prefix row with a start/end row or exact row!");
+    }
+    
+    // configure span of scanner
+    if (options.getExactRow() != null) {
+      scanConfig.setSpan(Span.exact(options.getExactRow()));
+    } else if (options.getRowPrefix() != null) {
+      scanConfig.setSpan(Span.prefix(options.getRowPrefix()));
+    } else {
+      if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
+        scanConfig.setSpan(new Span(options.getStartRow(), true, options.getEndRow(), true));
+      } else if (options.getStartRow() != null) { 
+        scanConfig.setSpan(new Span(Bytes.wrap(options.getStartRow()), true, Bytes.EMPTY, true));
+      } else if (options.getEndRow() != null) {
+        scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.wrap(options.getEndRow()), true));
+      }
+    }
+
+    // configure columns of scanner
+    for (String column : options.getColumns()) {
+      String[] colFields = column.split(":");
+      if (colFields.length == 1) {
+        scanConfig.fetchColumnFamily(Bytes.wrap(colFields[0]));
+      } else if (colFields.length == 2) {
+        scanConfig.fetchColumn(Bytes.wrap(colFields[0]), Bytes.wrap(colFields[1]));
+      } else {
+        throw new IllegalArgumentException("Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
+      }
+    }
+    
+    return scanConfig;
+  }
+  
   public static void main(String[] args) throws Exception {
     
     ScanOptions options = new ScanOptions();
@@ -91,44 +132,12 @@ public class Scan {
     try (FluoClient client = FluoFactory.newClient(chosenConfig)) {
       try (Snapshot s = client.newSnapshot()) {
         
-        ScannerConfiguration scanConfig = new ScannerConfiguration();
-        
-        if ((options.getExactRow() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getRowPrefix() != null))) {
-          System.err.println("You cannot specify an exact row with a start/end row or row prefix!");
+        ScannerConfiguration scanConfig = null;
+        try {
+          scanConfig = buildScanConfig(options);
+        } catch (IllegalArgumentException e) {
+          System.err.println(e.getMessage());
           System.exit(-1);
-        }
-        
-        if ((options.getRowPrefix() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getExactRow() != null))) {
-          System.err.println("You cannot specify an prefix row with a start/end row or exact row!");
-          System.exit(-1);
-        }
-        
-        // configure span of scanner
-        if (options.getExactRow() != null) {
-          scanConfig.setSpan(Span.exact(options.getExactRow()));
-        } else if (options.getRowPrefix() != null) {
-          scanConfig.setSpan(Span.prefix(options.getRowPrefix()));
-        } else {
-          if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
-            scanConfig.setSpan(new Span(options.getStartRow(), true, options.getEndRow(), true));
-          } else if (options.getStartRow() != null) { 
-            scanConfig.setSpan(new Span(Bytes.wrap(options.getStartRow()), true, Bytes.EMPTY, true));
-          } else if (options.getEndRow() != null) {
-            scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.wrap(options.getEndRow()), true));
-          }
-        }
-
-        // configure columns of scanner
-        for (String column : options.getColumns()) {
-          String[] colFields = column.split(":");
-          if (colFields.length == 1) {
-            scanConfig.fetchColumnFamily(Bytes.wrap(colFields[0]));
-          } else if (colFields.length == 2) {
-            scanConfig.fetchColumn(Bytes.wrap(colFields[0]), Bytes.wrap(colFields[1]));
-          } else {
-            System.err.println("Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
-            System.exit(-1);
-          }
         }
         
         RowIterator iter = s.get(scanConfig);
