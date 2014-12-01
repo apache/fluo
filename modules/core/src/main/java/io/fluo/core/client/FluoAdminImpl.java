@@ -31,8 +31,10 @@ import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
 import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.CuratorUtil;
+import io.fluo.core.worker.ObserverContext;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.conf.Property;
+import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
@@ -122,6 +124,8 @@ public class FluoAdminImpl implements FluoAdmin {
     try {
       Properties sharedProps = new Properties();
 
+      logger.info("Setting up observers using app config: {}", ConfigurationUtils.toString(config.subset(FluoConfiguration.APP_PREFIX)));
+      
       Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
       Map<Column,ObserverConfiguration> weakObservers = new HashMap<>();
 
@@ -132,6 +136,8 @@ public class FluoAdminImpl implements FluoAdmin {
           addObserver(colObservers, weakObservers, config.getString(key));
         } else if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
           sharedProps.setProperty(key, Long.toString(config.getLong(key)));
+        } else if (key.startsWith(FluoConfiguration.APP_PREFIX)){
+          sharedProps.setProperty(key, config.getProperty(key).toString());
         }
       }
       Operations.updateObservers(config, colObservers, weakObservers);
@@ -143,7 +149,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  private static void addObserver(Map<Column,ObserverConfiguration> observers, 
+  private void addObserver(Map<Column,ObserverConfiguration> observers, 
       Map<Column,ObserverConfiguration> weakObservers, String value) throws Exception {
     
     String[] fields = value.split(",");
@@ -158,7 +164,10 @@ public class FluoAdminImpl implements FluoAdmin {
     observerConfig.setParameters(params);
 
     Observer observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
-    observer.init(observerConfig.getParameters());
+    
+    logger.info("Setting up observer {} using params {}.",observer.getClass().getSimpleName(),  params);
+    
+    observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), observerConfig.getParameters()));
     ObservedColumn observedCol = observer.getObservedColumn();
 
     if (observedCol.getType() == NotificationType.STRONG)

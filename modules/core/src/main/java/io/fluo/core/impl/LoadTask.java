@@ -18,6 +18,7 @@ package io.fluo.core.impl;
 import io.fluo.api.client.Loader;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.exceptions.CommitException;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,13 @@ public class LoadTask implements Runnable {
           TransactionBase tx = txi;
           if (TracingTransaction.isTracingEnabled())
             tx = new TracingTransaction(tx);
-          loader.load(tx);
+          Loader.Context context = new Loader.Context() {
+            @Override
+            public Configuration getAppConfiguration() {
+              return env.getAppConfiguration();
+            }
+          };
+          loader.load(tx,context);
           txi.commit();
           status = "COMMITTED";
           return;

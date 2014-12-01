@@ -71,7 +71,7 @@ public class Observers implements AutoCloseable {
     if (observerConfig != null) {
       try{
         observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
-        observer.init(observerConfig.getParameters());
+        observer.init(new ObserverContext(env, observerConfig.getParameters()));
       }catch(RuntimeException e){
         throw e;
       }catch(Exception e){

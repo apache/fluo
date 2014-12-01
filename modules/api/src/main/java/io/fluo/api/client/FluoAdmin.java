@@ -15,6 +15,8 @@
  */
 package io.fluo.api.client;
 
+import io.fluo.api.config.FluoConfiguration;
+
 /**
  * Provides methods for initializing and administering a Fluo instance.
  */
@@ -33,15 +35,21 @@ public interface FluoAdmin {
   }
 
   /**
-   * Initializes Fluo instance and stores shared configuration in Zookeeper. Shared configuration consists of properties with observer.* and transaction.*
-   * prefix. Throws {@link AlreadyInitializedException} if Fluo instance was already initialized in zookeeper. If you want initialize zookeeper again, set
-   * io.fluo.client.zookeeper.clear to true
+   * Initializes Fluo instance and stores shared configuration in Zookeeper. Shared configuration consists of properties with
+   * {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX}, {@value io.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
+   * {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. Throws {@link AlreadyInitializedException} if Fluo instance was already
+   * initialized in zookeeper. If you want initialize zookeeper again, set {@value FluoConfiguration#ADMIN_ALLOW_REINITIALIZE_PROP} to true
    */
   public void initialize() throws AlreadyInitializedException;
 
   /**
-   * Updates shared configuration in Zookeeper. Shared configuration consists of properties with observer.* and transaction.* prefix. This method is called if a
-   * user has previously called initialize() but wants changes to shared configuration updated in Zookeeper
+   * Updates shared configuration in Zookeeper. Shared configuration consists of properties with {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX},
+   * {@value io.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. This
+   * method is called if a user has previously called {@link #initialize()} but wants changes to shared configuration updated in Zookeeper.
+   * 
+   * <p>
+   * During this method Observers are reinitialized using configuration passed to FluoAdmin and not existing shared configuration stored in zookeeper. So make
+   * sure all config needed by observers is present.
    */
   public void updateSharedConfig();
 }

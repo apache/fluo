@@ -129,7 +129,7 @@ public class ScanTask implements Runnable {
         
         if (!stopped.get())
           UtilWaitThread.sleep(sleepTime, stopped);
-        
+
       }catch(Exception e){
         if(isInterruptedException(e))
           log.debug("Error while looking for notifications", e);

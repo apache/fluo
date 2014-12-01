@@ -34,10 +34,10 @@ public abstract class TypedLoader implements Loader {
   }
 
   @Override
-  public void load(TransactionBase tx) throws Exception {
-    load(tl.wrap(tx));
+  public void load(TransactionBase tx, Context context) throws Exception {
+    load(tl.wrap(tx), context);
   }
 
-  public abstract void load(TypedTransactionBase tx) throws Exception;
+  public abstract void load(TypedTransactionBase tx, Context context) throws Exception;
 
 }

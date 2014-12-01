@@ -39,7 +39,10 @@ import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
+import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.zookeeper.KeeperException;
@@ -63,6 +66,7 @@ public class Environment implements AutoCloseable {
   private SharedResources resources;
   private long rollbackTime;
   private MetricNames metricNames;
+  private Configuration appConfig;
   
   /**
    * Constructs an environment from another environment
@@ -167,6 +171,9 @@ public class Environment implements AutoCloseable {
     bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
     Properties sharedProps = new Properties(); 
     sharedProps.load(bais);
+    Configuration sharedConfig = ConfigurationConverter.getConfiguration(sharedProps);
+    //make sure not to include config passed to env, only want config from zookeeper
+    appConfig = sharedConfig.subset(FluoConfiguration.APP_PREFIX);
     config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
   }
 
@@ -279,6 +286,12 @@ public class Environment implements AutoCloseable {
     return metricNames;
   }
   
+  public Configuration getAppConfiguration(){
+    //TODO create immutable wrapper
+    BaseConfiguration config = new BaseConfiguration();
+    ConfigurationUtils.copy(appConfig, config);
+    return config;
+  }
   
   @Override
   public void close() {

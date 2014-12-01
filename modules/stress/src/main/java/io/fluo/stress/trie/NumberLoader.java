@@ -15,12 +15,11 @@
  */
 package io.fluo.stress.trie;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import io.fluo.api.client.Loader;
-
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.types.TypedTransactionBase;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /** Executes load transactions of numbers into trie at leaf node level
  */
@@ -47,7 +46,7 @@ public class NumberLoader implements Loader {
   }
   
   @Override
-  public void load(TransactionBase tx) throws Exception {
+  public void load(TransactionBase tx, Context context) throws Exception {
     
     TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
     

@@ -76,6 +76,15 @@ To create an observer, follow these steps:
 3. Configure your Fluo instance to use this observer by modifying the Observer section of [fluo.properties].  
 4. Restart your Fluo instance so that your Fluo workers load the new observer.
 
+Application Configuration
+-------------------------
+
+Each observer can have its own configuration.  This is useful for the case of
+using the same observer code w/ different parameters.  However for the case of
+sharing the same configuration across observers, fluo provides a simple
+mechanism to set and access application specific configuration.  See the
+javadoc on [FluoClient].getAppConfiguration() for more details.
+
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [FluoFactory]: modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
 [FluoClient]: modules/api/src/main/java/io/fluo/api/client/FluoClient.java

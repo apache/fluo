@@ -15,26 +15,18 @@
  */
 package io.fluo.api.observer;
 
-import java.util.Map;
-
 import io.fluo.api.client.TransactionBase;
 
 /**
  * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the {@link #process(TransactionBase, Bytes, Column)} method.
- * AbstractObserver extends {@link Observer} but provides a default implementation for the {@link #init(Map)} and {@link #close()} method so that they can be
- * optionally implemented by user.
+ * AbstractObserver extends {@link Observer} but provides a default implementation for the {@link #init(Context)} and {@link #close()} method so that they
+ * can be optionally implemented by user.
  */
 public abstract class AbstractObserver implements Observer {
 
-  /**
-   * Optionally implemented by users to initialize {@link Observer}
-   */
   @Override
-  public void init(Map<String,String> config) throws Exception {}
+  public void init(Context context) throws Exception {}
 
-  /**
-   * Optionally implemented by users to close resources used by {@link Observer}
-   */
   @Override
   public void close() {}
 }
