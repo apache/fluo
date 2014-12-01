@@ -63,7 +63,7 @@ public class NotificationProcessor implements AutoCloseable {
   private class NotificationTracker {
     private Map<RowColumn, Future<?>> queuedWork = new HashMap<>();
     private long sizeInBytes = 0;
-    private static final long MAX_SIZE = 1<<19;
+    private static final long MAX_SIZE = 1<<24;
     
     private long size(RowColumn rowCol){
       Column col = rowCol.getColumn();
@@ -150,6 +150,10 @@ public class NotificationProcessor implements AutoCloseable {
     return true;
   }
   
+  public int size() {
+    return queue.size();
+  }
+  
   public void clear(){
     tracker.clear();
     executor.purge();
@@ -175,5 +179,5 @@ public class NotificationProcessor implements AutoCloseable {
   
   protected void workFinished(){
     
-  }
+  } 
 }

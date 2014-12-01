@@ -30,6 +30,7 @@ import io.fluo.core.util.ByteUtil;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationFinderFactory;
 import io.fluo.core.worker.NotificationProcessor;
+import io.fluo.core.worker.finder.hash.ScanTask;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
@@ -101,6 +102,10 @@ public class MiniFluoImpl implements MiniFluo {
       if (config.getMiniStartAccumulo()) {
         startMiniAccumulo();
       }
+      
+      config.setProperty(ScanTask.MIN_SLEEP_TIME_PROP, 50);
+      config.setProperty(ScanTask.MAX_SLEEP_TIME_PROP, 100);
+      
       env = new Environment(config);
 
       reporter = FluoClientImpl.setupReporters(env, "mini", reporterCounter);
