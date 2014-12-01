@@ -86,9 +86,9 @@ mechanism to set and access application specific configuration.  See the
 javadoc on [FluoClient].getAppConfiguration() for more details.
 
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[FluoFactory]: modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
-[FluoClient]: modules/api/src/main/java/io/fluo/api/client/FluoClient.java
-[FluoConfiguration]: modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
-[AbstractObserver]: modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
-[fluo.properties]: modules/distribution/src/main/config/fluo.properties
+[FluoFactory]: ../modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
+[FluoClient]: ../modules/api/src/main/java/io/fluo/api/client/FluoClient.java
+[FluoConfiguration]: ../modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
+[AbstractObserver]: ../modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
+[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: http://fluo.io/apidocs/
