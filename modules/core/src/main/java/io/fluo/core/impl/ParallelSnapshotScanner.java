@@ -74,7 +74,7 @@ public class ParallelSnapshotScanner {
 
     scanner.setRanges(ranges);
 
-    SnapshotScanner.setupScanner(scanner, new ArrayList<>(columns), startTs);
+    SnapshotScanner.setupScanner(scanner, columns, startTs);
 
     return scanner;
   }
