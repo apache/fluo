@@ -23,25 +23,25 @@ import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.Writable;
 
 /**
- * Represents Column in Fluo.
+ * Represents Column in Fluo
  */
 public class Column implements Writable {
   
-  public static final Column EMPTY = new Column();
+  public static final Bytes UNSET = Bytes.wrap(new byte[0]);
   
-  private Bytes family = Bytes.EMPTY;
-  private Bytes qualifier = Bytes.EMPTY;
-  private Bytes visibility = Bytes.EMPTY;
+  private Bytes family = UNSET;
+  private Bytes qualifier = UNSET;
+  private Bytes visibility = UNSET;
+  
+  public static final Column EMPTY = new Column();
 
   /**
-   * Creates Column with family, qualifier and visibility
-   * set to Bytes.EMPTY
+   * Creates an empty Column where family, qualifier and visibility are not set
    */
   public Column() {}
   
   /**
-   * Creates Column with family and sets qualifier and visibility
-   * to Bytes.EMPTY
+   * Creates Column with only a family.
    */
   public Column(Bytes family) {
     Preconditions.checkNotNull(family, "Family must not be null");
@@ -49,16 +49,14 @@ public class Column implements Writable {
   }
   
   /**
-   * Creates Column with family and sets qualifier and visibility 
-   * to Bytes.EMPTY.  String parameter will be encoded as UTF-8.
+   * Creates Column with only a family. String parameter will be encoded as UTF-8.
    */
   public Column(String family) {
     this(family == null ? null : Bytes.wrap(family));
   }
 
   /**
-   * Creates Column with family and qualifier and sets visibility
-   * to Bytes.EMPTY
+   * Creates Column with a family and qualifier.
    */
   public Column(Bytes family, Bytes qualifier) {
     Preconditions.checkNotNull(family, "Family must not be null");
@@ -68,8 +66,7 @@ public class Column implements Writable {
   }
   
   /**
-   * Creates Column with family and qualifier and sets visibility
-   * to Bytes.EMPTY.  String parameters will be encoded as UTF-8.
+   * Creates Column with a family and qualifier.  String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier) {
     this(family == null ? null : Bytes.wrap(family), 
@@ -89,8 +86,7 @@ public class Column implements Writable {
   }
   
   /** 
-   * Creates Column with family, qualifier, and visibility.
-   * String parameters will be encoded as UTF-8.
+   * Creates Column with family, qualifier, and visibility. String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier, String visibility) {
     this(family == null ? null : Bytes.wrap(family), 
@@ -99,48 +95,54 @@ public class Column implements Writable {
   }
   
   /**
-   * Retrieves Family of Column
-   * 
-   * @return Bytes Family 
+   * Returns true if family is set
+   */
+  public boolean isFamilySet() {
+    return family != UNSET;
+  }
+  
+  /**
+   * Retrieves Column Family (in Bytes).  Returns {@link Bytes.EMPTY} if not set.
    */
   public Bytes getFamily() {
+    if (!isFamilySet()) {
+      return Bytes.EMPTY;
+    }
     return family;
   }
   
   /**
-   * Retrieves Qualifier of Column
-   * 
-   * @return Bytes Qualifier
+   * Returns true if qualifier is set
+   */
+  public boolean isQualifierSet() {
+    return qualifier != UNSET;
+  }
+  
+  /**
+   * Retrieves Column Qualifier (in Bytes). Returns {@link Bytes.EMPTY} if not set.
    */
   public Bytes getQualifier() {
+    if (!isQualifierSet()) {
+      return Bytes.EMPTY;
+    }
     return qualifier;
   }
   
   /**
-   * Retrieves Visibility of Column
-   * 
-   * @return Bytes Visibility
+   * Returns true if visibility is set. 
+   */
+  public boolean isVisibilitySet() {
+    return visibility != UNSET;
+  }
+  
+  /**
+   * Retrieves Column Visibility (in Bytes). Returns {@link Bytes.EMPTY} if not set.
    */
   public Bytes getVisibility() {
+    if (!isVisibilitySet()) {
+      return Bytes.EMPTY;
+    }
     return visibility;
-  }
-
-  /**
-   * Sets visibility of Column
-   * 
-   */
-  public Column setVisibility(String visibilty) {
-    this.visibility = Bytes.wrap(visibilty);
-    return this;
-  }
-
-  /**
-   * Sets visibility of Column
-   * 
-   */
-  public Column setVisibility(Bytes visibilty) {
-    this.visibility = visibilty;
-    return this;
   }
   
   @Override
@@ -154,11 +156,10 @@ public class Column implements Writable {
   }
   
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(Object o) {    
     if (o instanceof Column) {
       Column oc = (Column) o;
-      return family.equals(oc.family) && qualifier.equals(oc.qualifier)
-          && visibility.equals(oc.visibility);
+      return family.equals(oc.getFamily()) && qualifier.equals(oc.getQualifier()) && visibility.equals(oc.getVisibility());
     }
     return false;
   }

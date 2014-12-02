@@ -50,7 +50,7 @@ public class WeakNotificationIT extends TestBaseMini {
       TypedTransactionBase ttx = tl.wrap(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
-      sc.setSpan(Span.exact(row, Bytes.wrap("stats")));
+      sc.setSpan(Span.exact(row, new Column(Bytes.wrap("stats"))));
       RowIterator rowIter = ttx.get(sc);
 
       int sum = 0;

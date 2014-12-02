@@ -72,7 +72,7 @@ public class WorkerIT extends TestBaseMini {
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, Bytes.wrap("link"))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column(Bytes.wrap("link")))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {

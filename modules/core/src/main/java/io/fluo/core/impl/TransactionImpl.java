@@ -511,7 +511,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
-        Column col = new Column(Bytes.wrap(cu.getColumnFamily()), Bytes.wrap(cu.getColumnQualifier())).setVisibility(Bytes.wrap(cu.getColumnVisibility()));
+        Column col = new Column(Bytes.wrap(cu.getColumnFamily()), Bytes.wrap(cu.getColumnQualifier()), Bytes.wrap(cu.getColumnVisibility()));
 
         if (triggerColumn.equals(col)) {
           

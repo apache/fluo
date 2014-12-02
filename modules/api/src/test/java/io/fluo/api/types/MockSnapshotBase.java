@@ -95,12 +95,15 @@ public class MockSnapshotBase implements SnapshotBase {
 
       Bytes row = Bytes.wrap(rcv[0]);
       String[] colFields = rcv[1].split(":");
-      if (colFields.length != 2 && colFields.length != 3)
-        throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis],<value> but saw : " + entry);
 
-      Column col = new Column(colFields[0], colFields[1]);
-      if (colFields.length == 3)
-        col.setVisibility(colFields[2]);
+      Column col;
+      if (colFields.length == 3) {
+        col = new Column(colFields[0], colFields[1], colFields[2]);
+      } else if (colFields.length == 2) {
+        col = new Column(colFields[0], colFields[1]);
+      } else {
+        throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis],<value> but saw : " + entry);
+      }
 
       Bytes val;
       if (rcv.length == 2)
@@ -133,12 +136,15 @@ public class MockSnapshotBase implements SnapshotBase {
 
       Bytes row = Bytes.wrap(rcv[0]);
       String[] colFields = rcv[1].split(":");
-      if (colFields.length != 2 && colFields.length != 3)
-        throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis] but saw : " + entry);
 
-      Column col = new Column(colFields[0], colFields[1]);
-      if (colFields.length == 3)
-        col.setVisibility(colFields[2]);
+      Column col;
+      if (colFields.length == 3) {
+        col = new Column(colFields[0], colFields[1], colFields[2]);
+      } else if (colFields.length == 2) {
+        col = new Column(colFields[0], colFields[1]);
+      } else {
+        throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis],<value> but saw : " + entry);
+      }
 
       Set<Column> cols = ret.get(row);
       if (cols == null) {

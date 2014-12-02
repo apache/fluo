@@ -194,6 +194,7 @@ public class Span {
    * Creates a span that covers an exact row
    */
   public static Span exact(Bytes row) {
+    Preconditions.checkNotNull(row);
     return new Span(row, true, row, true);
   }
   
@@ -202,55 +203,29 @@ public class Span {
    * String parameters will be encoded as UTF-8
    */
   public static Span exact(String row) {
+    Preconditions.checkNotNull(row);
     return exact(Bytes.wrap(row));
   }
   
   /**
-   * Creates a Span that covers an exact row and column family
+   * Creates a Span that covers an exact row and {@link Column}. The {@link Column} passed to this method can be constructed without a qualifier or visibility
+   * to create a Span at the family or qualifier level.
    */
-  public static Span exact(Bytes row, Bytes cf) {
-    RowColumn start = new RowColumn(row, new Column(cf));
+  public static Span exact(Bytes row, Column col) {
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(col);
+    RowColumn start = new RowColumn(row, col);
     return new Span(start, true, start.following(), false);
   }
   
   /**
-   * Creates a Span that covers an exact row and column family
-   * String parameters will be encoded as UTF-8
+   * Creates a Span that covers an exact row and {@link Column}. The {@link Column} passed to this method can be constructed without a qualifier or visibility
+   * to create a Span at the family or qualifier level. String parameters will be encoded as UTF-8
    */
-  public static Span exact(String row, String cf) {
-    return exact(Bytes.wrap(row), Bytes.wrap(cf));
-  }
-  
-  /**
-   * Creates a Span that covers an exact row, column family, and column qualifier
-   */
-  public static Span exact(Bytes row, Bytes cf, Bytes cq) {
-    RowColumn start = new RowColumn(row, new Column(cf, cq));
-    return new Span(start, true, start.following(), false);
-  }
-  
-  /**
-   * Creates a Span that covers an exact row, column family, and column qualifier
-   * String parameters will be encoded as UTF-8
-   */
-  public static Span exact(String row, String cf, String cq) {
-    return exact(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq));
-  }
-  
-  /**
-   * Creates a Span that covers an exact row, column family, column qualifier, and column visibility
-   */
-  public static Span exact(Bytes row, Bytes cf, Bytes cq, Bytes cv) {
-    RowColumn start = new RowColumn(row, new Column(cf, cq, cv));
-    return new Span(start, true, start.following(), false);
-  }
-  
-  /**
-   * Creates a Span that covers an exact row, column family, column qualifier, and column visibility
-   * String parameters will be encoded as UTF-8
-   */
-  public static Span exact(String row, String cf, String cq, String cv) {
-    return exact(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq), Bytes.wrap(cv));
+  public static Span exact(String row, Column col) {
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(col);
+    return exact(Bytes.wrap(row), col);
   }
   
   private static Bytes followingPrefix(Bytes prefix) {
@@ -273,9 +248,10 @@ public class Span {
   }
   
   /**
-   * Returns a Span that covers all rows beginning with a prefix
+   * Returns a Span that covers all rows beginning with a prefix. 
    */
   public static Span prefix(Bytes rowPrefix) {
+    Preconditions.checkNotNull(rowPrefix);
     Bytes fp = followingPrefix(rowPrefix);
     return new Span(rowPrefix, true, fp == null ? Bytes.EMPTY : fp, false);
   }
@@ -285,60 +261,46 @@ public class Span {
    * String parameters will be encoded as UTF-8
    */
   public static Span prefix(String rowPrefix) {
+    Preconditions.checkNotNull(rowPrefix);
     return prefix(Bytes.wrap(rowPrefix));
   }
-  
+    
   /**
-   * Returns a Span that covers all column families beginning with a prefix within a given row
+   * Returns a Span that covers all columns beginning with a row and {@link Column} prefix. The {@link Column} passed to this method can be constructed without
+   * a qualifier or visibility to create a prefix Span at the family or qualifier level.
    */
-  public static Span prefix(Bytes row, Bytes cfPrefix) {
-    Bytes fp = followingPrefix(cfPrefix);
-    RowColumn end = (fp == null ? new RowColumn(row).following() : new RowColumn(row, new Column(fp)));
-    return new Span(new RowColumn(row, new Column(cfPrefix)), true, end, false);
+  public static Span prefix(Bytes row, Column colPrefix) {
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(colPrefix);
+    Bytes cf = colPrefix.getFamily();
+    Bytes cq = colPrefix.getQualifier();
+    Bytes cv = colPrefix.getVisibility();
+    
+    if (colPrefix.isVisibilitySet()) {
+      Bytes fp = followingPrefix(cv);
+      RowColumn end = (fp == null ? new RowColumn(row, new Column(cf, cq)).following() : new RowColumn(row, new Column(cf, cq, fp)));
+      return new Span(new RowColumn(row, colPrefix), true, end, false);
+    } else if (colPrefix.isQualifierSet()) {
+      Bytes fp = followingPrefix(cq);
+      RowColumn end = (fp == null ? new RowColumn(row, new Column(cf)).following() : new RowColumn(row, new Column(cf, fp)));
+      return new Span(new RowColumn(row, colPrefix), true, end, false);
+    } else if (colPrefix.isFamilySet()) {
+      Bytes fp = followingPrefix(cf);
+      RowColumn end = (fp == null ? new RowColumn(row).following() : new RowColumn(row, new Column(fp)));
+      return new Span(new RowColumn(row, colPrefix), true, end, false);
+    } else {
+      return prefix(row);
+    }
   }
   
   /**
-   * Returns a Span that covers all column families beginning with a prefix within a given row
-   * String parameters will be encoded as UTF-8
+   * Returns a Span that covers all columns beginning with a row and {@link Column} prefix. The {@link Column} passed to this method can be constructed without
+   * a qualifier or visibility to create a prefix Span at the family or qualifier level. String parameters will be encoded as UTF-8
    */
-  public static Span prefix(String row, String cfPrefix) {
-    return prefix(Bytes.wrap(row), Bytes.wrap(cfPrefix));
-  }
-  
-  /**
-   * Returns a Span that covers all column qualifiers beginning with a prefix within a given row
-   * and column family
-   */
-  public static Span prefix(Bytes row, Bytes cf, Bytes cqPrefix) {
-    Bytes fp = followingPrefix(cqPrefix);
-    RowColumn end = (fp == null ? new RowColumn(row, new Column(cf)).following() : new RowColumn(row, new Column(cf, fp)));
-    return new Span(new RowColumn(row, new Column(cf, cqPrefix)), true, end, false);
-  }
-  
-  /**
-   * Returns a Span that covers all column qualifiers beginning with a prefix within a given row
-   * String parameters will be encoded as UTF-8
-   */
-  public static Span prefix(String row, String cf, String cqPrefix) {
-    return prefix(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cqPrefix));
-  }
-  
-  /**
-   * Returns a Span that covers all column visibilities beginning with a prefix within a given row,
-   * column family, and column qualifier.
-   */
-  public static Span prefix(Bytes row, Bytes cf, Bytes cq, Bytes cvPrefix) {
-    Bytes fp = followingPrefix(cvPrefix);
-    RowColumn end = (fp == null ? new RowColumn(row, new Column(cf, cq)).following() : new RowColumn(row, new Column(cf, cq, fp)));
-    return new Span(new RowColumn(row, new Column(cf, cq, cvPrefix)), true, end, false);
-  }
-  
-  /**
-   * Returns a Span that covers all column visibilities beginning with a prefix within a given row
-   * String parameters will be encoded as UTF-8
-   */
-  public static Span prefix(String row, String cf, String cq, String cvPrefix) {
-    return prefix(Bytes.wrap(row), Bytes.wrap(cf), Bytes.wrap(cq), Bytes.wrap(cvPrefix));
+  public static Span prefix(String row, Column colPrefix) {
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(colPrefix);
+    return prefix(Bytes.wrap(row), colPrefix);
   }
   
   public static class KeyBuilder {

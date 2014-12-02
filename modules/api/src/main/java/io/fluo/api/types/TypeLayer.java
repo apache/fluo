@@ -233,10 +233,13 @@ public class TypeLayer {
     Bytes vis;
 
     Column getCol() {
-      if (vis == null)
+      if (qual == null) {
+        return new Column(family);
+      } else if (vis == null) {
         return new Column(family, qual);
-      else
+      } else {
         return new Column(family, qual, vis);
+      }
     }
   }
 

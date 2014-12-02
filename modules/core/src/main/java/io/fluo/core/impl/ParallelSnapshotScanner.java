@@ -129,7 +129,7 @@ public class ParallelSnapshotScanner {
         Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
         Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
 
-        Column col = new Column(cf, cq).setVisibility(ByteUtil.toBytes(entry.getKey().getColumnVisibilityData()));
+        Column col = new Column(cf, cq, ByteUtil.toBytes(entry.getKey().getColumnVisibilityData()));
 
         long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 

@@ -61,8 +61,8 @@ public class ColumnVisIT extends TestBaseImpl {
   public void testFailFastGetCols() {
     TestTransaction tx1 = new TestTransaction(env);
 
-    Column col1 = new Column("f", "q").setVisibility("A&");
-    Column col2 = new Column("f", "q").setVisibility("C|");
+    Column col1 = new Column("f", "q", "A&");
+    Column col2 = new Column("f", "q", "C|");
 
     // expect get cols w/ bad col vis to fail fast
     tx1.get().row("r").columns(col1, col2).size();
@@ -72,8 +72,8 @@ public class ColumnVisIT extends TestBaseImpl {
   public void testFailFastGetRowsCols() {
     TestTransaction tx1 = new TestTransaction(env);
 
-    Column col1 = new Column("f", "q").setVisibility("A&");
-    Column col2 = new Column("f", "q").setVisibility("C|");
+    Column col1 = new Column("f", "q", "A&");
+    Column col2 = new Column("f", "q", "C|");
 
     // expect get rows cols w/ bad col vis to fail fast
     tx1.get().rowsString(Arrays.asList("r1", "r2")).columns(col1, col2).toStringMap().size();

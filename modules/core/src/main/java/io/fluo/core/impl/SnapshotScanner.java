@@ -26,7 +26,6 @@ import io.fluo.accumulo.iterators.SnapshotIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.config.ScannerConfiguration;
-import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
@@ -84,7 +83,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
   static void setupScanner(ScannerBase scanner, Set<Column> columns, long startTs) {
     for (Column col : columns) {
-      if (!col.getQualifier().equals(Bytes.EMPTY)) {
+      if (col.isQualifierSet()) {
         scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
       } else {
         scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
