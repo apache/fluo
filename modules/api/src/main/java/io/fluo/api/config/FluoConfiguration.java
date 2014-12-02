@@ -63,12 +63,10 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   // Administration
   private static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
-  public static final String ADMIN_ALLOW_REINITIALIZE_PROP = ADMIN_PREFIX + ".allow.reinitialize";
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
   public static final String ADMIN_ACCUMULO_CLASSPATH_DEFAULT = "";
   public static final String ADMIN_CLASS_PROP = ADMIN_PREFIX + ".class";
-  public static final boolean ADMIN_ALLOW_REINITIALIZE_DEFAULT = false;
   public static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
   
   // Worker 
@@ -240,16 +238,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public String getAccumuloClasspath() {
     return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
   }
- 
-  public FluoConfiguration setAllowReinitialize(boolean allowReinitialize) {
-    setProperty(ADMIN_ALLOW_REINITIALIZE_PROP, allowReinitialize);
-    return this;
-  }
-  
-  public boolean getAllowReinitialize() {
-    return getBoolean(ADMIN_ALLOW_REINITIALIZE_PROP, ADMIN_ALLOW_REINITIALIZE_DEFAULT);
-  }
-  
+       
   public FluoConfiguration setAdminClass(String adminClass) {
     setProperty(ADMIN_CLASS_PROP, adminClass);
     return this;
@@ -603,7 +592,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
     config.setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
     config.setProperty(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
-    config.setProperty(ADMIN_ALLOW_REINITIALIZE_PROP, ADMIN_ALLOW_REINITIALIZE_DEFAULT);
     config.setProperty(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
     config.setProperty(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);

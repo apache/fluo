@@ -23,14 +23,66 @@ import io.fluo.api.config.FluoConfiguration;
 public interface FluoAdmin {
   
   /**
-   * Exception that is thrown if Fluo instance was already initialized. An instance is already initialized if the root directory set by the property
-   * io.fluo.client.zookeeper.connect exists in Zookeeper. If this directory can be reinitialized and overwritten set io.fluo.client.zookeeper.clear to true
+   * Specifies Fluo initialization options such as clearing Zookeeper or existing Accumulo table.
+   */
+  public static class InitOpts {
+    private boolean clearZookeeper = false;
+    private boolean clearTable = false;
+    
+    /** 
+     * Clears zookeeper root (if exists) specified by {@value FluoConfiguration#CLIENT_ZOOKEEPER_CONNECT_PROP}.  Default is false.
+     */
+    public InitOpts setClearZookeeper(boolean clearZookeeper) {
+      this.clearZookeeper = clearZookeeper;
+      return this;
+    }
+    
+    public boolean getClearZookeeper() {
+      return clearZookeeper;
+    }
+    
+    /** 
+     * Clears accumulo table (if exists) specified by {@value FluoConfiguration#ADMIN_ACCUMULO_TABLE_PROP}.  Default is false.
+     */
+    public InitOpts setClearTable(boolean clearTable) {
+      this.clearTable = clearTable;
+      return this;
+    }
+    
+    public boolean getClearTable() {
+      return clearTable;
+    }
+  }
+
+  /**
+   * Exception that is thrown if Fluo instance was already initialized. An instance is already initialized if the chroot directory set by the property
+   * io.fluo.client.zookeeper.connect exists in Zookeeper. If this directory can be clear, set {@link InitOpts#setClearTable(boolean)} to true
    */
   public static class AlreadyInitializedException extends Exception {
     private static final long serialVersionUID = 1L;
+    
+    public AlreadyInitializedException(String msg) {
+      super(msg);
+    }
 
-    public AlreadyInitializedException(Exception e) {
-      super(e);
+    public AlreadyInitializedException() {
+      super();
+    }
+  }
+
+  /**
+   * Exception that is thrown if Accumulo table (set by io.fluo.admin.accumulo.table) exists during initialization. If this table can be cleared, set
+   * {@link InitOpts#setClearZookeeper(boolean)} to true
+   */
+  public static class TableExistsException extends Exception {
+    private static final long serialVersionUID = 1L;
+    
+    public TableExistsException(String msg) {
+      super(msg);
+    }
+
+    public TableExistsException() {
+      super();
     }
   }
 
@@ -38,9 +90,10 @@ public interface FluoAdmin {
    * Initializes Fluo instance and stores shared configuration in Zookeeper. Shared configuration consists of properties with
    * {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX}, {@value io.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
    * {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. Throws {@link AlreadyInitializedException} if Fluo instance was already
-   * initialized in zookeeper. If you want initialize zookeeper again, set {@value FluoConfiguration#ADMIN_ALLOW_REINITIALIZE_PROP} to true
+   * initialized in Zookeeper. If you want to initialize Zookeeper again, set {@link InitOpts#setClearZookeeper(boolean)} to true. Throws
+   * {@link TableExistsException} if Accumulo table exists. If you want to clear table, set {@link InitOpts#setClearTable(boolean)} to true.
    */
-  public void initialize() throws AlreadyInitializedException;
+  public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException;
 
   /**
    * Updates shared configuration in Zookeeper. Shared configuration consists of properties with {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX},

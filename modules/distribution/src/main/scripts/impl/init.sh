@@ -27,10 +27,4 @@ script=$( basename "$SOURCE" )
 
 . "$impl"/config.sh
 
-if [[ -z "$1" ]]; then
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.FluoInitializeMain -config-dir $FLUO_CONF_DIR
-else
-  echo -e "Usage: fluo init (<argument>)\n"
-  echo -e "Optional arguments:\n"
-  echo "  -h, --help   Print this help message"
-fi
+java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.init.Init -config-dir $FLUO_CONF_DIR $1
