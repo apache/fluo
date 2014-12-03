@@ -26,27 +26,28 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class NumberLoader implements Loader {
   
   private final Number number;
-  private final int level;
-  private final int nodeSize;
+  private Integer nodeSize = null;
   
   public NumberLoader(Integer num, int nodeSize) {
     checkArgument(num >= 0, "Only positive numbers accepted");
     checkArgument((nodeSize <= 32) && ((32 % nodeSize) == 0), "nodeSize must be divisor of 32"); 
     this.number = num;
     this.nodeSize = nodeSize;
-    this.level = 32 / nodeSize;
   }
   
-  public NumberLoader(Long num, int nodeSize) {
+  public NumberLoader(Long num) {
     checkArgument(num >= 0, "Only positive numbers accepted");
-    checkArgument((nodeSize <= 64) && ((64 % nodeSize) == 0), "nodeSize must be divisor of 64");
     this.number = num;
-    this.nodeSize = nodeSize;
-    this.level = 64 / nodeSize;
   }
   
   @Override
   public void load(TransactionBase tx, Context context) throws Exception {
+    
+    if(nodeSize == null){
+      nodeSize = context.getAppConfiguration().getInt(Constants.NODE_SIZE_PROP);
+      checkArgument((nodeSize <= 64) && ((64 % nodeSize) == 0), "nodeSize must be divisor of 64");
+    }
+    int level = 64 / nodeSize;
     
     TypedTransactionBase ttx = Constants.TYPEL.wrap(tx);
     

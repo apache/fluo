@@ -16,7 +16,6 @@
 package io.fluo.stress.trie;
 
 import io.fluo.api.data.Column;
-
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 
@@ -29,4 +28,7 @@ public class Constants {
 
   public static final Column COUNT_SEEN_COL = TYPEL.bc().fam("count").qual("seen").vis();
   public static final Column COUNT_WAIT_COL = TYPEL.bc().fam("count").qual("wait").vis();
+  
+  public static final String NODE_SIZE_PROP = "trie.nodeSize";
+  public static final String STOP_LEVEL_PROP = "trie.stopLevel";
 }
