@@ -49,14 +49,14 @@ public class ScanTest {
     Assert.assertEquals(new RowColumn("start"), config.getSpan().getStart());
     Assert.assertEquals(new RowColumn("end").following(), config.getSpan().getEnd());
     Assert.assertEquals(2, config.getColumns().size());
-    Assert.assertEquals(new Column("col1"), config.getColumns().get(0));
-    Assert.assertEquals(new Column("col2"), config.getColumns().get(1));
+    Assert.assertTrue(config.getColumns().contains(new Column("col1")));
+    Assert.assertTrue( config.getColumns().contains(new Column("col2")));
     
     config = parseArgs("-s start -c cf:cq");
     Assert.assertEquals(new RowColumn("start"), config.getSpan().getStart());
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getEnd());
     Assert.assertEquals(1, config.getColumns().size());
-    Assert.assertEquals(new Column("cf", "cq"), config.getColumns().get(0));
+    Assert.assertTrue(config.getColumns().contains(new Column("cf", "cq")));
     
     config = parseArgs("-e end");
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());
@@ -75,8 +75,8 @@ public class ScanTest {
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getEnd());
     Assert.assertEquals(2, config.getColumns().size());
-    Assert.assertEquals(new Column("cf1", "cq1"), config.getColumns().get(0));
-    Assert.assertEquals(new Column("cf2", "cq2"), config.getColumns().get(1));
+    Assert.assertTrue(config.getColumns().contains(new Column("cf1", "cq1")));
+    Assert.assertTrue(config.getColumns().contains(new Column("cf2", "cq2")));
   }
   
   @Test

@@ -15,9 +15,9 @@
  */
 package io.fluo.api.config;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import io.fluo.api.client.SnapshotBase;
@@ -31,13 +31,13 @@ import io.fluo.api.data.Span;
 public class ScannerConfiguration implements Cloneable {
 
   private Span span = new Span();
-  // TODO use a set
-  private ArrayList<Column> columns = new ArrayList<>();
+  private Set<Column> columns = new HashSet<>();
 
   /**
    * Sets {@link Span} for ScannerConfiguration
    */
   public ScannerConfiguration setSpan(Span span) {
+    Preconditions.checkNotNull(span);
     this.span = span;
     return this;
   }
@@ -52,14 +52,12 @@ public class ScannerConfiguration implements Cloneable {
   /**
    * List of all {@link Column}s that scanner will retrieve
    */
-  public List<Column> getColumns() {
-    return Collections.unmodifiableList(columns);
+  public Set<Column> getColumns() {
+    return Collections.unmodifiableSet(columns);
   }
-
-  // TODO document SnapshotIterator
-
+  
   /**
-   * Configures scanner to retrieve columns with the family
+   * Configures scanner to retrieve column with the given family
    */
   public ScannerConfiguration fetchColumnFamily(Bytes fam) {
     Preconditions.checkNotNull(fam);
@@ -68,14 +66,14 @@ public class ScannerConfiguration implements Cloneable {
   }
 
   /**
-   * Configures scanner to retrieve columns with the given family and qualifier
+   * Configures scanner to retrieve column with the given family and qualifier
    */
   public ScannerConfiguration fetchColumn(Bytes fam, Bytes qual) {
     Preconditions.checkNotNull(fam, qual);
     columns.add(new Column(fam, qual));
     return this;
   }
-
+  
   /**
    * Clears all fetched column settings
    */
@@ -88,7 +86,7 @@ public class ScannerConfiguration implements Cloneable {
   public Object clone() throws CloneNotSupportedException {
     ScannerConfiguration sc = (ScannerConfiguration) super.clone();
 
-    sc.columns = (ArrayList<Column>) columns.clone();
+    sc.columns = (Set<Column>) ((HashSet<Column>)columns).clone();
     sc.span = span;
 
     return sc;

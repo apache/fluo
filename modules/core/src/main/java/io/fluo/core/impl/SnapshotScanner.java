@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import io.fluo.accumulo.iterators.SnapshotIterator;
 import io.fluo.accumulo.util.ColumnConstants;
@@ -81,7 +82,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.iterator = scanner.iterator();
   }
 
-  static void setupScanner(ScannerBase scanner, List<Column> columns, long startTs) {
+  static void setupScanner(ScannerBase scanner, Set<Column> columns, long startTs) {
     for (Column col : columns) {
       if (!col.getQualifier().equals(Bytes.EMPTY)) {
         scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
