@@ -39,7 +39,7 @@ public class MockSnapshotBase implements SnapshotBase {
   }
 
   @Override
-  public Bytes get(Bytes row, Column column) throws Exception {
+  public Bytes get(Bytes row, Column column) {
     Map<Column,Bytes> cols = getData.get(row);
     if (cols != null)
       return cols.get(column);
@@ -48,7 +48,7 @@ public class MockSnapshotBase implements SnapshotBase {
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
     Map<Column,Bytes> ret = new HashMap<>();
     Map<Column,Bytes> cols = getData.get(row);
     if (cols != null) {
@@ -62,7 +62,7 @@ public class MockSnapshotBase implements SnapshotBase {
   }
 
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
 
     Map<Bytes,Map<Column,Bytes>> ret = new HashMap<>();
 
@@ -77,7 +77,7 @@ public class MockSnapshotBase implements SnapshotBase {
   }
 
   @Override
-  public RowIterator get(ScannerConfiguration config) throws Exception {
+  public RowIterator get(ScannerConfiguration config) {
     throw new UnsupportedOperationException();
   }
 
