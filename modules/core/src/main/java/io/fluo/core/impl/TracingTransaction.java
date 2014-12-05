@@ -47,21 +47,21 @@ public class TracingTransaction implements TransactionBase {
   }
 
   @Override
-  public Bytes get(Bytes row, Column column) throws Exception {
+  public Bytes get(Bytes row, Column column) {
     Bytes ret = tx.get(row, column);
     log("get(%s, %s) -> %s", row, column, ret);
     return ret;
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
     Map<Column,Bytes> ret = tx.get(row, columns);
     log("get(%s, %s) -> %s", row, columns, ret);
     return ret;
   }
 
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     Map<Bytes,Map<Column,Bytes>> ret = tx.get(rows, columns);
     // TODO make multiple log calls
     log("get(%s, %s) -> %s", rows, columns, ret);
@@ -69,7 +69,7 @@ public class TracingTransaction implements TransactionBase {
   }
 
   @Override
-  public RowIterator get(ScannerConfiguration config) throws Exception {
+  public RowIterator get(ScannerConfiguration config) {
     // TODO log something better
     log("get(ScannerConfiguration");
     return tx.get(config);

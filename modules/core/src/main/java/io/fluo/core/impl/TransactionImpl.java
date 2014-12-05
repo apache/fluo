@@ -72,10 +72,10 @@ public class TransactionImpl implements Transaction, Snapshot {
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.wrap(EMPTY);
   private static final Bytes DELETE = Bytes.wrap("special delete object");
-  private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED };
+  private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED }
   
   private final long startTs;
-  private final Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();;
+  private final Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();
   private final Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
   private final Set<Column> observedColumns;
   private final Environment env;
@@ -131,19 +131,19 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
-  public Bytes get(Bytes row, Column column) throws Exception {
+  public Bytes get(Bytes row, Column column) {
     checkIfOpen();
     // TODO cache? precache?
     return get(row, Collections.singleton(column)).get(column);
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) throws Exception {
+  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
     checkIfOpen();
     return getImpl(row, columns);
   }
   
-  private Map<Column,Bytes> getImpl(Bytes row, Set<Column> columns) throws Exception {
+  private Map<Column,Bytes> getImpl(Bytes row, Set<Column> columns) {
     
     // TODO push visibility filtering to server side?
 
@@ -177,7 +177,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
     
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) throws Exception {
+  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     checkIfOpen();
 
     env.getSharedResources().getVisCache().validate(columns);
@@ -205,12 +205,12 @@ public class TransactionImpl implements Transaction, Snapshot {
   // TODO add a get that uses the batch scanner
 
   @Override
-  public RowIterator get(ScannerConfiguration config) throws Exception {
+  public RowIterator get(ScannerConfiguration config) {
     checkIfOpen();
     return getImpl(config);
   }
   
-  private RowIterator getImpl(ScannerConfiguration config) throws Exception {
+  private RowIterator getImpl(ScannerConfiguration config) {
     return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
     
