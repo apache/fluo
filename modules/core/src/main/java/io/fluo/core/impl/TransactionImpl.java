@@ -62,7 +62,6 @@ import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.accumulo.core.util.ArgumentChecker;
 
 /**
  * Transaction implementation
@@ -217,7 +216,9 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     checkIfOpen();
-    ArgumentChecker.notNull(row, col, value);
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(col);
+    Preconditions.checkNotNull(value);
     
     if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
       throw new IllegalArgumentException(ColumnConstants.NOTIFY_CF + " is a reserved family");
@@ -243,9 +244,8 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void setWeakNotification(Bytes row, Column col) {
     checkIfOpen();
-    // TODO do not use ArgumentChecked
-    // TODO anlyze code to see what non-public Accumulo APIs are used
-    ArgumentChecker.notNull(row, col);
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(col);
 
     if (!env.getWeakObservers().containsKey(col))
       throw new IllegalArgumentException("Column not configured for weak notifications " + col);
@@ -264,7 +264,8 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
-    ArgumentChecker.notNull(row, col);
+    Preconditions.checkNotNull(row);
+    Preconditions.checkNotNull(col);
     set(row, col, DELETE);
   }
   
