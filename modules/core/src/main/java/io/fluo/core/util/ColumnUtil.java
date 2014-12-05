@@ -69,7 +69,7 @@ public class ColumnUtil {
   }
   
   public static Entry<Key,Value> checkColumn(Environment env, IteratorSetting iterConf, Bytes row, Column col) {
-    Span span = Span.exact(row, col.getFamily(), col.getQualifier(), col.getVisibility());
+    Span span = Span.exact(row, col);
     
     Scanner scanner;
     try {

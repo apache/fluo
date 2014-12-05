@@ -117,10 +117,10 @@ public class TypeLayerTest {
     Assert.assertEquals(new Column("5", "7"), tl.bc().fam(Bytes.wrap("5")).qual(Bytes.wrap("7")).vis());
     Assert.assertEquals(new Column("5", "7"), tl.bc().fam(ByteBuffer.wrap("5".getBytes())).qual(ByteBuffer.wrap("7".getBytes())).vis());
 
-    Assert.assertEquals(new Column("f0", "q0").setVisibility("A&B"), tl.bc().fam("f0".getBytes()).qual("q0".getBytes()).vis("A&B"));
-    Assert.assertEquals(new Column("f0", "q0").setVisibility("A&C"), tl.bc().fam("f0").qual("q0").vis("A&C".getBytes()));
-    Assert.assertEquals(new Column("5", "7").setVisibility("A&D"), tl.bc().fam(5).qual(7).vis(Bytes.wrap("A&D")));
-    Assert.assertEquals(new Column("5", "7").setVisibility("A&D"), tl.bc().fam(5).qual(7).vis(ByteBuffer.wrap("A&D".getBytes())));
+    Assert.assertEquals(new Column("f0", "q0", "A&B"), tl.bc().fam("f0".getBytes()).qual("q0".getBytes()).vis("A&B"));
+    Assert.assertEquals(new Column("f0", "q0", "A&C"), tl.bc().fam("f0").qual("q0").vis("A&C".getBytes()));
+    Assert.assertEquals(new Column("5", "7", "A&D"), tl.bc().fam(5).qual(7).vis(Bytes.wrap("A&D")));
+    Assert.assertEquals(new Column("5", "7", "A&D"), tl.bc().fam(5).qual(7).vis(ByteBuffer.wrap("A&D".getBytes())));
   }
 
   @Test

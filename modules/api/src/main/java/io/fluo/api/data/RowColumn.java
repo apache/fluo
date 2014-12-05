@@ -124,9 +124,9 @@ public class RowColumn {
       return RowColumn.EMPTY;
     } else if (col.equals(Column.EMPTY)) {
       return new RowColumn(followingBytes(row));
-    } else if (col.getQualifier().equals(Bytes.EMPTY)) {
+    } else if (!col.isQualifierSet()) {
       return new RowColumn(row, new Column(followingBytes(col.getFamily())));
-    } else if (col.getVisibility().equals(Bytes.EMPTY)) {
+    } else if (!col.isVisibilitySet()) {
       return new RowColumn(row, new Column(col.getFamily(), followingBytes(col.getQualifier())));
     } else {
       return new RowColumn(row, new Column(col.getFamily(), col.getQualifier(), followingBytes(col.getVisibility())));

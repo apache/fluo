@@ -51,15 +51,15 @@ public class SpanUtil {
       return null;
     }
     Text row = ByteUtil.toText(rc.getRow());
-    if ((rc.getColumn().equals(Column.EMPTY)) || (rc.getColumn().getFamily().equals(Bytes.EMPTY))) {
+    if ((rc.getColumn().equals(Column.EMPTY)) || !rc.getColumn().isFamilySet()) {
       return new Key(row);
     }
     Text cf = ByteUtil.toText(rc.getColumn().getFamily());
-    if (rc.getColumn().getQualifier().equals(Bytes.EMPTY)) {
+    if (!rc.getColumn().isQualifierSet()) {
       return new Key(row, cf);
     }
     Text cq = ByteUtil.toText(rc.getColumn().getQualifier());
-    if (rc.getColumn().getVisibility().equals(Bytes.EMPTY)) {
+    if (!rc.getColumn().isVisibilitySet()) {
       return new Key(row, cf, cq);
     }
     Text cv = ByteUtil.toText(rc.getColumn().getVisibility());

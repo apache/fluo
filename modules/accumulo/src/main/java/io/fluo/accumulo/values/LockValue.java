@@ -41,7 +41,7 @@ public class LockValue {
       throw new IllegalArgumentException("more fields than expected");
     
     this.prow = fields.get(0);
-    this.pcol = new Column(fields.get(1), fields.get(2)).setVisibility(fields.get(3));
+    this.pcol = new Column(fields.get(1), fields.get(2), fields.get(3));
     this.isWrite = (fields.get(4).byteAt(0) & 0x1) == 0x1;
     this.isDelete = (fields.get(4).byteAt(0) & 0x2) == 0x2;
     this.isTrigger = (fields.get(4).byteAt(0) & 0x4) == 0x4;

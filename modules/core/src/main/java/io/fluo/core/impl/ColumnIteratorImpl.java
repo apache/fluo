@@ -61,7 +61,7 @@ public class ColumnIteratorImpl implements ColumnIterator {
     final Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
     final Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
     
-    final Column col = new Column(cf, cq).setVisibility(cv);
+    final Column col = new Column(cf, cq, cv);
     final Bytes val = Bytes.wrap(entry.getValue().get());
 
     return new Entry<Column,Bytes>() {
