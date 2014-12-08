@@ -15,17 +15,13 @@
  */
 package io.fluo.api.data;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.io.Writable;
 
 /**
- * Represents Column in Fluo
+ * Represents all or a subset of the column family, column qualifier, and column visibility fields. A column with no fields set is represented by
+ * {@link Column.EMPTY}. Column is immutable after it is created.
  */
-public class Column implements Writable {
+public class Column {
   
   public static final Bytes UNSET = Bytes.wrap(new byte[0]);
   
@@ -162,20 +158,5 @@ public class Column implements Writable {
       return family.equals(oc.getFamily()) && qualifier.equals(oc.getQualifier()) && visibility.equals(oc.getVisibility());
     }
     return false;
-  }
-
-  // TODO remove from public API
-  @Override
-  public void write(DataOutput out) throws IOException {
-    Bytes.write(out, family);
-    Bytes.write(out, qualifier);
-    Bytes.write(out, visibility);    
-  }
-
-  @Override
-  public void readFields(DataInput in) throws IOException {
-    family = Bytes.read(in);
-    qualifier = Bytes.read(in);
-    visibility = Bytes.read(in);
   }
 }

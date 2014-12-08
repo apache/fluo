@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.types;
+package io.fluo.core.types;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -22,7 +22,11 @@ import java.util.Map;
 import com.google.common.collect.ImmutableSet;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.types.StringEncoder;
+import io.fluo.api.types.TypeLayer;
+import io.fluo.api.types.TypedSnapshot;
 import io.fluo.api.types.TypedSnapshotBase.Value;
+import io.fluo.api.types.TypedTransactionBase;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -21,6 +21,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.core.data.MutableBytes;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
@@ -49,10 +50,15 @@ public class MutationBuilder {
   }
   
   public MutationBuilder(Bytes row) {
-    if (row.isBackedByArray())
+    mutation = new Mutation(row.toArray());
+  }
+  
+  public MutationBuilder(MutableBytes row) {
+    if (row.isBackedByArray()) {
       mutation = new Mutation(row.getBackingArray(), row.offset(), row.length());
-    else
+    } else {
       mutation = new Mutation(row.toArray());
+    }
   }
 
   public MutationBuilder(byte[] row) {

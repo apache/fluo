@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.types;
+package io.fluo.core.data;
 
-import io.fluo.api.client.Transaction;
-import io.fluo.api.exceptions.CommitException;
+import io.fluo.api.data.Bytes;
 
-public class MockTransaction extends MockTransactionBase implements Transaction {
-
-  MockTransaction(String... entries) {
-    super(entries);
-  }
-
+/**
+ * 
+ */
+public class MutableBytesFactory implements Bytes.BytesFactory {
+  
   @Override
-  public void commit() throws CommitException {
-    // does nothing
+  public Bytes get(byte[] data) {
+    return new MutableBytes(data);
   }
 
-  @Override
-  public void close() {
-    // no resources to close
-  }
 }

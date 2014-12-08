@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.config;
+package io.fluo.core.config;
+
+import io.fluo.api.config.ScannerConfiguration;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;

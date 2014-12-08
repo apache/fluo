@@ -23,7 +23,6 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,12 +33,31 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.WritableUtils;
 
 /**
- * Represents bytes in Fluo. Similar to an Accumulo {@link ByteSequence}
+ * Represents bytes in Fluo. Similar to an Accumulo {@link ByteSequence}. Bytes is immutable after it is created. {@link Bytes.EMPTY} is used to represent a
+ * Bytes object with no data.
  */
 public abstract class Bytes implements Comparable<Bytes> {
   
+  private static final String BYTES_FACTORY_CLASS = "io.fluo.core.data.MutableBytesFactory";
+
+  public interface BytesFactory {
+    Bytes get(byte[] data);
+  }
+
+  private static BytesFactory bytesFactory;
+
+  static {
+    try {
+      bytesFactory = (BytesFactory) Class.forName(BYTES_FACTORY_CLASS).getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static final Bytes EMPTY = Bytes.wrap(new byte[0]);
-  
+
+  private Integer hashCode = null;
+
   public Bytes() {}
 
   /**
@@ -52,14 +70,12 @@ public abstract class Bytes implements Comparable<Bytes> {
   public abstract byte byteAt(int i);
 
   /**
-   * Gets the length of this sequence.
-   *
-   * @return sequence length
+   * Gets the length of bytes
    */
   public abstract int length();
 
   /**
-   * Returns a portion of this bytes sequence.
+   * Returns a portion of the Bytes object
    *
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
@@ -67,35 +83,10 @@ public abstract class Bytes implements Comparable<Bytes> {
   public abstract Bytes subSequence(int start, int end);
 
   /**
-   * Returns a byte array containing the bytes in this sequence. This method
-   * may copy the sequence data or may return a backing byte array directly.
-   *
-   * @return byte array
+   * Returns a byte array containing a copy of the bytes
    */
   public abstract byte[] toArray();
   
-  /**
-   * Determines whether this sequence is backed by a byte array.
-   *
-   * @return true if sequence is backed by a byte array
-   */
-  public abstract boolean isBackedByArray();
-
-  /**
-   * Gets the backing byte array for this sequence.
-   *
-   * @return byte array
-   */
-  public abstract byte[] getBackingArray();
-
-  /**
-   * Gets the offset for this byte sequence. This value represents the starting
-   * point for the sequence in the backing array, if there is one.
-   *
-   * @return offset (inclusive)
-   */
-  public abstract int offset();
-
   /**
    * Compares the two given byte sequences, byte by byte, returning a negative,
    * zero, or positive result if the first sequence is less than, equal to, or
@@ -108,7 +99,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param b2 second byte sequence to compare
    * @return comparison result
    */
-  public static int compareBytes(Bytes b1, Bytes b2) {
+  final public static int compareBytes(Bytes b1, Bytes b2) {
 
     int minLen = Math.min(b1.length(), b2.length());
 
@@ -124,24 +115,18 @@ public abstract class Bytes implements Comparable<Bytes> {
   }
 
   /**
-   * Compares this Bytes to another.
-   *
-   * @param other Bytes
-   * @return comparison result
+   * Compares this Bytes object to another.
    */
   @Override
-  public int compareTo(Bytes other) {      
+  final public int compareTo(Bytes other) {      
     return compareBytes(this, other);
   }
 
   /**
-   * Determines if this Bytes equals another.
-   *
-   * @param other object
-   * @return true if equal
+   * Returns true if this Bytes object equals another.
    */
   @Override
-  public boolean equals(Object other) {
+  final public boolean equals(Object other) {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
@@ -156,77 +141,63 @@ public abstract class Bytes implements Comparable<Bytes> {
     return false;
   }
 
-  /**
-   * Computes hash code of Bytes
-   * 
-   * @return hash code
-   */
   @Override
-  public int hashCode() {
-    int hash = 1;
-    if (isBackedByArray()) {
-      byte[] data = getBackingArray();
-      int end = offset() + length();
-      for (int i = offset(); i < end; i++)
-        hash = (31 * hash) + data[i];
-    } else {
-      for (int i = 0; i < length(); i++)
+  final public int hashCode() {
+    if (hashCode == null) {
+      int hash = 1;
+      for (int i = 0; i < length(); i++) {
         hash = (31 * hash) + byteAt(i);
+      }
+      hashCode = hash;
     }
-    return hash;
+    return hashCode;
   }
   
   /**
-   * Wraps byte array as Bytes
-   * 
-   * @param array byte array
-   * @return Bytes
+   * Creates a Bytes object by copying the given byte array
    */
-  public static Bytes wrap(byte[] array) {
-    return new ArrayBytes(array);
+  final public static Bytes wrap(byte[] array) {
+    byte[] copy = new byte[array.length];
+    System.arraycopy(array, 0, copy, 0, array.length);
+    return bytesFactory.get(copy);
   }
   
   /**
-   * Creates a Bytes object by wrapping a subsequence of the given byte array. 
-   * The given byte array is used directly as the backing array, so later changes
-   * made to the (relevant portion of the) array reflect into the new Byte array.
+   * Creates a Bytes object by copying a subsequence of the given byte array 
    *
    * @param data Byte data
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
    */
-  public static Bytes wrap(byte data[], int offset, int length) {
-    return new ArrayBytes(data, offset, length);
+  final public static Bytes wrap(byte data[], int offset, int length) {
+    byte[] copy = new byte[length];
+    System.arraycopy(data, offset, copy, 0, length);
+    return bytesFactory.get(copy);
   }
 
   /**
-   * Wraps ByteBuffer as Bytes
-   * 
-   * @param bb ByteBuffer
-   * @return Bytes
+   * Creates a Bytes object by copying data from a ByteBuffer
    */
-  public static Bytes wrap(ByteBuffer bb) {
-    return new ArrayBytes(bb);
+  final public static Bytes wrap(ByteBuffer bb) {
+    byte[] data = new byte[bb.remaining()];
+    bb.get(data);
+    return bytesFactory.get(data);
   }
   
   /**
-   * Wraps a UTF-8 String as Bytes
-   * 
-   * @param s String
-   * @return Bytes
+   * Creates a Bytes object from a String
    */
-  public static Bytes wrap(String s) {
-    return new ArrayBytes(s);
+  final public static Bytes wrap(String s) {
+    byte[] data = s.getBytes(StandardCharsets.UTF_8);
+    return bytesFactory.get(data);
   }
   
   /**
-   * Wraps a String with a given charset as Bytes
-   * 
-   * @param s String
-   * @return Bytes
+   * Creates a Bytes object from String with a given charset
    */
-  public static Bytes wrap(String s, Charset c) {
-    return new ArrayBytes(s, c);
+  final public static Bytes wrap(String s, Charset c) {
+    byte[] data = s.getBytes(c);
+    return bytesFactory.get(data);
   }
   
   /**
@@ -236,14 +207,10 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param b Bytes
    * @throws IOException
    */
-  public static void write(DataOutput out, Bytes b) throws IOException {
+  final public static void write(DataOutput out, Bytes b) throws IOException {
     WritableUtils.writeVInt(out, b.length());
-    if (b.isBackedByArray()) {
-      out.write(b.getBackingArray(), b.offset(), b.length());
-    } else {
-      for (int i = 0; i < b.length(); i++) {
-        out.write(b.byteAt(i) & 0xff);
-      }
+    for (int i = 0; i < b.length(); i++) {
+      out.write(b.byteAt(i) & 0xff);
     }
   }
 
@@ -254,7 +221,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @return Bytes
    * @throws IOException
    */
-  public static Bytes read(DataInput in) throws IOException {
+  final public static Bytes read(DataInput in) throws IOException {
     int len = WritableUtils.readVInt(in);
     byte b[] = new byte[len];
     in.readFully(b);
@@ -267,7 +234,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param listOfBytes
    * @return Bytes
    */
-  public static Bytes concat(Bytes... listOfBytes) {
+  final public static Bytes concat(Bytes... listOfBytes) {
     try {
       // TODO calculate exact array size needed
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -275,11 +242,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       
       for (Bytes b : listOfBytes) {
         WritableUtils.writeVInt(dos, b.length());
-        if (b.isBackedByArray()) {
-          dos.write(b.getBackingArray(), b.offset(), b.length());
-        } else {
-          dos.write(b.toArray());
-        }
+        dos.write(b.toArray());
       }
       
       dos.close();
@@ -295,12 +258,9 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param b Original bytes object
    * @return List of bytes objects
    */
-  public static List<Bytes> split(Bytes b) {
+  final public static List<Bytes> split(Bytes b) {
     ByteArrayInputStream bais;
-    if (b.isBackedByArray())
-      bais = new ByteArrayInputStream(b.getBackingArray(), b.offset(), b.length());
-    else
-      bais = new ByteArrayInputStream(b.toArray());
+    bais = new ByteArrayInputStream(b.toArray());
     
     DataInputStream dis = new DataInputStream(bais);
     
@@ -320,154 +280,6 @@ public abstract class Bytes implements Comparable<Bytes> {
       throw new RuntimeException(e);
     }
     return ret;
-  }
-  
-  /**
-  * An implementation of {@link Bytes} that uses a backing byte array.
-  */
-  private static class ArrayBytes extends Bytes implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    protected final byte data[];
-    protected final int offset;
-    protected final int length;
-
-    /**
-     * Creates a new ArrayBytes. The given byte array is used directly as the
-     * backing array, so later changes made to the array reflect into the new
-     * sequence.
-     *
-     * @param data byte data
-     */
-    private ArrayBytes(byte data[]) {
-      this.data = data;
-      this.offset = 0;
-      this.length = data.length;
-    }
-
-    /**
-     * Creates a new ArrayBytes from a subsequence of the given byte array. The
-     * given byte array is used directly as the backing array, so later changes
-     * made to the (relevant portion of the) array reflect into the new sequence.
-     *
-     * @param data byte data
-     * @param offset starting offset in byte array (inclusive)
-     * @param length number of bytes to include in sequence
-     * @throws IllegalArgumentException if the offset or length are out of bounds
-     * for the given byte array
-     */
-    private ArrayBytes(byte data[], int offset, int length) {
-      if (offset < 0 || offset > data.length || length < 0 || (offset + length) > data.length) {
-        throw new IllegalArgumentException(" Bad offset and/or length data.length = " + data.length + " offset = " + offset + " length = " + length);
-      }
-      this.data = data;
-      this.offset = offset;
-      this.length = length;
-    }
-
-    /**
-     * Creates a new ArrayBytes from the given string. The bytes are determined from
-     * the string using UTF-8 encoding
-     *
-     * @param s String to represent as Bytes
-     */
-    private ArrayBytes(String s) {
-      this(s.getBytes(StandardCharsets.UTF_8));
-    }
-    
-    /**
-     * Creates a new ArrayBytes from the given string. The bytes are determined from
-     * the string using the specified charset
-     *
-     * @param s String to represent as Bytes
-     * @param cs Charset
-     */
-    private ArrayBytes(String s, Charset cs) {
-      this(s.getBytes(cs));
-    }
-
-    /**
-     * Creates a new ArrayBytes based on a ByteBuffer. If the byte buffer has an
-     * array, that array (and the buffer's offset and limit) are used; otherwise,
-     * a new backing array is created and a relative bulk get is performed to
-     * transfer the buffer's contents (starting at its current position and
-     * not beyond its limit).
-     *
-     * @param buffer byte buffer
-     */
-    private ArrayBytes(ByteBuffer buffer) {
-      this.length = buffer.remaining();
-
-      if (buffer.hasArray()) {
-        this.data = buffer.array();
-        this.offset = buffer.position();
-      } else {
-        this.data = new byte[length];
-        this.offset = 0;
-        buffer.get(data);
-      }
-    }
-    
-    @Override
-    public byte byteAt(int i) {
-
-      if (i < 0) {
-        throw new IllegalArgumentException("i < 0, " + i);
-      }
-
-      if (i >= length) {
-        throw new IllegalArgumentException("i >= length, " + i + " >= " + length);
-      }
-
-      return data[offset + i];
-    }
-
-    @Override
-    public byte[] getBackingArray() {
-      return data;
-    }
-
-    @Override
-    public boolean isBackedByArray() {
-      return true;
-    }
-
-    @Override
-    public int length() {
-      return length;
-    }
-
-    @Override
-    public int offset() {
-      return offset;
-    }
-
-    @Override
-    public Bytes subSequence(int start, int end) {
-      if (start > end || start < 0 || end > length) {
-        throw new IllegalArgumentException("Bad start and/end start = " + start + " end=" + end + " offset=" + offset + " length=" + length);
-      }
-      return new ArrayBytes(data, offset + start, end - start);
-    }
-
-    @Override
-    public byte[] toArray() {
-      if (offset == 0 && length == data.length)
-        return data;
-
-      byte[] copy = new byte[length];
-      System.arraycopy(data, offset, copy, 0, length);
-      return copy;
-    }
-
-    /** 
-     * Creates UTF-8 String using Bytes data
-     */
-    @Override
-    public String toString() {
-      return new String(data, offset, length, StandardCharsets.UTF_8);
-    }
   }
 }
 

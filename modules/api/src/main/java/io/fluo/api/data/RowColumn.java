@@ -18,7 +18,7 @@ package io.fluo.api.data;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents a Row & Column in Fluo. Similar to an Accumulo Key.
+ * Represents all or subset of a Fluo row and {@link Column}.  RowColumn is similar to an Accumulo Key.  RowColumn is immutable after it is created.
  */
 public class RowColumn {
   
@@ -28,14 +28,12 @@ public class RowColumn {
   private Column col = Column.EMPTY;
   
   /** 
-   * Constructs a RowColumn with row set to Bytes.EMPTY
-   * and column set to Column.EMPTY 
+   * Constructs a RowColumn with row set to Bytes.EMPTY and column set to Column.EMPTY 
    */
   public RowColumn() {}
   
   /**
-   * Constructs a RowColumn with only a row.  
-   * Column will be set to Column.EMPTY
+   * Constructs a RowColumn with only a row.  Column will be set to Column.EMPTY
    * 
    * @param row Bytes Row
    */
@@ -45,8 +43,7 @@ public class RowColumn {
   }
   
   /**
-   * Constructs a RowColumn with only a row.
-   * Column will be set to Column.EMPTY
+   * Constructs a RowColumn with only a row. Column will be set to Column.EMPTY
    * 
    * @param row (will be UTF-8 encoded)
    */
