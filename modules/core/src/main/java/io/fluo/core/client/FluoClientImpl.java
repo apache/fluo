@@ -48,7 +48,9 @@ public class FluoClientImpl implements FluoClient {
   public FluoClientImpl(FluoConfiguration config) {
     this.config = config;
     if (!config.hasRequiredClientProps()) {
-      throw new IllegalArgumentException("Client configuration is missing required properties");
+      String msg = "Client configuration is missing required properties";
+      log.error(msg);
+      throw new IllegalArgumentException(msg);
     }
     try {
       this.env = new Environment(config);

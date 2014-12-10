@@ -15,6 +15,8 @@
  */
 package io.fluo.api.client;
 
+import java.lang.reflect.InvocationTargetException;
+
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.mini.MiniFluo;
@@ -71,6 +73,10 @@ public class FluoFactory {
     } catch (ClassNotFoundException e) {
       String msg = "Could not find " + clazz + " class which could be caused by fluo-core jar not being on the classpath.";
       log.error(msg);
+      throw new FluoException(msg, e);
+    } catch (InvocationTargetException e) {
+      String msg = "Failed to contstruct "+clazz+" class due to exception";
+      log.error(msg, e);
       throw new FluoException(msg, e);
     } catch (Exception e) {
       log.error("Could not instantiate class - " + clazz);

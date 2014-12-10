@@ -21,12 +21,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
@@ -58,10 +60,11 @@ import org.slf4j.LoggerFactory;
 public class OracleClient {
 
   public static final Logger log = LoggerFactory.getLogger(OracleClient.class);
+  private static final int MAX_ORACLE_WAIT_PERIOD = 60;
 
   private final Timer responseTimer;
   private final Histogram stampsHistogram;
-
+  
   private Participant currentLeader;
 
   private static final class TimeRequest {
@@ -285,10 +288,30 @@ public class OracleClient {
     thread.start();
   }
 
-  public long getTimestamp() throws Exception {
+  /**
+   * Retrieves time stamp from Oracle.  Throws {@link FluoException} if timed out or interrupted. 
+   */
+  public long getTimestamp() {
     TimeRequest tr = new TimeRequest();
     queue.add(tr);
-    tr.cdl.await();
+    try {
+      int timeout = env.getConfiguration().getClientRetryTimeout();
+      if (timeout < 0) {
+        long waitPeriod = 1;
+        long waitTotal = 0;
+        while (!tr.cdl.await(waitPeriod, TimeUnit.SECONDS)) {
+          waitTotal += waitPeriod;
+          if (waitPeriod < MAX_ORACLE_WAIT_PERIOD) {
+            waitPeriod *= 2;
+          }
+          log.error("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s", waitTotal, waitPeriod);
+        }
+      } else if (!tr.cdl.await(timeout, TimeUnit.MILLISECONDS)) {
+        throw new FluoException("Timed out (after "+timeout+"ms) trying to retrieve timestamp from Oracle.  Is the Oracle running?");
+      }
+    } catch (InterruptedException e) {
+      throw new FluoException("Interrupted while retrieving timestamp from Oracle");
+    }
     return tr.timestamp.get();
   }
 

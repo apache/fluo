@@ -35,6 +35,7 @@ public class FluoConfigurationTest {
   public void testDefaults() {
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT, base.getZookeepers());
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT, base.getZookeeperTimeout());
+    Assert.assertEquals(FluoConfiguration.CLIENT_RETRY_TIMEOUT_MS_DEFAULT, base.getClientRetryTimeout());
     Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
     Assert.assertEquals(FluoConfiguration.CLIENT_CLASS_DEFAULT, base.getClientClass());
     Assert.assertEquals(FluoConfiguration.ADMIN_CLASS_DEFAULT, base.getAdminClass());
@@ -102,6 +103,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
     Assert.assertFalse(config.setMiniStartAccumulo(false).getMiniStartAccumulo());
     Assert.assertEquals("mydata", config.setMiniDataDir("mydata").getMiniDataDir());
+    Assert.assertEquals(17, config.setClientRetryTimeout(17).getClientRetryTimeout());
   }
   
   @Test

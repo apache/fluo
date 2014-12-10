@@ -18,6 +18,7 @@ package io.fluo.core.util;
 import io.fluo.api.config.FluoConfiguration;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -32,7 +33,9 @@ public class AccumuloUtil {
    * Creates Accumulo instance given FluoConfiguration
    */
   public static Instance getInstance(FluoConfiguration config) {
-    return new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers());
+    ClientConfiguration clientConfig = ClientConfiguration.loadDefault().withInstance(config.getAccumuloInstance())
+        .withZkHosts(config.getAccumuloZookeepers()).withZkTimeout(config.getZookeeperTimeout() / 1000);
+    return new ZooKeeperInstance(clientConfig);
   }
 
   /**
