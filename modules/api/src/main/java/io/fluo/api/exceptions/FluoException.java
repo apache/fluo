@@ -22,11 +22,19 @@ public class FluoException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
+  public FluoException() {
+    super();
+  }
+  
   public FluoException(String msg) {
     super(msg);
   }
-
-  public FluoException() {
-    super();
+  
+  public FluoException(Throwable cause) {
+    super(cause);
+  }
+  
+  public FluoException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
