@@ -16,6 +16,7 @@
 package io.fluo.api.client;
 
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.mini.MiniFluo;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -67,9 +68,13 @@ public class FluoFactory {
   private static <T>T buildClassWithConfig(String clazz, Configuration config) {
     try {
       return (T) Class.forName(clazz).getDeclaredConstructor(FluoConfiguration.class).newInstance(config);
+    } catch (ClassNotFoundException e) {
+      String msg = "Could not find " + clazz + " class which could be caused by fluo-core jar not being on the classpath.";
+      log.error(msg);
+      throw new FluoException(msg, e);
     } catch (Exception e) {
       log.error("Could not instantiate class - " + clazz);
-      throw new IllegalStateException(e);
+      throw new FluoException(e);
     }
   }
 
@@ -77,9 +82,13 @@ public class FluoFactory {
   private static <T>T buildClass(String clazz) {
     try {
       return (T) Class.forName(clazz).newInstance();
+    } catch (ClassNotFoundException e) {
+      String msg = "Could not find " + clazz + " class which could be caused by fluo-core jar not being on the classpath.";
+      log.error(msg);
+      throw new FluoException(msg, e);
     } catch (Exception e) {
       log.error("Could not instantiate class - " + clazz);
-      throw new IllegalStateException(e);
+      throw new FluoException(e);
     }
   }
 }

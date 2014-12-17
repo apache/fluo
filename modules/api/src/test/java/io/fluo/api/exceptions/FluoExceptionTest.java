@@ -19,6 +19,21 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class FluoExceptionTest {
+  
+  @Test
+  public void testFluoExceptionConstructors() {
+    FluoException e = new FluoException();
+    Assert.assertEquals(null, e.getMessage());
+    
+    e = new FluoException("msg1");
+    Assert.assertEquals("msg1", e.getMessage());
+    
+    e = new FluoException("msg2", new IllegalArgumentException("msg3"));
+    Assert.assertEquals("msg2", e.getMessage());
+    
+    e = new FluoException(new IllegalArgumentException("msg4"));
+    Assert.assertEquals("java.lang.IllegalArgumentException: msg4", e.getMessage());
+  }
 
   @Test(expected = FluoException.class)
   public void testThrowFluo() {
