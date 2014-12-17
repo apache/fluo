@@ -195,11 +195,7 @@ public class TypedSnapshotBase implements SnapshotBase {
     public ByteBuffer toByteBuffer() {
       if (getBytes() == null)
         return null;
-      if (getBytes().isBackedByArray()) {
-        return ByteBuffer.wrap(getBytes().getBackingArray(), getBytes().offset(), getBytes().length());
-      } else {
-        return ByteBuffer.wrap(getBytes().toArray());
-      }
+      return ByteBuffer.wrap(getBytes().toArray());
     }
 
     public ByteBuffer toByteBuffer(ByteBuffer defaultValue) {

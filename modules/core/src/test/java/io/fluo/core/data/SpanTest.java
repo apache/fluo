@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.data;
+package io.fluo.core.data;
+
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
+import io.fluo.api.data.Span;
+import io.fluo.api.data.Span.Builder;
 
 import org.junit.Assert;
 import org.junit.Test;

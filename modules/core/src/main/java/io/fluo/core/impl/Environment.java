@@ -35,6 +35,7 @@ import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.util.AccumuloUtil;
+import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -183,8 +184,7 @@ public class Environment implements AutoCloseable {
     
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
-      Column col = new Column();
-      col.readFields(dis);
+      Column col = ColumnUtil.readColumn(dis);
       String clazz = dis.readUTF();
       Map<String,String> params = new HashMap<>();
       int numParams = WritableUtils.readVInt(dis);

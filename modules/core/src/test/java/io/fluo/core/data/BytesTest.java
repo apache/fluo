@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.data;
+package io.fluo.core.data;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import io.fluo.api.data.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,6 +45,12 @@ public class BytesTest {
     Bytes b3 = Bytes.wrap(s3.getBytes());
     Assert.assertArrayEquals(s3.getBytes(), b3.toArray());
     Assert.assertEquals(s3, b3.toString());
+    
+    String s4 = "test4";
+    byte[] d4 = s4.getBytes();
+    Bytes b4 = Bytes.wrap(d4, 0, d4.length);
+    Assert.assertArrayEquals(s4.getBytes(), b4.toArray());
+    Assert.assertEquals(s4, b4.toString());
   }
   
   @Test
@@ -59,5 +66,13 @@ public class BytesTest {
     Assert.assertEquals(b1, blist.get(0));
     Assert.assertEquals(b2, blist.get(1));
     Assert.assertEquals(b3, blist.get(2));
+  }
+  
+  @Test
+  public void testImmutable() {
+    byte[] d1 = Bytes.wrap("mydata").toArray();
+    
+    Bytes imm = Bytes.wrap(d1);
+    Assert.assertNotSame(d1, imm.toArray());
   }
 }

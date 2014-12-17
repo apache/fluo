@@ -36,6 +36,7 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.ByteUtil;
+import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -131,7 +132,7 @@ public class Operations {
     WritableUtils.writeVInt(dos, colObservers.size());
 
     for (Entry<Column,ObserverConfiguration> entry : es) {
-      entry.getKey().write(dos);
+      ColumnUtil.writeColumn(entry.getKey(), dos);
       dos.writeUTF(entry.getValue().getClassName());
       Map<String,String> params = entry.getValue().getParameters();
       WritableUtils.writeVInt(dos, params.size());

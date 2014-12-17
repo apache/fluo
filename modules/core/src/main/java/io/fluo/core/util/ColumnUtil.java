@@ -15,6 +15,9 @@
  */
 package io.fluo.core.util;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -101,5 +104,18 @@ public class ColumnUtil {
     }
     
     return null;
+  }
+  
+  public static void writeColumn(Column col, DataOutput out) throws IOException {
+    Bytes.write(out, col.getFamily());
+    Bytes.write(out, col.getQualifier());
+    Bytes.write(out, col.getVisibility());    
+  }
+
+  public static Column readColumn(DataInput in) throws IOException {
+    Bytes family = Bytes.read(in);
+    Bytes qualifier = Bytes.read(in);
+    Bytes visibility = Bytes.read(in);
+    return new Column(family, qualifier, visibility);
   }
 }

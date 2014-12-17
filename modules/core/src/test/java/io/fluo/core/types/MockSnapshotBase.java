@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.types;
+package io.fluo.core.types;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.api.types;
+package io.fluo.core.types;
 
-import io.fluo.api.client.Snapshot;
+import io.fluo.api.client.Transaction;
+import io.fluo.api.exceptions.CommitException;
 
-public class MockSnapshot extends MockSnapshotBase implements Snapshot {
+public class MockTransaction extends MockTransactionBase implements Transaction {
 
-  MockSnapshot(String... entries) {
+  MockTransaction(String... entries) {
     super(entries);
   }
 
   @Override
+  public void commit() throws CommitException {
+    // does nothing
+  }
+
+  @Override
   public void close() {
-    // no resources need to be closed
+    // no resources to close
   }
 }
