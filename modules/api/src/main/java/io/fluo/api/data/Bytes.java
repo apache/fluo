@@ -38,7 +38,7 @@ import org.apache.hadoop.io.WritableUtils;
  */
 public abstract class Bytes implements Comparable<Bytes> {
   
-  private static final String BYTES_FACTORY_CLASS = "io.fluo.core.data.MutableBytesFactory";
+  private static final String BYTES_FACTORY_CLASS = "io.fluo.accumulo.data.MutableBytesFactory";
 
   public interface BytesFactory {
     Bytes get(byte[] data);

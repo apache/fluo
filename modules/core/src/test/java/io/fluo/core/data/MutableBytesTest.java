@@ -15,6 +15,7 @@
  */
 package io.fluo.core.data;
 
+import io.fluo.accumulo.data.MutableBytes;
 import io.fluo.api.data.Bytes;
 import org.junit.Assert;
 import org.junit.Test;

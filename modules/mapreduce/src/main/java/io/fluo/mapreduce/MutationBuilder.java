@@ -17,11 +17,11 @@ package io.fluo.mapreduce;
 
 import java.nio.charset.StandardCharsets;
 
+import io.fluo.accumulo.data.MutableBytes;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.core.data.MutableBytes;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
