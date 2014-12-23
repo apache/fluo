@@ -15,8 +15,8 @@
  */
 package io.fluo.core.util;
 
+import io.fluo.accumulo.data.MutableBytes;
 import io.fluo.api.data.Bytes;
-import io.fluo.core.data.MutableBytes;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.Text;

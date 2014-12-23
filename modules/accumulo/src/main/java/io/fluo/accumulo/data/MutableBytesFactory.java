@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.core.data;
+package io.fluo.accumulo.data;
 
 import io.fluo.api.data.Bytes;
 
 /**
- * 
+ * An implementation of BytesFactory
  */
 public class MutableBytesFactory implements Bytes.BytesFactory {
   
