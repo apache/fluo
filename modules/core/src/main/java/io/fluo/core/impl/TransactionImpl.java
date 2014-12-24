@@ -693,14 +693,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   void deleteWeakRow() {
     if (weakRow != null) {
-      long commitTs;
-      try {
-        commitTs = OracleClient.getInstance(env).getTimestamp();
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      long commitTs = OracleClient.getInstance(env).getTimestamp();
       Flutation m = new Flutation(env, weakRow);
       m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), commitTs);
 

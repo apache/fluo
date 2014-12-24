@@ -30,6 +30,7 @@ import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.mini.MiniFluoImpl;
@@ -128,6 +129,9 @@ public class Scan {
       chosenConfig = new FluoConfiguration(clientPropsFile);
       System.out.println("Scanning '" + chosenConfig.getAccumuloTable() + "' table of MiniFluo instance (" + config.getMiniDataDir()+ ")");
     }
+    
+    // Limit client to retry for only 500ms as user is waiting
+    chosenConfig.setClientRetryTimeout(500);
         
     try (FluoClient client = FluoFactory.newClient(chosenConfig)) {
       try (Snapshot s = client.newSnapshot()) {
@@ -154,6 +158,8 @@ public class Scan {
             System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t" + colEntry.getValue());
           }
         }
+      } catch (FluoException e) {
+        System.out.println("Scan failed - " + e.getMessage());
       }
     }
     System.exit(0);

@@ -22,12 +22,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
-import io.fluo.accumulo.util.ZookeeperUtil;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
@@ -166,11 +165,7 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   private long getTimestamp() {
-    try {
-      return OracleClient.getInstance(env).getTimestamp();
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
+    return OracleClient.getInstance(env).getTimestamp();
   }
 
   private void createZkNode(long ts) {

@@ -55,10 +55,12 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String CLIENT_ACCUMULO_ZOOKEEPERS_PROP = CLIENT_PREFIX + ".accumulo.zookeepers";
   public static final String CLIENT_ZOOKEEPER_TIMEOUT_PROP = CLIENT_PREFIX + ".zookeeper.timeout";
   public static final String CLIENT_ZOOKEEPER_CONNECT_PROP = CLIENT_PREFIX + ".zookeeper.connect";
+  public static final String CLIENT_RETRY_TIMEOUT_MS_PROP = CLIENT_PREFIX + ".retry.timeout.ms";
   public static final String CLIENT_CLASS_PROP = CLIENT_PREFIX + ".class";
   public static final int CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT = 30000;
   public static final String CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT = "localhost";
   public static final String CLIENT_ZOOKEEPER_CONNECT_DEFAULT = "localhost/fluo";
+  public static final int CLIENT_RETRY_TIMEOUT_MS_DEFAULT = -1;
   public static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
   
   // Administration
@@ -169,6 +171,15 @@ public class FluoConfiguration extends CompositeConfiguration {
     
   public int getZookeeperTimeout() {
     return getInt(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
+  }
+  
+  public FluoConfiguration setClientRetryTimeout(int timeoutMS) {
+    setProperty(CLIENT_RETRY_TIMEOUT_MS_PROP, timeoutMS);
+    return this;
+  }
+    
+  public int getClientRetryTimeout() {
+    return getInt(CLIENT_RETRY_TIMEOUT_MS_PROP, CLIENT_RETRY_TIMEOUT_MS_DEFAULT);
   }
     
   public FluoConfiguration setAccumuloInstance(String accumuloInstance) {
@@ -480,12 +491,12 @@ public class FluoConfiguration extends CompositeConfiguration {
     }
   }
   
-  private boolean contains(String key) {
-    if (containsKey(key) == false) {
-      log.info(key + " is not set");
-      return false;
+  private boolean verifyStringPropSet(String key) {
+    if (containsKey(key) && !getString(key).isEmpty()) {
+      return true;
     }
-    return true;
+    log.info(key + " is not set");
+    return false;
   }
   
   private boolean verifyStringPropNotSet(String key) {
@@ -501,9 +512,9 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
   public boolean hasRequiredClientProps() {
     boolean valid = true;
-    valid &= contains(CLIENT_ACCUMULO_USER_PROP);
-    valid &= contains(CLIENT_ACCUMULO_PASSWORD_PROP);
-    valid &= contains(CLIENT_ACCUMULO_INSTANCE_PROP);
+    valid &= verifyStringPropSet(CLIENT_ACCUMULO_USER_PROP);
+    valid &= verifyStringPropSet(CLIENT_ACCUMULO_PASSWORD_PROP);
+    valid &= verifyStringPropSet(CLIENT_ACCUMULO_INSTANCE_PROP);
     return valid;
   }
   
@@ -513,7 +524,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public boolean hasRequiredAdminProps() {
     boolean valid = true;
     valid &= hasRequiredClientProps();
-    valid &= contains(ADMIN_ACCUMULO_TABLE_PROP);
+    valid &= verifyStringPropSet(ADMIN_ACCUMULO_TABLE_PROP);
     return valid;
   }
   

@@ -73,6 +73,8 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
         log.error("fluo.properties is missing required properties for worker");
         System.exit(-1);
       }
+      // any client in worker should retry forever
+      config.setClientRetryTimeout(-1);
  
       TwillContext context = getContext();
       if(context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null){

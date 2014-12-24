@@ -71,6 +71,8 @@ public class FluoOracleMain extends AbstractTwillRunnable {
         log.error("fluo.properties is missing required properties for oracle");
         System.exit(-1);
       }
+      // any client in oracle should retry forever
+      config.setClientRetryTimeout(-1);
       
       TwillContext context = getContext();
       if(context != null &&  System.getProperty(MetricNames.METRICS_ID_PROP) == null){
