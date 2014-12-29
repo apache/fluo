@@ -96,7 +96,7 @@ public class ByteArrayUtil {
   public static byte[] concat(byte[]... byteArrays) {
     Bytes[] bs = new Bytes[byteArrays.length];
     for (int i = 0; i < byteArrays.length; i++) {
-      bs[i] = Bytes.wrap(byteArrays[i]);
+      bs[i] = Bytes.of(byteArrays[i]);
     }
     return Bytes.concat(bs).toArray();
   }

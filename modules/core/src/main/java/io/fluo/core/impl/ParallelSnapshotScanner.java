@@ -142,7 +142,7 @@ public class ParallelSnapshotScanner {
             ret.put(row, cols);
           }
 
-          cols.put(col, Bytes.wrap(entry.getValue().get()));
+          cols.put(col, Bytes.of(entry.getValue().get()));
         } else if (colType == ColumnConstants.WRITE_PREFIX) {
           if (WriteValue.isTruncated(entry.getValue().get())) {
             throw new StaleScanException();

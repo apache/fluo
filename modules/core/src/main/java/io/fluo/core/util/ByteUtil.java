@@ -57,7 +57,7 @@ public class ByteUtil {
    * Convert from Hadoop Text to Bytes
    */
   public static Bytes toBytes(Text t) {
-    return Bytes.wrap(t.getBytes(), 0, t.getLength());
+    return Bytes.of(t.getBytes(), 0, t.getLength());
   }
   
   /**
@@ -88,9 +88,9 @@ public class ByteUtil {
    */
   public static Bytes toBytes(ByteSequence bs) {
     if (bs.isBackedByArray()) {
-      return Bytes.wrap(bs.getBackingArray(), bs.offset(), bs.length());
+      return Bytes.of(bs.getBackingArray(), bs.offset(), bs.length());
     } else {
-      return Bytes.wrap(bs.toArray(), 0, bs.length());
+      return Bytes.of(bs.toArray(), 0, bs.length());
     }
   }
 }

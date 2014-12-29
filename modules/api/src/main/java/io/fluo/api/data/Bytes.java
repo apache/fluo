@@ -54,7 +54,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     }
   }
 
-  public static final Bytes EMPTY = Bytes.wrap(new byte[0]);
+  public static final Bytes EMPTY = Bytes.of(new byte[0]);
 
   private Integer hashCode = null;
 
@@ -154,48 +154,48 @@ public abstract class Bytes implements Comparable<Bytes> {
   }
   
   /**
-   * Creates a Bytes object by copying the given byte array
+   * Creates a Bytes object by copying the data of the given byte array
    */
-  final public static Bytes wrap(byte[] array) {
+  final public static Bytes of(byte[] array) {
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
     return bytesFactory.get(copy);
   }
   
   /**
-   * Creates a Bytes object by copying a subsequence of the given byte array 
+   * Creates a Bytes object by copying the data of a subsequence of the given byte array 
    *
    * @param data Byte data
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
    */
-  final public static Bytes wrap(byte data[], int offset, int length) {
+  final public static Bytes of(byte data[], int offset, int length) {
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
     return bytesFactory.get(copy);
   }
 
   /**
-   * Creates a Bytes object by copying data from a ByteBuffer
+   * Creates a Bytes object by copying the data of the given ByteBuffer
    */
-  final public static Bytes wrap(ByteBuffer bb) {
+  final public static Bytes of(ByteBuffer bb) {
     byte[] data = new byte[bb.remaining()];
     bb.get(data);
     return bytesFactory.get(data);
   }
   
   /**
-   * Creates a Bytes object from a String
+   * Creates a Bytes object by copying the value of the given String
    */
-  final public static Bytes wrap(String s) {
+  final public static Bytes of(String s) {
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
   }
   
   /**
-   * Creates a Bytes object from String with a given charset
+   * Creates a Bytes object by copying the value of the given String with a given charset
    */
-  final public static Bytes wrap(String s, Charset c) {
+  final public static Bytes of(String s, Charset c) {
     byte[] data = s.getBytes(c);
     return bytesFactory.get(data);
   }
@@ -225,7 +225,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     int len = WritableUtils.readVInt(in);
     byte b[] = new byte[len];
     in.readFully(b);
-    return wrap(b);
+    return of(b);
   }
   
   /**
@@ -246,7 +246,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       }
       
       dos.close();
-      return wrap(baos.toByteArray());
+      return of(baos.toByteArray());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -272,7 +272,7 @@ public abstract class Bytes implements Comparable<Bytes> {
         // TODO could get pointers into original byte seq
         byte field[] = new byte[len];
         dis.readFully(field);
-        ret.add(wrap(field));
+        ret.add(of(field));
       }
     } catch (EOFException ee) {
       

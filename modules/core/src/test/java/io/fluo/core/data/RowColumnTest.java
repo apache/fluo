@@ -37,16 +37,16 @@ public class RowColumnTest {
     Assert.assertEquals("   ", rc.toString());
     Assert.assertNotEquals(RowColumn.EMPTY, Column.EMPTY);
     
-    rc = new RowColumn(Bytes.wrap("r1"));
-    Assert.assertEquals(Bytes.wrap("r1"), rc.getRow());
+    rc = new RowColumn(Bytes.of("r1"));
+    Assert.assertEquals(Bytes.of("r1"), rc.getRow());
     Assert.assertEquals(Column.EMPTY, rc.getColumn());
     Assert.assertEquals(new RowColumn("r1"), rc);
     Assert.assertEquals("r1   ", rc.toString());
     
     rc = new RowColumn("r2", new Column("cf2"));
-    Assert.assertEquals(Bytes.wrap("r2"), rc.getRow());
+    Assert.assertEquals(Bytes.of("r2"), rc.getRow());
     Assert.assertEquals(new Column("cf2"), rc.getColumn());
-    Assert.assertEquals(new RowColumn(Bytes.wrap("r2"), new Column("cf2")), rc);
+    Assert.assertEquals(new RowColumn(Bytes.of("r2"), new Column("cf2")), rc);
     Assert.assertEquals("r2 cf2  ", rc.toString());
     Assert.assertEquals(132689, rc.hashCode());
   }
@@ -55,12 +55,12 @@ public class RowColumnTest {
   public void testFollowing() {
     byte[] fdata = new String("data1").getBytes();
     fdata[4] = (byte) 0x00;
-    Bytes fb = Bytes.wrap(fdata);
+    Bytes fb = Bytes.of(fdata);
     
     Assert.assertEquals(RowColumn.EMPTY, new RowColumn().following());
     Assert.assertEquals(new RowColumn(fb), new RowColumn("data").following());
     Assert.assertEquals(new RowColumn("row", new Column(fb)), new RowColumn("row", new Column("data")).following());
-    Assert.assertEquals(new RowColumn("row", new Column(Bytes.wrap("cf"), fb)), new RowColumn("row", new Column("cf", "data")).following());
-    Assert.assertEquals(new RowColumn("row", new Column(Bytes.wrap("cf"), Bytes.wrap("cq"), fb)), new RowColumn("row", new Column("cf", "cq", "data")).following());
+    Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), fb)), new RowColumn("row", new Column("cf", "data")).following());
+    Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), Bytes.of("cq"), fb)), new RowColumn("row", new Column("cf", "cq", "data")).following());
   }
 }

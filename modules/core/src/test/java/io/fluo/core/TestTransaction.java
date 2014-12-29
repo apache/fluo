@@ -59,7 +59,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   @SuppressWarnings("resource")
   public TestTransaction(Environment env, String trow, Column tcol) {
-    this(new TransactionImpl(env, Bytes.wrap(trow), tcol), new StringEncoder());
+    this(new TransactionImpl(env, Bytes.of(trow), tcol), new StringEncoder());
   }
 
   /**

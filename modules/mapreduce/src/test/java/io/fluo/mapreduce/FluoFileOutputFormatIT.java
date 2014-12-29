@@ -52,8 +52,8 @@ public class FluoFileOutputFormatIT extends TestBaseImpl {
     public void map(LongWritable key, Text data, Context context) throws IOException, InterruptedException {
       String fields[] = data.toString().split(",");
 
-      RowColumn rc = new RowColumn(Bytes.wrap(fields[0]), new Column(Bytes.wrap(fields[1]), Bytes.wrap(fields[2])));
-      Bytes val = Bytes.wrap(fields[3]);
+      RowColumn rc = new RowColumn(Bytes.of(fields[0]), new Column(Bytes.of(fields[1]), Bytes.of(fields[2])));
+      Bytes val = Bytes.of(fields[3]);
 
       context.write(rc, val);
     }

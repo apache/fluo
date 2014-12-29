@@ -93,7 +93,7 @@ public class MockSnapshotBase implements SnapshotBase {
       if (rcv.length != 3 && !(rcv.length == 2 && entry.trim().endsWith(",")))
         throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis],<value> but saw : " + entry);
 
-      Bytes row = Bytes.wrap(rcv[0]);
+      Bytes row = Bytes.of(rcv[0]);
       String[] colFields = rcv[1].split(":");
 
       Column col;
@@ -109,7 +109,7 @@ public class MockSnapshotBase implements SnapshotBase {
       if (rcv.length == 2)
         val = Bytes.EMPTY;
       else
-        val = Bytes.wrap(rcv[2]);
+        val = Bytes.of(rcv[2]);
 
       Map<Column,Bytes> cols = ret.get(row);
       if (cols == null) {
@@ -134,7 +134,7 @@ public class MockSnapshotBase implements SnapshotBase {
       if (rcv.length != 2)
         throw new IllegalArgumentException("expected <row>,<col fam>:<col qual>[:col vis] but saw : " + entry);
 
-      Bytes row = Bytes.wrap(rcv[0]);
+      Bytes row = Bytes.of(rcv[0]);
       String[] colFields = rcv[1].split(":");
 
       Column col;

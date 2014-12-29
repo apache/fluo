@@ -41,19 +41,19 @@ public class ScannerConfigurationTest {
     Assert.assertEquals(0, config.getColumns().size());
     
     config = new ScannerConfiguration();
-    config.fetchColumnFamily(Bytes.wrap("cf1"));
+    config.fetchColumnFamily(Bytes.of("cf1"));
     Assert.assertEquals(1, config.getColumns().size());
     Assert.assertEquals(new Column("cf1"), config.getColumns().iterator().next());
     
     config = new ScannerConfiguration();
-    config.fetchColumn(Bytes.wrap("cf2"), Bytes.wrap("cq2"));
+    config.fetchColumn(Bytes.of("cf2"), Bytes.of("cq2"));
     Assert.assertEquals(1, config.getColumns().size());
     Assert.assertEquals(new Column("cf2", "cq2"), config.getColumns().iterator().next());
     
     config = new ScannerConfiguration();
-    config.fetchColumnFamily(Bytes.wrap("a"));
-    config.fetchColumnFamily(Bytes.wrap("b"));
-    config.fetchColumnFamily(Bytes.wrap("a"));
+    config.fetchColumnFamily(Bytes.of("a"));
+    config.fetchColumnFamily(Bytes.of("b"));
+    config.fetchColumnFamily(Bytes.of("a"));
     Assert.assertEquals(2, config.getColumns().size());
     
     config.clearColumns();
@@ -76,12 +76,12 @@ public class ScannerConfigurationTest {
     } catch (NullPointerException e) { }
     
     try {
-      config.fetchColumn(null, Bytes.wrap("qual"));
+      config.fetchColumn(null, Bytes.of("qual"));
       Assert.fail();
     } catch (NullPointerException e) { }
     
     try {
-      config.fetchColumn(Bytes.wrap("fam"), null);
+      config.fetchColumn(Bytes.of("fam"), null);
       Assert.fail();
     } catch (NullPointerException e) { }
     

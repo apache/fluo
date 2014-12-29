@@ -84,7 +84,7 @@ import io.fluo.api.data.Column;
  * <pre>
  * <code>
  *   void process(Transaction tx, byte[] row, byte[] cf, int cq, long val){
- *     tx.set(Bytes.wrap(row), new Column(Bytes.wrap(cf), Bytes.wrap(Integer.toString(cq))), Bytes.wrap(Long.toString(val));
+ *     tx.set(Bytes.of(row), new Column(Bytes.of(cf), Bytes.of(Integer.toString(cq))), Bytes.of(Long.toString(val));
  *   }
  * </code>
  * </pre>
@@ -113,13 +113,13 @@ import io.fluo.api.data.Column;
  *   void add(Transaction tx, byte[] row, Column col, long amount){
  *     
  *     long balance = 0;
- *     Bytes bval = tx.get(Bytes.wrap(row), col);
+ *     Bytes bval = tx.get(Bytes.of(row), col);
  *     if(bval != null)
  *       balance = Long.parseLong(bval.toString());
  *     
  *     balance += amount;
  *     
- *     tx.set(Bytes.wrap(row), col, Bytes.wrap(Long.toString(amount)));
+ *     tx.set(Bytes.of(row), col, Bytes.of(Long.toString(amount)));
  *     
  *   }
  * </code>
@@ -161,7 +161,7 @@ import io.fluo.api.data.Column;
  * <pre>
  * <code>
  *   void process(Transaction tx, byte[] row, Column col, long amount){
- *     Bytes val =  tx.get(Bytes.wrap(row), col);
+ *     Bytes val =  tx.get(Bytes.of(row), col);
  *     if(val == null)
  *       return;   
  *     long balance = Long.parseLong(val.toString());
@@ -260,11 +260,11 @@ public class TypeLayer {
     }
 
     public R row(byte[] row) {
-      return row(Bytes.wrap(row));
+      return row(Bytes.of(row));
     }
 
     public R row(ByteBuffer row) {
-      return row(Bytes.wrap(row));
+      return row(Bytes.of(row));
     }
 
     public R row(Bytes row) {
@@ -298,11 +298,11 @@ public class TypeLayer {
     }
 
     public R1 fam(byte[] family) {
-      return fam(Bytes.wrap(family));
+      return fam(Bytes.of(family));
     }
 
     public R1 fam(ByteBuffer family) {
-      return fam(Bytes.wrap(family));
+      return fam(Bytes.of(family));
     }
 
     public R1 fam(Bytes family) {
@@ -350,11 +350,11 @@ public class TypeLayer {
     }
 
     public R qual(byte[] qualifier) {
-      return qual(Bytes.wrap(qualifier));
+      return qual(Bytes.of(qualifier));
     }
 
     public R qual(ByteBuffer qualifier) {
-      return qual(Bytes.wrap(qualifier));
+      return qual(Bytes.of(qualifier));
     }
 
     public R qual(Bytes qualifier) {
@@ -376,7 +376,7 @@ public class TypeLayer {
     }
 
     public Column vis(String cv) {
-      return vis(Bytes.wrap(cv));
+      return vis(Bytes.of(cv));
     }
 
     public Column vis(Bytes cv) {
@@ -384,11 +384,11 @@ public class TypeLayer {
     }
 
     public Column vis(ByteBuffer cv) {
-      return vis(Bytes.wrap(cv));
+      return vis(Bytes.of(cv));
     }
 
     public Column vis(byte[] cv) {
-      return vis(Bytes.wrap(cv));
+      return vis(Bytes.of(cv));
     }
   }
 

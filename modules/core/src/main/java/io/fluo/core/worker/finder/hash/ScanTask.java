@@ -176,7 +176,7 @@ public class ScanTask implements Runnable {
         return count;
       
       Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
-      List<Bytes> ca = Bytes.split(Bytes.wrap(entry.getKey().getColumnQualifierData().toArray()));
+      List<Bytes> ca = Bytes.split(Bytes.of(entry.getKey().getColumnQualifierData().toArray()));
       Column col = new Column(ca.get(0), ca.get(1));
       if(hwf.getWorkerQueue().addNotification(hwf, row, col))
         count++;

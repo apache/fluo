@@ -81,11 +81,11 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
 
     public void set(byte[] ba) throws AlreadySetException {
-      set(Bytes.wrap(ba));
+      set(Bytes.of(ba));
     }
 
     public void set(ByteBuffer bb) throws AlreadySetException {
-      set(Bytes.wrap(bb));
+      set(Bytes.of(bb));
     }
 
     /**
@@ -147,7 +147,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
 
     public Mutator vis(String cv) {
       checkNotSet();
-      data.vis = Bytes.wrap(cv);
+      data.vis = Bytes.of(cv);
       return new Mutator(data);
     }
 
@@ -159,13 +159,13 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
 
     public Mutator vis(byte[] cv) {
       checkNotSet();
-      data.vis = Bytes.wrap(cv);
+      data.vis = Bytes.of(cv);
       return new Mutator(data);
     }
 
     public Mutator vis(ByteBuffer cv) {
       checkNotSet();
-      data.vis = Bytes.wrap(cv);
+      data.vis = Bytes.of(cv);
       return new Mutator(data);
     }
   }
