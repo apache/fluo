@@ -53,7 +53,7 @@ public class FluoIT extends TestBaseImpl {
 
       try (Snapshot s = client.newSnapshot()) {
         Assert.assertNotNull(s);
-        s.get(Bytes.wrap("test"), new Column(Bytes.wrap("cf"), Bytes.wrap("cq")));
+        s.get(Bytes.of("test"), new Column(Bytes.of("cf"), Bytes.of("cq")));
       }
     }
   }
@@ -409,7 +409,7 @@ public class FluoIT extends TestBaseImpl {
     tx3.done();
     
     HashSet<Column> columns = new HashSet<>();
-    RowIterator riter = tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), new Column(Bytes.wrap("outlink")))));
+    RowIterator riter = tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.of("d00001"), new Column(Bytes.of("outlink")))));
     while (riter.hasNext()) {
       ColumnIterator citer = riter.next().getValue();
       while (citer.hasNext()) {
@@ -426,7 +426,7 @@ public class FluoIT extends TestBaseImpl {
     
     TestTransaction tx4 = new TestTransaction(env);
     columns.clear();
-    riter = tx4.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.wrap("d00001"), new Column(Bytes.wrap("outlink")))));
+    riter = tx4.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.of("d00001"), new Column(Bytes.of("outlink")))));
     while (riter.hasNext()) {
       ColumnIterator citer = riter.next().getValue();
       while (citer.hasNext()) {

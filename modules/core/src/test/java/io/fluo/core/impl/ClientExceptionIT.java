@@ -38,14 +38,14 @@ public class ClientExceptionIT extends TestBaseMini {
     
     // test transaction set & delete
     try (Transaction tx = client.newTransaction()) {
-      tx.set(Bytes.wrap("row"), new Column("c1"), Bytes.wrap("val1"));
-      tx.set(Bytes.wrap("row"), new Column("c1"), Bytes.wrap("val2"));
+      tx.set(Bytes.of("row"), new Column("c1"), Bytes.of("val1"));
+      tx.set(Bytes.of("row"), new Column("c1"), Bytes.of("val2"));
       Assert.fail("exception not thrown");
     } catch (AlreadySetException e) {}
 
     try (Transaction tx = client.newTransaction()) {
-      tx.delete(Bytes.wrap("row"), new Column("c1"));
-      tx.delete(Bytes.wrap("row"), new Column("c1"));
+      tx.delete(Bytes.of("row"), new Column("c1"));
+      tx.delete(Bytes.of("row"), new Column("c1"));
       Assert.fail("exception not thrown");
     } catch (AlreadySetException e) {}
     

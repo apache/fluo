@@ -45,15 +45,15 @@ public class ColumnTest {
     Assert.assertEquals(Column.EMPTY, Column.EMPTY);
     Assert.assertEquals(Column.EMPTY, new Column());
     
-    Assert.assertEquals(new Column("a"), new Column(Bytes.wrap("a")));
-    Assert.assertEquals(new Column("a"), new Column(Bytes.wrap("a"), Bytes.EMPTY, Bytes.EMPTY));
-    Assert.assertEquals(new Column("a").hashCode(), new Column(Bytes.wrap("a"), Bytes.EMPTY, Bytes.EMPTY).hashCode());
+    Assert.assertEquals(new Column("a"), new Column(Bytes.of("a")));
+    Assert.assertEquals(new Column("a"), new Column(Bytes.of("a"), Bytes.EMPTY, Bytes.EMPTY));
+    Assert.assertEquals(new Column("a").hashCode(), new Column(Bytes.of("a"), Bytes.EMPTY, Bytes.EMPTY).hashCode());
     
     col = new Column("cf1");
     Assert.assertTrue(col.isFamilySet());
     Assert.assertFalse(col.isQualifierSet());
     Assert.assertFalse(col.isVisibilitySet());
-    Assert.assertEquals(Bytes.wrap("cf1"), col.getFamily());
+    Assert.assertEquals(Bytes.of("cf1"), col.getFamily());
     Assert.assertSame(Bytes.EMPTY, col.getQualifier());
     Assert.assertSame(Bytes.EMPTY, col.getVisibility());
     Assert.assertEquals(new Column("cf1"), col);
@@ -62,8 +62,8 @@ public class ColumnTest {
     Assert.assertTrue(col.isFamilySet());
     Assert.assertTrue(col.isQualifierSet());
     Assert.assertFalse(col.isVisibilitySet());
-    Assert.assertEquals(Bytes.wrap("cf2"), col.getFamily());
-    Assert.assertEquals(Bytes.wrap("cq2"), col.getQualifier());
+    Assert.assertEquals(Bytes.of("cf2"), col.getFamily());
+    Assert.assertEquals(Bytes.of("cq2"), col.getQualifier());
     Assert.assertSame(Bytes.EMPTY, col.getVisibility());
     Assert.assertEquals(new Column("cf2", "cq2"), col);
     
@@ -71,9 +71,9 @@ public class ColumnTest {
     Assert.assertTrue(col.isFamilySet());
     Assert.assertTrue(col.isQualifierSet());
     Assert.assertTrue(col.isVisibilitySet());
-    Assert.assertEquals(Bytes.wrap("cf3"), col.getFamily());
-    Assert.assertEquals(Bytes.wrap("cq3"), col.getQualifier());
-    Assert.assertEquals(Bytes.wrap("cv3"), col.getVisibility());
+    Assert.assertEquals(Bytes.of("cf3"), col.getFamily());
+    Assert.assertEquals(Bytes.of("cq3"), col.getQualifier());
+    Assert.assertEquals(Bytes.of("cv3"), col.getVisibility());
     Assert.assertEquals(new Column("cf3", "cq3", "cv3"), col);
   }
 }

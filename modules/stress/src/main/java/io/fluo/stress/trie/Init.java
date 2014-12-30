@@ -113,8 +113,8 @@ public class Init  extends Configured implements Tool {
         sum += l.get();
       }
       
-      RowColumn rowCol = new RowColumn(Bytes.wrap(key.getBytes(), 0, key.getLength()), Constants.COUNT_SEEN_COL);
-      context.write(rowCol, Bytes.wrap(sum+""));
+      RowColumn rowCol = new RowColumn(Bytes.of(key.getBytes(), 0, key.getLength()), Constants.COUNT_SEEN_COL);
+      context.write(rowCol, Bytes.of(sum+""));
     }
   }
 

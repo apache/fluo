@@ -47,7 +47,7 @@ public class RowIteratorImpl implements RowIterator {
     
     Entry<Key,Value> entry = cols.next();
 
-    final Bytes row = Bytes.wrap(entry.getKey().getRowData().toArray());
+    final Bytes row = Bytes.of(entry.getKey().getRowData().toArray());
     final ColumnIterator coliter = new ColumnIteratorImpl(entry, cols);
     
     return new Entry<Bytes,ColumnIterator>() {

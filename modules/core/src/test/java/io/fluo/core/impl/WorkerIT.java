@@ -47,7 +47,7 @@ import org.junit.Test;
  */
 public class WorkerIT extends TestBaseMini {
 
-  private static final Bytes NODE_CF = Bytes.wrap("node");
+  private static final Bytes NODE_CF = Bytes.of("node");
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
@@ -72,7 +72,7 @@ public class WorkerIT extends TestBaseMini {
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column(Bytes.wrap("link")))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column(Bytes.of("link")))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -83,7 +83,7 @@ public class WorkerIT extends TestBaseMini {
       String degree2 = "" + count;
 
       if (degree == null || !degree.toString().equals(degree2)) {
-        ttx.set(row, typeLayer.bc().fam("attr").qual("degree").vis(), Bytes.wrap(degree2));
+        ttx.set(row, typeLayer.bc().fam("attr").qual("degree").vis(), Bytes.of(degree2));
 
         // put new entry in degree index
         ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
@@ -143,7 +143,7 @@ public class WorkerIT extends TestBaseMini {
     tx6.mutate().row("N0003").fam("link").qual("N0050").set("");
     tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, Bytes.wrap("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
+    tx6.preCommit(cd, Bytes.of("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
 
     miniFluo.waitForObservers();
 

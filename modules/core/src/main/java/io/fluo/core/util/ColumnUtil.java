@@ -90,10 +90,10 @@ public class ColumnUtil {
       Entry<Key,Value> entry = iter.next();
       
       Key k = entry.getKey();
-      Bytes r = Bytes.wrap(k.getRowData().toArray());
-      Bytes cf = Bytes.wrap(k.getColumnFamilyData().toArray());
-      Bytes cq = Bytes.wrap(k.getColumnQualifierData().toArray());
-      Bytes cv = Bytes.wrap(k.getColumnVisibilityData().toArray());
+      Bytes r = Bytes.of(k.getRowData().toArray());
+      Bytes cf = Bytes.of(k.getColumnFamilyData().toArray());
+      Bytes cq = Bytes.of(k.getColumnQualifierData().toArray());
+      Bytes cv = Bytes.of(k.getColumnVisibilityData().toArray());
       
       if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
           && cv.equals(col.getVisibility())) {

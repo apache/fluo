@@ -48,7 +48,7 @@ public class ObserverConfigIT extends TestBaseMini {
     public void init(Context context) {
       String ocTokens[] = context.getParameters().get("observedCol").split(":");
       observedColumn = new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(), NotificationType.valueOf(ocTokens[2]));
-      outputCQ = Bytes.wrap(context.getParameters().get("outputCQ"));
+      outputCQ = Bytes.of(context.getParameters().get("outputCQ"));
       String swn = context.getParameters().get("setWeakNotification");
       if (swn != null && swn.equals("true"))
         setWeakNotification = true;

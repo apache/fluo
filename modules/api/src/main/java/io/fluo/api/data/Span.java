@@ -127,7 +127,7 @@ public class Span {
    * @param endRowInclusive End row inclusive
    */
   public Span(String startRow, boolean startRowInclusive, String endRow, boolean endRowInclusive) {
-    this(Bytes.wrap(startRow), startRowInclusive, Bytes.wrap(endRow), endRowInclusive);
+    this(Bytes.of(startRow), startRowInclusive, Bytes.of(endRow), endRowInclusive);
   }
     
   /**
@@ -204,7 +204,7 @@ public class Span {
    */
   public static Span exact(String row) {
     Preconditions.checkNotNull(row);
-    return exact(Bytes.wrap(row));
+    return exact(Bytes.of(row));
   }
   
   /**
@@ -225,7 +225,7 @@ public class Span {
   public static Span exact(String row, Column col) {
     Preconditions.checkNotNull(row);
     Preconditions.checkNotNull(col);
-    return exact(Bytes.wrap(row), col);
+    return exact(Bytes.of(row), col);
   }
   
   private static Bytes followingPrefix(Bytes prefix) {
@@ -244,7 +244,7 @@ public class Span {
     
     // increment the selected byte
     newBytes[changeIndex]++;
-    return Bytes.wrap(newBytes);
+    return Bytes.of(newBytes);
   }
   
   /**
@@ -262,7 +262,7 @@ public class Span {
    */
   public static Span prefix(String rowPrefix) {
     Preconditions.checkNotNull(rowPrefix);
-    return prefix(Bytes.wrap(rowPrefix));
+    return prefix(Bytes.of(rowPrefix));
   }
     
   /**
@@ -300,7 +300,7 @@ public class Span {
   public static Span prefix(String row, Column colPrefix) {
     Preconditions.checkNotNull(row);
     Preconditions.checkNotNull(colPrefix);
-    return prefix(Bytes.wrap(row), colPrefix);
+    return prefix(Bytes.of(row), colPrefix);
   }
   
   public static class KeyBuilder {
@@ -330,7 +330,7 @@ public class Span {
      * Build start of Span starting with row (will be encoded UTF-8)
      */
     public StartCFBuilder startRow(String row) {
-      return startRow(Bytes.wrap(row));
+      return startRow(Bytes.of(row));
     }
     
     /**
@@ -346,7 +346,7 @@ public class Span {
      * Build end of Span starting with row (will be encoded UTF-8) 
      */
     public EndCFBuilder endRow(String row) {
-      return endRow(Bytes.wrap(row));
+      return endRow(Bytes.of(row));
     }
         
     public Span build() {
@@ -373,7 +373,7 @@ public class Span {
      * Build Span end starting with row (will be encoded UTF-8)
      */
     public EndCFBuilder endRow(String row) {
-      return endRow(Bytes.wrap(row));
+      return endRow(Bytes.of(row));
     }
     
     /**
@@ -431,7 +431,7 @@ public class Span {
      * Add column visibility (will be encoded UTF-8) to Span start
      */
     public StartBuilder vis(String cv) {
-      return vis(Bytes.wrap(cv));
+      return vis(Bytes.of(cv));
     }
   }
   
@@ -453,7 +453,7 @@ public class Span {
      * Add column qualifier (will be encoded UTF-8) to Span start 
      */
     public StartCVBuilder qual(String cq) {
-      return qual(Bytes.wrap(cq));
+      return qual(Bytes.of(cq));
     }
   }
   
@@ -475,7 +475,7 @@ public class Span {
      * Add column family (will be encoded UTF-8) to Span start
      */
     public StartCQBuilder fam(String cf) {
-      return fam(Bytes.wrap(cf));
+      return fam(Bytes.of(cf));
     }
   }
   
@@ -497,7 +497,7 @@ public class Span {
      * Add column visibility (will be encoded UTF-8) to Span end
      */
     public EndBuilder vis(String cv) {
-      return vis(Bytes.wrap(cv));
+      return vis(Bytes.of(cv));
     }
   }
   
@@ -519,7 +519,7 @@ public class Span {
      * Add column qualifier (will be encoded UTF-8) to Span end
      */
     public EndCVBuilder qual(String cq) {
-      return qual(Bytes.wrap(cq));
+      return qual(Bytes.of(cq));
     }
   }
   
@@ -541,7 +541,7 @@ public class Span {
      * Add column family (will be encoded UTF-8) to an Span end
      */
     public EndCQBuilder fam(String cf) {
-      return fam(Bytes.wrap(cf));
+      return fam(Bytes.of(cf));
     }
   }
 }

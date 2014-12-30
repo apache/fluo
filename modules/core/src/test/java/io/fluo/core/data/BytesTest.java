@@ -31,24 +31,24 @@ public class BytesTest {
   public void testBytesWrap() {
     
     String s1 = "test1";
-    Bytes b1 = Bytes.wrap(s1);
+    Bytes b1 = Bytes.of(s1);
     Assert.assertArrayEquals(s1.getBytes(), b1.toArray());
     Assert.assertEquals(s1, b1.toString());
     
     String s2 = "test2";
     ByteBuffer bb = ByteBuffer.wrap(s2.getBytes());
-    Bytes b2 = Bytes.wrap(bb);
+    Bytes b2 = Bytes.of(bb);
     Assert.assertArrayEquals(s2.getBytes(), b2.toArray());
     Assert.assertEquals(s2, b2.toString());
     
     String s3 = "test3";
-    Bytes b3 = Bytes.wrap(s3.getBytes());
+    Bytes b3 = Bytes.of(s3.getBytes());
     Assert.assertArrayEquals(s3.getBytes(), b3.toArray());
     Assert.assertEquals(s3, b3.toString());
     
     String s4 = "test4";
     byte[] d4 = s4.getBytes();
-    Bytes b4 = Bytes.wrap(d4, 0, d4.length);
+    Bytes b4 = Bytes.of(d4, 0, d4.length);
     Assert.assertArrayEquals(s4.getBytes(), b4.toArray());
     Assert.assertEquals(s4, b4.toString());
   }
@@ -56,9 +56,9 @@ public class BytesTest {
   @Test
   public void testConcatSplit() {
     
-    Bytes b1 = Bytes.wrap("str1");
-    Bytes b2 = Bytes.wrap("string2");
-    Bytes b3 = Bytes.wrap("s3");
+    Bytes b1 = Bytes.of("str1");
+    Bytes b2 = Bytes.of("string2");
+    Bytes b3 = Bytes.of("s3");
     Bytes ball = Bytes.concat(b1, b2, b3);
     
     List<Bytes> blist = Bytes.split(ball);
@@ -70,9 +70,9 @@ public class BytesTest {
   
   @Test
   public void testImmutable() {
-    byte[] d1 = Bytes.wrap("mydata").toArray();
+    byte[] d1 = Bytes.of("mydata").toArray();
     
-    Bytes imm = Bytes.wrap(d1);
+    Bytes imm = Bytes.of(d1);
     Assert.assertNotSame(d1, imm.toArray());
   }
 }

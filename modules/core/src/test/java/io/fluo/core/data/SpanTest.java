@@ -39,14 +39,14 @@ public class SpanTest {
   String cq2s = "cq2";
   String cv2s = "cv2";
   long ts2 = 51;  
-  Bytes rw1b = Bytes.wrap(rw1s);
-  Bytes cf1b = Bytes.wrap(cf1s);
-  Bytes cq1b = Bytes.wrap(cq1s);
-  Bytes cv1b = Bytes.wrap(cv1s);
-  Bytes rw2b = Bytes.wrap(rw2s);
-  Bytes cf2b = Bytes.wrap(cf2s);
-  Bytes cq2b = Bytes.wrap(cq2s);
-  Bytes cv2b = Bytes.wrap(cv2s);
+  Bytes rw1b = Bytes.of(rw1s);
+  Bytes cf1b = Bytes.of(cf1s);
+  Bytes cq1b = Bytes.of(cq1s);
+  Bytes cv1b = Bytes.of(cv1s);
+  Bytes rw2b = Bytes.of(rw2s);
+  Bytes cf2b = Bytes.of(cf2s);
+  Bytes cq2b = Bytes.of(cq2s);
+  Bytes cv2b = Bytes.of(cv2s);
   
   @Test
   public void testRowRange() {
@@ -120,9 +120,9 @@ public class SpanTest {
   
   @Test
   public void testRowCFCQCVRange() {
-    RowColumn rc1 = new RowColumn(rw1b, new Column(cf1b, cq1b, Bytes.wrap(cv1s)));
+    RowColumn rc1 = new RowColumn(rw1b, new Column(cf1b, cq1b, Bytes.of(cv1s)));
     RowColumn frc1 = rc1.following();
-    RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b, Bytes.wrap(cv2s)));
+    RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b, Bytes.of(cv2s)));
     RowColumn frc2 = rc2.following();
     
     Assert.assertEquals(new Span(rc1, true, frc2, false), 

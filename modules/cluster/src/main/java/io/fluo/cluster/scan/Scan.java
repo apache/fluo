@@ -61,9 +61,9 @@ public class Scan {
       if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
         scanConfig.setSpan(new Span(options.getStartRow(), true, options.getEndRow(), true));
       } else if (options.getStartRow() != null) { 
-        scanConfig.setSpan(new Span(Bytes.wrap(options.getStartRow()), true, Bytes.EMPTY, true));
+        scanConfig.setSpan(new Span(Bytes.of(options.getStartRow()), true, Bytes.EMPTY, true));
       } else if (options.getEndRow() != null) {
-        scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.wrap(options.getEndRow()), true));
+        scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.of(options.getEndRow()), true));
       }
     }
 
@@ -71,9 +71,9 @@ public class Scan {
     for (String column : options.getColumns()) {
       String[] colFields = column.split(":");
       if (colFields.length == 1) {
-        scanConfig.fetchColumnFamily(Bytes.wrap(colFields[0]));
+        scanConfig.fetchColumnFamily(Bytes.of(colFields[0]));
       } else if (colFields.length == 2) {
-        scanConfig.fetchColumn(Bytes.wrap(colFields[0]), Bytes.wrap(colFields[1]));
+        scanConfig.fetchColumn(Bytes.of(colFields[0]), Bytes.of(colFields[1]));
       } else {
         throw new IllegalArgumentException("Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
       }

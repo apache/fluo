@@ -54,13 +54,13 @@ public class MiniIT {
 
           try (Transaction t = client.newTransaction()) {
             Assert.assertNotNull(t);
-            t.set(Bytes.wrap("test"), new Column(Bytes.wrap("cf"), Bytes.wrap("cq")), Bytes.wrap("myval"));
+            t.set(Bytes.of("test"), new Column(Bytes.of("cf"), Bytes.of("cq")), Bytes.of("myval"));
             t.commit();
           }
           try (Snapshot s = client.newSnapshot()) {
             Assert.assertNotNull(s);
-            Bytes v = s.get(Bytes.wrap("test"), new Column(Bytes.wrap("cf"), Bytes.wrap("cq")));
-            Assert.assertEquals(Bytes.wrap("myval"), v);
+            Bytes v = s.get(Bytes.of("test"), new Column(Bytes.of("cf"), Bytes.of("cq")));
+            Assert.assertEquals(Bytes.of("myval"), v);
           }
         }
       }

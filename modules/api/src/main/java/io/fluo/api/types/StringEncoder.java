@@ -49,7 +49,7 @@ public class StringEncoder implements Encoder {
 
   @Override
   public Bytes encode(String s) {
-    return Bytes.wrap(s);
+    return Bytes.of(s);
   }
 
   @Override

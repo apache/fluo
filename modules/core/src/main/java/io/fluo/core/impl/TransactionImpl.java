@@ -69,8 +69,8 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 public class TransactionImpl implements Transaction, Snapshot {
   
   public static final byte[] EMPTY = new byte[0];
-  public static final Bytes EMPTY_BS = Bytes.wrap(EMPTY);
-  private static final Bytes DELETE = Bytes.wrap("special delete object");
+  public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
+  private static final Bytes DELETE = Bytes.of("special delete object");
   private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED }
   
   private final long startTs;
@@ -423,7 +423,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     while (resultsIter.hasNext()) {
       Result result = resultsIter.next();
       // TODO handle unknown?
-      Bytes row = Bytes.wrap(result.getMutation().getRow());
+      Bytes row = Bytes.of(result.getMutation().getRow());
       if (result.getStatus() == Status.ACCEPTED)
         cd.acceptedRows.add(row);
       else {
@@ -504,14 +504,14 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   private boolean checkForAckCollision(ConditionalMutation cm) {
-    Bytes row = Bytes.wrap(cm.getRow());
+    Bytes row = Bytes.of(cm.getRow());
 
     if (row.equals(triggerRow)) {
       List<ColumnUpdate> updates = cm.getUpdates();
       
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
-        Column col = new Column(Bytes.wrap(cu.getColumnFamily()), Bytes.wrap(cu.getColumnQualifier()), Bytes.wrap(cu.getColumnVisibility()));
+        Column col = new Column(Bytes.of(cu.getColumnFamily()), Bytes.of(cu.getColumnQualifier()), Bytes.of(cu.getColumnVisibility()));
 
         if (triggerColumn.equals(col)) {
           

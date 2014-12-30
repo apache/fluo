@@ -30,7 +30,7 @@ public class ColumnConstants {
   public static final long ACK_PREFIX = 0xc000000000000000l;
   public static final long DATA_PREFIX = 0xa000000000000000l;
   public static final long TIMESTAMP_MASK = 0x1fffffffffffffffl;
-  public static final Bytes NOTIFY_CF = Bytes.wrap("ntfy");
+  public static final Bytes NOTIFY_CF = Bytes.of("ntfy");
 
   private ColumnConstants() {}
 

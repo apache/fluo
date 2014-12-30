@@ -48,7 +48,7 @@ public class RowColumn {
    * @param row (will be UTF-8 encoded)
    */
   public RowColumn(String row) {
-    this(row == null ? null : Bytes.wrap(row));
+    this(row == null ? null : Bytes.of(row));
   }
   
   /**
@@ -71,7 +71,7 @@ public class RowColumn {
    * @param col Column
    */
   public RowColumn(String row, Column col) {
-    this(row == null ? null : Bytes.wrap(row), col);
+    this(row == null ? null : Bytes.of(row), col);
   }
 
   /**
@@ -138,6 +138,6 @@ public class RowColumn {
   }
   
   private Bytes followingBytes(Bytes b) {
-    return Bytes.wrap(followingArray(b.toArray()));
+    return Bytes.of(followingArray(b.toArray()));
   }
 }

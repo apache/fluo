@@ -306,7 +306,7 @@ public class FailureIT extends TestBaseImpl {
     Assert.assertEquals(0, tx3.getStats().getDeadLocks());
     Assert.assertEquals(0, tx3.getStats().getTimedOutLocks());
     
-    int bobFinal = Integer.parseInt(tx3.get(Bytes.wrap("bob"), balanceCol).toString());
+    int bobFinal = Integer.parseInt(tx3.get(Bytes.of("bob"), balanceCol).toString());
     Assert.assertEquals(10, bobFinal);
     
     if (killTransactor) {
@@ -414,7 +414,7 @@ public class FailureIT extends TestBaseImpl {
     tx5.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
     tx5.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
     cd = tx5.createCommitData();
-    Assert.assertTrue(tx5.preCommit(cd, Bytes.wrap("idx:abc"), typeLayer.bc().fam("doc").qual("url").vis()));
+    Assert.assertTrue(tx5.preCommit(cd, Bytes.of("idx:abc"), typeLayer.bc().fam("doc").qual("url").vis()));
     long commitTs = OracleClient.getInstance(env).getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
     

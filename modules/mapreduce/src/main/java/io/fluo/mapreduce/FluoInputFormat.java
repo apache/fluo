@@ -107,7 +107,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
           
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
-            sc.fetchColumnFamily(Bytes.wrap(fam));
+            sc.fetchColumnFamily(Bytes.of(fam));
 
           rowIter = ti.get(sc);
         } catch (Exception e) {

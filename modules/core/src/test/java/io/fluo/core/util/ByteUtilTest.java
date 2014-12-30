@@ -32,7 +32,7 @@ public class ByteUtilTest {
     String s1 = "test1";
     Text t1 = new Text(s1);
     Bytes b1 = ByteUtil.toBytes(t1);
-    Assert.assertEquals(Bytes.wrap(s1), b1);
+    Assert.assertEquals(Bytes.of(s1), b1);
     Assert.assertEquals(t1, ByteUtil.toText(b1));
   }
   
@@ -41,7 +41,7 @@ public class ByteUtilTest {
     String s2 = "test2";
     ByteSequence bs2 = new ArrayByteSequence(s2);
     Bytes b2 = ByteUtil.toBytes(bs2);
-    Assert.assertEquals(Bytes.wrap(s2), b2);
+    Assert.assertEquals(Bytes.of(s2), b2);
     Assert.assertEquals(bs2, ByteUtil.toByteSequence(b2));
   } 
 }

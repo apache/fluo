@@ -62,17 +62,17 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
 
     public Value vis(byte[] cv) {
-      data.vis = Bytes.wrap(cv);
+      data.vis = Bytes.of(cv);
       return new Value(data);
     }
 
     public Value vis(ByteBuffer bb) {
-      data.vis = Bytes.wrap(bb);
+      data.vis = Bytes.of(bb);
       return new Value(data);
     }
 
     public Value vis(String cv) {
-      data.vis = Bytes.wrap(cv);
+      data.vis = Bytes.of(cv);
       return new Value(data);
     }
   }
@@ -400,7 +400,7 @@ public class TypedSnapshotBase implements SnapshotBase {
     public ColumnsMethods rowsBytes(Collection<byte[]> rows) {
       ArrayList<Bytes> conv = new ArrayList<>();
       for (byte[] row : rows) {
-        conv.add(Bytes.wrap(row));
+        conv.add(Bytes.of(row));
       }
 
       return rows(conv);
@@ -409,7 +409,7 @@ public class TypedSnapshotBase implements SnapshotBase {
     public ColumnsMethods rowsByteBuffers(Collection<ByteBuffer> rows) {
       ArrayList<Bytes> conv = new ArrayList<>();
       for (ByteBuffer row : rows) {
-        conv.add(Bytes.wrap(row));
+        conv.add(Bytes.of(row));
       }
 
       return rows(conv);

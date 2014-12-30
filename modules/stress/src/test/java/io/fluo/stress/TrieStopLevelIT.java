@@ -46,7 +46,7 @@ public class TrieStopLevelIT extends TrieMapRedIT {
   public void testEndToEnd() throws Exception {
     super.testEndToEnd();
     try(Snapshot snap = client.newSnapshot()){
-      Bytes row = Bytes.wrap(Node.generateRootId(8));
+      Bytes row = Bytes.of(Node.generateRootId(8));
       Assert.assertNull(snap.get(row, Constants.COUNT_SEEN_COL));
       Assert.assertNull(snap.get(row, Constants.COUNT_WAIT_COL));
     }
