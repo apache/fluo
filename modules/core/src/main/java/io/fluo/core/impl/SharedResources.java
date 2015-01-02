@@ -18,6 +18,7 @@ package io.fluo.core.impl;
 import com.codahale.metrics.MetricRegistry;
 import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
+import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -25,8 +26,6 @@ import org.apache.accumulo.core.client.ConditionalWriterConfig;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 
 /** 
  * Shared Fluo resources that must be closed
@@ -49,8 +48,7 @@ public class SharedResources implements AutoCloseable {
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
-    curator = CuratorFrameworkFactory.newClient(env.getConfiguration().getZookeepers(), 
-        new ExponentialBackoffRetry(1000, 10));
+    curator = CuratorUtil.newFluoCurator(env.getConfiguration()); 
     curator.start();
     bw = env.getConnector().createBatchWriter(env.getTable(), new BatchWriterConfig());
     sbw = new SharedBatchWriter(bw);

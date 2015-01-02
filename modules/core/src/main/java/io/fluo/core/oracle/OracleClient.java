@@ -32,16 +32,15 @@ import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
+import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 import org.apache.curator.framework.recipes.leader.Participant;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -85,7 +84,7 @@ public class OracleClient {
     public void run() {
       
       try {
-        curatorFramework = CuratorFrameworkFactory.newClient(env.getConfiguration().getZookeepers(), new ExponentialBackoffRetry(1000, 10));
+        curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
         CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
         curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
         curatorFramework.start();
