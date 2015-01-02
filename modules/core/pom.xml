@@ -27,7 +27,7 @@
   <artifactId>fluo-core</artifactId>
   <packaging>jar</packaging>
 
-  <name>Core</name>
+  <name>Fluo Core</name>
   <description>The modules contains the core implementation code of Fluo.</description>
 
   <profiles>

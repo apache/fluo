@@ -27,7 +27,7 @@
   <artifactId>fluo-accumulo</artifactId>
   <packaging>jar</packaging>
 
-  <name>Accumulo Extensions</name>
+  <name>Fluo Accumulo Extensions</name>
   <description>
     This module contains all Fluo code that is run by Accumulo.  This includes iterators and formatters.
     Given that this module produces a JAR that needs to be included on the Accumulo classpath, external 

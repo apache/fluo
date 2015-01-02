@@ -27,7 +27,7 @@
   <artifactId>fluo-mapreduce</artifactId>
   <packaging>jar</packaging>
 
-  <name>MapReduce</name>
+  <name>Fluo MapReduce</name>
   <description>
     This module provides utility code for MapReduce jobs that read from or write to a Fluo table.    
   </description>

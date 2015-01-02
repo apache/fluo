@@ -26,7 +26,7 @@
   <artifactId>fluo-cluster</artifactId>
   <packaging>jar</packaging>
 
-  <name>Cluster</name>
+  <name>Fluo Cluster</name>
   <description>
     This module contains all code necessary to run Fluo on a YARN cluster using Apache Twill.
     It was separated from fluo-core to keep dependencies (like Twill) out of Fluo clients which
