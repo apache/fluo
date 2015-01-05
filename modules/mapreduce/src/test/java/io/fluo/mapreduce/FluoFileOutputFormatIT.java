@@ -36,13 +36,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import io.fluo.core.TestTransaction;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.mapreduce.FluoFileOutputFormat;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
-public class FluoFileOutputFormatIT extends TestBaseImpl {
+public class FluoFileOutputFormatIT extends ITBaseImpl {
 
   static final TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 

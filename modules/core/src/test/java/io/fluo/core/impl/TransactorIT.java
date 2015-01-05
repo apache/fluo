@@ -16,7 +16,7 @@
 package io.fluo.core.impl;
 
 import io.fluo.accumulo.util.ZookeeperPath;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +25,7 @@ import org.junit.rules.ExpectedException;
 /** 
  * Tests transactor classes
  */
-public class TransactorIT extends TestBaseImpl {
+public class TransactorIT extends ITBaseImpl {
   
   public static Long id1 = new Long(2);
   public static Long id2 = new Long(3);

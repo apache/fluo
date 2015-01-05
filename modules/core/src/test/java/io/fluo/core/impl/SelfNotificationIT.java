@@ -29,14 +29,14 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Test an observer notifying the column its observing.  This is a useful pattern for exporting data.
  */
-public class SelfNotificationIT extends TestBaseMini {
+public class SelfNotificationIT extends ITBaseMini {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   

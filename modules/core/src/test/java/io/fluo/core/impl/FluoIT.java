@@ -30,7 +30,7 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
@@ -39,7 +39,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class FluoIT extends TestBaseImpl {
+public class FluoIT extends ITBaseImpl {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   

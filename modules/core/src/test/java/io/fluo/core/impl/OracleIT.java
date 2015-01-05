@@ -27,7 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.HostUtil;
@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
-public class OracleIT extends TestBaseImpl {
+public class OracleIT extends ITBaseImpl {
 
   @Test
   public void testRestart() throws Exception {

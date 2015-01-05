@@ -32,7 +32,7 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.mini.MiniFluoImpl;
@@ -45,7 +45,7 @@ import org.junit.Test;
 /**
  * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
  */
-public class WorkerIT extends TestBaseMini {
+public class WorkerIT extends ITBaseMini {
 
   private static final Bytes NODE_CF = Bytes.of("node");
 

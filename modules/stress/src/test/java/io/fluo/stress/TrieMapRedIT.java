@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.fluo.api.config.ObserverConfiguration;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import io.fluo.stress.trie.Constants;
 import io.fluo.stress.trie.Generate;
 import io.fluo.stress.trie.Init;
@@ -42,7 +42,7 @@ import org.junit.Test;
 /** 
  * Tests Trie Stress Test using MapReduce Ingest
  */
-public class TrieMapRedIT extends TestBaseMini {
+public class TrieMapRedIT extends ITBaseMini {
   
   @Override
   protected List<ObserverConfiguration> getObservers() {

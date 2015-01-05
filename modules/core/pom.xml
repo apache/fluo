@@ -44,7 +44,7 @@
             <artifactId>accumulo-maven-plugin</artifactId>
             <version>${accumulo.version}</version>
             <configuration>
-              <instanceName>plugin-it-instance</instanceName>
+              <instanceName>it-instance-maven</instanceName>
               <rootPassword>ITSecret</rootPassword>
             </configuration>
             <executions>
