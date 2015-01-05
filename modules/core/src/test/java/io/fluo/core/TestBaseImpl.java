@@ -69,7 +69,6 @@ public class TestBaseImpl {
       this.env = env;
     }
 
-    @SuppressWarnings("resource")
     TestOracle(int port) throws Exception {
       this(new Environment(config, curator, conn, port));
     }

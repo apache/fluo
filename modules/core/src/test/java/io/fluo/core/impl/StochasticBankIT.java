@@ -56,7 +56,6 @@ public class StochasticBankIT extends TestBaseImpl {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();
 
-  @SuppressWarnings("resource")
   @Test
   public void testConcurrency() throws Exception {
 
