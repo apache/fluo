@@ -114,7 +114,6 @@ public class ParallelScannerIT extends TestBaseImpl {
 
     tx1.done();
 
-    @SuppressWarnings("resource")
     TransactorNode tNode1 = new TransactorNode(env);
 
     TestTransaction tx2 = new TestTransaction(env, tNode1);
