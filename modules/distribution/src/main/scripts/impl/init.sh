@@ -27,4 +27,16 @@ script=$( basename "$SOURCE" )
 
 . "$impl"/config.sh
 
+if [[ -z $HADOOP_PREFIX ]]; then
+  echo "HADOOP_PREFIX needs to be set!"
+  exit 1
+fi
+
+echo "Copying Fluo jars to HDFS at /fluo/lib to be accessible by Accumulo for iterators"
+$HADOOP_PREFIX/bin/hdfs dfs -mkdir -p /fluo/lib
+echo "Copying `ls $FLUO_HOME/lib/fluo-api-*.jar` to HDFS"
+$HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-api-*.jar /fluo/lib/
+echo "Copying `ls $FLUO_HOME/lib/fluo-accumulo-*.jar` to HDFS"
+$HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-accumulo-*.jar /fluo/lib/
+
 java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.init.Init -config-dir $FLUO_CONF_DIR $1
