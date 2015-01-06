@@ -28,6 +28,7 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.FluoOracleMain;
 import io.fluo.cluster.FluoWorkerMain;
 import io.fluo.cluster.util.LogbackUtil;
+import io.fluo.core.client.FluoAdminImpl;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.curator.framework.CuratorFramework;
@@ -258,6 +259,11 @@ public class YarnAdmin {
 
     File configFile = new File(options.getFluoConf() + "/fluo.properties");
     config = new FluoConfiguration(configFile);
+    
+    if (!FluoAdminImpl.zookeeperInitialized(config)) {
+      System.out.println("ERROR - Fluo has not been initialized yet in Zookeeper at " + config.getZookeepers());
+      System.exit(-1);
+    }
 
     try {
       curator = CuratorUtil.newFluoCurator(config);
