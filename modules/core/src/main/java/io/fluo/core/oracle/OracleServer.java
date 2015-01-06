@@ -27,10 +27,10 @@ import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
+import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.Halt;
 import io.fluo.core.util.HostUtil;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -38,7 +38,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 import org.apache.curator.framework.recipes.leader.Participant;
-import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -215,7 +214,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     InetSocketAddress addr = startServer();
 
-    curatorFramework = CuratorFrameworkFactory.newClient(env.getConfiguration().getZookeepers(), new ExponentialBackoffRetry(1000, 10));
+    curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
 
