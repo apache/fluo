@@ -27,7 +27,7 @@
   <artifactId>fluo-stress</artifactId>
   <packaging>jar</packaging>
 
-  <name>Stress</name>
+  <name>Fluo Stress</name>
   <description>
     This module contains Fluo stress tests.  Stress tests are different than integration tests in
     that they are designed to run on a cluster while integration tests only run on MiniFluo in a 

@@ -13,7 +13,7 @@
   <version>1.0.0-beta-1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Parent</name>
+  <name>Fluo Parent</name>
   <description>An implementation of Percolator for Apache Accumulo</description>
   <url>http://www.fluo.io</url>
   <organization>

@@ -26,7 +26,7 @@
   <artifactId>fluo-metrics</artifactId>
   <packaging>jar</packaging>
 
-  <name>Metrics</name>
+  <name>Fluo Metrics</name>
   <description>
     This module contains code needed to configure dropwizard metrics reporters.
     The reason this module was created was to avoid adding dependencies to fluo-core 
