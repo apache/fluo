@@ -107,6 +107,11 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
+          <configuration>
+            <systemPropertyVariables>
+              <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
+            </systemPropertyVariables>
+          </configuration>
           <executions>
             <execution>
               <id>run-integration-tests</id>

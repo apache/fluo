@@ -22,7 +22,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.BankUtil;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -38,7 +38,7 @@ import org.junit.Test;
 /**
  * Tests GarbageCollectionIterator class
  */
-public class GarbageCollectionIteratorIT extends TestBaseImpl {
+public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   @Test
   public void testVerifyAfterGC() throws Exception {

@@ -17,7 +17,7 @@ package io.fluo.mapreduce;
 
 import io.fluo.core.TestTransaction;
 
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.mapreduce.MutationBuilder;
 import io.fluo.api.data.Bytes;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -27,7 +27,7 @@ import org.junit.Test;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 
-public class MutationBuilderIT extends TestBaseImpl {
+public class MutationBuilderIT extends ITBaseImpl {
 
   static final TypeLayer tl = new TypeLayer(new StringEncoder());
 

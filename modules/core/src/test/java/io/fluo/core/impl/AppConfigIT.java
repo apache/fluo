@@ -31,12 +31,12 @@ import io.fluo.api.types.TypedLoader;
 import io.fluo.api.types.TypedObserver;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class AppConfigIT extends TestBaseMini{
+public class AppConfigIT extends ITBaseMini{
 
   @Override
   protected void setAppConfig(Configuration config){

@@ -20,7 +20,7 @@ import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoAdmin.TableExistsException;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.Assert;
@@ -29,7 +29,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class FluoAdminImplIT extends TestBaseImpl {
+public class FluoAdminImplIT extends ITBaseImpl {
 
   @Test
   public void testInitializeTwiceFails() throws AlreadyInitializedException, TableExistsException {

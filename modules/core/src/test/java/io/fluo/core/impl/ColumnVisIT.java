@@ -19,11 +19,11 @@ package io.fluo.core.impl;
 import java.util.Arrays;
 
 import io.fluo.api.data.Column;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import org.junit.Test;
 
-public class ColumnVisIT extends TestBaseImpl {
+public class ColumnVisIT extends ITBaseImpl {
 
   @Test(expected = Exception.class)
   public void testFailFastSet() {

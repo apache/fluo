@@ -32,14 +32,14 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class WeakNotificationIT extends TestBaseMini {
+public class WeakNotificationIT extends ITBaseMini {
 
   private static TypeLayer tl = new TypeLayer(new StringEncoder());
 

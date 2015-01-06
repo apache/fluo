@@ -19,14 +19,14 @@ import java.util.NoSuchElementException;
 
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperUtil;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Tests TimestampTracker class
  */
-public class TimestampTrackerIT extends TestBaseImpl {
+public class TimestampTrackerIT extends ITBaseImpl {
 
   @Test(expected = NoSuchElementException.class)
   public void testTsNoElement() {

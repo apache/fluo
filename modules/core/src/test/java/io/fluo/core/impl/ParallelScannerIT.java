@@ -22,14 +22,14 @@ import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedSnapshotBase.Value;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.oracle.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ParallelScannerIT extends TestBaseImpl {
+public class ParallelScannerIT extends ITBaseImpl {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
   @Test

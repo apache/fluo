@@ -38,7 +38,7 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.StaleScanException;
 import org.apache.accumulo.core.client.Scanner;
@@ -51,7 +51,7 @@ import org.junit.Test;
  * This test starts multiple thread that randomly transfer between accounts. At any given time the sum of all money in the bank should be the same, therefore
  * the average should not vary.
  */
-public class StochasticBankIT extends TestBaseImpl {
+public class StochasticBankIT extends ITBaseImpl {
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();

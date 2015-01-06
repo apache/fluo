@@ -22,14 +22,14 @@ import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransaction;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Integration test to verify exceptions thrown by Fluo client
  */
-public class ClientExceptionIT extends TestBaseMini {
+public class ClientExceptionIT extends ITBaseMini {
 
   static TypeLayer tl = new TypeLayer(new StringEncoder());
 

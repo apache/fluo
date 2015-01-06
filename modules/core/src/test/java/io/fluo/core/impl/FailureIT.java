@@ -31,7 +31,7 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.TestBaseImpl;
+import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.StaleScanException;
@@ -47,7 +47,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class FailureIT extends TestBaseImpl {
+public class FailureIT extends ITBaseImpl {
   
   @Rule
   public ExpectedException exception = ExpectedException.none();

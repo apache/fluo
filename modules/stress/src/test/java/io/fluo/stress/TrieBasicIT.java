@@ -23,7 +23,7 @@ import java.util.Set;
 
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.types.TypedSnapshot;
-import io.fluo.core.TestBaseMini;
+import io.fluo.core.ITBaseMini;
 import io.fluo.core.client.LoaderExecutorImpl;
 import io.fluo.core.impl.Environment;
 import io.fluo.stress.trie.Constants;
@@ -42,7 +42,7 @@ import static io.fluo.stress.trie.Constants.TYPEL;
 /** 
  * Tests Trie Stress Test using Basic Loader
  */
-public class TrieBasicIT extends TestBaseMini {
+public class TrieBasicIT extends ITBaseMini {
   
   private static final Logger log = LoggerFactory.getLogger(TrieBasicIT.class);
   
