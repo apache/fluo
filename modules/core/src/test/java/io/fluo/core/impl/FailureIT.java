@@ -31,6 +31,7 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
+import io.fluo.core.BankUtil;
 import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
@@ -47,25 +48,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static io.fluo.core.BankUtil.BALANCE;
+
 public class FailureIT extends ITBaseImpl {
   
   @Rule
   public ExpectedException exception = ExpectedException.none();
   
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
-  Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-    
-  private void transfer(Environment env, String from, String to, int amount) throws Exception {
-    TestTransaction tx = new TestTransaction(env);
-    
-    int bal1 = Integer.parseInt(tx.get().row(from).col(balanceCol).toString());
-    int bal2 = Integer.parseInt(tx.get().row(to).col(balanceCol).toString());
-    
-    tx.mutate().row(from).col(balanceCol).set("" + (bal1 - amount));
-    tx.mutate().row(to).col(balanceCol).set("" + (bal2 + amount));
-    
-    tx.done();
-  }
 
   public static class NullObserver extends AbstractObserver {
 
@@ -213,19 +203,19 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("bob").col(balanceCol).set("10");
-    tx.mutate().row("joe").col(balanceCol).set("20");
-    tx.mutate().row("jill").col(balanceCol).set("60");
+    tx.mutate().row("bob").col(BALANCE).set(10);
+    tx.mutate().row("joe").col(BALANCE).set(20);
+    tx.mutate().row("jill").col(BALANCE).set(60);
     
     tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     
-    int bal1 = Integer.parseInt(tx2.get().row("bob").col(balanceCol).toString());
-    int bal2 = Integer.parseInt(tx2.get().row("joe").col(balanceCol).toString());
+    int bal1 = tx2.get().row("bob").col(BALANCE).toInteger(0);
+    int bal2 = tx2.get().row("joe").col(BALANCE).toInteger(0);
     
-    tx2.mutate().row("bob").col(balanceCol).set("" + (bal1 - 7));
-    tx2.mutate().row("joe").col(balanceCol).set("" + (bal2 + 7));
+    tx2.mutate().row("bob").col(BALANCE).set(bal1 - 7);
+    tx2.mutate().row("joe").col(BALANCE).set(bal2 + 7);
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -236,31 +226,31 @@ public class FailureIT extends ITBaseImpl {
     int bobBal = 10;
     int joeBal = 20;
     if ((new Random()).nextBoolean()) {
-      transfer(env, "joe", "jill", 7);
+      BankUtil.transfer(env, "joe", "jill", 7);
       joeBal -= 7;
     } else {
-      transfer(env, "bob", "jill", 7);
+      BankUtil.transfer(env, "bob", "jill", 7);
       bobBal -= 7;
     }
     
     TestTransaction tx4 = new TestTransaction(env);
     
-    Assert.assertEquals(bobBal + "", tx4.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals(joeBal + "", tx4.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("67", tx4.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(bobBal, tx4.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(joeBal, tx4.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(67, tx4.get().row("jill").col(BALANCE).toInteger(0));
     
     long commitTs = OracleClient.getInstance(env).getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
-    transfer(env, "bob", "joe", 2);
+    BankUtil.transfer(env, "bob", "joe", 2);
     bobBal -= 2;
     joeBal += 2;
     
     TestTransaction tx6 = new TestTransaction(env);
     
-    Assert.assertEquals(bobBal + "", tx6.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals(joeBal + "", tx6.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("67", tx6.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(bobBal, tx6.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(joeBal, tx6.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(67, tx6.get().row("jill").col(BALANCE).toInteger(0));
   }
   
   @Test
@@ -278,19 +268,19 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("bob").col(balanceCol).set("10");
-    tx.mutate().row("joe").col(balanceCol).set("20");
-    tx.mutate().row("jill").col(balanceCol).set("60");
+    tx.mutate().row("bob").col(BALANCE).set(10);
+    tx.mutate().row("joe").col(BALANCE).set(20);
+    tx.mutate().row("jill").col(BALANCE).set(60);
     
     tx.done();
     
     TestTransaction tx2 = new TestTransaction(env, t1);
     
-    int bal1 = tx2.get().row("bob").col(balanceCol).toInteger();
-    int bal2 = tx2.get().row("joe").col(balanceCol).toInteger();
+    int bal1 = tx2.get().row("bob").col(BALANCE).toInteger(0);
+    int bal2 = tx2.get().row("joe").col(BALANCE).toInteger(0);
     
-    tx2.mutate().row("bob").col(balanceCol).set(bal1 - 7);
-    tx2.mutate().row("joe").col(balanceCol).set(bal2 + 7);
+    tx2.mutate().row("bob").col(BALANCE).set(bal1 - 7);
+    tx2.mutate().row("joe").col(BALANCE).set(bal2 + 7);
     
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
@@ -303,7 +293,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals(0, tx3.getStats().getDeadLocks());
     Assert.assertEquals(0, tx3.getStats().getTimedOutLocks());
     
-    int bobFinal = Integer.parseInt(tx3.get(Bytes.of("bob"), balanceCol).toString());
+    int bobFinal = Integer.parseInt(tx3.get(Bytes.of("bob"), BALANCE).toString());
     Assert.assertEquals(10, bobFinal);
     
     if (killTransactor) {
@@ -333,19 +323,19 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
 
-    tx.mutate().row("bob").col(balanceCol).set("10");
-    tx.mutate().row("joe").col(balanceCol).set("20");
-    tx.mutate().row("jill").col(balanceCol).set("60");
+    tx.mutate().row("bob").col(BALANCE).set(10);
+    tx.mutate().row("joe").col(BALANCE).set(20);
+    tx.mutate().row("jill").col(BALANCE).set(60);
     
     tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
     
-    int bal1 = Integer.parseInt(tx2.get().row("bob").col(balanceCol).toString());
-    int bal2 = Integer.parseInt(tx2.get().row("joe").col(balanceCol).toString());
+    int bal1 = tx2.get().row("bob").col(BALANCE).toInteger(0);
+    int bal2 = tx2.get().row("joe").col(BALANCE).toInteger(0);
     
-    tx2.mutate().row("bob").col(balanceCol).set("" + (bal1 - 7));
-    tx2.mutate().row("joe").col(balanceCol).set("" + (bal2 + 7));
+    tx2.mutate().row("bob").col(BALANCE).set(bal1 - 7);
+    tx2.mutate().row("joe").col(BALANCE).set(bal2 + 7);
     
     // get locks
     CommitData cd = tx2.createCommitData();
@@ -354,29 +344,29 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
     // test rolling forward primary and non-primary columns
-    String bobBal = "3";
-    String joeBal = "27";
+    int bobBal = 3;
+    int joeBal = 27;
     if ((new Random()).nextBoolean()) {
-      transfer(env, "joe", "jill", 2);
-      joeBal = "25";
+      BankUtil.transfer(env, "joe", "jill", 2);
+      joeBal = 25;
     } else {
-      transfer(env, "bob", "jill", 2);
-      bobBal = "1";
+      BankUtil.transfer(env, "bob", "jill", 2);
+      bobBal = 1;
     }
     
     TestTransaction tx4 = new TestTransaction(env);
     
-    Assert.assertEquals(bobBal, tx4.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals(joeBal, tx4.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("62", tx4.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(bobBal, tx4.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(joeBal, tx4.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(62, tx4.get().row("jill").col(BALANCE).toInteger(0));
 
     tx2.finishCommit(cd, commitTs);
     
     TestTransaction tx5 = new TestTransaction(env);
     
-    Assert.assertEquals(bobBal, tx5.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals(joeBal, tx5.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("62", tx5.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(bobBal, tx5.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(joeBal, tx5.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(62, tx5.get().row("jill").col(BALANCE).toInteger(0));
   }
   
   @Test
@@ -385,21 +375,21 @@ public class FailureIT extends ITBaseImpl {
     
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).set("3");
-    tx.mutate().row("url0000").col(typeLayer.bc().fam("doc").qual("content").vis()).set("abc def");
+    tx.mutate().row("url0000").fam("attr").qual("lastupdate").set(3);
+    tx.mutate().row("url0000").fam("doc").qual("content").set("abc def");
     
     tx.done();
 
     TestTransaction tx2 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
-    tx2.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
-    tx2.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx2.mutate().row("idx:abc").fam("doc").qual("url").set("url0000");
+    tx2.mutate().row("idx:def").fam("doc").qual("url").set("url0000");
     CommitData cd = tx2.createCommitData();
     tx2.preCommit(cd);
     
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertNull(tx3.get().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
-    Assert.assertNull(tx3.get().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
-    Assert.assertEquals("3", tx3.get().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).toString());
+    Assert.assertNull(tx3.get().row("idx:abc").fam("doc").qual("url").toString());
+    Assert.assertNull(tx3.get().row("idx:def").fam("doc").qual("url").toString());
+    Assert.assertEquals(3, tx3.get().row("url0000").fam("attr").qual("lastupdate").toInteger(0));
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), Authorizations.EMPTY);
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
@@ -408,8 +398,8 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());
     
     TestTransaction tx5 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
-    tx5.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
-    tx5.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx5.mutate().row("idx:abc").fam("doc").qual("url").set("url0000");
+    tx5.mutate().row("idx:def").fam("doc").qual("url").set("url0000");
     cd = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd, Bytes.of("idx:abc"), typeLayer.bc().fam("doc").qual("url").vis()));
     long commitTs = OracleClient.getInstance(env).getTimestamp();
@@ -417,17 +407,17 @@ public class FailureIT extends ITBaseImpl {
     
     // should roll tx5 forward
     TestTransaction tx6 = new TestTransaction(env);
-    Assert.assertEquals("3", tx6.get().row("url0000").col(typeLayer.bc().fam("attr").qual("lastupdate").vis()).toString());
-    Assert.assertEquals("url0000", tx6.get().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
-    Assert.assertEquals("url0000", tx6.get().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).toString());
+    Assert.assertEquals(3, tx6.get().row("url0000").fam("attr").qual("lastupdate").toInteger(0));
+    Assert.assertEquals("url0000", tx6.get().row("idx:abc").fam("doc").qual("url").toString());
+    Assert.assertEquals("url0000", tx6.get().row("idx:def").fam("doc").qual("url").toString());
     
     iter = scanner.iterator();
     Assert.assertFalse(iter.hasNext());
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown for overlapping.. CommitException is thrown
     TestTransaction tx4 = new TestTransaction(env, "url0000", typeLayer.bc().fam("attr").qual("lastupdate").vis());
-    tx4.mutate().row("idx:abc").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
-    tx4.mutate().row("idx:def").col(typeLayer.bc().fam("doc").qual("url").vis()).set("url0000");
+    tx4.mutate().row("idx:abc").fam("doc").qual("url").set("url0000");
+    tx4.mutate().row("idx:def").fam("doc").qual("url").set("url0000");
 
     try {
       // should not go through if tx5 is properly rolled forward
@@ -441,34 +431,34 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("bob").col(balanceCol).set("10");
-    tx.mutate().row("joe").col(balanceCol).set("20");
-    tx.mutate().row("jill").col(balanceCol).set("60");
+    tx.mutate().row("bob").col(BALANCE).set(10);
+    tx.mutate().row("joe").col(BALANCE).set(20);
+    tx.mutate().row("jill").col(BALANCE).set(60);
     
     tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
-    Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals(10, tx2.get().row("bob").col(BALANCE).toInteger(0));
     
-    transfer(env, "joe", "jill", 1);
-    transfer(env, "joe", "bob", 1);
-    transfer(env, "bob", "joe", 2);
-    transfer(env, "jill", "joe", 2);
+    BankUtil.transfer(env, "joe", "jill", 1);
+    BankUtil.transfer(env, "joe", "bob", 1);
+    BankUtil.transfer(env, "bob", "joe", 2);
+    BankUtil.transfer(env, "jill", "joe", 2);
     
     conn.tableOperations().flush(table, null, null, true);
     
     // Stale scan should not occur due to oldest active timestamp tracking in Zookeeper
     try {
-      tx2.get().row("joe").col(balanceCol).toString();
+      tx2.get().row("joe").col(BALANCE).toInteger(0);
     } catch (StaleScanException sse) {
       Assert.assertFalse(true);
     }
     
     TestTransaction tx3 = new TestTransaction(env);
     
-    Assert.assertEquals("9", tx3.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals("22", tx3.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("59", tx3.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(9, tx3.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(22, tx3.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(59, tx3.get().row("jill").col(BALANCE).toInteger(0));
   }
   
   @Test
@@ -476,19 +466,19 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
     
-    tx.mutate().row("bob").col(balanceCol).set("10");
-    tx.mutate().row("joe").col(balanceCol).set("20");
-    tx.mutate().row("jill").col(balanceCol).set("60");
+    tx.mutate().row("bob").col(BALANCE).set(10);
+    tx.mutate().row("joe").col(BALANCE).set(20);
+    tx.mutate().row("jill").col(BALANCE).set(60);
     
     tx.done();
     
     TestTransaction tx2 = new TestTransaction(env);
-    Assert.assertEquals("10", tx2.get().row("bob").col(balanceCol).toString());
+    Assert.assertEquals(10, tx2.get().row("bob").col(BALANCE).toInteger(0));
     
-    transfer(env, "joe", "jill", 1);
-    transfer(env, "joe", "bob", 1);
-    transfer(env, "bob", "joe", 2);
-    transfer(env, "jill", "joe", 2);
+    BankUtil.transfer(env, "joe", "jill", 1);
+    BankUtil.transfer(env, "joe", "bob", 1);
+    BankUtil.transfer(env, "bob", "joe", 2);
+    BankUtil.transfer(env, "jill", "joe", 2);
     
     // Force a stale scan be modifying the oldest active timestamp to a 
     // more recent time in Zookeeper.  This disables timestamp tracking.
@@ -501,15 +491,15 @@ public class FailureIT extends ITBaseImpl {
     
     // Tx2 should throw stale scan exception
     try {
-      tx2.get().row("joe").col(balanceCol).toString();
+      tx2.get().row("joe").col(BALANCE).toInteger();
       Assert.assertFalse(true);
     } catch (StaleScanException sse) { }
     
     TestTransaction tx3 = new TestTransaction(env);
     
-    Assert.assertEquals("9", tx3.get().row("bob").col(balanceCol).toString());
-    Assert.assertEquals("22", tx3.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("59", tx3.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(9, tx3.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(22, tx3.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(59, tx3.get().row("jill").col(BALANCE).toInteger(0));
   }
   
   @Test
@@ -517,9 +507,9 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx1 = new TestTransaction(env);
     
-    tx1.mutate().row("bob").col(balanceCol).set("10");
-    tx1.mutate().row("joe").col(balanceCol).set("20");
-    tx1.mutate().row("jill").col(balanceCol).set("60");
+    tx1.mutate().row("bob").col(BALANCE).set(10);
+    tx1.mutate().row("joe").col(BALANCE).set(20);
+    tx1.mutate().row("jill").col(BALANCE).set(60);
     
     CommitData cd = tx1.createCommitData();
     Assert.assertTrue(tx1.preCommit(cd));
@@ -527,8 +517,8 @@ public class FailureIT extends ITBaseImpl {
     while (true) {
       TestTransaction tx2 = new TestTransaction(env);
     
-      tx2.mutate().row("bob").col(balanceCol).set("11");
-      tx2.mutate().row("jill").col(balanceCol).set("61");
+      tx2.mutate().row("bob").col(BALANCE).set(11);
+      tx2.mutate().row("jill").col(BALANCE).set(61);
       
       // tx1 should be rolled back even in case where columns tx1 locked are not read by tx2
       try {
@@ -541,8 +531,8 @@ public class FailureIT extends ITBaseImpl {
 
     TestTransaction tx4 = new TestTransaction(env);
     
-    Assert.assertEquals("11", tx4.get().row("bob").col(balanceCol).toString());
-    Assert.assertNull(tx4.get().row("joe").col(balanceCol).toString());
-    Assert.assertEquals("61", tx4.get().row("jill").col(balanceCol).toString());
+    Assert.assertEquals(11, tx4.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertNull(tx4.get().row("joe").col(BALANCE).toInteger());
+    Assert.assertEquals(61, tx4.get().row("jill").col(BALANCE).toInteger(0));
   }
 }
