@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.accumulo.values.DelLockValue;
@@ -43,6 +44,9 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
 
+  @VisibleForTesting
+  static final String OLDEST_ACTIVE_TS_OPT = "timestamp.oldest.active";
+  
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   private Long oldestActiveTs;
@@ -61,11 +65,17 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
       throw new IllegalArgumentException();
     }
     this.source = source;
-    String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
-    if (zookeepers == null) {
-      throw new IllegalArgumentException("A configuration item for GC iterator was not set");
+    
+    String oats = options.get(OLDEST_ACTIVE_TS_OPT) ;
+    if(oats != null){
+      oldestActiveTs = Long.valueOf(oats);
+    }else{
+      String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
+      if (zookeepers == null) {
+        throw new IllegalArgumentException("A configuration item for GC iterator was not set");
+      }
+      oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);  
     }
-    oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);
   }
 
   @Override
@@ -119,6 +129,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
     boolean truncationSeen = false;
     boolean oldestSeen = false;
+    boolean sawAck = false;
+    long firstWrite = -1;
+    
     truncationTime = -1;
 
     position = 0;
@@ -136,7 +149,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-
+      
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
         keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
         completeTxs.add(ts);
@@ -152,7 +165,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         if (!oldestSeen && !truncationSeen) {
           keep = true;
           
-          if (timePtr < oldestActiveTs)
+          if(firstWrite == -1)
+            firstWrite = ts;
+          
+          if (ts < oldestActiveTs)
             oldestSeen = true;
 
           if (WriteValue.isTruncated(val))
@@ -185,7 +201,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
 
         if (timePtr > invalidationTime) {
-          invalidationTime = ts;
+          invalidationTime = timePtr;
           keep = true;
         }
 
@@ -201,8 +217,11 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         // can stop looking
         break;
       } else if (colType == ColumnConstants.ACK_PREFIX) {
-        // TODO determine which acks can be dropped
-        keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
+        if (!sawAck) {
+          if(ts >= firstWrite) 
+            keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get())); 
+          sawAck = true;
+        }
       } else {
         throw new IllegalArgumentException(" unknown colType " + String.format("%x", colType));
       }
@@ -246,7 +265,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
 
   @Override
   public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
-    // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
   }
   
