@@ -15,8 +15,17 @@
  */
 package io.fluo.mapreduce;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
+import io.fluo.core.ITBaseImpl;
+import io.fluo.core.TestTransaction;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -30,17 +39,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import io.fluo.core.TestTransaction;
-import io.fluo.core.ITBaseImpl;
-import io.fluo.mapreduce.FluoFileOutputFormat;
-import io.fluo.api.data.RowColumn;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
 
 public class FluoFileOutputFormatIT extends ITBaseImpl {
 
@@ -100,9 +98,9 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
     TestTransaction tx2 = new TestTransaction(env);
 
-    Assert.assertEquals("1", tx1.get().row("a").fam("b").qual("c").toString());
-    Assert.assertEquals("2", tx1.get().row("d").fam("b").qual("c").toString());
-    Assert.assertEquals("90", tx1.get().row("foo").fam("moo").qual("moo").toString());
+    Assert.assertEquals(1, tx1.get().row("a").fam("b").qual("c").toInteger(0));
+    Assert.assertEquals(2, tx1.get().row("d").fam("b").qual("c").toInteger(0));
+    Assert.assertEquals(90, tx1.get().row("foo").fam("moo").qual("moo").toInteger(0));
 
     tx1.mutate().row("a").fam("b").qual("c").set("3");
     tx1.mutate().row("d").fam("b").qual("c").delete();
@@ -110,15 +108,15 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     tx1.done();
 
     // should not see changes from tx1
-    Assert.assertEquals("1", tx2.get().row("a").fam("b").qual("c").toString());
-    Assert.assertEquals("2", tx2.get().row("d").fam("b").qual("c").toString());
-    Assert.assertEquals("90", tx2.get().row("foo").fam("moo").qual("moo").toString());
+    Assert.assertEquals(1, tx2.get().row("a").fam("b").qual("c").toInteger(0));
+    Assert.assertEquals(2, tx2.get().row("d").fam("b").qual("c").toInteger(0));
+    Assert.assertEquals(90, tx2.get().row("foo").fam("moo").qual("moo").toInteger(0));
 
     TestTransaction tx3 = new TestTransaction(env);
 
     // should see changes from tx1
-    Assert.assertEquals("3", tx3.get().row("a").fam("b").qual("c").toString());
-    Assert.assertNull(tx3.get().row("d").fam("b").qual("c").toString());
-    Assert.assertEquals("90", tx3.get().row("foo").fam("moo").qual("moo").toString());
+    Assert.assertEquals(3, tx3.get().row("a").fam("b").qual("c").toInteger(0));
+    Assert.assertNull(tx3.get().row("d").fam("b").qual("c").toInteger());
+    Assert.assertEquals(90, tx3.get().row("foo").fam("moo").qual("moo").toInteger(0));
   }
 }

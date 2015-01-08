@@ -47,8 +47,6 @@ import org.junit.Test;
  */
 public class WorkerIT extends ITBaseMini {
 
-  private static final Bytes NODE_CF = Bytes.of("node");
-
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
   private static Column observedColumn = typeLayer.bc().fam("attr").qual("lastupdate").vis();
@@ -65,14 +63,15 @@ public class WorkerIT extends ITBaseMini {
 
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
-      // get previously calculated degree
 
-      Bytes degree = tx.get(row, typeLayer.bc().fam("attr").qual("degree").vis());
       TypedTransactionBase ttx = typeLayer.wrap(tx);
+      
+      // get previously calculated degree
+      String degree = ttx.get().row(row).fam("attr").qual("degree").toString();
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column(Bytes.of("link")))));
+      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -82,16 +81,16 @@ public class WorkerIT extends ITBaseMini {
       }
       String degree2 = "" + count;
 
-      if (degree == null || !degree.toString().equals(degree2)) {
-        ttx.set(row, typeLayer.bc().fam("attr").qual("degree").vis(), Bytes.of(degree2));
+      if (degree == null || !degree.equals(degree2)) {
+        ttx.mutate().row(row).fam("attr").qual("degree").set(degree2);
 
         // put new entry in degree index
-        ttx.mutate().row("IDEG" + degree2).col(new Column(NODE_CF, row)).set("");
+        ttx.mutate().row("IDEG" + degree2).fam("node").qual(row).set("");
       }
 
       if (degree != null) {
         // delete old degree in index
-        ttx.mutate().row("IDEG" + degree).col(new Column(NODE_CF, row)).delete();
+        ttx.mutate().row("IDEG" + degree).fam("node").qual(row).delete();
       }
     }
 
@@ -116,12 +115,12 @@ public class WorkerIT extends ITBaseMini {
 
     // verify observer updated degree index
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertEquals("2", tx3.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertEquals(2, tx3.get().row("N0003").fam("attr").qual("degree").toInteger(0));
     Assert.assertEquals("", tx3.get().row("IDEG2").fam("node").qual("N0003").toString());
 
     // add a link between two nodes in a graph
     tx3.mutate().row("N0003").fam("link").qual("N0010").set("");
-    tx3.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
+    tx3.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
     tx3.done();
 
     miniFluo.waitForObservers();
@@ -129,26 +128,26 @@ public class WorkerIT extends ITBaseMini {
     // verify observer updated degree index. Should have deleted old index entry
     // and added a new one
     TestTransaction tx4 = new TestTransaction(env);
-    Assert.assertEquals("3", tx4.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertEquals(3, tx4.get().row("N0003").fam("attr").qual("degree").toInteger(0));
     Assert.assertNull("", tx4.get().row("IDEG2").fam("node").qual("N0003").toString());
     Assert.assertEquals("", tx4.get().row("IDEG3").fam("node").qual("N0003").toString());
 
     // test rollback
     TestTransaction tx5 = new TestTransaction(env);
     tx5.mutate().row("N0003").fam("link").qual("N0030").set("");
-    tx5.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
+    tx5.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
     tx5.done();
 
     TestTransaction tx6 = new TestTransaction(env);
     tx6.mutate().row("N0003").fam("link").qual("N0050").set("");
-    tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
+    tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
     CommitData cd = tx6.createCommitData();
     tx6.preCommit(cd, Bytes.of("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
 
     miniFluo.waitForObservers();
 
     TestTransaction tx7 = new TestTransaction(env);
-    Assert.assertEquals("4", tx7.get().row("N0003").fam("attr").qual("degree").toString());
+    Assert.assertEquals(4, tx7.get().row("N0003").fam("attr").qual("degree").toInteger(0));
     Assert.assertNull("", tx7.get().row("IDEG3").fam("node").qual("N0003").toString());
     Assert.assertEquals("", tx7.get().row("IDEG4").fam("node").qual("N0003").toString());
     
@@ -179,7 +178,7 @@ public class WorkerIT extends ITBaseMini {
   private void addLink(String from, String to){
     try(TypedTransaction tx = typeLayer.wrap(client.newTransaction())){
       tx.mutate().row(from).fam("link").qual(to).set("");
-      tx.mutate().row(from).fam("attr").qual("lastupdate").set(System.currentTimeMillis() + "");
+      tx.mutate().row(from).fam("attr").qual("lastupdate").set(System.currentTimeMillis());
       tx.commit();
     }
   }
@@ -204,7 +203,7 @@ public class WorkerIT extends ITBaseMini {
       miniFluo.waitForObservers();
       
       try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
-        Assert.assertEquals("10", snap.get().row("N0003").fam("attr").qual("degree").toString());
+        Assert.assertEquals(10, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
         Assert.assertEquals("", snap.get().row("IDEG10").fam("node").qual("N0003").toString());
       }
       
@@ -217,19 +216,14 @@ public class WorkerIT extends ITBaseMini {
       miniFluo.waitForObservers();
       
       try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
-        Assert.assertEquals("19", snap.get().row("N0003").fam("attr").qual("degree").toString());
+        Assert.assertEquals(19, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
         Assert.assertEquals("", snap.get().row("IDEG19").fam("node").qual("N0003").toString());
         Assert.assertNull(snap.get().row("IDEG10").fam("node").qual("N0003").toString());
       }
       
       nf1.stop();
-      
     }
-    
-    
-    
   }
-  
   
   // TODO test that observers trigger on delete
 }
