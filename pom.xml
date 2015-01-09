@@ -110,6 +110,7 @@
           <configuration>
             <systemPropertyVariables>
               <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
+              <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
             </systemPropertyVariables>
           </configuration>
           <executions>
