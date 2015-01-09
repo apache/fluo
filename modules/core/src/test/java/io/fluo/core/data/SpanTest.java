@@ -19,8 +19,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
-import io.fluo.api.data.Span.Builder;
-
 import org.junit.Assert;
 import org.junit.Test;
 

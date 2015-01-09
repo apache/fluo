@@ -52,13 +52,13 @@ public class ITBase {
   protected final static String PASSWORD = "ITSecret";
   protected final static String TABLE_BASE = "table";
   protected final static String IT_INSTANCE_NAME_PROP = FluoConfiguration.FLUO_PREFIX + ".it.instance.name";
+  protected final static String IT_INSTANCE_CLEAR_PROP = FluoConfiguration.FLUO_PREFIX + ".it.instance.clear";
   
   protected static String instanceName;
   protected static Connector conn;
   protected static Instance miniAccumulo;
   private static MiniAccumuloCluster cluster;
   private static boolean startedCluster = false;
-  private static File instanceDir;
   
   protected static FluoConfiguration config;
   protected static FluoClient client;
@@ -69,7 +69,11 @@ public class ITBase {
   @BeforeClass
   public static void setUpAccumulo() throws Exception {
     instanceName = System.getProperty(IT_INSTANCE_NAME_PROP, "it-instance-default");
-    instanceDir = new File("target/accumulo-maven-plugin/" + instanceName);
+    File instanceDir = new File("target/accumulo-maven-plugin/" + instanceName);
+    boolean instanceClear = System.getProperty(IT_INSTANCE_CLEAR_PROP, "true").equalsIgnoreCase("true");
+    if (instanceDir.exists() && instanceClear) {
+      FileUtils.deleteDirectory(instanceDir);
+    }
     if (!instanceDir.exists()) {
       MiniAccumuloConfig cfg = new MiniAccumuloConfig(instanceDir, PASSWORD);
       cfg.setInstanceName(instanceName);
@@ -125,7 +129,6 @@ public class ITBase {
   public static void tearDownAccumulo() throws Exception {
     if (startedCluster) {
       cluster.stop();
-      FileUtils.deleteDirectory(instanceDir);
     }
   }
 }
