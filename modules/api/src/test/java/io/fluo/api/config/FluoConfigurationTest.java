@@ -16,6 +16,7 @@
 package io.fluo.api.config;
 
 import java.io.File;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
@@ -201,4 +202,45 @@ public class FluoConfigurationTest {
     Assert.assertEquals("zk1,zk2,zk3/fluo", config.getZookeepers());
   }
   
+  private void assertIAE(String value) {
+    FluoConfiguration config = new FluoConfiguration();
+    try {
+      config.setProperty(FluoConfiguration.OBSERVER_PREFIX+"1", value); 
+      config.getObserverConfig();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+  }
+  
+  @Test
+  public void testObserverConfig() {
+    FluoConfiguration config = new FluoConfiguration();
+    config.setProperty(FluoConfiguration.OBSERVER_PREFIX+"1", "com.foo.Observer2,configKey1=configVal1,configKey2=configVal2");
+    List<ObserverConfiguration> ocList = config.getObserverConfig();
+    Assert.assertEquals(1, ocList.size());
+    Assert.assertEquals("com.foo.Observer2", ocList.get(0).getClassName());
+    Assert.assertEquals("configVal1", ocList.get(0).getParameters().get("configKey1"));
+    Assert.assertEquals("configVal2", ocList.get(0).getParameters().get("configKey2"));
+    Assert.assertEquals(2, ocList.get(0).getParameters().size());
+    assertIAE("index,check,,phrasecount.PhraseCounter");
+    assertIAE("");
+    assertIAE(" ");
+    assertIAE(",key=value");
+    assertIAE(",");
+    assertIAE("com.foo.Observer2,configKey1=,configKey2=configVal2");
+    assertIAE("com.foo.Observer2,configKey1=val,=configVal2");
+
+    config = new FluoConfiguration();
+    config.setProperty(FluoConfiguration.OBSERVER_PREFIX+"1", "Class,"); 
+    ocList = config.getObserverConfig();
+    Assert.assertEquals(1, ocList.size());
+    Assert.assertEquals("Class", ocList.get(0).getClassName());
+    Assert.assertEquals(0, ocList.get(0).getParameters().size());
+    
+    config = new FluoConfiguration();
+    try {
+      config.setProperty(FluoConfiguration.OBSERVER_PREFIX+"1", "class,bad,input"); 
+      config.validate();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+  }
 }

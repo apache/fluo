@@ -123,58 +123,43 @@ public class FluoAdminImpl implements FluoAdmin {
   public void updateSharedConfig() {
     
     try {
-      Properties sharedProps = new Properties();
-
       logger.info("Setting up observers using app config: {}", ConfigurationUtils.toString(config.subset(FluoConfiguration.APP_PREFIX)));
       
       Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
       Map<Column,ObserverConfiguration> weakObservers = new HashMap<>();
+      for (ObserverConfiguration observerConfig : config.getObserverConfig()) {
+        
+        Observer observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+        
+        logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(), observerConfig.getParameters());
+        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), observerConfig.getParameters()));
+        
+        ObservedColumn observedCol = observer.getObservedColumn();
+        if (observedCol.getType() == NotificationType.STRONG)
+          colObservers.put(observedCol.getColumn(), observerConfig);
+        else
+          weakObservers.put(observedCol.getColumn(), observerConfig);
+      }
 
+      Properties sharedProps = new Properties();
       Iterator<String> iter = config.getKeys();
       while (iter.hasNext()) {
         String key = iter.next();
-        if (key.startsWith(FluoConfiguration.OBSERVER_PREFIX)) {
-          addObserver(colObservers, weakObservers, config.getString(key));
-        } else if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
+        if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
           sharedProps.setProperty(key, Long.toString(config.getLong(key)));
         } else if (key.startsWith(FluoConfiguration.APP_PREFIX)){
           sharedProps.setProperty(key, config.getProperty(key).toString());
         }
       }
+      
       Operations.updateObservers(config, colObservers, weakObservers);
       Operations.updateSharedConfig(config, sharedProps);
+      
     } catch (Exception e) {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
       throw new RuntimeException(e);
     }
-  }
-
-  private void addObserver(Map<Column,ObserverConfiguration> observers, 
-      Map<Column,ObserverConfiguration> weakObservers, String value) throws Exception {
-    
-    String[] fields = value.split(",");
-
-    ObserverConfiguration observerConfig = new ObserverConfiguration(fields[0]);
-
-    Map<String,String> params = new HashMap<>();
-    for (int i = 1; i < fields.length; i++) {
-      String[] kv = fields[i].split("=");
-      params.put(kv[0], kv[1]);
-    }
-    observerConfig.setParameters(params);
-
-    Observer observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
-    
-    logger.info("Setting up observer {} using params {}.",observer.getClass().getSimpleName(),  params);
-    
-    observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), observerConfig.getParameters()));
-    ObservedColumn observedCol = observer.getObservedColumn();
-
-    if (observedCol.getType() == NotificationType.STRONG)
-      observers.put(observedCol.getColumn(), observerConfig);
-    else
-      weakObservers.put(observedCol.getColumn(), observerConfig);
   }
   
   public static boolean oracleExists(FluoConfiguration config) {

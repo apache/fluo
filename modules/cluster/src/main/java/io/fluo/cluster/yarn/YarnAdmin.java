@@ -81,6 +81,18 @@ public class YarnAdmin {
       System.err.println("Failed to start Fluo instance because fluo.properties is missing required properties.");
       System.exit(-1);
     }
+    
+    try {
+      config.validate();
+    } catch (IllegalArgumentException e) {
+      System.err.println("Error - Invalid fluo.properties due to "+ e.getMessage());
+      System.exit(-1);
+    } catch (Exception e) {
+      System.err.println("Error - Invalid fluo.properties due to "+ e.getMessage());
+      e.printStackTrace();
+      System.exit(-1);
+    }
+    
     preparer = twillRunner.prepare(new FluoTwillApp(config, options.getFluoConf()));
     
     // Add jars from fluo lib/ directory that are not being loaded by Twill. 
