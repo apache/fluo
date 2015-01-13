@@ -77,7 +77,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key,Value> {
   
   @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-    IteratorUtil.maximizeStartKeyTimeStamp(range);
+    range = IteratorUtil.maximizeStartKeyTimeStamp(range);
 
     source.seek(range, columnFamilies, inclusive);
     
