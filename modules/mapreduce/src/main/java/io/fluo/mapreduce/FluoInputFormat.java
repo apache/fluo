@@ -20,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
@@ -34,6 +33,7 @@ import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -136,23 +136,23 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
    * Configure properties needed to connect to a Fluo instance
    * 
    * @param conf
-   * @param props
+   * @param config
    *          use {@link io.fluo.api.config.FluoConfiguration} to configure programmatically
    */
   @SuppressWarnings("deprecation")
-  public static void configure(Job conf, Properties props) {
+  public static void configure(Job conf, Configuration config) {
     try {
-      FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
-      try (Environment env = new Environment(config)) {
+      FluoConfiguration fconfig = new FluoConfiguration(config);
+      try (Environment env = new Environment(fconfig)) {
         long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
         conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        props.store(baos, "");
+        ConfigurationConverter.getProperties(config).store(baos, "");
         conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
 
-        AccumuloInputFormat.setZooKeeperInstance(conf, config.getAccumuloInstance(), config.getAccumuloZookeepers());
-        AccumuloInputFormat.setConnectorInfo(conf, config.getAccumuloUser(), new PasswordToken(config.getAccumuloPassword()));
+        AccumuloInputFormat.setZooKeeperInstance(conf, fconfig.getAccumuloInstance(), fconfig.getAccumuloZookeepers());
+        AccumuloInputFormat.setConnectorInfo(conf, fconfig.getAccumuloUser(), new PasswordToken(fconfig.getAccumuloPassword()));
         AccumuloInputFormat.setInputTableName(conf, env.getTable());
         AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
       }
