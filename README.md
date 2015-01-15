@@ -78,8 +78,7 @@ Fluo has a test suite that consists of the following:
 * Units tests which are run by `mvn package`
 * Integration tests which are run using `mvn verify`.  These tests start
 a local Fluo instance (called MiniFluo) and run against it.
-* [Stress tests](modules/stress/README.md) which are designed to run on a 
-Fluo cluster.
+* A [Stress test][Stress] application designed to run on a Fluo cluster.
 
 Metrics
 -------
@@ -101,4 +100,4 @@ information.
 [Java]: https://www.oracle.com/java/index.html
 [Maven]: http://maven.apache.org/
 [Metrics]: https://dropwizard.github.io/metrics/3.1.0/
-
+[Stress]: https://github.com/fluo-io/fluo-stress
