@@ -74,6 +74,14 @@ public class FluoOracleMain extends AbstractTwillRunnable {
       // any client in oracle should retry forever
       config.setClientRetryTimeout(-1);
       
+      try {
+        config.validate();
+      } catch (Exception e) {
+        System.err.println("Error - Invalid fluo.properties due to "+ e.getMessage());
+        e.printStackTrace();
+        System.exit(-1);
+      }
+      
       TwillContext context = getContext();
       if(context != null &&  System.getProperty(MetricNames.METRICS_ID_PROP) == null){
         System.setProperty(MetricNames.METRICS_ID_PROP, "oracle-"+context.getInstanceId());

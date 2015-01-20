@@ -77,6 +77,16 @@ public class Init {
       System.err.println("Error - Required properties are not set in " + commandOpts.getFluoProps());
       System.exit(-1);
     }
+    try {
+      config.validate();
+    } catch (IllegalArgumentException e) {
+      System.err.println("Error - Invalid fluo.properties ("+commandOpts.getFluoProps()+") due to "+ e.getMessage());
+      System.exit(-1);
+    } catch (Exception e) {
+      System.err.println("Error - Invalid fluo.properties ("+commandOpts.getFluoProps()+") due to "+ e.getMessage());
+      e.printStackTrace();
+      System.exit(-1);
+    }
         
     if (FluoAdminImpl.oracleExists(config)) {
       System.err.println("Error - A Fluo instance is running and must be stopped before running 'fluo init'.  Aborted initialization.");

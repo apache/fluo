@@ -20,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -154,6 +156,10 @@ public class FluoConfiguration extends CompositeConfiguration {
       throw new IllegalArgumentException(e);
     }
   }
+  
+  public void validate() {   
+    getObserverConfig();
+  }
 
   public FluoConfiguration setZookeepers(String zookeepers) {
     setProperty(CLIENT_ZOOKEEPER_CONNECT_PROP, zookeepers);
@@ -268,6 +274,49 @@ public class FluoConfiguration extends CompositeConfiguration {
   
   public int getWorkerThreads() {
     return getInt(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
+  }
+  
+  public List<ObserverConfiguration> getObserverConfig() {
+    
+    List<ObserverConfiguration> configList = new ArrayList<>();
+    Iterator<String> iter = getKeys();
+    
+    while (iter.hasNext()) {
+      String key = iter.next();
+      if (key.startsWith(FluoConfiguration.OBSERVER_PREFIX)) {
+        String value = getString(key).trim();
+        
+        if (value.isEmpty()) {
+          throw new IllegalArgumentException(key + " is set to empty value");
+        }
+        
+        String[] fields = value.split(",");
+        if (fields.length == 0) {
+          throw new IllegalArgumentException(key + " has bad value: " + value);
+        }
+        
+        String className = fields[0];
+        if (className.isEmpty()) {
+          throw new IllegalArgumentException(key + " has empty class name: "+ className);
+        }
+        ObserverConfiguration observerConfig = new ObserverConfiguration(className);
+
+        Map<String,String> params = new HashMap<>();
+        for (int i = 1; i < fields.length; i++) {
+          String[] kv = fields[i].split("=");
+          if (kv.length != 2) {
+            throw new IllegalArgumentException(key+" has invalid param. Expected 'key=value' but encountered '"+fields[i]+"'");
+          }
+          if (kv[0].isEmpty() || kv[1].isEmpty()) {
+            throw new IllegalArgumentException(key+" has empty key or value in param: "+fields[i]);
+          }
+          params.put(kv[0], kv[1]);
+        }
+        observerConfig.setParameters(params);
+        configList.add(observerConfig);
+      } 
+    }
+    return configList;
   }
 
   /**
