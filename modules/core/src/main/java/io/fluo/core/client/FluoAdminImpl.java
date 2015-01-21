@@ -27,6 +27,7 @@ import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
@@ -121,44 +122,52 @@ public class FluoAdminImpl implements FluoAdmin {
 
   @Override
   public void updateSharedConfig() {
-    
-    try {
-      logger.info("Setting up observers using app config: {}", ConfigurationUtils.toString(config.subset(FluoConfiguration.APP_PREFIX)));
-      
-      Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
-      Map<Column,ObserverConfiguration> weakObservers = new HashMap<>();
-      for (ObserverConfiguration observerConfig : config.getObserverConfig()) {
-        
-        Observer observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
-        
-        logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(), observerConfig.getParameters());
-        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), observerConfig.getParameters()));
-        
-        ObservedColumn observedCol = observer.getObservedColumn();
-        if (observedCol.getType() == NotificationType.STRONG)
-          colObservers.put(observedCol.getColumn(), observerConfig);
-        else
-          weakObservers.put(observedCol.getColumn(), observerConfig);
+
+    logger.info("Setting up observers using app config: {}", ConfigurationUtils.toString(config.subset(FluoConfiguration.APP_PREFIX)));
+
+    Map<Column,ObserverConfiguration> colObservers = new HashMap<>();
+    Map<Column,ObserverConfiguration> weakObservers = new HashMap<>();
+    for (ObserverConfiguration observerConfig : config.getObserverConfig()) {
+
+      Observer observer;
+      try {
+        observer = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+      } catch (ClassNotFoundException e1) {
+        throw new FluoException("Observer class '" + observerConfig.getClassName() + "' was not found.  Check for class name misspellings or failure to include the observer jar.", e1);
+      } catch (InstantiationException | IllegalAccessException e2) {
+        throw new FluoException("Observer class '" + observerConfig.getClassName() + "' could not be created.", e2);
       }
 
-      Properties sharedProps = new Properties();
-      Iterator<String> iter = config.getKeys();
-      while (iter.hasNext()) {
-        String key = iter.next();
-        if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
-          sharedProps.setProperty(key, Long.toString(config.getLong(key)));
-        } else if (key.startsWith(FluoConfiguration.APP_PREFIX)){
-          sharedProps.setProperty(key, config.getProperty(key).toString());
-        }
+      logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(), observerConfig.getParameters());
+      try {
+        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), observerConfig.getParameters()));
+      } catch (Exception e) {
+        throw new FluoException("Observer '" + observerConfig.getClassName() + "' could not be initialized", e);
       }
-      
+
+      ObservedColumn observedCol = observer.getObservedColumn();
+      if (observedCol.getType() == NotificationType.STRONG)
+        colObservers.put(observedCol.getColumn(), observerConfig);
+      else
+        weakObservers.put(observedCol.getColumn(), observerConfig);
+    }
+
+    Properties sharedProps = new Properties();
+    Iterator<String> iter = config.getKeys();
+    while (iter.hasNext()) {
+      String key = iter.next();
+      if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
+        sharedProps.setProperty(key, Long.toString(config.getLong(key)));
+      } else if (key.startsWith(FluoConfiguration.APP_PREFIX)){
+        sharedProps.setProperty(key, config.getProperty(key).toString());
+      }
+    }
+
+    try {
       Operations.updateObservers(config, colObservers, weakObservers);
       Operations.updateSharedConfig(config, sharedProps);
-      
     } catch (Exception e) {
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
-      throw new RuntimeException(e);
+      throw new FluoException("Failed to update shared configuration in Zookeeper", e);
     }
   }
   

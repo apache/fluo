@@ -28,6 +28,7 @@ import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.client.FluoAdminImpl;
 import org.slf4j.LoggerFactory;
 
@@ -132,8 +133,14 @@ public class Init {
     }
 
     System.out.println("Initializing Fluo instance using " + commandOpts.getFluoProps());
-    FluoAdmin admin = FluoFactory.newAdmin(config);
-    admin.initialize(initOpts);
+    try {
+      FluoAdmin admin = FluoFactory.newAdmin(config);
+      admin.initialize(initOpts);
+    } catch (FluoException e) {
+      System.out.println("Initialization failed due to the following exception:");
+      e.printStackTrace();
+      System.exit(-1);
+    }
     System.out.println("Initialization is complete.");
   }
 }
