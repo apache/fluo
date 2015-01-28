@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import io.fluo.api.client.FluoClient;
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.configuration.CompositeConfiguration;
@@ -158,97 +159,116 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
   
   public void validate() {   
+    // keep in alphabetical order
+    getAccumuloClasspath();
+    getAccumuloInstance();
+    getAccumuloPassword();
+    getAccumuloTable();
+    getAccumuloUser();
+    getAccumuloZookeepers();
+    getAdminClass();
+    getClientClass();
+    getClientRetryTimeout();
+    getLoaderQueueSize();
+    getLoaderThreads();
+    getMetricsYaml();
+    getMetricsYamlBase64();
     getObserverConfig();
+    getOracleInstances();
+    getOracleMaxMemory();
+    getOracleNumCores();
+    getOraclePort();
+    getTransactionRollbackTime();
+    getWorkerInstances();
+    getWorkerMaxMemory();
+    getWorkerNumCores();
+    getWorkerThreads();
+    getZookeepers();
+    getZookeeperTimeout();
   }
 
   public FluoConfiguration setZookeepers(String zookeepers) {
-    setProperty(CLIENT_ZOOKEEPER_CONNECT_PROP, zookeepers);
-    return this;
+    return setNonEmptyString(CLIENT_ZOOKEEPER_CONNECT_PROP, zookeepers);
   }
   
   public String getZookeepers() {
-    return getString(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
+    return getNonEmptyString(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
   }
  
   public FluoConfiguration setZookeeperTimeout(int timeout) {
-    setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, timeout);
-    return this;
+    return setPositiveInt(CLIENT_ZOOKEEPER_TIMEOUT_PROP, timeout);
   }
     
   public int getZookeeperTimeout() {
-    return getInt(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
+    return getPositiveInt(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
   }
   
   public FluoConfiguration setClientRetryTimeout(int timeoutMS) {
+    Preconditions.checkArgument(timeoutMS >= -1, CLIENT_RETRY_TIMEOUT_MS_PROP+" must be >= -1");
     setProperty(CLIENT_RETRY_TIMEOUT_MS_PROP, timeoutMS);
     return this;
   }
     
   public int getClientRetryTimeout() {
-    return getInt(CLIENT_RETRY_TIMEOUT_MS_PROP, CLIENT_RETRY_TIMEOUT_MS_DEFAULT);
+    int retval = getInt(CLIENT_RETRY_TIMEOUT_MS_PROP, CLIENT_RETRY_TIMEOUT_MS_DEFAULT);
+    Preconditions.checkArgument(retval >= -1, CLIENT_RETRY_TIMEOUT_MS_PROP+" must be >= -1");
+    return retval;
   }
     
   public FluoConfiguration setAccumuloInstance(String accumuloInstance) {
-    setProperty(CLIENT_ACCUMULO_INSTANCE_PROP, accumuloInstance);
-    return this;
+    return setNonEmptyString(CLIENT_ACCUMULO_INSTANCE_PROP, accumuloInstance);
   }
     
   public String getAccumuloInstance() {
-    return getString(CLIENT_ACCUMULO_INSTANCE_PROP);
+    return getNonEmptyString(CLIENT_ACCUMULO_INSTANCE_PROP);
   }
   
   public FluoConfiguration setAccumuloUser(String accumuloUser) {
-    setProperty(CLIENT_ACCUMULO_USER_PROP, accumuloUser);
-    return this;
+    return setNonEmptyString(CLIENT_ACCUMULO_USER_PROP, accumuloUser);
   }
   
   public String getAccumuloUser() {
-    return getString(CLIENT_ACCUMULO_USER_PROP);
+    return getNonEmptyString(CLIENT_ACCUMULO_USER_PROP);
   }
     
   public FluoConfiguration setAccumuloPassword(String accumuloPassword) {
-    setProperty(CLIENT_ACCUMULO_PASSWORD_PROP, accumuloPassword);
+    setProperty(CLIENT_ACCUMULO_PASSWORD_PROP, verifyNotNull(CLIENT_ACCUMULO_PASSWORD_PROP, accumuloPassword));
     return this;
   }
   
   public String getAccumuloPassword() {
-    return getString(CLIENT_ACCUMULO_PASSWORD_PROP);
+    return verifyNotNull(CLIENT_ACCUMULO_PASSWORD_PROP, getString(CLIENT_ACCUMULO_PASSWORD_PROP));
   }
   
   public FluoConfiguration setAccumuloZookeepers(String zookeepers) {
-    setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, zookeepers);
-    return this;
+    return setNonEmptyString(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, zookeepers);
   }
   
   public String getAccumuloZookeepers() {
-    return getString(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
+    return getNonEmptyString(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
   }
   
   public FluoConfiguration setClientClass(String clientClass) {
-    setProperty(CLIENT_CLASS_PROP, clientClass);
-    return this;
+    return setNonEmptyString(CLIENT_CLASS_PROP, clientClass);
   }
   
   public String getClientClass() {
-    return getString(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
+    return getNonEmptyString(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
   }
   
   /**
-   * Sets Accumulo table.  This property only needs to 
-   * be set for FluoAdmin as it will be stored in retrieved
-   * from Zookeeper for clients.
+   * Sets Accumulo table. This property only needs to be set for FluoAdmin as it will be stored in retrieved from Zookeeper for clients.
    */
   public FluoConfiguration setAccumuloTable(String table) {
-    setProperty(ADMIN_ACCUMULO_TABLE_PROP, table);
-    return this;
+    return setNonEmptyString(ADMIN_ACCUMULO_TABLE_PROP, table);
   }
   
   public String getAccumuloTable() {
-    return getString(ADMIN_ACCUMULO_TABLE_PROP);
+    return getNonEmptyString(ADMIN_ACCUMULO_TABLE_PROP);
   }
   
   public FluoConfiguration setAccumuloClasspath(String path) {
-    setProperty(ADMIN_ACCUMULO_CLASSPATH_PROP, path);
+    setProperty(ADMIN_ACCUMULO_CLASSPATH_PROP, verifyNotNull(ADMIN_ACCUMULO_CLASSPATH_PROP, path));
     return this;
   }
   
@@ -257,23 +277,19 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
        
   public FluoConfiguration setAdminClass(String adminClass) {
-    setProperty(ADMIN_CLASS_PROP, adminClass);
-    return this;
+    return setNonEmptyString(ADMIN_CLASS_PROP, adminClass);
   }
   
   public String getAdminClass() {
-    return getString(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
+    return getNonEmptyString(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
   }
   
   public FluoConfiguration setWorkerThreads(int numThreads) {
-    if (numThreads <= 0)
-      throw new IllegalArgumentException("Must be positive " + numThreads);
-    setProperty(WORKER_NUM_THREADS_PROP, numThreads);
-    return this;
+    return setPositiveInt(WORKER_NUM_THREADS_PROP, numThreads);
   }
   
   public int getWorkerThreads() {
-    return getInt(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
+    return getPositiveInt(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
   }
   
   public List<ObserverConfiguration> getObserverConfig() {
@@ -348,102 +364,92 @@ public class FluoConfiguration extends CompositeConfiguration {
     return this;
   }
 
-  public void setTransactionRollbackTime(long time, TimeUnit tu) {
-    setProperty(TRANSACTION_ROLLBACK_TIME_PROP, tu.toMillis(time));
+  public FluoConfiguration setTransactionRollbackTime(long time, TimeUnit tu) {
+    return setPositiveLong(TRANSACTION_ROLLBACK_TIME_PROP, tu.toMillis(time));
   }
   
   public long getTransactionRollbackTime() {
-    return getLong(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
+    return getPositiveLong(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
   }
 
   public FluoConfiguration setWorkerInstances(int workerInstances) {
-    setProperty(WORKER_INSTANCES_PROP, workerInstances);
-    return this;
+    return setPositiveInt(WORKER_INSTANCES_PROP, workerInstances);
   }
 
   public int getWorkerInstances() {
-    return getInt(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
+    return getPositiveInt(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
   }
   
   public FluoConfiguration setWorkerMaxMemory(int maxMemoryMB) {
-    setProperty(WORKER_MAX_MEMORY_MB_PROP, maxMemoryMB);
-    return this;
+    return setPositiveInt(WORKER_MAX_MEMORY_MB_PROP, maxMemoryMB);
   }
   
   public int getWorkerMaxMemory() {
-    return getInt(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
+    return getPositiveInt(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
   }
   
   public FluoConfiguration setWorkerNumCores(int numCores) {
-    setProperty(WORKER_NUM_CORES_PROP, numCores);
-    return this;
+    return setPositiveInt(WORKER_NUM_CORES_PROP, numCores);
   }
   
   public int getWorkerNumCores() {
-    return getInt(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
+    return getPositiveInt(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
   }
   
   public FluoConfiguration setLoaderThreads(int numThreads) {
-    setProperty(LOADER_NUM_THREADS_PROP, numThreads);
-    return this;
+    return setPositiveInt(LOADER_NUM_THREADS_PROP, numThreads);
   }
   
   public int getLoaderThreads() {
-    return getInt(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
+    return getPositiveInt(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
   }
   
   public FluoConfiguration setLoaderQueueSize(int queueSize) {
-    setProperty(LOADER_QUEUE_SIZE_PROP, queueSize);
-    return this;
+    return setPositiveInt(LOADER_QUEUE_SIZE_PROP, queueSize);
   }
   
   public int getLoaderQueueSize() {
-    return getInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
+    return getPositiveInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
   }
   
   public FluoConfiguration setOracleMaxMemory(int oracleMaxMemory) {
-    setProperty(ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
-    return this;
+    return setPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
   }
   
   public int getOracleMaxMemory() {
-    return getInt(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
+    return getPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
   }
 
   public FluoConfiguration setOraclePort(int oraclePort) {
-    setProperty(ORACLE_PORT_PROP, oraclePort);
-    return this;
+    return setPort(ORACLE_PORT_PROP, oraclePort);
   }
   
   public int getOraclePort() {
-    return getInt(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
+    return getPort(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
   }
   
   public FluoConfiguration setOracleInstances(int oracleInstances) {
-	  setProperty(ORACLE_INSTANCES_PROP, oracleInstances);
-	  return this;
+	  return setPositiveInt(ORACLE_INSTANCES_PROP, oracleInstances);
   }
 
   public int getOracleInstances() {
-	  return getInt(ORACLE_INSTANCES_PROP, ORACLE_INSTANCES_DEFAULT);
+	  return getPositiveInt(ORACLE_INSTANCES_PROP, ORACLE_INSTANCES_DEFAULT);
   }
   
   public FluoConfiguration setOracleNumCores(int numCores) {
-    setProperty(ORACLE_NUM_CORES_PROP, numCores);
-    return this;
+    return setPositiveInt(ORACLE_NUM_CORES_PROP, numCores);
   }
   
   public int getOracleNumCores() {
-    return getInt(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
+    return getPositiveInt(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
   }
   
   public FluoConfiguration setMiniClass(String miniClass) {
-    setProperty(MINI_CLASS_PROP, miniClass);
-    return this;
+    return setNonEmptyString(MINI_CLASS_PROP, miniClass);
   }
   
   public String getMiniClass() {
-    return getString(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
+    return getNonEmptyString(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 
   /**
@@ -483,8 +489,8 @@ public class FluoConfiguration extends CompositeConfiguration {
    * @param base64Yaml
    *          A base64 encoded yaml metrics config.
    */
-  public void setMetricsYamlBase64(String base64Yaml) {
-    setProperty(METRICS_YAML_BASE64, base64Yaml);
+  public FluoConfiguration setMetricsYamlBase64(String base64Yaml) {
+    return setNonEmptyString(METRICS_YAML_BASE64, base64Yaml);
   }
 
   /**
@@ -494,7 +500,7 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
 
   public String getMetricsYamlBase64() {
-    return getString(METRICS_YAML_BASE64, METRICS_YAML_BASE64_DEFAULT);
+    return getNonEmptyString(METRICS_YAML_BASE64, METRICS_YAML_BASE64_DEFAULT);
   }
 
   /**
@@ -516,12 +522,11 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
   
   public FluoConfiguration setMiniDataDir(String dataDir) {
-    setProperty(MINI_DATA_DIR_PROP, dataDir);
-    return this;
+    return setNonEmptyString(MINI_DATA_DIR_PROP, dataDir);
   }
   
   public String getMiniDataDir() {
-    return getString(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
+    return getNonEmptyString(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }
       
   protected void setDefault(String key, String val) {
@@ -666,5 +671,67 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
     config.setProperty(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
     config.setProperty(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
+  }
+  
+  private FluoConfiguration setPositiveInt(String property, int value) {
+    Preconditions.checkArgument(value > 0, property+" must be positive");
+    setProperty(property, value);
+    return this;
+  }
+  
+  private int getPositiveInt(String property, int defaultValue) {
+    int value = getInt(property, defaultValue);
+    Preconditions.checkArgument(value > 0, property+" must be positive");
+    return value;
+  }
+  
+  private FluoConfiguration setPositiveLong(String property, long value) {
+    Preconditions.checkArgument(value > 0, property+" must be positive");
+    setProperty(property, value);
+    return this;
+  }
+  
+  private long getPositiveLong(String property, long defaultValue) {
+    long value = getLong(property, defaultValue);
+    Preconditions.checkArgument(value > 0, property+" must be positive");
+    return value;
+  }
+  
+  private FluoConfiguration setPort(String property, int value) {
+    Preconditions.checkArgument(value >= 1 && value <= 65535, property+" must be valid port (1-65535)");
+    setProperty(property, value);
+    return this;
+  }
+  
+  private int getPort(String property, int defaultValue) {
+    int value = getInt(property, defaultValue);
+    Preconditions.checkArgument(value >= 1 && value <= 65535, property+" must be valid port (1-65535)");
+    return value;
+  }
+  
+  private FluoConfiguration setNonEmptyString(String property, String value) {
+    Preconditions.checkNotNull(value, property+" cannot be null");
+    Preconditions.checkArgument(!value.isEmpty(), property+" cannot be empty");
+    setProperty(property, value);
+    return this;
+  }
+  
+  private String getNonEmptyString(String property, String defaultValue) {
+    String value = getString(property, defaultValue);
+    Preconditions.checkNotNull(value, property+" cannot be null");
+    Preconditions.checkArgument(!value.isEmpty(), property+" cannot be empty");
+    return value;
+  }
+  
+  private String getNonEmptyString(String property) {
+    String value = getString(property);
+    Preconditions.checkNotNull(value, property+" cannot be null");
+    Preconditions.checkArgument(!value.isEmpty(), property+" cannot be empty");
+    return value;
+  }
+          
+  private static String verifyNotNull(String property, String value) {
+    Preconditions.checkNotNull(value, property+" cannot be null");
+    return value;
   }
 }
