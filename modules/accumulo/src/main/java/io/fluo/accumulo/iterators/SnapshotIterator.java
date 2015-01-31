@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.WriteValue;
@@ -32,12 +33,10 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
-/**
- * 
- */
 public class SnapshotIterator implements SortedKeyValueIterator<Key,Value> {
   
-  private static final String TIMESTAMP_OPT = "timestampOpt";
+  @VisibleForTesting
+  static final String TIMESTAMP_OPT = "timestampOpt";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   
   private SortedKeyValueIterator<Key,Value> source;

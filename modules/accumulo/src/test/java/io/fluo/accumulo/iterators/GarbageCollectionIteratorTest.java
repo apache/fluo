@@ -20,12 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.accumulo.core.conf.AccumuloConfiguration;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.SortedMapIterator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,34 +31,8 @@ public class GarbageCollectionIteratorTest {
     GarbageCollectionIterator gci = new GarbageCollectionIterator();
     Map<String, String> options = new HashMap<>();
     options.put(GarbageCollectionIterator.OLDEST_ACTIVE_TS_OPT, Long.toString(oldestActive));
-    IteratorEnvironment env = new IteratorEnvironment() {
+    TestIteratorEnv env = new TestIteratorEnv(IteratorScope.majc);
 
-      @Override
-      public SortedKeyValueIterator<Key,Value> reserveMapFileReader(String mapFileName) throws IOException {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void registerSideChannel(SortedKeyValueIterator<Key,Value> iter) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isFullMajorCompaction() {
-        // TODO Auto-generated method stub
-        return true;
-      }
-
-      @Override
-      public IteratorScope getIteratorScope() {
-        return IteratorScope.majc;
-      }
-
-      @Override
-      public AccumuloConfiguration getConfig() {
-        return null;
-      }
-    };
     try {
       gci.init(new SortedMapIterator(input.data), options, env);
     } catch (IOException e) {
@@ -253,21 +222,21 @@ public class GarbageCollectionIteratorTest {
     expected.add("0 f q DATA 48","18");
 
     Assert.assertEquals(expected, output);
-    
+
     //test TX_DONE and WRITE where times do not match
     input = new TestData(inputBase);
-    
+
     input.add("0 f q TX_DONE 17", "");
     input.add("0 f q WRITE 20","17 TRUNCATION PRIMARY");
-    
+
     output = new TestData(newGCI(input, 60));
-    
+
     expected = new TestData();
     expected.add("0 f q TX_DONE 17", "");
     expected.add("0 f q WRITE 52","48 TRUNCATION");
     expected.add("0 f q WRITE 20","17 TRUNCATION PRIMARY");
     expected.add("0 f q DATA 48","18");
-    
+
     Assert.assertEquals(expected, output);
   }
 
@@ -370,85 +339,85 @@ public class GarbageCollectionIteratorTest {
     input.add("0 f q TX_DONE 13", "");
 
     output = new TestData(newGCI(input, 23));
-    
+
     expected = new TestData();
     expected.add("0 f q WRITE 22","19 TRUNCATION");
     expected.add("0 f q DATA 19","19");
-    
+
     Assert.assertEquals(expected, output);
-    
+
     //ensure that timestamp in value is used
     input = new TestData();
     input.add("0 f q DEL_LOCK 13", "3 PRIMARY");
     input.add("0 f q LOCK 11", "0 f q");
     input.add("0 f q DATA 11","15");
-    
+
     output = new TestData(newGCI(input, 23));
-    
+
     Assert.assertEquals(input, output);
-    
-    
+
+
     //ensure timestamp in value is used test 2
     input = new TestData();
-    
+
     input.add("0 f q WRITE 11","10");
     input.add("0 f q DEL_LOCK 13", "3");
     input.add("0 f q LOCK 3", "0 f q");
     input.add("0 f q DATA 10","17");
     input.add("0 f q DATA 3","15");
-    
+
     output = new TestData(newGCI(input, 23));
-    
+
     expected = new TestData();
     expected.add("0 f q WRITE 11","10 TRUNCATION");
     expected.add("0 f q DATA 10","17");
-    
+
     Assert.assertEquals(expected, output);
   }
-  
 
-  
+
+
   @Test
   public void testMultiColumn(){
-    
+
     TestData input = new TestData();
 
     input.add("0 f a DEL_LOCK 19", "19");
     input.add("0 f a LOCK 19", "1 f q");
     input.add("0 f a DATA 19","15");
-    
+
     input.add("0 f b LOCK 19", "1 f q");
     input.add("0 f b DATA 19","16");
-    
+
     input.add("0 f c TX_DONE 20", "");
-    
+
     input.add("0 f d WRITE 25","21");
     input.add("0 f d WRITE 20","17 TRUNCATION PRIMARY");
     input.add("0 f d DATA 21","19");
     input.add("0 f d DATA 17","15");
-    
+
     input.add("0 f e LOCK 19", "1 f q");
     input.add("0 f e DATA 19","16");
-    
+
     TestData output = new TestData(newGCI(input, 27));
-    
+
     TestData expected = new TestData();
-    
+
     expected.add("0 f a DEL_LOCK 19", "19");
     expected.add("0 f a DATA 19","15");
-    
+
     expected.add("0 f b LOCK 19", "1 f q");
     expected.add("0 f b DATA 19","16");
-    
+
     expected.add("0 f c TX_DONE 20", "");
-    
+
     expected.add("0 f d WRITE 25","21 TRUNCATION");
     expected.add("0 f d WRITE 20","17 TRUNCATION PRIMARY");
     expected.add("0 f d DATA 21","19");
-    
+
     expected.add("0 f e LOCK 19", "1 f q");
     expected.add("0 f e DATA 19","16");
-    
+
     Assert.assertEquals(expected, output);
   }
 }
