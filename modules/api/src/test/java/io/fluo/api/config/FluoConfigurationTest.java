@@ -16,6 +16,7 @@
 package io.fluo.api.config;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -175,9 +176,19 @@ public class FluoConfigurationTest {
     // check for values set in prop file
     Assert.assertEquals("localhost/fluo", config.getZookeepers());
     Assert.assertEquals("localhost", config.getAccumuloZookeepers());
-    Assert.assertEquals("", config.getAccumuloUser());
     Assert.assertEquals("", config.getAccumuloPassword());
-    Assert.assertEquals("", config.getAccumuloTable());
+    try {
+      config.getAccumuloUser();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+    try {
+      config.getAccumuloTable();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+    try {
+      config.getAccumuloInstance();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
   }
 
   @Test
@@ -221,6 +232,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals("configVal1", ocList.get(0).getParameters().get("configKey1"));
     Assert.assertEquals("configVal2", ocList.get(0).getParameters().get("configKey2"));
     Assert.assertEquals(2, ocList.get(0).getParameters().size());
+    assertIAE("class,bad,input");
     assertIAE("index,check,,phrasecount.PhraseCounter");
     assertIAE("");
     assertIAE(" ");
@@ -235,12 +247,43 @@ public class FluoConfigurationTest {
     Assert.assertEquals(1, ocList.size());
     Assert.assertEquals("Class", ocList.get(0).getClassName());
     Assert.assertEquals(0, ocList.get(0).getParameters().size());
-    
-    config = new FluoConfiguration();
-    try {
-      config.setProperty(FluoConfiguration.OBSERVER_PREFIX+"1", "class,bad,input"); 
-      config.validate();
-      Assert.fail();
-    } catch (IllegalArgumentException e) { }
+  }
+  
+  @Test
+  public void testIAE() {
+    FluoConfiguration config = new FluoConfiguration();    
+    String[] positiveIntMethods = { "setLoaderQueueSize", "setLoaderThreads", 
+        "setOracleInstances", "setOracleMaxMemory", "setOracleNumCores",
+        "setWorkerInstances", "setWorkerMaxMemory", "setWorkerNumCores", 
+        "setWorkerThreads", "setZookeeperTimeout"};
+    for (String methodName : positiveIntMethods) {
+      try {
+        config.getClass().getMethod(methodName, int.class).invoke(config, -5);
+        Assert.fail();
+      } catch (InvocationTargetException e) {
+        if (!(e.getCause() instanceof IllegalArgumentException)) {
+          Assert.fail();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        Assert.fail();
+      }
+    }
+    String[] nonEmptyMethods = { "setAccumuloInstance", "setAccumuloTable",
+        "setAccumuloUser", "setAccumuloZookeepers", "setAdminClass", "setClientClass",
+        "setMetricsYamlBase64", "setMiniClass", "setMiniDataDir", "setZookeepers"};
+    for (String methodName : nonEmptyMethods) {
+      try {
+        config.getClass().getMethod(methodName, String.class).invoke(config, "");
+        Assert.fail();
+      } catch (InvocationTargetException e) {
+        if (!(e.getCause() instanceof IllegalArgumentException)) {
+          Assert.fail();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        Assert.fail();
+      }
+    }
   }
 }
