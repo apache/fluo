@@ -44,9 +44,9 @@ public class TestData {
     data.putAll(td.data);
   }
 
-  TestData(SortedKeyValueIterator<Key,Value> iter){
+  TestData(SortedKeyValueIterator<Key,Value> iter, Range range){
     try {
-      iter.seek(new Range(), new HashSet<ByteSequence>(), false);
+      iter.seek(range, new HashSet<ByteSequence>(), false);
 
       while(iter.hasTop()){
         data.put(iter.getTopKey(), iter.getTopValue());
@@ -57,7 +57,11 @@ public class TestData {
     }
   }
 
-  public void add(String key, String value){
+  TestData(SortedKeyValueIterator<Key,Value> iter){
+    this(iter, new Range());
+  }
+
+  public TestData addIfInRange(String key, String value, Range range){
     String[] fields = key.split("\\s+");
 
     String row = fields[0];
@@ -98,7 +102,16 @@ public class TestData {
 
     }
 
-    data.put(new Key(row, cf, cq, ts), new Value(val));
+    Key akey = new Key(row, cf, cq, ts);
+    if(range.contains(akey)){
+      data.put(akey, new Value(val));
+    }
+
+    return this;
+  }
+
+  public TestData add(String key, String value){
+    return addIfInRange(key, value, new Range());
   }
 
   @Override
