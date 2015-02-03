@@ -48,7 +48,7 @@ public class RowColumn {
    * @param row (will be UTF-8 encoded)
    */
   public RowColumn(String row) {
-    this(row == null ? null : Bytes.of(row));
+    this(Bytes.of(row));
   }
   
   /**
@@ -71,7 +71,7 @@ public class RowColumn {
    * @param col Column
    */
   public RowColumn(String row, Column col) {
-    this(row == null ? null : Bytes.of(row), col);
+    this(Bytes.of(row), col);
   }
 
   /**

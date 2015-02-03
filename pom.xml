@@ -189,13 +189,36 @@
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>3.0.0</version>
+          <configuration>
+            <xmlOutput>true</xmlOutput>
+            <effort>Max</effort>
+            <failOnError>true</failOnError>
+            <includeTests>true</includeTests>
+            <maxRank>9</maxRank>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
-
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>run-findbugs</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
