@@ -114,7 +114,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       }
     };
     timer = new Timer("Oracle timestamp timer", true);
-    timer.schedule(tt, ZookeeperUtil.ZK_UPDATE_PERIOD_MS, ZookeeperUtil.ZK_UPDATE_PERIOD_MS);
+    long updatePeriod = env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP, ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT);
+    timer.schedule(tt, updatePeriod, updatePeriod);
   }
 
   private void allocateTimestamp() throws Exception {

@@ -113,7 +113,7 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   public TimestampTracker(Environment env, TransactorID tid) {
-    this(env, tid, ZookeeperUtil.ZK_UPDATE_PERIOD_MS);
+    this(env, tid, env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP, ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT));
   }
 
   /**

@@ -45,10 +45,10 @@ public class WorkTask implements Runnable {
   
   @Override
   public void run() {
-    TransactionImpl txi = null;
     Observer observer = observers.getObserver(col);
     try {
       while (true) {
+        TransactionImpl txi = null;
         TxResult status = TxResult.UNKNOWN;
         try {
           txi = new TransactionImpl(env, row, col);
@@ -73,22 +73,21 @@ public class WorkTask implements Runnable {
           break;
         } finally {
           if (txi != null) {
-            txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
-            if (TxLogger.isLoggingEnabled())
-              TxLogger.logTx(status.toString(), observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+            try{
+              txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
+              if (TxLogger.isLoggingEnabled())
+                TxLogger.logTx(status.toString(), observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
+            }finally{
+              txi.close();
+            }
           }
         }
         // TODO if duplicate set detected, see if its because already acknowledged
       }
     } finally {
-      // close after multiple commit attempts
-      if (txi != null) {
-        txi.close();
-      }
-      
       observers.returnObserver(observer);
     }
-    
+
   }
 
 }
