@@ -322,9 +322,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
 
     try {
-      if (isConnected() && (event.equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
-                            event.equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
-                            event.equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) ) {
+      if (isConnected() && (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
+                            event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
+                            event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) ) {
         synchronized (this) {
           Participant participant = leaderSelector.getLeader();
           if (isLeader(participant) && !leaderSelector.hasLeadership())    // in case current instance becomes leader, we want to know who came before it.

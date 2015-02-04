@@ -27,6 +27,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Column;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.ConditionalFlutation;
 import io.fluo.core.util.FluoCondition;
@@ -65,7 +66,7 @@ public class LockResolver {
       Long trid = transactorIds.get(prc);
       if (trid == null) {
         transactorIds.put(prc, lockVal.getTransactor());
-      } else if (trid != lockVal.getTransactor()) {
+      } else if (!trid.equals(lockVal.getTransactor())) {
         // sanity check.. its assumed that all locks w/ the same PrimaryRowColumn should have the same transactor id as well
         throw new IllegalStateException("transactor ids not equals " + prc + " " + lock.getKey() + " " + trid + " " + lockVal.getTransactor());
       }
@@ -241,6 +242,6 @@ public class LockResolver {
   }
 
   private static boolean isPrimary(PrimaryRowColumn prc, Key k) {
-    return prc.prow.equals(k.getRowData()) && prc.pcol.equals(SpanUtil.toRowColumn(k).getColumn());
+    return prc.prow.equals(ByteUtil.toBytes(k.getRowData())) && prc.pcol.equals(SpanUtil.toRowColumn(k).getColumn());
   }
 }

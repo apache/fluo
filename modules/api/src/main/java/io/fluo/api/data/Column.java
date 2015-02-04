@@ -48,7 +48,7 @@ public class Column {
    * Creates Column with only a family. String parameter will be encoded as UTF-8.
    */
   public Column(String family) {
-    this(family == null ? null : Bytes.of(family));
+    this(Bytes.of(family));
   }
 
   /**
@@ -65,8 +65,7 @@ public class Column {
    * Creates Column with a family and qualifier.  String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier) {
-    this(family == null ? null : Bytes.of(family), 
-         qualifier == null ? null : Bytes.of(qualifier));
+    this(Bytes.of(family), Bytes.of(qualifier));
   }
 
   /** 
@@ -85,9 +84,7 @@ public class Column {
    * Creates Column with family, qualifier, and visibility. String parameters will be encoded as UTF-8.
    */
   public Column(String family, String qualifier, String visibility) {
-    this(family == null ? null : Bytes.of(family), 
-         qualifier == null ? null : Bytes.of(qualifier), 
-         visibility == null ? null : Bytes.of(visibility));
+    this(Bytes.of(family), Bytes.of(qualifier), Bytes.of(visibility));
   }
   
   /**

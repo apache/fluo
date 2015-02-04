@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -157,6 +158,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Creates a Bytes object by copying the data of the given byte array
    */
   final public static Bytes of(byte[] array) {
+    Preconditions.checkNotNull(array);
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
     return bytesFactory.get(copy);
@@ -170,6 +172,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param length Number of bytes to include
    */
   final public static Bytes of(byte data[], int offset, int length) {
+    Preconditions.checkNotNull(data);
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
     return bytesFactory.get(copy);
@@ -179,6 +182,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Creates a Bytes object by copying the data of the given ByteBuffer
    */
   final public static Bytes of(ByteBuffer bb) {
+    Preconditions.checkNotNull(bb);
     byte[] data = new byte[bb.remaining()];
     bb.get(data);
     return bytesFactory.get(data);
@@ -188,6 +192,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Creates a Bytes object by copying the value of the given String
    */
   final public static Bytes of(String s) {
+    Preconditions.checkNotNull(s);
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
   }
@@ -196,6 +201,8 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Creates a Bytes object by copying the value of the given String with a given charset
    */
   final public static Bytes of(String s, Charset c) {
+    Preconditions.checkNotNull(s);
+    Preconditions.checkNotNull(c);
     byte[] data = s.getBytes(c);
     return bytesFactory.get(data);
   }
