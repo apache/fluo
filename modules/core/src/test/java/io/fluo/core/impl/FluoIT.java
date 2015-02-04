@@ -293,7 +293,7 @@ public class FluoIT extends ITBaseImpl {
 
     }
 
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx1.commitPrimaryColumn(cd, commitTs));
     tx1.finishCommit(cd, commitTs);
 

@@ -117,10 +117,10 @@ public class WeakNotificationIT extends ITBaseMini {
     CommitData cd6 = tx6.createCommitData();
     Assert.assertTrue(tx6.preCommit(cd6));
 
-    long commitTs5 = OracleClient.getInstance(env).getTimestamp();
+    long commitTs5 = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd5, commitTs5));
 
-    long commitTs6 = OracleClient.getInstance(env).getTimestamp();
+    long commitTs6 = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx6.commitPrimaryColumn(cd6, commitTs6));
 
     tx6.finishCommit(cd6, commitTs6);

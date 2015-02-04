@@ -55,7 +55,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     final CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
-    final long commitTs = OracleClient.getInstance(env).getTimestamp();
+    final long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd2, commitTs));
 
     // create a thread that will unlock column while transaction tx3 is executing
@@ -133,7 +133,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     CommitData cd3 = tx3.createCommitData();
     Assert.assertTrue(tx3.preCommit(cd3));
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     tx3.commitPrimaryColumn(cd3, commitTs);
 
     if (closeTransID)

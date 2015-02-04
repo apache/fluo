@@ -18,6 +18,7 @@ package io.fluo.core.impl;
 import com.codahale.metrics.MetricRegistry;
 import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
+import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
@@ -37,6 +38,7 @@ public class SharedResources implements AutoCloseable {
   private final ConditionalWriter cw;
   private final SharedBatchWriter sbw;
   private final CuratorFramework curator;
+  private OracleClient oracleClient = null;
   private TransactorID tid = null;
   private TransactorNode tnode = null;
   private TransactorCache transactorCache = null;
@@ -77,6 +79,14 @@ public class SharedResources implements AutoCloseable {
   public CuratorFramework getCurator() {
     checkIfClosed();
     return curator;
+  }
+  
+  public synchronized OracleClient getOracleClient() {
+    checkIfClosed();
+    if (oracleClient == null) {
+      oracleClient = new OracleClient(env);
+    }
+    return oracleClient;
   }
   
   public synchronized TransactorID getTransactorID() {

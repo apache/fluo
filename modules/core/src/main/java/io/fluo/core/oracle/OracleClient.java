@@ -17,8 +17,6 @@ package io.fluo.core.oracle;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -270,12 +268,10 @@ public class OracleClient {
     }
   }
 
-  private final static Map<String,OracleClient> clients = new HashMap<>();
-
   private final Environment env;
   private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
 
-  private OracleClient(Environment env) throws Exception {
+  public OracleClient(Environment env) {
     this.env = env;
 
     responseTimer = env.getSharedResources().getMetricRegistry().timer(env.getMeticNames().getOracleClientGetStamps());
@@ -320,29 +316,5 @@ public class OracleClient {
   public synchronized String getOracle() {
     return currentLeader != null ? currentLeader.getId() : null;
   }
-
-  /**
-   * Create an instance of an OracleClient and cache it by the Fluo instance id`
-   *
-   * @param env
-   * @return
-   */
-  public static synchronized OracleClient getInstance(Environment env) {
-    // this key differentiates between different instances of Accumulo and Fluo
-    String key = env.getFluoInstanceID();
-
-    OracleClient client = clients.get(key);
-
-    if (client == null) {
-      try {
-        client = new OracleClient(env);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      clients.put(key, client);
-    }
-
-    return client;
-  }
-
+  
 }

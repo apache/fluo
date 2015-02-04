@@ -122,11 +122,11 @@ public class FailureIT extends ITBaseImpl {
     }
 
     if (killTransactor) {
-      long commitTs = OracleClient.getInstance(env).getTimestamp();
+      long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
       exception.expect(IllegalStateException.class);
       tx2.commitPrimaryColumn(cd, commitTs);
     } else {
-      long commitTs = OracleClient.getInstance(env).getTimestamp();
+      long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
       t2.close();
     }
@@ -173,7 +173,7 @@ public class FailureIT extends ITBaseImpl {
     
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
     
     if (killTransactor)
@@ -239,7 +239,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals(joeBal, tx4.get().row("joe").col(BALANCE).toInteger(0));
     Assert.assertEquals(67, tx4.get().row("jill").col(BALANCE).toInteger(0));
     
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
     
     BankUtil.transfer(env, "bob", "joe", 2);
@@ -304,7 +304,7 @@ public class FailureIT extends ITBaseImpl {
       Assert.assertEquals(1, tx3.getStats().getTimedOutLocks());
     }
     
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
 
     if (killTransactor) {
       // test for exception
@@ -340,7 +340,7 @@ public class FailureIT extends ITBaseImpl {
     // get locks
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
     // test rolling forward primary and non-primary columns
@@ -402,7 +402,7 @@ public class FailureIT extends ITBaseImpl {
     tx5.mutate().row("idx:def").fam("doc").qual("url").set("url0000");
     cd = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd, Bytes.of("idx:abc"), typeLayer.bc().fam("doc").qual("url").vis()));
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
     
     // should roll tx5 forward
