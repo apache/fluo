@@ -49,7 +49,7 @@ public class OracleIT extends ITBaseImpl {
 
   @Test
   public void testRestart() throws Exception {
-    OracleClient client = OracleClient.getInstance(env);
+    OracleClient client = env.getSharedResources().getOracleClient();
 
     long ts1 = client.getTimestamp();
     long ts2 = client.getTimestamp();
@@ -80,7 +80,7 @@ public class OracleIT extends ITBaseImpl {
 
     @Override
     public void run() {
-      OracleClient oclient = OracleClient.getInstance(env);
+      OracleClient oclient = env.getSharedResources().getOracleClient();
 
       for (int i = 0; i < numToGet; i++) {
         try {
@@ -116,7 +116,7 @@ public class OracleIT extends ITBaseImpl {
 
     socket.close();
 
-    OracleClient client = OracleClient.getInstance(env);
+    OracleClient client = env.getSharedResources().getOracleClient();
 
     assertEquals(2, client.getTimestamp());
 
@@ -181,7 +181,7 @@ public class OracleIT extends ITBaseImpl {
     oserver3.start();
     sleepUntilConnected(oserver3);
 
-    OracleClient client = OracleClient.getInstance(env);
+    OracleClient client = env.getSharedResources().getOracleClient();
 
     long timestamp;
     for (long i = 2; i <= 7; i++) {
@@ -217,7 +217,7 @@ public class OracleIT extends ITBaseImpl {
 
     sleepUntilConnected(oserver);
 
-    OracleClient client = OracleClient.getInstance(env);
+    OracleClient client = env.getSharedResources().getOracleClient();
 
     long timestamp;
     for (long i = 2; i <= 7; i++) {

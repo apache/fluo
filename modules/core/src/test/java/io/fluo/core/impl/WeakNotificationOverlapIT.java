@@ -33,7 +33,6 @@ import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
@@ -173,7 +172,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // the notification for ttx2. It should delete the notification for ttx1.
     TestTransaction ttx3 = new TestTransaction(env, "1", ntfyCol);
 
-    long commitTs = OracleClient.getInstance(env).getTimestamp();
+    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(ttx2.commitPrimaryColumn(cd2, commitTs));
     ttx2.finishCommit(cd2, commitTs);
     ttx2.close();

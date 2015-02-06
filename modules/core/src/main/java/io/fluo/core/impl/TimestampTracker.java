@@ -165,7 +165,7 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   private long getTimestamp() {
-    return OracleClient.getInstance(env).getTimestamp();
+    return env.getSharedResources().getOracleClient().getTimestamp();
   }
 
   private void createZkNode(long ts) {

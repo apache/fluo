@@ -17,8 +17,6 @@ package io.fluo.core.oracle;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically
  * fail over to different leaders.
  */
-public class OracleClient {
+public class OracleClient implements AutoCloseable {
 
   public static final Logger log = LoggerFactory.getLogger(OracleClient.class);
   private static final int MAX_ORACLE_WAIT_PERIOD = 60;
@@ -65,7 +63,7 @@ public class OracleClient {
   private final Histogram stampsHistogram;
   
   private Participant currentLeader;
-
+  
   private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicLong timestamp = new AtomicLong();
@@ -84,21 +82,28 @@ public class OracleClient {
     public void run() {
       
       try {
-        curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
-        CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
-        curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
-        curatorFramework.start();
+        synchronized (this) {
+          //want this code to be mutually exclusive with close() .. so if in middle of setup, close method will wait till finished 
+          if(closed){
+            return;
+          }
+          
+          curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
+          CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
+          curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
+          curatorFramework.start();
 
-        while (!cnxnListener.isConnected())
-          Thread.sleep(200);
+          while (!cnxnListener.isConnected())
+            Thread.sleep(200);
 
-        pathChildrenCache = new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
-        pathChildrenCache.getListenable().addListener(this);
-        pathChildrenCache.start();
+          pathChildrenCache = new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
+          pathChildrenCache.getListenable().addListener(this);
+          pathChildrenCache.start();
 
-        leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
+          leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
 
-        connect();
+          connect();  
+        }
         doWork();
 
       } catch (Exception e) {
@@ -134,7 +139,14 @@ public class OracleClient {
 
         try {
           request.clear();
-          request.add(queue.take());
+          TimeRequest trh = null;
+          while(trh == null){
+            if(closed){
+              return;
+            }
+            trh = queue.poll(1, TimeUnit.SECONDS);
+          }
+          request.add(trh);
           queue.drainTo(request);
 
           long start;
@@ -177,7 +189,11 @@ public class OracleClient {
             tr.timestamp.set(start + i);
             tr.cdl.countDown();
           }
-
+        } catch (InterruptedException e) {
+          if(closed){
+            return;
+          }
+          e.printStackTrace();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -214,13 +230,28 @@ public class OracleClient {
      * Atomically closes current connection and connects to the current leader
      */
     private synchronized void reconnect() throws InterruptedException, TTransportException, KeeperException, IOException {
-      close();
+      if(transport.isOpen())
+        transport.close();
       connect();
     }
 
-    private void close() {
-      if(transport.isOpen())
+    private synchronized void close() {
+      if(transport != null && transport.isOpen())
         transport.close();
+      try {
+        if(pathChildrenCache != null)
+          pathChildrenCache.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      
+      if(curatorFramework != null)
+        curatorFramework.close();
+      
+      transport = null;
+      pathChildrenCache = null;
+      leaderSelector = null;
+      curatorFramework = null;
     }
 
     private boolean getLeaderAttempt() {
@@ -270,19 +301,20 @@ public class OracleClient {
     }
   }
 
-  private final static Map<String,OracleClient> clients = new HashMap<>();
-
   private final Environment env;
   private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
+  private final Thread thread;
+  private volatile boolean closed = false;
+  private final TimestampRetriever timestampRetriever;
 
-  private OracleClient(Environment env) throws Exception {
+  public OracleClient(Environment env) {
     this.env = env;
 
     responseTimer = env.getSharedResources().getMetricRegistry().timer(env.getMeticNames().getOracleClientGetStamps());
     stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(env.getMeticNames().getOrcaleClientStamps());
 
-    // TODO make thread exit if idle for a bit, and start one when request arrives
-    Thread thread = new Thread(new TimestampRetriever());
+    timestampRetriever = new TimestampRetriever();
+    thread = new Thread(timestampRetriever);
     thread.setDaemon(true);
     thread.start();
   }
@@ -291,6 +323,8 @@ public class OracleClient {
    * Retrieves time stamp from Oracle.  Throws {@link FluoException} if timed out or interrupted. 
    */
   public long getTimestamp() {
+    checkClosed();
+    
     TimeRequest tr = new TimeRequest();
     queue.add(tr);
     try {
@@ -299,17 +333,18 @@ public class OracleClient {
         long waitPeriod = 1;
         long waitTotal = 0;
         while (!tr.cdl.await(waitPeriod, TimeUnit.SECONDS)) {
+          checkClosed();
           waitTotal += waitPeriod;
           if (waitPeriod < MAX_ORACLE_WAIT_PERIOD) {
             waitPeriod *= 2;
           }
-          log.error("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s", waitTotal, waitPeriod);
+          log.warn("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s", waitTotal, waitPeriod);
         }
       } else if (!tr.cdl.await(timeout, TimeUnit.MILLISECONDS)) {
         throw new FluoException("Timed out (after "+timeout+"ms) trying to retrieve timestamp from Oracle.  Is the Oracle running?");
       }
     } catch (InterruptedException e) {
-      throw new FluoException("Interrupted while retrieving timestamp from Oracle");
+      throw new FluoException("Interrupted while retrieving timestamp from Oracle", e);
     }
     return tr.timestamp.get();
   }
@@ -318,31 +353,27 @@ public class OracleClient {
    * Return the oracle that the current client is connected to.
    */
   public synchronized String getOracle() {
+    checkClosed();
     return currentLeader != null ? currentLeader.getId() : null;
   }
 
-  /**
-   * Create an instance of an OracleClient and cache it by the Fluo instance id`
-   *
-   * @param env
-   * @return
-   */
-  public static synchronized OracleClient getInstance(Environment env) {
-    // this key differentiates between different instances of Accumulo and Fluo
-    String key = env.getFluoInstanceID();
-
-    OracleClient client = clients.get(key);
-
-    if (client == null) {
-      try {
-        client = new OracleClient(env);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      clients.put(key, client);
+  private void checkClosed(){
+    if(closed){
+      throw new IllegalStateException(OracleClient.class.getSimpleName()+" is closed");
     }
-
-    return client;
   }
-
+  
+  @Override
+  public void close() {
+    if(!closed){
+      closed = true;
+      try {
+        thread.interrupt();
+        thread.join();
+        timestampRetriever.close();
+      } catch (InterruptedException e) {
+        throw new FluoException("Interrupted during close", e);
+      }
+    }
+  }  
 }
