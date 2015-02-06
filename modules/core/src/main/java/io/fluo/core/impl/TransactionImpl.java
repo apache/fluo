@@ -442,16 +442,10 @@ public class TransactionImpl implements Transaction, Snapshot {
       return false;
     }
 
-    // set weak notifications after all locks are written, but before finishing commit. If weak notifications were set after the commit, then information
-    // about weak notifications would need to be persisted in the lock phase. Setting here is safe because any observers that run as a result of the weak
-    // notification will wait for the commit to finish. Setting here may cause an observer to run unessecarily in the case of rollback, but thats ok.
-    // TODO look into setting weak notification as part of lock and commit phases to avoid this synchronous step
-    writeWeakNotifications();
-
     return true;
   }
 
-  private void writeWeakNotifications() {
+  private void writeWeakNotifications(long commitTs) {
     if (weakNotifications.size() > 0) {
       SharedBatchWriter sbw = env.getSharedResources().getBatchWriter();
       ArrayList<Mutation> mutations = new ArrayList<>();
@@ -459,7 +453,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       for (Entry<Bytes,Set<Column>> entry : weakNotifications.entrySet()) {
         Flutation m = new Flutation(env, entry.getKey());
         for (Column col : entry.getValue()) {
-          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(col), startTs, TransactionImpl.EMPTY);
+          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(col), commitTs, TransactionImpl.EMPTY);
         }
         mutations.add(m);
       }
@@ -536,6 +530,12 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException, AccumuloSecurityException {
+    // set weak notifications after all locks are written, but before finishing commit. If weak notifications were set after the commit, then information
+    // about weak notifications would need to be persisted in the lock phase. Setting here is safe because any observers that run as a result of the weak
+    // notification will wait for the commit to finish. Setting here may cause an observer to run unessecarily in the case of rollback, but thats ok.
+    // TODO look into setting weak notification as part of lock and commit phases to avoid this synchronous step
+    writeWeakNotifications(commitTs);
+
     // try to delete lock and add write for primary column
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
@@ -619,7 +619,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     
     if (weakRow != null) {
       Flutation m = new Flutation(env, weakRow);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), commitTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), startTs);
 
       mutations.add(m);
     }
@@ -693,9 +693,8 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   void deleteWeakRow() {
     if (weakRow != null) {
-      long commitTs = OracleClient.getInstance(env).getTimestamp();
       Flutation m = new Flutation(env, weakRow);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), commitTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), startTs);
 
       env.getSharedResources().getBatchWriter().writeMutation(m);
     }

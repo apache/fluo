@@ -17,6 +17,7 @@ package io.fluo.accumulo.util;
 
 import java.io.IOException;
 
+import io.fluo.api.config.FluoConfiguration;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
@@ -34,7 +35,8 @@ public class ZookeeperUtil {
   // Time period that each client will update ZK with their oldest active timestamp
   // If period is too short, Zookeeper may be overloaded.  If too long, garbage collection
   // may keep older versions of table data unnecessarily.
-  public static long ZK_UPDATE_PERIOD_MS = 60000;
+  public static final String ZK_UPDATE_PERIOD_PROP = FluoConfiguration.FLUO_PREFIX+".impl.timestamp.update.period";
+  public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
 
   private ZookeeperUtil() {}
   

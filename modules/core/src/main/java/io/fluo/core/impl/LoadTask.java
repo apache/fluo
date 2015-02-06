@@ -38,43 +38,40 @@ public class LoadTask implements Runnable {
   
   @Override
   public void run() {
-    TransactionImpl txi = null;
-    try {
-      while (true) {
-        String status = "UNKNOWN";
-        try {
-          txi = new TransactionImpl(env);
-          TransactionBase tx = txi;
-          if (TracingTransaction.isTracingEnabled())
-            tx = new TracingTransaction(tx);
-          Loader.Context context = new Loader.Context() {
-            @Override
-            public Configuration getAppConfiguration() {
-              return env.getAppConfiguration();
-            }
-          };
-          loader.load(tx,context);
-          txi.commit();
-          status = "COMMITTED";
-          return;
-        } catch (CommitException e) {
-          status = "COMMIT_EXCEPTION";
-          // retry
-        } catch (Exception e) {
-          status = "ERROR";
-          log.error("Failed to execute loader " + loader, e);
-          throw new RuntimeException(e);
-        } finally {
-          if (txi != null) {
+    while (true) {
+      TransactionImpl txi = null;
+      String status = "UNKNOWN";
+      try {
+        txi = new TransactionImpl(env);
+        TransactionBase tx = txi;
+        if (TracingTransaction.isTracingEnabled())
+          tx = new TracingTransaction(tx);
+        Loader.Context context = new Loader.Context() {
+          @Override
+          public Configuration getAppConfiguration() {
+            return env.getAppConfiguration();
+          }
+        };
+        loader.load(tx, context);
+        txi.commit();
+        status = "COMMITTED";
+        return;
+      } catch (CommitException e) {
+        status = "COMMIT_EXCEPTION";
+        // retry
+      } catch (Exception e) {
+        status = "ERROR";
+        log.error("Failed to execute loader " + loader, e);
+        throw new RuntimeException(e);
+      } finally {
+        if (txi != null) {
+          try{
             txi.getStats().report(env.getMeticNames(), status, loader.getClass(), env.getSharedResources().getMetricRegistry());
             TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
+          }finally{
+            txi.close();
           }
         }
-      }
-    } finally {
-      // close after multiple possible commit attempts
-      if (txi != null) {
-        txi.close();
       }
     }
   }

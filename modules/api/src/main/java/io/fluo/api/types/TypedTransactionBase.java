@@ -101,7 +101,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
      * @param i
      * @throws Exception
      */
-    public void increment(int i) throws Exception {
+    public void increment(int i) throws AlreadySetException {
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       int v = 0;
@@ -116,7 +116,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
      * @param i
      * @throws Exception
      */
-    public void increment(long l) throws Exception {
+    public void increment(long l) throws AlreadySetException {
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       long v = 0;

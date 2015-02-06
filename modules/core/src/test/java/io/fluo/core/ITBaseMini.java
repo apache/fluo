@@ -36,7 +36,10 @@ public class ITBaseMini extends ITBase {
 
   protected void setAppConfig(Configuration config) {
   }
-  
+
+  protected void setConfig(FluoConfiguration config) {
+  }
+
   @Before
   public void setUpFluo() throws Exception {
     String zkRoot = "/mini-test" + testCounter.getAndIncrement();
@@ -52,7 +55,8 @@ public class ITBaseMini extends ITBase {
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
     config.setMiniStartAccumulo(false);
-  
+
+    setConfig(config);
     setAppConfig(config.getAppConfiguration());
     
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
