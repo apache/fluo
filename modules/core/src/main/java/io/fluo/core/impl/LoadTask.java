@@ -16,8 +16,9 @@
 package io.fluo.core.impl;
 
 import io.fluo.api.client.Loader;
-import io.fluo.api.client.TransactionBase;
+import io.fluo.api.client.Transaction;
 import io.fluo.api.exceptions.CommitException;
+import io.fluo.core.log.TracingTransaction;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,12 +41,13 @@ public class LoadTask implements Runnable {
   public void run() {
     while (true) {
       TransactionImpl txi = null;
+      Transaction tx = null;
       String status = "UNKNOWN";
       try {
         txi = new TransactionImpl(env);
-        TransactionBase tx = txi;
+        tx = txi;
         if (TracingTransaction.isTracingEnabled())
-          tx = new TracingTransaction(tx);
+          tx = new TracingTransaction(txi, loader.getClass());
         Loader.Context context = new Loader.Context() {
           @Override
           public Configuration getAppConfiguration() {
@@ -53,7 +55,7 @@ public class LoadTask implements Runnable {
           }
         };
         loader.load(tx, context);
-        txi.commit();
+        tx.commit();
         status = "COMMITTED";
         return;
       } catch (CommitException e) {
@@ -61,15 +63,14 @@ public class LoadTask implements Runnable {
         // retry
       } catch (Exception e) {
         status = "ERROR";
-        log.error("Failed to execute loader " + loader, e);
+        log.warn("Failed to execute loader " + loader.getClass().getSimpleName(), e);
         throw new RuntimeException(e);
       } finally {
         if (txi != null) {
           try{
             txi.getStats().report(env.getMeticNames(), status, loader.getClass(), env.getSharedResources().getMetricRegistry());
-            TxLogger.logTx(status, loader.getClass().getName(), txi.getStats());
           }finally{
-            txi.close();
+            tx.close();
           }
         }
       }

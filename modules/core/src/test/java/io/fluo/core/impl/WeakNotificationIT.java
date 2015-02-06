@@ -35,7 +35,6 @@ import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.ITBaseMini;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.oracle.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;
 

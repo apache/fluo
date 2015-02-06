@@ -16,9 +16,15 @@
 
 package io.fluo.core.impl;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Preconditions;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
 import io.fluo.core.metrics.MetricNames;
 
 public class TxStats {
@@ -27,11 +33,13 @@ public class TxStats {
   private long entriesReturned = 0;
   private long entriesSet = 0;
   private long finishTime = 0;
-  private long collisions = 0;
+  private long collisions = -1;
   // number of entries recovered from other transactions
   private long recovered = 0;
   private long deadLocks = 0;
   private long timedOutLocks = 0;
+  private Map<Bytes,Set<Column>> rejected = Collections.emptyMap();
+  private long commitTs = -1;
 
   TxStats() {
     this.startTime = System.currentTimeMillis();
@@ -54,6 +62,12 @@ public class TxStats {
   }
 
   public long getCollisions() {
+    if(collisions == -1){
+      collisions = 0;
+      for (Set<Column> cols : rejected.values()) {
+        collisions += cols.size();
+      }
+    }
     return collisions;
   }
 
@@ -67,6 +81,18 @@ public class TxStats {
   
   public long getTimedOutLocks() {
     return timedOutLocks;
+  }
+
+  public Map<Bytes,Set<Column>> getRejected(){
+    return rejected;
+  }
+
+  public long getCommitTs() {
+    return commitTs;
+  }
+
+  public void setCommitTs(long ts){
+    this.commitTs = ts;
   }
 
   void incrementLockWaitTime(long l) {
@@ -83,6 +109,13 @@ public class TxStats {
 
   void incrementCollisions(long c) {
     collisions += c;
+  }
+  
+  public void setRejected(Map<Bytes,Set<Column>> rejected) {
+    Preconditions.checkNotNull(rejected);
+    Preconditions.checkState(this.rejected.size() == 0);
+    this.rejected = rejected;
+    this.collisions = -1;
   }
   
   void incrementDeadLocks() {
