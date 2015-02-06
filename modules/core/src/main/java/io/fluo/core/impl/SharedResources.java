@@ -146,6 +146,9 @@ public class SharedResources implements AutoCloseable {
     if (transactorCache != null) {
       transactorCache.close();
     }
+    if(oracleClient != null){
+      oracleClient.close();
+    }
     cw.close();
     sbw.close();
     try {
