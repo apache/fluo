@@ -16,6 +16,7 @@
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,7 +31,6 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.KeyValue;
 import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -44,6 +44,18 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
 
+  private static class KeyValue extends SimpleImmutableEntry<Key,Value>{
+    private static final long serialVersionUID = 1L;
+    
+    public KeyValue(Key key, Value value) {
+      super(new Key(key), new Value(value));
+    }
+    
+    public KeyValue(Key key, byte[] value) {
+      super(new Key(key), new Value(value));
+    }
+  }
+  
   @VisibleForTesting
   static final String OLDEST_ACTIVE_TS_OPT = "timestamp.oldest.active";
   
@@ -151,7 +163,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
+        keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         completeTxs.add(ts);
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
         boolean keep = false;
@@ -187,7 +199,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
           invalidationTime = timePtr;
 
         if (keep) {
-          keys.add(new KeyValue(new Key(source.getTopKey()), val));
+          keys.add(new KeyValue(source.getTopKey(), val));
         } else if (complete) {
           completeTxs.remove(ts);
         }
@@ -206,20 +218,20 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         }
 
         if (keep) {
-          keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
+          keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         } else if (complete) {
           completeTxs.remove(ts);
         }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime)
-          keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get()));
+          keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
       } else if (colType == ColumnConstants.DATA_PREFIX) {
         // can stop looking
         break;
       } else if (colType == ColumnConstants.ACK_PREFIX) {
         if (!sawAck) {
           if(ts >= firstWrite) 
-            keys.add(new KeyValue(new Key(source.getTopKey()), source.getTopValue().get())); 
+            keys.add(new KeyValue(source.getTopKey(), source.getTopValue())); 
           sawAck = true;
         }
       } else {
@@ -230,9 +242,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     }
 
     for (KeyValue kv : keys) {
-      long colType = kv.key.getTimestamp() & ColumnConstants.PREFIX_MASK;
+      long colType = kv.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        if (completeTxs.contains(kv.key.getTimestamp() & ColumnConstants.TIMESTAMP_MASK)) {
+        if (completeTxs.contains(kv.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK)) {
           keysFiltered.add(kv);
         }
       } else {
@@ -248,7 +260,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   @Override
   public Key getTopKey() {
     if (position < keysFiltered.size()) {
-      return keysFiltered.get(position).key;
+      return keysFiltered.get(position).getKey();
     } else {
       return source.getTopKey();
     }
@@ -257,7 +269,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   @Override
   public Value getTopValue() {
     if (position < keysFiltered.size()) {
-      return new Value(keysFiltered.get(position).value);
+      return keysFiltered.get(position).getValue();
     } else {
       return source.getTopValue();
     }
