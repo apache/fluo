@@ -26,6 +26,8 @@ bin="$( cd -P "$( dirname "$impl" )" && pwd )"
 script=$( basename "$SOURCE" )
 # Stop: Resolve Script Directory
 
+. "$bin"/../conf/fluo-env.sh
+
 # Determine FLUO_HOME - Use env variable set by user.  If none set, calculate using bin dir
 FLUO_HOME="${FLUO_HOME:-$( cd -P ${bin}/.. && pwd )}"
 export FLUO_HOME
