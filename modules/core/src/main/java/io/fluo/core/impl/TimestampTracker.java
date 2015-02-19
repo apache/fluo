@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
-import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;

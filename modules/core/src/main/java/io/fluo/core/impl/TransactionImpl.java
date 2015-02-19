@@ -43,7 +43,6 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
-import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.ConditionalFlutation;
 import io.fluo.core.util.FluoCondition;
@@ -669,6 +668,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       }
       
       long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+      stats.setCommitTs(commitTs);
       if (commitPrimaryColumn(cd, commitTs)) {
         finishCommit(cd, commitTs);
       } else {
@@ -684,9 +684,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       throw new RuntimeException(e);
     } finally {
       stats.setFinishTime(System.currentTimeMillis());
-      for (Set<Column> cols : cd.getRejected().values()) {
-        stats.incrementCollisions(cols.size());
-      }
+      stats.setRejected(cd.getRejected());
       status = TxStatus.COMMITTED;
     }
   }

@@ -25,7 +25,6 @@ import io.fluo.api.types.TypedSnapshotBase.Value;
 import io.fluo.core.ITBaseImpl;
 import io.fluo.core.TestTransaction;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.oracle.OracleClient;
 import org.junit.Assert;
 import org.junit.Test;
 

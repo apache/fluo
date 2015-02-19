@@ -16,19 +16,22 @@
 
 package io.fluo.core.worker;
 
-import io.fluo.api.client.TransactionBase;
+import io.fluo.api.client.Transaction;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.TracingTransaction;
 import io.fluo.core.impl.TransactionImpl;
-import io.fluo.core.impl.TxLogger;
+import io.fluo.core.log.TracingTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkTask implements Runnable {
 
+  private static Logger log = LoggerFactory.getLogger(WorkTask.class);
+  
   private Environment env;
   private Bytes row;
   private Column col;
@@ -49,15 +52,16 @@ public class WorkTask implements Runnable {
     try {
       while (true) {
         TransactionImpl txi = null;
+        Transaction tx = txi;
         TxResult status = TxResult.UNKNOWN;
         try {
           txi = new TransactionImpl(env, row, col);
-          TransactionBase tx = txi;
+          tx = txi;
           if (TracingTransaction.isTracingEnabled())
-            tx = new TracingTransaction(tx);
+            tx = new TracingTransaction(txi, row, col, observer.getClass());
 
           observer.process(tx, row, col);
-          txi.commit();
+          tx.commit();
           status = TxResult.COMMITTED;
           break;
         } catch (AlreadyAcknowledgedException aae) {
@@ -69,16 +73,15 @@ public class WorkTask implements Runnable {
           status = TxResult.COMMIT_EXCEPTION;
         } catch (Exception e) {
           status = TxResult.ERROR;
+          log.warn("Failed to execute observer " + observer.getClass().getSimpleName(), e);
           notificationFinder.failedToProcess(row, col, status);
           break;
         } finally {
           if (txi != null) {
             try{
               txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
-              if (TxLogger.isLoggingEnabled())
-                TxLogger.logTx(status.toString(), observer.getClass().getSimpleName(), txi.getStats(), row + ":" + col);
             }finally{
-              txi.close();
+              tx.close();
             }
           }
         }

@@ -37,7 +37,6 @@ import io.fluo.core.TestTransaction;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
