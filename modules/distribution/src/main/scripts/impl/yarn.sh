@@ -32,6 +32,11 @@ if [[ -z $HADOOP_PREFIX ]]; then
   exit 1
 fi
 
+if [ ! -d "$HADOOP_PREFIX" ]; then
+  echo "HADOOP_PREFIX=$HADOOP_PREFIX is not a valid directory.  Please correct it in your .bashrc or fluo-env.sh"
+  exit 1
+fi
+
 ADMIN_OPTS="-fluo-conf $FLUO_CONF_DIR -fluo-lib $FLUO_LIB_DIR -hadoop-prefix $HADOOP_PREFIX"
 ADMIN_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*"
 

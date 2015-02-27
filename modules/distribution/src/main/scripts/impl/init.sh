@@ -32,6 +32,11 @@ if [[ -z $HADOOP_PREFIX ]]; then
   exit 1
 fi
 
+if [ ! -d "$HADOOP_PREFIX" ]; then
+  echo "HADOOP_PREFIX=$HADOOP_PREFIX is not a valid directory.  Please correct it in your .bashrc or fluo-env.sh"
+  exit 1
+fi
+
 echo "Copying Fluo jars to HDFS at /fluo/lib to be accessible by Accumulo for iterators"
 $HADOOP_PREFIX/bin/hdfs dfs -mkdir -p /fluo/lib
 echo "Copying `ls $FLUO_HOME/lib/fluo-api-*.jar` to HDFS"
