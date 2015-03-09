@@ -15,8 +15,6 @@
  */
 package io.fluo.core.util;
 
-import org.apache.accumulo.core.util.Daemon;
-import org.apache.accumulo.core.util.UtilWaitThread;
 import org.apache.log4j.Logger;
 
 public class Halt {
@@ -45,14 +43,16 @@ public class Halt {
   public static void halt(final int status, Runnable runnable) {
     try {
       // give ourselves a little time to try and do something
-      new Daemon() {
+      Thread thread = new Thread(){
         @Override
         public void run() {
           UtilWaitThread.sleep(100);
           Runtime.getRuntime().halt(status);
         }
-      }.start();
-
+      };
+      thread.setDaemon(true);
+      thread.start();
+ 
       if (runnable != null)
         runnable.run();
       Runtime.getRuntime().halt(status);

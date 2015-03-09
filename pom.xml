@@ -201,6 +201,11 @@
             <maxRank>9</maxRank>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>2.14</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -219,6 +224,34 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <checkstyleRules>
+            <module name="Checker">
+              <module name="TreeWalker">
+                <module name="AvoidStarImport"/>
+                <module name="RegexpSinglelineJava">
+                  <!--check that only Accumulo public APIs are imported-->            
+                  <property name="format" value="import\s+org\.apache\.accumulo\.(.*\.(impl|thrift)\..*|(?!core|minicluster).*|core\.(?!client|data|iterators|security\.Authorizations|security\.ColumnVisibility|util\.format\.Formatter).*|core\.data\.(?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)"/>
+                  <property name="ignoreComments" value="true"/>
+                  <property name="message" value="Accumulo non-public classes imported"/>
+                </module>
+              </module>
+            </module>
+          </checkstyleRules>
+          <failOnViolation>true</failOnViolation>
+         </configuration>
+         <executions>
+           <execution>
+             <id>check-style</id>
+             <goals>
+               <goal>check</goal>
+             </goals>
+           </execution>
+         </executions>
       </plugin>
     </plugins>
   </build>
