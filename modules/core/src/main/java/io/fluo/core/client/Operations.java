@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.accumulo.iterators.GarbageCollectionIterator;
+import io.fluo.accumulo.util.AccumuloProps;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
@@ -40,7 +41,6 @@ import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.Text;
@@ -168,6 +168,6 @@ public class Operations {
     
     conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
     
-    conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_FORMATTER_CLASS.getKey(), FluoFormatter.class.getName());
+    conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_FORMATTER_CLASS, FluoFormatter.class.getName());
   }
 }

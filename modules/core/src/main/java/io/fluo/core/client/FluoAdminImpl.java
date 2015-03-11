@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.base.Preconditions;
+import io.fluo.accumulo.util.AccumuloProps;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
@@ -35,7 +36,6 @@ import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.worker.ObserverContext;
 import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.conf.Property;
 import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.KeeperException;
@@ -106,11 +106,11 @@ public class FluoAdminImpl implements FluoAdmin {
       if (!config.getAccumuloClasspath().trim().isEmpty()) {
         // TODO add fluo version to context name to make it unique
         String contextName = "fluo";
-        conn.instanceOperations().setProperty(Property.VFS_CONTEXT_CLASSPATH_PROPERTY.getKey() + "fluo", config.getAccumuloClasspath());
-        conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_CLASSPATH.getKey(), contextName);
+        conn.instanceOperations().setProperty(AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + "fluo", config.getAccumuloClasspath());
+        conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_CLASSPATH, contextName);
       }
 
-      conn.tableOperations().setProperty(config.getAccumuloTable(), Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
+      conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException();
     } catch (Exception e) {
