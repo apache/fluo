@@ -68,6 +68,8 @@ public class LogbackUtil {
         logConfig = String.format("%s/logback-file.xml", configDir);
       }
     } 
+    
+    ClusterUtil.verifyConfigPathsExist(logConfig);
         
     // assume SLF4J is bound to logback in the current environment
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();

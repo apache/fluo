@@ -29,6 +29,7 @@ import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.exceptions.FluoException;
+import io.fluo.cluster.util.ClusterUtil;
 import io.fluo.core.client.FluoAdminImpl;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +74,7 @@ public class Init {
     Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     root.setLevel(Level.ERROR);
 
+    ClusterUtil.verifyConfigPathsExist(commandOpts.getFluoProps());
     FluoConfiguration config = new FluoConfiguration(new File(commandOpts.getFluoProps()));
     if (!config.hasRequiredAdminProps()) {
       System.err.println("Error - Required properties are not set in " + commandOpts.getFluoProps());

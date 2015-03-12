@@ -60,6 +60,8 @@ public class Log4jUtil {
         logConfig = String.format("%s/log4j-file.xml", configDir);
       }
     }
+    
+    ClusterUtil.verifyConfigPathsExist(logConfig);
         
     DOMConfigurator.configureAndWatch(logConfig, 5000);
 
