@@ -19,6 +19,7 @@ import java.io.File;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.util.ClusterUtil;
 import io.fluo.cluster.util.Log4jUtil;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class MiniAdmin {
         System.exit(-1);
       }
       options.validateConfig();
-            
+      
       Log4jUtil.init("MiniAdmin", options.getConfigDir(), "STDOUT", false);
      
     } catch (Exception e) {
@@ -51,6 +52,7 @@ public class MiniAdmin {
     }
 
     try {
+      ClusterUtil.verifyConfigPathsExist(options.getFluoProps());
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
       
       switch (options.getCommand().toLowerCase()) {
