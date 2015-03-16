@@ -43,6 +43,9 @@ mini)
 scan)
   "$bin"/impl/scan.sh "${*:2}"
 	;;
+classpath)
+  "$bin"/impl/classpath.sh ${*:2}
+        ;;
 *)
 	echo -e "Usage: fluo <command> (<argument>)\n"
   echo -e "Possible commands:\n"
@@ -51,6 +54,7 @@ scan)
 	echo "  local     Administers Fluo instance on local machine"
 	echo "  mini      Administers MiniFluo instance"
 	echo "  scan      Prints snapshot of data in Fluo instance"
+	echo "  classpath Prints the classpath needed for fluo clients.  Run with -h to learn more."
   echo " " 
 	exit 1
 esac
