@@ -482,7 +482,7 @@ public class FailureIT extends ITBaseImpl {
     // Force a stale scan be modifying the oldest active timestamp to a 
     // more recent time in Zookeeper.  This disables timestamp tracking.
     Long nextTs = new TestTransaction(env).getStartTs();
-    curator.setData().forPath(env.getSharedResources().getTimestampTracker().getNodePath(), 
+    env.getSharedResources().getCurator().setData().forPath(env.getSharedResources().getTimestampTracker().getNodePath(),
         LongUtil.toByteArray(nextTs));
     
     // GC iterator will clear data that tx2 wants to scan

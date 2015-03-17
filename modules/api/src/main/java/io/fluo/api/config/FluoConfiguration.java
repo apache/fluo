@@ -134,6 +134,15 @@ public class FluoConfiguration extends CompositeConfiguration {
     setThrowExceptionOnMissing(true);
     setDelimiterParsingDisabled(true);
   }
+
+  public FluoConfiguration(FluoConfiguration other) {
+    this();
+    Iterator<String> iter =  other.getKeys();
+    while (iter.hasNext()) {
+      String key = iter.next();
+      setProperty(key, other.getProperty(key));
+    }
+  }
   
   public FluoConfiguration(Configuration configuration) {
     this();

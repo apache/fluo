@@ -18,7 +18,6 @@ package io.fluo.core.worker;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-
 import io.fluo.core.impl.Environment;
 
 public interface NotificationFinder {

@@ -17,7 +17,6 @@ package io.fluo.core.data;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-
 import org.junit.Assert;
 import org.junit.Test;
 

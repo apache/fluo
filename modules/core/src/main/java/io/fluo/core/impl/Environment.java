@@ -17,7 +17,6 @@ package io.fluo.core.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -62,18 +61,40 @@ public class Environment implements AutoCloseable {
   private Connector conn;
   private String accumuloInstanceID;
   private String fluoInstanceID;
-  private int oraclePort;
   private FluoConfiguration config;
   private SharedResources resources;
-  private long rollbackTime;
   private MetricNames metricNames;
   private Configuration appConfig;
-  
+
+  /**
+   * Constructs an environment from given FluoConfiguration
+   * @param configuration Configuration used to configure environment
+   */
+  public Environment(FluoConfiguration configuration) {
+    config = configuration;
+    conn = AccumuloUtil.getConnector(config);
+
+    readZookeeperConfig();
+
+    if (!conn.getInstance().getInstanceName().equals(accumuloInstance))
+      throw new IllegalArgumentException("unexpected accumulo instance name " + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
+
+    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
+      throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
+
+    try {
+      resources = new SharedResources(this);
+    } catch (TableNotFoundException e1) {
+      throw new IllegalStateException(e1);
+    }
+  }
+
   /**
    * Constructs an environment from another environment
    * @param env
    * @throws Exception
    */
+  @VisibleForTesting
   public Environment(Environment env) throws Exception {
     this.table = env.table;
     this.auths = env.auths;
@@ -84,98 +105,47 @@ public class Environment implements AutoCloseable {
     this.conn = env.conn;
     this.accumuloInstanceID = env.accumuloInstanceID;
     this.fluoInstanceID = env.fluoInstanceID;
-    this.observers = env.observers;
-    this.oraclePort = env.oraclePort;
     this.config = env.config;
     this.resources = new SharedResources(this);
-    this.rollbackTime = env.rollbackTime;
   }
 
-  /**
-   * Constructs an environment from given FluoConfiguration
-   * @param configuration Configuration used to configure environment
-   */
-  public Environment(FluoConfiguration configuration) {
-    this.config = configuration;
-    
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-      
-      init(curator, AccumuloUtil.getConnector(config), config.getOraclePort());
-    }
-  }
-    
-  /**
-   * Constructs environment from fluo.properties file
-   * @param propFile fluo.properties File
-   * @throws Exception
-   */
-  public Environment(File propFile) throws Exception {
-    this(new FluoConfiguration(propFile));
-  }
-  
-  @VisibleForTesting
-  public Environment(FluoConfiguration config, CuratorFramework curator, Connector conn, int oraclePort) throws Exception {
-    this.config = config;
-    init(curator, conn, oraclePort);
-  }
-  
-  private void init(CuratorFramework curator, Connector conn, int oraclePort) {
-    try {
-      readConfig(curator);
-    } catch (Exception e1) {
-      throw new IllegalStateException(e1);
-    }
-
-    this.oraclePort = oraclePort;
-    this.conn = conn;
-
-    if (!conn.getInstance().getInstanceName().equals(accumuloInstance))
-      throw new IllegalArgumentException("unexpected accumulo instance name " + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
-
-    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
-      throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
-
-    rollbackTime = config.getTransactionRollbackTime();
-
-    try {
-      this.resources = new SharedResources(this);
-    } catch (TableNotFoundException e2) {
-      throw new IllegalStateException(e2);
-    }
-  }
-  
   /**
    * read configuration from zookeeper
    * 
    * @throws InterruptedException
    * @throws KeeperException
    */
-  private void readConfig(CuratorFramework curator) throws Exception {
-    
-    accumuloInstance = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME), "UTF-8");
-    accumuloInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
-    fluoInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_INSTANCE_ID), "UTF-8");
+  private void readZookeeperConfig() {
 
-    table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
+      curator.start();
 
-    ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
-    DataInputStream dis = new DataInputStream(bais);
-    
-    observers = Collections.unmodifiableMap(readObservers(dis));
-    weakObservers = Collections.unmodifiableMap(readObservers(dis));
-    allObserversColumns = new HashSet<>();
-    allObserversColumns.addAll(observers.keySet());
-    allObserversColumns.addAll(weakObservers.keySet());
-    allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
+      accumuloInstance = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME), "UTF-8");
+      accumuloInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
+      fluoInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_INSTANCE_ID), "UTF-8");
 
-    bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
-    Properties sharedProps = new Properties(); 
-    sharedProps.load(bais);
-    Configuration sharedConfig = ConfigurationConverter.getConfiguration(sharedProps);
-    //make sure not to include config passed to env, only want config from zookeeper
-    appConfig = sharedConfig.subset(FluoConfiguration.APP_PREFIX);
-    config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
+      table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
+
+      ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
+      DataInputStream dis = new DataInputStream(bais);
+
+      observers = Collections.unmodifiableMap(readObservers(dis));
+      weakObservers = Collections.unmodifiableMap(readObservers(dis));
+      allObserversColumns = new HashSet<>();
+      allObserversColumns.addAll(observers.keySet());
+      allObserversColumns.addAll(weakObservers.keySet());
+      allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
+
+      bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
+      Properties sharedProps = new Properties();
+      sharedProps.load(bais);
+      Configuration sharedConfig = ConfigurationConverter.getConfiguration(sharedProps);
+      //make sure not to include config passed to env, only want config from zookeeper
+      appConfig = sharedConfig.subset(FluoConfiguration.APP_PREFIX);
+      config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
@@ -253,14 +223,6 @@ public class Environment implements AutoCloseable {
     
   public FluoConfiguration getConfiguration() {
     return config;
-  }
-
-  public long getRollbackTime() {
-    return rollbackTime;
-  }
-  
-  public int getOraclePort() {
-    return oraclePort;
   }
 
   public synchronized MetricNames getMeticNames(){

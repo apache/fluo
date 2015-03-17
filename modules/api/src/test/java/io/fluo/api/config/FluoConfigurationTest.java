@@ -250,6 +250,18 @@ public class FluoConfigurationTest {
     Assert.assertEquals("Class", ocList.get(0).getClassName());
     Assert.assertEquals(0, ocList.get(0).getParameters().size());
   }
+
+  @Test
+  public void testCopyConfig() {
+    FluoConfiguration c1 = new FluoConfiguration();
+    c1.setOraclePort(1);
+    Assert.assertEquals(1, c1.getOraclePort());
+    FluoConfiguration c2 = new FluoConfiguration(c1);
+    Assert.assertEquals(1, c2.getOraclePort());
+    c2.setOraclePort(2);
+    Assert.assertEquals(2, c2.getOraclePort());
+    Assert.assertEquals(1, c1.getOraclePort());
+  }
   
   @Test
   public void testIAE() {

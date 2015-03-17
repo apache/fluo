@@ -15,14 +15,13 @@
  */
 package io.fluo.core.impl;
 
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
-
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Weigher;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
 
 public class TxInfoCache {
 

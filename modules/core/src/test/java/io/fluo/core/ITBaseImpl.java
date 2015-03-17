@@ -23,9 +23,7 @@ import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.oracle.OracleServer;
-import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.PortUtils;
-import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
 import org.junit.Before;
 
@@ -34,14 +32,13 @@ import org.junit.Before;
  */
 public class ITBaseImpl extends ITBase {
 
-  protected static CuratorFramework curator;
   protected Environment env;
   protected String table;
   protected OracleServer oserver;
   
   protected class TestOracle extends OracleServer implements AutoCloseable {
 
-    Environment env;
+    private Environment env;
 
     TestOracle(Environment env) throws Exception {
       super(env);
@@ -49,7 +46,7 @@ public class ITBaseImpl extends ITBase {
     }
 
     TestOracle(int port) throws Exception {
-      this(new Environment(config, curator, conn, port));
+      this(new Environment(new FluoConfiguration(config).setOraclePort(port)));
     }
 
     @Override
@@ -73,9 +70,7 @@ public class ITBaseImpl extends ITBase {
     config.setZookeepers(miniAccumulo.getZooKeepers() + zkRoot);
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
-    
-    curator = CuratorUtil.newFluoCurator(config);
-    curator.start();
+    config.setOraclePort(PortUtils.getRandomFreePort());
     
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
@@ -84,8 +79,8 @@ public class ITBaseImpl extends ITBase {
    
     client = FluoFactory.newClient(config);
 
-    env = new Environment(config, curator, conn, PortUtils.getRandomFreePort());
-    
+    env = new Environment(config);
+
     oserver = new OracleServer(env);
     oserver.start();
   }
@@ -104,6 +99,5 @@ public class ITBaseImpl extends ITBase {
       oserver.stop();
     env.close();
     client.close();
-    curator.close();
   }
 }
