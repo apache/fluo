@@ -38,6 +38,11 @@ For both clients and observers, you will need to include the following in your M
 </dependency>
 ```
 
+Fluo provides a classpath command to help users build a runtime classpath.
+This command along with the `hadoop jar` command is useful when writing
+scripts to run Fluo client code.  These command allow the scripts to use the
+versions of Hadoop, Accumulo, and Zookeeper installed on a cluster.
+ 
 Creating a Fluo client
 ----------------------
 

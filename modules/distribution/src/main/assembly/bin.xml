@@ -37,6 +37,56 @@
       </excludes>
     </dependencySet>
     <dependencySet>
+      <outputDirectory>lib/fluo-client</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>true</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <includes>
+      	<include>io.fluo:fluo-api</include>
+      	<include>io.fluo:fluo-core</include>
+        <include>io.fluo:fluo-mapreduce</include>
+        <include>org.slf4j:slf4j-api</include>
+      </includes>
+      <excludes>
+      	<exclude>org.apache.accumulo:*</exclude>
+      	<exclude>org.apache.zookeeper:zookeeper</exclude>
+      </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>lib/accumulo</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>false</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <includes>
+      	<include>org.apache.accumulo:accumulo-core</include>
+        <include>org.apache.accumulo:accumulo-minicluster</include>
+      </includes>
+      <excludes>
+      	<exclude>org.apache.hadoop:hadoop-minicluster</exclude>
+      </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>lib/zookeeper</outputDirectory>
+      <directoryMode>0755</directoryMode>
+      <fileMode>0644</fileMode>
+      <useProjectArtifact>false</useProjectArtifact>
+      <scope>runtime</scope>
+      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <includes>
+      	<include>org.apache.zookeeper:zookeeper</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
       <outputDirectory>lib/log4j</outputDirectory>
       <directoryMode>0755</directoryMode>
       <fileMode>0644</fileMode>
