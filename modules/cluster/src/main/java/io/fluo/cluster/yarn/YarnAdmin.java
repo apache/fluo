@@ -24,6 +24,8 @@ import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service.State;
 import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.api.client.FluoAdmin;
+import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.FluoOracleMain;
 import io.fluo.cluster.FluoWorkerMain;
@@ -253,7 +255,7 @@ public class YarnAdmin {
     return new String(curator.getData().forPath(ZookeeperPath.YARN_APP_ID), StandardCharsets.UTF_8);
   }
   
-  public static void main(String[] args) throws ConfigurationException, Exception {
+  public static void main(String[] args) throws Exception {
 
     options = new YarnOptions();
     JCommander jcommand = new JCommander(options, args);
@@ -268,10 +270,12 @@ public class YarnAdmin {
     ClusterUtil.verifyConfigFilesExist(options.getFluoConf(), "fluo.properties");
     File configFile = new File(options.getFluoConf() + "/fluo.properties");
     config = new FluoConfiguration(configFile);
-    
-    if (!FluoAdminImpl.zookeeperInitialized(config)) {
-      System.out.println("ERROR - Fluo has not been initialized yet in Zookeeper at " + config.getZookeepers());
-      System.exit(-1);
+
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      if (!admin.zookeeperInitialized()) {
+        System.out.println("ERROR - Fluo has not been initialized yet in Zookeeper at " + config.getZookeepers());
+        System.exit(-1);
+      }
     }
 
     try {
@@ -319,6 +323,5 @@ public class YarnAdmin {
         curator.close();
       }
     }
-    
   }
 }

@@ -19,6 +19,7 @@ package io.fluo.core.impl;
 import java.util.Collections;
 import java.util.List;
 
+import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.LoaderExecutor;
@@ -61,7 +62,9 @@ public class AppConfigIT extends ITBaseMini{
     appConfig.clear();
     appConfig.setProperty("myapp.sizeLimit", 40000);
     appConfig.setProperty("myapp.timeLimit", 30000);
-    FluoFactory.newAdmin(config).updateSharedConfig();;
+    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      admin.updateSharedConfig();
+    }
     
     //set app config that differs from what was just put in zk
     appConfig.setProperty("myapp.sizeLimit", 6);

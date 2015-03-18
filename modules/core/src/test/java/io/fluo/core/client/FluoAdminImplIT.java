@@ -34,30 +34,34 @@ public class FluoAdminImplIT extends ITBaseImpl {
   @Test
   public void testInitializeTwiceFails() throws AlreadyInitializedException, TableExistsException {
 
-    FluoAdmin fluoAdmin = new FluoAdminImpl(config);
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
 
-    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
-    
-    fluoAdmin.initialize(opts);
-    fluoAdmin.initialize(opts);
+      InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
 
-    opts.setClearZookeeper(false).setClearTable(false);
-    try {
-      fluoAdmin.initialize(opts);
-      fail("This should have failed");
-    } catch (AlreadyInitializedException e) { }
-    
-    opts.setClearZookeeper(false).setClearTable(true);
-    try {
-      fluoAdmin.initialize(opts);
-      fail("This should have failed");
-    } catch (AlreadyInitializedException e) { }
-    
-    opts.setClearZookeeper(true).setClearTable(false);
-    try {
-      fluoAdmin.initialize(opts);
-      fail("This should have failed");
-    } catch (TableExistsException e) { }
+      admin.initialize(opts);
+      admin.initialize(opts);
+
+      opts.setClearZookeeper(false).setClearTable(false);
+      try {
+        admin.initialize(opts);
+        fail("This should have failed");
+      } catch (AlreadyInitializedException e) {
+      }
+
+      opts.setClearZookeeper(false).setClearTable(true);
+      try {
+        admin.initialize(opts);
+        fail("This should have failed");
+      } catch (AlreadyInitializedException e) {
+      }
+
+      opts.setClearZookeeper(true).setClearTable(false);
+      try {
+        admin.initialize(opts);
+        fail("This should have failed");
+      } catch (TableExistsException e) {
+      }
+    }
 
     assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
   }
@@ -69,8 +73,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     
     for (String host : new String[]{"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
       config.setZookeepers(host);
-      FluoAdmin fluoAdmin = new FluoAdminImpl(config);
-      try {
+      try (FluoAdmin fluoAdmin = new FluoAdminImpl(config)) {
         fluoAdmin.initialize(opts);
         fail("This should have failed");
       } catch (IllegalArgumentException e) { }
@@ -84,10 +87,12 @@ public class FluoAdminImplIT extends ITBaseImpl {
     String longPath = "/very/long/path";
     config.setZookeepers(zk + longPath);
 
-    FluoAdmin fluoAdmin = new FluoAdminImpl(config);
     InitOpts opts = new InitOpts();
     opts.setClearZookeeper(true).setClearTable(true);
-    fluoAdmin.initialize(opts);
+
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.initialize(opts);
+    }
     
     try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();
@@ -97,8 +102,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
     String longPath2 = "/very/long/path2";
     config.setZookeepers(zk + longPath2);
 
-    fluoAdmin = new FluoAdminImpl(config);
-    fluoAdmin.initialize(opts);
+    try (FluoAdmin admin = new FluoAdminImpl(config)){
+      admin.initialize(opts);
+    }
     
     try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
       curator.start();

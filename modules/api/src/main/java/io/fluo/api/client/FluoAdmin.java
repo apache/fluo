@@ -20,7 +20,7 @@ import io.fluo.api.config.FluoConfiguration;
 /**
  * Provides methods for initializing and administering a Fluo instance.
  */
-public interface FluoAdmin {
+public interface FluoAdmin extends AutoCloseable {
   
   /**
    * Specifies Fluo initialization options such as clearing Zookeeper or existing Accumulo table.
@@ -105,4 +105,7 @@ public interface FluoAdmin {
    * sure all config needed by observers is present.
    */
   public void updateSharedConfig();
+
+  @Override
+  public void close();
 }
