@@ -397,19 +397,19 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
   
   public FluoConfiguration setLoaderThreads(int numThreads) {
-    return setPositiveInt(LOADER_NUM_THREADS_PROP, numThreads);
+    return setNonNegativeInt(LOADER_NUM_THREADS_PROP, numThreads);
   }
   
   public int getLoaderThreads() {
-    return getPositiveInt(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
+    return getNonNegativeInt(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
   }
   
   public FluoConfiguration setLoaderQueueSize(int queueSize) {
-    return setPositiveInt(LOADER_QUEUE_SIZE_PROP, queueSize);
+    return setNonNegativeInt(LOADER_QUEUE_SIZE_PROP, queueSize);
   }
   
   public int getLoaderQueueSize() {
-    return getPositiveInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
+    return getNonNegativeInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
   }
   
   public FluoConfiguration setOracleMaxMemory(int oracleMaxMemory) {
@@ -672,6 +672,18 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
     config.setProperty(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }
+  
+  private FluoConfiguration setNonNegativeInt(String property, int value) {
+    Preconditions.checkArgument(value >= 0, property+" must be non-negative");
+    setProperty(property, value);
+    return this;
+  }
+  
+  private int getNonNegativeInt(String property, int defaultValue) {
+    int value = getInt(property, defaultValue);
+    Preconditions.checkArgument(value >= 0, property+" must be non-negative");
+    return value;
+  }  
   
   private FluoConfiguration setPositiveInt(String property, int value) {
     Preconditions.checkArgument(value > 0, property+" must be positive");

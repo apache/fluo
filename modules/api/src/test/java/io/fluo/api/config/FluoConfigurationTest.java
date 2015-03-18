@@ -90,7 +90,9 @@ public class FluoConfigurationTest {
     Assert.assertEquals("admin", config.setAdminClass("admin").getAdminClass());
     Assert.assertEquals("client", config.setClientClass("client").getClientClass());
     Assert.assertEquals(4, config.setLoaderQueueSize(4).getLoaderQueueSize());
+    Assert.assertEquals(0, config.setLoaderQueueSize(0).getLoaderQueueSize());
     Assert.assertEquals(7, config.setLoaderThreads(7).getLoaderThreads());
+    Assert.assertEquals(0, config.setLoaderThreads(0).getLoaderThreads());
     Assert.assertEquals("mini", config.setMiniClass("mini").getMiniClass());
     Assert.assertEquals(8, config.setOracleMaxMemory(8).getOracleMaxMemory());
     Assert.assertEquals(9, config.setOraclePort(9).getOraclePort());
