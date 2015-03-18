@@ -3,4 +3,5 @@
 #see https://dropwizard.github.io/dropwizard/manual/configuration.html#metrics
 frequency: 60 seconds
 reporters:
-  - type: console
+  - type: log
+    logger: metrics

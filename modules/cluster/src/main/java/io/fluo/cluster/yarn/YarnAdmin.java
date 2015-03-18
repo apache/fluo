@@ -24,16 +24,12 @@ import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service.State;
 import io.fluo.accumulo.util.ZookeeperPath;
-import io.fluo.api.client.FluoAdmin;
-import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.FluoOracleMain;
 import io.fluo.cluster.FluoWorkerMain;
 import io.fluo.cluster.util.ClusterUtil;
-import io.fluo.cluster.util.LogbackUtil;
 import io.fluo.core.client.FluoAdminImpl;
 import io.fluo.core.util.CuratorUtil;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -264,8 +260,6 @@ public class YarnAdmin {
       jcommand.usage();
       System.exit(-1);
     }
-
-    LogbackUtil.init("YarnAdmin", options.getFluoConf(), "STDOUT", false);
 
     ClusterUtil.verifyConfigFilesExist(options.getFluoConf(), "fluo.properties");
     File configFile = new File(options.getFluoConf() + "/fluo.properties");
