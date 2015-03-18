@@ -61,9 +61,10 @@ public class ITBaseMini extends ITBase {
     
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     
-    FluoAdmin admin = FluoFactory.newAdmin(config);
-    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
-    admin.initialize(opts);
+    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+      admin.initialize(opts);
+    }
    
     config.getAppConfiguration().clear();
     

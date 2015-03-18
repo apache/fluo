@@ -90,59 +90,61 @@ public class Init {
       e.printStackTrace();
       System.exit(-1);
     }
-        
-    if (FluoAdminImpl.oracleExists(config)) {
-      System.err.println("Error - A Fluo instance is running and must be stopped before running 'fluo init'.  Aborted initialization.");
-      System.exit(-1);
-    }
 
-    InitOpts initOpts = new InitOpts();
-    
-    if (commandOpts.getUpdate()) {
-      System.out.println("Updating Fluo configuration in Zookeeper using " + commandOpts.getFluoProps());
-      FluoAdmin admin = FluoFactory.newAdmin(config);
-      admin.updateSharedConfig();
-      System.out.println("Update is complete.");
-      System.exit(0);
-    } 
-    
-    if (commandOpts.getForce()) {
-      initOpts.setClearZookeeper(true).setClearTable(true);
-    } else {
-      if (commandOpts.getClearZookeeper()) {
-        initOpts.setClearZookeeper(true);
-      } else if (FluoAdminImpl.zookeeperInitialized(config)) {
-        System.out.print("Fluo is already initialized in Zookeeper at " + config.getZookeepers() + " - Would you like to clear and reinitialize Zookeeper (y/n)? ");
-        if (readYes()) {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+
+      if (admin.oracleExists()) {
+        System.err.println("Error - A Fluo instance is running and must be stopped before running 'fluo init'.  Aborted initialization.");
+        System.exit(-1);
+      }
+
+      InitOpts initOpts = new InitOpts();
+
+      if (commandOpts.getUpdate()) {
+        System.out.println("Updating Fluo configuration in Zookeeper using " + commandOpts.getFluoProps());
+        admin.updateSharedConfig();
+        System.out.println("Update is complete.");
+        System.exit(0);
+      }
+
+      if (commandOpts.getForce()) {
+        initOpts.setClearZookeeper(true).setClearTable(true);
+      } else {
+        if (commandOpts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
-        } else {
-          System.out.println("Aborted initialization.");
-          System.exit(-1);
+        } else if (admin.zookeeperInitialized()) {
+          System.out
+              .print("Fluo is already initialized in Zookeeper at " + config.getZookeepers() + " - Would you like to clear and reinitialize Zookeeper (y/n)? ");
+          if (readYes()) {
+            initOpts.setClearZookeeper(true);
+          } else {
+            System.out.println("Aborted initialization.");
+            System.exit(-1);
+          }
         }
-      }
 
-      if (commandOpts.getClearTable()) {
-        initOpts.setClearTable(true);
-      } else if (FluoAdminImpl.accumuloTableExists(config)) {
-        System.out.print("The Accumulo table '" + config.getAccumuloTable() + "' already exists - Would you like to drop and recreate this table (y/n)? ");
-        if (readYes()) {
+        if (commandOpts.getClearTable()) {
           initOpts.setClearTable(true);
-        } else {
-          System.out.println("Aborted initialization.");
-          System.exit(-1);
+        } else if (admin.accumuloTableExists()) {
+          System.out.print("The Accumulo table '" + config.getAccumuloTable() + "' already exists - Would you like to drop and recreate this table (y/n)? ");
+          if (readYes()) {
+            initOpts.setClearTable(true);
+          } else {
+            System.out.println("Aborted initialization.");
+            System.exit(-1);
+          }
         }
       }
-    }
 
-    System.out.println("Initializing Fluo instance using " + commandOpts.getFluoProps());
-    try {
-      FluoAdmin admin = FluoFactory.newAdmin(config);
-      admin.initialize(initOpts);
-    } catch (FluoException e) {
-      System.out.println("Initialization failed due to the following exception:");
-      e.printStackTrace();
-      System.exit(-1);
+      System.out.println("Initializing Fluo instance using " + commandOpts.getFluoProps());
+      try {
+        admin.initialize(initOpts);
+      } catch (FluoException e) {
+        System.out.println("Initialization failed due to the following exception:");
+        e.printStackTrace();
+        System.exit(-1);
+      }
+      System.out.println("Initialization is complete.");
     }
-    System.out.println("Initialization is complete.");
   }
 }

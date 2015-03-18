@@ -77,9 +77,10 @@ public class ITBaseImpl extends ITBase {
     curator = CuratorUtil.newFluoCurator(config);
     curator.start();
     
-    FluoAdmin admin = FluoFactory.newAdmin(config);
-    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
-    admin.initialize(opts);
+    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+      admin.initialize(opts);
+    }
    
     client = FluoFactory.newClient(config);
 

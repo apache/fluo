@@ -15,13 +15,20 @@
  */
 package io.fluo.core.client;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 
 import com.google.common.base.Preconditions;
+import io.fluo.accumulo.format.FluoFormatter;
+import io.fluo.accumulo.iterators.GarbageCollectionIterator;
 import io.fluo.accumulo.util.AccumuloProps;
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.FluoAdmin;
@@ -33,11 +40,15 @@ import io.fluo.api.observer.Observer;
 import io.fluo.api.observer.Observer.NotificationType;
 import io.fluo.api.observer.Observer.ObservedColumn;
 import io.fluo.core.util.AccumuloUtil;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.worker.ObserverContext;
 import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -50,24 +61,41 @@ public class FluoAdminImpl implements FluoAdmin {
 
   private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
   private final FluoConfiguration config;
+  private final CuratorFramework rootCurator;
+  private CuratorFramework fluoCurator = null;
+
+  private final String zkRoot;
   
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
+
+    zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
+    rootCurator = CuratorUtil.newRootFluoCurator(config);
+    rootCurator.start();
+  }
+
+  private synchronized CuratorFramework getFluoCurator() {
+    if (fluoCurator == null) {
+      fluoCurator = CuratorUtil.newFluoCurator(config);
+      fluoCurator.start();
+    }
+    return fluoCurator;
   }
   
   @Override
   public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException {
-    Preconditions.checkArgument(ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/") == false, 
+    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/"),
         "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
 
-    if (zookeeperInitialized(config) && !opts.getClearZookeeper()) {
+    if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException("Fluo instance already initialized at " + config.getZookeepers());
     }
 
     Connector conn = AccumuloUtil.getConnector(config);
+
     boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
     if (tableExists && !opts.getClearTable()) {
       throw new TableExistsException("Accumulo table already exists " + config.getAccumuloTable());
@@ -84,23 +112,19 @@ public class FluoAdminImpl implements FluoAdmin {
       }
     }
 
-    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-      curator.start();
-      try {
-        String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
-        if (curator.checkExists().forPath(zkRoot) != null) { 
-          logger.info("Clearing Fluo instance in Zookeeper at {}", config.getZookeepers());
-          curator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
-        }
-      } catch(KeeperException.NoNodeException nne) {
-      } catch(Exception e) {
-        logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
-        throw new RuntimeException(e);
+    try {
+      if (rootCurator.checkExists().forPath(zkRoot) != null) {
+        logger.info("Clearing Fluo instance in Zookeeper at {}", config.getZookeepers());
+        rootCurator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
       }
+    } catch (KeeperException.NoNodeException nne) {
+    } catch (Exception e) {
+      logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
+      throw new RuntimeException(e);
     }
 
     try {
-      Operations.initialize(config, conn);
+      initialize(conn);
       updateSharedConfig();
 
       if (!config.getAccumuloClasspath().trim().isEmpty()) {
@@ -118,6 +142,45 @@ public class FluoAdminImpl implements FluoAdmin {
         throw (RuntimeException) e;
       throw new RuntimeException(e);
     }
+  }
+
+  private void initialize(Connector conn) throws Exception {
+
+    final String accumuloInstanceName = conn.getInstance().getInstanceName();
+    final String accumuloInstanceID = conn.getInstance().getInstanceID();
+    final String fluoInstanceID = UUID.randomUUID().toString();
+
+    // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
+    CuratorUtil.putData(rootCurator, zkRoot, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+
+    // Retrieve Fluo curator now that chroot has been created
+    CuratorFramework curator = getFluoCurator();
+
+    // Initialize Zookeeper & Accumulo for this Fluo instance
+    // TODO set Fluo data version
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable().getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_INSTANCE_ID, fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.ORACLE_SERVER, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
+
+    // TODO may need to configure an iterator that squishes multiple notifications to one at compaction time since versioning iterator is not configured for
+    // table...
+
+    conn.tableOperations().create(config.getAccumuloTable(), false);
+    Map<String,Set<Text>> groups = new HashMap<>();
+    groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
+    conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
+
+    IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
+    GarbageCollectionIterator.setZookeepers(gcIter, config.getZookeepers());
+
+    conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter, EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
+
+    conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_FORMATTER_CLASS, FluoFormatter.class.getName());
   }
 
   @Override
@@ -164,41 +227,40 @@ public class FluoAdminImpl implements FluoAdmin {
     }
 
     try {
-      Operations.updateObservers(config, colObservers, weakObservers);
-      Operations.updateSharedConfig(config, sharedProps);
+      CuratorFramework curator = getFluoCurator();
+      Operations.updateObservers(curator, colObservers, weakObservers);
+      Operations.updateSharedConfig(curator, sharedProps);
     } catch (Exception e) {
       throw new FluoException("Failed to update shared configuration in Zookeeper", e);
     }
   }
-  
-  public static boolean oracleExists(FluoConfiguration config) {
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-      try {
-        if (curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) == null) {
-          return false;
-        } else {
-          return !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    } 
+
+  @Override
+  public void close() {
+    rootCurator.close();
+    if (fluoCurator != null) {
+      fluoCurator.close();
+    }
+  }
+
+  public boolean oracleExists() {
+    CuratorFramework curator = getFluoCurator();
+    try {
+      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean zookeeperInitialized() {
+    try {
+      return rootCurator.checkExists().forPath(zkRoot) != null;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
   
-  public static boolean zookeeperInitialized(FluoConfiguration config) {
-    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-      curator.start();
-      String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
-      try {
-        return curator.checkExists().forPath(zkRoot) != null;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    } 
-  }
-  
-  public static boolean accumuloTableExists(FluoConfiguration config) {
+  public boolean accumuloTableExists() {
     Connector conn = AccumuloUtil.getConnector(config);
     return conn.tableOperations().exists(config.getAccumuloTable());
   }

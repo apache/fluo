@@ -60,68 +60,29 @@ public class Operations {
 
   // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
 
-  public static void updateSharedConfig(FluoConfiguration config, Properties sharedProps) throws Exception {
+  public static void updateSharedConfig(CuratorFramework curator, Properties sharedProps) throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    sharedProps.store(baos, "Shared java props");
 
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      sharedProps.store(baos, "Shared java props");
-
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
-    }
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
   }
 
-  public static void updateObservers(FluoConfiguration config, Map<Column,ObserverConfiguration> colObservers,
-      Map<Column,ObserverConfiguration> weakObservers) throws Exception {
+  public static void updateObservers(CuratorFramework curator, Map<Column,ObserverConfiguration> colObservers, Map<Column,ObserverConfiguration> weakObservers)
+      throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
 
-      String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS;
-      try {
-        curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
-      } catch(NoNodeException nne) {
-      } catch(Exception e) {
-        logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=[" + e.getMessage() + "]");
-        throw new RuntimeException(e);
-      }
-
-      byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-      CuratorUtil.putData(curator, observerPath, serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
-    }
-  }
-
-  public static void initialize(FluoConfiguration config, Connector conn) throws Exception {
-
-    final String accumuloInstanceName = conn.getInstance().getInstanceName();
-    final String accumuloInstanceID = conn.getInstance().getInstanceID();
-    final String fluoInstanceID = UUID.randomUUID().toString();
-    
-    // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
-    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-      curator.start();
-      String zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
-      CuratorUtil.putData(curator, zkRoot, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+    String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS;
+    try {
+      curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
+    } catch (NoNodeException nne) {
+    } catch (Exception e) {
+      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=[" + e.getMessage() + "]");
+      throw new RuntimeException(e);
     }
 
-    // Initialize Zookeeper & Accumulo for this Fluo instance
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-
-      // TODO set Fluo data version
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable().getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_INSTANCE_ID, fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_SERVER, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
-      CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
-
-      createTable(config, conn);
-    }
+    byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
+    CuratorUtil.putData(curator, observerPath, serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
   }
 
   private static void serializeObservers(DataOutputStream dos, Map<Column,ObserverConfiguration> colObservers) throws IOException {
@@ -152,22 +113,5 @@ public class Operations {
     
     byte[] serializedObservers = baos.toByteArray();
     return serializedObservers;
-  }
-
-  private static void createTable(FluoConfiguration config, Connector conn) throws Exception {
-    // TODO may need to configure an iterator that squishes multiple notifications to one at compaction time since versioning iterator is not configured for
-    // table...
-
-    conn.tableOperations().create(config.getAccumuloTable(), false);
-    Map<String,Set<Text>> groups = new HashMap<>();
-    groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
-    conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
-    
-    IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setZookeepers(gcIter, config.getZookeepers());
-    
-    conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter, EnumSet.of(IteratorScope.majc, IteratorScope.minc));
-    
-    conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_FORMATTER_CLASS, FluoFormatter.class.getName());
   }
 }

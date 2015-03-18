@@ -17,6 +17,7 @@ package io.fluo.core.impl;
 
 import java.util.HashSet;
 
+import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -44,7 +45,9 @@ public class FluoIT extends ITBaseImpl {
   
   @Test
   public void testFluoFactory() throws Exception {
-    Assert.assertNotNull(FluoFactory.newAdmin(config));
+    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      Assert.assertNotNull(admin);
+    }
 
     try (FluoClient client = FluoFactory.newClient(config)) {
       Assert.assertNotNull(client);
