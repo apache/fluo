@@ -16,6 +16,7 @@
 package io.fluo.cluster;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
@@ -35,11 +36,11 @@ import org.slf4j.LoggerFactory;
  * Main method of Fluo oracle that can be called within a Twill/YARN application or on its own as a Java application
  */
 public class FluoOracleMain extends AbstractTwillRunnable {
-  
-  public static String ORACLE_NAME = "FluoOracle";
 
   private static final Logger log = LoggerFactory.getLogger(FluoOracleMain.class);
-
+  public static String ORACLE_NAME = "FluoOracle";
+  private AtomicBoolean shutdown = new AtomicBoolean(false);
+  
   @Override
   public void run() {
     System.out.println("Starting Oracle");
@@ -96,6 +97,9 @@ public class FluoOracleMain extends AbstractTwillRunnable {
         server.start();
 
         while (true) {
+          if (shutdown.get()) {
+            break;
+          }
           UtilWaitThread.sleep(10000);
         }
       }
@@ -110,6 +114,7 @@ public class FluoOracleMain extends AbstractTwillRunnable {
   @Override
   public void stop() {
     log.info("Stopping Fluo oracle");
+    shutdown.set(true);
   }
   
   public static void main(String[] args) {
