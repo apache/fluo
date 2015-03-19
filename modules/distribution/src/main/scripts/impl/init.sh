@@ -37,9 +37,7 @@ if [ ! -d "$HADOOP_PREFIX" ]; then
   exit 1
 fi
 
-java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.init.Init -config-dir $FLUO_CONF_DIR $1
-
-if [[ $? -eq 0 && $1 != *"-h"* && $1 != *"-u"* ]]; then
+if [[ $1 != *"-h"* && $1 != *"-u"* ]]; then
   echo "Copying Fluo jars to HDFS at /fluo/lib to be accessible by Accumulo for iterators"
   $HADOOP_PREFIX/bin/hdfs dfs -mkdir -p /fluo/lib
   echo "Copying `ls $FLUO_HOME/lib/fluo-api-*.jar` to HDFS"
@@ -47,3 +45,6 @@ if [[ $? -eq 0 && $1 != *"-h"* && $1 != *"-u"* ]]; then
   echo "Copying `ls $FLUO_HOME/lib/fluo-accumulo-*.jar` to HDFS"
   $HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-accumulo-*.jar /fluo/lib/
 fi
+
+java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.init.Init -config-dir $FLUO_CONF_DIR $1
+
