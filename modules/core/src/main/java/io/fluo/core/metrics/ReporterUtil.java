@@ -19,11 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import io.fluo.core.metrics.ReporterStarter.Params;
-
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.metrics.ReporterStarter.Params;
 import org.apache.commons.configuration.Configuration;
 
 public class ReporterUtil {

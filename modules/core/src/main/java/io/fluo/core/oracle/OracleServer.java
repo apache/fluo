@@ -182,7 +182,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   private InetSocketAddress startServer() throws TTransportException {
 
-    InetSocketAddress addr = new InetSocketAddress(env.getOraclePort());
+    InetSocketAddress addr = new InetSocketAddress(env.getConfiguration().getOraclePort());
 
     TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
 

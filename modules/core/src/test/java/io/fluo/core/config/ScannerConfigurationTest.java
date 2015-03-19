@@ -16,7 +16,6 @@
 package io.fluo.core.config;
 
 import io.fluo.api.config.ScannerConfiguration;
-
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;

@@ -51,8 +51,8 @@ public class TransactorIT extends ITBaseImpl {
     Assert.assertEquals(id2, t2.getTransactorID().getLongID());
     Assert.assertTrue(checkExists(t1));
     Assert.assertTrue(checkExists(t2));
-    Assert.assertArrayEquals("2".getBytes(), curator.getData().forPath(t1.getNodePath()));
-    Assert.assertArrayEquals("3".getBytes(), curator.getData().forPath(t2.getNodePath()));
+    Assert.assertArrayEquals("2".getBytes(), env.getSharedResources().getCurator().getData().forPath(t1.getNodePath()));
+    Assert.assertArrayEquals("3".getBytes(), env.getSharedResources().getCurator().getData().forPath(t2.getNodePath()));
     
     // verify the cache
     Assert.assertTrue(cache.checkExists(id1));
@@ -92,7 +92,7 @@ public class TransactorIT extends ITBaseImpl {
     Assert.assertTrue(checkExists(t1));
    
     // Test that node will be recreated if removed
-    curator.delete().forPath(t1.getNodePath());
+    env.getSharedResources().getCurator().delete().forPath(t1.getNodePath());
     
     Assert.assertEquals(id1, t1.getTransactorID().getLongID());
     assertNumOpen(1);
@@ -153,11 +153,11 @@ public class TransactorIT extends ITBaseImpl {
   }
   
   private boolean checkExists(TransactorNode t) throws Exception {
-    return curator.checkExists().forPath(t.getNodePath()) != null;
+    return env.getSharedResources().getCurator().checkExists().forPath(t.getNodePath()) != null;
   }
   
   private int getNumOpen() throws Exception {
-    return curator.getChildren().forPath(ZookeeperPath.TRANSACTOR_NODES).size();
+    return env.getSharedResources().getCurator().getChildren().forPath(ZookeeperPath.TRANSACTOR_NODES).size();
   }
   
   private void assertNumOpen(int expected) throws Exception {

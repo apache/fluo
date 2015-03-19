@@ -82,7 +82,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     // verify that oracle initial current ts
     Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));
     // delete the oracle current timestamp path
-    curator.delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
+    env.getSharedResources().getCurator().delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
     // verify that oldest possible is returned
     Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE, 
         ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));

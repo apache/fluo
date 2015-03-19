@@ -104,7 +104,7 @@ public class LockResolver {
     TransactorCache transactorCache = env.getSharedResources().getTransactorCache();
 
     List<Entry<Key,Value>> locksToRecover;
-    if (System.currentTimeMillis() - startTime > env.getRollbackTime()) {
+    if (System.currentTimeMillis() - startTime > env.getConfiguration().getTransactionRollbackTime()) {
       locksToRecover = locks;
       stats.incrementTimedOutLocks(locksToRecover.size());
       timedOut = true;

@@ -112,13 +112,13 @@ public class TimestampTrackerIT extends ITBaseImpl {
   }
 
   private boolean zkNodeExists(TimestampTracker tracker) throws Exception {
-    return curator.checkExists().forPath(tracker.getNodePath()) != null;
+    return env.getSharedResources().getCurator().checkExists().forPath(tracker.getNodePath()) != null;
   }
 
   private long zkNodeValue(TimestampTracker tracker) throws Exception {
     if (zkNodeExists(tracker) == false) {
       throw new IllegalStateException("node does not exist");
     }
-    return LongUtil.fromByteArray(curator.getData().forPath(tracker.getNodePath()));
+    return LongUtil.fromByteArray(env.getSharedResources().getCurator().getData().forPath(tracker.getNodePath()));
   }
 }

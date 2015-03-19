@@ -359,8 +359,9 @@ public class FluoIT extends ITBaseImpl {
     tx.mutate().row("jill").col(balanceCol).set(60);
     
     tx.done();
-    
-    Environment env2 = new Environment(config, curator, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
+
+    FluoConfiguration fc = new FluoConfiguration(config).setOraclePort(FluoConfiguration.ORACLE_PORT_DEFAULT);
+    Environment env2 = new Environment(fc);
     env2.setAuthorizations(new Authorizations("B"));
     
     TestTransaction tx2 = new TestTransaction(env2);
@@ -369,7 +370,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(60, tx2.get().row("jill").col(balanceCol).toInteger(0));
     env2.close();
     
-    Environment env3 = new Environment(config, curator, conn, FluoConfiguration.ORACLE_PORT_DEFAULT);
+    Environment env3 = new Environment(fc);
     env3.setAuthorizations(new Authorizations("C"));
     
     TestTransaction tx3 = new TestTransaction(env3);
