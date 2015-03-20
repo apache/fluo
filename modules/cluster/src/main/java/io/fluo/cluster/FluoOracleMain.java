@@ -96,12 +96,11 @@ public class FluoOracleMain extends AbstractTwillRunnable {
         OracleServer server = new OracleServer(env);
         server.start();
 
-        while (true) {
-          if (shutdown.get()) {
-            break;
-          }
+        while (!shutdown.get()) {
           UtilWaitThread.sleep(10000);
         }
+ 
+        server.stop();
       }
 
     } catch (Exception e) {

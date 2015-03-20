@@ -100,12 +100,11 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
         notificationFinder.init(env, np);
         notificationFinder.start();
 
-        while (true) {
-          if (shutdown.get()) {
-            break;
-          }
+        while (!shutdown.get()) {
           UtilWaitThread.sleep(1000);
         }
+
+        notificationFinder.stop();
       }
     } catch (Exception e) {
       log.error("Exception running FluoWorker: ", e);
