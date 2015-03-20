@@ -16,6 +16,7 @@
 package io.fluo.cluster;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
@@ -40,8 +41,8 @@ import org.slf4j.LoggerFactory;
 public class FluoWorkerMain extends AbstractTwillRunnable {
 
   private static final Logger log = LoggerFactory.getLogger(FluoWorkerMain.class);
-  
   public static String WORKER_NAME = "FluoWorker";
+  private AtomicBoolean shutdown = new AtomicBoolean(false);
   
   @Override
   public void run() {
@@ -99,9 +100,11 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
         notificationFinder.init(env, np);
         notificationFinder.start();
 
-        while (true) {
+        while (!shutdown.get()) {
           UtilWaitThread.sleep(1000);
         }
+
+        notificationFinder.stop();
       }
     } catch (Exception e) {
       log.error("Exception running FluoWorker: ", e);
@@ -113,6 +116,7 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
   @Override
   public void stop() {
     log.info("Stopping Fluo worker");
+    shutdown.set(true);
   }
 
   public static void main(String[] args) throws Exception {
