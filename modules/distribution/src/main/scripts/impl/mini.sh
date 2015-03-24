@@ -27,17 +27,19 @@ script=$( basename "$SOURCE" )
 
 . "$impl"/config.sh
 
-LOGHOST=$(hostname)
-SERVICE="mini"
+FLUO_LOG_HOST=$(hostname)
+FLUO_APP="mini"
 MINI_OPTS="-config-dir $FLUO_CONF_DIR -log-output $FLUO_LOG_DIR"
-MINI_OUT=${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.out
-MINI_ERR=${FLUO_LOG_DIR}/${SERVICE}_${LOGHOST}.err
-MINI_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/log4j/*"
+MINI_OUT=${FLUO_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.out
+MINI_ERR=${FLUO_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.err
+MINI_LIB="$FLUO_CONF_DIR/*:$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/log4j/*"
+
+START_OPTS="-Dlog4j.configuration=file:///$FLUO_CONF_DIR/log4j.xml -Dio.fluo.log.app=$FLUO_APP -Dio.fluo.log.host=$FLUO_LOG_HOST -Dio.fluo.log.dir=$FLUO_LOG_DIR"
 
 case "$1" in
 start)
   echo -n "Starting MiniFluo..."
-  java -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.mini.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
+  java $START_OPTS -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$FLUO_LIB_DIR/observers/*" io.fluo.cluster.mini.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
   echo "DONE"
 	;;
 stop)

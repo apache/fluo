@@ -34,6 +34,8 @@ import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.fluo.cluster.util.MainOptions.STDOUT;
+
 /** 
  * Main run method of Fluo worker that can be called within
  * a Twill/YARN application or on its own as a Java application
@@ -46,8 +48,13 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
   
   @Override
   public void run() {
-    String[] args = { "-config-dir", "./conf"};
-    run(args);
+    System.out.println("Starting Worker");
+    String logDir = System.getenv("LOG_DIRS");
+    if (logDir == null) {
+      System.err.println("LOG_DIRS env variable was not set by Twill.  Logging to console instead!");
+      logDir = STDOUT;
+    }
+    run(new String[]{ "-config-dir", "./conf", "-log-output", logDir});
   }
   
   public void run(String[] args) {
@@ -61,7 +68,9 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       }
       options.validateConfig();
 
-      LogbackUtil.init("worker", options.getConfigDir(), options.getLogOutput());
+      if (!options.getLogOutput().equals(STDOUT)) {
+        LogbackUtil.init("worker", options.getConfigDir(), options.getLogOutput());
+      }
     } catch (Exception e) {
       System.err.println("Exception while starting FluoWorker: "+ e.getMessage());
       e.printStackTrace();

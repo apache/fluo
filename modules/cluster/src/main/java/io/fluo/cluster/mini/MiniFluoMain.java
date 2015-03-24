@@ -21,7 +21,6 @@ import com.beust.jcommander.JCommander;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.mini.MiniFluo;
-import io.fluo.cluster.util.Log4jUtil;
 import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
@@ -36,8 +35,8 @@ public class MiniFluoMain {
 
   public static void main(String[] args) {
 
-    MainOptions options = new MainOptions();
     try {
+      MainOptions options = new MainOptions();
       JCommander jcommand = new JCommander(options, args);
 
       if (options.help) {
@@ -46,17 +45,9 @@ public class MiniFluoMain {
       }
       options.validateConfig();
 
-      Log4jUtil.init("mini", options.getConfigDir(), options.getLogOutput());
-    } catch (Exception e) {
-      System.err.println("Exception while starting MiniFluo: "+ e.getMessage());
-      e.printStackTrace();
-      System.exit(-1);
-    }
-
-    try {
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
       if (!config.hasRequiredMiniFluoProps()) {
-        log.error("fluo.properties is missing required properties for MiniFluo");
+        log.error("Failed to start MiniFluo - fluo.properties is missing required properties for MiniFluo");
         System.exit(-1);
       }
       try (MiniFluo mini = FluoFactory.newMiniFluo(config)) {

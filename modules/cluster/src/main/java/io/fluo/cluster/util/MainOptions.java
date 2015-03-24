@@ -18,17 +18,19 @@ package io.fluo.cluster.util;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.configuration.ConfigurationConverter;
 import com.beust.jcommander.Parameter;
 import io.fluo.api.config.FluoConfiguration;
+import org.apache.commons.configuration.ConfigurationConverter;
 
 public class MainOptions {
+
+  public final static String STDOUT = "STDOUT";
   
   @Parameter(names = "-config-dir", description = "Location of Fluo configuration directory")
   private String configDir;
 
-  @Parameter(names = "-log-output", description = "Location to output logging.  Set to directory or STDOUT (which is default) ")
-  private String logOutput = "STDOUT";
+  @Parameter(names = "-log-output", description = "Location to output logging.  Set to directory or STDOUT (which is default)")
+  private String logOutput = STDOUT;
     
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   public boolean help;

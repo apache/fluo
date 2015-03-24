@@ -17,10 +17,9 @@ package io.fluo.cluster.yarn;
 
 import java.io.File;
 
-import io.fluo.cluster.FluoWorkerMain;
-
-import io.fluo.cluster.FluoOracleMain;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.FluoOracleMain;
+import io.fluo.cluster.FluoWorkerMain;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
