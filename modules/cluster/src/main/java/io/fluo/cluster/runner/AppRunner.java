@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.scan;
+package io.fluo.cluster.runner;
 
 import java.io.File;
-import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
@@ -33,25 +34,79 @@ import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.core.mini.MiniFluoImpl;
-import org.slf4j.LoggerFactory;
 
 /**
- * Scans and prints Fluo table 
+ * Base class for running a Fluo application
  */
-public class Scan {
-  
+public abstract class AppRunner {
+
+  protected String fluoHomeDir;
+  protected FluoConfiguration config;
+  private String appName;
+  private String scriptName;
+
+  public AppRunner(String scriptName, String fluoHomeDir, FluoConfiguration config) {
+    this.scriptName = scriptName;
+    this.fluoHomeDir = fluoHomeDir;
+    this.config = config;
+    this.appName = config.getApplicationName();
+  }
+
+  public AppRunner(String scriptName, String fluoHomeDir, String appName) {
+    this.scriptName = scriptName;
+    this.fluoHomeDir = fluoHomeDir;
+    this.appName = appName;
+    File appPropsPath = new File(getAppPropsPath());
+    if (!appPropsPath.exists()) {
+      throw new IllegalStateException(appName+" application does not have a config path " + getAppPropsPath());
+    }
+    this.config = new FluoConfiguration(appPropsPath);
+    if (!config.getApplicationName().equals(appName)) {
+      throw new IllegalStateException("Application name in config '" + config.getApplicationName() + "' does not match given appName: " + appName);
+    }
+  }
+
+  public String getConfDir() {
+    return fluoHomeDir + "/conf";
+  }
+
+  public String getLibDir() {
+    return fluoHomeDir + "/lib";
+  }
+
+  public String getAppsDir() {
+    return fluoHomeDir + "/apps";
+  }
+
+  public String getAppPropsPath() {
+    return getAppConfDir() + "/fluo.properties";
+  }
+
+  public String getAppConfDir() {
+    return String.format("%s/%s/conf", getAppsDir(), appName);
+  }
+
+  public String getAppLibDir() {
+    return String.format("%s/%s/lib", getAppsDir(), appName);
+  }
+
+  public FluoConfiguration getConfiguration() {
+    return config;
+  }
+
+
+
   public static ScannerConfiguration buildScanConfig(ScanOptions options) {
     ScannerConfiguration scanConfig = new ScannerConfiguration();
-    
+
     if ((options.getExactRow() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getRowPrefix() != null))) {
       throw new IllegalArgumentException("You cannot specify an exact row with a start/end row or row prefix!");
     }
-    
+
     if ((options.getRowPrefix() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getExactRow() != null))) {
       throw new IllegalArgumentException("You cannot specify an prefix row with a start/end row or exact row!");
     }
-    
+
     // configure span of scanner
     if (options.getExactRow() != null) {
       scanConfig.setSpan(Span.exact(options.getExactRow()));
@@ -60,7 +115,7 @@ public class Scan {
     } else {
       if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
         scanConfig.setSpan(new Span(options.getStartRow(), true, options.getEndRow(), true));
-      } else if (options.getStartRow() != null) { 
+      } else if (options.getStartRow() != null) {
         scanConfig.setSpan(new Span(Bytes.of(options.getStartRow()), true, Bytes.EMPTY, true));
       } else if (options.getEndRow() != null) {
         scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.of(options.getEndRow()), true));
@@ -78,15 +133,19 @@ public class Scan {
         throw new IllegalArgumentException("Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
       }
     }
-    
+
     return scanConfig;
   }
-  
-  public static void main(String[] args) throws Exception {
-    
+
+  public void scan(String[] args) {
+    scan(config, args);
+  }
+
+  public void scan(FluoConfiguration config, String[] args) {
+
     ScanOptions options = new ScanOptions();
     JCommander jcommand = new JCommander(options);
-    jcommand.setProgramName("fluo scan");
+    jcommand.setProgramName(scriptName + " scan <app>");
     try {
       jcommand.parse(args);
     } catch (ParameterException e) {
@@ -94,48 +153,21 @@ public class Scan {
       jcommand.usage();
       System.exit(-1);
     }
-    
+
     if (options.help) {
       jcommand.usage();
       System.exit(0);
     }
-    
-    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.ERROR);
 
-    FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
-    FluoConfiguration chosenConfig = null;
-
-    if (config.hasRequiredClientProps()) {
-      chosenConfig = config;
-      System.out.println("Scanning '"+config.getAccumuloTable() + "' table of Fluo instance (" + config.getZookeepers() + ")");
-    } else {
-      File miniDataDir = new File(config.getMiniDataDir());
-      if (miniDataDir.exists()) {
-        System.err.println("No Fluo instance found to connect with!  Client properties are not set in fluo.properties and a MiniAccumuloCluster is not running at "+miniDataDir.getAbsolutePath());
-        System.exit(-1);
-      }
-
-      if (!config.hasRequiredMiniFluoProps()) {
-        System.err.println("Fluo properties are not configured correctly!");
-        System.exit(-1);
-      }
-
-      File clientPropsFile = new File(MiniFluoImpl.clientPropsPath(config));
-      if (!clientPropsFile.exists()) {
-        System.err.println("MiniFluo client.properties do not exist at " + clientPropsFile.getAbsolutePath());
-        System.exit(-1);
-      }
-      chosenConfig = new FluoConfiguration(clientPropsFile);
-      System.out.println("Scanning '" + chosenConfig.getAccumuloTable() + "' table of MiniFluo instance (" + config.getMiniDataDir()+ ")");
-    }
-    
     // Limit client to retry for only 500ms as user is waiting
-    chosenConfig.setClientRetryTimeout(500);
-        
-    try (FluoClient client = FluoFactory.newClient(chosenConfig)) {
+    FluoConfiguration sConfig = new FluoConfiguration(config);
+    sConfig.setClientRetryTimeout(500);
+
+    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName() + "' application.");
+
+    try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
-        
+
         ScannerConfiguration scanConfig = null;
         try {
           scanConfig = buildScanConfig(options);
@@ -143,18 +175,18 @@ public class Scan {
           System.err.println(e.getMessage());
           System.exit(-1);
         }
-        
+
         RowIterator iter = s.get(scanConfig);
-        
+
         if (iter.hasNext() == false) {
           System.out.println("\nNo data found\n");
         }
-        
+
         while (iter.hasNext() && !System.out.checkError()) {
-          Entry<Bytes,ColumnIterator> rowEntry = iter.next();
+          Map.Entry<Bytes,ColumnIterator> rowEntry = iter.next();
           ColumnIterator citer = rowEntry.getValue();
           while (citer.hasNext() && !System.out.checkError()) {
-            Entry<Column,Bytes> colEntry = citer.next();
+            Map.Entry<Column,Bytes> colEntry = citer.next();
             System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t" + colEntry.getValue());
           }
         }
@@ -162,6 +194,5 @@ public class Scan {
         System.out.println("Scan failed - " + e.getMessage());
       }
     }
-    System.exit(0);
   }
 }

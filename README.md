@@ -47,13 +47,13 @@ cd fluo
 mvn package
 ```
 
-Running a Fluo Instance
------------------------
+Running Fluo
+------------
 
 If you are new to Fluo, consider following the [quickstart] example which runs a development 
 Fluo instance along with a sample Fluo application.
 
-If you would like to run your own Fluo instance, follow one of the installation instructions below:
+If you would like to install and run Fluo, follow one of the installation instructions below:
 
 * [Test & development instructions](docs/test-dev-install.md) - sets up a MiniFluo instance that
 is easy to install but should only be used for testing and development.

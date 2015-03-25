@@ -32,8 +32,8 @@ your local machine or cluster:
 * [Zookeeper]
 * [Java][Java] (version 7+)
 
-Obtaining a distribution
-------------------------
+Obtain a distribution
+---------------------
 
 Before you can install Fluo, you will need to obtain a distribution tarball that
 works for your environment. Fluo distributions are built for specific releases
@@ -58,11 +58,11 @@ Next, build a distribution for your environment. The tarball will be created in
 mvn package -Daccumulo.version=1.6.1 -Dhadoop.version=2.4.0
 ```
 
-Installing and configuring Fluo
--------------------------------
+Install Fluo
+------------
 
 When you have a distribution tarball built for your environment, follow these steps
-to install and configure Fluo.
+to install Fluo.
 
 First, choose a directory with plenty of space and untar the distribution:
 ```
@@ -75,24 +75,19 @@ cd fluo-1.0.0-beta-1-SNAPSHOT
 ls lib/hadoop-* lib/accumulo-*
 ```
 
-Next, copy the example configuration to the base of your configuration directory:
+Next, copy the example configuration to the base of your configuration directory to create
+the default configuration for your Fluo install:
 ```
 cp conf/examples/* conf/
 ```
 
-Modify [fluo.properties] for your environment. NOTE - All properties that have a 
-default are set with it.  Uncomment a property if you want to use a value different 
-than the default.  Properties that are unset and uncommented must be set by the user.
-When configuring the observer section in fluo.properties, you can configure your instance
-for the [phrasecount] application if you have not created your own application. See
-the [phrasecount] example for instructions. You can also choose not to configure any
-observers but your workers will be idle when started.
-```
-vim conf/fluo.properties
-```
+The default configuration will be used as the base configuration for each new application.  
+Therefore, you should modify [fluo.properties] for your environment.  However, you should not
+configure any application settings (like observers). 
 
-Finally, if you configured [fluo.properties] for observers, copy any jars containing these
-observer classes to `lib/observers` of your Fluo installation.
+NOTE - All properties that have a default are set with it.  Uncomment a property if you want 
+to use a value different than the default.  Properties that are unset and uncommented must be
+set by the user.
 
 Fluo command script
 -------------------
@@ -111,43 +106,75 @@ Source your `.bashrc` for the changes to take effect and test the script
 source ~/.bashrc
 fluo
 ```
+
 Running the script without any arguments prints a description of all commands.
-
-Initializing Fluo
------------------
-
-After Fluo is installed and configured, initialize your instance:
 ```
-fluo init
+./bin/fluo
 ```
+
+Configure a Fluo application
+----------------------------
+
+You are now ready to configure a Fluo application.  Use the command below to create the
+configuration necessary for a new application.  Feel free to pick a different name (other
+than `myapp`) for your application:
+```
+fluo new myapp
+```
+
+This command will create a directory for your application at `apps/myapp` of your Fluo
+install which will contain a `conf` and `lib`.  
+
+The `apps/myapp/conf` directory contains a copy of the `fluo.properties` from your default
+configuration.  This should be configured for your application:
+```
+vim apps/myapp/fluo.properties
+```
+
+When configuring the observer section in fluo.properties, you can configure your instance
+for the [phrasecount] application if you have not created your own application. See
+the [phrasecount] example for instructions. You can also choose not to configure any
+observers but your workers will be idle when started.
+
+The `apps/myapp/lib` directory should contain any observer jars for your application. If 
+you configured [fluo.properties] for observers, copy any jars containing these
+observer classes to this directory.
+ 
+Initialize your application
+---------------------------
+
+After your application has been configured, use the command below to initialize it:
+```
+fluo init myapp
+```
+
 This only needs to be called once and stores configuration in Zookeeper.
 
-Running Fluo
-------------
+Start your application
+----------------------
 
-A Fluo instance consists of one oracle process and multiple worker processes.
-These processes can either be run on a YARN cluster or started locally on each
-machine.
+A Fluo application consists of one oracle process and multiple worker processes.
+Before starting your application, you can configure the number of worker process
+in your [fluo.properties] file.
 
-The preferred method to run a Fluo instance is using YARN which will start
-up multiple workers as configured in [fluo.properties].  To start a Fluo cluster 
-in YARN, run following command:
+When you are ready to start your Fluo application on your YARN cluster, run the
+command below:
 ```
-fluo yarn start
+fluo start myapp
 ```
 
 The start command above will work for a single-node or a large cluster.  By
-using YARN, you no longer need to deploy the Fluo binaries to every node on your
+using YARN, you do not need to deploy the Fluo binaries to every node on your
 cluster or start processes on every node.
 
 You can use the following command to check the status of your instance:
 ```
-fluo yarn status
+fluo status myapp
 ```
 
 For more detailed information on the YARN containers running Fluo:
 ```
-fluo yarn info
+fluo info myapp
 ```
 You can also use `yarn application -list` to check the status of your Fluo instance
 in YARN.  Logs are viewable within YARN.  
@@ -156,44 +183,17 @@ When you have data in your fluo instance, you can view it using the command `flu
 Pipe the output to `less` using the command `fluo scan | less` if you want to page 
 through the data.
 
-If you do not have YARN set up, you can start a local Fluo process using
-the following commands:
-```
-fluo local start-oracle
-fluo local start-worker
-```
+Stop your Fluo application
+--------------------------
 
-In a distributed environment, you will need to deploy the Fluo binary to 
-every node and start each process individually.
-
-Stopping Fluo
--------------
-
-If you are using YARN, use the following command to stop your Fluo instance:
+Use the following command to stop your Fluo application:
 ```
-fluo yarn stop
+fluo stop myapp
 ```
 If stop fails, there is also a kill command.
 ```
-fluo yarn kill
+fluo kill myapp
 ```
-
-If you are not using YARN, use the following commands to stop a local Fluo
-process.  In a distributed environment, these command will need to be run
-on every machine where processes are running:
-```
-fluo local stop-worker
-fluo local stop-oracle
-```
-
-Running Multiple Fluo Instances
--------------------------------
-
-Multiple Fluo instances can be run on the same cluster as long as each instance
-has a different Zookeeper chroot (set by `io.fluo.client.zookeeper.connect`) as
-well as a different Accumulo table (set by `io.fluo.admin.accumulo.table`). Untar
-your Fluo distribution into seperate directories for each instance and follow the
-installation instructions on each instance.
 
 Tuning Accumulo
 ---------------
@@ -211,6 +211,25 @@ has enough threads.  Should probably increase the
 
 Using at least Accumulo 1.6.1 is recommended because multiple performance bugs
 were fixed.
+
+Run locally without YARN
+------------------------
+
+If you do not have YARN set up, you can start the oracle and worker as a local 
+Fluo process using the following commands:
+```
+local-fluo start-oracle
+local-fluo start-worker
+```
+
+Use the following commands to stop a local Fluo process:
+```
+local-fluo stop-worker
+local-fluo stop-oracle
+```
+
+In a distributed environment, you will need to deploy and configure a Fluo 
+distribution on every node in your cluster.
 
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/

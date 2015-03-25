@@ -27,34 +27,99 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/impl/config.sh
 
+if [[ -z $HADOOP_PREFIX ]]; then
+  echo "HADOOP_PREFIX needs to be set!"
+  exit 1
+fi
+
+if [ ! -d "$HADOOP_PREFIX" ]; then
+  echo "HADOOP_PREFIX=$HADOOP_PREFIX is not a valid directory.  Please correct it in your .bashrc or fluo-env.sh"
+  exit 1
+fi
+
+APP=$2
+APP_DIR=$FLUO_HOME/apps/$APP
+APP_CONF_DIR=$APP_DIR/conf
+APP_LIB_DIR=$APP_DIR/lib
+
+function copy_config {
+  if [ -f $FLUO_CONF_DIR/$1 ]; then
+    cp $FLUO_CONF_DIR/$1 $APP_CONF_DIR/
+  elif [ -f $FLUO_CONF_DIR/examples/$1 ]; then
+    cp FLUO_CONF_DIR/examples/$1 $APP_CONF_DIR
+  else
+    echo "Config file $1 not found in $FLUO_CONF_DIR or $FLUO_CONF_DIR/examples"
+    exit 1
+  fi
+}
+
+function print_usage {
+  echo -e "Usage: fluo <command> (<argument> ...)\n"
+  echo -e "Possible commands:\n"
+  echo "  new <app>     Creates configuraiton for new application in apps/"
+  echo "  init <app>    Initializes a Fluo application using conf/fluo.properties"
+  echo "  start <app>   Starts Fluo application on cluster"
+  echo "  stop <app>    Stops Fluo application on cluster"
+  echo "  status <app>  Prints status of Fluo application"
+  echo "  info <app>    Prints more detailed status of Fluo application"
+  echo "  scan <app>    Prints snapshot of data in Fluo application"
+  echo "  classpath     Prints the classpath needed for fluo clients.  Run with -h to learn more."
+  echo " "
+  exit 1
+}
+
+function validate_app {
+  if [ -z "$APP" ]; then
+    echo -e "The application name (set by <app>) cannot be an empty string!\n"
+    print_usage
+  fi
+  if [[ $APP = *"-h"* ]]; then
+    print_usage
+  fi
+}
+
+function check_dirs {
+  validate_app
+  if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
+    echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'fluo new $APP' to create this configuration"
+    exit 1
+  fi
+}
+
 case "$1" in
+new)
+  validate_app
+  if [ -d $APP_DIR ]; then
+    echo "The Fluo '$APP' application already has a directory in apps/"
+    exit 1
+  fi
+  mkdir -p $APP_DIR
+  mkdir -p $APP_CONF_DIR
+  mkdir -p $APP_LIB_DIR
+  copy_config fluo.properties
+  $SED "s/io.fluo.client.application.name=/io.fluo.client.application.name=$APP/g" $APP_CONF_DIR/fluo.properties
+  copy_config logback.xml
+  copy_config metrics.yaml
+  ;;
 init)
-  "$bin"/impl/init.sh "${*:2}"
-	;;
-yarn)
-  "$bin"/impl/yarn.sh "${*:2}"
-	;;
-local)
-  "$bin"/impl/local.sh "${*:2}"
-	;;
-mini)
-  "$bin"/impl/mini.sh "${*:2}"
-	;;
-scan)
-  "$bin"/impl/scan.sh "${*:2}"
-	;;
+  check_dirs
+  if [[ $@ != *"-h"* && $@ != *"-u"* ]]; then
+    echo "Copying Fluo jars to HDFS at /fluo/lib to be accessible by Accumulo for iterators"
+    $HADOOP_PREFIX/bin/hdfs dfs -mkdir -p /fluo/lib
+    echo "Copying `ls $FLUO_HOME/lib/fluo-api-*.jar` to HDFS"
+    $HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-api-*.jar /fluo/lib/
+    echo "Copying `ls $FLUO_HOME/lib/fluo-accumulo-*.jar` to HDFS"
+    $HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-accumulo-*.jar /fluo/lib/
+  fi
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $@
+  ;;
+start|stop|kill|status|info|scan)
+  check_dirs
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $@
+  ;;
 classpath)
   "$bin"/impl/classpath.sh ${*:2}
-        ;;
+  ;;
 *)
-	echo -e "Usage: fluo <command> (<argument>)\n"
-  echo -e "Possible commands:\n"
-	echo "  init      Initializes a Fluo instance using conf/fluo.properties"
-	echo "  yarn      Administers Fluo instance in YARN"
-	echo "  local     Administers Fluo instance on local machine"
-	echo "  mini      Administers MiniFluo instance"
-	echo "  scan      Prints snapshot of data in Fluo instance"
-	echo "  classpath Prints the classpath needed for fluo clients.  Run with -h to learn more."
-  echo " " 
-	exit 1
+  print_usage
 esac

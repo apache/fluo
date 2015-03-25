@@ -88,7 +88,7 @@ public class OracleClient implements AutoCloseable {
             return;
           }
           
-          curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
+          curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
           CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
           curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
           curatorFramework.start();
@@ -163,7 +163,7 @@ public class OracleClient implements AutoCloseable {
 
               Context timerContext = responseTimer.time();
 
-              start = localClient.getTimestamps(env.getFluoInstanceID(), request.size());
+              start = localClient.getTimestamps(env.getFluoApplicationID(), request.size());
 
               String leaderId = getOracle();
               if(leaderId != null && !leaderId.equals(currentLeaderId)) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.util;
+package io.fluo.cluster.main;
 
 import java.io.IOException;
 import java.util.Properties;

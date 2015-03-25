@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.main;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.LogbackUtil;
-import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.oracle.OracleServer;
@@ -32,7 +31,7 @@ import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.fluo.cluster.util.MainOptions.STDOUT;
+import static io.fluo.cluster.main.MainOptions.STDOUT;
 
 /**
  * Main method of Fluo oracle that can be called within a Twill/YARN application or on its own as a Java application
@@ -98,7 +97,7 @@ public class FluoOracleMain extends AbstractTwillRunnable {
       
       try (Environment env = new Environment(config);
           Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
-        log.info("Oracle configuration:");
+        log.info("Starting Oracle for Fluo '{}' application with the following configuration:", config.getApplicationName());
         env.getConfiguration().print();
 
         OracleServer server = new OracleServer(env);

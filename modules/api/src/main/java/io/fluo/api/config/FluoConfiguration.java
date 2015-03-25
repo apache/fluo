@@ -52,6 +52,7 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Client properties
   private static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
+  public static final String CLIENT_APPLICATION_NAME_PROP = CLIENT_PREFIX + ".application.name";
   public static final String CLIENT_ACCUMULO_PASSWORD_PROP = CLIENT_PREFIX + ".accumulo.password";
   public static final String CLIENT_ACCUMULO_USER_PROP = CLIENT_PREFIX + ".accumulo.user";
   public static final String CLIENT_ACCUMULO_INSTANCE_PROP = CLIENT_PREFIX + ".accumulo.instance";
@@ -176,6 +177,8 @@ public class FluoConfiguration extends CompositeConfiguration {
     getAccumuloUser();
     getAccumuloZookeepers();
     getAdminClass();
+    getApplicationName();
+    getAppZookeepers();
     getClientClass();
     getClientRetryTimeout();
     getLoaderQueueSize();
@@ -192,16 +195,63 @@ public class FluoConfiguration extends CompositeConfiguration {
     getWorkerMaxMemory();
     getWorkerNumCores();
     getWorkerThreads();
-    getZookeepers();
     getZookeeperTimeout();
   }
 
-  public FluoConfiguration setZookeepers(String zookeepers) {
+  public FluoConfiguration setApplicationName(String applicationName) {
+    verifyApplicationName(applicationName);
+    setProperty(CLIENT_APPLICATION_NAME_PROP, applicationName);
+    return this;
+  }
+
+  public String getApplicationName() {
+    String applicationName = getString(CLIENT_APPLICATION_NAME_PROP);
+    verifyApplicationName(applicationName);
+    return applicationName;
+  }
+
+  /**
+   * Verifies application name.  Avoids characters that Zookeeper does not like in nodes.
+   * @param name
+   */
+  private void verifyApplicationName(String name) {
+    if (name == null) {
+      throw new IllegalArgumentException("Application name cannot be null");
+    }
+    if (name.length() == 0) {
+      throw new IllegalArgumentException("Application name length must be > 0");
+    }
+    String reason = null;
+    char chars[] = name.toCharArray();
+    char c;
+    for (int i = 0; i < chars.length; i++) {
+      c = chars[i];
+      if (c == 0) {
+        reason = "null character not allowed @" + i;
+        break;
+      } else if (c == '/' || c == '.') {
+        reason = "invalid character @" + i;
+        break;
+      } else if (c > '\u0000' && c <= '\u001f' || c >= '\u007f' && c <= '\u009F' || c >= '\ud800' && c <= '\uf8ff' || c >= '\ufff0' && c <= '\uffff') {
+        reason = "invalid charater @" + i;
+        break;
+      }
+    }
+    if (reason != null) {
+      throw new IllegalArgumentException("Invalid application name \"" + name + "\" caused by " + reason);
+    }
+  }
+
+  public FluoConfiguration setInstanceZookeepers(String zookeepers) {
     return setNonEmptyString(CLIENT_ZOOKEEPER_CONNECT_PROP, zookeepers);
   }
-  
-  public String getZookeepers() {
+
+  public String getInstanceZookeepers() {
     return getNonEmptyString(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
+  }
+
+  public String getAppZookeepers() {
+    return getInstanceZookeepers()+"/"+getApplicationName();
   }
  
   public FluoConfiguration setZookeeperTimeout(int timeout) {
@@ -575,6 +625,7 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
   public boolean hasRequiredClientProps() {
     boolean valid = true;
+    valid &= verifyStringPropSet(CLIENT_APPLICATION_NAME_PROP);
     valid &= verifyStringPropSet(CLIENT_ACCUMULO_USER_PROP);
     valid &= verifyStringPropSet(CLIENT_ACCUMULO_PASSWORD_PROP);
     valid &= verifyStringPropSet(CLIENT_ACCUMULO_INSTANCE_PROP);

@@ -133,7 +133,7 @@ public class FluoInputFormat extends InputFormat<Bytes,ColumnIterator> {
   }
   
   /**
-   * Configure properties needed to connect to a Fluo instance
+   * Configure properties needed to connect to a Fluo application
    * 
    * @param conf
    * @param config

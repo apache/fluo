@@ -142,7 +142,7 @@ public class MiniFluoImpl implements MiniFluo {
       config.setAccumuloUser(USER);
       config.setAccumuloPassword(PASSWORD);
       config.setAccumuloZookeepers(cluster.getZooKeepers());
-      config.setZookeepers(cluster.getZooKeepers()+"/fluo");
+      config.setInstanceZookeepers(cluster.getZooKeepers() + "/fluo");
       
       // configuration that only needs to be set if not by user
       if ((config.containsKey(FluoConfiguration.ADMIN_ACCUMULO_TABLE_PROP) == false) ||

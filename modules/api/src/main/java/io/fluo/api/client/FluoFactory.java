@@ -75,7 +75,7 @@ public class FluoFactory {
       log.error(msg);
       throw new FluoException(msg, e);
     } catch (InvocationTargetException e) {
-      String msg = "Failed to contstruct "+clazz+" class due to exception";
+      String msg = "Failed to construct "+clazz+" class due to exception";
       log.error(msg, e);
       throw new FluoException(msg, e);
     } catch (Exception e) {

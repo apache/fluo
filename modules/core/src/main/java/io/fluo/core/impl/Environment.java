@@ -60,7 +60,7 @@ public class Environment implements AutoCloseable {
   private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
-  private String fluoInstanceID;
+  private String fluoApplicationID;
   private FluoConfiguration config;
   private SharedResources resources;
   private MetricNames metricNames;
@@ -104,7 +104,7 @@ public class Environment implements AutoCloseable {
     this.allObserversColumns = env.allObserversColumns;
     this.conn = env.conn;
     this.accumuloInstanceID = env.accumuloInstanceID;
-    this.fluoInstanceID = env.fluoInstanceID;
+    this.fluoApplicationID = env.fluoApplicationID;
     this.config = env.config;
     this.resources = new SharedResources(this);
   }
@@ -117,12 +117,12 @@ public class Environment implements AutoCloseable {
    */
   private void readZookeeperConfig() {
 
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
 
       accumuloInstance = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME), "UTF-8");
       accumuloInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
-      fluoInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_INSTANCE_ID), "UTF-8");
+      fluoApplicationID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID), "UTF-8");
 
       table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
 
@@ -197,8 +197,8 @@ public class Environment implements AutoCloseable {
     return accumuloInstanceID;
   }
   
-  public String getFluoInstanceID() {
-    return fluoInstanceID;
+  public String getFluoApplicationID() {
+    return fluoApplicationID;
   }
 
   public Map<Column,ObserverConfiguration> getObservers() {

@@ -13,67 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.scan;
+package io.fluo.cluster.runner;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.beust.jcommander.Parameter;
 
-/**
- * Scan command line options 
- */
 public class ScanOptions {
-  
+
   @Parameter(names = "-s", description = "Start row (inclusive) of scan")
   private String startRow;
-  
+
   @Parameter(names = "-e", description = "End row (inclusive) of scan")
   private String endRow;
-  
+
   @Parameter(names = "-c", description = "Columns of scan in comma separated format: <<columnfamily>[:<columnqualifier>]{,<columnfamily>[:<columnqualifier>]}> ")
   private List<String> columns;
-  
+
   @Parameter(names = "-r", description = "Exact row to scan")
   private String exactRow;
-  
+
   @Parameter(names = "-p", description = "Row prefix to scan")
   private String rowPrefix;
-    
-  @Parameter(names = "-config-dir", description = "Location of Fluo configuration directory", required = true, hidden = true)
-  private String configDir;
-    
+
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   public boolean help;
-  
+
   public String getStartRow() {
     return startRow;
   }
-  
+
   public String getEndRow() {
     return endRow;
   }
-  
+
   public String getExactRow() {
     return exactRow;
   }
-  
+
   public String getRowPrefix() {
     return rowPrefix;
   }
-  
+
   public List<String> getColumns() {
     if (columns == null) {
       return Collections.emptyList();
     }
     return columns;
-  }
-    
-  public String getConfigDir() {
-    return configDir;
-  }
-  
-  public String getFluoProps() {
-    return configDir + "/fluo.properties";
   }
 }

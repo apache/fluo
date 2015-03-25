@@ -18,8 +18,8 @@ package io.fluo.cluster.yarn;
 import java.io.File;
 
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.FluoOracleMain;
-import io.fluo.cluster.FluoWorkerMain;
+import io.fluo.cluster.main.FluoOracleMain;
+import io.fluo.cluster.main.FluoWorkerMain;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
@@ -35,9 +35,7 @@ import org.slf4j.LoggerFactory;
  * Represents Fluo oracle application in Twill
  */
 public class FluoTwillApp implements TwillApplication {
-  
-  public static final String FLUO_APP_NAME = "Fluo";
-  
+
   private static final Logger log = LoggerFactory.getLogger(FluoTwillApp.class);
   
   private final FluoConfiguration config;
@@ -67,8 +65,8 @@ public class FluoTwillApp implements TwillApplication {
   @Override
   public TwillSpecification configure() {   
     
-    log.info("Configuring a Fluo instance with {} Oracle instances and {} Worker instances with following properties:", 
-        config.getOracleInstances(), config.getWorkerInstances());
+    log.info("Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances with following properties:",
+        config.getApplicationName(), config.getOracleInstances(), config.getWorkerInstances());
     
     log.info("{} = {}", FluoConfiguration.ORACLE_MAX_MEMORY_MB_PROP, config.getOracleMaxMemory());
     log.info("{} = {}", FluoConfiguration.WORKER_MAX_MEMORY_MB_PROP, config.getWorkerMaxMemory());
@@ -77,7 +75,7 @@ public class FluoTwillApp implements TwillApplication {
     
     // Start building Fluo Twill application
     MoreRunnable moreRunnable = TwillSpecification.Builder.with() 
-        .setName(FLUO_APP_NAME).withRunnable();
+        .setName(config.getApplicationName()).withRunnable();
     
     // Configure Oracle 
     ResourceSpecification oracleResources = ResourceSpecification.Builder.with()

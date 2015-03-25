@@ -45,6 +45,7 @@ public class FluoClientTest {
       Assert.fail();
     } catch (IllegalArgumentException e) { }
 
+    config.setApplicationName("test");
     config.setAccumuloUser("test");
     config.setAccumuloPassword("test");
     config.setAccumuloInstance("test");

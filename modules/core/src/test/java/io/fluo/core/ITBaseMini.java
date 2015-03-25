@@ -42,14 +42,14 @@ public class ITBaseMini extends ITBase {
 
   @Before
   public void setUpFluo() throws Exception {
-    String zkRoot = "/mini-test" + testCounter.getAndIncrement();
-    
+
     config = new FluoConfiguration();
+    config.setApplicationName("mini-test" + testCounter.getAndIncrement());
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
-    config.setZookeepers(miniAccumulo.getZooKeepers() + zkRoot);
+    config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
