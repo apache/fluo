@@ -77,7 +77,7 @@ Creating a Fluo observer
 To create an observer, follow these steps:
 
 1. Create a class that extends [AbstractObserver].
-2. Build a jar containing this class and include this jar in ```lib/observers``` of your Fluo installation.
+2. Build a jar containing this class and include this jar in the `lib/` directory of your Fluo application.
 3. Configure your Fluo instance to use this observer by modifying the Observer section of [fluo.properties].  
 4. Restart your Fluo instance so that your Fluo workers load the new observer.
 

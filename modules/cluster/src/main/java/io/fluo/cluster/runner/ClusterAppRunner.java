@@ -13,34 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.init;
+package io.fluo.cluster.runner;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import io.fluo.api.client.FluoAdmin.InitOpts;
+import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.api.exceptions.FluoException;
-import io.fluo.cluster.util.ClusterUtil;
 import io.fluo.core.client.FluoAdminImpl;
-import org.slf4j.LoggerFactory;
 
-/** 
- * Initializes Fluo using properties in configuration files
+/**
+ * For running Fluo app on cluster
  */
-public class Init {
-  
-  public static boolean readYes() throws IOException {
+public abstract class ClusterAppRunner extends AppRunner {
+
+  public ClusterAppRunner(String scriptName, String fluoHomeDir, FluoConfiguration config) {
+    super(scriptName, fluoHomeDir, config);
+  }
+
+  public ClusterAppRunner(String scriptName, String fluoHomeDir, String appName) {
+    super(scriptName, fluoHomeDir, appName);
+  }
+
+  public abstract void start();
+
+  public abstract void stop();
+
+  public class InitOptions {
+
+    @Parameter(names = {"-f", "--force"}, description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to setting both --clearTable --clearZookeeper")
+    private boolean force;
+
+    @Parameter(names = {"--clearTable"}, description = "Skips prompt and clears Accumulo table")
+    private boolean clearTable;
+
+    @Parameter(names = {"--clearZookeeper"}, description = "Skips prompt and clears Zookeeper")
+    private boolean clearZookeeper;
+
+    @Parameter(names = {"-u", "--update"}, description = "Update Fluo configuration in Zookeeper")
+    private boolean update;
+
+    @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
+    public boolean help;
+
+    public boolean getForce() {
+      return force;
+    }
+
+    public boolean getClearTable() {
+      return clearTable;
+    }
+
+    public boolean getClearZookeeper() {
+      return clearZookeeper;
+    }
+
+    public boolean getUpdate() {
+      return update;
+    }
+  }
+
+  public static boolean readYes() {
     String input = "unk";
     while (true) {
       BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-      input = bufferedReader.readLine().trim();
+      try {
+        input = bufferedReader.readLine().trim();
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
       if (input.equalsIgnoreCase("y")) {
         return true;
       } else if (input.equalsIgnoreCase("n")) {
@@ -50,9 +95,8 @@ public class Init {
       }
     }
   }
-  
-  public static void main(String[] args) throws Exception {
-    
+
+  public void init(String[] args) {
     InitOptions commandOpts = new InitOptions();
     JCommander jcommand = new JCommander(commandOpts);
     jcommand.setProgramName("fluo init");
@@ -63,28 +107,23 @@ public class Init {
       jcommand.usage();
       System.exit(-1);
     }
-    
+
     if (commandOpts.help) {
       jcommand.usage();
       System.exit(0);
     }
-    
-    Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.ERROR);
 
-    ClusterUtil.verifyConfigPathsExist(commandOpts.getFluoProps());
-    FluoConfiguration config = new FluoConfiguration(new File(commandOpts.getFluoProps()));
     if (!config.hasRequiredAdminProps()) {
-      System.err.println("Error - Required properties are not set in " + commandOpts.getFluoProps());
+      System.err.println("Error - Required properties are not set in " + getAppPropsPath());
       System.exit(-1);
     }
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties ("+commandOpts.getFluoProps()+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties ("+getAppPropsPath()+") due to "+ e.getMessage());
       System.exit(-1);
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties ("+commandOpts.getFluoProps()+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties ("+getAppPropsPath()+") due to "+ e.getMessage());
       e.printStackTrace();
       System.exit(-1);
     }
@@ -92,14 +131,14 @@ public class Init {
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
       if (admin.oracleExists()) {
-        System.err.println("Error - A Fluo instance is running and must be stopped before running 'fluo init'.  Aborted initialization.");
+        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application is already running and must be stopped before running 'fluo init'.  Aborted initialization.");
         System.exit(-1);
       }
 
-      InitOpts initOpts = new InitOpts();
+      FluoAdmin.InitOpts initOpts = new FluoAdmin.InitOpts();
 
       if (commandOpts.getUpdate()) {
-        System.out.println("Updating Fluo configuration in Zookeeper using " + commandOpts.getFluoProps());
+        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName() + "' application in Zookeeper using " + getAppPropsPath());
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
@@ -111,8 +150,8 @@ public class Init {
         if (commandOpts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
-          System.out
-              .print("Fluo is already initialized in Zookeeper at " + config.getZookeepers() + " - Would you like to clear and reinitialize Zookeeper (y/n)? ");
+          System.out.print("A Fluo '" + config.getApplicationName() + "' application is already initialized in Zookeeper at " + config.getAppZookeepers()
+              + " - Would you like to clear and reinitialize Zookeeper for this application (y/n)? ");
           if (readYes()) {
             initOpts.setClearZookeeper(true);
           } else {
@@ -134,10 +173,10 @@ public class Init {
         }
       }
 
-      System.out.println("Initializing Fluo instance using " + commandOpts.getFluoProps());
+      System.out.println("Initializing Fluo '" + config.getApplicationName()+ "' application using " + getAppPropsPath());
       try {
         admin.initialize(initOpts);
-      } catch (FluoException e) {
+      } catch (Exception e) {
         System.out.println("Initialization failed due to the following exception:");
         e.printStackTrace();
         System.exit(-1);

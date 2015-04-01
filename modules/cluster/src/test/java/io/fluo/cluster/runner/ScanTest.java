@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.scan;
+package io.fluo.cluster.runner;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.ScannerConfiguration;
@@ -31,9 +31,8 @@ public class ScanTest {
   private ScannerConfiguration parseArgs(String args) {
     ScanOptions options = new ScanOptions();
     JCommander jcommand = new JCommander(options);
-    String argsWithConfig = args.concat(" -config-dir mydir");
-    jcommand.parse(argsWithConfig.split(" "));
-    return Scan.buildScanConfig(options);
+    jcommand.parse(args.split(" "));
+    return AppRunner.buildScanConfig(options);
   }
   
   @Test

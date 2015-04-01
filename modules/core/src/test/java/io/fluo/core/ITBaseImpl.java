@@ -59,15 +59,15 @@ public class ITBaseImpl extends ITBase {
   public void setUpFluo() throws Exception {
 
     table = getNextTableName();
-    String zkRoot = "/impl-test" + testCounter.getAndIncrement();
 
     config = new FluoConfiguration();
+    config.setApplicationName("impl-test" + testCounter.getAndIncrement());
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloTable(table);
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
-    config.setZookeepers(miniAccumulo.getZooKeepers() + zkRoot);
+    config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());

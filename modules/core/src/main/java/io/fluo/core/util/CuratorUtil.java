@@ -42,15 +42,15 @@ public class CuratorUtil {
   /**
    * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo chroot.
    */
-  public static CuratorFramework newFluoCurator(FluoConfiguration config) {
-    return newCurator(config.getZookeepers(), config.getZookeeperTimeout());
+  public static CuratorFramework newAppCurator(FluoConfiguration config) {
+    return newCurator(config.getAppZookeepers(), config.getZookeeperTimeout());
   }
 
   /**
    * Creates a curator built using Fluo's zookeeper connection string. Root path will start at root "/" of Zoookeper.
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
-    return newCurator(ZookeeperUtil.parseServers(config.getZookeepers()), config.getZookeeperTimeout());
+    return newCurator(ZookeeperUtil.parseServers(config.getAppZookeepers()), config.getZookeeperTimeout());
   }
   
   /**

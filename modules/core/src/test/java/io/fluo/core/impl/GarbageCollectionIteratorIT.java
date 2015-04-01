@@ -57,7 +57,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     TestTransaction tx2 = new TestTransaction(env);
 
     env.getSharedResources().getTimestampTracker().updateZkNode();
-    long oldestTs = ZookeeperUtil.getOldestTimestamp(config.getZookeepers());
+    long oldestTs = ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
     Assert.assertEquals(tx2.getStartTs(), oldestTs);
 
     // Force a garbage collection
@@ -80,12 +80,12 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Logger.getLogger(ZookeeperUtil.class).setLevel(Level.FATAL);
     
     // verify that oracle initial current ts
-    Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));
+    Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
     // delete the oracle current timestamp path
     env.getSharedResources().getCurator().delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
     // verify that oldest possible is returned
     Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE, 
-        ZookeeperUtil.getOldestTimestamp(config.getZookeepers()));
+        ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
     
     // set level back 
     Logger.getLogger(ZookeeperUtil.class).setLevel(curLevel);

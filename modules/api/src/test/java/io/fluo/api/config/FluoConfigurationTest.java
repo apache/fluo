@@ -35,7 +35,7 @@ public class FluoConfigurationTest {
   
   @Test
   public void testDefaults() {
-    Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT, base.getZookeepers());
+    Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT, base.getInstanceZookeepers());
     Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT, base.getZookeeperTimeout());
     Assert.assertEquals(FluoConfiguration.CLIENT_RETRY_TIMEOUT_MS_DEFAULT, base.getClientRetryTimeout());
     Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
@@ -100,8 +100,10 @@ public class FluoConfigurationTest {
     Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
     Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
-    Assert.assertEquals("zoos1", config.setZookeepers("zoos1").getZookeepers());
+    Assert.assertEquals("zoos1", config.setInstanceZookeepers("zoos1").getInstanceZookeepers());
     Assert.assertEquals("zoos2", config.setAccumuloZookeepers("zoos2").getAccumuloZookeepers());
+    Assert.assertEquals("app", config.setApplicationName("app").getApplicationName());
+    Assert.assertEquals("zoos1/app", config.getAppZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
     Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
     Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
@@ -113,6 +115,8 @@ public class FluoConfigurationTest {
   @Test
   public void testHasClientProps() {
     FluoConfiguration config = new FluoConfiguration();
+    Assert.assertFalse(config.hasRequiredClientProps());
+    config.setApplicationName("app");
     Assert.assertFalse(config.hasRequiredClientProps());
     config.setAccumuloUser("user");
     Assert.assertFalse(config.hasRequiredClientProps());
@@ -126,6 +130,7 @@ public class FluoConfigurationTest {
   public void testHasAdminProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredAdminProps());
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -137,6 +142,7 @@ public class FluoConfigurationTest {
   public void testHasWorkerProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredWorkerProps());
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -147,6 +153,7 @@ public class FluoConfigurationTest {
   public void testHasOracleProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredOracleProps());
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -156,6 +163,8 @@ public class FluoConfigurationTest {
   @Test
   public void testHasMiniFluoProps() {
     FluoConfiguration config = new FluoConfiguration();
+    Assert.assertTrue(config.hasRequiredMiniFluoProps());
+    config.setApplicationName("app");
     Assert.assertTrue(config.hasRequiredMiniFluoProps());
     config.setAccumuloUser("user");
     Assert.assertFalse(config.hasRequiredMiniFluoProps());
@@ -176,7 +185,7 @@ public class FluoConfigurationTest {
     // make sure classpath contains comma.  otherwise it was shortened
     Assert.assertTrue(config.getAccumuloClasspath().contains(","));
     // check for values set in prop file
-    Assert.assertEquals("localhost/fluo", config.getZookeepers());
+    Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
     Assert.assertEquals("localhost", config.getAccumuloZookeepers());
     Assert.assertEquals("", config.getAccumuloPassword());
     try {
@@ -208,11 +217,12 @@ public class FluoConfigurationTest {
     Properties props = new Properties();
     props.setProperty(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_PROP, "zk1,zk2,zk3");
     props.setProperty(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP, "zk1,zk2,zk3/fluo");
+    props.setProperty(FluoConfiguration.CLIENT_APPLICATION_NAME_PROP, "myapp");
     
     //ran into a bug where this particular constructor was truncating everything after zk1
     FluoConfiguration config = new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
     Assert.assertEquals("zk1,zk2,zk3", config.getAccumuloZookeepers());
-    Assert.assertEquals("zk1,zk2,zk3/fluo", config.getZookeepers());
+    Assert.assertEquals("zk1,zk2,zk3/fluo/myapp", config.getAppZookeepers());
   }
   
   private void assertIAE(String value) {
@@ -223,7 +233,7 @@ public class FluoConfigurationTest {
       Assert.fail();
     } catch (IllegalArgumentException e) { }
   }
-  
+
   @Test
   public void testObserverConfig() {
     FluoConfiguration config = new FluoConfiguration();
@@ -249,6 +259,36 @@ public class FluoConfigurationTest {
     Assert.assertEquals(1, ocList.size());
     Assert.assertEquals("Class", ocList.get(0).getClassName());
     Assert.assertEquals(0, ocList.get(0).getParameters().size());
+  }
+
+  private void assertSetNameIAE(String name) {
+    FluoConfiguration config = new FluoConfiguration();
+    try {
+      config.setApplicationName(name);
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+  }
+
+  private void assertGetNameIAE(String name) {
+    FluoConfiguration config = new FluoConfiguration();
+    try {
+      config.setProperty(FluoConfiguration.CLIENT_APPLICATION_NAME_PROP, name);
+      config.getApplicationName();
+      Assert.fail();
+    } catch (IllegalArgumentException e) { }
+  }
+
+  @Test
+  public void testApplicationName() {
+    FluoConfiguration config = new FluoConfiguration();
+    config.setApplicationName("valid");
+    Assert.assertEquals("valid", config.getApplicationName());
+    String [] invalidNames = { "/name", "/", "te.t", ".", "", "a/b"};
+    for (String name : invalidNames) {
+      assertSetNameIAE(name);
+      assertGetNameIAE(name);
+    }
+    assertSetNameIAE(null);
   }
 
   @Test
@@ -285,7 +325,7 @@ public class FluoConfigurationTest {
     }
     String[] nonEmptyMethods = { "setAccumuloInstance", "setAccumuloTable",
         "setAccumuloUser", "setAccumuloZookeepers", "setAdminClass", "setClientClass",
-        "setMetricsYamlBase64", "setMiniClass", "setMiniDataDir", "setZookeepers"};
+        "setMetricsYamlBase64", "setMiniClass", "setMiniDataDir", "setInstanceZookeepers"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

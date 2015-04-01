@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster;
+package io.fluo.cluster.main;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.util.LogbackUtil;
-import io.fluo.cluster.util.MainOptions;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.util.UtilWaitThread;
@@ -34,7 +33,7 @@ import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.fluo.cluster.util.MainOptions.STDOUT;
+import static io.fluo.cluster.main.MainOptions.STDOUT;
 
 /** 
  * Main run method of Fluo worker that can be called within
@@ -101,7 +100,7 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       
       try (Environment env = new Environment(config);
           Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
-        log.info("Worker configuration:");
+        log.info("Starting Worker for Fluo '{}' application with the following configuration:", config.getApplicationName());
         env.getConfiguration().print();
      
         NotificationProcessor np = new NotificationProcessor(env);
@@ -119,7 +118,7 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       log.error("Exception running FluoWorker: ", e);
     }
     
-    log.info("FluoWorker is exiting.");
+    log.info("Worker is exiting.");
   }
   
   @Override

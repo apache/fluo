@@ -71,6 +71,5 @@ public class LogbackUtil {
 
     System.out.println("Logging to " + logDir + " using config " + logConfig);
     log.info("Initialized logging using config in " + logConfig);
-    log.info("Starting " + application + " application");
   }
 }

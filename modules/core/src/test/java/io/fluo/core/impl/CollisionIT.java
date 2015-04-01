@@ -136,10 +136,10 @@ public class CollisionIT extends ITBaseMini {
       Assert.assertEquals(1000, snapshot.get().row("all").fam("stat").qual("total").toInteger(-1));
     }
 
-    long oldestTS = ZookeeperUtil.getOldestTimestamp(config.getZookeepers());
+    long oldestTS = ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
     while (true) {
       UtilWaitThread.sleep(300);
-      long tmp = ZookeeperUtil.getOldestTimestamp(config.getZookeepers());
+      long tmp = ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
       if (oldestTS == tmp) {
         break;
       }

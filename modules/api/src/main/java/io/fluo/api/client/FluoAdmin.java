@@ -18,7 +18,7 @@ package io.fluo.api.client;
 import io.fluo.api.config.FluoConfiguration;
 
 /**
- * Provides methods for initializing and administering a Fluo instance.
+ * Provides methods for initializing and administering a Fluo application.
  */
 public interface FluoAdmin extends AutoCloseable {
   
@@ -55,8 +55,8 @@ public interface FluoAdmin extends AutoCloseable {
   }
 
   /**
-   * Exception that is thrown if Fluo instance was already initialized. An instance is already initialized if the chroot directory set by the property
-   * io.fluo.client.zookeeper.connect exists in Zookeeper. If this directory can be clear, set {@link InitOpts#setClearTable(boolean)} to true
+   * Exception that is thrown if Fluo application was already initialized. An application is already initialized if a directory with same name as application exists
+   * at the chroot directory set by the property io.fluo.client.zookeeper.connect. If this directory can be cleared, set {@link InitOpts#setClearTable(boolean)} to true
    */
   public static class AlreadyInitializedException extends Exception {
     private static final long serialVersionUID = 1L;
@@ -87,9 +87,9 @@ public interface FluoAdmin extends AutoCloseable {
   }
 
   /**
-   * Initializes Fluo instance and stores shared configuration in Zookeeper. Shared configuration consists of properties with
+   * Initializes Fluo application and stores shared configuration in Zookeeper. Shared configuration consists of properties with
    * {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX}, {@value io.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
-   * {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. Throws {@link AlreadyInitializedException} if Fluo instance was already
+   * {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. Throws {@link AlreadyInitializedException} if Fluo application was already
    * initialized in Zookeeper. If you want to initialize Zookeeper again, set {@link InitOpts#setClearZookeeper(boolean)} to true. Throws
    * {@link TableExistsException} if Accumulo table exists. If you want to clear table, set {@link InitOpts#setClearTable(boolean)} to true.
    */

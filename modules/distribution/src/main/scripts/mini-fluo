@@ -1,0 +1,131 @@
+#! /usr/bin/env bash
+
+# Copyright 2014 Fluo authors (see AUTHORS)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Start: Resolve Script Directory
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+   bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+   SOURCE="$(readlink "$SOURCE")"
+   [[ $SOURCE != /* ]] && SOURCE="$bin/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+bin="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+script=$( basename "$SOURCE" )
+# Stop: Resolve Script Directory
+
+. "$bin"/impl/config.sh
+
+APP=$2
+APP_DIR=$FLUO_HOME/apps/$APP
+APP_LIB_DIR=$APP_DIR/lib
+APP_CONF_DIR=$APP_DIR/conf
+APP_LOG_DIR=$APP_DIR/logs
+
+function print_usage {
+  echo -e "Usage: mini-fluo <command> (<argument> ..)\n"
+  echo -e "Possible commands:\n"
+  echo "  new <app>         Creates configuration for new MiniFluo application in apps/"
+  echo "  start <app>       Starts application in MiniFluo on local machine"
+  echo "  kill <app>        Kills application in MiniFluo on local machine"
+  echo "  scan <app>        Prints snapshot of data in MiniFluo application"
+  echo " "
+  exit 1
+}
+
+function validate_app {
+  if [ -z "$APP" ]; then
+    echo -e "The application name (set by <app>) cannot be an empty string!\n"
+    print_usage
+  fi
+  if [[ $APP = *"-h"* ]]; then
+    print_usage
+  fi
+}
+
+function check_dirs {
+  validate_app
+  if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
+    echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'mini-fluo new $APP' to create this configuration"
+    exit 1
+  fi
+  mkdir -p $APP_LOG_DIR 2>/dev/null
+}
+
+function copy_config {
+  if [ -f $FLUO_CONF_DIR/$1 ]; then
+    cp $FLUO_CONF_DIR/$1 $APP_CONF_DIR/
+  elif [ -f $FLUO_CONF_DIR/examples/$1 ]; then
+    cp FLUO_CONF_DIR/examples/$1 $APP_CONF_DIR
+  else
+    echo "Config file $1 not found in $FLUO_CONF_DIR or $FLUO_CONF_DIR/examples"
+    exit 1
+  fi
+}
+
+function kill_if_running {
+  PID=`jps -m | grep $1 | grep $APP | cut -f 1 -d ' '`
+  if [ -z "$PID" ]; then
+    echo "ERROR - A $1 process for the Fluo application '$APP' is not running"
+    exit 1
+  else
+    kill $PID
+  fi
+}
+
+FLUO_LOG_HOST=$(hostname)
+FLUO_APP="mini"
+MINI_OPTS="-config-dir $APP_CONF_DIR -log-output $APP_LOG_DIR"
+MINI_OUT=${APP_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.out
+MINI_ERR=${APP_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.err
+MINI_LIB="$APP_CONF_DIR/*:$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/log4j/*"
+
+START_OPTS="-Dlog4j.configuration=file:///$APP_CONF_DIR/log4j.xml -Dio.fluo.log.app=$FLUO_APP -Dio.fluo.log.host=$FLUO_LOG_HOST -Dio.fluo.log.dir=$APP_LOG_DIR"
+
+case "$1" in
+new)
+  if [ -d $APP_DIR ]; then
+    echo "The Fluo '$APP' application already has a directory in apps/"
+    exit 1
+  fi
+  validate_app
+  mkdir -p $APP_DIR
+  mkdir -p $APP_CONF_DIR
+  mkdir -p $APP_LIB_DIR
+  copy_config fluo.properties
+  $SED "s/io.fluo.client.application.name=/io.fluo.client.application.name=$APP/g" $APP_CONF_DIR/fluo.properties
+  $SED "s/io.fluo.client.accumulo/#io.fluo.client.accumulo/g" $APP_CONF_DIR/fluo.properties
+  $SED "s/#io.fluo.mini/io.fluo.mini/g" $APP_CONF_DIR/fluo.properties
+  copy_config log4j.xml
+  copy_config metrics.yaml
+  ;;
+start)
+  check_dirs
+  java $START_OPTS -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.main.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
+  echo "Started '$APP' application in MiniFluo.  View logs at $APP_LOG_DIR"
+  ;;
+kill)
+  validate_app
+  check_dirs
+  kill_if_running MiniFluoMain
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME cleanup $APP
+  echo "Killed '$APP' application running in MiniFluo"
+  ;;
+scan)
+  check_dirs
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME $@
+  ;;
+*)
+  print_usage
+esac

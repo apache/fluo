@@ -50,7 +50,7 @@ public class SharedResources implements AutoCloseable {
 
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
-    curator = CuratorUtil.newFluoCurator(env.getConfiguration()); 
+    curator = CuratorUtil.newAppCurator(env.getConfiguration());
     curator.start();
     bw = env.getConnector().createBatchWriter(env.getTable(), new BatchWriterConfig());
     sbw = new SharedBatchWriter(bw);

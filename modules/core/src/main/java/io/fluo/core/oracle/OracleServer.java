@@ -150,7 +150,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     if (!started)
       throw new IllegalStateException();
 
-    if (!id.equals(env.getFluoInstanceID())) {
+    if (!id.equals(env.getFluoApplicationID())) {
       throw new IllegalArgumentException();
     }
 
@@ -215,7 +215,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     InetSocketAddress addr = startServer();
 
-    curatorFramework = CuratorUtil.newFluoCurator(env.getConfiguration());
+    curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
 

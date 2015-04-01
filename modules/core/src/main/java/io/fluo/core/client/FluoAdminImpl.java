@@ -64,7 +64,7 @@ public class FluoAdminImpl implements FluoAdmin {
   private final CuratorFramework rootCurator;
   private CuratorFramework fluoCurator = null;
 
-  private final String zkRoot;
+  private final String appRootDir;
   
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
@@ -72,14 +72,14 @@ public class FluoAdminImpl implements FluoAdmin {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
 
-    zkRoot = ZookeeperUtil.parseRoot(config.getZookeepers());
+    appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
     rootCurator = CuratorUtil.newRootFluoCurator(config);
     rootCurator.start();
   }
 
   private synchronized CuratorFramework getFluoCurator() {
     if (fluoCurator == null) {
-      fluoCurator = CuratorUtil.newFluoCurator(config);
+      fluoCurator = CuratorUtil.newAppCurator(config);
       fluoCurator.start();
     }
     return fluoCurator;
@@ -87,11 +87,11 @@ public class FluoAdminImpl implements FluoAdmin {
   
   @Override
   public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException {
-    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getZookeepers()).equals("/"),
+    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers()).equals("/"),
         "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
-      throw new AlreadyInitializedException("Fluo instance already initialized at " + config.getZookeepers());
+      throw new AlreadyInitializedException("Fluo application already initialized at " + config.getAppZookeepers());
     }
 
     Connector conn = AccumuloUtil.getConnector(config);
@@ -104,7 +104,7 @@ public class FluoAdminImpl implements FluoAdmin {
     // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
 
     if (tableExists) {
-      logger.info("Accumulo table {} will be dropped and created as requested by user", config.getAccumuloTable());
+      logger.info("The Accumulo table '{}' will be dropped and created as requested by user", config.getAccumuloTable());
       try {
         conn.tableOperations().delete(config.getAccumuloTable());
       } catch (Exception e) {
@@ -113,13 +113,13 @@ public class FluoAdminImpl implements FluoAdmin {
     }
 
     try {
-      if (rootCurator.checkExists().forPath(zkRoot) != null) {
-        logger.info("Clearing Fluo instance in Zookeeper at {}", config.getZookeepers());
-        rootCurator.delete().deletingChildrenIfNeeded().forPath(zkRoot);
+      if (rootCurator.checkExists().forPath(appRootDir) != null) {
+        logger.info("Clearing Fluo '{}' application in Zookeeper at {}", config.getApplicationName(), config.getAppZookeepers());
+        rootCurator.delete().deletingChildrenIfNeeded().forPath(appRootDir);
       }
     } catch (KeeperException.NoNodeException nne) {
     } catch (Exception e) {
-      logger.error("An error occurred deleting Zookeeper root of [" + config.getZookeepers() + "], error=[" + e.getMessage() + "]");
+      logger.error("An error occurred deleting Zookeeper root of [" + config.getAppZookeepers() + "], error=[" + e.getMessage() + "]");
       throw new RuntimeException(e);
     }
 
@@ -148,10 +148,10 @@ public class FluoAdminImpl implements FluoAdmin {
 
     final String accumuloInstanceName = conn.getInstance().getInstanceName();
     final String accumuloInstanceID = conn.getInstance().getInstanceID();
-    final String fluoInstanceID = UUID.randomUUID().toString();
+    final String fluoApplicationID = UUID.randomUUID().toString();
 
     // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
-    CuratorUtil.putData(rootCurator, zkRoot, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(rootCurator, appRootDir, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
 
     // Retrieve Fluo curator now that chroot has been created
     CuratorFramework curator = getFluoCurator();
@@ -162,7 +162,7 @@ public class FluoAdminImpl implements FluoAdmin {
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable().getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME, accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID, accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
-    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_INSTANCE_ID, fluoInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_APPLICATION_ID, fluoApplicationID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_SERVER, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'}, CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'}, CuratorUtil.NodeExistsPolicy.FAIL);
@@ -176,7 +176,7 @@ public class FluoAdminImpl implements FluoAdmin {
     conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
 
     IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setZookeepers(gcIter, config.getZookeepers());
+    GarbageCollectionIterator.setZookeepers(gcIter, config.getAppZookeepers());
 
     conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter, EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
 
@@ -254,7 +254,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
   public boolean zookeeperInitialized() {
     try {
-      return rootCurator.checkExists().forPath(zkRoot) != null;
+      return rootCurator.checkExists().forPath(appRootDir) != null;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

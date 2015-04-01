@@ -55,9 +55,11 @@ then
   exit 1
 fi
 
-# Set up FLUO_LOG_DIR and make sure it exists
-if [ -z ${FLUO_LOG_DIR} ]; then
-   FLUO_LOG_DIR=$FLUO_HOME/logs
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  export MD5=md5
+  export SED="sed -i .bak"
+else
+  export MD5=md5sum
+  export SED="sed -i"
 fi
-mkdir -p $FLUO_LOG_DIR 2>/dev/null
-export FLUO_LOG_DIR
+

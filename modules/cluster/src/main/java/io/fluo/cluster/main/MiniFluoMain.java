@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.fluo.cluster.mini;
+package io.fluo.cluster.main;
 
 import java.io.File;
 
 import com.beust.jcommander.JCommander;
+import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.ClusterUtil;
-import org.apache.commons.io.FileUtils;
+import io.fluo.api.mini.MiniFluo;
+import io.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Administers MiniFluo
+ * Main method for MiniFluo
  */
-public class MiniAdmin {
+public class MiniFluoMain {
   
-  private static final Logger log = LoggerFactory.getLogger(MiniAdmin.class);
-  
+  private static final Logger log = LoggerFactory.getLogger(MiniFluoMain.class);
+
   public static void main(String[] args) {
-    
-    MiniOptions options = new MiniOptions();
+
     try {
+      MainOptions options = new MainOptions();
       JCommander jcommand = new JCommander(options, args);
 
       if (options.help) {
@@ -43,22 +44,22 @@ public class MiniAdmin {
       }
       options.validateConfig();
 
-      ClusterUtil.verifyConfigPathsExist(options.getFluoProps());
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
-
-      switch (options.getCommand().toLowerCase()) {
-        case "stop":
-          File dataDir = new File(config.getMiniDataDir());
-          if (dataDir.exists() && config.getMiniStartAccumulo()) {
-            FileUtils.deleteDirectory(dataDir);
-          }
-          break;
-        default:
-          log.error("Unknown command: " + options.getCommand());
-          break;
+      if (!config.hasRequiredMiniFluoProps()) {
+        log.error("Failed to start MiniFluo - fluo.properties is missing required properties for MiniFluo");
+        System.exit(-1);
+      }
+      try (MiniFluo mini = FluoFactory.newMiniFluo(config)) {
+        log.info("MiniFluo is running");
+        
+        while (true) {
+          UtilWaitThread.sleep(1000);
+        }
       }
     } catch (Exception e) {
-      log.error("Exception running MiniAdmin: ", e);
+      log.error("Exception running MiniFluo: ", e);
     }
+    
+    log.info("MiniFluo is exiting.");
   }
 }

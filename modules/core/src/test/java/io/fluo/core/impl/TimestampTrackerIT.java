@@ -108,7 +108,7 @@ public class TimestampTrackerIT extends ITBaseImpl {
   }
 
   private long getOldestTs() {
-    return ZookeeperUtil.getOldestTimestamp(config.getZookeepers());
+    return ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
   }
 
   private boolean zkNodeExists(TimestampTracker tracker) throws Exception {
