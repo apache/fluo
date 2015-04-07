@@ -18,9 +18,7 @@ package io.fluo.cluster.runner;
 import java.io.File;
 import java.io.IOException;
 
-import io.fluo.api.client.FluoFactory;
-import io.fluo.api.mini.MiniFluo;
-import io.fluo.core.util.UtilWaitThread;
+import io.fluo.api.config.FluoConfiguration;
 import org.apache.commons.io.FileUtils;
 
 /**
@@ -28,8 +26,8 @@ import org.apache.commons.io.FileUtils;
  */
 public class MiniAppRunner extends AppRunner {
 
-  public MiniAppRunner(String fluoHomeDir, String appName) {
-    super("mini-fluo", fluoHomeDir, appName);
+  public MiniAppRunner(FluoConfiguration config) {
+    super(config, "mini-fluo");
   }
 
   public void cleanup() {

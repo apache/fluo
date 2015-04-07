@@ -22,6 +22,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.runner.MiniAppRunner;
+import io.fluo.cluster.util.FluoPath;
 import io.fluo.core.mini.MiniFluoImpl;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,9 @@ public class MiniFluoCommand {
       }
     }
 
-    MiniAppRunner runner = new MiniAppRunner(fluoHomeDir, appName);
+    FluoPath cu = new FluoPath(fluoHomeDir, appName);
+
+    MiniAppRunner runner = new MiniAppRunner(cu.getAppConfiguration());
 
     switch (command.toLowerCase()) {
       case "scan":

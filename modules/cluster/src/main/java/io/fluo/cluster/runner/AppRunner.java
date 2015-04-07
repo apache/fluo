@@ -17,13 +17,13 @@ package io.fluo.cluster.runner;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.google.common.annotations.VisibleForTesting;
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -35,60 +35,30 @@ import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.core.impl.Environment;
+import io.fluo.core.util.ByteUtil;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for running a Fluo application
  */
 public abstract class AppRunner {
 
-  protected String fluoHomeDir;
+  private static final Logger log = LoggerFactory.getLogger(AppRunner.class);
+  private static final long MIN_SLEEP_SEC = 10;
+  private static final long MAX_SLEEP_SEC = 300;
+
   protected FluoConfiguration config;
-  private String appName;
   private String scriptName;
 
-  public AppRunner(String scriptName, String fluoHomeDir, FluoConfiguration config) {
-    this.scriptName = scriptName;
-    this.fluoHomeDir = fluoHomeDir;
+  public AppRunner(FluoConfiguration config, String scriptName) {
     this.config = config;
-    this.appName = config.getApplicationName();
-  }
-
-  public AppRunner(String scriptName, String fluoHomeDir, String appName) {
     this.scriptName = scriptName;
-    this.fluoHomeDir = fluoHomeDir;
-    this.appName = appName;
-    File appPropsPath = new File(getAppPropsPath());
-    if (!appPropsPath.exists()) {
-      throw new IllegalStateException(appName + " application does not have a config path " + getAppPropsPath());
-    }
-    this.config = new FluoConfiguration(appPropsPath);
-    if (!config.getApplicationName().equals(appName)) {
-      throw new IllegalStateException("Application name in config '" + config.getApplicationName() + "' does not match given appName: " + appName);
-    }
-  }
-
-  public String getConfDir() {
-    return fluoHomeDir + "/conf";
-  }
-
-  public String getLibDir() {
-    return fluoHomeDir + "/lib";
-  }
-
-  public String getAppsDir() {
-    return fluoHomeDir + "/apps";
-  }
-
-  public String getAppPropsPath() {
-    return getAppConfDir() + "/fluo.properties";
-  }
-
-  public String getAppConfDir() {
-    return String.format("%s/%s/conf", getAppsDir(), appName);
-  }
-
-  public String getAppLibDir() {
-    return String.format("%s/%s/lib", getAppsDir(), appName);
   }
 
   public FluoConfiguration getConfiguration() {
@@ -136,11 +106,11 @@ public abstract class AppRunner {
     return scanConfig;
   }
 
-  public void scan(String[] args) {
-    scan(config, args);
+  public long scan(String[] args) {
+    return scan(config, args);
   }
 
-  public void scan(FluoConfiguration config, String[] args) {
+  public long scan(FluoConfiguration config, String[] args) {
 
     ScanOptions options = new ScanOptions();
     JCommander jcommand = new JCommander(options);
@@ -164,6 +134,7 @@ public abstract class AppRunner {
 
     System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName() + "' application.");
 
+    long entriesFound = 0;
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
 
@@ -177,7 +148,7 @@ public abstract class AppRunner {
 
         RowIterator iter = s.get(scanConfig);
 
-        if (iter.hasNext() == false) {
+        if (!iter.hasNext()) {
           System.out.println("\nNo data found\n");
         }
 
@@ -187,16 +158,14 @@ public abstract class AppRunner {
           while (citer.hasNext() && !System.out.checkError()) {
             Map.Entry<Column,Bytes> colEntry = citer.next();
             System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t" + colEntry.getValue());
+            entriesFound++;
           }
         }
       } catch (FluoException e) {
         System.out.println("Scan failed - " + e.getMessage());
       }
     }
-  }
-
-  public void classpath(String[] args) {
-    classpath(scriptName, fluoHomeDir, args);
+    return entriesFound;
   }
 
   private static void appendLib(StringBuilder classpath, String libDirName, boolean useLibJarsFormat) {
@@ -208,20 +177,22 @@ public abstract class AppRunner {
 
     if (useLibJarsFormat) {
       File[] files = libDir.listFiles();
-      Arrays.sort(files);
-      for (File f : files) {
-        if (f.isFile() && f.getName().endsWith(".jar")) {
-          if (classpath.length() != 0) {
-            classpath.append(",");
+      if (files != null) {
+        Arrays.sort(files);
+        for (File f : files) {
+          if (f.isFile() && f.getName().endsWith(".jar")) {
+            if (classpath.length() != 0) {
+              classpath.append(",");
+            }
+            classpath.append(f.getAbsolutePath());
           }
-          classpath.append(f.getAbsolutePath());
         }
       }
     } else {
       if (classpath.length() != 0) {
         classpath.append(":");
       }
-      classpath.append(libDir.getAbsolutePath() + "/*");
+      classpath.append(libDir.getAbsolutePath()).append("/*");
     }
   }
 
@@ -253,5 +224,65 @@ public abstract class AppRunner {
     }
 
     System.out.println(classpath.toString());
+  }
+
+  private long calculateSleep(long notifyCount, long numWorkers) {
+    long sleep = notifyCount / numWorkers / 100;
+    if (sleep < MIN_SLEEP_SEC) {
+      return MIN_SLEEP_SEC;
+    } else if (sleep > MAX_SLEEP_SEC) {
+      return MAX_SLEEP_SEC;
+    }
+    return sleep;
+  }
+
+  @VisibleForTesting
+  public long countNotifications(Environment env) {
+    Scanner scanner = null;
+    try {
+      scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    } catch (TableNotFoundException e) {
+      log.error("An exception was thrown -", e);
+      System.exit(-1);
+    }
+    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
+
+    long count = 0;
+    for (Iterator<Map.Entry<Key,Value>> iterator = scanner.iterator(); iterator.hasNext(); iterator.next()) {
+      count++;
+    }
+    return count;
+  }
+
+  public void waitUntilFinished() {
+    FluoConfiguration waitConfig = new FluoConfiguration(config);
+    waitConfig.setClientRetryTimeout(500);
+    try (Environment env = new Environment(waitConfig)) {
+      log.info("The wait command will exit when all notifications are processed");
+      while (true) {
+        long ts1 = env.getSharedResources().getOracleClient().getTimestamp();
+        long ntfyCount = countNotifications(env);
+        long ts2 = env.getSharedResources().getOracleClient().getTimestamp();
+        if (ntfyCount == 0 && ts1 == (ts2 - 1)) {
+          log.info("All processing has finished!");
+          break;
+        }
+
+        try {
+          long sleepSec = calculateSleep(ntfyCount, waitConfig.getWorkerInstances());
+          log.info("{} notifications are still outstanding.  Will try again in {} seconds...", ntfyCount, sleepSec);
+          Thread.sleep(1000 * sleepSec);
+        } catch (InterruptedException e) {
+          log.error("Sleep was interrupted!  Exiting...");
+          System.exit(-1);
+        }
+      }
+    } catch (FluoException e) {
+      log.error(e.getMessage());
+      System.exit(-1);
+    } catch (Exception e) {
+      log.error("An exception was thrown -", e);
+      System.exit(-1);
+    }
   }
 }

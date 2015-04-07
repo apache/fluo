@@ -123,6 +123,24 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>org.apache.accumulo</groupId>
+          <artifactId>accumulo-maven-plugin</artifactId>
+          <version>${accumulo.version}</version>
+          <configuration>
+            <instanceName>it-instance-maven</instanceName>
+            <rootPassword>ITSecret</rootPassword>
+          </configuration>
+          <executions>
+            <execution>
+              <id>run-plugin</id>
+              <goals>
+                <goal>start</goal>
+                <goal>stop</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <configuration>

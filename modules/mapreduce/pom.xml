@@ -34,6 +34,7 @@
 
   <profiles>
     <profile>
+      <id>mini-accumulo</id>
       <activation>
         <property>
           <name>!skipTests</name>
@@ -44,20 +45,6 @@
           <plugin>
             <groupId>org.apache.accumulo</groupId>
             <artifactId>accumulo-maven-plugin</artifactId>
-            <version>${accumulo.version}</version>
-            <configuration>
-              <instanceName>it-instance-maven</instanceName>
-              <rootPassword>ITSecret</rootPassword>
-            </configuration>
-            <executions>
-              <execution>
-                <id>run-plugin</id>
-                <goals>
-                  <goal>start</goal>
-                  <goal>stop</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
