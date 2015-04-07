@@ -30,26 +30,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Preconditions;
-import org.apache.accumulo.core.data.ByteSequence;
-import org.apache.hadoop.io.WritableUtils;
 
 /**
- * Represents bytes in Fluo. Similar to an Accumulo {@link ByteSequence}. Bytes is immutable after it is created. {@link Bytes.EMPTY} is used to represent a
+ * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is created. {@link Bytes.EMPTY} is used to represent a
  * Bytes object with no data.
  */
 public abstract class Bytes implements Comparable<Bytes> {
   
   private static final String BYTES_FACTORY_CLASS = "io.fluo.accumulo.data.MutableBytesFactory";
+  private static final String WRITE_UTIL_CLASS = "io.fluo.accumulo.data.WriteUtilImpl";
 
   public interface BytesFactory {
     Bytes get(byte[] data);
   }
 
+  public interface WriteUtil {
+    void writeVInt(DataOutput stream, int i) throws IOException;
+    int readVInt(DataInput stream) throws IOException;
+  }
+
   private static BytesFactory bytesFactory;
+  private static WriteUtil writeUtil;
 
   static {
     try {
       bytesFactory = (BytesFactory) Class.forName(BYTES_FACTORY_CLASS).getDeclaredConstructor().newInstance();
+      writeUtil = (WriteUtil) Class.forName(WRITE_UTIL_CLASS).getDeclaredConstructor().newInstance();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -215,7 +221,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @throws IOException
    */
   final public static void write(DataOutput out, Bytes b) throws IOException {
-    WritableUtils.writeVInt(out, b.length());
+    writeUtil.writeVInt(out, b.length());
     for (int i = 0; i < b.length(); i++) {
       out.write(b.byteAt(i) & 0xff);
     }
@@ -229,7 +235,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @throws IOException
    */
   final public static Bytes read(DataInput in) throws IOException {
-    int len = WritableUtils.readVInt(in);
+    int len = writeUtil.readVInt(in);
     byte b[] = new byte[len];
     in.readFully(b);
     return of(b);
@@ -248,7 +254,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       DataOutputStream dos = new DataOutputStream(baos);
       
       for (Bytes b : listOfBytes) {
-        WritableUtils.writeVInt(dos, b.length());
+        writeUtil.writeVInt(dos, b.length());
         dos.write(b.toArray());
       }
       
@@ -275,7 +281,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     
     try {
       while (true) {
-        int len = WritableUtils.readVInt(dis);
+        int len = writeUtil.readVInt(dis);
         // TODO could get pointers into original byte seq
         byte field[] = new byte[len];
         dis.readFully(field);
@@ -289,5 +295,3 @@ public abstract class Bytes implements Comparable<Bytes> {
     return ret;
   }
 }
-
-
