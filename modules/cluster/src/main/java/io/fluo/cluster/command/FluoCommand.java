@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import io.fluo.cluster.runner.AppRunner;
 import io.fluo.cluster.runner.YarnAppRunner;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,9 @@ public class FluoCommand {
       for (String logger : new String[]{ Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
         ((Logger)LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
       }
+    } else if (command.equalsIgnoreCase("classpath")) {
+      AppRunner.classpath("fluo", fluoHomeDir, remainArgs);
+      return;
     }
 
     try (YarnAppRunner runner = new YarnAppRunner(fluoHomeDir, appName, hadoopPrefix)) {

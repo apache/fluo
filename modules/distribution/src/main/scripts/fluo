@@ -118,7 +118,7 @@ start|stop|kill|status|info|scan)
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $@
   ;;
 classpath)
-  "$bin"/impl/classpath.sh ${*:2}
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $1 app ${*:2}
   ;;
 *)
   print_usage

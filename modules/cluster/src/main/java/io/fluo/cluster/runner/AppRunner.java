@@ -16,6 +16,7 @@
 package io.fluo.cluster.runner;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public abstract class AppRunner {
     this.appName = appName;
     File appPropsPath = new File(getAppPropsPath());
     if (!appPropsPath.exists()) {
-      throw new IllegalStateException(appName+" application does not have a config path " + getAppPropsPath());
+      throw new IllegalStateException(appName + " application does not have a config path " + getAppPropsPath());
     }
     this.config = new FluoConfiguration(appPropsPath);
     if (!config.getApplicationName().equals(appName)) {
@@ -93,8 +94,6 @@ public abstract class AppRunner {
   public FluoConfiguration getConfiguration() {
     return config;
   }
-
-
 
   public static ScannerConfiguration buildScanConfig(ScanOptions options) {
     ScannerConfiguration scanConfig = new ScannerConfiguration();
@@ -194,5 +193,65 @@ public abstract class AppRunner {
         System.out.println("Scan failed - " + e.getMessage());
       }
     }
+  }
+
+  public void classpath(String[] args) {
+    classpath(scriptName, fluoHomeDir, args);
+  }
+
+  private static void appendLib(StringBuilder classpath, String libDirName, boolean useLibJarsFormat) {
+    File libDir = new File(libDirName);
+    if (!libDir.exists()) {
+      System.err.println("ERROR - Directory needed for classpath does not exist: " + libDirName);
+      System.exit(-1);
+    }
+
+    if (useLibJarsFormat) {
+      File[] files = libDir.listFiles();
+      Arrays.sort(files);
+      for (File f : files) {
+        if (f.isFile() && f.getName().endsWith(".jar")) {
+          if (classpath.length() != 0) {
+            classpath.append(",");
+          }
+          classpath.append(f.getAbsolutePath());
+        }
+      }
+    } else {
+      if (classpath.length() != 0) {
+        classpath.append(":");
+      }
+      classpath.append(libDir.getAbsolutePath() + "/*");
+    }
+  }
+
+  public static void classpath(String scriptName, String fluoHomeDir, String[] args) {
+    ClasspathOptions options = new ClasspathOptions();
+    JCommander jcommand = new JCommander(options);
+    jcommand.setProgramName(scriptName + " classpath");
+    try {
+      jcommand.parse(args);
+    } catch (ParameterException e) {
+      System.err.println(e.getMessage());
+      jcommand.usage();
+      System.exit(-1);
+    }
+
+    if (options.help) {
+      jcommand.usage();
+      System.exit(0);
+    }
+
+    StringBuilder classpath = new StringBuilder();
+
+    appendLib(classpath, fluoHomeDir + "/lib/fluo-client", options.getLibJars());
+    if (options.getAccumulo()) {
+      appendLib(classpath, fluoHomeDir + "/lib/accumulo", options.getLibJars());
+    }
+    if (options.getZookeepers()) {
+      appendLib(classpath, fluoHomeDir + "/lib/zookeeper", options.getLibJars());
+    }
+
+    System.out.println(classpath.toString());
   }
 }
