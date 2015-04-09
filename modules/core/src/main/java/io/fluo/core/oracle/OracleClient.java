@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.codahale.metrics.Histogram;
@@ -84,7 +85,7 @@ public class OracleClient implements AutoCloseable {
       try {
         synchronized (this) {
           //want this code to be mutually exclusive with close() .. so if in middle of setup, close method will wait till finished 
-          if(closed){
+          if(closed.get()){
             return;
           }
           
@@ -105,9 +106,12 @@ public class OracleClient implements AutoCloseable {
           connect();  
         }
         doWork();
-
       } catch (Exception e) {
-        e.printStackTrace();
+        if (!closed.get()) {
+          log.error("Exception occurred in run() method", e);
+        } else {
+          log.debug("Exception occurred in run() method", e);
+        }
       }
     }
 
@@ -141,7 +145,7 @@ public class OracleClient implements AutoCloseable {
           request.clear();
           TimeRequest trh = null;
           while(trh == null){
-            if(closed){
+            if(closed.get()){
               return;
             }
             trh = queue.poll(1, TimeUnit.SECONDS);
@@ -180,7 +184,7 @@ public class OracleClient implements AutoCloseable {
               log.info("Oracle connection lost. Retrying...");
               reconnect();
             } catch (TException e) {
-              e.printStackTrace();
+              log.error("TException occurred in doWork() method", e);
             }
           }
 
@@ -190,12 +194,13 @@ public class OracleClient implements AutoCloseable {
             tr.cdl.countDown();
           }
         } catch (InterruptedException e) {
-          if(closed){
-            return;
+          if(!closed.get()){
+            log.error("InterruptedException occurred in doWork() method", e);
+          } else {
+            log.debug("InterruptedException occurred in doWork() method", e);
           }
-          e.printStackTrace();
         } catch (Exception e) {
-          e.printStackTrace();
+          log.error("Exception occurred in doWork() method", e);
         }
       }
     }
@@ -285,7 +290,7 @@ public class OracleClient implements AutoCloseable {
      * Sleep a random amount of time from 100ms to 1sec
      */
     private void sleepRandom() {
-      UtilWaitThread.sleep(100 + (long) (1000 * Math.random()));
+      UtilWaitThread.sleep(100 + (long) (1000 * Math.random()), closed);
     }
 
     private boolean isLeader(Participant participant) {
@@ -304,7 +309,7 @@ public class OracleClient implements AutoCloseable {
   private final Environment env;
   private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
   private final Thread thread;
-  private volatile boolean closed = false;
+  private AtomicBoolean closed = new AtomicBoolean(false);
   private final TimestampRetriever timestampRetriever;
 
   public OracleClient(Environment env) {
@@ -358,15 +363,15 @@ public class OracleClient implements AutoCloseable {
   }
 
   private void checkClosed(){
-    if(closed){
+    if(closed.get()){
       throw new IllegalStateException(OracleClient.class.getSimpleName()+" is closed");
     }
   }
   
   @Override
   public void close() {
-    if(!closed){
-      closed = true;
+    if(!closed.get()){
+      closed.set(true);
       try {
         thread.interrupt();
         thread.join();

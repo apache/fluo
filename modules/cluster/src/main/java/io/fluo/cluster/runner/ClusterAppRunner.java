@@ -31,12 +31,11 @@ import io.fluo.core.client.FluoAdminImpl;
  */
 public abstract class ClusterAppRunner extends AppRunner {
 
-  public ClusterAppRunner(String scriptName, String fluoHomeDir, FluoConfiguration config) {
-    super(scriptName, fluoHomeDir, config);
-  }
+  private String appPropsPath;
 
-  public ClusterAppRunner(String scriptName, String fluoHomeDir, String appName) {
-    super(scriptName, fluoHomeDir, appName);
+  public ClusterAppRunner(FluoConfiguration config, String scriptName, String appPropsPath) {
+    super(config, scriptName);
+    this.appPropsPath = appPropsPath;
   }
 
   public abstract void start();
@@ -114,16 +113,16 @@ public abstract class ClusterAppRunner extends AppRunner {
     }
 
     if (!config.hasRequiredAdminProps()) {
-      System.err.println("Error - Required properties are not set in " + getAppPropsPath());
+      System.err.println("Error - Required properties are not set in " + appPropsPath);
       System.exit(-1);
     }
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties ("+getAppPropsPath()+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties ("+appPropsPath+") due to "+ e.getMessage());
       System.exit(-1);
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties ("+getAppPropsPath()+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties ("+appPropsPath+") due to "+ e.getMessage());
       e.printStackTrace();
       System.exit(-1);
     }
@@ -138,7 +137,7 @@ public abstract class ClusterAppRunner extends AppRunner {
       FluoAdmin.InitOpts initOpts = new FluoAdmin.InitOpts();
 
       if (commandOpts.getUpdate()) {
-        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName() + "' application in Zookeeper using " + getAppPropsPath());
+        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName() + "' application in Zookeeper using " + appPropsPath);
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
@@ -173,7 +172,7 @@ public abstract class ClusterAppRunner extends AppRunner {
         }
       }
 
-      System.out.println("Initializing Fluo '" + config.getApplicationName()+ "' application using " + getAppPropsPath());
+      System.out.println("Initializing Fluo '" + config.getApplicationName()+ "' application using " + appPropsPath);
       try {
         admin.initialize(initOpts);
       } catch (Exception e) {

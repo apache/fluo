@@ -26,6 +26,7 @@ import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.main.FluoOracleMain;
 import io.fluo.cluster.main.FluoWorkerMain;
+import io.fluo.cluster.util.FluoPath;
 import io.fluo.cluster.yarn.FluoTwillApp;
 import io.fluo.cluster.yarn.TwillUtil;
 import io.fluo.core.client.FluoAdminImpl;
@@ -50,15 +51,12 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   private static final Logger log = LoggerFactory.getLogger(YarnAppRunner.class);
   private TwillRunnerService twillRunner;
   private CuratorFramework curator;
+  private FluoPath fluoPath;
   private String hadoopPrefix;
 
-  public YarnAppRunner(String fluoHomeDir, FluoConfiguration config, String hadoopPrefix) {
-    super("fluo", fluoHomeDir, config);
-    this.hadoopPrefix = hadoopPrefix;
-  }
-
-  public YarnAppRunner(String fluoHomeDir, String appName, String hadoopPrefix) {
-    super("fluo", fluoHomeDir, appName);
+  public YarnAppRunner(FluoConfiguration config, FluoPath fluoPath, String hadoopPrefix) {
+    super(config, "fluo", fluoPath.getAppPropsPath());
+    this.fluoPath = fluoPath;
     this.hadoopPrefix = hadoopPrefix;
   }
 
@@ -102,7 +100,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   @Override
   public void start() {
     checkIfInitialized();
-    TwillPreparer preparer = null;
+    TwillPreparer preparer;
 
     if (twillIdExists()) {
       String runId = getTwillId();
@@ -134,25 +132,31 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       System.exit(-1);
     }
 
-    preparer = getTwillRunner().prepare(new FluoTwillApp(config, getAppConfDir()));
+    preparer = getTwillRunner().prepare(new FluoTwillApp(config, fluoPath.getAppConfDir()));
 
     // Add jars from fluo lib/ directory that are not being loaded by Twill.
     try {
-      File libDir = new File(getLibDir());
-      for (File f : libDir.listFiles()) {
-        if (f.isFile()) {
-          String jarPath = "file:" + f.getCanonicalPath();
-          log.trace("Adding library jar (" + f.getName() + ") to Fluo application.");
-          preparer.withResources(new URI(jarPath));
+      File libDir = new File(fluoPath.getLibDir());
+      File[] libFiles = libDir.listFiles();
+      if (libFiles != null) {
+        for (File f : libFiles) {
+          if (f.isFile()) {
+            String jarPath = "file:" + f.getCanonicalPath();
+            log.trace("Adding library jar (" + f.getName() + ") to Fluo application.");
+            preparer.withResources(new URI(jarPath));
+          }
         }
       }
 
       // Add jars found in application's lib dir
-      File observerDir = new File(getAppLibDir());
-      for (File f : observerDir.listFiles()) {
-        String jarPath = "file:" + f.getCanonicalPath();
-        log.debug("Adding application jar (" + f.getName() + ") to Fluo application.");
-        preparer.withResources(new URI(jarPath));
+      File appLibDir = new File(fluoPath.getAppLibDir());
+      File[] appFiles = appLibDir.listFiles();
+      if (appFiles != null) {
+        for (File f : appFiles) {
+          String jarPath = "file:" + f.getCanonicalPath();
+          log.debug("Adding application jar (" + f.getName() + ") to Fluo application.");
+          preparer.withResources(new URI(jarPath));
+        }
       }
     } catch (Exception e) {
       throw new IllegalStateException(e);
@@ -169,7 +173,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       String twillId = controller.getRunId().toString();
       CuratorUtil.putData(getCurator(), ZookeeperPath.YARN_TWILL_ID, twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
 
-      while (controller.isRunning() == false) {
+      while (!controller.isRunning()) {
         Thread.sleep(500);
       }
       // set app id in zookeeper
@@ -180,7 +184,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
       log.info("Waiting for all desired containers to start...");
       int checks = 0;
-      while (allContainersRunning(controller) == false) {
+      while (!allContainersRunning(controller)) {
         Thread.sleep(500);
         checks++;
         if (checks == 30) {
@@ -236,7 +240,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
   public void status(boolean extraInfo) {
     checkIfInitialized();
-    if (twillIdExists() == false) {
+    if (!twillIdExists()) {
       System.out.print("A Fluo '" + config.getApplicationName() + "' application is not running in YARN.");
       return;
     }
@@ -249,7 +253,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       Service.State state = controller.state();
       System.out.println("A Fluo '" + config.getApplicationName() + "' application is " + state + " in YARN " + getFullInfo());
 
-      if (state.equals(Service.State.RUNNING) && (allContainersRunning(controller) == false)) {
+      if (state.equals(Service.State.RUNNING) && !allContainersRunning(controller)) {
         System.out.println("\nWARNING - The Fluo application is not running all desired containers!  YARN may not have enough available resources.  Application is currently running "
             + containerStatus(controller));
       }
@@ -267,7 +271,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   }
 
   private String verifyTwillId() {
-    if (twillIdExists() == false) {
+    if (!twillIdExists()) {
       System.err.println("WARNING - A YARN application is not referenced in Zookeeper for this Fluo application.  Check if there is a Fluo application "
           + "running in YARN using the command 'yarn application -list`. If so, verify that your fluo.properties is configured correctly.");
       System.exit(-1);

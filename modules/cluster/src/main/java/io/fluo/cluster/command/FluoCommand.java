@@ -22,6 +22,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.fluo.cluster.runner.AppRunner;
 import io.fluo.cluster.runner.YarnAppRunner;
+import io.fluo.cluster.util.FluoPath;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -42,6 +43,8 @@ public class FluoCommand {
     String appName = args[3];
     String[] remainArgs = Arrays.copyOfRange(args, 4, args.length);
 
+    FluoPath fluoPath = new FluoPath(fluoHomeDir, appName);
+
     if (command.equalsIgnoreCase("scan")) {
       for (String logger : new String[]{ Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
         ((Logger)LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
@@ -51,7 +54,7 @@ public class FluoCommand {
       return;
     }
 
-    try (YarnAppRunner runner = new YarnAppRunner(fluoHomeDir, appName, hadoopPrefix)) {
+    try (YarnAppRunner runner = new YarnAppRunner(fluoPath.getAppConfiguration(), fluoPath, hadoopPrefix)) {
       switch (command.toLowerCase()) {
         case "init":
           runner.init(remainArgs);
@@ -74,13 +77,20 @@ public class FluoCommand {
         case "info":
           runner.status(true);
           break;
+        case "wait":
+          runner.waitUntilFinished();
+          break;
         default:
           System.err.println("Unknown command: " + command);
           break;
       }
     } catch (Exception e) {
-      System.err.println("Command caused exception below:");
+      System.err.println("Command failed due to exception below:");
       e.printStackTrace();
+      System.exit(-1);
     }
+
+    // TODO FLUO-464 - Speed up exit and remove System.exit() below
+    System.exit(0);
   }
 }
