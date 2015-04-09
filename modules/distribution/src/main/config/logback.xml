@@ -15,7 +15,7 @@
 -->
 
 <!--
-This file configures logging for the Fluo oracle and workers (when using 'fluo yarn' & 'fluo local' commands)
+This file configures logging for the Fluo oracle and workers (when using 'fluo' & 'local-fluo' commands)
 -->
 <configuration>
 

@@ -188,7 +188,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
         Thread.sleep(500);
         checks++;
         if (checks == 30) {
-          log.warn("Still waiting... YARN may not have enough resources available for this application.  Use ctrl-c to stop waiting and check status using 'fluo yarn info'.");
+          log.warn("Still waiting... YARN may not have enough resources available for this application.  Use ctrl-c to stop waiting and check status using 'fluo info <app>'.");
         }
       }
       log.info("All desired containers are running in YARN " + getAppInfo());
@@ -248,7 +248,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     TwillController controller = getTwillRunner().lookup(config.getApplicationName(), RunIds.fromString(twillId));
     if (controller == null) {
       logExistsButNotRunning();
-      System.err.println("You can clean up this reference by running 'fluo yarn stop' or 'fluo yarn kill'.");
+      System.err.println("You can clean up this reference by running 'fluo stop <app>' or 'fluo kill <app>'.");
     } else {
       Service.State state = controller.state();
       System.out.println("A Fluo '" + config.getApplicationName() + "' application is " + state + " in YARN " + getFullInfo());
