@@ -70,9 +70,17 @@
   <dependencies>
     <dependency>
       <groupId>io.fluo</groupId>
+      <artifactId>fluo-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-accumulo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-metrics</artifactId>
     </dependency>
@@ -99,8 +107,49 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-framework</artifactId>
+    </dependency>
 
     <!-- Test Dependencies -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>

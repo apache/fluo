@@ -15,10 +15,14 @@
  */
 package io.fluo.core.util;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public class Halt {
-  static private final Logger log = Logger.getLogger(Halt.class);
+  static private final Marker fatal = MarkerFactory.getMarker("FATAL");
+  static private final Logger log = LoggerFactory.getLogger(Halt.class);
 
   private Halt() {}
 
@@ -26,7 +30,7 @@ public class Halt {
     halt(0, new Runnable() {
       @Override
       public void run() {
-        log.fatal(msg);
+        log.error(fatal, msg);
       }
     });
   }
@@ -35,7 +39,7 @@ public class Halt {
     halt(status, new Runnable() {
       @Override
       public void run() {
-        log.fatal(msg);
+        log.error(fatal, msg);
       }
     });
   }

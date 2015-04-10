@@ -23,7 +23,7 @@
     </encoder>
   </appender>
   
-  <logger name="io.fluo" level="debug"/>
+  <logger name="io.fluo" level="info"/>
   <logger name="org.apache.zookeeper" level="error"/>
   <logger name="org.apache.curator" level="error"/>
   <logger name="org.apache.hadoop.util.NativeCodeLoader" level="error"/>
