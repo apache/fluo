@@ -18,8 +18,6 @@ package io.fluo.api.iterator;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import io.fluo.api.iterator.ColumnIterator;
-
 import io.fluo.api.data.Bytes;
 
 /**

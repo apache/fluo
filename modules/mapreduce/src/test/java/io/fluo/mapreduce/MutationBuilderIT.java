@@ -15,17 +15,15 @@
  */
 package io.fluo.mapreduce;
 
-import io.fluo.core.TestTransaction;
-
-import io.fluo.core.ITBaseImpl;
-import io.fluo.mapreduce.MutationBuilder;
 import io.fluo.api.data.Bytes;
+import io.fluo.api.types.StringEncoder;
+import io.fluo.api.types.TypeLayer;
+import io.fluo.core.ITBaseImpl;
+import io.fluo.core.TestTransaction;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.junit.Assert;
 import org.junit.Test;
-import io.fluo.api.types.StringEncoder;
-import io.fluo.api.types.TypeLayer;
 
 public class MutationBuilderIT extends ITBaseImpl {
 

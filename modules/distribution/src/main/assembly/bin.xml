@@ -47,6 +47,7 @@
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <includes>
       	<include>io.fluo:fluo-api</include>
+        <include>io.fluo:fluo-accumulo</include>
       	<include>io.fluo:fluo-core</include>
         <include>io.fluo:fluo-mapreduce</include>
         <include>org.slf4j:slf4j-api</include>
