@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.metrics.config;
 
 import java.io.File;
@@ -91,8 +92,9 @@ public class Reporters implements AutoCloseable {
     }
 
     // see dropwizard PR #552 (https://github.com/dropwizard/dropwizard/pull/552)
-    if (domain == null)
+    if (domain == null) {
       domain = FluoConfiguration.FLUO_PREFIX;
+    }
     JmxReporter jmxReporter = JmxReporter.forRegistry(registry).inDomain(domain).build();
     jmxReporter.start();
     log.debug("Started reporter " + jmxReporter.getClass().getName());

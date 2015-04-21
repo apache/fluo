@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.client;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -75,16 +76,18 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public Snapshot newSnapshot() {
     TransactionImpl tx = new TransactionImpl(env);
-    if (TracingTransaction.isTracingEnabled())
+    if (TracingTransaction.isTracingEnabled()) {
       return new TracingTransaction(tx);
+    }
     return tx;
   }
 
   @Override
   public Transaction newTransaction() {
     TransactionImpl tx = new TransactionImpl(env);
-    if (TracingTransaction.isTracingEnabled())
+    if (TracingTransaction.isTracingEnabled()) {
       return new TracingTransaction(tx);
+    }
     return tx;
   }
 

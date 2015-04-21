@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.mapreduce;
 
 import java.io.ByteArrayInputStream;
@@ -108,8 +109,9 @@ public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
           ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
 
-          for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0]))
+          for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0])) {
             sc.fetchColumnFamily(Bytes.of(fam));
+          }
 
           rowIter = ti.get(sc);
         } catch (Exception e) {
@@ -171,7 +173,7 @@ public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
   public static void fetchFamilies(Job job, Bytes... fams) {
     // TODO support binary data
-    String sfams[] = new String[fams.length];
+    String[] sfams = new String[fams.length];
     for (int i = 0; i < sfams.length; i++) {
       sfams[i] = fams[i].toString();
     }

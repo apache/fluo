@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.client;
 
 import java.util.concurrent.ExecutorService;
@@ -49,13 +50,15 @@ public class LoaderExecutorImpl implements LoaderExecutor {
       return;
     }
 
-    if (numThreads <= 0)
+    if (numThreads <= 0) {
       throw new IllegalArgumentException(
           "numThreads must be positivie OR numThreads and queueSize must both be 0");
+    }
 
-    if (queueSize < 0)
+    if (queueSize < 0) {
       throw new IllegalArgumentException(
           "queueSize must be non-negative OR numThreads and queueSize must both be 0");
+    }
 
     this.env = env;
     this.semaphore = new Semaphore(numThreads + queueSize);
@@ -69,8 +72,9 @@ public class LoaderExecutorImpl implements LoaderExecutor {
     if (executor == null) {
       new LoadTask(loader, env).run();
     } else {
-      if (exceptionRef.get() != null)
+      if (exceptionRef.get() != null) {
         throw new RuntimeException(exceptionRef.get());
+      }
 
       final Runnable lt = new LoadTask(loader, env);
 
@@ -116,8 +120,9 @@ public class LoaderExecutorImpl implements LoaderExecutor {
       }
     }
 
-    if (exceptionRef.get() != null)
+    if (exceptionRef.get() != null) {
       throw new RuntimeException(exceptionRef.get());
+    }
   }
 
 }

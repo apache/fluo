@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -59,15 +60,17 @@ public class SharedBatchWriter {
           mQueue.drainTo(batches);
 
           for (MutationBatch mutationBatch : batches) {
-            if (mutationBatch != end)
+            if (mutationBatch != end) {
               bw.addMutations(mutationBatch.mutations);
+            }
           }
 
           bw.flush();
 
           for (MutationBatch mutationBatch : batches) {
-            if (mutationBatch == end)
+            if (mutationBatch == end) {
               keepRunning = false;
+            }
             mutationBatch.cdl.countDown();
           }
 
@@ -100,8 +103,9 @@ public class SharedBatchWriter {
 
   public void writeMutations(List<Mutation> ml) {
 
-    if (ml.size() == 0)
+    if (ml.size() == 0) {
       return;
+    }
 
     try {
       MutationBatch mb = new MutationBatch(ml);

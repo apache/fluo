@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.ByteArrayInputStream;
@@ -78,13 +79,15 @@ public class Environment implements AutoCloseable {
 
     readZookeeperConfig();
 
-    if (!conn.getInstance().getInstanceName().equals(accumuloInstance))
+    if (!conn.getInstance().getInstanceName().equals(accumuloInstance)) {
       throw new IllegalArgumentException("unexpected accumulo instance name "
           + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
+    }
 
-    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
+    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID)) {
       throw new IllegalArgumentException("unexpected accumulo instance id "
           + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
+    }
 
     try {
       resources = new SharedResources(this);

@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -110,8 +111,9 @@ public class FailureIT extends ITBaseImpl {
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
 
-    if (killTransactor)
+    if (killTransactor) {
       t2.close();
+    }
 
     TestTransaction tx3 = new TestTransaction(env);
     for (int r = 0; r < 10; r++) {
@@ -174,8 +176,9 @@ public class FailureIT extends ITBaseImpl {
     long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
-    if (killTransactor)
+    if (killTransactor) {
       t2.close();
+    }
 
     TestTransaction tx3 = new TestTransaction(env);
     for (int r = 0; r < 10; r++) {
@@ -191,8 +194,9 @@ public class FailureIT extends ITBaseImpl {
       Assert.assertEquals("1" + r + "1", tx4.get().row(r + "").col(col2).toString());
     }
 
-    if (!killTransactor)
+    if (!killTransactor) {
       t2.close();
+    }
   }
 
   @Test

@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.data;
 
 import io.fluo.accumulo.data.MutableBytes;

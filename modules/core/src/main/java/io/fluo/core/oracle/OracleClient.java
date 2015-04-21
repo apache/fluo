@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.oracle;
 
 import java.io.IOException;
@@ -94,8 +95,9 @@ public class OracleClient implements AutoCloseable {
           curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
           curatorFramework.start();
 
-          while (!cnxnListener.isConnected())
+          while (!cnxnListener.isConnected()) {
             Thread.sleep(200);
+          }
 
           pathChildrenCache =
               new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
@@ -130,10 +132,11 @@ public class OracleClient implements AutoCloseable {
 
         Participant participant = leaderSelector.getLeader();
         synchronized (this) {
-          if (isLeader(participant))
+          if (isLeader(participant)) {
             currentLeader = leaderSelector.getLeader();
-          else
+          } else {
             currentLeader = null;
+          }
         }
       }
     }
@@ -240,23 +243,27 @@ public class OracleClient implements AutoCloseable {
      */
     private synchronized void reconnect() throws InterruptedException, TTransportException,
         KeeperException, IOException {
-      if (transport.isOpen())
+      if (transport.isOpen()) {
         transport.close();
+      }
       connect();
     }
 
     private synchronized void close() {
-      if (transport != null && transport.isOpen())
+      if (transport != null && transport.isOpen()) {
         transport.close();
+      }
       try {
-        if (pathChildrenCache != null)
+        if (pathChildrenCache != null) {
           pathChildrenCache.close();
+        }
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
 
-      if (curatorFramework != null)
+      if (curatorFramework != null) {
         curatorFramework.close();
+      }
 
       transport = null;
       pathChildrenCache = null;

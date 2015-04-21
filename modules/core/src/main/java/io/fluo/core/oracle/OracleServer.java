@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.oracle;
 
 import java.net.InetSocketAddress;
@@ -138,8 +139,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
         .forPath(maxTsPath, LongUtil.toByteArray(newMax));
     maxTs = newMax;
 
-    if (!isLeader)
+    if (!isLeader) {
       throw new IllegalStateException();
+    }
   }
 
   @Override
@@ -153,15 +155,17 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   private synchronized long _getTimestamps(String id, int num) throws TException {
-    if (!started)
+    if (!started) {
       throw new IllegalStateException();
+    }
 
     if (!id.equals(env.getFluoApplicationID())) {
       throw new IllegalArgumentException();
     }
 
-    if (!isLeader)
+    if (!isLeader) {
       throw new IllegalStateException();
+    }
 
     try {
       while (num + currentTs >= maxTs) {
@@ -217,8 +221,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   public synchronized void start() throws Exception {
-    if (started)
+    if (started) {
       throw new IllegalStateException();
+    }
 
     InetSocketAddress addr = startServer();
 
@@ -226,8 +231,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
 
-    while (!cnxnListener.isConnected())
+    while (!cnxnListener.isConnected()) {
       Thread.sleep(200);
+    }
 
     leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
     String leaderId = HostUtil.getHostName() + ":" + addr.getPort();
@@ -239,8 +245,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     pathChildrenCache.getListenable().addListener(this);
     pathChildrenCache.start();
 
-    while (!cnxnListener.isConnected())
+    while (!cnxnListener.isConnected()) {
       Thread.sleep(200);
+    }
 
     log.info("Listening " + addr);
 
@@ -302,8 +309,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
         OracleService.Client client = getOracleClient(host, port);
         if (client != null) {
           try {
-            while (client.isLeader())
+            while (client.isLeader()) {
               Thread.sleep(500);
+            }
           } catch (Exception e) {
           }
         }
@@ -316,18 +324,17 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
       isLeader = true;
 
-      while (started)
-        Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that
-                           // called this method
-
+      while (started) {
+        // if leadership is lost, then curator will interrupt the thread that called this method
+        Thread.sleep(100);
+      }
     } finally {
       isLeader = false;
 
-      if (started)
-        Halt.halt("Oracle has lost leadership unexpectedly and is now halting."); // if we stopped
-                                                                                  // the server
-                                                                                  // manually, we
-                                                                                  // shouldn't halt
+      if (started) {
+        // if we stopped the server manually, we shouldn't halt
+        Halt.halt("Oracle has lost leadership unexpectedly and is now halting.");
+      }
     }
   }
 
@@ -342,11 +349,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
               .getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED))) {
         synchronized (this) {
           Participant participant = leaderSelector.getLeader();
-          if (isLeader(participant) && !leaderSelector.hasLeadership()) // in case current instance
-                                                                        // becomes leader, we want
-                                                                        // to know who came before
-                                                                        // it.
+          if (isLeader(participant) && !leaderSelector.hasLeadership()) {
+            // in case current instance becomes leader, we want to know who came before it.
             currentLeader = participant;
+          }
         }
       }
     } catch (InterruptedException e) {

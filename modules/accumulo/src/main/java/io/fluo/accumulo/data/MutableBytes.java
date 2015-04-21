@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.data;
 
 import java.io.Serializable;
@@ -27,7 +28,7 @@ public class MutableBytes extends Bytes implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private final byte data[];
+  private final byte[] data;
   private final int offset;
   private final int length;
 
@@ -35,7 +36,7 @@ public class MutableBytes extends Bytes implements Serializable {
    * Creates a new MutableBytes. The given byte array is used directly as the backing array so later
    * changes made to the array reflect into the new sequence.
    */
-  public MutableBytes(byte data[]) {
+  public MutableBytes(byte[] data) {
     this.data = data;
     this.offset = 0;
     this.length = data.length;
@@ -52,7 +53,7 @@ public class MutableBytes extends Bytes implements Serializable {
    * @throws IllegalArgumentException if the offset or length are out of bounds for the given byte
    *         array
    */
-  public MutableBytes(byte data[], int offset, int length) {
+  public MutableBytes(byte[] data, int offset, int length) {
     if (offset < 0 || offset > data.length || length < 0 || (offset + length) > data.length) {
       throw new IllegalArgumentException(" Bad offset and/or length data.length = " + data.length
           + " offset = " + offset + " length = " + length);
@@ -169,8 +170,9 @@ public class MutableBytes extends Bytes implements Serializable {
    * Returns a byte array of data and only copies if necessary
    */
   public byte[] getArray() {
-    if (offset == 0 && length == data.length)
+    if (offset == 0 && length == data.length) {
       return data;
+    }
 
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);

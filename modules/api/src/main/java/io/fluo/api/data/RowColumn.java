@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.data;
 
 import com.google.common.base.Preconditions;
@@ -130,7 +131,7 @@ public class RowColumn {
     }
   }
 
-  private byte[] followingArray(byte ba[]) {
+  private byte[] followingArray(byte[] ba) {
     byte[] fba = new byte[ba.length + 1];
     System.arraycopy(ba, 0, fba, 0, ba.length);
     fba[ba.length] = (byte) 0x00;

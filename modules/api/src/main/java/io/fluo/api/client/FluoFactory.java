@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.client;
 
 import java.lang.reflect.InvocationTargetException;
@@ -57,12 +58,11 @@ public class FluoFactory {
   }
 
   /**
-   * Creates a {@link MiniFluo} using the provided configuration.
-   * 
-   * Configuration (see {@link FluoConfiguration}) should either contain the property
-   * io.fluo.mini.start.accumulo (set to true) to indicate that MiniFluo should start its own
-   * Accumulo instance or it should contain the following properties if it is connecting to an
-   * existing instance: io.fluo.client.accumulo.user, io.fluo.client.accumulo.password,
+   * Creates a {@link MiniFluo} using the provided configuration. Configuration (see
+   * {@link FluoConfiguration}) should either contain the property io.fluo.mini.start.accumulo (set
+   * to true) to indicate that MiniFluo should start its own Accumulo instance or it should contain
+   * the following properties if it is connecting to an existing instance:
+   * io.fluo.client.accumulo.user, io.fluo.client.accumulo.password,
    * io.fluo.client.accumulo.instance, io.fluo.admin.accumulo.table
    */
   public static MiniFluo newMiniFluo(Configuration configuration) {

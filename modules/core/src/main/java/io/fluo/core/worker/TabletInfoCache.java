@@ -48,8 +48,9 @@ public class TabletInfoCache<T, S extends Supplier<T>> {
     }
 
     private int hashCode(Text t) {
-      if (t == null)
+      if (t == null) {
         return 0;
+      }
       return t.hashCode();
     }
 
@@ -59,11 +60,13 @@ public class TabletInfoCache<T, S extends Supplier<T>> {
     }
 
     private boolean equals(Text t1, Text t2) {
-      if (t1 == t2)
+      if (t1 == t2) {
         return true;
+      }
 
-      if (t1 == null || t2 == null)
+      if (t1 == null || t2 == null) {
         return false;
+      }
 
       return t1.equals(t2);
     }
@@ -138,10 +141,11 @@ public class TabletInfoCache<T, S extends Supplier<T>> {
 
       for (TabletInfo<T> tabletInfo : tablets) {
         TabletInfo<T> oldTI = oldTablets.get(tabletInfo);
-        if (oldTI != null)
+        if (oldTI != null) {
           newTablets.add(oldTI);
-        else
+        } else {
           newTablets.add(tabletInfo);
+        }
       }
 
       cachedTablets = newTablets;

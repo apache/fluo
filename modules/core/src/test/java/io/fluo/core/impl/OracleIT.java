@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.OutputStream;
@@ -276,8 +277,9 @@ public class OracleIT extends ITBaseImpl {
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
 
-      if (i == 10)
+      if (i == 10) {
         oserver.stop();
+      }
     }
 
     cdl.await();
@@ -311,13 +313,15 @@ public class OracleIT extends ITBaseImpl {
   }
 
   private void sleepWhileConnected(OracleServer oserver) throws InterruptedException {
-    while (oserver.isConnected())
+    while (oserver.isConnected()) {
       Thread.sleep(100);
+    }
   }
 
   private void sleepUntilConnected(OracleServer oserver) throws InterruptedException {
-    while (!oserver.isConnected())
+    while (!oserver.isConnected()) {
       Thread.sleep(100);
+    }
   }
 
 }

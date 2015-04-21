@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -247,8 +248,9 @@ public class TransactionImpl implements Transaction, Snapshot {
     Preconditions.checkNotNull(row);
     Preconditions.checkNotNull(col);
 
-    if (!env.getWeakObservers().containsKey(col))
+    if (!env.getWeakObservers().containsKey(col)) {
       throw new IllegalArgumentException("Column not configured for weak notifications " + col);
+    }
 
     env.getSharedResources().getVisCache().validate(col);
 
@@ -274,18 +276,21 @@ public class TransactionImpl implements Transaction, Snapshot {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = isTriggerRow && col.equals(triggerColumn);
-    if (isTrigger)
+    if (isTrigger) {
       PrewriteIterator.enableAckCheck(iterConf);
+    }
 
     Condition cond = new FluoCondition(env, col).setIterators(iterConf);
 
-    if (cm == null)
+    if (cm == null) {
       cm = new ConditionalFlutation(env, row, cond);
-    else
+    } else {
       cm.addCondition(cond);
+    }
 
-    if (val != null && val != DELETE)
+    if (val != null && val != DELETE) {
       cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
+    }
 
     cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn,
         val != null, val == DELETE, isTriggerRow, getTransactorID()));
@@ -321,13 +326,15 @@ public class TransactionImpl implements Transaction, Snapshot {
       rejected = new HashMap<>();
 
       Set<Column> ret = rejected.put(row, columns);
-      if (ret != null)
+      if (ret != null) {
         throw new IllegalStateException();
+      }
     }
 
     private Map<Bytes, Set<Column>> getRejected() {
-      if (rejected == null)
+      if (rejected == null) {
         return Collections.emptyMap();
+      }
 
       return rejected;
     }
@@ -364,8 +371,9 @@ public class TransactionImpl implements Transaction, Snapshot {
     Map<Column, Bytes> colSet = updates.get(cd.prow);
     cd.pcol = primCol;
     cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0)
+    if (colSet.size() == 0) {
       updates.remove(cd.prow);
+    }
 
     // try to lock primary column
     ConditionalMutation pcm =
@@ -413,12 +421,13 @@ public class TransactionImpl implements Transaction, Snapshot {
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
 
       for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (cm == null)
+        if (cm == null) {
           cm =
               prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
                   cd.pcol, isTriggerRow);
-        else
+        } else {
           prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
+        }
       }
 
       mutations.add(cm);
@@ -433,9 +442,9 @@ public class TransactionImpl implements Transaction, Snapshot {
       Result result = resultsIter.next();
       // TODO handle unknown?
       Bytes row = Bytes.of(result.getMutation().getRow());
-      if (result.getStatus() == Status.ACCEPTED)
+      if (result.getStatus() == Status.ACCEPTED) {
         cd.acceptedRows.add(row);
-      else {
+      } else {
         // TODO if trigger is always primary row:col, then do not need checks elsewhere
         ackCollision |= checkForAckCollision(result.getMutation());
         cd.addToRejected(row, updates.get(row).keySet());
@@ -445,8 +454,9 @@ public class TransactionImpl implements Transaction, Snapshot {
     if (cd.getRejected().size() > 0) {
       rollback(cd);
 
-      if (ackCollision)
+      if (ackCollision) {
         throw new AlreadyAcknowledgedException();
+      }
 
       return false;
     }
@@ -480,6 +490,7 @@ public class TransactionImpl implements Transaction, Snapshot {
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
    * 
+   * <p>
    * In this case TX2 would not roll back TX1, because it never read the column. This function
    * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
    * trying to always read unread columns.
@@ -578,9 +589,10 @@ public class TransactionImpl implements Transaction, Snapshot {
 
       switch (txInfo.status) {
         case COMMITTED:
-          if (txInfo.commitTs != commitTs)
+          if (txInfo.commitTs != commitTs) {
             throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!="
                 + commitTs);
+          }
           mutationStatus = Status.ACCEPTED;
           break;
         case LOCKED:
@@ -686,8 +698,9 @@ public class TransactionImpl implements Transaction, Snapshot {
       return;
     }
 
-    for (Map<Column, Bytes> cols : updates.values())
+    for (Map<Column, Bytes> cols : updates.values()) {
       stats.incrementEntriesSet(cols.size());
+    }
 
     CommitData cd = createCommitData();
 

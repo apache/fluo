@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.data;
 
 import java.io.ByteArrayInputStream;
@@ -137,11 +138,13 @@ public abstract class Bytes implements Comparable<Bytes> {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
-      if (this == other)
+      if (this == other) {
         return true;
+      }
 
-      if (length() != ob.length())
+      if (length() != ob.length()) {
         return false;
+      }
 
       return compareTo(ob) == 0;
     }
@@ -177,7 +180,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
    */
-  final public static Bytes of(byte data[], int offset, int length) {
+  final public static Bytes of(byte[] data, int offset, int length) {
     Preconditions.checkNotNull(data);
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
@@ -236,7 +239,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    */
   final public static Bytes read(DataInput in) throws IOException {
     int len = writeUtil.readVInt(in);
-    byte b[] = new byte[len];
+    byte[] b = new byte[len];
     in.readFully(b);
     return of(b);
   }
@@ -283,7 +286,7 @@ public abstract class Bytes implements Comparable<Bytes> {
       while (true) {
         int len = writeUtil.readVInt(dis);
         // TODO could get pointers into original byte seq
-        byte field[] = new byte[len];
+        byte[] field = new byte[len];
         dis.readFully(field);
         ret.add(of(field));
       }

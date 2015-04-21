@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
@@ -112,8 +113,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
       if (colType == ColumnConstants.DATA_PREFIX) {
-        if (ts >= truncationTime)
+        if (ts >= truncationTime) {
           break;
+        }
       } else {
         // TODO check if its a notify
         break;
@@ -174,32 +176,38 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
         byte[] val = source.getTopValue().get();
         long timePtr = WriteValue.getTimestamp(val);
 
-        if (WriteValue.isPrimary(val) && !complete)
+        if (WriteValue.isPrimary(val) && !complete) {
           keep = true;
+        }
 
         if (!oldestSeen && !truncationSeen) {
           keep = true;
 
-          if (firstWrite == -1)
+          if (firstWrite == -1) {
             firstWrite = ts;
+          }
 
-          if (ts < oldestActiveTs)
+          if (ts < oldestActiveTs) {
             oldestSeen = true;
+          }
 
-          if (WriteValue.isTruncated(val))
+          if (WriteValue.isTruncated(val)) {
             truncationSeen = true;
+          }
 
           if (oldestSeen || truncationSeen) {
-            if (truncationTime != -1)
+            if (truncationTime != -1) {
               throw new IllegalStateException();
+            }
 
             truncationTime = timePtr;
             val = WriteValue.encode(truncationTime, WriteValue.isPrimary(val), true);
           }
         }
 
-        if (timePtr > invalidationTime)
+        if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
+        }
 
         if (keep) {
           keys.add(new KeyValue(source.getTopKey(), val));
@@ -210,8 +218,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
 
-        if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete)
+        if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete) {
           keep = true;
+        }
 
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
 
@@ -226,15 +235,17 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
           completeTxs.remove(ts);
         }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
-        if (ts > invalidationTime)
+        if (ts > invalidationTime) {
           keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
+        }
       } else if (colType == ColumnConstants.DATA_PREFIX) {
         // can stop looking
         break;
       } else if (colType == ColumnConstants.ACK_PREFIX) {
         if (!sawAck) {
-          if (ts >= firstWrite)
+          if (ts >= firstWrite) {
             keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
+          }
           sawAck = true;
         }
       } else {

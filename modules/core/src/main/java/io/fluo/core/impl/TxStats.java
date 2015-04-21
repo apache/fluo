@@ -134,17 +134,21 @@ public class TxStats {
 
   public void report(MetricNames names, String status, Class<?> execClass, MetricRegistry registry) {
     String sn = execClass.getSimpleName();
-    if (getLockWaitTime() > 0)
+    if (getLockWaitTime() > 0) {
       registry.timer(names.getTxLockwait() + sn).update(getLockWaitTime(), TimeUnit.MILLISECONDS);
+    }
     registry.timer(names.getTxTime() + sn).update(getTime(), TimeUnit.MILLISECONDS);
-    if (getCollisions() > 0)
+    if (getCollisions() > 0) {
       registry.histogram(names.getTxCollisions() + sn).update(getCollisions());
+    }
     registry.histogram(names.getTxSet() + sn).update(getEntriesSet());
     registry.histogram(names.getTxRead() + sn).update(getEntriesReturned());
-    if (getTimedOutLocks() > 0)
+    if (getTimedOutLocks() > 0) {
       registry.histogram(names.getTxLocksTimedout() + sn).update(getTimedOutLocks());
-    if (getDeadLocks() > 0)
+    }
+    if (getDeadLocks() > 0) {
       registry.histogram(names.getTxLocksDead() + sn).update(getDeadLocks());
+    }
     registry.counter(names.getTxStatus() + status.toLowerCase() + "." + sn).inc();
   }
 }

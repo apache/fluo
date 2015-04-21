@@ -72,8 +72,9 @@ public class NotificationProcessor implements AutoCloseable {
 
     public synchronized boolean add(RowColumn rowCol, Future<?> task) {
 
-      if (queuedWork.containsKey(rowCol))
+      if (queuedWork.containsKey(rowCol)) {
         return false;
+      }
 
       while (sizeInBytes > MAX_SIZE) {
         try {
@@ -83,8 +84,9 @@ public class NotificationProcessor implements AutoCloseable {
         }
       }
 
-      if (queuedWork.containsKey(rowCol))
+      if (queuedWork.containsKey(rowCol)) {
         return false;
+      }
 
       queuedWork.put(rowCol, task);
       sizeInBytes += size(rowCol);
@@ -135,8 +137,9 @@ public class NotificationProcessor implements AutoCloseable {
 
     FutureTask<?> ft = new FutureTask<Void>(eht, null);
 
-    if (!tracker.add(rowCol, ft))
+    if (!tracker.add(rowCol, ft)) {
       return false;
+    }
 
     workAdded();
 

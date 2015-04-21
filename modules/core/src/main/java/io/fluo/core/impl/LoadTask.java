@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import io.fluo.api.client.Loader;
@@ -44,8 +45,9 @@ public class LoadTask implements Runnable {
       try {
         txi = new TransactionImpl(env);
         tx = txi;
-        if (TracingTransaction.isTracingEnabled())
+        if (TracingTransaction.isTracingEnabled()) {
           tx = new TracingTransaction(txi, loader.getClass());
+        }
         Loader.Context context = new Loader.Context() {
           @Override
           public Configuration getAppConfiguration() {

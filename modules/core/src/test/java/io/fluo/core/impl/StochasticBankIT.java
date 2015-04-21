@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.BufferedWriter;
@@ -77,8 +78,9 @@ public class StochasticBankIT extends ITBaseImpl {
     Random rand = new Random();
     Environment tenv = env;
 
-    if (rand.nextBoolean())
+    if (rand.nextBoolean()) {
       tenv = new FaultyConfig(env, (rand.nextDouble() * .4) + .1, .50);
+    }
 
     List<Thread> threads = startTransfers(tenv, numAccounts, 20, runFlag);
 
@@ -126,8 +128,9 @@ public class StochasticBankIT extends ITBaseImpl {
           while (runFlag.get()) {
             int acct1 = rand.nextInt(numAccounts);
             int acct2 = rand.nextInt(numAccounts);
-            while (acct1 == acct2)
+            while (acct1 == acct2) {
               acct2 = rand.nextInt(numAccounts);
+            }
             int amt = rand.nextInt(100);
 
             transfer(env, fmtAcct(acct1), fmtAcct(acct2), amt);
@@ -212,8 +215,9 @@ public class StochasticBankIT extends ITBaseImpl {
                 / ((t2 - t1) / 1000.0));
 
         if (stat.getSum() != numAccounts * 1000) {
-          if (lastTx != null)
+          if (lastTx != null) {
             printDiffs(env, lastTx, tx);
+          }
         }
 
         Assert.assertEquals(numAccounts * 1000, stat.getSum());

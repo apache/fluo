@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.log;
 
 import java.util.Collection;
@@ -150,8 +151,9 @@ public class TracingTransaction implements Transaction, Snapshot {
     if (summaryLog.isTraceEnabled()) {
       TxStats stats = tx.getStats();
       String className = "N/A";
-      if (clazz != null)
+      if (clazz != null) {
         className = clazz.getSimpleName();
+      }
       // TODO log total # read, see fluo-426
       summaryLog
           .trace(

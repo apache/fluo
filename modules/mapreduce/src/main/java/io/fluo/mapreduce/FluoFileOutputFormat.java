@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.mapreduce;
 
 import java.io.IOException;
@@ -33,12 +34,13 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * This class wraps the {@link AccumuloFileOutputFormat} and converts to Fluo's data format. You can
  * use the static methods on {@link AccumuloFileOutputFormat} to configure the output file.
  * 
+ * <p>
  * The intended use of this output format is for seeding an initialized Fluo table on which no
  * transactions have executed.
  * 
- * As with the Accumulo file output format, rows and columns must be written in sorted order.
- * 
- * For writing data with {@link AccumuloOutputFormat}, see {@link MutationBuilder}
+ * <p>
+ * As with the Accumulo file output format, rows and columns must be written in sorted order.For
+ * writing data with {@link AccumuloOutputFormat}, see {@link MutationBuilder}
  */
 
 public class FluoFileOutputFormat extends FileOutputFormat<RowColumn, Bytes> {

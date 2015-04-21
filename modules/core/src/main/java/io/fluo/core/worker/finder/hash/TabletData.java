@@ -23,10 +23,13 @@ class TabletData {
       // remember if a tablet is empty an do not retry it for a bit... the more times empty, the
       // longer the retry
       retryTime = sleepTime + System.currentTimeMillis();
-      if (sleepTime == 0)
+      if (sleepTime == 0) {
         sleepTime = 100;
-      else if (sleepTime < maxSleep)
-        sleepTime = (long) (1.5 * sleepTime) + (long) (sleepTime * Math.random());
+      } else {
+        if (sleepTime < maxSleep) {
+          sleepTime = (long) (1.5 * sleepTime) + (long) (sleepTime * Math.random());
+        }
+      }
     } else {
       retryTime = 0;
       sleepTime = 0;

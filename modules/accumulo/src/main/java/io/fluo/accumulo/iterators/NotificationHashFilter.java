@@ -47,14 +47,17 @@ public class NotificationHashFilter extends Filter {
   }
 
   public static void setModulusParams(IteratorSetting iterCfg, int divisor, int remainder) {
-    if (remainder < 0)
+    if (remainder < 0) {
       throw new IllegalArgumentException("remainder < 0 : " + remainder);
+    }
 
-    if (divisor <= 0)
+    if (divisor <= 0) {
       throw new IllegalArgumentException("divisor <= 0 : " + divisor);
+    }
 
-    if (remainder >= divisor)
+    if (remainder >= divisor) {
       throw new IllegalArgumentException("remainder >= divisor : " + remainder + "," + divisor);
+    }
 
     iterCfg.addOption(DIVISOR_OPT, divisor + "");
     iterCfg.addOption(REMAINDER_OPT, remainder + "");

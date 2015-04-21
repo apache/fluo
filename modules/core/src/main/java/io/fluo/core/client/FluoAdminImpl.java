@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.client;
 
 import java.util.Collections;
@@ -145,8 +146,9 @@ public class FluoAdminImpl implements FluoAdmin {
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException();
     } catch (Exception e) {
-      if (e instanceof RuntimeException)
+      if (e instanceof RuntimeException) {
         throw (RuntimeException) e;
+      }
       throw new RuntimeException(e);
     }
   }
@@ -237,10 +239,11 @@ public class FluoAdminImpl implements FluoAdmin {
       }
 
       ObservedColumn observedCol = observer.getObservedColumn();
-      if (observedCol.getType() == NotificationType.STRONG)
+      if (observedCol.getType() == NotificationType.STRONG) {
         colObservers.put(observedCol.getColumn(), observerConfig);
-      else
+      } else {
         weakObservers.put(observedCol.getColumn(), observerConfig);
+      }
     }
 
     Properties sharedProps = new Properties();

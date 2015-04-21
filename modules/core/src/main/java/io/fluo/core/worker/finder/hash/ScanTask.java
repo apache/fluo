@@ -114,8 +114,9 @@ public class ScanTask implements Runnable {
               }
               tabletInfo.getData().updateScanCount(count, max_sleep_time);
               notifications += count;
-              if (stopped.get())
+              if (stopped.get()) {
                 break;
+              }
             }
 
             minRetryTime = Math.min(tabletInfo.getData().retryTime, minRetryTime);
@@ -132,14 +133,16 @@ public class ScanTask implements Runnable {
         log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})",
             tabletsScanned, tablets.size(), notifications, qSize);
 
-        if (!stopped.get())
+        if (!stopped.get()) {
           UtilWaitThread.sleep(sleepTime, stopped);
+        }
 
       } catch (Exception e) {
-        if (isInterruptedException(e))
+        if (isInterruptedException(e)) {
           log.debug("Error while looking for notifications", e);
-        else
+        } else {
           log.error("Error while looking for notifications", e);
+        }
       }
 
     }
@@ -149,8 +152,9 @@ public class ScanTask implements Runnable {
     boolean wasInt = false;
     Throwable cause = e;
     while (cause != null) {
-      if (cause instanceof InterruptedException)
+      if (cause instanceof InterruptedException) {
         wasInt = true;
+      }
       cause = cause.getCause();
     }
     return wasInt;
@@ -175,17 +179,20 @@ public class ScanTask implements Runnable {
     int count = 0;
 
     for (Entry<Key, Value> entry : scanner) {
-      if (lmp.update != hwf.getModulusParams().update)
-        throw new HashNotificationFinder.ModParamsChangedException();
+      if (lmp.update != hwf.getModulusParams().update) {
+        throw new ModParamsChangedException();
+      }
 
-      if (stopped.get())
+      if (stopped.get()) {
         return count;
+      }
 
       Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
       List<Bytes> ca = Bytes.split(Bytes.of(entry.getKey().getColumnQualifierData().toArray()));
       Column col = new Column(ca.get(0), ca.get(1));
-      if (hwf.getWorkerQueue().addNotification(hwf, row, col))
+      if (hwf.getWorkerQueue().addNotification(hwf, row, col)) {
         count++;
+      }
     }
     return count;
   }

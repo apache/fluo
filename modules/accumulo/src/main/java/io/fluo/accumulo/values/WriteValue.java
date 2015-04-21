@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.values;
 
 import io.fluo.accumulo.util.ByteArrayUtil;
@@ -59,7 +60,7 @@ public class WriteValue {
   }
 
   public static byte[] encode(long ts, boolean primary, boolean truncated) {
-    byte ba[] = new byte[9];
+    byte[] ba = new byte[9];
     ba[0] = (byte) ((primary ? 1 : 0) | (truncated ? 2 : 0));
     ByteArrayUtil.encode(ba, 1, ts);
     return ba;

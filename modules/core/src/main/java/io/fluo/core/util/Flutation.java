@@ -41,12 +41,13 @@ public class Flutation extends Mutation {
 
   public static void put(Environment env, Mutation m, Column col, long ts, byte[] val) {
     ColumnVisibility cv;
-    if (env != null)
+    if (env != null) {
       cv = env.getSharedResources().getVisCache().getCV(col.getVisibility());
-    else if (col.getVisibility().length() == 0)
+    } else if (col.getVisibility().length() == 0) {
       cv = VisibilityCache.EMPTY_VIS;
-    else
+    } else {
       cv = new ColumnVisibility(ByteUtil.toText(col.getVisibility()));
+    }
 
     m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), cv, ts, new Value(
         val));

@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.util;
 
 import org.slf4j.Logger;
@@ -55,8 +56,9 @@ public class Halt {
       thread.setDaemon(true);
       thread.start();
 
-      if (runnable != null)
+      if (runnable != null) {
         runnable.run();
+      }
       Runtime.getRuntime().halt(status);
     } finally {
       // In case something else decides to throw a Runtime exception

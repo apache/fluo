@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -50,8 +51,9 @@ public class ObserverConfigIT extends ITBaseMini {
               NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.of(context.getParameters().get("outputCQ"));
       String swn = context.getParameters().get("setWeakNotification");
-      if (swn != null && swn.equals("true"))
+      if (swn != null && swn.equals("true")) {
         setWeakNotification = true;
+      }
     }
 
     @Override
@@ -64,8 +66,9 @@ public class ObserverConfigIT extends ITBaseMini {
 
       tx.set(row, outCol, in);
 
-      if (setWeakNotification)
+      if (setWeakNotification) {
         tx.setWeakNotification(row, outCol);
+      }
     }
 
     @Override
@@ -76,8 +79,9 @@ public class ObserverConfigIT extends ITBaseMini {
 
   Map<String, String> newMap(String... args) {
     HashMap<String, String> ret = new HashMap<>();
-    for (int i = 0; i < args.length; i += 2)
+    for (int i = 0; i < args.length; i += 2) {
       ret.put(args[i], args[i + 1]);
+    }
     return ret;
   }
 

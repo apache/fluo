@@ -57,8 +57,9 @@ public class VisibilityCache {
   }
 
   public ColumnVisibility getCV(final Bytes colvis) {
-    if (colvis.length() == 0)
+    if (colvis.length() == 0) {
       return EMPTY_VIS;
+    }
 
     try {
       return visCache.get(colvis, new Callable<ColumnVisibility>() {

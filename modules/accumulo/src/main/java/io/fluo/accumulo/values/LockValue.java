@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.values;
 
 import java.util.List;
@@ -35,8 +36,9 @@ public class LockValue {
   public LockValue(byte[] enc) {
     List<Bytes> fields = Bytes.split(Bytes.of(enc));
 
-    if (fields.size() != 6)
+    if (fields.size() != 6) {
       throw new IllegalArgumentException("more fields than expected");
+    }
 
     this.prow = fields.get(0);
     this.pcol = new Column(fields.get(1), fields.get(2), fields.get(3));
@@ -72,14 +74,17 @@ public class LockValue {
 
   public static byte[] encode(Bytes prow, Column pcol, boolean isWrite, boolean isDelete,
       boolean isTrigger, Long transactor) {
-    byte bools[] = new byte[1];
+    byte[] bools = new byte[1];
     bools[0] = 0;
-    if (isWrite)
+    if (isWrite) {
       bools[0] = 0x1;
-    if (isDelete)
+    }
+    if (isDelete) {
       bools[0] |= 0x2;
-    if (isTrigger)
+    }
+    if (isTrigger) {
       bools[0] |= 0x4;
+    }
     return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(),
         Bytes.of(bools), Bytes.of(ByteArrayUtil.encode(transactor))).toArray();
   }

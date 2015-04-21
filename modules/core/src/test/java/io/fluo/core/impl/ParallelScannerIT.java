@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.Arrays;
@@ -137,14 +138,16 @@ public class ParallelScannerIT extends ITBaseImpl {
     long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     tx3.commitPrimaryColumn(cd3, commitTs);
 
-    if (closeTransID)
+    if (closeTransID) {
       tNode1.close();
+    }
 
     check();
     check();
 
-    if (!closeTransID)
+    if (!closeTransID) {
       tNode1.close();
+    }
   }
 
   void check() throws Exception {

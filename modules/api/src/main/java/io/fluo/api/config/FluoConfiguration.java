@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.config;
 
 import java.io.ByteArrayInputStream;
@@ -221,7 +222,7 @@ public class FluoConfiguration extends CompositeConfiguration {
       throw new IllegalArgumentException("Application name length must be > 0");
     }
     String reason = null;
-    char chars[] = name.toCharArray();
+    char[] chars = name.toCharArray();
     char c;
     for (int i = 0; i < chars.length; i++) {
       c = chars[i];
@@ -533,7 +534,7 @@ public class FluoConfiguration extends CompositeConfiguration {
    * @param in yaml input
    */
   public void setMetricsYaml(InputStream in) {
-    byte data[] = new byte[4096];
+    byte[] data = new byte[4096];
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     int len;
     try {
@@ -596,8 +597,9 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   protected void setDefault(String key, String val) {
-    if (getProperty(key) == null)
+    if (getProperty(key) == null) {
       setProperty(key, val);
+    }
   }
 
   /**

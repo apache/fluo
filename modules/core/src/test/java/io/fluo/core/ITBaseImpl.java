@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core;
 
 import java.util.concurrent.TimeUnit;
@@ -93,8 +94,9 @@ public class ITBaseImpl extends ITBase {
   @After
   public void tearDownFluo() throws Exception {
     conn.tableOperations().delete(table);
-    if (oserver.isConnected())
+    if (oserver.isConnected()) {
       oserver.stop();
+    }
     env.close();
     client.close();
   }

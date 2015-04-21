@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class TransactorNode implements AutoCloseable {
 
   public enum TrStatus {
     OPEN, CLOSED
-  };
+  }
 
   private static final Logger log = LoggerFactory.getLogger(TransactorNode.class);
   private Environment env;

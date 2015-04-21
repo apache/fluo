@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.format;
 
 import java.util.Iterator;
@@ -48,18 +49,24 @@ public class FluoFormatter implements Formatter {
     long ts = key.getTimestamp();
     String type = "";
 
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX)
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX) {
       type = "TX_DONE";
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX)
+    }
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX) {
       type = "DEL_LOCK";
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX)
+    }
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX) {
       type = "LOCK";
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX)
+    }
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX) {
       type = "DATA";
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX)
+    }
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX) {
       type = "WRITE";
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX)
+    }
+    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX) {
       type = "ACK";
+    }
 
     String val;
     if (type.equals("WRITE")) {

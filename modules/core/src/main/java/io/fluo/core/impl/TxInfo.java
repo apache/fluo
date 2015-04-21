@@ -57,8 +57,9 @@ public class TxInfo {
       if (ts == startTs) {
         txInfo.status = TxStatus.LOCKED;
         txInfo.lockValue = entry.getValue().get();
-      } else
+      } else {
         txInfo.status = TxStatus.UNKNOWN; // locked by another tx
+      }
     } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
       DelLockValue dlv = new DelLockValue(entry.getValue().get());
 

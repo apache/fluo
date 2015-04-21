@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -112,8 +113,9 @@ public class ParallelSnapshotScanner {
         continue;
       }
 
-      for (Map<Column, Bytes> cols : ret.values())
+      for (Map<Column, Bytes> cols : ret.values()) {
         stats.incrementEntriesReturned(cols.size());
+      }
 
       return ret;
     }

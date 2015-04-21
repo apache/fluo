@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
@@ -97,8 +98,9 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-        if (timePtr > invalidationTime)
+        if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
+        }
 
         if (lockTime == timePtr) {
           hasTop = true;
@@ -107,8 +109,9 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
 
-        if (timePtr > invalidationTime)
+        if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
+        }
 
         if (timePtr == lockTime) {
           hasTop = true;

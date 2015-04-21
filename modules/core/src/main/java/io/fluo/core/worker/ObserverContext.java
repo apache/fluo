@@ -40,8 +40,9 @@ public class ObserverContext implements Observer.Context {
 
   @Override
   public Configuration getAppConfiguration() {
-    if (env == null)
+    if (env == null) {
       return appConfig;
+    }
     return env.getAppConfiguration();
   }
 

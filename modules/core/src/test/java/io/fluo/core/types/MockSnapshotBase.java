@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.types;
 
 import java.util.Collection;
@@ -39,8 +40,9 @@ public class MockSnapshotBase implements SnapshotBase {
   @Override
   public Bytes get(Bytes row, Column column) {
     Map<Column, Bytes> cols = getData.get(row);
-    if (cols != null)
+    if (cols != null) {
       return cols.get(column);
+    }
 
     return null;
   }
@@ -52,8 +54,9 @@ public class MockSnapshotBase implements SnapshotBase {
     if (cols != null) {
       for (Column column : columns) {
         Bytes val = cols.get(column);
-        if (val != null)
+        if (val != null) {
           ret.put(column, val);
+        }
       }
     }
     return ret;
@@ -89,9 +92,10 @@ public class MockSnapshotBase implements SnapshotBase {
 
     for (String entry : entries) {
       String[] rcv = entry.split(",");
-      if (rcv.length != 3 && !(rcv.length == 2 && entry.trim().endsWith(",")))
+      if (rcv.length != 3 && !(rcv.length == 2 && entry.trim().endsWith(","))) {
         throw new IllegalArgumentException(
             "expected <row>,<col fam>:<col qual>[:col vis],<value> but saw : " + entry);
+      }
 
       Bytes row = Bytes.of(rcv[0]);
       String[] colFields = rcv[1].split(":");
@@ -107,10 +111,11 @@ public class MockSnapshotBase implements SnapshotBase {
       }
 
       Bytes val;
-      if (rcv.length == 2)
+      if (rcv.length == 2) {
         val = Bytes.EMPTY;
-      else
+      } else {
         val = Bytes.of(rcv[2]);
+      }
 
       Map<Column, Bytes> cols = ret.get(row);
       if (cols == null) {
@@ -132,9 +137,10 @@ public class MockSnapshotBase implements SnapshotBase {
 
     for (String entry : entries) {
       String[] rcv = entry.split(",");
-      if (rcv.length != 2)
+      if (rcv.length != 2) {
         throw new IllegalArgumentException(
             "expected <row>,<col fam>:<col qual>[:col vis] but saw : " + entry);
+      }
 
       Bytes row = Bytes.of(rcv[0]);
       String[] colFields = rcv[1].split(":");

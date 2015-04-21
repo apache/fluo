@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
@@ -107,8 +108,9 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
 
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-        if (timePtr > invalidationTime)
+        if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
+        }
 
         if (firstWrite == -1) {
           firstWrite = ts;

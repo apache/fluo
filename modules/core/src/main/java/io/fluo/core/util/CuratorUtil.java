@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.util;
 
 import java.util.concurrent.TimeUnit;
@@ -64,8 +65,9 @@ public class CuratorUtil {
 
   public static boolean putData(CuratorFramework curator, String zPath, byte[] data,
       NodeExistsPolicy policy) throws KeeperException, InterruptedException {
-    if (policy == null)
+    if (policy == null) {
       policy = NodeExistsPolicy.FAIL;
+    }
 
     while (true) {
       try {
@@ -83,17 +85,19 @@ public class CuratorUtil {
                 return true;
               } catch (Exception nne) {
 
-                if (nne instanceof KeeperException.NoNodeException)
+                if (nne instanceof KeeperException.NoNodeException) {
                   // node delete between create call and set data, so try create call again
                   continue;
-                else
+                } else {
                   throw new RuntimeException(nne);
+                }
               }
             default:
               throw (KeeperException.NodeExistsException) nee;
           }
-        } else
+        } else {
           throw new RuntimeException(nee);
+        }
       }
     }
   }

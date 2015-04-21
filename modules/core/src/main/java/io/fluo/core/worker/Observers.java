@@ -63,8 +63,9 @@ public class Observers implements AutoCloseable {
     Observer observer = null;
 
     ObserverConfiguration observerConfig = env.getObservers().get(col);
-    if (observerConfig == null)
+    if (observerConfig == null) {
       observerConfig = env.getWeakObservers().get(col);
+    }
 
     if (observerConfig != null) {
       try {
@@ -97,8 +98,9 @@ public class Observers implements AutoCloseable {
   }
 
   public void close() {
-    if (observers == null)
+    if (observers == null) {
       return;
+    }
 
     synchronized (observers) {
       for (List<Observer> olist : observers.values()) {

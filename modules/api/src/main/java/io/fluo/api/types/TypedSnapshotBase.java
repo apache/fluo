@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.types;
 
 import java.nio.ByteBuffer;
@@ -86,8 +87,9 @@ public class TypedSnapshotBase implements SnapshotBase {
           bytes = snapshot.get(data.row, data.getCol());
           gotBytes = true;
         } catch (Exception e) {
-          if (e instanceof RuntimeException)
+          if (e instanceof RuntimeException) {
             throw (RuntimeException) e;
+          }
           throw new RuntimeException(e);
         }
       }
@@ -106,99 +108,115 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
 
     public Integer toInteger() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeInteger(getBytes());
     }
 
     public int toInteger(int defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeInteger(getBytes());
     }
 
     public Long toLong() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeLong(getBytes());
     }
 
     public long toLong(long defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeLong(getBytes());
     }
 
     @Override
     public String toString() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeString(getBytes());
     }
 
     public String toString(String defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeString(getBytes());
     }
 
     public Float toFloat() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeFloat(getBytes());
     }
 
     public float toFloat(float defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeFloat(getBytes());
     }
 
     public Double toDouble() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeDouble(getBytes());
     }
 
     public double toDouble(double defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeDouble(getBytes());
     }
 
     public Boolean toBoolean() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return encoder.decodeBoolean(getBytes());
     }
 
     public boolean toBoolean(boolean defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return encoder.decodeBoolean(getBytes());
     }
 
     public byte[] toBytes() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return getBytes().toArray();
     }
 
     public byte[] toBytes(byte[] defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return getBytes().toArray();
     }
 
     public ByteBuffer toByteBuffer() {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return null;
+      }
       return ByteBuffer.wrap(getBytes().toArray());
     }
 
     public ByteBuffer toByteBuffer(ByteBuffer defaultValue) {
-      if (getBytes() == null)
+      if (getBytes() == null) {
         return defaultValue;
+      }
       return toByteBuffer();
     }
 
@@ -215,10 +233,11 @@ public class TypedSnapshotBase implements SnapshotBase {
     public boolean equals(Object o) {
       if (o instanceof Value) {
         Value ov = (Value) o;
-        if (getBytes() == null)
+        if (getBytes() == null) {
           return ov.getBytes() == null;
-        else
+        } else {
           return getBytes().equals(ov.getBytes());
+        }
       }
 
       return false;
@@ -298,8 +317,9 @@ public class TypedSnapshotBase implements SnapshotBase {
       Map<Bytes, Map<Column, Bytes>> in = getInput();
       Map<String, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet()) {
         out.put(encoder.decodeString(rowEntry.getKey()), wrap(rowEntry.getValue()));
+      }
 
       return wrap2(out);
     }
@@ -309,8 +329,9 @@ public class TypedSnapshotBase implements SnapshotBase {
       Map<Bytes, Map<Column, Bytes>> in = getInput();
       Map<Long, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet()) {
         out.put(encoder.decodeLong(rowEntry.getKey()), wrap(rowEntry.getValue()));
+      }
 
       return wrap2(out);
     }
@@ -320,8 +341,9 @@ public class TypedSnapshotBase implements SnapshotBase {
       Map<Bytes, Map<Column, Bytes>> in = getInput();
       Map<Integer, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet()) {
         out.put(encoder.decodeInteger(rowEntry.getKey()), wrap(rowEntry.getValue()));
+      }
 
       return wrap2(out);
     }
@@ -331,8 +353,9 @@ public class TypedSnapshotBase implements SnapshotBase {
       Map<Bytes, Map<Column, Bytes>> in = getInput();
       Map<Bytes, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet()) {
         out.put(rowEntry.getKey(), wrap(rowEntry.getValue()));
+      }
 
       return wrap2(out);
     }

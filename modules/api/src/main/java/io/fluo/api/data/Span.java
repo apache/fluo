@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.data;
 
 import com.google.common.base.Preconditions;
@@ -72,10 +73,10 @@ public class Span {
    * Construct a new span from a start and end RowColumn. Set either key to RowColumn.EMPTY to
    * indicate positive or negative infinite
    * 
-   * @param startKey Start key
-   * @param startKeyInclusive Include start key in Range
-   * @param endKey End Key
-   * @param endKeyInclusive Include end key in Range
+   * @param start Start RowColumn
+   * @param startInclusive Include start in Range
+   * @param end End RowColumn
+   * @param endInclusive Include end in Range
    */
   public Span(RowColumn start, boolean startInclusive, RowColumn end, boolean endInclusive) {
     Preconditions.checkNotNull(start, "start must not be null");
@@ -166,9 +167,7 @@ public class Span {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof Span)
-      return equals((Span) o);
-    return false;
+    return o instanceof Span && equals((Span) o);
   }
 
   /**
@@ -234,10 +233,12 @@ public class Span {
 
     // find the last byte in the array that is not 0xff
     int changeIndex = prefix.length() - 1;
-    while (changeIndex >= 0 && prefixBytes[changeIndex] == (byte) 0xff)
+    while (changeIndex >= 0 && prefixBytes[changeIndex] == (byte) 0xff) {
       changeIndex--;
-    if (changeIndex < 0)
+    }
+    if (changeIndex < 0) {
       return null;
+    }
 
     // copy prefix bytes into new array
     byte[] newBytes = new byte[changeIndex + 1];

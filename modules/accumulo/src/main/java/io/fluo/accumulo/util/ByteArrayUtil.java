@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.util;
 
 import io.fluo.api.data.Bytes;
@@ -29,7 +30,7 @@ public class ByteArrayUtil {
    * @return byte array
    */
   public static byte[] encode(long v) {
-    byte ba[] = new byte[8];
+    byte[] ba = new byte[8];
     encode(ba, 0, v);
     return ba;
   }

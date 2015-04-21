@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class TransactorCache implements AutoCloseable {
 
   public enum TcStatus {
     OPEN, CLOSED
-  };
+  }
 
   private final Environment env;
   private final PathChildrenCache cache;

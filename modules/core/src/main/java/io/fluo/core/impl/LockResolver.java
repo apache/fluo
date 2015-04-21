@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -170,8 +171,9 @@ public class LockResolver {
       }
     }
 
-    if (mutations.size() > 0)
+    if (mutations.size() > 0) {
       env.getSharedResources().getBatchWriter().writeMutations(new ArrayList<>(mutations.values()));
+    }
 
     return numResolved == locks.size();
   }
@@ -179,8 +181,9 @@ public class LockResolver {
   private static void rollback(Environment env, long startTs, PrimaryRowColumn prc,
       List<Entry<Key, Value>> value, Map<ByteSequence, Mutation> mutations) {
     for (Entry<Key, Value> entry : value) {
-      if (isPrimary(prc, entry.getKey()))
+      if (isPrimary(prc, entry.getKey())) {
         continue;
+      }
 
       long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
@@ -224,8 +227,9 @@ public class LockResolver {
   private static void commitColumns(Environment env, PrimaryRowColumn prc,
       List<Entry<Key, Value>> value, long commitTs, Map<ByteSequence, Mutation> mutations) {
     for (Entry<Key, Value> entry : value) {
-      if (isPrimary(prc, entry.getKey()))
+      if (isPrimary(prc, entry.getKey())) {
         continue;
+      }
 
       long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       // TODO may be that a stronger sanity check that could be done here

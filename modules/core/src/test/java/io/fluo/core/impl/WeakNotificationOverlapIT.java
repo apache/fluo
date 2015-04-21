@@ -54,8 +54,9 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     @Override
     public void process(TypedTransactionBase tx, Bytes row, Column col) {
       Integer total = tx.get().row(row).fam("stat").qual("total").toInteger();
-      if (total == null)
+      if (total == null) {
         return;
+      }
       int processed = tx.get().row(row).fam("stat").qual("processed").toInteger(0);
 
       tx.mutate().row(row).fam("stat").qual("processed").set(total);

@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.types;
 
 import java.nio.ByteBuffer;
@@ -44,8 +45,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
 
     void checkNotSet() {
-      if (set)
+      if (set) {
         throw new IllegalStateException("Already set value");
+      }
     }
 
     public void set(Bytes bytes) throws AlreadySetException {
@@ -104,8 +106,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       int v = 0;
-      if (val != null)
+      if (val != null) {
         v = encoder.decodeInteger(val);
+      }
       tx.set(data.row, data.getCol(), encoder.encode(v + i));
     }
 
@@ -120,8 +123,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       long v = 0;
-      if (val != null)
+      if (val != null) {
         v = encoder.decodeLong(val);
+      }
       tx.set(data.row, data.getCol(), encoder.encode(v + l));
     }
 

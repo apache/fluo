@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.IOException;
@@ -66,14 +67,16 @@ public class TimestampTracker implements AutoCloseable {
           long ts = 0;
 
           synchronized (TimestampTracker.this) {
-            if (closed)
+            if (closed) {
               return;
+            }
 
             if (allocationsInProgress > 0) {
               sawZeroCount = 0;
               if (timestamps.size() > 0) {
-                if (updatingZk)
+                if (updatingZk) {
                   throw new IllegalStateException("expected updatingZk to be false");
+                }
                 ts = timestamps.first();
                 updatingZk = true;
               }

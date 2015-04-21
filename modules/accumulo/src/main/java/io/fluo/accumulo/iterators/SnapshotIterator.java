@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
@@ -68,20 +69,23 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
           long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-          if (timePtr > invalidationTime)
+          if (timePtr > invalidationTime) {
             invalidationTime = timePtr;
+          }
 
           if (dataPointer == -1) {
-            if (ts <= snaptime)
+            if (ts <= snaptime) {
               dataPointer = timePtr;
-            else if (WriteValue.isTruncated(source.getTopValue().get()))
+            } else if (WriteValue.isTruncated(source.getTopValue().get())) {
               return;
+            }
           }
         } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
           long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
 
-          if (timePtr > invalidationTime)
+          if (timePtr > invalidationTime) {
             invalidationTime = timePtr;
+          }
         } else if (colType == ColumnConstants.LOCK_PREFIX) {
           if (ts > invalidationTime && ts <= snaptime) {
             // nothing supersedes this lock, therefore the column is locked

@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.api.config;
 
 import java.util.Collections;
@@ -46,8 +47,9 @@ public class ObserverConfiguration {
    * @see FluoConfiguration#getAppConfiguration()
    */
   public ObserverConfiguration setParameters(Map<String, String> params) {
-    if (params == null)
+    if (params == null) {
       throw new IllegalArgumentException();
+    }
     this.params = params;
     return this;
   }

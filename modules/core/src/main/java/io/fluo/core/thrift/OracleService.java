@@ -5,6 +5,7 @@
  * 
  * @generated
  */
+
 package io.fluo.core.thrift;
 
 import java.util.BitSet;

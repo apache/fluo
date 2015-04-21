@@ -11,6 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.fluo.core.impl;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -28,11 +29,11 @@ public class CuratorCnxnListener implements ConnectionStateListener {
   @Override
   public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
     if (connectionState.equals(ConnectionState.CONNECTED)
-        || connectionState.equals(ConnectionState.RECONNECTED))
+        || connectionState.equals(ConnectionState.RECONNECTED)) {
       isConnected = true;
-
-    else if (connectionState.equals(ConnectionState.LOST)
-        || connectionState.equals(ConnectionState.SUSPENDED))
+    } else if (connectionState.equals(ConnectionState.LOST)
+        || connectionState.equals(ConnectionState.SUSPENDED)) {
       isConnected = false;
+    }
   }
 }
