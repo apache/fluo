@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.oracle;
 
@@ -53,21 +51,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Oracle server is the responsible for providing incrementing logical timestamps to clients. It should never
- * give the same timestamp to two clients and it should always provide an incrementing timestamp.
+ * Oracle server is the responsible for providing incrementing logical timestamps to clients. It
+ * should never give the same timestamp to two clients and it should always provide an incrementing
+ * timestamp.
  * <p/>
- * If multiple oracle servers are run, they will choose a leader and clients will automatically connect
- * to that leader. If the leader goes down, the client will automatically fail over to the next leader.
- * In the case where an oracle fails over, the next oracle will begin a new block of timestamps.
+ * If multiple oracle servers are run, they will choose a leader and clients will automatically
+ * connect to that leader. If the leader goes down, the client will automatically fail over to the
+ * next leader. In the case where an oracle fails over, the next oracle will begin a new block of
+ * timestamps.
  */
-public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface, PathChildrenCacheListener {
-  
+public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface,
+    PathChildrenCacheListener {
+
   private static final Logger log = LoggerFactory.getLogger(OracleServer.class);
 
   private final Histogram stampsHistogram;
 
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
-  
+
   private final Environment env;
   private final Timer timer;
 
@@ -77,7 +78,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private volatile long maxTs = 0;
   private volatile boolean started = false;
   private long zkTs = 0;
-  
+
   private LeaderSelector leaderSelector;
   private PathChildrenCache pathChildrenCache;
   private CuratorFramework curatorFramework;
@@ -89,11 +90,13 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private final String oraclePath;
 
   private volatile boolean isLeader = false;
-  
+
   public OracleServer(Environment env) throws Exception {
     this.env = env;
 
-    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(env.getMeticNames().getOracleServerStamps());
+    stampsHistogram =
+        env.getSharedResources().getMetricRegistry()
+            .histogram(env.getMeticNames().getOracleServerStamps());
 
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
@@ -102,7 +105,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     TimerTask tt = new TimerTask() {
       @Override
       public void run() {
-        long lastTs = currentTs-1;
+        long lastTs = currentTs - 1;
         if (isLeader && (zkTs != lastTs)) {
           try {
             curatorFramework.setData().forPath(curTsPath, LongUtil.toByteArray(lastTs));
@@ -114,7 +117,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       }
     };
     timer = new Timer("Oracle timestamp timer", true);
-    long updatePeriod = env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP, ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT);
+    long updatePeriod =
+        env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP,
+            ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT);
     timer.schedule(tt, updatePeriod, updatePeriod);
   }
 
@@ -124,14 +129,15 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     // TODO check that d is expected
     // TODO check that stil server when setting
-    // TODO make num allocated variable... when a server first starts allocate a small amount... the longer it runs and the busier it is, allocate bigger blocks
+    // TODO make num allocated variable... when a server first starts allocate a small amount... the
+    // longer it runs and the busier it is, allocate bigger blocks
 
     long newMax = Long.parseLong(new String(d)) + 1000;
 
     curatorFramework.setData().withVersion(stat.getVersion())
-      .forPath(maxTsPath, LongUtil.toByteArray(newMax));
+        .forPath(maxTsPath, LongUtil.toByteArray(newMax));
     maxTs = newMax;
-    
+
     if (!isLeader)
       throw new IllegalStateException();
   }
@@ -171,7 +177,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     }
   }
 
-  @Override public boolean isLeader() throws TException {
+  @Override
+  public boolean isLeader() throws TException {
     return isLeader;
   }
 
@@ -276,9 +283,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   /**
-   * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the last timestamp
-   * set in zookeeper.
-   *
+   * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the
+   * last timestamp set in zookeeper.
+   * 
    * @param curatorFramework
    * @throws Exception
    */
@@ -293,11 +300,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
         int port = Integer.parseInt(address[1]);
 
         OracleService.Client client = getOracleClient(host, port);
-        if(client != null) {
+        if (client != null) {
           try {
-            while(client.isLeader())
+            while (client.isLeader())
               Thread.sleep(500);
-          } catch(Exception e) {}
+          } catch (Exception e) {
+          }
         }
       }
 
@@ -309,30 +317,39 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       isLeader = true;
 
       while (started)
-        Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that called this method
+        Thread.sleep(100); // if leadership is lost, then curator will interrupt the thread that
+                           // called this method
 
     } finally {
       isLeader = false;
 
-      if(started)
-        Halt.halt("Oracle has lost leadership unexpectedly and is now halting.");    // if we stopped the server manually, we shouldn't halt
+      if (started)
+        Halt.halt("Oracle has lost leadership unexpectedly and is now halting."); // if we stopped
+                                                                                  // the server
+                                                                                  // manually, we
+                                                                                  // shouldn't halt
     }
   }
 
   @Override
-  public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
+  public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event)
+      throws Exception {
 
     try {
-      if (isConnected() && (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
-                            event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
-                            event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) ) {
+      if (isConnected()
+          && (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
+              || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) || event
+              .getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED))) {
         synchronized (this) {
           Participant participant = leaderSelector.getLeader();
-          if (isLeader(participant) && !leaderSelector.hasLeadership())    // in case current instance becomes leader, we want to know who came before it.
+          if (isLeader(participant) && !leaderSelector.hasLeadership()) // in case current instance
+                                                                        // becomes leader, we want
+                                                                        // to know who came before
+                                                                        // it.
             currentLeader = participant;
         }
       }
-    } catch(InterruptedException e) {
+    } catch (InterruptedException e) {
       log.warn("Oracle leadership watcher has been interrupted unexpectedly");
     }
   }

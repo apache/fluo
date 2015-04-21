@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.accumulo.util;
 
@@ -33,15 +31,16 @@ public class ZookeeperUtil {
   public static final long OLDEST_POSSIBLE = -1;
 
   // Time period that each client will update ZK with their oldest active timestamp
-  // If period is too short, Zookeeper may be overloaded.  If too long, garbage collection
+  // If period is too short, Zookeeper may be overloaded. If too long, garbage collection
   // may keep older versions of table data unnecessarily.
-  public static final String ZK_UPDATE_PERIOD_PROP = FluoConfiguration.FLUO_PREFIX+".impl.timestamp.update.period";
+  public static final String ZK_UPDATE_PERIOD_PROP = FluoConfiguration.FLUO_PREFIX
+      + ".impl.timestamp.update.period";
   public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
 
   private ZookeeperUtil() {}
-  
+
   /**
-   * Parses server section of Zookeeper connection string 
+   * Parses server section of Zookeeper connection string
    */
   public static String parseServers(String zookeepers) {
     int slashIndex = zookeepers.indexOf("/");
@@ -52,7 +51,8 @@ public class ZookeeperUtil {
   }
 
   /**
-   * Parses chroot section of Zookeeper connection string 
+   * Parses chroot section of Zookeeper connection string
+   * 
    * @param zookeepers
    * @return Returns root path or "/" if none found
    */
@@ -78,12 +78,12 @@ public class ZookeeperUtil {
     try {
       zk = new ZooKeeper(zookeepers, 30000, null);
 
-      // Try to find oldest active timestamp of transactors 
+      // Try to find oldest active timestamp of transactors
       String tsRootPath = ZookeeperPath.TRANSACTOR_TIMESTAMPS;
       try {
-        if (zk.exists(tsRootPath, false) != null) { 
+        if (zk.exists(tsRootPath, false) != null) {
           for (String child : zk.getChildren(tsRootPath, false)) {
-            Long ts = LongUtil.fromByteArray(zk.getData(tsRootPath+"/"+child, false, null));
+            Long ts = LongUtil.fromByteArray(zk.getData(tsRootPath + "/" + child, false, null));
             nodeFound = true;
             if (ts < oldestTs) {
               oldestTs = ts;

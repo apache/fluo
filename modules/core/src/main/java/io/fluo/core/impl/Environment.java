@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -58,8 +56,8 @@ public class Environment implements AutoCloseable {
   private String table;
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;
-  private Map<Column,ObserverConfiguration> observers;
-  private Map<Column,ObserverConfiguration> weakObservers;
+  private Map<Column, ObserverConfiguration> observers;
+  private Map<Column, ObserverConfiguration> weakObservers;
   private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
@@ -71,6 +69,7 @@ public class Environment implements AutoCloseable {
 
   /**
    * Constructs an environment from given FluoConfiguration
+   * 
    * @param configuration Configuration used to configure environment
    */
   public Environment(FluoConfiguration configuration) {
@@ -80,10 +79,12 @@ public class Environment implements AutoCloseable {
     readZookeeperConfig();
 
     if (!conn.getInstance().getInstanceName().equals(accumuloInstance))
-      throw new IllegalArgumentException("unexpected accumulo instance name " + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
+      throw new IllegalArgumentException("unexpected accumulo instance name "
+          + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
 
     if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID))
-      throw new IllegalArgumentException("unexpected accumulo instance id " + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
+      throw new IllegalArgumentException("unexpected accumulo instance id "
+          + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
 
     try {
       resources = new SharedResources(this);
@@ -94,6 +95,7 @@ public class Environment implements AutoCloseable {
 
   /**
    * Constructs an environment from another environment
+   * 
    * @param env
    * @throws Exception
    */
@@ -123,13 +125,18 @@ public class Environment implements AutoCloseable {
     try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
 
-      accumuloInstance = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME), "UTF-8");
-      accumuloInstanceID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
-      fluoApplicationID = new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID), "UTF-8");
+      accumuloInstance =
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME),
+              "UTF-8");
+      accumuloInstanceID =
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
+      fluoApplicationID =
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID), "UTF-8");
 
       table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
 
-      ByteArrayInputStream bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
+      ByteArrayInputStream bais =
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
       DataInputStream dis = new DataInputStream(bais);
 
       observers = Collections.unmodifiableMap(readObservers(dis));
@@ -143,7 +150,7 @@ public class Environment implements AutoCloseable {
       Properties sharedProps = new Properties();
       sharedProps.load(bais);
       Configuration sharedConfig = ConfigurationConverter.getConfiguration(sharedProps);
-      //make sure not to include config passed to env, only want config from zookeeper
+      // make sure not to include config passed to env, only want config from zookeeper
       appConfig = sharedConfig.subset(FluoConfiguration.APP_PREFIX);
       config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
     } catch (Exception e) {
@@ -151,15 +158,16 @@ public class Environment implements AutoCloseable {
     }
   }
 
-  private static Map<Column,ObserverConfiguration> readObservers(DataInputStream dis) throws IOException {
+  private static Map<Column, ObserverConfiguration> readObservers(DataInputStream dis)
+      throws IOException {
 
-    HashMap<Column,ObserverConfiguration> omap = new HashMap<>();
-    
+    HashMap<Column, ObserverConfiguration> omap = new HashMap<>();
+
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
       Column col = ColumnUtil.readColumn(dis);
       String clazz = dis.readUTF();
-      Map<String,String> params = new HashMap<>();
+      Map<String, String> params = new HashMap<>();
       int numParams = WritableUtils.readVInt(dis);
       for (int j = 0; j < numParams; j++) {
         String k = dis.readUTF();
@@ -172,7 +180,7 @@ public class Environment implements AutoCloseable {
 
       omap.put(col, observerConfig);
     }
-    
+
     return omap;
   }
 
@@ -187,7 +195,7 @@ public class Environment implements AutoCloseable {
       throw new RuntimeException(e);
     }
   }
-  
+
   public Authorizations getAuthorizations() {
     return auths;
   }
@@ -195,69 +203,69 @@ public class Environment implements AutoCloseable {
   public String getAccumuloInstance() {
     return accumuloInstance;
   }
-  
+
   public String getAccumuloInstanceID() {
     return accumuloInstanceID;
   }
-  
+
   public String getFluoApplicationID() {
     return fluoApplicationID;
   }
 
-  public Map<Column,ObserverConfiguration> getObservers() {
+  public Map<Column, ObserverConfiguration> getObservers() {
     return observers;
   }
 
-  public Map<Column,ObserverConfiguration> getWeakObservers() {
+  public Map<Column, ObserverConfiguration> getWeakObservers() {
     return weakObservers;
   }
 
   public String getTable() {
     return table;
   }
-  
+
   public Connector getConnector() {
     return conn;
   }
-    
+
   public SharedResources getSharedResources() {
     return resources;
   }
-    
+
   public FluoConfiguration getConfiguration() {
     return config;
   }
 
-  public synchronized MetricNames getMeticNames(){
-    if(metricNames == null){
+  public synchronized MetricNames getMeticNames() {
+    if (metricNames == null) {
       String mid = System.getProperty(MetricNames.METRICS_ID_PROP);
-      if(mid == null){
+      if (mid == null) {
         try {
           String hostname = InetAddress.getLocalHost().getHostName();
           int idx = hostname.indexOf('.');
-          if(idx > 0){
+          if (idx > 0) {
             hostname = hostname.substring(0, idx);
           }
-          mid = hostname+"_"+getSharedResources().getTransactorID();
+          mid = hostname + "_" + getSharedResources().getTransactorID();
         } catch (UnknownHostException e) {
-         throw new RuntimeException(e);
+          throw new RuntimeException(e);
         }
       }
-      
+
       mid = mid.replace('.', '_');
-      
+
       metricNames = new MetricNames(mid);
     }
     return metricNames;
   }
-  
-  public Configuration getAppConfiguration(){
-    //TODO create immutable wrapper
+
+  public Configuration getAppConfiguration() {
+    // TODO create immutable wrapper
     BaseConfiguration config = new BaseConfiguration();
     ConfigurationUtils.copy(appConfig, config);
     return config;
   }
-  
+
   @Override
   public void close() {
     resources.close();

@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core;
 
@@ -36,7 +34,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 public class TestTransaction extends TypedTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
-  
+
   @SuppressWarnings("resource")
   public TestTransaction(Environment env, TransactorNode transactor) {
     this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder());
@@ -71,40 +69,44 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
       close();
     }
   }
-  
+
   public void commit() throws CommitException {
     tx.commit();
   }
-  
+
   public void close() {
     tx.close();
   }
-  
+
   public CommitData createCommitData() throws TableNotFoundException {
     return tx.createCommitData();
   }
 
-  public boolean preCommit(CommitData cd) throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  public boolean preCommit(CommitData cd) throws AlreadyAcknowledgedException,
+      TableNotFoundException, AccumuloException, AccumuloSecurityException {
     return tx.preCommit(cd);
   }
 
-  public boolean preCommit(CommitData cd, Bytes trow, Column tcol) throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException,
+  public boolean preCommit(CommitData cd, Bytes trow, Column tcol)
+      throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException,
       AccumuloSecurityException {
     return tx.preCommit(cd, trow, tcol);
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException, AccumuloSecurityException {
+  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
+      AccumuloSecurityException {
     return tx.commitPrimaryColumn(cd, commitTs);
   }
 
-  public void finishCommit(CommitData cd, long commitTs) throws MutationsRejectedException, TableNotFoundException {
+  public void finishCommit(CommitData cd, long commitTs) throws MutationsRejectedException,
+      TableNotFoundException {
     tx.finishCommit(cd, commitTs);
   }
 
   public long getStartTs() {
     return tx.getStartTs();
   }
-  
+
   public TxStats getStats() {
     return tx.getStats();
   }

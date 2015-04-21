@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.util;
 
@@ -27,9 +25,9 @@ import org.apache.hadoop.io.Text;
  * Utility methods for manipulating Spans
  */
 public class SpanUtil {
-  
+
   private SpanUtil() {}
-  
+
   /**
    * Converts a Fluo Span to Accumulo Range
    * 
@@ -37,9 +35,10 @@ public class SpanUtil {
    * @return Range
    */
   public static Range toRange(Span span) {
-    return new Range(toKey(span.getStart()), span.isStartInclusive(), toKey(span.getEnd()), span.isEndInclusive());
+    return new Range(toKey(span.getStart()), span.isStartInclusive(), toKey(span.getEnd()),
+        span.isEndInclusive());
   }
-  
+
   /**
    * Converts from a Fluo RowColumn to a Accumulo Key
    * 
@@ -65,7 +64,7 @@ public class SpanUtil {
     Text cv = ByteUtil.toText(rc.getColumn().getVisibility());
     return new Key(row, cf, cq, cv);
   }
-  
+
   /**
    * Converts an Accumulo Range to a Fluo Span
    * 
@@ -73,10 +72,10 @@ public class SpanUtil {
    * @return Span
    */
   public static Span toSpan(Range range) {
-    return new Span(toRowColumn(range.getStartKey()), range.isStartKeyInclusive(), 
-                    toRowColumn(range.getEndKey()), range.isEndKeyInclusive());
+    return new Span(toRowColumn(range.getStartKey()), range.isStartKeyInclusive(),
+        toRowColumn(range.getEndKey()), range.isEndKeyInclusive());
   }
-  
+
   /**
    * Converts from an Accumulo Key to a Fluo RowColumn
    * 

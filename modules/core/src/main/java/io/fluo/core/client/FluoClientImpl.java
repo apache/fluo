@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.client;
 
@@ -34,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of Fluo Client
  */
 public class FluoClientImpl implements FluoClient {
-  
+
   private static final Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
   private static final AtomicInteger reporterCounter = new AtomicInteger(1);
 
@@ -42,10 +40,12 @@ public class FluoClientImpl implements FluoClient {
   private Environment env;
   private AutoCloseable reporter;
 
-  public static final AutoCloseable setupReporters(Environment env, String id, AtomicInteger reporterCounter) {
-    return ReporterUtil.setupReporters(env, FluoConfiguration.FLUO_PREFIX + "." + id + "." + reporterCounter.getAndIncrement());
+  public static final AutoCloseable setupReporters(Environment env, String id,
+      AtomicInteger reporterCounter) {
+    return ReporterUtil.setupReporters(env, FluoConfiguration.FLUO_PREFIX + "." + id + "."
+        + reporterCounter.getAndIncrement());
   }
-  
+
   public FluoClientImpl(FluoConfiguration config) {
     this.config = config;
     if (!config.hasRequiredClientProps()) {
@@ -75,7 +75,7 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public Snapshot newSnapshot() {
     TransactionImpl tx = new TransactionImpl(env);
-    if(TracingTransaction.isTracingEnabled())
+    if (TracingTransaction.isTracingEnabled())
       return new TracingTransaction(tx);
     return tx;
   }
@@ -83,7 +83,7 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public Transaction newTransaction() {
     TransactionImpl tx = new TransactionImpl(env);
-    if(TracingTransaction.isTracingEnabled())
+    if (TracingTransaction.isTracingEnabled())
       return new TracingTransaction(tx);
     return tx;
   }
@@ -92,7 +92,7 @@ public class FluoClientImpl implements FluoClient {
   public Configuration getAppConfiguration() {
     return env.getAppConfiguration();
   }
-  
+
   @Override
   public void close() {
     env.close();

@@ -1,17 +1,15 @@
 /*
  * Copyright 2015 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.cluster.runner;
 
@@ -52,7 +50,7 @@ public class MiniAppRunnerIT extends ITBaseMini {
       Column countColumn = new Column(Bytes.of("count"), col.getQualifier());
       int ingest = tx.get().row(row).col(col).toInteger(0);
       int count = tx.get().row(row).col(countColumn).toInteger(0);
-      tx.mutate().row(row).col(countColumn).set(count+ingest);
+      tx.mutate().row(row).col(countColumn).set(count + ingest);
       tx.mutate().row(row).col(col).delete();
     }
   }
@@ -64,7 +62,7 @@ public class MiniAppRunnerIT extends ITBaseMini {
 
   @Test
   public void testSimple() {
-    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
       tx1.mutate().row("row1").fam("ingest").qual("num").set(1);
       tx1.mutate().row("row2").fam("ingest").qual("num").set(1);
       tx1.mutate().row("row3").fam("ingest").qual("num").set(1);

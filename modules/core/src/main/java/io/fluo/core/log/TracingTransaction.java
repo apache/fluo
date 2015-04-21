@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.log;
 
@@ -36,42 +34,45 @@ import org.slf4j.LoggerFactory;
 public class TracingTransaction implements Transaction, Snapshot {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX);
-  private static final Logger collisionLog = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX+".collisions");
-  private static final Logger summaryLog = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX+".summary");
-  
+  private static final Logger collisionLog = LoggerFactory
+      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".collisions");
+  private static final Logger summaryLog = LoggerFactory
+      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
+
   private final TransactionImpl tx;
   private final long txid;
   private Bytes triggerRow;
   private Column triggerColumn;
   private Class<?> clazz;
   private boolean committed = false;
-  
-  public TracingTransaction(TransactionImpl tx){
+
+  public TracingTransaction(TransactionImpl tx) {
     this(tx, null, null, null);
   }
-  
-  public TracingTransaction(TransactionImpl tx, Class<?> clazz){
+
+  public TracingTransaction(TransactionImpl tx, Class<?> clazz) {
     this(tx, null, null, clazz);
   }
-  
-  public TracingTransaction(TransactionImpl tx, Bytes triggerRow, Column triggerColumn, Class<?> clazz) {
+
+  public TracingTransaction(TransactionImpl tx, Bytes triggerRow, Column triggerColumn,
+      Class<?> clazz) {
     this.tx = tx;
     this.txid = tx.getStartTs();
-    
+
     this.triggerRow = triggerRow;
     this.triggerColumn = triggerColumn;
     this.clazz = clazz;
-    
+
     log.trace("txid: {} begin() thread: {}", txid, Thread.currentThread().getId());
 
-    if(triggerRow != null){
+    if (triggerRow != null) {
       log.trace("txid: {} trigger: {} {}", txid, triggerRow, triggerColumn);
     }
-    
-    if(clazz != null){
+
+    if (clazz != null) {
       log.trace("txid: {} class: {}", txid, clazz.getName());
     }
-    
+
   }
 
   @Override
@@ -82,15 +83,15 @@ public class TracingTransaction implements Transaction, Snapshot {
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
-    Map<Column,Bytes> ret = tx.get(row, columns);
+  public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
+    Map<Column, Bytes> ret = tx.get(row, columns);
     log.trace("txid: {} get({}, {}) -> {}", txid, row, columns, ret);
     return ret;
   }
 
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
-    Map<Bytes,Map<Column,Bytes>> ret = tx.get(rows, columns);
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+    Map<Bytes, Map<Column, Bytes>> ret = tx.get(rows, columns);
     log.trace("txid: {} get({}, {}) -> {}", txid, rows, columns, ret);
     return ret;
   }
@@ -151,10 +152,13 @@ public class TracingTransaction implements Transaction, Snapshot {
       String className = "N/A";
       if (clazz != null)
         className = clazz.getSimpleName();
-      //TODO log total # read, see fluo-426
-      summaryLog.trace("txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} waitTime: {} %s committed: {} class: {}", txid, Thread
-          .currentThread().getId(), stats.getTime(), stats.getEntriesReturned(), stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(),
-          committed, className);
+      // TODO log total # read, see fluo-426
+      summaryLog
+          .trace(
+              "txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} waitTime: {} %s committed: {} class: {}",
+              txid, Thread.currentThread().getId(), stats.getTime(), stats.getEntriesReturned(),
+              stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
+              className);
     }
     tx.close();
   }

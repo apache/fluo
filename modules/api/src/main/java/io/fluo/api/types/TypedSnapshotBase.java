@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.api.types;
 
@@ -39,7 +37,7 @@ import io.fluo.api.types.TypeLayer.QualifierMethods;
 import io.fluo.api.types.TypeLayer.RowMethods;
 import org.apache.commons.collections.map.DefaultedMap;
 
-//TODO need to refactor column to use Encoder
+// TODO need to refactor column to use Encoder
 
 /**
  * A {@link SnapshotBase} that uses a {@link TypeLayer}
@@ -239,7 +237,7 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
-  public class ValueFamilyMethods extends FamilyMethods<ValueQualifierBuilder,Value> {
+  public class ValueFamilyMethods extends FamilyMethods<ValueQualifierBuilder, Value> {
 
     ValueFamilyMethods(Data data) {
       tl.super(data);
@@ -255,7 +253,7 @@ public class TypedSnapshotBase implements SnapshotBase {
       return new Value(data);
     }
 
-    public Map<Column,Value> columns(Set<Column> columns) {
+    public Map<Column, Value> columns(Set<Column> columns) {
       try {
         return wrap(snapshot.get(data.row, columns));
       } catch (Exception e) {
@@ -263,7 +261,7 @@ public class TypedSnapshotBase implements SnapshotBase {
       }
     }
 
-    public Map<Column,Value> columns(Column... columns) {
+    public Map<Column, Value> columns(Column... columns) {
       try {
         return wrap(snapshot.get(data.row, new HashSet<>(Arrays.asList(columns))));
       } catch (Exception e) {
@@ -281,7 +279,7 @@ public class TypedSnapshotBase implements SnapshotBase {
       this.columns = columns;
     }
 
-    private Map<Bytes,Map<Column,Bytes>> getInput() {
+    private Map<Bytes, Map<Column, Bytes>> getInput() {
       try {
         return snapshot.get(rows, columns);
       } catch (Exception e) {
@@ -291,48 +289,49 @@ public class TypedSnapshotBase implements SnapshotBase {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Map wrap2(Map m) {
-      return Collections.unmodifiableMap(DefaultedMap.decorate(m, new DefaultedMap(new Value((Bytes) null))));
+      return Collections.unmodifiableMap(DefaultedMap.decorate(m, new DefaultedMap(new Value(
+          (Bytes) null))));
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String,Map<Column,Value>> toStringMap() {
-      Map<Bytes,Map<Column,Bytes>> in = getInput();
-      Map<String,Map<Column,Value>> out = new HashMap<>();
+    public Map<String, Map<Column, Value>> toStringMap() {
+      Map<Bytes, Map<Column, Bytes>> in = getInput();
+      Map<String, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
         out.put(encoder.decodeString(rowEntry.getKey()), wrap(rowEntry.getValue()));
 
       return wrap2(out);
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Long,Map<Column,Value>> toLongMap() {
-      Map<Bytes,Map<Column,Bytes>> in = getInput();
-      Map<Long,Map<Column,Value>> out = new HashMap<>();
+    public Map<Long, Map<Column, Value>> toLongMap() {
+      Map<Bytes, Map<Column, Bytes>> in = getInput();
+      Map<Long, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
         out.put(encoder.decodeLong(rowEntry.getKey()), wrap(rowEntry.getValue()));
 
       return wrap2(out);
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Integer,Map<Column,Value>> toIntegerMap() {
-      Map<Bytes,Map<Column,Bytes>> in = getInput();
-      Map<Integer,Map<Column,Value>> out = new HashMap<>();
+    public Map<Integer, Map<Column, Value>> toIntegerMap() {
+      Map<Bytes, Map<Column, Bytes>> in = getInput();
+      Map<Integer, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
         out.put(encoder.decodeInteger(rowEntry.getKey()), wrap(rowEntry.getValue()));
 
       return wrap2(out);
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Bytes,Map<Column,Value>> toBytesMap() {
-      Map<Bytes,Map<Column,Bytes>> in = getInput();
-      Map<Bytes,Map<Column,Value>> out = new HashMap<>();
+    public Map<Bytes, Map<Column, Value>> toBytesMap() {
+      Map<Bytes, Map<Column, Bytes>> in = getInput();
+      Map<Bytes, Map<Column, Value>> out = new HashMap<>();
 
-      for (Entry<Bytes,Map<Column,Bytes>> rowEntry : in.entrySet())
+      for (Entry<Bytes, Map<Column, Bytes>> rowEntry : in.entrySet())
         out.put(rowEntry.getKey(), wrap(rowEntry.getValue()));
 
       return wrap2(out);
@@ -429,17 +428,17 @@ public class TypedSnapshotBase implements SnapshotBase {
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
+  public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     return snapshot.get(row, columns);
   }
 
   @Override
-  public RowIterator get(ScannerConfiguration config){
+  public RowIterator get(ScannerConfiguration config) {
     return snapshot.get(config);
   }
 
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     return snapshot.get(rows, columns);
   }
 
@@ -448,8 +447,8 @@ public class TypedSnapshotBase implements SnapshotBase {
   }
 
   @SuppressWarnings({"unchecked"})
-  private Map<Column,Value> wrap(Map<Column,Bytes> map) {
-    Map<Column,Value> ret = Maps.transformValues(map, new Function<Bytes,Value>() {
+  private Map<Column, Value> wrap(Map<Column, Bytes> map) {
+    Map<Column, Value> ret = Maps.transformValues(map, new Function<Bytes, Value>() {
       @Override
       public Value apply(Bytes input) {
         return new Value(input);

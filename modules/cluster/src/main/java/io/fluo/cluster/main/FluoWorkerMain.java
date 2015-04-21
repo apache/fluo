@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.cluster.main;
 
@@ -35,27 +33,28 @@ import org.slf4j.LoggerFactory;
 
 import static io.fluo.cluster.main.MainOptions.STDOUT;
 
-/** 
- * Main run method of Fluo worker that can be called within
- * a Twill/YARN application or on its own as a Java application
+/**
+ * Main run method of Fluo worker that can be called within a Twill/YARN application or on its own
+ * as a Java application
  */
 public class FluoWorkerMain extends AbstractTwillRunnable {
 
   private static final Logger log = LoggerFactory.getLogger(FluoWorkerMain.class);
   public static String WORKER_NAME = "FluoWorker";
   private AtomicBoolean shutdown = new AtomicBoolean(false);
-  
+
   @Override
   public void run() {
     System.out.println("Starting Worker");
     String logDir = System.getenv("LOG_DIRS");
     if (logDir == null) {
-      System.err.println("LOG_DIRS env variable was not set by Twill.  Logging to console instead!");
+      System.err
+          .println("LOG_DIRS env variable was not set by Twill.  Logging to console instead!");
       logDir = STDOUT;
     }
-    run(new String[]{ "-config-dir", "./conf", "-log-output", logDir});
+    run(new String[] {"-config-dir", "./conf", "-log-output", logDir});
   }
-  
+
   public void run(String[] args) {
     MainOptions options = new MainOptions();
     try {
@@ -71,7 +70,7 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
         LogbackUtil.init("worker", options.getConfigDir(), options.getLogOutput());
       }
     } catch (Exception e) {
-      System.err.println("Exception while starting FluoWorker: "+ e.getMessage());
+      System.err.println("Exception while starting FluoWorker: " + e.getMessage());
       e.printStackTrace();
       System.exit(-1);
     }
@@ -84,27 +83,30 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
       }
       // any client in worker should retry forever
       config.setClientRetryTimeout(-1);
-      
+
       try {
         config.validate();
       } catch (Exception e) {
-        System.err.println("Error - Invalid fluo.properties due to "+ e.getMessage());
+        System.err.println("Error - Invalid fluo.properties due to " + e.getMessage());
         e.printStackTrace();
         System.exit(-1);
       }
- 
+
       TwillContext context = getContext();
-      if(context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null){
-        System.setProperty(MetricNames.METRICS_ID_PROP, "worker-"+context.getInstanceId());
+      if (context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null) {
+        System.setProperty(MetricNames.METRICS_ID_PROP, "worker-" + context.getInstanceId());
       }
-      
+
       try (Environment env = new Environment(config);
-          Reporters reporters = Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
-        log.info("Starting Worker for Fluo '{}' application with the following configuration:", config.getApplicationName());
+          Reporters reporters =
+              Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
+        log.info("Starting Worker for Fluo '{}' application with the following configuration:",
+            config.getApplicationName());
         env.getConfiguration().print();
-     
+
         NotificationProcessor np = new NotificationProcessor(env);
-        NotificationFinder notificationFinder = NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
+        NotificationFinder notificationFinder =
+            NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
         notificationFinder.init(env, np);
         notificationFinder.start();
 
@@ -117,10 +119,10 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
     } catch (Exception e) {
       log.error("Exception running FluoWorker: ", e);
     }
-    
+
     log.info("Worker is exiting.");
   }
-  
+
   @Override
   public void stop() {
     log.info("Stopping Fluo worker");

@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.api.exceptions;
 
@@ -19,18 +17,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class FluoExceptionTest {
-  
+
   @Test
   public void testFluoExceptionConstructors() {
     FluoException e = new FluoException();
     Assert.assertEquals(null, e.getMessage());
-    
+
     e = new FluoException("msg1");
     Assert.assertEquals("msg1", e.getMessage());
-    
+
     e = new FluoException("msg2", new IllegalArgumentException("msg3"));
     Assert.assertEquals("msg2", e.getMessage());
-    
+
     e = new FluoException(new IllegalArgumentException("msg4"));
     Assert.assertEquals("java.lang.IllegalArgumentException: msg4", e.getMessage());
   }
@@ -45,7 +43,8 @@ public class FluoExceptionTest {
     try {
       throwFluoException();
       Assert.assertFalse(true);
-    } catch (FluoException e) {}
+    } catch (FluoException e) {
+    }
   }
 
   @Test(expected = CommitException.class)
@@ -58,14 +57,16 @@ public class FluoExceptionTest {
     try {
       throwCommitException();
       Assert.assertFalse(true);
-    } catch (FluoException e) {}
+    } catch (FluoException e) {
+    }
 
     try {
       throwCommitException();
       Assert.assertFalse(true);
-    } catch (CommitException e) {}
+    } catch (CommitException e) {
+    }
   }
-  
+
   @Test(expected = AlreadySetException.class)
   public void testThrowAlreadySet() {
     throwAlreadySetException();
@@ -76,12 +77,14 @@ public class FluoExceptionTest {
     try {
       throwAlreadySetException();
       Assert.assertFalse(true);
-    } catch (FluoException e) {}
+    } catch (FluoException e) {
+    }
 
     try {
       throwAlreadySetException();
       Assert.assertFalse(true);
-    } catch (AlreadySetException e) {}
+    } catch (AlreadySetException e) {
+    }
   }
 
   private void throwFluoException() throws FluoException {
@@ -91,7 +94,7 @@ public class FluoExceptionTest {
   private void throwCommitException() throws CommitException {
     throw new CommitException();
   }
-  
+
   private void throwAlreadySetException() throws AlreadySetException {
     throw new AlreadySetException();
   }

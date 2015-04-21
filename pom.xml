@@ -222,7 +222,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.14</version>
+          <version>2.15</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -246,30 +246,63 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <checkstyleRules>
-            <module name="Checker">
-              <module name="TreeWalker">
-                <module name="AvoidStarImport"/>
-                <module name="RegexpSinglelineJava">
-                  <!--check that only Accumulo public APIs are imported-->            
-                  <property name="format" value="import\s+org\.apache\.accumulo\.(.*\.(impl|thrift)\..*|(?!core|minicluster).*|core\.(?!client|data|iterators|security\.Authorizations|security\.ColumnVisibility|util\.format\.Formatter).*|core\.data\.(?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)"/>
-                  <property name="ignoreComments" value="true"/>
-                  <property name="message" value="Accumulo non-public classes imported"/>
+        <executions>
+          <execution>
+            <id>accumulo-api-check</id>
+            <configuration>
+              <checkstyleRules>
+                <module name="Checker">
+                  <module name="TreeWalker">
+                    <module name="AvoidStarImport"/>
+                    <module name="RegexpSinglelineJava">
+                      <!--check that only Accumulo public APIs are imported-->
+                      <property name="format" value="import\s+org\.apache\.accumulo\.(.*\.(impl|thrift)\..*|(?!core|minicluster).*|core\.(?!client|data|iterators|security\.Authorizations|security\.ColumnVisibility|util\.format\.Formatter).*|core\.data\.(?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)"/>
+                      <property name="ignoreComments" value="true"/>
+                      <property name="message" value="Accumulo non-public classes imported"/>
+                    </module>
+                  </module>
                 </module>
-              </module>
-            </module>
-          </checkstyleRules>
-          <failOnViolation>true</failOnViolation>
-         </configuration>
-         <executions>
-           <execution>
-             <id>check-style</id>
-             <goals>
-               <goal>check</goal>
-             </goals>
-           </execution>
-         </executions>
+              </checkstyleRules>
+              <failOnViolation>true</failOnViolation>
+              <outputFile>${project.build.directory}/checkstyle-results-accumulo.xml</outputFile>
+            </configuration>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>java-style-check</id>
+            <phase>validate</phase>
+            <configuration>
+              <configLocation>modules/contrib/fluo-checks.xml</configLocation>
+              <encoding>UTF-8</encoding>
+              <logViolationsToConsole>false</logViolationsToConsole>
+              <failOnViolation>false</failOnViolation>
+              <violationSeverity>warning</violationSeverity>
+              <outputFile>${project.build.directory}/checkstyle-results-java.xml
+              </outputFile>
+              <excludes>**/OracleService*</excludes>
+            </configuration>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+      <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+        <artifactId>maven-java-formatter-plugin</artifactId>
+        <version>0.4</version>
+        <configuration>
+          <configFile>${project.basedir}/../../modules/contrib/fluo-eclipse-style.xml</configFile>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

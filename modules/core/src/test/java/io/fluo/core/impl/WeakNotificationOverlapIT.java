@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.core.impl;
@@ -49,7 +47,8 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(), NotificationType.WEAK);
+      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(),
+          NotificationType.WEAK);
     }
 
     @Override
@@ -71,7 +70,8 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
   @Test
   public void testOverlap() throws Exception {
-    // this test ensures that processing of weak notification deletes based on startTs and not commitTs
+    // this test ensures that processing of weak notification deletes based on startTs and not
+    // commitTs
 
     Column ntfyCol = typeLayer.bc().fam("stat").qual("changed").vis();
 
@@ -109,7 +109,8 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     Assert.assertEquals(2, snap2.get().row("all").fam("stat").qual("total").toInteger(-1));
     snap2.done();
 
-    // the following code is a repeat of the above with a slight diff. The following tx creates a notification, but deletes the data so there is no work for the
+    // the following code is a repeat of the above with a slight diff. The following tx creates a
+    // notification, but deletes the data so there is no work for the
     // observer. This test the case where a observer deletes a notification w/o making any updates.
     TestTransaction ttx5 = new TestTransaction(env);
     ttx5.mutate().row(1).fam("stat").qual("total").delete();
@@ -168,7 +169,8 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     CommitData cd2 = ttx2.createCommitData();
     Assert.assertTrue(ttx2.preCommit(cd2));
 
-    // simulate an observer processing the notification created by ttx1 while ttx2 is in the middle of committing. Processing this observer should not delete
+    // simulate an observer processing the notification created by ttx1 while ttx2 is in the middle
+    // of committing. Processing this observer should not delete
     // the notification for ttx2. It should delete the notification for ttx1.
     TestTransaction ttx3 = new TestTransaction(env, "1", ntfyCol);
 
@@ -202,7 +204,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
     int count = 0;
-    for (Iterator<Entry<Key,Value>> iterator = scanner.iterator(); iterator.hasNext();) {
+    for (Iterator<Entry<Key, Value>> iterator = scanner.iterator(); iterator.hasNext();) {
       iterator.next();
       count++;
     }

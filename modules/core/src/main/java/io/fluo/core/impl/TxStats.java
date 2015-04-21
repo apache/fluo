@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.core.impl;
@@ -38,7 +36,7 @@ public class TxStats {
   private long recovered = 0;
   private long deadLocks = 0;
   private long timedOutLocks = 0;
-  private Map<Bytes,Set<Column>> rejected = Collections.emptyMap();
+  private Map<Bytes, Set<Column>> rejected = Collections.emptyMap();
   private long commitTs = -1;
 
   TxStats() {
@@ -62,7 +60,7 @@ public class TxStats {
   }
 
   public long getCollisions() {
-    if(collisions == -1){
+    if (collisions == -1) {
       collisions = 0;
       for (Set<Column> cols : rejected.values()) {
         collisions += cols.size();
@@ -74,16 +72,16 @@ public class TxStats {
   public long getRecovered() {
     return recovered;
   }
-  
+
   public long getDeadLocks() {
     return deadLocks;
   }
-  
+
   public long getTimedOutLocks() {
     return timedOutLocks;
   }
 
-  public Map<Bytes,Set<Column>> getRejected(){
+  public Map<Bytes, Set<Column>> getRejected() {
     return rejected;
   }
 
@@ -91,7 +89,7 @@ public class TxStats {
     return commitTs;
   }
 
-  public void setCommitTs(long ts){
+  public void setCommitTs(long ts) {
     this.commitTs = ts;
   }
 
@@ -110,18 +108,18 @@ public class TxStats {
   void incrementCollisions(long c) {
     collisions += c;
   }
-  
-  public void setRejected(Map<Bytes,Set<Column>> rejected) {
+
+  public void setRejected(Map<Bytes, Set<Column>> rejected) {
     Preconditions.checkNotNull(rejected);
     Preconditions.checkState(this.rejected.size() == 0);
     this.rejected = rejected;
     this.collisions = -1;
   }
-  
+
   void incrementDeadLocks() {
     deadLocks++;
   }
-  
+
   void incrementTimedOutLocks() {
     timedOutLocks++;
   }

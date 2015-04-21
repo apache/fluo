@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -95,8 +93,9 @@ public class OracleIT extends ITBaseImpl {
   }
 
   /**
-   * Test that bogus input into the oracle server doesn't cause an OOM exception. This
-   * essentially tests for THRIFT-602
+   * Test that bogus input into the oracle server doesn't cause an OOM exception. This essentially
+   * tests for THRIFT-602
+   * 
    * @throws TTransportException
    */
   @Test
@@ -107,8 +106,9 @@ public class OracleIT extends ITBaseImpl {
     Logger.getLogger(THsHaServer.class).setLevel(Level.FATAL);
 
     Socket socket = new Socket();
-    socket.connect(new InetSocketAddress(HostUtil.getHostName(), env.getConfiguration().getOraclePort()));
-    OutputStream outstream = socket .getOutputStream();
+    socket.connect(new InetSocketAddress(HostUtil.getHostName(), env.getConfiguration()
+        .getOraclePort()));
+    OutputStream outstream = socket.getOutputStream();
     try (PrintWriter out = new PrintWriter(outstream)) {
       out.print("abcd");
       out.flush();
@@ -161,8 +161,9 @@ public class OracleIT extends ITBaseImpl {
   }
 
   /**
-   * If multiple {@link io.fluo.core.oracle.OracleServer} instances are competing leadership and fail, the {@link OracleClient} should
-   * failover to them as they go down and serve up new blocks of timestamps.
+   * If multiple {@link io.fluo.core.oracle.OracleServer} instances are competing leadership and
+   * fail, the {@link OracleClient} should failover to them as they go down and serve up new blocks
+   * of timestamps.
    */
   @Test
   public void failover_newTimestampRequested() throws Exception {
@@ -174,7 +175,7 @@ public class OracleIT extends ITBaseImpl {
 
     TestOracle oserver2 = createExtraOracle(port2);
     TestOracle oserver3 = createExtraOracle(port3);
-    
+
     oserver2.start();
     sleepUntilConnected(oserver2);
 
@@ -189,7 +190,8 @@ public class OracleIT extends ITBaseImpl {
       assertEquals(i, timestamp);
     }
 
-    assertTrue(client.getOracle().endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
+    assertTrue(client.getOracle()
+        .endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
 
     oserver.stop();
     sleepWhileConnected(oserver);
@@ -229,7 +231,7 @@ public class OracleIT extends ITBaseImpl {
     sleepWhileConnected(oserver);
 
     int count = 0;
-    while(count < 5 && client.getOracle() != null) {
+    while (count < 5 && client.getOracle() != null) {
       Thread.sleep(1000);
       count++;
     }
@@ -241,7 +243,8 @@ public class OracleIT extends ITBaseImpl {
 
     assertEquals(1002, client.getTimestamp());
 
-    assertTrue(client.getOracle().endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
+    assertTrue(client.getOracle()
+        .endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
 
     oserver.stop();
   }
@@ -273,7 +276,7 @@ public class OracleIT extends ITBaseImpl {
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
 
-      if(i == 10)
+      if (i == 10)
         oserver.stop();
     }
 
@@ -308,12 +311,12 @@ public class OracleIT extends ITBaseImpl {
   }
 
   private void sleepWhileConnected(OracleServer oserver) throws InterruptedException {
-    while(oserver.isConnected())
+    while (oserver.isConnected())
       Thread.sleep(100);
   }
 
   private void sleepUntilConnected(OracleServer oserver) throws InterruptedException {
-    while(!oserver.isConnected())
+    while (!oserver.isConnected())
       Thread.sleep(100);
   }
 

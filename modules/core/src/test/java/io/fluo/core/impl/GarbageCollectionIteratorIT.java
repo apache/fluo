@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -72,28 +70,28 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx3.done();
     tx2.done();
   }
-  
+
   @Test
   public void testGetOldestTimestamp() throws Exception {
     // we are expecting an error in this test
     Level curLevel = Logger.getLogger(ZookeeperUtil.class).getLevel();
     Logger.getLogger(ZookeeperUtil.class).setLevel(Level.FATAL);
-    
+
     // verify that oracle initial current ts
     Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
     // delete the oracle current timestamp path
     env.getSharedResources().getCurator().delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
     // verify that oldest possible is returned
-    Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE, 
+    Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE,
         ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
-    
-    // set level back 
+
+    // set level back
     Logger.getLogger(ZookeeperUtil.class).setLevel(curLevel);
   }
 
   /**
    * Verifies that older versions of data are newer than given timestamp
-   *  
+   * 
    * @param oldestTs
    * @throws TableNotFoundException
    */
@@ -102,12 +100,13 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
     Iterator<Entry<Key, Value>> iter = scanner.iterator();
 
-    Entry<Key,Value> prev = null;
+    Entry<Key, Value> prev = null;
     int numWrites = 0;
     while (iter.hasNext()) {
-      Entry<Key,Value> entry = iter.next();
+      Entry<Key, Value> entry = iter.next();
 
-      if ((prev == null) || !prev.getKey().equals(entry.getKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+      if ((prev == null)
+          || !prev.getKey().equals(entry.getKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
         numWrites = 0;
       }
 
@@ -117,7 +116,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
       if (colType == ColumnConstants.WRITE_PREFIX) {
         numWrites++;
         if (numWrites > 1) {
-          Assert.assertTrue("Extra write had ts "+ts+" < "+oldestTs, ts >= oldestTs);
+          Assert.assertTrue("Extra write had ts " + ts + " < " + oldestTs, ts >= oldestTs);
         }
       }
       prev = entry;

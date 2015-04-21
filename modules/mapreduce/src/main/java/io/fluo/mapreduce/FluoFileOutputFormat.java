@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.mapreduce;
 
@@ -32,23 +30,26 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 /**
- * This class wraps the {@link AccumuloFileOutputFormat} and converts to Fluo's data format. You can use the static methods on
- * {@link AccumuloFileOutputFormat} to configure the output file.
+ * This class wraps the {@link AccumuloFileOutputFormat} and converts to Fluo's data format. You can
+ * use the static methods on {@link AccumuloFileOutputFormat} to configure the output file.
  * 
- * The intended use of this output format is for seeding an initialized Fluo table on which no transactions have executed.
+ * The intended use of this output format is for seeding an initialized Fluo table on which no
+ * transactions have executed.
  * 
  * As with the Accumulo file output format, rows and columns must be written in sorted order.
  * 
  * For writing data with {@link AccumuloOutputFormat}, see {@link MutationBuilder}
  */
 
-public class FluoFileOutputFormat extends FileOutputFormat<RowColumn,Bytes> {
+public class FluoFileOutputFormat extends FileOutputFormat<RowColumn, Bytes> {
 
   @Override
-  public RecordWriter<RowColumn,Bytes> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
-    final RecordWriter<Key,Value> accumuloRecordWriter = new AccumuloFileOutputFormat().getRecordWriter(job);
+  public RecordWriter<RowColumn, Bytes> getRecordWriter(TaskAttemptContext job) throws IOException,
+      InterruptedException {
+    final RecordWriter<Key, Value> accumuloRecordWriter =
+        new AccumuloFileOutputFormat().getRecordWriter(job);
 
-    return new RecordWriter<RowColumn,Bytes>() {
+    return new RecordWriter<RowColumn, Bytes>() {
 
       @Override
       public void write(RowColumn key, Bytes value) throws IOException, InterruptedException {

@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.accumulo.util;
 
@@ -26,7 +24,7 @@ public class ByteArrayUtil {
 
   /**
    * Encode long as byte array
-   *
+   * 
    * @param v Long value
    * @return byte array
    */
@@ -38,7 +36,7 @@ public class ByteArrayUtil {
 
   /**
    * Encode a long into a byte array at an offset
-   *
+   * 
    * @param ba Byte array
    * @param offset Offset
    * @param v Long value
@@ -58,28 +56,23 @@ public class ByteArrayUtil {
 
   /**
    * Decode long from byte array at offset
-   *
+   * 
    * @param ba byte array
    * @param offset Offset
    * @return long value
    */
   public static long decodeLong(byte[] ba, int offset) {
     // @formatter:off
-    return
-        ((((long) ba[offset + 0] << 56) +
-            ((long) (ba[offset + 1] & 255) << 48) +
-            ((long) (ba[offset + 2] & 255) << 40) +
-            ((long) (ba[offset + 3] & 255) << 32) +
-            ((long) (ba[offset + 4] & 255) << 24) +
-            (       (ba[offset + 5] & 255) << 16) +
-            (       (ba[offset + 6] & 255) << 8) +
-            (       (ba[offset + 7] & 255) << 0)));
+    return ((((long) ba[offset + 0] << 56) + ((long) (ba[offset + 1] & 255) << 48)
+        + ((long) (ba[offset + 2] & 255) << 40) + ((long) (ba[offset + 3] & 255) << 32)
+        + ((long) (ba[offset + 4] & 255) << 24) + ((ba[offset + 5] & 255) << 16)
+        + ((ba[offset + 6] & 255) << 8) + ((ba[offset + 7] & 255) << 0)));
     // @formatter:on
   }
 
   /**
    * Decode long from byte array
-   *
+   * 
    * @param ba byte array
    * @return long value
    */
@@ -89,7 +82,7 @@ public class ByteArrayUtil {
 
   /**
    * Concatenate several byte arrays into one
-   *
+   * 
    * @param byteArrays List of byte arrays
    * @return concatenated byte array
    */

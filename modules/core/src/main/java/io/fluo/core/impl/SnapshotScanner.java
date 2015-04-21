@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -41,16 +39,16 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * Allows users to iterate over entries of a {@link Snapshot} 
+ * Allows users to iterate over entries of a {@link Snapshot}
  */
-public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
+public class SnapshotScanner implements Iterator<Entry<Key, Value>> {
 
   private final long startTs;
   private final Environment env;
   private final TxStats stats;
 
-  private Iterator<Entry<Key,Value>> iterator;
-  private Entry<Key,Value> next;
+  private Iterator<Entry<Key, Value>> iterator;
+  private Entry<Key, Value> next;
   private ScannerConfiguration config;
 
   static final long INITIAL_WAIT_TIME = 50;
@@ -64,7 +62,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     this.stats = stats;
     setUpIterator();
   }
-  
+
   private void setUpIterator() {
     Scanner scanner;
     try {
@@ -77,7 +75,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     scanner.setRange(SpanUtil.toRange(config.getSpan()));
 
     setupScanner(scanner, config.getColumns(), startTs);
-    
+
     this.iterator = scanner.iterator();
   }
 
@@ -89,32 +87,32 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
         scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
       }
     }
-    
+
     IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);
     scanner.addScanIterator(iterConf);
   }
-  
+
   @Override
   public boolean hasNext() {
     if (next == null) {
       next = getNext();
     }
-    
+
     return next != null;
   }
-  
+
   @Override
-  public Entry<Key,Value> next() {
+  public Entry<Key, Value> next() {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
-    
-    Entry<Key,Value> tmp = next;
+
+    Entry<Key, Value> tmp = next;
     next = null;
     return tmp;
   }
-  
+
   private void resetScanner(Span span) {
     try {
       config = (ScannerConfiguration) config.clone();
@@ -126,14 +124,14 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     setUpIterator();
   }
 
-  public void resolveLock(Entry<Key,Value> lockEntry) {
+  public void resolveLock(Entry<Key, Value> lockEntry) {
 
     // read ahead a little bit looking for other locks to resolve
 
     long startTime = System.currentTimeMillis();
     long waitTime = INITIAL_WAIT_TIME;
 
-    List<Entry<Key,Value>> locks = new ArrayList<>();
+    List<Entry<Key, Value>> locks = new ArrayList<>();
     locks.add(lockEntry);
     int amountRead = 0;
     int numRead = 0;
@@ -143,7 +141,7 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
 
     while (true) {
       while (iterator.hasNext()) {
-        Entry<Key,Value> entry = iterator.next();
+        Entry<Key, Value> entry = iterator.next();
 
         long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 
@@ -183,13 +181,13 @@ public class SnapshotScanner implements Iterator<Entry<Key,Value>> {
     resetScanner(new Span(start, true, origEnd, isEndInclusive));
   }
 
-  public Entry<Key,Value> getNext() {
+  public Entry<Key, Value> getNext() {
     mloop: while (true) {
       // its possible a next could exist then be rolled back
       if (!iterator.hasNext())
         return null;
 
-      Entry<Key,Value> entry = iterator.next();
+      Entry<Key, Value> entry = iterator.next();
 
       long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 

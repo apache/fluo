@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -45,7 +43,8 @@ public class ParallelSnapshotScanner {
   private Set<Column> columns;
   private TxStats stats;
 
-  ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env, long startTs, TxStats stats) {
+  ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
+      long startTs, TxStats stats) {
     this.unscannedRows = new HashSet<>(rows);
     this.columns = columns;
     this.env = env;
@@ -79,15 +78,15 @@ public class ParallelSnapshotScanner {
     return scanner;
   }
 
-  Map<Bytes,Map<Column,Bytes>> scan() {
+  Map<Bytes, Map<Column, Bytes>> scan() {
 
     long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
     long startTime = System.currentTimeMillis();
 
-    Map<Bytes,Map<Column,Bytes>> ret = new HashMap<>();
+    Map<Bytes, Map<Column, Bytes>> ret = new HashMap<>();
 
     while (true) {
-      List<Entry<Key,Value>> locks = new ArrayList<>();
+      List<Entry<Key, Value>> locks = new ArrayList<>();
 
       scan(ret, locks);
 
@@ -104,7 +103,7 @@ public class ParallelSnapshotScanner {
 
         // retain the rows that were locked for future scans
         HashSet<Bytes> lockedRows = new HashSet<>();
-        for (Entry<Key,Value> entry : locks) {
+        for (Entry<Key, Value> entry : locks) {
           lockedRows.add(ByteUtil.toBytes(entry.getKey().getRowData()));
         }
 
@@ -113,18 +112,18 @@ public class ParallelSnapshotScanner {
         continue;
       }
 
-      for (Map<Column,Bytes> cols : ret.values())
+      for (Map<Column, Bytes> cols : ret.values())
         stats.incrementEntriesReturned(cols.size());
 
       return ret;
     }
   }
 
-  void scan(Map<Bytes,Map<Column,Bytes>> ret, List<Entry<Key,Value>> locks) {
+  void scan(Map<Bytes, Map<Column, Bytes>> ret, List<Entry<Key, Value>> locks) {
 
     BatchScanner bs = setupBatchScanner(unscannedRows, columns);
     try {
-      for (Entry<Key,Value> entry : bs) {
+      for (Entry<Key, Value> entry : bs) {
         Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
         Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
         Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
@@ -136,7 +135,7 @@ public class ParallelSnapshotScanner {
         if (colType == ColumnConstants.LOCK_PREFIX) {
           locks.add(entry);
         } else if (colType == ColumnConstants.DATA_PREFIX) {
-          Map<Column,Bytes> cols = ret.get(row);
+          Map<Column, Bytes> cols = ret.get(row);
           if (cols == null) {
             cols = new HashMap<>();
             ret.put(row, cols);

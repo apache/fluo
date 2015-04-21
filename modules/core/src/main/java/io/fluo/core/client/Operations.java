@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.client;
 
@@ -38,22 +36,26 @@ import org.slf4j.LoggerFactory;
  * Utility methods for initializing Zookeeper & Accumulo
  */
 public class Operations {
-  
+
   private Operations() {}
 
   private static final Logger logger = LoggerFactory.getLogger(Operations.class);
 
-  // TODO refactor all method in this class to take a properties object... if so the prop keys would need to be public
+  // TODO refactor all method in this class to take a properties object... if so the prop keys would
+  // need to be public
 
-  public static void updateSharedConfig(CuratorFramework curator, Properties sharedProps) throws Exception {
+  public static void updateSharedConfig(CuratorFramework curator, Properties sharedProps)
+      throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     sharedProps.store(baos, "Shared java props");
 
-    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(), CuratorUtil.NodeExistsPolicy.OVERWRITE);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(),
+        CuratorUtil.NodeExistsPolicy.OVERWRITE);
   }
 
-  public static void updateObservers(CuratorFramework curator, Map<Column,ObserverConfiguration> colObservers, Map<Column,ObserverConfiguration> weakObservers)
-      throws Exception {
+  public static void updateObservers(CuratorFramework curator,
+      Map<Column, ObserverConfiguration> colObservers,
+      Map<Column, ObserverConfiguration> weakObservers) throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode
 
@@ -62,40 +64,44 @@ public class Operations {
       curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
     } catch (NoNodeException nne) {
     } catch (Exception e) {
-      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=[" + e.getMessage() + "]");
+      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath
+          + "], error=[" + e.getMessage() + "]");
       throw new RuntimeException(e);
     }
 
     byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-    CuratorUtil.putData(curator, observerPath, serializedObservers, CuratorUtil.NodeExistsPolicy.OVERWRITE);
+    CuratorUtil.putData(curator, observerPath, serializedObservers,
+        CuratorUtil.NodeExistsPolicy.OVERWRITE);
   }
 
-  private static void serializeObservers(DataOutputStream dos, Map<Column,ObserverConfiguration> colObservers) throws IOException {
+  private static void serializeObservers(DataOutputStream dos,
+      Map<Column, ObserverConfiguration> colObservers) throws IOException {
     // TODO use a human readable serialized format like json
 
-    Set<Entry<Column,ObserverConfiguration>> es = colObservers.entrySet();
+    Set<Entry<Column, ObserverConfiguration>> es = colObservers.entrySet();
 
     WritableUtils.writeVInt(dos, colObservers.size());
 
-    for (Entry<Column,ObserverConfiguration> entry : es) {
+    for (Entry<Column, ObserverConfiguration> entry : es) {
       ColumnUtil.writeColumn(entry.getKey(), dos);
       dos.writeUTF(entry.getValue().getClassName());
-      Map<String,String> params = entry.getValue().getParameters();
+      Map<String, String> params = entry.getValue().getParameters();
       WritableUtils.writeVInt(dos, params.size());
-      for (Entry<String,String> pentry : entry.getValue().getParameters().entrySet()) {
+      for (Entry<String, String> pentry : entry.getValue().getParameters().entrySet()) {
         dos.writeUTF(pentry.getKey());
         dos.writeUTF(pentry.getValue());
       }
     }
   }
 
-  private static byte[] serializeObservers(Map<Column,ObserverConfiguration> colObservers, Map<Column,ObserverConfiguration> weakObservers) throws IOException {
+  private static byte[] serializeObservers(Map<Column, ObserverConfiguration> colObservers,
+      Map<Column, ObserverConfiguration> weakObservers) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(baos)) {
       serializeObservers(dos, colObservers);
       serializeObservers(dos, weakObservers);
     }
-    
+
     byte[] serializedObservers = baos.toByteArray();
     return serializedObservers;
   }

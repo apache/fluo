@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.types;
 
@@ -25,14 +23,15 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
 /**
- * A very simple implementation of {@link TransactionBase} used for testing. All reads are serviced from {@link #getData}. Updates are stored in {@link #setData},
- * {@link #deletes}, or {@link #weakNotifications} depending on the update type.
+ * A very simple implementation of {@link TransactionBase} used for testing. All reads are serviced
+ * from {@link #getData}. Updates are stored in {@link #setData}, {@link #deletes}, or
+ * {@link #weakNotifications} depending on the update type.
  */
 public class MockTransactionBase extends MockSnapshotBase implements TransactionBase {
 
-  final Map<Bytes,Map<Column,Bytes>> setData = new HashMap<>();
-  final Map<Bytes,Set<Column>> deletes = new HashMap<>();
-  final Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+  final Map<Bytes, Map<Column, Bytes>> setData = new HashMap<>();
+  final Map<Bytes, Set<Column>> deletes = new HashMap<>();
+  final Map<Bytes, Set<Column>> weakNotifications = new HashMap<>();
 
   MockTransactionBase(String... entries) {
     super(entries);
@@ -51,7 +50,7 @@ public class MockTransactionBase extends MockSnapshotBase implements Transaction
 
   @Override
   public void set(Bytes row, Column col, Bytes value) {
-    Map<Column,Bytes> cols = setData.get(row);
+    Map<Column, Bytes> cols = setData.get(row);
     if (cols == null) {
       cols = new HashMap<>();
       setData.put(row, cols);

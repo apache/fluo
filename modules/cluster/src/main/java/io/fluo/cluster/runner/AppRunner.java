@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.cluster.runner;
 
@@ -68,12 +66,18 @@ public abstract class AppRunner {
   public static ScannerConfiguration buildScanConfig(ScanOptions options) {
     ScannerConfiguration scanConfig = new ScannerConfiguration();
 
-    if ((options.getExactRow() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getRowPrefix() != null))) {
-      throw new IllegalArgumentException("You cannot specify an exact row with a start/end row or row prefix!");
+    if ((options.getExactRow() != null)
+        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
+            .getRowPrefix() != null))) {
+      throw new IllegalArgumentException(
+          "You cannot specify an exact row with a start/end row or row prefix!");
     }
 
-    if ((options.getRowPrefix() != null) && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options.getExactRow() != null))) {
-      throw new IllegalArgumentException("You cannot specify an prefix row with a start/end row or exact row!");
+    if ((options.getRowPrefix() != null)
+        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
+            .getExactRow() != null))) {
+      throw new IllegalArgumentException(
+          "You cannot specify an prefix row with a start/end row or exact row!");
     }
 
     // configure span of scanner
@@ -99,7 +103,8 @@ public abstract class AppRunner {
       } else if (colFields.length == 2) {
         scanConfig.fetchColumn(Bytes.of(colFields[0]), Bytes.of(colFields[1]));
       } else {
-        throw new IllegalArgumentException("Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
+        throw new IllegalArgumentException("Failed to scan!  Column '" + column
+            + "' has too many fields (indicated by ':')");
       }
     }
 
@@ -132,7 +137,8 @@ public abstract class AppRunner {
     FluoConfiguration sConfig = new FluoConfiguration(config);
     sConfig.setClientRetryTimeout(500);
 
-    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName() + "' application.");
+    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName()
+        + "' application.");
 
     long entriesFound = 0;
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
@@ -153,11 +159,12 @@ public abstract class AppRunner {
         }
 
         while (iter.hasNext() && !System.out.checkError()) {
-          Map.Entry<Bytes,ColumnIterator> rowEntry = iter.next();
+          Map.Entry<Bytes, ColumnIterator> rowEntry = iter.next();
           ColumnIterator citer = rowEntry.getValue();
           while (citer.hasNext() && !System.out.checkError()) {
-            Map.Entry<Column,Bytes> colEntry = citer.next();
-            System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t" + colEntry.getValue());
+            Map.Entry<Column, Bytes> colEntry = citer.next();
+            System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t"
+                + colEntry.getValue());
             entriesFound++;
           }
         }
@@ -248,7 +255,8 @@ public abstract class AppRunner {
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
     long count = 0;
-    for (Iterator<Map.Entry<Key,Value>> iterator = scanner.iterator(); iterator.hasNext(); iterator.next()) {
+    for (Iterator<Map.Entry<Key, Value>> iterator = scanner.iterator(); iterator.hasNext(); iterator
+        .next()) {
       count++;
     }
     return count;
@@ -270,7 +278,8 @@ public abstract class AppRunner {
 
         try {
           long sleepSec = calculateSleep(ntfyCount, waitConfig.getWorkerInstances());
-          log.info("{} notifications are still outstanding.  Will try again in {} seconds...", ntfyCount, sleepSec);
+          log.info("{} notifications are still outstanding.  Will try again in {} seconds...",
+              ntfyCount, sleepSec);
           Thread.sleep(1000 * sleepSec);
         } catch (InterruptedException e) {
           log.error("Sleep was interrupted!  Exiting...");

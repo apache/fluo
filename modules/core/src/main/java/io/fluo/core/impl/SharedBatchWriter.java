@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -24,14 +22,14 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.data.Mutation;
 
-//created this class because batch writer blocks adding mutations while its flushing
+// created this class because batch writer blocks adding mutations while its flushing
 
 public class SharedBatchWriter {
 
   private final BatchWriter bw;
   private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<>(1000);
   private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
-  
+
   private static class MutationBatch {
 
     private List<Mutation> mutations;
@@ -61,14 +59,14 @@ public class SharedBatchWriter {
           mQueue.drainTo(batches);
 
           for (MutationBatch mutationBatch : batches) {
-            if(mutationBatch != end)
+            if (mutationBatch != end)
               bw.addMutations(mutationBatch.mutations);
           }
 
           bw.flush();
 
           for (MutationBatch mutationBatch : batches) {
-            if(mutationBatch == end)
+            if (mutationBatch == end)
               keepRunning = false;
             mutationBatch.cdl.countDown();
           }
@@ -133,4 +131,3 @@ public class SharedBatchWriter {
   }
 
 }
-

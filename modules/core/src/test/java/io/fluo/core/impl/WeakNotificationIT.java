@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core.impl;
 
@@ -57,7 +55,7 @@ public class WeakNotificationIT extends ITBaseMini {
       if (rowIter.hasNext()) {
         ColumnIterator colIter = rowIter.next().getValue();
         while (colIter.hasNext()) {
-          Entry<Column,Bytes> colVal = colIter.next();
+          Entry<Column, Bytes> colVal = colIter.next();
           sum += Integer.parseInt(colVal.getValue().toString());
           ttx.delete(row, colVal.getKey());
         }
@@ -83,7 +81,7 @@ public class WeakNotificationIT extends ITBaseMini {
   @Test
   public void testWeakNotification() throws Exception {
     Environment env = new Environment(config);
-    
+
     TestTransaction tx1 = new TestTransaction(env);
     tx1.mutate().row("r1").fam("stat").qual("count").set(3);
     tx1.done();
@@ -129,14 +127,15 @@ public class WeakNotificationIT extends ITBaseMini {
 
     TestTransaction tx7 = new TestTransaction(env);
     Assert.assertEquals(39, tx7.get().row("r1").fam("stat").qual("count").toInteger(0));
-    
+
     env.close();
   }
 
   @Test(timeout = 30000)
   public void testNOOP() throws Exception {
-    // if an observer makes not updates in a transaction, it should still delete the weak notification
-    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+    // if an observer makes not updates in a transaction, it should still delete the weak
+    // notification
+    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
       tx1.mutate().row("r1").fam("stat").qual("count").set(3);
       tx1.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
       tx1.commit();
@@ -148,7 +147,7 @@ public class WeakNotificationIT extends ITBaseMini {
 
   @Test(expected = IllegalArgumentException.class)
   public void testBadColumn() throws Exception {
-    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
       tx1.mutate().row("r1").fam("stat").qual("count").set(3);
       tx1.mutate().row("r1").fam("stat").qual("foo").weaklyNotify();
       tx1.commit();

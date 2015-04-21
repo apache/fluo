@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.core;
 
@@ -35,7 +33,7 @@ public class ITBaseImpl extends ITBase {
   protected Environment env;
   protected String table;
   protected OracleServer oserver;
-  
+
   protected class TestOracle extends OracleServer implements AutoCloseable {
 
     private Environment env;
@@ -71,12 +69,12 @@ public class ITBaseImpl extends ITBase {
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
     config.setOraclePort(PortUtils.getRandomFreePort());
-    
+
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
       admin.initialize(opts);
     }
-   
+
     client = FluoFactory.newClient(config);
 
     env = new Environment(config);
@@ -91,7 +89,7 @@ public class ITBaseImpl extends ITBase {
   public TestOracle createExtraOracle(int port) throws Exception {
     return new TestOracle(port);
   }
-  
+
   @After
   public void tearDownFluo() throws Exception {
     conn.tableOperations().delete(table);

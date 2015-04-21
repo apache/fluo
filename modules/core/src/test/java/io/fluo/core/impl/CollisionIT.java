@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.core.impl;
@@ -46,14 +44,14 @@ import org.junit.Test;
 
 /**
  * Run end to end test with lots of collisions and verify the following :
- *
+ * 
  * <p>
  * <ul>
  * <li/>LoaderExecutor works correctly w/ lots of collisions
  * <li/>Observers work correctly w/ lots of collisions
  * <li/>Fluo GC works correctly after lots of collisions
  * </ul>
- *
+ * 
  */
 public class CollisionIT extends ITBaseMini {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
@@ -77,7 +75,8 @@ public class CollisionIT extends ITBaseMini {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(), NotificationType.WEAK);
+      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(),
+          NotificationType.WEAK);
     }
 
     @Override
@@ -129,8 +128,10 @@ public class CollisionIT extends ITBaseMini {
     try (TypedSnapshot snapshot = typeLayer.wrap(client.newSnapshot())) {
 
       for (int i = 0; i < expectedCounts.length; i++) {
-        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("total").toInteger(-1));
-        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("processed").toInteger(-1));
+        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("total")
+            .toInteger(-1));
+        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("processed")
+            .toInteger(-1));
       }
 
       Assert.assertEquals(1000, snapshot.get().row("all").fam("stat").qual("total").toInteger(-1));
@@ -152,10 +153,11 @@ public class CollisionIT extends ITBaseMini {
 
     HashSet<String> rowCols = new HashSet<>();
 
-    for (Entry<Key,Value> entry : scanner) {
+    for (Entry<Key, Value> entry : scanner) {
       Key k = entry.getKey();
-      String rowCol = k.getRow() + ":" + k.getColumnFamily() + ":" + k.getColumnQualifier() + ":"
-          + String.format("%x", k.getTimestamp() & ColumnConstants.PREFIX_MASK);
+      String rowCol =
+          k.getRow() + ":" + k.getColumnFamily() + ":" + k.getColumnQualifier() + ":"
+              + String.format("%x", k.getTimestamp() & ColumnConstants.PREFIX_MASK);
       Assert.assertFalse("Duplicate row col " + rowCol, rowCols.contains(rowCol));
       rowCols.add(rowCol);
     }

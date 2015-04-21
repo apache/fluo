@@ -1,39 +1,38 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.fluo.api.data;
 
 import com.google.common.base.Preconditions;
 
 /**
- * Represents all or subset of a Fluo row and {@link Column}.  RowColumn is similar to an Accumulo Key.  RowColumn is immutable after it is created.
+ * Represents all or subset of a Fluo row and {@link Column}. RowColumn is similar to an Accumulo
+ * Key. RowColumn is immutable after it is created.
  */
 public class RowColumn {
-  
+
   public static RowColumn EMPTY = new RowColumn();
-  
+
   private Bytes row = Bytes.EMPTY;
   private Column col = Column.EMPTY;
-  
-  /** 
-   * Constructs a RowColumn with row set to Bytes.EMPTY and column set to Column.EMPTY 
+
+  /**
+   * Constructs a RowColumn with row set to Bytes.EMPTY and column set to Column.EMPTY
    */
   public RowColumn() {}
-  
+
   /**
-   * Constructs a RowColumn with only a row.  Column will be set to Column.EMPTY
+   * Constructs a RowColumn with only a row. Column will be set to Column.EMPTY
    * 
    * @param row Bytes Row
    */
@@ -41,7 +40,7 @@ public class RowColumn {
     Preconditions.checkNotNull(row, "Row must not be null");
     this.row = row;
   }
-  
+
   /**
    * Constructs a RowColumn with only a row. Column will be set to Column.EMPTY
    * 
@@ -50,7 +49,7 @@ public class RowColumn {
   public RowColumn(String row) {
     this(Bytes.of(row));
   }
-  
+
   /**
    * Constructs a RowColumn
    * 
@@ -63,7 +62,7 @@ public class RowColumn {
     this.row = row;
     this.col = col;
   }
-  
+
   /**
    * Constructs a RowColumn
    * 
@@ -91,26 +90,26 @@ public class RowColumn {
   public Column getColumn() {
     return col;
   }
-  
+
   @Override
   public String toString() {
     return row + " " + col;
   }
-  
+
   @Override
   public boolean equals(Object o) {
-    if (o instanceof RowColumn) { 
+    if (o instanceof RowColumn) {
       RowColumn other = (RowColumn) o;
       return row.equals(other.row) && col.equals(other.col);
     }
     return false;
   }
-  
+
   @Override
-  public int hashCode(){
+  public int hashCode() {
     return row.hashCode() + col.hashCode();
   }
-  
+
   /**
    * Returns a RowColumn following the current one
    * 
@@ -126,17 +125,18 @@ public class RowColumn {
     } else if (!col.isVisibilitySet()) {
       return new RowColumn(row, new Column(col.getFamily(), followingBytes(col.getQualifier())));
     } else {
-      return new RowColumn(row, new Column(col.getFamily(), col.getQualifier(), followingBytes(col.getVisibility())));
+      return new RowColumn(row, new Column(col.getFamily(), col.getQualifier(),
+          followingBytes(col.getVisibility())));
     }
   }
-  
+
   private byte[] followingArray(byte ba[]) {
     byte[] fba = new byte[ba.length + 1];
     System.arraycopy(ba, 0, fba, 0, ba.length);
     fba[ba.length] = (byte) 0x00;
     return fba;
   }
-  
+
   private Bytes followingBytes(Bytes b) {
     return Bytes.of(followingArray(b.toArray()));
   }
