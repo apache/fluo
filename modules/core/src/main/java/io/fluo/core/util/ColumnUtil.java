@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.util;
 
 import java.io.DataInput;
@@ -42,7 +41,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
  * Utilities for modifying columns in Fluo
  */
 public class ColumnUtil {
-  
+
   private ColumnUtil() {}
 
   public static byte[] concatCFCQ(Column c) {
@@ -53,27 +52,32 @@ public class ColumnUtil {
     return env.getSharedResources().getVisCache().getCV(col);
   }
 
-  public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary, Column col, boolean isWrite, boolean isDelete, long startTs,
-      long commitTs,
+  public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary,
+      Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
-      Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs, WriteValue.encode(startTs, isPrimary, false));
+      Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
+          WriteValue.encode(startTs, isPrimary, false));
     } else {
-      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs, DelLockValue.encode(startTs, isPrimary, false));
+      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs,
+          DelLockValue.encode(startTs, isPrimary, false));
     }
-    
+
     if (isTrigger) {
       Flutation.put(env, m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col), startTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col),
+          startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {
-      m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col), commitTs, TransactionImpl.EMPTY);
+      m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col),
+          commitTs, TransactionImpl.EMPTY);
     }
   }
-  
-  public static Entry<Key,Value> checkColumn(Environment env, IteratorSetting iterConf, Bytes row, Column col) {
+
+  public static Entry<Key, Value> checkColumn(Environment env, IteratorSetting iterConf, Bytes row,
+      Column col) {
     Span span = Span.exact(row, col);
-    
+
     Scanner scanner;
     try {
       // TODO reuse or share scanner
@@ -84,17 +88,17 @@ public class ColumnUtil {
     }
     scanner.setRange(SpanUtil.toRange(span));
     scanner.addScanIterator(iterConf);
-    
-    Iterator<Entry<Key,Value>> iter = scanner.iterator();
+
+    Iterator<Entry<Key, Value>> iter = scanner.iterator();
     if (iter.hasNext()) {
-      Entry<Key,Value> entry = iter.next();
-      
+      Entry<Key, Value> entry = iter.next();
+
       Key k = entry.getKey();
       Bytes r = Bytes.of(k.getRowData().toArray());
       Bytes cf = Bytes.of(k.getColumnFamilyData().toArray());
       Bytes cq = Bytes.of(k.getColumnQualifierData().toArray());
       Bytes cv = Bytes.of(k.getColumnVisibilityData().toArray());
-      
+
       if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
           && cv.equals(col.getVisibility())) {
         return entry;
@@ -102,14 +106,14 @@ public class ColumnUtil {
         throw new RuntimeException("unexpected key " + k + " " + row + " " + col);
       }
     }
-    
+
     return null;
   }
-  
+
   public static void writeColumn(Column col, DataOutput out) throws IOException {
     Bytes.write(out, col.getFamily());
     Bytes.write(out, col.getQualifier());
-    Bytes.write(out, col.getVisibility());    
+    Bytes.write(out, col.getVisibility());
   }
 
   public static Column readColumn(DataInput in) throws IOException {

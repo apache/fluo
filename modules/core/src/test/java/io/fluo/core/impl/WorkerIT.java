@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.Collections;
@@ -43,7 +42,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
+ * A simple test that added links between nodes in a graph. There is an observer that updates an
+ * index of node degree.
  */
 public class WorkerIT extends ITBaseMini {
 
@@ -65,13 +65,14 @@ public class WorkerIT extends ITBaseMini {
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
       TypedTransactionBase ttx = typeLayer.wrap(tx);
-      
+
       // get previously calculated degree
       String degree = ttx.get().row(row).fam("attr").qual("degree").toString();
 
       // calculate new degree
       int count = 0;
-      RowIterator riter = ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
+      RowIterator riter =
+          ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -107,7 +108,7 @@ public class WorkerIT extends ITBaseMini {
   public void test1() throws Exception {
 
     Environment env = new Environment(config);
-  
+
     addLink("N0003", "N0040");
     addLink("N0003", "N0020");
 
@@ -150,7 +151,7 @@ public class WorkerIT extends ITBaseMini {
     Assert.assertEquals(4, tx7.get().row("N0003").fam("attr").qual("degree").toInteger(0));
     Assert.assertNull("", tx7.get().row("IDEG3").fam("node").qual("N0003").toString());
     Assert.assertEquals("", tx7.get().row("IDEG4").fam("node").qual("N0003").toString());
-    
+
     env.close();
   }
 
@@ -162,68 +163,69 @@ public class WorkerIT extends ITBaseMini {
     Column old = observedColumn;
     observedColumn = typeLayer.bc().fam("attr2").qual("lastupdate").vis();
     try {
-      try(Environment env = new Environment(config); Observers observers = new Observers(env)){
+      try (Environment env = new Environment(config); Observers observers = new Observers(env)) {
         observers.getObserver(typeLayer.bc().fam("attr").qual("lastupdate").vis());
       }
 
       Assert.fail();
 
     } catch (IllegalStateException ise) {
-      Assert.assertTrue(ise.getMessage().contains("Mismatch between configured column and class column"));
+      Assert.assertTrue(ise.getMessage().contains(
+          "Mismatch between configured column and class column"));
     } finally {
       observedColumn = old;
     }
   }
 
-  private void addLink(String from, String to){
-    try(TypedTransaction tx = typeLayer.wrap(client.newTransaction())){
+  private void addLink(String from, String to) {
+    try (TypedTransaction tx = typeLayer.wrap(client.newTransaction())) {
       tx.mutate().row(from).fam("link").qual(to).set("");
       tx.mutate().row(from).fam("attr").qual("lastupdate").set(System.currentTimeMillis());
       tx.commit();
     }
   }
-  
+
   @Test
-  public void testMultipleFinders(){
-    
-    try(Environment env = new Environment(config)){
-    
+  public void testMultipleFinders() {
+
+    try (Environment env = new Environment(config)) {
+
       NotificationFinder nf1 = new HashNotificationFinder();
-      nf1.init(env, ((MiniFluoImpl)miniFluo).getNotificationProcessor());
+      nf1.init(env, ((MiniFluoImpl) miniFluo).getNotificationProcessor());
       nf1.start();
-      
+
       NotificationFinder nf2 = new HashNotificationFinder();
-      nf2.init(env, ((MiniFluoImpl)miniFluo).getNotificationProcessor());
+      nf2.init(env, ((MiniFluoImpl) miniFluo).getNotificationProcessor());
       nf2.start();
-      
-      for(int i = 0; i< 10; i++){
-        addLink("N0003", "N00"+i+"0");
+
+      for (int i = 0; i < 10; i++) {
+        addLink("N0003", "N00" + i + "0");
       }
-      
+
       miniFluo.waitForObservers();
-      
-      try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
+
+      try (TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())) {
         Assert.assertEquals(10, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
         Assert.assertEquals("", snap.get().row("IDEG10").fam("node").qual("N0003").toString());
       }
-      
+
       nf2.stop();
-      
-      for(int i = 1; i< 10; i++){
-        addLink("N0003", "N0"+i+"00");
+
+      for (int i = 1; i < 10; i++) {
+        addLink("N0003", "N0" + i + "00");
       }
-      
+
       miniFluo.waitForObservers();
-      
-      try(TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())){
+
+      try (TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())) {
         Assert.assertEquals(19, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
         Assert.assertEquals("", snap.get().row("IDEG19").fam("node").qual("N0003").toString());
         Assert.assertNull(snap.get().row("IDEG10").fam("node").qual("N0003").toString());
       }
-      
+
       nf1.stop();
     }
   }
-  
+
   // TODO test that observers trigger on delete
 }

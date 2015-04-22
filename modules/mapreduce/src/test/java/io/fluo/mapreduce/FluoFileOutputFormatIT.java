@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.mapreduce;
 
 import java.io.File;
@@ -44,13 +43,15 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
 
   static final TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  public static class TestMapper extends Mapper<LongWritable,Text,RowColumn,Bytes> {
+  public static class TestMapper extends Mapper<LongWritable, Text, RowColumn, Bytes> {
 
     @Override
-    public void map(LongWritable key, Text data, Context context) throws IOException, InterruptedException {
+    public void map(LongWritable key, Text data, Context context) throws IOException,
+        InterruptedException {
       String fields[] = data.toString().split(",");
 
-      RowColumn rc = new RowColumn(Bytes.of(fields[0]), new Column(Bytes.of(fields[1]), Bytes.of(fields[2])));
+      RowColumn rc =
+          new RowColumn(Bytes.of(fields[0]), new Column(Bytes.of(fields[1]), Bytes.of(fields[2])));
       Bytes val = Bytes.of(fields[3]);
 
       context.write(rc, val);
@@ -58,7 +59,8 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
   }
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder(new File(System.getProperty("user.dir") + "/target"));
+  public TemporaryFolder tempFolder = new TemporaryFolder(new File(System.getProperty("user.dir")
+      + "/target"));
 
   @Test
   public void testImportFile() throws Exception {

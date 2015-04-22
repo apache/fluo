@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.accumulo.iterators;
@@ -29,12 +27,13 @@ public class TestIteratorEnv implements IteratorEnvironment {
 
   private IteratorScope scope;
 
-  TestIteratorEnv(IteratorScope scope){
+  TestIteratorEnv(IteratorScope scope) {
     this.scope = scope;
   }
 
   @Override
-  public SortedKeyValueIterator<Key,Value> reserveMapFileReader(String mapFileName) throws IOException {
+  public SortedKeyValueIterator<Key, Value> reserveMapFileReader(String mapFileName)
+      throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -54,7 +53,7 @@ public class TestIteratorEnv implements IteratorEnvironment {
   }
 
   @Override
-  public void registerSideChannel(SortedKeyValueIterator<Key,Value> iter) {
+  public void registerSideChannel(SortedKeyValueIterator<Key, Value> iter) {
     throw new UnsupportedOperationException();
   }
 }

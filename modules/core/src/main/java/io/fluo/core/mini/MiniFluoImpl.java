@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.mini;
 
 import java.io.File;
@@ -45,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of MiniFluo
  */
 public class MiniFluoImpl implements MiniFluo {
-  
+
   private static final Logger log = LoggerFactory.getLogger(MiniFluoImpl.class);
 
   private static final AtomicInteger reporterCounter = new AtomicInteger(1);
@@ -58,7 +57,7 @@ public class MiniFluoImpl implements MiniFluo {
   private NotificationFinder notificationFinder;
   private FluoConfiguration config;
   private MiniAccumuloCluster cluster = null;
-  
+
   protected static String USER = "root";
   protected static String PASSWORD = "secret";
 
@@ -69,27 +68,27 @@ public class MiniFluoImpl implements MiniFluo {
     public MiniNotificationProcessor(Environment env) {
       super(env);
     }
-    
+
     @Override
-    protected void workAdded(){
+    protected void workAdded() {
       synchronized (MiniFluoImpl.this) {
         numProcessing++;
       }
     }
-    
+
     @Override
-    protected void workFinished(){
+    protected void workFinished() {
       synchronized (MiniFluoImpl.this) {
         numProcessing--;
       }
     }
   }
- 
+
   @VisibleForTesting
   public NotificationProcessor getNotificationProcessor() {
     return mnp;
   }
-  
+
   private synchronized boolean isProcessing(Scanner scanner) {
     return scanner.iterator().hasNext() || numProcessing > 0;
   }
@@ -99,15 +98,15 @@ public class MiniFluoImpl implements MiniFluo {
       throw new IllegalArgumentException("MiniFluo configuration is not valid");
     }
     config = fluoConfig;
-    
+
     try {
       if (config.getMiniStartAccumulo()) {
         startMiniAccumulo();
       }
-      
+
       config.setProperty(ScanTask.MIN_SLEEP_TIME_PROP, 50);
       config.setProperty(ScanTask.MAX_SLEEP_TIME_PROP, 100);
-      
+
       env = new Environment(config);
 
       reporter = FluoClientImpl.setupReporters(env, "mini", reporterCounter);
@@ -123,30 +122,31 @@ public class MiniFluoImpl implements MiniFluo {
       throw new RuntimeException(e);
     }
   }
-  
+
   public static String clientPropsPath(FluoConfiguration config) {
     return config.getMiniDataDir() + "/client.properties";
   }
-  
+
   private void startMiniAccumulo() {
     try {
       // start mini accumulo cluster
       MiniAccumuloConfig cfg = new MiniAccumuloConfig(new File(config.getMiniDataDir()), PASSWORD);
       cluster = new MiniAccumuloCluster(cfg);
       cluster.start();
-      
-      log.debug("Started MiniAccumulo(accumulo="+cluster.getInstanceName()+" zk="+cluster.getZooKeepers()+")");
-      
+
+      log.debug("Started MiniAccumulo(accumulo=" + cluster.getInstanceName() + " zk="
+          + cluster.getZooKeepers() + ")");
+
       // configuration that must overridden
       config.setAccumuloInstance(cluster.getInstanceName());
       config.setAccumuloUser(USER);
       config.setAccumuloPassword(PASSWORD);
       config.setAccumuloZookeepers(cluster.getZooKeepers());
       config.setInstanceZookeepers(cluster.getZooKeepers() + "/fluo");
-      
+
       // configuration that only needs to be set if not by user
-      if ((config.containsKey(FluoConfiguration.ADMIN_ACCUMULO_TABLE_PROP) == false) ||
-          config.getAccumuloTable().trim().isEmpty()) {
+      if ((config.containsKey(FluoConfiguration.ADMIN_ACCUMULO_TABLE_PROP) == false)
+          || config.getAccumuloTable().trim().isEmpty()) {
         config.setAccumuloTable("fluo");
       }
 
@@ -154,19 +154,19 @@ public class MiniFluoImpl implements MiniFluo {
       try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
         admin.initialize(opts);
       }
-      
+
       File miniProps = new File(clientPropsPath(config));
       PropertiesConfiguration connConfig = new PropertiesConfiguration();
       connConfig.append(config.getClientConfiguration());
       connConfig.save(miniProps);
-      
+
       log.debug("Wrote MiniFluo client properties to {}", miniProps.getAbsolutePath());
-      
+
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
+
   @Override
   public Configuration getClientConfiguration() {
     return config.getClientConfiguration();
@@ -177,7 +177,7 @@ public class MiniFluoImpl implements MiniFluo {
     try {
       if (oserver != null) {
         notificationFinder.stop();
-        mnp.close(); 
+        mnp.close();
         oserver.stop();
         env.close();
         reporter.close();
@@ -196,7 +196,7 @@ public class MiniFluoImpl implements MiniFluo {
       Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
       scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
-      while (isProcessing(scanner)) { 
+      while (isProcessing(scanner)) {
         Thread.sleep(100);
       }
 

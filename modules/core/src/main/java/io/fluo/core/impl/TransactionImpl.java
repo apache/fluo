@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -66,18 +65,21 @@ import org.apache.accumulo.core.security.ColumnVisibility;
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction, Snapshot {
-  
+
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
   private static final Bytes DELETE = Bytes.of("special delete object");
-  private static enum TxStatus { OPEN, COMMIT_STARTED, COMMITTED, CLOSED }
-  
+
+  private static enum TxStatus {
+    OPEN, COMMIT_STARTED, COMMITTED, CLOSED
+  }
+
   private final long startTs;
-  private final Map<Bytes,Map<Column,Bytes>> updates = new HashMap<>();
-  private final Map<Bytes,Set<Column>> weakNotifications = new HashMap<>();
+  private final Map<Bytes, Map<Column, Bytes>> updates = new HashMap<>();
+  private final Map<Bytes, Set<Column>> weakNotifications = new HashMap<>();
   private final Set<Column> observedColumns;
   private final Environment env;
-  final Map<Bytes,Set<Column>> columnsRead = new HashMap<>();
+  final Map<Bytes, Set<Column>> columnsRead = new HashMap<>();
   private final TxStats stats = new TxStats();
   private Bytes triggerRow;
   private Column triggerColumn;
@@ -89,14 +91,14 @@ public class TransactionImpl implements Transaction, Snapshot {
   private ColumnVisibility gv(Column colvis) {
     return env.getSharedResources().getVisCache().getCV(colvis);
   }
- 
+
   public TransactionImpl(Environment env, Bytes triggerRow, Column triggerColumn, long startTs) {
     Preconditions.checkNotNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
     this.startTs = startTs;
     this.observedColumns = env.getObservers().keySet();
-    
+
     if (triggerColumn != null && env.getWeakObservers().containsKey(triggerColumn)) {
       this.weakRow = triggerRow;
       this.weakColumn = triggerColumn;
@@ -104,14 +106,14 @@ public class TransactionImpl implements Transaction, Snapshot {
       this.triggerRow = triggerRow;
       this.triggerColumn = triggerColumn;
     }
-    
+
     if (triggerRow != null) {
-      Map<Column,Bytes> colUpdates = new HashMap<>();
+      Map<Column, Bytes> colUpdates = new HashMap<>();
       colUpdates.put(triggerColumn, null);
       updates.put(triggerRow, colUpdates);
     }
   }
-  
+
   public TransactionImpl(Environment env, Bytes triggerRow, Column tiggerColumn) {
     this(env, triggerRow, tiggerColumn, allocateTimestamp(env));
   }
@@ -119,11 +121,11 @@ public class TransactionImpl implements Transaction, Snapshot {
   public TransactionImpl(Environment env) {
     this(env, null, null, allocateTimestamp(env));
   }
-  
+
   public TransactionImpl(Environment env, long startTs) {
     this(env, null, null, startTs);
   }
-    
+
   private static Long allocateTimestamp(Environment env) {
     return env.getSharedResources().getTimestampTracker().allocateTimestamp();
   }
@@ -136,13 +138,13 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
-  public Map<Column,Bytes> get(Bytes row, Set<Column> columns) {
+  public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     checkIfOpen();
     return getImpl(row, columns);
   }
-  
-  private Map<Column,Bytes> getImpl(Bytes row, Set<Column> columns) {
-    
+
+  private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
+
     // TODO push visibility filtering to server side?
 
     env.getSharedResources().getVisCache().validate(columns);
@@ -152,39 +154,39 @@ public class TransactionImpl implements Transaction, Snapshot {
     for (Column column : columns) {
       config.fetchColumn(column.getFamily(), column.getQualifier());
     }
-    
+
     RowIterator iter = getImpl(config);
-    
-    Map<Column,Bytes> ret = new HashMap<>();
+
+    Map<Column, Bytes> ret = new HashMap<>();
 
     while (iter.hasNext()) {
-      Entry<Bytes,ColumnIterator> entry = iter.next();
+      Entry<Bytes, ColumnIterator> entry = iter.next();
       ColumnIterator citer = entry.getValue();
       while (citer.hasNext()) {
-        Entry<Column,Bytes> centry = citer.next();
+        Entry<Column, Bytes> centry = citer.next();
         if (columns.contains(centry.getKey())) {
           ret.put(centry.getKey(), centry.getValue());
         }
       }
     }
-    
+
     // only update columns read after successful read
     updateColumnsRead(row, columns);
-    
+
     return ret;
   }
-    
+
   @Override
-  public Map<Bytes,Map<Column,Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     checkIfOpen();
 
     env.getSharedResources().getVisCache().validate(columns);
 
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
 
-    Map<Bytes,Map<Column,Bytes>> ret = pss.scan();
+    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
 
-    for (Entry<Bytes,Map<Column,Bytes>> entry : ret.entrySet()) {
+    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
       updateColumnsRead(entry.getKey(), entry.getValue().keySet());
     }
 
@@ -207,18 +209,18 @@ public class TransactionImpl implements Transaction, Snapshot {
     checkIfOpen();
     return getImpl(config);
   }
-  
+
   private RowIterator getImpl(ScannerConfiguration config) {
     return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
-    
+
   @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     checkIfOpen();
     Preconditions.checkNotNull(row);
     Preconditions.checkNotNull(col);
     Preconditions.checkNotNull(value);
-    
+
     if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
       throw new IllegalArgumentException(ColumnConstants.NOTIFY_CF + " is a reserved family");
     }
@@ -227,18 +229,18 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     // TODO copy?
 
-    Map<Column,Bytes> colUpdates = updates.get(row);
+    Map<Column, Bytes> colUpdates = updates.get(row);
     if (colUpdates == null) {
       colUpdates = new HashMap<>();
       updates.put(row, colUpdates);
     }
-    
+
     if (colUpdates.get(col) != null) {
       throw new AlreadySetException("Value already set " + row + " " + col);
     }
     colUpdates.put(col, value);
   }
-  
+
 
   @Override
   public void setWeakNotification(Bytes row, Column col) {
@@ -246,8 +248,9 @@ public class TransactionImpl implements Transaction, Snapshot {
     Preconditions.checkNotNull(row);
     Preconditions.checkNotNull(col);
 
-    if (!env.getWeakObservers().containsKey(col))
+    if (!env.getWeakObservers().containsKey(col)) {
       throw new IllegalArgumentException("Column not configured for weak notifications " + col);
+    }
 
     env.getSharedResources().getVisCache().validate(col);
 
@@ -267,35 +270,41 @@ public class TransactionImpl implements Transaction, Snapshot {
     Preconditions.checkNotNull(col);
     set(row, col, DELETE);
   }
-  
-  private ConditionalFlutation prewrite(ConditionalFlutation cm, Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn,
-      boolean isTriggerRow) {
+
+  private ConditionalFlutation prewrite(ConditionalFlutation cm, Bytes row, Column col, Bytes val,
+      Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = isTriggerRow && col.equals(triggerColumn);
-    if (isTrigger)
+    if (isTrigger) {
       PrewriteIterator.enableAckCheck(iterConf);
-    
-    Condition cond = new FluoCondition(env, col).setIterators(iterConf);
-    
-    if (cm == null)
-      cm = new ConditionalFlutation(env, row, cond);
-    else
-      cm.addCondition(cond);
-    
-    if (val != null && val != DELETE)
-      cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
+    }
 
-    cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn, val != null, val == DELETE, isTriggerRow, getTransactorID()));
-    
+    Condition cond = new FluoCondition(env, col).setIterators(iterConf);
+
+    if (cm == null) {
+      cm = new ConditionalFlutation(env, row, cond);
+    } else {
+      cm.addCondition(cond);
+    }
+
+    if (val != null && val != DELETE) {
+      cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
+    }
+
+    cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn,
+        val != null, val == DELETE, isTriggerRow, getTransactorID()));
+
     return cm;
   }
-  
-  private ConditionalFlutation prewrite(Bytes row, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
+
+  private ConditionalFlutation prewrite(Bytes row, Column col, Bytes val, Bytes primaryRow,
+      Column primaryColumn, boolean isTriggerRow) {
     return prewrite(null, row, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
 
-  private void prewrite(ConditionalFlutation cm, Column col, Bytes val, Bytes primaryRow, Column primaryColumn, boolean isTriggerRow) {
+  private void prewrite(ConditionalFlutation cm, Column col, Bytes val, Bytes primaryRow,
+      Column primaryColumn, boolean isTriggerRow) {
     prewrite(cm, null, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
 
@@ -307,24 +316,26 @@ public class TransactionImpl implements Transaction, Snapshot {
     private Bytes pval;
 
     private HashSet<Bytes> acceptedRows;
-    private Map<Bytes,Set<Column>> rejected = new HashMap<>();
-    
+    private Map<Bytes, Set<Column>> rejected = new HashMap<>();
+
     private void addPrimaryToRejected() {
       rejected = Collections.singletonMap(prow, Collections.singleton(pcol));
     }
-    
+
     private void addToRejected(Bytes row, Set<Column> columns) {
       rejected = new HashMap<>();
-      
+
       Set<Column> ret = rejected.put(row, columns);
-      if (ret != null)
+      if (ret != null) {
         throw new IllegalStateException();
+      }
     }
-    
-    private Map<Bytes,Set<Column>> getRejected() {
-      if (rejected == null)
+
+    private Map<Bytes, Set<Column>> getRejected() {
+      if (rejected == null) {
         return Collections.emptyMap();
-      
+      }
+
       return rejected;
     }
 
@@ -334,42 +345,46 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
-  public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException, AccumuloSecurityException, AlreadyAcknowledgedException {
+  public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException,
+      AccumuloSecurityException, AlreadyAcknowledgedException {
     if (triggerRow != null) {
       // always want to throw already ack exception if collision, so process trigger first
       return preCommit(cd, triggerRow, triggerColumn);
     } else {
       Bytes prow = updates.keySet().iterator().next();
-      Map<Column,Bytes> colSet = updates.get(prow);
+      Map<Column, Bytes> colSet = updates.get(prow);
       Column pcol = colSet.keySet().iterator().next();
       return preCommit(cd, prow, pcol);
     }
 
   }
-  
-  public boolean preCommit(CommitData cd, Bytes primRow, Column primCol) throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
+
+  public boolean preCommit(CommitData cd, Bytes primRow, Column primCol)
+      throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
       AlreadyAcknowledgedException {
-    
+
     checkIfOpen();
     status = TxStatus.COMMIT_STARTED;
 
     // get a primary column
     cd.prow = primRow;
-    Map<Column,Bytes> colSet = updates.get(cd.prow);
+    Map<Column, Bytes> colSet = updates.get(cd.prow);
     cd.pcol = primCol;
     cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0)
+    if (colSet.size() == 0) {
       updates.remove(cd.prow);
-    
+    }
+
     // try to lock primary column
-    ConditionalMutation pcm = prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
-    
+    ConditionalMutation pcm =
+        prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, cd.prow.equals(triggerRow));
+
     Status mutationStatus = cd.cw.write(pcm).getStatus();
-    
+
     while (mutationStatus == Status.UNKNOWN) {
-      
+
       TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-      
+
       switch (txInfo.status) {
         case LOCKED:
           mutationStatus = Status.ACCEPTED;
@@ -383,11 +398,12 @@ public class TransactionImpl implements Transaction, Snapshot {
           break;
         case COMMITTED:
         default:
-          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow + " " + cd.pcol);
-          
+          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow
+              + " " + cd.pcol);
+
       }
     }
-    
+
     if (mutationStatus != Status.ACCEPTED) {
       cd.addPrimaryToRejected();
       if (checkForAckCollision(pcm)) {
@@ -395,27 +411,30 @@ public class TransactionImpl implements Transaction, Snapshot {
       }
       return false;
     }
-    
+
     // TODO if trigger is always primary row:col, then do not need checks elsewhere
     // try to lock other columns
     ArrayList<ConditionalMutation> mutations = new ArrayList<>();
-    
-    for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
+
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
       ConditionalFlutation cm = null;
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
-      
-      for (Entry<Column,Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (cm == null)
-          cm = prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
-        else
+
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        if (cm == null) {
+          cm =
+              prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
+                  cd.pcol, isTriggerRow);
+        } else {
           prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
+        }
       }
-      
+
       mutations.add(cm);
     }
-    
+
     cd.acceptedRows = new HashSet<>();
-    
+
     boolean ackCollision = false;
 
     Iterator<Result> resultsIter = cd.cw.write(mutations.iterator());
@@ -423,21 +442,22 @@ public class TransactionImpl implements Transaction, Snapshot {
       Result result = resultsIter.next();
       // TODO handle unknown?
       Bytes row = Bytes.of(result.getMutation().getRow());
-      if (result.getStatus() == Status.ACCEPTED)
+      if (result.getStatus() == Status.ACCEPTED) {
         cd.acceptedRows.add(row);
-      else {
+      } else {
         // TODO if trigger is always primary row:col, then do not need checks elsewhere
         ackCollision |= checkForAckCollision(result.getMutation());
         cd.addToRejected(row, updates.get(row).keySet());
       }
     }
-    
+
     if (cd.getRejected().size() > 0) {
       rollback(cd);
-      
-      if (ackCollision)
+
+      if (ackCollision) {
         throw new AlreadyAcknowledgedException();
-      
+      }
+
       return false;
     }
 
@@ -449,10 +469,11 @@ public class TransactionImpl implements Transaction, Snapshot {
       SharedBatchWriter sbw = env.getSharedResources().getBatchWriter();
       ArrayList<Mutation> mutations = new ArrayList<>();
 
-      for (Entry<Bytes,Set<Column>> entry : weakNotifications.entrySet()) {
+      for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
         Flutation m = new Flutation(env, entry.getKey());
         for (Column col : entry.getValue()) {
-          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(col), commitTs, TransactionImpl.EMPTY);
+          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(col), commitTs,
+              TransactionImpl.EMPTY);
         }
         mutations.add(m);
       }
@@ -469,16 +490,19 @@ public class TransactionImpl implements Transaction, Snapshot {
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
    * 
-   * In this case TX2 would not roll back TX1, because it never read the column. This function attempts to handle this case if TX2 fails. Only doing this in
-   * case of failures is cheaper than trying to always read unread columns.
+   * <p>
+   * In this case TX2 would not roll back TX1, because it never read the column. This function
+   * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
+   * trying to always read unread columns.
    * 
    * @param cd
    */
   private void readUnread(CommitData cd) throws Exception {
-    // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user may not iterate over entire range
-    Map<Bytes,Set<Column>> columnsToRead = new HashMap<>();
-    
-    for (Entry<Bytes,Set<Column>> entry : cd.getRejected().entrySet()) {
+    // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
+    // may not iterate over entire range
+    Map<Bytes, Set<Column>> columnsToRead = new HashMap<>();
+
+    for (Entry<Bytes, Set<Column>> entry : cd.getRejected().entrySet()) {
       Set<Column> rowColsRead = columnsRead.get(entry.getKey());
       if (rowColsRead == null) {
         columnsToRead.put(entry.getKey(), entry.getValue());
@@ -491,7 +515,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       }
     }
 
-    for (Entry<Bytes,Set<Column>> entry : columnsToRead.entrySet()) {
+    for (Entry<Bytes, Set<Column>> entry : columnsToRead.entrySet()) {
       getImpl(entry.getKey(), entry.getValue());
     }
   }
@@ -501,14 +525,17 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     if (row.equals(triggerRow)) {
       List<ColumnUpdate> updates = cm.getUpdates();
-      
+
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
-        Column col = new Column(Bytes.of(cu.getColumnFamily()), Bytes.of(cu.getColumnQualifier()), Bytes.of(cu.getColumnVisibility()));
+        Column col =
+            new Column(Bytes.of(cu.getColumnFamily()), Bytes.of(cu.getColumnQualifier()),
+                Bytes.of(cu.getColumnVisibility()));
 
         if (triggerColumn.equals(col)) {
-          
-          // TODO this check will not detect ack when tx overlaps with another tx... it will instead the the lock release.. this may be ok, the worker will
+
+          // TODO this check will not detect ack when tx overlaps with another tx... it will instead
+          // the the lock release.. this may be ok, the worker will
           // retry the tx and then see the already ack exception
 
           IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
@@ -517,22 +544,27 @@ public class TransactionImpl implements Transaction, Snapshot {
           Key key = ColumnUtil.checkColumn(env, iterConf, row, col).getKey();
           // TODO could key be null?
           long colType = key.getTimestamp() & ColumnConstants.PREFIX_MASK;
-          
+
           if (colType == ColumnConstants.ACK_PREFIX) {
             return true;
           }
         }
       }
     }
-    
+
     return false;
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException, AccumuloSecurityException {
-    // set weak notifications after all locks are written, but before finishing commit. If weak notifications were set after the commit, then information
-    // about weak notifications would need to be persisted in the lock phase. Setting here is safe because any observers that run as a result of the weak
-    // notification will wait for the commit to finish. Setting here may cause an observer to run unessecarily in the case of rollback, but thats ok.
-    // TODO look into setting weak notification as part of lock and commit phases to avoid this synchronous step
+  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
+      AccumuloSecurityException {
+    // set weak notifications after all locks are written, but before finishing commit. If weak
+    // notifications were set after the commit, then information
+    // about weak notifications would need to be persisted in the lock phase. Setting here is safe
+    // because any observers that run as a result of the weak
+    // notification will wait for the commit to finish. Setting here may cause an observer to run
+    // unessecarily in the case of rollback, but thats ok.
+    // TODO look into setting weak notification as part of lock and commit phases to avoid this
+    // synchronous step
     writeWeakNotifications(commitTs);
 
     // try to delete lock and add write for primary column
@@ -540,22 +572,27 @@ public class TransactionImpl implements Transaction, Snapshot {
     PrewriteIterator.setSnaptime(iterConf, startTs);
     boolean isTrigger = cd.prow.equals(triggerRow) && cd.pcol.equals(triggerColumn);
 
-    Condition lockCheck = new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
-        LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger, getTransactorID()));
+    Condition lockCheck =
+        new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
+            LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger,
+                getTransactorID()));
     ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
 
-    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE, startTs, commitTs, observedColumns, delLockMutation);
-    
+    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE,
+        startTs, commitTs, observedColumns, delLockMutation);
+
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
-    
+
     while (mutationStatus == Status.UNKNOWN) {
-      
+
       TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-      
+
       switch (txInfo.status) {
         case COMMITTED:
-          if (txInfo.commitTs != commitTs)
-            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + commitTs);
+          if (txInfo.commitTs != commitTs) {
+            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!="
+                + commitTs);
+          }
           mutationStatus = Status.ACCEPTED;
           break;
         case LOCKED:
@@ -569,69 +606,74 @@ public class TransactionImpl implements Transaction, Snapshot {
     if (mutationStatus != Status.ACCEPTED) {
       return false;
     }
-    
+
     return true;
   }
-  
+
   private void rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
     // roll back locks
-    
+
     // TODO let rollback be done lazily? this makes GC more difficult
-    
+
     Flutation m;
 
     ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
     for (Bytes row : cd.acceptedRows) {
       m = new Flutation(env, row);
       for (Column col : updates.get(row).keySet()) {
-        m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(startTs, false, true));
+        m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+            DelLockValue.encode(startTs, false, true));
       }
       mutations.add(m);
     }
-    
+
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
-    
+
     // mark transaction as complete for garbage collection purposes
     m = new Flutation(env, cd.prow);
     // TODO timestamp?
     // TODO writing the primary column with a batch writer is iffy
 
-    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(startTs, false, true));
+    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encode(startTs, false, true));
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
     env.getSharedResources().getBatchWriter().writeMutation(m);
   }
-  
-  public boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException, MutationsRejectedException {
+
+  public boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException,
+      MutationsRejectedException {
     // delete locks and add writes for other columns
     ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
-    for (Entry<Bytes,Map<Column,Bytes>> rowUpdates : updates.entrySet()) {
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
       Flutation m = new Flutation(env, rowUpdates.getKey());
       boolean isTriggerRow = rowUpdates.getKey().equals(triggerRow);
-      for (Entry<Column,Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        ColumnUtil.commitColumn(env, isTriggerRow && colUpdates.getKey().equals(triggerColumn), false, colUpdates.getKey(), colUpdates.getValue() != null,
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        ColumnUtil.commitColumn(env, isTriggerRow && colUpdates.getKey().equals(triggerColumn),
+            false, colUpdates.getKey(), colUpdates.getValue() != null,
             colUpdates.getValue() == DELETE, startTs, commitTs, observedColumns, m);
       }
-      
+
       mutations.add(m);
     }
-    
+
     if (weakRow != null) {
       Flutation m = new Flutation(env, weakRow);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), startTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn),
+          gv(weakColumn), startTs);
 
       mutations.add(m);
     }
 
     env.getSharedResources().getBatchWriter().writeMutations(mutations);
-    
+
     // mark transaction as complete for garbage collection purposes
 
     Flutation m = new Flutation(env, cd.prow);
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
 
     env.getSharedResources().getBatchWriter().writeMutationAsync(m);
-    
+
     return true;
   }
 
@@ -643,30 +685,31 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   @Override
   public synchronized void commit() throws CommitException {
-    
+
     if (status == TxStatus.CLOSED) {
       throw new CommitException("Transaction was previously closed");
     } else if (status == TxStatus.COMMITTED) {
       throw new CommitException("Transaction was previously committed");
     }
-    
+
     if (updates.size() == 0) {
       deleteWeakRow();
       stats.setFinishTime(System.currentTimeMillis());
       return;
     }
 
-    for (Map<Column,Bytes> cols : updates.values())
+    for (Map<Column, Bytes> cols : updates.values()) {
       stats.incrementEntriesSet(cols.size());
+    }
 
     CommitData cd = createCommitData();
-    
+
     try {
       if (!preCommit(cd)) {
         readUnread(cd);
         throw new CommitException("Pre-commit failed");
       }
-      
+
       long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
       stats.setCommitTs(commitTs);
       if (commitPrimaryColumn(cd, commitTs)) {
@@ -692,7 +735,8 @@ public class TransactionImpl implements Transaction, Snapshot {
   void deleteWeakRow() {
     if (weakRow != null) {
       Flutation m = new Flutation(env, weakRow);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn), gv(weakColumn), startTs);
+      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(weakColumn),
+          gv(weakColumn), startTs);
 
       env.getSharedResources().getBatchWriter().writeMutation(m);
     }
@@ -705,7 +749,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   public long getStartTs() {
     return startTs;
   }
-  
+
   /**
    * Sets the transactor of this transaction
    * 
@@ -717,10 +761,10 @@ public class TransactionImpl implements Transaction, Snapshot {
     this.tnode = tnode;
     return this;
   }
-  
+
   /**
-   * Retrieves transactor ID by first getting/creating
-   * transactor (which is only done until necessary)
+   * Retrieves transactor ID by first getting/creating transactor (which is only done until
+   * necessary)
    */
   private Long getTransactorID() {
     if (tnode == null) {
@@ -736,7 +780,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       env.getSharedResources().getTimestampTracker().removeTimestamp(startTs);
     }
   }
-  
+
   private synchronized void checkIfOpen() {
     if (status != TxStatus.OPEN) {
       throw new IllegalStateException("Transation is no longer open! status = " + status);

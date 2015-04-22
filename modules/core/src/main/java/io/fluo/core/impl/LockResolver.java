@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -43,21 +42,25 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * This is utility code for either rolling forward or back failed transactions. A transaction is deemed to have failed if the reading transaction waited too
- * long or the transactor id does not exist in zookeeper.
+ * This is utility code for either rolling forward or back failed transactions. A transaction is
+ * deemed to have failed if the reading transaction waited too long or the transactor id does not
+ * exist in zookeeper.
  */
 
 public class LockResolver {
 
-  private static Map<PrimaryRowColumn,List<Entry<Key,Value>>> groupLocksByPrimary(List<Entry<Key,Value>> locks) {
-    Map<PrimaryRowColumn,List<Entry<Key,Value>>> groupedLocks = new HashMap<>();
-    Map<PrimaryRowColumn,Long> transactorIds = new HashMap<>();
+  private static Map<PrimaryRowColumn, List<Entry<Key, Value>>> groupLocksByPrimary(
+      List<Entry<Key, Value>> locks) {
+    Map<PrimaryRowColumn, List<Entry<Key, Value>>> groupedLocks = new HashMap<>();
+    Map<PrimaryRowColumn, Long> transactorIds = new HashMap<>();
 
-    for (Entry<Key,Value> lock : locks) {
+    for (Entry<Key, Value> lock : locks) {
       LockValue lockVal = new LockValue(lock.getValue().get());
-      PrimaryRowColumn prc = new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(), lock.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK);
+      PrimaryRowColumn prc =
+          new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(), lock.getKey()
+              .getTimestamp() & ColumnConstants.TIMESTAMP_MASK);
 
-      List<Entry<Key,Value>> lockList = groupedLocks.get(prc);
+      List<Entry<Key, Value>> lockList = groupedLocks.get(prc);
       if (lockList == null) {
         lockList = new ArrayList<>();
         groupedLocks.put(prc, lockList);
@@ -67,8 +70,10 @@ public class LockResolver {
       if (trid == null) {
         transactorIds.put(prc, lockVal.getTransactor());
       } else if (!trid.equals(lockVal.getTransactor())) {
-        // sanity check.. its assumed that all locks w/ the same PrimaryRowColumn should have the same transactor id as well
-        throw new IllegalStateException("transactor ids not equals " + prc + " " + lock.getKey() + " " + trid + " " + lockVal.getTransactor());
+        // sanity check.. its assumed that all locks w/ the same PrimaryRowColumn should have the
+        // same transactor id as well
+        throw new IllegalStateException("transactor ids not equals " + prc + " " + lock.getKey()
+            + " " + trid + " " + lockVal.getTransactor());
       }
 
       lockList.add(lock);
@@ -81,36 +86,36 @@ public class LockResolver {
   /**
    * Attempts to roll forward or roll back a set of locks encountered by a transaction reading data.
    * 
-   * @param env
-   *          environment
-   * @param startTs
-   *          the logical start time from the oracle of the transaction that encountered the lock
-   * @param stats
-   *          stats object for the transaction that encountered the lock
+   * @param env environment
+   * @param startTs the logical start time from the oracle of the transaction that encountered the
+   *        lock
+   * @param stats stats object for the transaction that encountered the lock
    * @param locks
-   * @param startTime
-   *          the wall time that the transaction that encountered the lock first saw the lock
+   * @param startTime the wall time that the transaction that encountered the lock first saw the
+   *        lock
    * @return true if all locks passed in were resolved (rolled forward or back)
    */
-  static boolean resolveLocks(Environment env, long startTs, TxStats stats, List<Entry<Key,Value>> locks, long startTime) {
+  static boolean resolveLocks(Environment env, long startTs, TxStats stats,
+      List<Entry<Key, Value>> locks, long startTime) {
     // check if transactor is still alive
 
     int numResolved = 0;
 
-    Map<ByteSequence,Mutation> mutations = new HashMap<>();
+    Map<ByteSequence, Mutation> mutations = new HashMap<>();
 
     boolean timedOut = false;
 
     TransactorCache transactorCache = env.getSharedResources().getTransactorCache();
 
-    List<Entry<Key,Value>> locksToRecover;
-    if (System.currentTimeMillis() - startTime > env.getConfiguration().getTransactionRollbackTime()) {
+    List<Entry<Key, Value>> locksToRecover;
+    if (System.currentTimeMillis() - startTime > env.getConfiguration()
+        .getTransactionRollbackTime()) {
       locksToRecover = locks;
       stats.incrementTimedOutLocks(locksToRecover.size());
       timedOut = true;
     } else {
       locksToRecover = new ArrayList<>(locks.size());
-      for (Entry<Key,Value> entry : locks) {
+      for (Entry<Key, Value> entry : locks) {
 
         Long transactorId = new LockValue(entry.getValue().get()).getTransactor();
         long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
@@ -125,12 +130,13 @@ public class LockResolver {
       }
     }
 
-    Map<PrimaryRowColumn,List<Entry<Key,Value>>> groupedLocks = groupLocksByPrimary(locksToRecover);
+    Map<PrimaryRowColumn, List<Entry<Key, Value>>> groupedLocks =
+        groupLocksByPrimary(locksToRecover);
 
     if (timedOut) {
-      Set<Entry<PrimaryRowColumn,List<Entry<Key,Value>>>> es = groupedLocks.entrySet();
+      Set<Entry<PrimaryRowColumn, List<Entry<Key, Value>>>> es = groupedLocks.entrySet();
 
-      for (Entry<PrimaryRowColumn,List<Entry<Key,Value>>> entry : es) {
+      for (Entry<PrimaryRowColumn, List<Entry<Key, Value>>> entry : es) {
         long lockTs = entry.getKey().startTs;
         Long transactorId = new LockValue(entry.getValue().get(0).getValue().get()).getTransactor();
         transactorCache.addTimedoutTransactor(transactorId, lockTs, startTime);
@@ -139,8 +145,8 @@ public class LockResolver {
 
     TxInfoCache txiCache = env.getSharedResources().getTxInfoCache();
 
-    Set<Entry<PrimaryRowColumn,List<Entry<Key,Value>>>> es = groupedLocks.entrySet();
-    for (Entry<PrimaryRowColumn,List<Entry<Key,Value>>> group : es) {
+    Set<Entry<PrimaryRowColumn, List<Entry<Key, Value>>>> es = groupedLocks.entrySet();
+    for (Entry<PrimaryRowColumn, List<Entry<Key, Value>>> group : es) {
       TxInfo txInfo = txiCache.getTransactionInfo(group.getKey());
       switch (txInfo.status) {
         case COMMITTED:
@@ -160,40 +166,49 @@ public class LockResolver {
           break;
         case UNKNOWN:
         default:
-          throw new IllegalStateException("can not abort : " + group.getKey() + " (" + txInfo.status + ")");
+          throw new IllegalStateException("can not abort : " + group.getKey() + " ("
+              + txInfo.status + ")");
       }
     }
 
-    if (mutations.size() > 0)
+    if (mutations.size() > 0) {
       env.getSharedResources().getBatchWriter().writeMutations(new ArrayList<>(mutations.values()));
+    }
 
     return numResolved == locks.size();
   }
 
-  private static void rollback(Environment env, long startTs, PrimaryRowColumn prc, List<Entry<Key,Value>> value, Map<ByteSequence,Mutation> mutations) {
-    for (Entry<Key,Value> entry : value) {
-      if (isPrimary(prc, entry.getKey()))
+  private static void rollback(Environment env, long startTs, PrimaryRowColumn prc,
+      List<Entry<Key, Value>> value, Map<ByteSequence, Mutation> mutations) {
+    for (Entry<Key, Value> entry : value) {
+      if (isPrimary(prc, entry.getKey())) {
         continue;
+      }
 
       long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
       Key k = entry.getKey();
-      mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(), k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
+      mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
+          k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
           DelLockValue.encode(lockTs, false, true));
     }
 
   }
 
-  private static boolean rollbackPrimary(Environment env, long startTs, PrimaryRowColumn prc, byte[] lockValue) {
+  private static boolean rollbackPrimary(Environment env, long startTs, PrimaryRowColumn prc,
+      byte[] lockValue) {
     // TODO review use of PrewriteIter here
 
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
-    ConditionalFlutation delLockMutation = new ConditionalFlutation(env, prc.prow, new FluoCondition(env, prc.pcol).setIterators(iterConf).setValue(lockValue));
+    ConditionalFlutation delLockMutation =
+        new ConditionalFlutation(env, prc.prow, new FluoCondition(env, prc.pcol).setIterators(
+            iterConf).setValue(lockValue));
 
     // TODO sanity check on lockTs vs startTs
 
-    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs, DelLockValue.encode(prc.startTs, true, true));
+    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encode(prc.startTs, true, true));
 
     ConditionalWriter cw = null;
 
@@ -209,28 +224,31 @@ public class LockResolver {
     }
   }
 
-  private static void commitColumns(Environment env, PrimaryRowColumn prc, List<Entry<Key,Value>> value, long commitTs,
-      Map<ByteSequence,Mutation> mutations) {
-    for (Entry<Key,Value> entry : value) {
-      if (isPrimary(prc, entry.getKey()))
+  private static void commitColumns(Environment env, PrimaryRowColumn prc,
+      List<Entry<Key, Value>> value, long commitTs, Map<ByteSequence, Mutation> mutations) {
+    for (Entry<Key, Value> entry : value) {
+      if (isPrimary(prc, entry.getKey())) {
         continue;
+      }
 
       long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       // TODO may be that a stronger sanity check that could be done here
       if (commitTs < lockTs) {
-        throw new IllegalStateException("bad commitTs : " + entry.getKey() + " (" + commitTs + "<" + lockTs + ")");
+        throw new IllegalStateException("bad commitTs : " + entry.getKey() + " (" + commitTs + "<"
+            + lockTs + ")");
       }
 
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
       Column col = SpanUtil.toRowColumn(entry.getKey()).getColumn();
-      
+
       LockValue lv = new LockValue(entry.getValue().get());
-      ColumnUtil.commitColumn(env, lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs, commitTs, env.getObservers().keySet(), mut);
+      ColumnUtil.commitColumn(env, lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs,
+          commitTs, env.getObservers().keySet(), mut);
     }
 
   }
 
-  private static Mutation getMutation(ByteSequence row, Map<ByteSequence,Mutation> mutations) {
+  private static Mutation getMutation(ByteSequence row, Map<ByteSequence, Mutation> mutations) {
     Mutation mut = mutations.get(row);
 
     if (mut == null) {
@@ -242,6 +260,7 @@ public class LockResolver {
   }
 
   private static boolean isPrimary(PrimaryRowColumn prc, Key k) {
-    return prc.prow.equals(ByteUtil.toBytes(k.getRowData())) && prc.pcol.equals(SpanUtil.toRowColumn(k).getColumn());
+    return prc.prow.equals(ByteUtil.toBytes(k.getRowData()))
+        && prc.pcol.equals(SpanUtil.toRowColumn(k).getColumn());
   }
 }

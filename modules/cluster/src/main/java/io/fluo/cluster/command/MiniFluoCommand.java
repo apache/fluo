@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.cluster.command;
 
 import java.io.File;
@@ -31,7 +30,8 @@ public class MiniFluoCommand {
   public static void main(String[] args) {
 
     if (args.length < 3) {
-      System.err.println("ERROR - Expected at least two arguments.  Usage: FluoCommand <fluoHomeDir> <command> <appName> ...");
+      System.err
+          .println("ERROR - Expected at least two arguments.  Usage: FluoCommand <fluoHomeDir> <command> <appName> ...");
       System.exit(-1);
     }
 
@@ -41,8 +41,8 @@ public class MiniFluoCommand {
     String[] remainArgs = Arrays.copyOfRange(args, 3, args.length);
 
     if (command.equalsIgnoreCase("scan")) {
-      for (String logger : new String[]{ Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
-        ((Logger)LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
+      for (String logger : new String[] {Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
+        ((Logger) LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
       }
     }
 
@@ -61,9 +61,11 @@ public class MiniFluoCommand {
         } else {
           File miniDataDir = new File(config.getMiniDataDir());
           if (!miniDataDir.exists()) {
-            System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
-                + "' application!  Client properties are not set in fluo.properties and a MiniAccumuloCluster is not running at " + miniDataDir
-                .getAbsolutePath());
+            System.err
+                .println("Cannot connect to Fluo '"
+                    + config.getApplicationName()
+                    + "' application!  Client properties are not set in fluo.properties and a MiniAccumuloCluster is not running at "
+                    + miniDataDir.getAbsolutePath());
             System.exit(-1);
           }
 
@@ -74,7 +76,8 @@ public class MiniFluoCommand {
 
           File clientPropsFile = new File(MiniFluoImpl.clientPropsPath(config));
           if (!clientPropsFile.exists()) {
-            System.err.println("MiniFluo client.properties do not exist at " + clientPropsFile.getAbsolutePath());
+            System.err.println("MiniFluo client.properties do not exist at "
+                + clientPropsFile.getAbsolutePath());
             System.exit(-1);
           }
           chosenConfig = new FluoConfiguration(clientPropsFile);

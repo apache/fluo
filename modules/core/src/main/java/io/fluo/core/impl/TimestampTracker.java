@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.io.IOException;
@@ -34,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Allocates timestamps from Oracle for transactions and tracks 
- * the oldest active timestamp in Zookeeper for garbage collection
+ * Allocates timestamps from Oracle for transactions and tracks the oldest active timestamp in
+ * Zookeeper for garbage collection
  */
 public class TimestampTracker implements AutoCloseable {
 
@@ -67,15 +66,17 @@ public class TimestampTracker implements AutoCloseable {
         try {
           long ts = 0;
 
-          synchronized(TimestampTracker.this) {
-            if (closed)
+          synchronized (TimestampTracker.this) {
+            if (closed) {
               return;
+            }
 
             if (allocationsInProgress > 0) {
               sawZeroCount = 0;
               if (timestamps.size() > 0) {
-                if (updatingZk)
+                if (updatingZk) {
                   throw new IllegalStateException("expected updatingZk to be false");
+                }
                 ts = timestamps.first();
                 updatingZk = true;
               }
@@ -112,7 +113,8 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   public TimestampTracker(Environment env, TransactorID tid) {
-    this(env, tid, env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP, ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT));
+    this(env, tid, env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP,
+        ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT));
   }
 
   /**
@@ -124,7 +126,8 @@ public class TimestampTracker implements AutoCloseable {
       Preconditions.checkState(!closed, "tracker closed ");
 
       if (node == null) {
-        Preconditions.checkState(allocationsInProgress == 0, "expected allocationsInProgress == 0 when node == null");
+        Preconditions.checkState(allocationsInProgress == 0,
+            "expected allocationsInProgress == 0 when node == null");
         Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
 
         createZkNode(getTimestamp());
@@ -146,7 +149,7 @@ public class TimestampTracker implements AutoCloseable {
         allocationsInProgress--;
       }
       throw re;
-    } 
+    }
   }
 
   /**
@@ -154,10 +157,12 @@ public class TimestampTracker implements AutoCloseable {
    */
   public synchronized void removeTimestamp(long ts) throws NoSuchElementException {
     Preconditions.checkState(!closed, "tracker closed ");
-    Preconditions.checkState(allocationsInProgress > 0, "allocationsInProgress should be > 0 " + allocationsInProgress);
+    Preconditions.checkState(allocationsInProgress > 0, "allocationsInProgress should be > 0 "
+        + allocationsInProgress);
     Preconditions.checkNotNull(node);
     if (timestamps.remove(ts) == false) {
-      throw new NoSuchElementException("Timestamp "+ts+" was previously removed or does not exist");
+      throw new NoSuchElementException("Timestamp " + ts
+          + " was previously removed or does not exist");
     }
 
     allocationsInProgress--;
@@ -169,7 +174,9 @@ public class TimestampTracker implements AutoCloseable {
 
   private void createZkNode(long ts) {
     Preconditions.checkState(node == null, "expected node to be null");
-    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL, getNodePath(), LongUtil.toByteArray(ts));
+    node =
+        new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
+            getNodePath(), LongUtil.toByteArray(ts));
     CuratorUtil.startAndWait(node, 10);
     zkTimestamp = ts;
   }

@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.core.worker;
@@ -31,21 +29,22 @@ import org.slf4j.LoggerFactory;
 public class WorkTask implements Runnable {
 
   private static Logger log = LoggerFactory.getLogger(WorkTask.class);
-  
+
   private Environment env;
   private Bytes row;
   private Column col;
   private Observers observers;
   private NotificationFinder notificationFinder;
-  
-  WorkTask(NotificationFinder notificationFinder, Environment env, Bytes row, Column col, Observers observers){
+
+  WorkTask(NotificationFinder notificationFinder, Environment env, Bytes row, Column col,
+      Observers observers) {
     this.notificationFinder = notificationFinder;
     this.env = env;
     this.row = row;
     this.col = col;
     this.observers = observers;
   }
-  
+
   @Override
   public void run() {
     Observer observer = observers.getObserver(col);
@@ -57,8 +56,9 @@ public class WorkTask implements Runnable {
         try {
           txi = new TransactionImpl(env, row, col);
           tx = txi;
-          if (TracingTransaction.isTracingEnabled())
+          if (TracingTransaction.isTracingEnabled()) {
             tx = new TracingTransaction(txi, row, col, observer.getClass());
+          }
 
           observer.process(tx, row, col);
           tx.commit();
@@ -78,9 +78,10 @@ public class WorkTask implements Runnable {
           break;
         } finally {
           if (txi != null) {
-            try{
-              txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(), env.getSharedResources().getMetricRegistry());
-            }finally{
+            try {
+              txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(),
+                  env.getSharedResources().getMetricRegistry());
+            } finally {
               tx.close();
             }
           }

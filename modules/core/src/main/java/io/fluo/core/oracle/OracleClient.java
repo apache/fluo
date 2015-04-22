@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.oracle;
 
 import java.io.IOException;
@@ -52,8 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will automatically
- * fail over to different leaders.
+ * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will
+ * automatically fail over to different leaders.
  */
 public class OracleClient implements AutoCloseable {
 
@@ -62,15 +61,16 @@ public class OracleClient implements AutoCloseable {
 
   private final Timer responseTimer;
   private final Histogram stampsHistogram;
-  
+
   private Participant currentLeader;
-  
+
   private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicLong timestamp = new AtomicLong();
   }
 
-  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable, PathChildrenCacheListener {
+  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable,
+      PathChildrenCacheListener {
 
     private LeaderSelector leaderSelector;
     private CuratorFramework curatorFramework;
@@ -81,29 +81,32 @@ public class OracleClient implements AutoCloseable {
 
     @Override
     public void run() {
-      
+
       try {
         synchronized (this) {
-          //want this code to be mutually exclusive with close() .. so if in middle of setup, close method will wait till finished 
-          if(closed.get()){
+          // want this code to be mutually exclusive with close() .. so if in middle of setup, close
+          // method will wait till finished
+          if (closed.get()) {
             return;
           }
-          
+
           curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
           CuratorCnxnListener cnxnListener = new CuratorCnxnListener();
           curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
           curatorFramework.start();
 
-          while (!cnxnListener.isConnected())
+          while (!cnxnListener.isConnected()) {
             Thread.sleep(200);
+          }
 
-          pathChildrenCache = new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
+          pathChildrenCache =
+              new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
           pathChildrenCache.getListenable().addListener(this);
           pathChildrenCache.start();
 
           leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
 
-          connect();  
+          connect();
         }
         doWork();
       } catch (Exception e) {
@@ -116,21 +119,24 @@ public class OracleClient implements AutoCloseable {
     }
 
     /**
-     * It's possible an Oracle has gone into a bad state. Upon the leader being changed, we want to update our state
+     * It's possible an Oracle has gone into a bad state. Upon the leader being changed, we want to
+     * update our state
      */
     @Override
-    public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event) throws Exception {
+    public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event)
+        throws Exception {
 
-      if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) ||
-          event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED) ||
-          event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) {
+      if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)
+          || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
+          || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) {
 
         Participant participant = leaderSelector.getLeader();
         synchronized (this) {
-          if(isLeader(participant))
+          if (isLeader(participant)) {
             currentLeader = leaderSelector.getLeader();
-          else
+          } else {
             currentLeader = null;
+          }
         }
       }
     }
@@ -144,8 +150,8 @@ public class OracleClient implements AutoCloseable {
         try {
           request.clear();
           TimeRequest trh = null;
-          while(trh == null){
-            if(closed.get()){
+          while (trh == null) {
+            if (closed.get()) {
               return;
             }
             trh = queue.poll(1, TimeUnit.SECONDS);
@@ -170,7 +176,7 @@ public class OracleClient implements AutoCloseable {
               start = localClient.getTimestamps(env.getFluoApplicationID(), request.size());
 
               String leaderId = getOracle();
-              if(leaderId != null && !leaderId.equals(currentLeaderId)) {
+              if (leaderId != null && !leaderId.equals(currentLeaderId)) {
                 reconnect();
                 continue;
               }
@@ -194,7 +200,7 @@ public class OracleClient implements AutoCloseable {
             tr.cdl.countDown();
           }
         } catch (InterruptedException e) {
-          if(!closed.get()){
+          if (!closed.get()) {
             log.error("InterruptedException occurred in doWork() method", e);
           } else {
             log.debug("InterruptedException occurred in doWork() method", e);
@@ -205,7 +211,8 @@ public class OracleClient implements AutoCloseable {
       }
     }
 
-    private synchronized void connect() throws IOException, KeeperException, InterruptedException, TTransportException {
+    private synchronized void connect() throws IOException, KeeperException, InterruptedException,
+        TTransportException {
 
       getLeader();
       while (true) {
@@ -234,25 +241,30 @@ public class OracleClient implements AutoCloseable {
     /**
      * Atomically closes current connection and connects to the current leader
      */
-    private synchronized void reconnect() throws InterruptedException, TTransportException, KeeperException, IOException {
-      if(transport.isOpen())
+    private synchronized void reconnect() throws InterruptedException, TTransportException,
+        KeeperException, IOException {
+      if (transport.isOpen()) {
         transport.close();
+      }
       connect();
     }
 
     private synchronized void close() {
-      if(transport != null && transport.isOpen())
+      if (transport != null && transport.isOpen()) {
         transport.close();
+      }
       try {
-        if(pathChildrenCache != null)
+        if (pathChildrenCache != null) {
           pathChildrenCache.close();
+        }
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
-      
-      if(curatorFramework != null)
+
+      if (curatorFramework != null) {
         curatorFramework.close();
-      
+      }
+
       transport = null;
       pathChildrenCache = null;
       leaderSelector = null;
@@ -302,8 +314,7 @@ public class OracleClient implements AutoCloseable {
      * NOTE: This isn't competing for leadership, so it doesn't need to be started.
      */
     @Override
-    public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-    }
+    public void takeLeadership(CuratorFramework curatorFramework) throws Exception {}
   }
 
   private final Environment env;
@@ -315,8 +326,12 @@ public class OracleClient implements AutoCloseable {
   public OracleClient(Environment env) {
     this.env = env;
 
-    responseTimer = env.getSharedResources().getMetricRegistry().timer(env.getMeticNames().getOracleClientGetStamps());
-    stampsHistogram = env.getSharedResources().getMetricRegistry().histogram(env.getMeticNames().getOrcaleClientStamps());
+    responseTimer =
+        env.getSharedResources().getMetricRegistry()
+            .timer(env.getMeticNames().getOracleClientGetStamps());
+    stampsHistogram =
+        env.getSharedResources().getMetricRegistry()
+            .histogram(env.getMeticNames().getOrcaleClientStamps());
 
     timestampRetriever = new TimestampRetriever();
     thread = new Thread(timestampRetriever);
@@ -325,11 +340,11 @@ public class OracleClient implements AutoCloseable {
   }
 
   /**
-   * Retrieves time stamp from Oracle.  Throws {@link FluoException} if timed out or interrupted. 
+   * Retrieves time stamp from Oracle. Throws {@link FluoException} if timed out or interrupted.
    */
   public long getTimestamp() {
     checkClosed();
-    
+
     TimeRequest tr = new TimeRequest();
     queue.add(tr);
     try {
@@ -343,10 +358,13 @@ public class OracleClient implements AutoCloseable {
           if (waitPeriod < MAX_ORACLE_WAIT_PERIOD) {
             waitPeriod *= 2;
           }
-          log.warn("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s", waitTotal, waitPeriod);
+          log.warn(
+              "Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s",
+              waitTotal, waitPeriod);
         }
       } else if (!tr.cdl.await(timeout, TimeUnit.MILLISECONDS)) {
-        throw new FluoException("Timed out (after "+timeout+"ms) trying to retrieve timestamp from Oracle.  Is the Oracle running?");
+        throw new FluoException("Timed out (after " + timeout
+            + "ms) trying to retrieve timestamp from Oracle.  Is the Oracle running?");
       }
     } catch (InterruptedException e) {
       throw new FluoException("Interrupted while retrieving timestamp from Oracle", e);
@@ -362,15 +380,15 @@ public class OracleClient implements AutoCloseable {
     return currentLeader != null ? currentLeader.getId() : null;
   }
 
-  private void checkClosed(){
-    if(closed.get()){
-      throw new IllegalStateException(OracleClient.class.getSimpleName()+" is closed");
+  private void checkClosed() {
+    if (closed.get()) {
+      throw new IllegalStateException(OracleClient.class.getSimpleName() + " is closed");
     }
   }
-  
+
   @Override
   public void close() {
-    if(!closed.get()){
+    if (!closed.get()) {
       closed.set(true);
       try {
         thread.interrupt();
@@ -380,5 +398,5 @@ public class OracleClient implements AutoCloseable {
         throw new FluoException("Interrupted during close", e);
       }
     }
-  }  
+  }
 }

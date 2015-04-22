@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
@@ -47,11 +46,14 @@ public class ObserverConfigIT extends ITBaseMini {
     @Override
     public void init(Context context) {
       String ocTokens[] = context.getParameters().get("observedCol").split(":");
-      observedColumn = new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(), NotificationType.valueOf(ocTokens[2]));
+      observedColumn =
+          new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(),
+              NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.of(context.getParameters().get("outputCQ"));
       String swn = context.getParameters().get("setWeakNotification");
-      if (swn != null && swn.equals("true"))
+      if (swn != null && swn.equals("true")) {
         setWeakNotification = true;
+      }
     }
 
     @Override
@@ -64,8 +66,9 @@ public class ObserverConfigIT extends ITBaseMini {
 
       tx.set(row, outCol, in);
 
-      if (setWeakNotification)
+      if (setWeakNotification) {
         tx.setWeakNotification(row, outCol);
+      }
     }
 
     @Override
@@ -74,10 +77,11 @@ public class ObserverConfigIT extends ITBaseMini {
     }
   }
 
-  Map<String,String> newMap(String... args) {
-    HashMap<String,String> ret = new HashMap<>();
-    for (int i = 0; i < args.length; i += 2)
+  Map<String, String> newMap(String... args) {
+    HashMap<String, String> ret = new HashMap<>();
+    for (int i = 0; i < args.length; i += 2) {
       ret.put(args[i], args[i + 1]);
+    }
     return ret;
   }
 
@@ -85,28 +89,31 @@ public class ObserverConfigIT extends ITBaseMini {
   protected List<ObserverConfiguration> getObservers() {
     List<ObserverConfiguration> observers = new ArrayList<>();
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col1:" + NotificationType.STRONG,
-        "outputCQ", "col2")));
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
+        .setParameters(newMap("observedCol", "fam1:col1:" + NotificationType.STRONG, "outputCQ",
+            "col2")));
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col2:" + NotificationType.STRONG,
-        "outputCQ", "col3", "setWeakNotification", "true")));
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
+        .setParameters(newMap("observedCol", "fam1:col2:" + NotificationType.STRONG, "outputCQ",
+            "col3", "setWeakNotification", "true")));
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName()).setParameters(newMap("observedCol", "fam1:col3:" + NotificationType.WEAK,
-        "outputCQ", "col4")));
+    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
+        .setParameters(newMap("observedCol", "fam1:col3:" + NotificationType.WEAK, "outputCQ",
+            "col4")));
 
     return observers;
   }
 
   @Test
   public void testObserverConfig() throws Exception {
-    try(TypedTransaction tx1 = tl.wrap(client.newTransaction())){
+    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
       tx1.mutate().row("r1").fam("fam1").qual("col1").set("abcdefg");
       tx1.commit();
     }
-    
+
     miniFluo.waitForObservers();
-    
-    try(TypedSnapshot tx2 = tl.wrap(client.newSnapshot())){
+
+    try (TypedSnapshot tx2 = tl.wrap(client.newSnapshot())) {
       Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col1").toString());
       Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col2").toString());
       Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col3").toString());

@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.cluster.runner;
 
 import java.io.BufferedReader;
@@ -44,7 +43,9 @@ public abstract class ClusterAppRunner extends AppRunner {
 
   public class InitOptions {
 
-    @Parameter(names = {"-f", "--force"}, description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to setting both --clearTable --clearZookeeper")
+    @Parameter(
+        names = {"-f", "--force"},
+        description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to setting both --clearTable --clearZookeeper")
     private boolean force;
 
     @Parameter(names = {"--clearTable"}, description = "Skips prompt and clears Accumulo table")
@@ -119,10 +120,12 @@ public abstract class ClusterAppRunner extends AppRunner {
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties ("+appPropsPath+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties (" + appPropsPath + ") due to "
+          + e.getMessage());
       System.exit(-1);
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties ("+appPropsPath+") due to "+ e.getMessage());
+      System.err.println("Error - Invalid fluo.properties (" + appPropsPath + ") due to "
+          + e.getMessage());
       e.printStackTrace();
       System.exit(-1);
     }
@@ -130,14 +133,18 @@ public abstract class ClusterAppRunner extends AppRunner {
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
       if (admin.oracleExists()) {
-        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application is already running and must be stopped before running 'fluo init'.  Aborted initialization.");
+        System.err
+            .println("Error - The Fluo '"
+                + config.getApplicationName()
+                + "' application is already running and must be stopped before running 'fluo init'.  Aborted initialization.");
         System.exit(-1);
       }
 
       FluoAdmin.InitOpts initOpts = new FluoAdmin.InitOpts();
 
       if (commandOpts.getUpdate()) {
-        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName() + "' application in Zookeeper using " + appPropsPath);
+        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
+            + "' application in Zookeeper using " + appPropsPath);
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
@@ -149,8 +156,12 @@ public abstract class ClusterAppRunner extends AppRunner {
         if (commandOpts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
-          System.out.print("A Fluo '" + config.getApplicationName() + "' application is already initialized in Zookeeper at " + config.getAppZookeepers()
-              + " - Would you like to clear and reinitialize Zookeeper for this application (y/n)? ");
+          System.out
+              .print("A Fluo '"
+                  + config.getApplicationName()
+                  + "' application is already initialized in Zookeeper at "
+                  + config.getAppZookeepers()
+                  + " - Would you like to clear and reinitialize Zookeeper for this application (y/n)? ");
           if (readYes()) {
             initOpts.setClearZookeeper(true);
           } else {
@@ -162,7 +173,8 @@ public abstract class ClusterAppRunner extends AppRunner {
         if (commandOpts.getClearTable()) {
           initOpts.setClearTable(true);
         } else if (admin.accumuloTableExists()) {
-          System.out.print("The Accumulo table '" + config.getAccumuloTable() + "' already exists - Would you like to drop and recreate this table (y/n)? ");
+          System.out.print("The Accumulo table '" + config.getAccumuloTable()
+              + "' already exists - Would you like to drop and recreate this table (y/n)? ");
           if (readYes()) {
             initOpts.setClearTable(true);
           } else {
@@ -172,7 +184,8 @@ public abstract class ClusterAppRunner extends AppRunner {
         }
       }
 
-      System.out.println("Initializing Fluo '" + config.getApplicationName()+ "' application using " + appPropsPath);
+      System.out.println("Initializing Fluo '" + config.getApplicationName()
+          + "' application using " + appPropsPath);
       try {
         admin.initialize(initOpts);
       } catch (Exception e) {

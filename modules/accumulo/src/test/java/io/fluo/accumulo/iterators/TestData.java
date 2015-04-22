@@ -1,17 +1,15 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package io.fluo.accumulo.iterators;
@@ -36,19 +34,19 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 public class TestData {
-  TreeMap<Key,Value> data = new TreeMap<Key,Value>();
+  TreeMap<Key, Value> data = new TreeMap<Key, Value>();
 
-  TestData(){}
+  TestData() {}
 
-  TestData(TestData td){
+  TestData(TestData td) {
     data.putAll(td.data);
   }
 
-  TestData(SortedKeyValueIterator<Key,Value> iter, Range range){
+  TestData(SortedKeyValueIterator<Key, Value> iter, Range range) {
     try {
       iter.seek(range, new HashSet<ByteSequence>(), false);
 
-      while(iter.hasTop()){
+      while (iter.hasTop()) {
         data.put(iter.getTopKey(), iter.getTopValue());
         iter.next();
       }
@@ -57,11 +55,11 @@ public class TestData {
     }
   }
 
-  TestData(SortedKeyValueIterator<Key,Value> iter){
+  TestData(SortedKeyValueIterator<Key, Value> iter) {
     this(iter, new Range());
   }
 
-  public TestData addIfInRange(String key, String value, Range range){
+  public TestData addIfInRange(String key, String value, Range range) {
     String[] fields = key.split("\\s+");
 
     String row = fields[0];
@@ -71,7 +69,7 @@ public class TestData {
     long ts = Long.parseLong(fields[4]);
     byte[] val = new byte[0];
 
-    switch(ct){
+    switch (ct) {
       case "ACK":
         ts |= ColumnConstants.ACK_PREFIX;
         break;
@@ -86,7 +84,9 @@ public class TestData {
       case "LOCK":
         ts |= ColumnConstants.LOCK_PREFIX;
         String rc[] = value.split("\\s+");
-        val = LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"), value.contains("DELETE"), value.contains("TRIGGER"), 42l);
+        val =
+            LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"),
+                value.contains("DELETE"), value.contains("TRIGGER"), 42l);
         break;
       case "DATA":
         ts |= ColumnConstants.DATA_PREFIX;
@@ -98,37 +98,37 @@ public class TestData {
         val = DelLockValue.encode(lockTs, value.contains("PRIMARY"), value.contains("ROLLBACK"));
         break;
       default:
-        throw new IllegalArgumentException("unknown column type "+ct);
+        throw new IllegalArgumentException("unknown column type " + ct);
 
     }
 
     Key akey = new Key(row, cf, cq, ts);
-    if(range.contains(akey)){
+    if (range.contains(akey)) {
       data.put(akey, new Value(val));
     }
 
     return this;
   }
 
-  public TestData add(String key, String value){
+  public TestData add(String key, String value) {
     return addIfInRange(key, value, new Range());
   }
 
   @Override
-  public boolean equals(Object o){
-    if(o instanceof TestData){
-      TestData otd = (TestData)o;
+  public boolean equals(Object o) {
+    if (o instanceof TestData) {
+      TestData otd = (TestData) o;
       return data.equals(otd.data);
     }
     return false;
   }
 
   @Override
-  public String toString(){
-    Set<Entry<Key,Value>> es = data.entrySet();
+  public String toString() {
+    Set<Entry<Key, Value>> es = data.entrySet();
     StringBuilder sb = new StringBuilder("{");
     String sep = "";
-    for (Entry<Key,Value> entry : es) {
+    for (Entry<Key, Value> entry : es) {
       sb.append(sep);
       sep = ", ";
       sb.append(FluoFormatter.toString(entry));

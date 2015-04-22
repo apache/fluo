@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import java.util.Arrays;
@@ -33,7 +32,8 @@ public class ParallelScannerIT extends ITBaseImpl {
 
   @Test
   public void testConcurrentParallelScan() throws Exception {
-    // have one transaction lock a row/cole and another attempt to read that row/col as part of a parallel scan
+    // have one transaction lock a row/cole and another attempt to read that row/col as part of a
+    // parallel scan
     TestTransaction tx1 = new TestTransaction(env);
 
     tx1.mutate().row("bob9").fam("vote").qual("election1").set("N");
@@ -70,24 +70,27 @@ public class ParallelScannerIT extends ITBaseImpl {
         }
       }
     };
-    
+
     Thread commitThread = new Thread(finishCommitTask);
     commitThread.start();
-    
+
     TestTransaction tx3 = new TestTransaction(env);
 
     Column e1Col = typeLayer.bc().fam("vote").qual("election1").vis();
-    
-    // normally when this test runs, some of the row/columns being read below will be locked for a bit
-    Map<String,Map<Column,Value>> votes = tx3.get().rowsString(Arrays.asList("bob9", "joe3", "sue4", "eve2")).columns(e1Col).toStringMap();
-    
+
+    // normally when this test runs, some of the row/columns being read below will be locked for a
+    // bit
+    Map<String, Map<Column, Value>> votes =
+        tx3.get().rowsString(Arrays.asList("bob9", "joe3", "sue4", "eve2")).columns(e1Col)
+            .toStringMap();
+
     Assert.assertEquals("N", votes.get("bob9").get(e1Col).toString(""));
     Assert.assertEquals("nay", votes.get("joe3").get(e1Col).toString(""));
     Assert.assertEquals("+1", votes.get("sue4").get(e1Col).toString(""));
     Assert.assertEquals("no", votes.get("eve2").get(e1Col).toString(""));
     Assert.assertEquals(4, votes.size());
-    
-    
+
+
   }
 
   @Test
@@ -135,20 +138,24 @@ public class ParallelScannerIT extends ITBaseImpl {
     long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     tx3.commitPrimaryColumn(cd3, commitTs);
 
-    if (closeTransID)
+    if (closeTransID) {
       tNode1.close();
+    }
 
     check();
     check();
 
-    if (!closeTransID)
+    if (!closeTransID) {
       tNode1.close();
+    }
   }
 
   void check() throws Exception {
     TestTransaction tx = new TestTransaction(env);
     Column scol = typeLayer.bc().fam(7).qual(7).vis();
-    Map<String,Map<Column,Value>> votes = tx.get().rowsString(Arrays.asList("5", "12", "19", "26", "33", "40", "47")).columns(scol).toStringMap();
+    Map<String, Map<Column, Value>> votes =
+        tx.get().rowsString(Arrays.asList("5", "12", "19", "26", "33", "40", "47")).columns(scol)
+            .toStringMap();
 
     // following should be rolled back
     Assert.assertEquals(3, votes.get("5").get(scol).toInteger(0));

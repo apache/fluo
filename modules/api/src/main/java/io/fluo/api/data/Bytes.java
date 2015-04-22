@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.api.data;
 
 import java.io.ByteArrayInputStream;
@@ -32,11 +31,11 @@ import java.util.List;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is created. {@link Bytes.EMPTY} is used to represent a
- * Bytes object with no data.
+ * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
+ * created. {@link Bytes.EMPTY} is used to represent a Bytes object with no data.
  */
 public abstract class Bytes implements Comparable<Bytes> {
-  
+
   private static final String BYTES_FACTORY_CLASS = "io.fluo.accumulo.data.MutableBytesFactory";
   private static final String WRITE_UTIL_CLASS = "io.fluo.accumulo.data.WriteUtilImpl";
 
@@ -46,6 +45,7 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   public interface WriteUtil {
     void writeVInt(DataOutput stream, int i) throws IOException;
+
     int readVInt(DataInput stream) throws IOException;
   }
 
@@ -54,8 +54,10 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   static {
     try {
-      bytesFactory = (BytesFactory) Class.forName(BYTES_FACTORY_CLASS).getDeclaredConstructor().newInstance();
-      writeUtil = (WriteUtil) Class.forName(WRITE_UTIL_CLASS).getDeclaredConstructor().newInstance();
+      bytesFactory =
+          (BytesFactory) Class.forName(BYTES_FACTORY_CLASS).getDeclaredConstructor().newInstance();
+      writeUtil =
+          (WriteUtil) Class.forName(WRITE_UTIL_CLASS).getDeclaredConstructor().newInstance();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -69,7 +71,7 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   /**
    * Gets a byte within this sequence of bytes
-   *
+   * 
    * @param i index into sequence
    * @return byte
    * @throws IllegalArgumentException if i is out of range
@@ -83,7 +85,7 @@ public abstract class Bytes implements Comparable<Bytes> {
 
   /**
    * Returns a portion of the Bytes object
-   *
+   * 
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
    */
@@ -93,15 +95,14 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Returns a byte array containing a copy of the bytes
    */
   public abstract byte[] toArray();
-  
+
   /**
-   * Compares the two given byte sequences, byte by byte, returning a negative,
-   * zero, or positive result if the first sequence is less than, equal to, or
-   * greater than the second. The comparison is performed starting with the
-   * first byte of each sequence, and proceeds until a pair of bytes differs,
-   * or one sequence runs out of byte (is shorter). A shorter sequence is
-   * considered less than a longer one.
-   *
+   * Compares the two given byte sequences, byte by byte, returning a negative, zero, or positive
+   * result if the first sequence is less than, equal to, or greater than the second. The comparison
+   * is performed starting with the first byte of each sequence, and proceeds until a pair of bytes
+   * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
+   * than a longer one.
+   * 
    * @param b1 first byte sequence to compare
    * @param b2 second byte sequence to compare
    * @return comparison result
@@ -125,7 +126,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Compares this Bytes object to another.
    */
   @Override
-  final public int compareTo(Bytes other) {      
+  final public int compareTo(Bytes other) {
     return compareBytes(this, other);
   }
 
@@ -137,11 +138,13 @@ public abstract class Bytes implements Comparable<Bytes> {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
-      if (this == other)
+      if (this == other) {
         return true;
+      }
 
-      if (length() != ob.length())
+      if (length() != ob.length()) {
         return false;
+      }
 
       return compareTo(ob) == 0;
     }
@@ -159,7 +162,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     }
     return hashCode;
   }
-  
+
   /**
    * Creates a Bytes object by copying the data of the given byte array
    */
@@ -169,15 +172,15 @@ public abstract class Bytes implements Comparable<Bytes> {
     System.arraycopy(array, 0, copy, 0, array.length);
     return bytesFactory.get(copy);
   }
-  
+
   /**
-   * Creates a Bytes object by copying the data of a subsequence of the given byte array 
-   *
+   * Creates a Bytes object by copying the data of a subsequence of the given byte array
+   * 
    * @param data Byte data
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
    */
-  final public static Bytes of(byte data[], int offset, int length) {
+  final public static Bytes of(byte[] data, int offset, int length) {
     Preconditions.checkNotNull(data);
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
@@ -193,7 +196,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     bb.get(data);
     return bytesFactory.get(data);
   }
-  
+
   /**
    * Creates a Bytes object by copying the value of the given String
    */
@@ -202,7 +205,7 @@ public abstract class Bytes implements Comparable<Bytes> {
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
   }
-  
+
   /**
    * Creates a Bytes object by copying the value of the given String with a given charset
    */
@@ -212,9 +215,9 @@ public abstract class Bytes implements Comparable<Bytes> {
     byte[] data = s.getBytes(c);
     return bytesFactory.get(data);
   }
-  
+
   /**
-   * Writes Bytes to DataOutput 
+   * Writes Bytes to DataOutput
    * 
    * @param out DataOutput
    * @param b Bytes
@@ -236,11 +239,11 @@ public abstract class Bytes implements Comparable<Bytes> {
    */
   final public static Bytes read(DataInput in) throws IOException {
     int len = writeUtil.readVInt(in);
-    byte b[] = new byte[len];
+    byte[] b = new byte[len];
     in.readFully(b);
     return of(b);
   }
-  
+
   /**
    * Concatenates of list of Bytes objects to create a byte array
    * 
@@ -252,19 +255,19 @@ public abstract class Bytes implements Comparable<Bytes> {
       // TODO calculate exact array size needed
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(baos);
-      
+
       for (Bytes b : listOfBytes) {
         writeUtil.writeVInt(dos, b.length());
         dos.write(b.toArray());
       }
-      
+
       dos.close();
       return of(baos.toByteArray());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
-  
+
   /**
    * Splits a bytes object into several bytes objects
    * 
@@ -274,21 +277,21 @@ public abstract class Bytes implements Comparable<Bytes> {
   final public static List<Bytes> split(Bytes b) {
     ByteArrayInputStream bais;
     bais = new ByteArrayInputStream(b.toArray());
-    
+
     DataInputStream dis = new DataInputStream(bais);
-    
+
     ArrayList<Bytes> ret = new ArrayList<>();
-    
+
     try {
       while (true) {
         int len = writeUtil.readVInt(dis);
         // TODO could get pointers into original byte seq
-        byte field[] = new byte[len];
+        byte[] field = new byte[len];
         dis.readFully(field);
         ret.add(of(field));
       }
     } catch (EOFException ee) {
-      
+
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

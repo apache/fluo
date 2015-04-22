@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.impl;
 
 import com.codahale.metrics.MetricRegistry;
@@ -28,7 +27,7 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.curator.framework.CuratorFramework;
 
-/** 
+/**
  * Shared Fluo resources that must be closed
  */
 public class SharedResources implements AutoCloseable {
@@ -54,33 +53,34 @@ public class SharedResources implements AutoCloseable {
     curator.start();
     bw = env.getConnector().createBatchWriter(env.getTable(), new BatchWriterConfig());
     sbw = new SharedBatchWriter(bw);
-    cw = env.getConnector().createConditionalWriter(env.getTable(), 
-        new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
+    cw =
+        env.getConnector().createConditionalWriter(env.getTable(),
+            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
   }
-  
+
   public SharedBatchWriter getBatchWriter() {
     checkIfClosed();
     return sbw;
   }
-  
+
   public ConditionalWriter getConditionalWriter() {
     checkIfClosed();
     return cw;
   }
-  
+
   public TxInfoCache getTxInfoCache() {
     checkIfClosed();
     return txInfoCache;
   }
-  
+
   public CuratorFramework getCurator() {
     checkIfClosed();
     return curator;
   }
-  
+
   public synchronized OracleClient getOracleClient() {
     checkIfClosed();
     if (oracleClient == null) {
@@ -88,7 +88,7 @@ public class SharedResources implements AutoCloseable {
     }
     return oracleClient;
   }
-  
+
   public synchronized TransactorID getTransactorID() {
     checkIfClosed();
     if (tid == null) {
@@ -96,7 +96,7 @@ public class SharedResources implements AutoCloseable {
     }
     return tid;
   }
-  
+
   public synchronized TimestampTracker getTimestampTracker() {
     checkIfClosed();
     if (tsTracker == null) {
@@ -104,7 +104,7 @@ public class SharedResources implements AutoCloseable {
     }
     return tsTracker;
   }
-  
+
   public synchronized TransactorNode getTransactorNode() {
     checkIfClosed();
     if (tnode == null) {
@@ -114,7 +114,7 @@ public class SharedResources implements AutoCloseable {
     }
     return tnode;
   }
-  
+
   public synchronized TransactorCache getTransactorCache() {
     checkIfClosed();
     if (transactorCache == null) {
@@ -124,7 +124,7 @@ public class SharedResources implements AutoCloseable {
     }
     return transactorCache;
   }
-  
+
   public VisibilityCache getVisCache() {
     checkIfClosed();
     return visCache;
@@ -146,7 +146,7 @@ public class SharedResources implements AutoCloseable {
     if (transactorCache != null) {
       transactorCache.close();
     }
-    if(oracleClient != null){
+    if (oracleClient != null) {
       oracleClient.close();
     }
     cw.close();
@@ -158,7 +158,7 @@ public class SharedResources implements AutoCloseable {
     }
     curator.close();
   }
-  
+
   private void checkIfClosed() {
     if (isClosed) {
       throw new IllegalStateException("SharedResources is closed!");

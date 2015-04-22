@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.core.util;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CuratorUtil {
-  
+
   private static final Logger log = LoggerFactory.getLogger(CuratorUtil.class);
 
   public enum NodeExistsPolicy {
@@ -40,36 +39,43 @@ public class CuratorUtil {
   private CuratorUtil() {}
 
   /**
-   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo chroot.
+   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo
+   * chroot.
    */
   public static CuratorFramework newAppCurator(FluoConfiguration config) {
     return newCurator(config.getAppZookeepers(), config.getZookeeperTimeout());
   }
 
   /**
-   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at root "/" of Zoookeper.
+   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at root
+   * "/" of Zoookeper.
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
-    return newCurator(ZookeeperUtil.parseServers(config.getAppZookeepers()), config.getZookeeperTimeout());
+    return newCurator(ZookeeperUtil.parseServers(config.getAppZookeepers()),
+        config.getZookeeperTimeout());
   }
-  
+
   /**
    * Creates a curator built using the given zookeeper connection string & timeout
    */
   public static CuratorFramework newCurator(String zookeepers, int timeout) {
-    return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout, new ExponentialBackoffRetry(1000, 10));
+    return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout,
+        new ExponentialBackoffRetry(1000, 10));
   }
 
-  public static boolean putData(CuratorFramework curator, String zPath, byte[] data, NodeExistsPolicy policy) throws KeeperException, InterruptedException {
-    if (policy == null)
+  public static boolean putData(CuratorFramework curator, String zPath, byte[] data,
+      NodeExistsPolicy policy) throws KeeperException, InterruptedException {
+    if (policy == null) {
       policy = NodeExistsPolicy.FAIL;
+    }
 
     while (true) {
       try {
-        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zPath, data);
+        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+            .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zPath, data);
         return true;
       } catch (Exception nee) {
-        if(nee instanceof KeeperException.NodeExistsException) {
+        if (nee instanceof KeeperException.NodeExistsException) {
           switch (policy) {
             case SKIP:
               return false;
@@ -79,17 +85,19 @@ public class CuratorUtil {
                 return true;
               } catch (Exception nne) {
 
-                if(nne instanceof KeeperException.NoNodeException)
+                if (nne instanceof KeeperException.NoNodeException) {
                   // node delete between create call and set data, so try create call again
                   continue;
-                else
+                } else {
                   throw new RuntimeException(nne);
+                }
               }
             default:
-              throw (KeeperException.NodeExistsException)nee;
+              throw (KeeperException.NodeExistsException) nee;
           }
-        } else
+        } else {
           throw new RuntimeException(nee);
+        }
       }
     }
   }
@@ -106,7 +114,7 @@ public class CuratorUtil {
     try {
       while (node.waitForInitialCreate(1, TimeUnit.SECONDS) == false) {
         waitTime += 1;
-        log.info("Waited "+waitTime+" sec for ephmeral node to be created");
+        log.info("Waited " + waitTime + " sec for ephmeral node to be created");
         if (waitTime > maxWaitSec) {
           throw new IllegalStateException("Failed to create ephemeral node");
         }

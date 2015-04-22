@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
@@ -39,30 +38,31 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * This iterator cleans up old versions and unneeded column metadata. 
- * It's intended to be used only at compaction time.
+ * This iterator cleans up old versions and unneeded column metadata. It's intended to be used only
+ * at compaction time.
  */
-public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Value> {
+public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Value> {
 
-  private static class KeyValue extends SimpleImmutableEntry<Key,Value>{
+  private static class KeyValue extends SimpleImmutableEntry<Key, Value> {
     private static final long serialVersionUID = 1L;
-    
+
     public KeyValue(Key key, Value value) {
       super(new Key(key), new Value(value));
     }
-    
+
     public KeyValue(Key key, byte[] value) {
       super(new Key(key), new Value(value));
     }
   }
-  
+
   @VisibleForTesting
   static final String OLDEST_ACTIVE_TS_OPT = "timestamp.oldest.active";
-  
+
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
-  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
+  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(
+      ColumnConstants.NOTIFY_CF.toArray());
   private Long oldestActiveTs;
-  private SortedKeyValueIterator<Key,Value> source;
+  private SortedKeyValueIterator<Key, Value> source;
 
   private ArrayList<KeyValue> keys = new ArrayList<>();
   private ArrayList<KeyValue> keysFiltered = new ArrayList<>();
@@ -72,21 +72,22 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   private int position = 0;
 
   @Override
-  public void init(SortedKeyValueIterator<Key,Value> source, Map<String,String> options, IteratorEnvironment env) throws IOException {
+  public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
+      IteratorEnvironment env) throws IOException {
     if (env.getIteratorScope() == IteratorScope.scan) {
       throw new IllegalArgumentException();
     }
     this.source = source;
-    
-    String oats = options.get(OLDEST_ACTIVE_TS_OPT) ;
-    if(oats != null){
+
+    String oats = options.get(OLDEST_ACTIVE_TS_OPT);
+    if (oats != null) {
       oldestActiveTs = Long.valueOf(oats);
-    }else{
+    } else {
       String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
       if (zookeepers == null) {
         throw new IllegalArgumentException("A configuration item for GC iterator was not set");
       }
-      oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);  
+      oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);
     }
   }
 
@@ -106,13 +107,15 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
       source.next();
     }
 
-    while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop()
+        && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
       if (colType == ColumnConstants.DATA_PREFIX) {
-        if (ts >= truncationTime)
+        if (ts >= truncationTime) {
           break;
+        }
       } else {
         // TODO check if its a notify
         break;
@@ -127,7 +130,8 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   }
 
   @Override
-  public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
+  public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive)
+      throws IOException {
     source.seek(range, columnFamilies, inclusive);
 
     if (source.hasTop()) {
@@ -143,7 +147,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
     boolean oldestSeen = false;
     boolean sawAck = false;
     long firstWrite = -1;
-    
+
     truncationTime = -1;
 
     position = 0;
@@ -157,11 +161,12 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
       return;
     }
 
-    while (source.hasTop() && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop()
+        && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
 
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-      
+
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
         keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         completeTxs.add(ts);
@@ -171,32 +176,38 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         byte[] val = source.getTopValue().get();
         long timePtr = WriteValue.getTimestamp(val);
 
-        if (WriteValue.isPrimary(val) && !complete)
+        if (WriteValue.isPrimary(val) && !complete) {
           keep = true;
-        
+        }
+
         if (!oldestSeen && !truncationSeen) {
           keep = true;
-          
-          if(firstWrite == -1)
-            firstWrite = ts;
-          
-          if (ts < oldestActiveTs)
-            oldestSeen = true;
 
-          if (WriteValue.isTruncated(val))
+          if (firstWrite == -1) {
+            firstWrite = ts;
+          }
+
+          if (ts < oldestActiveTs) {
+            oldestSeen = true;
+          }
+
+          if (WriteValue.isTruncated(val)) {
             truncationSeen = true;
+          }
 
           if (oldestSeen || truncationSeen) {
-            if (truncationTime != -1)
+            if (truncationTime != -1) {
               throw new IllegalStateException();
+            }
 
             truncationTime = timePtr;
             val = WriteValue.encode(truncationTime, WriteValue.isPrimary(val), true);
           }
         }
 
-        if (timePtr > invalidationTime)
+        if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
+        }
 
         if (keep) {
           keys.add(new KeyValue(source.getTopKey(), val));
@@ -207,8 +218,9 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
         boolean keep = false;
         boolean complete = completeTxs.contains(ts);
 
-        if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete)
+        if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete) {
           keep = true;
+        }
 
         long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
 
@@ -223,15 +235,17 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
           completeTxs.remove(ts);
         }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
-        if (ts > invalidationTime)
+        if (ts > invalidationTime) {
           keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
+        }
       } else if (colType == ColumnConstants.DATA_PREFIX) {
         // can stop looking
         break;
       } else if (colType == ColumnConstants.ACK_PREFIX) {
         if (!sawAck) {
-          if(ts >= firstWrite) 
-            keys.add(new KeyValue(source.getTopKey(), source.getTopValue())); 
+          if (ts >= firstWrite) {
+            keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
+          }
           sawAck = true;
         }
       } else {
@@ -252,7 +266,8 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
       }
     }
 
-    if (keysFiltered.size() == 0 && source.hasTop() && !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    if (keysFiltered.size() == 0 && source.hasTop()
+        && !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       throw new IllegalStateException();
     }
   }
@@ -276,10 +291,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key,Val
   }
 
   @Override
-  public SortedKeyValueIterator<Key,Value> deepCopy(IteratorEnvironment env) {
+  public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
     throw new UnsupportedOperationException();
   }
-  
+
   public static void setZookeepers(IteratorSetting gcIter, String zookeepers) {
     gcIter.addOption(ZOOKEEPER_CONNECT_OPT, zookeepers);
   }

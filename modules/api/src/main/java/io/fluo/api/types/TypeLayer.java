@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.api.types;
 
 import java.nio.ByteBuffer;
@@ -24,7 +23,8 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
 /**
- * A simple convenience layer for Fluo. This layer attempts to make the following common operations easier.
+ * A simple convenience layer for Fluo. This layer attempts to make the following common operations
+ * easier.
  * 
  * <UL>
  * <LI>Working with different types.
@@ -34,16 +34,18 @@ import io.fluo.api.data.Column;
  * </UL>
  * 
  * <p>
- * This layer was intentionally loosely coupled with the basic API. This allows other convenience layers for Fluo to build directly on the basic API w/o having
- * to consider the particulars of this layer. Also its expected that integration with other languages may only use the basic API.
+ * This layer was intentionally loosely coupled with the basic API. This allows other convenience
+ * layers for Fluo to build directly on the basic API w/o having to consider the particulars of this
+ * layer. Also its expected that integration with other languages may only use the basic API.
  * </p>
  * 
  * <h3>Using</h3>
  * 
  * <p>
- * A TypeLayer is created with a certain encoder thats used for converting from bytes to primitives and visa versa. In order to ensure that all of your code
- * uses the same encoder, its probably best to centralize the choice of an encoder within your project. There are many ways do to this, below is an example of
- * one way to centralize and use.
+ * A TypeLayer is created with a certain encoder thats used for converting from bytes to primitives
+ * and visa versa. In order to ensure that all of your code uses the same encoder, its probably best
+ * to centralize the choice of an encoder within your project. There are many ways do to this, below
+ * is an example of one way to centralize and use.
  * </p>
  * 
  * <pre>
@@ -90,8 +92,9 @@ import io.fluo.api.data.Column;
  * </pre>
  * 
  * <p>
- * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the following way. Because row(), fam(), qual(), and set() each take many
- * different types, this enables many different permutations that would not be achievable with overloading.
+ * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the
+ * following way. Because row(), fam(), qual(), and set() each take many different types, this
+ * enables many different permutations that would not be achievable with overloading.
  * </p>
  * 
  * <pre>
@@ -105,7 +108,8 @@ import io.fluo.api.data.Column;
  * <h3>Default values</h3>
  * 
  * <p>
- * The following example code shows using the basic fluo API to read a value and default to zero if it does not exist.
+ * The following example code shows using the basic fluo API to read a value and default to zero if
+ * it does not exist.
  * </p>
  * 
  * <pre>
@@ -126,8 +130,8 @@ import io.fluo.api.data.Column;
  * </pre>
  * 
  * <p>
- * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the following way. This code avoids the null check by supplying a default
- * value of zero.
+ * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the
+ * following way. This code avoids the null check by supplying a default value of zero.
  * </p>
  * 
  * <pre>
@@ -155,7 +159,8 @@ import io.fluo.api.data.Column;
  * <h3>Null return types</h3>
  * 
  * <p>
- * When using the basic API, you must ensure the return type is not null before converting a string or long.
+ * When using the basic API, you must ensure the return type is not null before converting a string
+ * or long.
  * </p>
  * 
  * <pre>
@@ -170,7 +175,8 @@ import io.fluo.api.data.Column;
  * </pre>
  * 
  * <p>
- * With {@link TypedTransactionBase} if no default value is supplied, then the null is passed through.
+ * With {@link TypedTransactionBase} if no default value is supplied, then the null is passed
+ * through.
  * </p>
  * 
  * <pre>
@@ -186,7 +192,8 @@ import io.fluo.api.data.Column;
  * <h3>Defaulted maps</h3>
  * 
  * <p>
- * The operations that return maps, return defaulted maps which make it easy to specify defaults and avoid null.
+ * The operations that return maps, return defaulted maps which make it easy to specify defaults and
+ * avoid null.
  * </p>
  * 
  * <pre>
@@ -311,7 +318,7 @@ public class TypeLayer {
     }
   }
 
-  public abstract class FamilyMethods<R1,R2> extends SimpleFamilyMethods<R1> {
+  public abstract class FamilyMethods<R1, R2> extends SimpleFamilyMethods<R1> {
 
     FamilyMethods(Data data) {
       super(data);

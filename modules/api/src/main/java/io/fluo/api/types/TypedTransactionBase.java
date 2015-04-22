@@ -1,18 +1,17 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package io.fluo.api.types;
 
 import java.nio.ByteBuffer;
@@ -46,8 +45,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
 
     void checkNotSet() {
-      if (set)
+      if (set) {
         throw new IllegalStateException("Already set value");
+      }
     }
 
     public void set(Bytes bytes) throws AlreadySetException {
@@ -96,7 +96,8 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
 
     /**
-     * Reads the current value of the row/column, adds i, sets the sum. If the row/column does not have a current value, then it defaults to zero.
+     * Reads the current value of the row/column, adds i, sets the sum. If the row/column does not
+     * have a current value, then it defaults to zero.
      * 
      * @param i
      * @throws Exception
@@ -105,13 +106,15 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       int v = 0;
-      if (val != null)
+      if (val != null) {
         v = encoder.decodeInteger(val);
+      }
       tx.set(data.row, data.getCol(), encoder.encode(v + i));
     }
 
     /**
-     * Reads the current value of the row/column, adds l, sets the sum. If the row/column does not have a current value, then it defaults to zero.
+     * Reads the current value of the row/column, adds l, sets the sum. If the row/column does not
+     * have a current value, then it defaults to zero.
      * 
      * @param i
      * @throws Exception
@@ -120,8 +123,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
       checkNotSet();
       Bytes val = tx.get(data.row, data.getCol());
       long v = 0;
-      if (val != null)
+      if (val != null) {
         v = encoder.decodeLong(val);
+      }
       tx.set(data.row, data.getCol(), encoder.encode(v + l));
     }
 
@@ -182,7 +186,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
   }
 
-  public class MutatorFamilyMethods extends FamilyMethods<MutatorQualifierMethods,Mutator> {
+  public class MutatorFamilyMethods extends FamilyMethods<MutatorQualifierMethods, Mutator> {
 
     MutatorFamilyMethods(Data data) {
       tl.super(data);
