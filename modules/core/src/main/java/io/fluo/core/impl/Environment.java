@@ -99,8 +99,7 @@ public class Environment implements AutoCloseable {
   /**
    * Constructs an environment from another environment
    * 
-   * @param env
-   * @throws Exception
+   * @param env Environment
    */
   @VisibleForTesting
   public Environment(Environment env) throws Exception {
@@ -118,10 +117,7 @@ public class Environment implements AutoCloseable {
   }
 
   /**
-   * read configuration from zookeeper
-   * 
-   * @throws InterruptedException
-   * @throws KeeperException
+   * Read configuration from zookeeper
    */
   private void readZookeeperConfig() {
 

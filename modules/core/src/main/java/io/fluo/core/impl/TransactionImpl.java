@@ -497,7 +497,7 @@ public class TransactionImpl implements Transaction, Snapshot {
    * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
    * trying to always read unread columns.
    * 
-   * @param cd
+   * @param cd Commit data
    */
   private void readUnread(CommitData cd) throws Exception {
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
@@ -768,7 +768,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   /**
    * Sets the transactor of this transaction
    * 
-   * @param transactor
+   * @param tnode TransactorNode
    * @return this Transaction
    */
   @VisibleForTesting

@@ -49,9 +49,8 @@ public class MainOptions {
 
   public void validateConfig() throws IOException {
     if (getConfigDir() == null) {
-      System.err
-          .println("Please set -config-dir option to directory containing fluo.properties file like below: ");
-      System.err.println();
+      System.err.println("Please set -config-dir option to directory containing fluo.properties "
+          + "file like below:\n");
       Properties defaults =
           ConfigurationConverter.getProperties(FluoConfiguration.getDefaultConfiguration());
       defaults.store(System.err, "Fluo properties");

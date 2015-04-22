@@ -45,7 +45,8 @@ public class MiniFluoMain {
 
       FluoConfiguration config = new FluoConfiguration(new File(options.getFluoProps()));
       if (!config.hasRequiredMiniFluoProps()) {
-        log.error("Failed to start MiniFluo - fluo.properties is missing required properties for MiniFluo");
+        log.error("Failed to start MiniFluo - fluo.properties is missing required properties for "
+            + "MiniFluo");
         System.exit(-1);
       }
       try (MiniFluo mini = FluoFactory.newMiniFluo(config)) {

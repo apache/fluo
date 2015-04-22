@@ -139,7 +139,7 @@ public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
   /**
    * Configure properties needed to connect to a Fluo application
    * 
-   * @param conf
+   * @param conf Job configuration
    * @param config use {@link io.fluo.api.config.FluoConfiguration} to configure programmatically
    */
   @SuppressWarnings("deprecation")

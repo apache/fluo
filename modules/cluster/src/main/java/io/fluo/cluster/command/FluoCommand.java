@@ -31,8 +31,8 @@ public class FluoCommand {
   public static void main(String[] args) {
 
     if (args.length < 4) {
-      System.err
-          .println("ERROR - Expected at least two arguments.  Usage: FluoCommand <fluoHomeDir> <hadoopPrefix> <command> <appName> ...");
+      System.err.println("ERROR - Expected at least two arguments.  "
+          + "Usage: FluoCommand <fluoHomeDir> <hadoopPrefix> <command> <appName> ...");
       System.exit(-1);
     }
 

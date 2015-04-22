@@ -124,7 +124,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       source.next();
     }
 
-    if (source.hasTop() && !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    // @formatter:off
+    if (source.hasTop() &&
+        !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+      // @formatter:on
       readColMetadata();
     }
   }

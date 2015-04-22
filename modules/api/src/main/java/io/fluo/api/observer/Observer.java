@@ -73,7 +73,7 @@ public interface Observer {
   /**
    * Implemented by user to initialize Observer.
    * 
-   * @param config
+   * @param context Observer context
    */
   public void init(Context context) throws Exception;
 

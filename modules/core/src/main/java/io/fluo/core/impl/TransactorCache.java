@@ -70,7 +70,10 @@ public class TransactorCache implements AutoCloseable {
         lockTs);
   }
 
-  public void addTimedoutTransactor(final Long transactorId, final long lockTs, final Long startTime) {
+  // @formatter:off
+  public void addTimedoutTransactor(final Long transactorId, final long lockTs,
+                                    final Long startTime) {
+    // @formatter:on
 
     try {
       AtomicLong cachedLockTs = timeoutCache.get(transactorId, new Callable<AtomicLong>() {

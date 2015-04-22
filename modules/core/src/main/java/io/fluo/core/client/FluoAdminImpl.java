@@ -86,10 +86,10 @@ public class FluoAdminImpl implements FluoAdmin {
 
   @Override
   public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException {
-    Preconditions
-        .checkArgument(
-            !ZookeeperUtil.parseRoot(config.getInstanceZookeepers()).equals("/"),
-            "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') must have a chroot suffix.");
+    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers())
+        .equals("/"),
+        "The Zookeeper connection string (set by 'io.fluo.client.zookeeper.connect') "
+            + " must have a chroot suffix.");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException("Fluo application already initialized at "
@@ -218,11 +218,9 @@ public class FluoAdminImpl implements FluoAdmin {
         observer =
             Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
       } catch (ClassNotFoundException e1) {
-        throw new FluoException(
-            "Observer class '"
-                + observerConfig.getClassName()
-                + "' was not found.  Check for class name misspellings or failure to include the observer jar.",
-            e1);
+        throw new FluoException("Observer class '" + observerConfig.getClassName() + "' was not "
+            + "found.  Check for class name misspellings or failure to include "
+            + "the observer jar.", e1);
       } catch (InstantiationException | IllegalAccessException e2) {
         throw new FluoException("Observer class '" + observerConfig.getClassName()
             + "' could not be created.", e2);

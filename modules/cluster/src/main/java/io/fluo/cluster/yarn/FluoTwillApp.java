@@ -64,9 +64,9 @@ public class FluoTwillApp implements TwillApplication {
   @Override
   public TwillSpecification configure() {
 
-    log.info(
-        "Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances with following properties:",
-        config.getApplicationName(), config.getOracleInstances(), config.getWorkerInstances());
+    log.info("Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
+        + "with following properties:", config.getApplicationName(), config.getOracleInstances(),
+        config.getWorkerInstances());
 
     log.info("{} = {}", FluoConfiguration.ORACLE_MAX_MEMORY_MB_PROP, config.getOracleMaxMemory());
     log.info("{} = {}", FluoConfiguration.WORKER_MAX_MEMORY_MB_PROP, config.getWorkerMaxMemory());

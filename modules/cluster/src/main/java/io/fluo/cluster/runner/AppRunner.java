@@ -176,7 +176,10 @@ public abstract class AppRunner {
     return entriesFound;
   }
 
-  private static void appendLib(StringBuilder classpath, String libDirName, boolean useLibJarsFormat) {
+  // @formatter:off
+  private static void appendLib(StringBuilder classpath, String libDirName,
+      boolean useLibJarsFormat) {
+    // @formatter:on
     File libDir = new File(libDirName);
     if (!libDir.exists()) {
       System.err.println("ERROR - Directory needed for classpath does not exist: " + libDirName);

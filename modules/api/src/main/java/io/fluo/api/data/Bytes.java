@@ -221,7 +221,6 @@ public abstract class Bytes implements Comparable<Bytes> {
    * 
    * @param out DataOutput
    * @param b Bytes
-   * @throws IOException
    */
   final public static void write(DataOutput out, Bytes b) throws IOException {
     writeUtil.writeVInt(out, b.length());
@@ -235,7 +234,6 @@ public abstract class Bytes implements Comparable<Bytes> {
    * 
    * @param in DataInput
    * @return Bytes
-   * @throws IOException
    */
   final public static Bytes read(DataInput in) throws IOException {
     int len = writeUtil.readVInt(in);
@@ -247,7 +245,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Concatenates of list of Bytes objects to create a byte array
    * 
-   * @param listOfBytes
+   * @param listOfBytes Bytes objects to concatenate
    * @return Bytes
    */
   final public static Bytes concat(Bytes... listOfBytes) {

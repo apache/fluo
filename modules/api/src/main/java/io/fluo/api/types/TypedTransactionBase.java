@@ -99,8 +99,8 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
      * Reads the current value of the row/column, adds i, sets the sum. If the row/column does not
      * have a current value, then it defaults to zero.
      * 
-     * @param i
-     * @throws Exception
+     * @param i Integer increment amount
+     * @throws AlreadySetException if value was previously set in transaction
      */
     public void increment(int i) throws AlreadySetException {
       checkNotSet();
@@ -116,8 +116,8 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
      * Reads the current value of the row/column, adds l, sets the sum. If the row/column does not
      * have a current value, then it defaults to zero.
      * 
-     * @param i
-     * @throws Exception
+     * @param l Long increment amount
+     * @throws AlreadySetException if value was previously set in transaction
      */
     public void increment(long l) throws AlreadySetException {
       checkNotSet();

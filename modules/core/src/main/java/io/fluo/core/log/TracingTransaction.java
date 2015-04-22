@@ -155,12 +155,10 @@ public class TracingTransaction implements Transaction, Snapshot {
         className = clazz.getSimpleName();
       }
       // TODO log total # read, see fluo-426
-      summaryLog
-          .trace(
-              "txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} waitTime: {} committed: {} class: {}",
-              txid, Thread.currentThread().getId(), stats.getTime(), stats.getEntriesReturned(),
-              stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
-              className);
+      summaryLog.trace("txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} "
+          + "waitTime: {} committed: {} class: {}", txid, Thread.currentThread().getId(),
+          stats.getTime(), stats.getEntriesReturned(), stats.getEntriesSet(),
+          stats.getCollisions(), stats.getLockWaitTime(), committed, className);
     }
     tx.close();
   }

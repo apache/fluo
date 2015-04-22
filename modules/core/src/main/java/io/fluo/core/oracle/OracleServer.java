@@ -293,8 +293,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
    * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the
    * last timestamp set in zookeeper.
    * 
-   * @param curatorFramework
-   * @throws Exception
+   * @param curatorFramework Curator framework
    */
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {

@@ -30,8 +30,8 @@ public class MiniFluoCommand {
   public static void main(String[] args) {
 
     if (args.length < 3) {
-      System.err
-          .println("ERROR - Expected at least two arguments.  Usage: FluoCommand <fluoHomeDir> <command> <appName> ...");
+      System.err.println("ERROR - Expected at least two arguments.  "
+          + "Usage: FluoCommand <fluoHomeDir> <command> <appName> ...");
       System.exit(-1);
     }
 
@@ -61,11 +61,9 @@ public class MiniFluoCommand {
         } else {
           File miniDataDir = new File(config.getMiniDataDir());
           if (!miniDataDir.exists()) {
-            System.err
-                .println("Cannot connect to Fluo '"
-                    + config.getApplicationName()
-                    + "' application!  Client properties are not set in fluo.properties and a MiniAccumuloCluster is not running at "
-                    + miniDataDir.getAbsolutePath());
+            System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
+                + "' application!  Client properties are not set in fluo.properties and "
+                + " a MiniAccumuloCluster is not running at " + miniDataDir.getAbsolutePath());
             System.exit(-1);
           }
 

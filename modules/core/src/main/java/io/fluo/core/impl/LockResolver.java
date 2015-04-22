@@ -87,11 +87,11 @@ public class LockResolver {
    * Attempts to roll forward or roll back a set of locks encountered by a transaction reading data.
    * 
    * @param env environment
-   * @param startTs the logical start time from the oracle of the transaction that encountered the
+   * @param startTs The logical start time from the oracle of the transaction that encountered the
    *        lock
-   * @param stats stats object for the transaction that encountered the lock
-   * @param locks
-   * @param startTime the wall time that the transaction that encountered the lock first saw the
+   * @param stats Stats object for the transaction that encountered the lock
+   * @param locks List of locks
+   * @param startTime The wall time that the transaction that encountered the lock first saw the
    *        lock
    * @return true if all locks passed in were resolved (rolled forward or back)
    */
