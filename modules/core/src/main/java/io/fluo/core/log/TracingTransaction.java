@@ -27,6 +27,7 @@ import io.fluo.api.data.Column;
 import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TxStats;
 import org.slf4j.Logger;
@@ -42,32 +43,30 @@ public class TracingTransaction implements Transaction, Snapshot {
 
   private final TransactionImpl tx;
   private final long txid;
-  private Bytes triggerRow;
-  private Column triggerColumn;
+  private Notification notification;
   private Class<?> clazz;
   private boolean committed = false;
 
   public TracingTransaction(TransactionImpl tx) {
-    this(tx, null, null, null);
+    this(tx, null, null);
   }
 
   public TracingTransaction(TransactionImpl tx, Class<?> clazz) {
-    this(tx, null, null, clazz);
+    this(tx, null, clazz);
   }
 
-  public TracingTransaction(TransactionImpl tx, Bytes triggerRow, Column triggerColumn,
-      Class<?> clazz) {
+  public TracingTransaction(TransactionImpl tx, Notification notification, Class<?> clazz) {
     this.tx = tx;
     this.txid = tx.getStartTs();
 
-    this.triggerRow = triggerRow;
-    this.triggerColumn = triggerColumn;
+    this.notification = notification;
     this.clazz = clazz;
 
     log.trace("txid: {} begin() thread: {}", txid, Thread.currentThread().getId());
 
-    if (triggerRow != null) {
-      log.trace("txid: {} trigger: {} {}", txid, triggerRow, triggerColumn);
+    if (notification != null) {
+      log.trace("txid: {} trigger: {} {} {}", txid, notification.getRow(),
+          notification.getColumn(), notification.getTimestamp());
     }
 
     if (clazz != null) {
@@ -131,8 +130,9 @@ public class TracingTransaction implements Transaction, Snapshot {
     } catch (CommitException ce) {
       log.trace("txid: {} commit() -> UNSUCCESSFUL commitTs: {}", txid, tx.getStats().getCommitTs());
 
-      if (!log.isTraceEnabled() && triggerRow != null) {
-        collisionLog.trace("txid: {} trigger: {} {}", txid, triggerRow, triggerColumn);
+      if (!log.isTraceEnabled() && notification != null) {
+        collisionLog.trace("txid: {} trigger: {} {} {}", txid, notification.getRow(),
+            notification.getColumn(), notification.getTimestamp());
       }
 
       if (!log.isTraceEnabled() && clazz != null) {
@@ -157,7 +157,7 @@ public class TracingTransaction implements Transaction, Snapshot {
       // TODO log total # read, see fluo-426
       summaryLog
           .trace(
-              "txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} waitTime: {} %s committed: {} class: {}",
+              "txid: {} thread : {} time: {} #ret: {} #set: {} #collisions: {} waitTime: {} committed: {} class: {}",
               txid, Thread.currentThread().getId(), stats.getTime(), stats.getEntriesReturned(),
               stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
               className);

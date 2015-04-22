@@ -417,7 +417,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals("url0000", tx6.get().row("idx:def").fam("doc").qual("url").toString());
 
     iter = scanner.iterator();
-    Assert.assertFalse(iter.hasNext());
+    Assert.assertTrue(iter.hasNext());
 
     // TODO is tx4 start before tx5, then this test will not work because AlreadyAck is not thrown
     // for overlapping.. CommitException is thrown
@@ -432,6 +432,11 @@ public class FailureIT extends ITBaseImpl {
       Assert.fail();
     } catch (AlreadyAcknowledgedException aae) {
     }
+
+    // commit above should schedule async delete of notification
+    env.getSharedResources().getBatchWriter().waitForAsyncFlush();
+    iter = scanner.iterator();
+    Assert.assertFalse(iter.hasNext());
   }
 
   @Test

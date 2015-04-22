@@ -14,8 +14,13 @@
 
 package io.fluo.core.impl;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
+import io.fluo.api.config.ObserverConfiguration;
+import io.fluo.api.types.TypedTransactionBase;
+import io.fluo.api.types.TypedObserver;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
@@ -41,6 +46,25 @@ import org.junit.Test;
 public class FluoIT extends ITBaseImpl {
 
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+
+  public static class BalanceObserver extends TypedObserver {
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(typeLayer.bc().fam("account").qual("balance").vis(),
+          NotificationType.STRONG);
+    }
+
+    @Override
+    public void process(TypedTransactionBase tx, Bytes row, Column col) {
+      Assert.fail();
+    }
+  }
+
+  @Override
+  protected List<io.fluo.api.config.ObserverConfiguration> getObservers() {
+    return Arrays.asList(new ObserverConfiguration(BalanceObserver.class.getName()));
+  };
 
   @Test
   public void testFluoFactory() throws Exception {
@@ -111,10 +135,17 @@ public class FluoIT extends ITBaseImpl {
 
   private void assertCommitFails(TestTransaction tx) {
     try {
-      tx.commit();
+      tx.done();
       Assert.fail();
     } catch (CommitException ce) {
+    }
+  }
 
+  private void assertAAck(TestTransaction tx) {
+    try {
+      tx.done();
+      Assert.fail();
+    } catch (AlreadyAcknowledgedException ce) {
     }
   }
 
@@ -211,7 +242,7 @@ public class FluoIT extends ITBaseImpl {
     tx2.mutate().row("bob").col(balanceCol).set(11);
 
     tx1.done();
-    assertCommitFails(tx2);
+    assertAAck(tx2);
 
     TestTransaction tx3 = new TestTransaction(env);
 
@@ -232,9 +263,11 @@ public class FluoIT extends ITBaseImpl {
     tx5.get().row("joe").col(balanceCol);
     tx5.mutate().row("bob").col(balanceCol).set(11);
 
+    TestTransaction tx7 = new TestTransaction(env, "joe", balanceCol);
+
     // make the 2nd transaction to start commit 1st
     tx5.done();
-    assertCommitFails(tx4);
+    assertAAck(tx4);
 
     TestTransaction tx6 = new TestTransaction(env);
 
@@ -242,16 +275,11 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(21, tx6.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(61, tx6.get().row("jill").col(balanceCol).toInteger(0));
 
-    TestTransaction tx7 = new TestTransaction(env, "joe", balanceCol);
     tx7.get().row("joe").col(balanceCol);
     tx7.mutate().row("bob").col(balanceCol).set(15);
     tx7.mutate().row("jill").col(balanceCol).set(60);
 
-    try {
-      tx7.commit();
-      Assert.fail();
-    } catch (AlreadyAcknowledgedException aae) {
-    }
+    assertAAck(tx7);
 
     TestTransaction tx8 = new TestTransaction(env);
 
@@ -275,6 +303,7 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx1 = new TestTransaction(env, "bob", balanceCol);
     TestTransaction tx2 = new TestTransaction(env, "bob", balanceCol);
+    TestTransaction tx3 = new TestTransaction(env, "bob", balanceCol);
 
     tx1.get().row("bob").col(balanceCol).toInteger();
     tx2.get().row("bob").col(balanceCol).toInteger();
@@ -290,24 +319,55 @@ public class FluoIT extends ITBaseImpl {
     CommitData cd = tx1.createCommitData();
     Assert.assertTrue(tx1.preCommit(cd));
 
-    try {
-      tx2.commit();
-    } catch (CommitException ce) {
-
-    }
+    assertCommitFails(tx2);
 
     long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
     Assert.assertTrue(tx1.commitPrimaryColumn(cd, commitTs));
     tx1.finishCommit(cd, commitTs);
 
-    TestTransaction tx3 = new TestTransaction(env, "bob", balanceCol);
     tx3.mutate().row("bob").col(addrCol).set("2 loop pl");
-    try {
-      tx3.commit();
-    } catch (AlreadyAcknowledgedException e) {
+    assertAAck(tx3);
+  }
 
-    }
+  @Test
+  public void testAck3() throws Exception {
+    TestTransaction tx = new TestTransaction(env);
 
+    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
+
+    tx.mutate().row("bob").col(balanceCol).set(10);
+    tx.mutate().row("joe").col(balanceCol).set(20);
+    tx.mutate().row("jill").col(balanceCol).set(60);
+
+    tx.done();
+
+    long notTS1 = TestTransaction.getNotificationTS(env, "bob", balanceCol);
+
+    // this transaction should create a second notification
+    TestTransaction tx1 = new TestTransaction(env);
+    tx1.mutate().row("bob").col(balanceCol).set(11);
+    tx1.done();
+
+    long notTS2 = TestTransaction.getNotificationTS(env, "bob", balanceCol);
+
+    Assert.assertTrue(notTS1 < notTS2);
+
+    // even though there were two notifications and TX is using 1st notification TS... only 1st TX
+    // should execute
+    // google paper calls this message collapsing
+
+    TestTransaction tx3 = new TestTransaction(env, "bob", balanceCol, notTS1);
+
+    TestTransaction tx2 = new TestTransaction(env, "bob", balanceCol, notTS1);
+    Assert.assertEquals(11, tx2.get().row("bob").col(balanceCol).toInteger(0));
+    tx2.done();
+
+    Assert.assertEquals(11, tx3.get().row("bob").col(balanceCol).toInteger(0));
+    assertAAck(tx3);
+
+    TestTransaction tx4 = new TestTransaction(env, "bob", balanceCol, notTS2);
+    Assert.assertEquals(11, tx4.get().row("bob").col(balanceCol).toInteger(0));
+    assertAAck(tx4);
   }
 
   @Test
@@ -335,7 +395,7 @@ public class FluoIT extends ITBaseImpl {
     tx1.mutate().row("jill").col(balanceCol).set(61);
 
     tx1.done();
-    assertCommitFails(tx2);
+    assertAAck(tx2);
 
     TestTransaction tx3 = new TestTransaction(env);
 

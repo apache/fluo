@@ -14,9 +14,8 @@
 
 package io.fluo.core.worker;
 
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 
 public interface NotificationFinder {
   public void init(Environment env, NotificationProcessor processor);
@@ -25,5 +24,5 @@ public interface NotificationFinder {
 
   public void stop();
 
-  public void failedToProcess(Bytes row, Column col, TxResult status);
+  public void failedToProcess(Notification notification, TxResult status);
 }

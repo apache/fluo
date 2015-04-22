@@ -119,7 +119,7 @@ public class LogIT extends ITBaseMini {
     pattern += ".*txid: \\1 collisions: \\Q{r1=[a b ]}\\E.*";
     Assert.assertTrue(logMsgs.matches(pattern));
 
-    pattern = ".*txid: (\\d+) trigger: \\d+ stat count";
+    pattern = ".*txid: (\\d+) trigger: \\d+ stat count  \\d+";
     pattern += ".*txid: \\1 class: io.fluo.core.log.LogIT\\$TestObserver";
     pattern += ".*txid: \\1 collisions: \\Q{all=[stat count ]}\\E.*";
     Assert.assertTrue(logMsgs.matches(pattern));
@@ -158,19 +158,19 @@ public class LogIT extends ITBaseMini {
 
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ %s committed: true class: TriggerLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ %s committed: true class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ %s committed: false class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 2 #collisions: 0 waitTime: \\d+ %s committed: true class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 2 #collisions: 1 waitTime: \\d+ %s committed: false class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
   }
 
   @Test
@@ -209,7 +209,6 @@ public class LogIT extends ITBaseMini {
     }
 
     String logMsgs = writer.toString();
-    System.out.println(logMsgs);
     logMsgs = logMsgs.replace('\n', ' ');
 
     String pattern;
@@ -234,7 +233,7 @@ public class LogIT extends ITBaseMini {
 
     // observer should cause this pattern in logs
     pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
-    pattern += ".*txid: \\1 trigger: 0 stat count";
+    pattern += ".*txid: \\1 trigger: 0 stat count  \\d+";
     pattern += ".*txid: \\1 class: io.fluo.core.log.LogIT\\$TestObserver";
     pattern += ".*txid: \\1 get\\(0, stat count \\) -> 1";
     pattern += ".*txid: \\1 get\\(all, stat count \\) -> null";
