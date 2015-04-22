@@ -14,6 +14,11 @@
 
 package io.fluo.core.impl;
 
+import java.util.List;
+
+import io.fluo.core.util.ByteUtil;
+import org.apache.accumulo.core.data.Key;
+
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -43,5 +48,12 @@ public class Notification extends RowColumn {
     ColumnVisibility cv = env.getSharedResources().getVisCache().getCV(getColumn());
     m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(getColumn()), cv, ts);
     return m;
+  }
+
+  public static Notification from(Key k) {
+    Bytes row = ByteUtil.toBytes(k.getRowData());
+    List<Bytes> ca = Bytes.split(Bytes.of(k.getColumnQualifierData().toArray()));
+    Column col = new Column(ca.get(0), ca.get(1));
+    return new Notification(row, col, k.getTimestamp());
   }
 }

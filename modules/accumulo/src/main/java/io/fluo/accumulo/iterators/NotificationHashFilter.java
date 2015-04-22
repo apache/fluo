@@ -17,6 +17,9 @@ package io.fluo.accumulo.iterators;
 import java.io.IOException;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -32,9 +35,18 @@ public class NotificationHashFilter extends Filter {
   private int divisor;
   private int remainder;
 
+  public static boolean accept(ByteSequence row, ByteSequence cq, int divisor, int remainder) {
+    return Math.abs(row.hashCode() + cq.hashCode()) % divisor == remainder;
+  }
+
+  @VisibleForTesting
+  public static boolean accept(Key k, int divisor, int remainder) {
+    return accept(k.getRowData(), k.getColumnQualifierData(), divisor, remainder);
+  }
+
   @Override
   public boolean accept(Key k, Value v) {
-    return Math.abs(k.getRowData().hashCode() + k.getColumnQualifierData().hashCode()) % divisor == remainder;
+    return accept(k, divisor, remainder);
   }
 
   @Override
