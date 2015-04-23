@@ -23,7 +23,7 @@ import org.apache.commons.configuration.ConfigurationConverter;
 
 public class MainOptions {
 
-  public final static String STDOUT = "STDOUT";
+  public static final String STDOUT = "STDOUT";
 
   @Parameter(names = "-config-dir", description = "Location of Fluo configuration directory")
   private String configDir;
