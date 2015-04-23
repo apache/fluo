@@ -32,17 +32,19 @@ import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
- * 
+ *
  */
 public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
   private static final String CHECK_ACK_OPT = "checkAckOpt";
+  private static final String NTFY_TIMESTAMP_OPT = "ntfyTsOpt";
 
   private SortedKeyValueIterator<Key, Value> source;
   private long snaptime;
 
   boolean hasTop = false;
   boolean checkAck = false;
+  long ntfyTimestamp = -1;
 
   public static void setSnaptime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
@@ -51,8 +53,9 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
 
-  public static void enableAckCheck(IteratorSetting cfg) {
+  public static void enableAckCheck(IteratorSetting cfg, long timestamp) {
     cfg.addOption(CHECK_ACK_OPT, "true");
+    cfg.addOption(NTFY_TIMESTAMP_OPT, timestamp + "");
   }
 
   @Override
@@ -62,6 +65,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
     if (options.containsKey(CHECK_ACK_OPT)) {
       this.checkAck = Boolean.parseBoolean(options.get(CHECK_ACK_OPT));
+      this.ntfyTimestamp = Long.parseLong(options.get(NTFY_TIMESTAMP_OPT));
     }
   }
 
@@ -94,7 +98,6 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     }
 
     long invalidationTime = -1;
-    long firstWrite = -1;
 
     hasTop = false;
     while (source.hasTop()
@@ -110,10 +113,6 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
 
         if (timePtr > invalidationTime) {
           invalidationTime = timePtr;
-        }
-
-        if (firstWrite == -1) {
-          firstWrite = ts;
         }
 
         if (ts >= snaptime) {
@@ -144,7 +143,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
         // can stop looking
         return;
       } else if (colType == ColumnConstants.ACK_PREFIX) {
-        if (checkAck && ts >= firstWrite) {
+        if (checkAck && ts > ntfyTimestamp) {
           hasTop = true;
           return;
         }

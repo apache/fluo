@@ -28,6 +28,7 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.TabletInfoCache;
@@ -81,6 +82,7 @@ public class ScanTask implements Runnable {
     max_sleep_time = env.getConfiguration().getInt(MAX_SLEEP_TIME_PROP, 5 * 60 * 1000);
   }
 
+  @Override
   public void run() {
 
     int qSize = hwf.getWorkerQueue().size();
@@ -109,6 +111,9 @@ public class ScanTask implements Runnable {
               int count = 0;
               ModulusParams modParams = hwf.getModulusParams();
               if (modParams != null) {
+                // notifications could have been asynchronously queued for deletion. Let that happen
+                // 1st before scanning
+                env.getSharedResources().getBatchWriter().waitForAsyncFlush();
                 count = scan(modParams, tabletInfo.getRange());
                 tabletsScanned++;
               }
@@ -180,7 +185,7 @@ public class ScanTask implements Runnable {
 
     for (Entry<Key, Value> entry : scanner) {
       if (lmp.update != hwf.getModulusParams().update) {
-        throw new ModParamsChangedException();
+        throw new HashNotificationFinder.ModParamsChangedException();
       }
 
       if (stopped.get()) {
@@ -190,7 +195,8 @@ public class ScanTask implements Runnable {
       Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
       List<Bytes> ca = Bytes.split(Bytes.of(entry.getKey().getColumnQualifierData().toArray()));
       Column col = new Column(ca.get(0), ca.get(1));
-      if (hwf.getWorkerQueue().addNotification(hwf, row, col)) {
+      Notification notification = new Notification(row, col, entry.getKey().getTimestamp());
+      if (hwf.getWorkerQueue().addNotification(hwf, notification)) {
         count++;
       }
     }

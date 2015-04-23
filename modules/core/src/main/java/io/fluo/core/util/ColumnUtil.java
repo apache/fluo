@@ -65,8 +65,6 @@ public class ColumnUtil {
 
     if (isTrigger) {
       Flutation.put(env, m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
-      m.putDelete(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col),
-          startTs);
     }
     if (observedColumns.contains(col) && isWrite && !isDelete) {
       m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(env, col),

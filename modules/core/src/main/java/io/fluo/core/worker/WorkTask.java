@@ -15,12 +15,11 @@
 package io.fluo.core.worker;
 
 import io.fluo.api.client.Transaction;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.Observer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.log.TracingTransaction;
 import org.slf4j.Logger;
@@ -31,42 +30,39 @@ public class WorkTask implements Runnable {
   private static Logger log = LoggerFactory.getLogger(WorkTask.class);
 
   private Environment env;
-  private Bytes row;
-  private Column col;
+  private Notification notification;
   private Observers observers;
   private NotificationFinder notificationFinder;
 
-  WorkTask(NotificationFinder notificationFinder, Environment env, Bytes row, Column col,
+  WorkTask(NotificationFinder notificationFinder, Environment env, Notification notification,
       Observers observers) {
     this.notificationFinder = notificationFinder;
     this.env = env;
-    this.row = row;
-    this.col = col;
+    this.notification = notification;
     this.observers = observers;
   }
 
   @Override
   public void run() {
-    Observer observer = observers.getObserver(col);
+    Observer observer = observers.getObserver(notification.getColumn());
     try {
       while (true) {
         TransactionImpl txi = null;
         Transaction tx = txi;
         TxResult status = TxResult.UNKNOWN;
         try {
-          txi = new TransactionImpl(env, row, col);
+          txi = new TransactionImpl(env, notification);
           tx = txi;
-          if (TracingTransaction.isTracingEnabled()) {
-            tx = new TracingTransaction(txi, row, col, observer.getClass());
-          }
+          if (TracingTransaction.isTracingEnabled())
+            tx = new TracingTransaction(txi, notification, observer.getClass());
 
-          observer.process(tx, row, col);
+          observer.process(tx, notification.getRow(), notification.getColumn());
           tx.commit();
           status = TxResult.COMMITTED;
           break;
         } catch (AlreadyAcknowledgedException aae) {
           status = TxResult.AACKED;
-          notificationFinder.failedToProcess(row, col, status);
+          notificationFinder.failedToProcess(notification, status);
           break;
         } catch (CommitException e) {
           // retry
@@ -74,7 +70,7 @@ public class WorkTask implements Runnable {
         } catch (Exception e) {
           status = TxResult.ERROR;
           log.warn("Failed to execute observer " + observer.getClass().getSimpleName(), e);
-          notificationFinder.failedToProcess(row, col, status);
+          notificationFinder.failedToProcess(notification, status);
           break;
         } finally {
           if (txi != null) {

@@ -14,6 +14,12 @@
 
 package io.fluo.core;
 
+import java.util.Map.Entry;
+
+import io.fluo.api.data.Span;
+
+import io.fluo.core.util.SpanUtil;
+import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -23,18 +29,51 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.impl.TransactorNode;
 import io.fluo.core.impl.TxStats;
+import io.fluo.core.util.ByteUtil;
+import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.iterators.user.VersioningIterator;
+import org.apache.hadoop.io.Text;
 
 public class TestTransaction extends TypedTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
+
+  public static long getNotificationTS(Environment env, String row, Column col) {
+    Scanner scanner;
+    try {
+      scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
+    scanner.addScanIterator(iterCfg);
+
+    Text cv = ByteUtil.toText(col.getVisibility());
+
+    scanner.setRange(SpanUtil.toRange(Span.prefix(row)));
+    scanner.fetchColumn(ByteUtil.toText(ColumnConstants.NOTIFY_CF),
+        new Text(ColumnUtil.concatCFCQ(col)));
+
+    for (Entry<Key, org.apache.accumulo.core.data.Value> entry : scanner) {
+      if (entry.getKey().getColumnVisibility().equals(cv)) {
+        return entry.getKey().getTimestamp();
+      }
+    }
+
+    throw new RuntimeException("No notification found");
+  }
 
   @SuppressWarnings("resource")
   public TestTransaction(Environment env, TransactorNode transactor) {
@@ -50,12 +89,13 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     this.tx = transactionImpl;
   }
 
-  public TestTransaction(Environment env, Bytes trow, Column tcol) {
-    this(new TransactionImpl(env, trow, tcol), new StringEncoder());
+  public TestTransaction(Environment env, String trow, Column tcol) {
+    this(env, trow, tcol, getNotificationTS(env, trow, tcol));
   }
 
-  public TestTransaction(Environment env, String trow, Column tcol) {
-    this(new TransactionImpl(env, Bytes.of(trow), tcol), new StringEncoder());
+  public TestTransaction(Environment env, String trow, Column tcol, long notificationTS) {
+    this(new TransactionImpl(env, new Notification(Bytes.of(trow), tcol, notificationTS)),
+        new StringEncoder());
   }
 
   /**

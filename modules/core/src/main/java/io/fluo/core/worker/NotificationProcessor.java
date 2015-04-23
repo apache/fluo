@@ -24,10 +24,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Gauge;
-import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,12 +113,10 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
-  public boolean addNotification(NotificationFinder notificationFinder, final Bytes row,
-      final Column col) {
+  public boolean addNotification(NotificationFinder notificationFinder,
+      final Notification notification) {
 
-    final RowColumn rowCol = new RowColumn(row, col);
-
-    final WorkTask workTask = new WorkTask(notificationFinder, env, row, col, observers);
+    final WorkTask workTask = new WorkTask(notificationFinder, env, notification, observers);
 
     Runnable eht = new Runnable() {
 
@@ -127,9 +125,11 @@ public class NotificationProcessor implements AutoCloseable {
         try {
           workTask.run();
         } catch (Exception e) {
-          log.error("Failed to process work " + row + " " + col, e);
+          log.error(
+              "Failed to process work " + notification.getRow() + " " + notification.getColumn()
+                  + " " + notification.getTimestamp(), e);
         } finally {
-          tracker.remove(rowCol);
+          tracker.remove(notification);
           workFinished();
         }
       }
@@ -137,7 +137,7 @@ public class NotificationProcessor implements AutoCloseable {
 
     FutureTask<?> ft = new FutureTask<Void>(eht, null);
 
-    if (!tracker.add(rowCol, ft)) {
+    if (!tracker.add(notification, ft)) {
       return false;
     }
 
@@ -146,7 +146,7 @@ public class NotificationProcessor implements AutoCloseable {
     try {
       executor.execute(eht);
     } catch (RejectedExecutionException rje) {
-      tracker.remove(rowCol);
+      tracker.remove(notification);
       workFinished();
       throw rje;
     }

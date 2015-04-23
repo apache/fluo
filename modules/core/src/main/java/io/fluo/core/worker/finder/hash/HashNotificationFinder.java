@@ -23,9 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.ZookeeperPath;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationProcessor;
@@ -181,7 +180,7 @@ public class HashNotificationFinder implements NotificationFinder {
   }
 
   @Override
-  public void failedToProcess(Bytes row, Column col, TxResult status) {}
+  public void failedToProcess(Notification notification, TxResult status) {}
 
   NotificationProcessor getWorkerQueue() {
     return notificationProcessor;

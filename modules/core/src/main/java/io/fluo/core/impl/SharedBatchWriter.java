@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.data.Mutation;
@@ -31,15 +32,14 @@ public class SharedBatchWriter {
   private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<>(1000);
   private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
 
+  private AtomicLong asyncBatchesAdded = new AtomicLong(0);
+  private long asyncBatchesProcessed = 0;
+
   private static class MutationBatch {
 
     private List<Mutation> mutations;
     private CountDownLatch cdl;
-
-    public MutationBatch(Mutation m) {
-      mutations = Collections.singletonList(m);
-      cdl = new CountDownLatch(1);
-    }
+    private boolean isAsync = false;
 
     public MutationBatch(List<Mutation> mutations) {
       this.mutations = mutations;
@@ -67,11 +67,24 @@ public class SharedBatchWriter {
 
           bw.flush();
 
+          int numAsync = 0;
+
           for (MutationBatch mutationBatch : batches) {
             if (mutationBatch == end) {
               keepRunning = false;
             }
             mutationBatch.cdl.countDown();
+
+            if (mutationBatch.isAsync) {
+              numAsync++;
+            }
+          }
+
+          if (numAsync > 0) {
+            synchronized (SharedBatchWriter.this) {
+              asyncBatchesProcessed += numAsync;
+              SharedBatchWriter.this.notifyAll();
+            }
           }
 
         } catch (Exception e) {
@@ -92,13 +105,7 @@ public class SharedBatchWriter {
   }
 
   public void writeMutation(Mutation m) {
-    try {
-      MutationBatch mb = new MutationBatch(m);
-      mQueue.put(mb);
-      mb.cdl.await();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    writeMutations(Collections.singletonList(m));
   }
 
   public void writeMutations(List<Mutation> ml) {
@@ -125,13 +132,37 @@ public class SharedBatchWriter {
     }
   }
 
-  public void writeMutationAsync(Mutation m) {
+  public void writeMutationsAsync(List<Mutation> ml) {
     try {
-      MutationBatch mb = new MutationBatch(m);
+      MutationBatch mb = new MutationBatch(ml);
+      mb.isAsync = true;
+      asyncBatchesAdded.incrementAndGet();
       mQueue.put(mb);
+
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
+  public void writeMutationAsync(Mutation m) {
+    writeMutationsAsync(Collections.singletonList(m));
+  }
+
+  /**
+   * waits for all async mutations that were added before this was called to be flushed. Does not
+   * wait for asyn mutations added after call.
+   */
+  public void waitForAsyncFlush() {
+    long numAdded = asyncBatchesAdded.get();
+
+    synchronized (this) {
+      while (numAdded > asyncBatchesProcessed) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
 }
