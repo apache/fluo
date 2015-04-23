@@ -34,29 +34,29 @@ public class WriteValue {
     return primary;
   }
 
+  public static boolean isPrimary(byte[] data) {
+    return (data[0] & 0x01) == 1;
+  }
+
   public boolean isTruncated() {
     return truncated;
-  }
-
-  public long getTimestamp() {
-    return ts;
-  }
-
-  @Override
-  public String toString() {
-    return ts + (truncated ? " TRUNCATION" : "") + " " + (primary ? "PRIMARY" : "");
   }
 
   public static boolean isTruncated(byte[] data) {
     return (data[0] & 0x02) == 2;
   }
 
-  public static boolean isPrimary(byte[] data) {
-    return (data[0] & 0x01) == 1;
+  public long getTimestamp() {
+    return ts;
   }
 
   public static long getTimestamp(byte[] data) {
     return ByteArrayUtil.decodeLong(data, 1);
+  }
+
+  @Override
+  public String toString() {
+    return ts + (truncated ? " TRUNCATION" : "") + " " + (primary ? "PRIMARY" : "");
   }
 
   public static byte[] encode(long ts, boolean primary, boolean truncated) {

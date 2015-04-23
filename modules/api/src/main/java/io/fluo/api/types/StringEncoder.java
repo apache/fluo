@@ -22,18 +22,8 @@ import io.fluo.api.data.Bytes;
 public class StringEncoder implements Encoder {
 
   @Override
-  public int decodeInteger(Bytes b) {
-    return Integer.parseInt(decodeString(b));
-  }
-
-  @Override
   public Bytes encode(int i) {
     return encode(Integer.toString(i));
-  }
-
-  @Override
-  public long decodeLong(Bytes b) {
-    return Long.parseLong(decodeString(b));
   }
 
   @Override
@@ -42,18 +32,8 @@ public class StringEncoder implements Encoder {
   }
 
   @Override
-  public String decodeString(Bytes b) {
-    return b.toString();
-  }
-
-  @Override
   public Bytes encode(String s) {
     return Bytes.of(s);
-  }
-
-  @Override
-  public float decodeFloat(Bytes b) {
-    return Float.parseFloat(decodeString(b));
   }
 
   @Override
@@ -62,22 +42,42 @@ public class StringEncoder implements Encoder {
   }
 
   @Override
-  public double decodeDouble(Bytes b) {
-    return Double.parseDouble(decodeString(b));
-  }
-
-  @Override
   public Bytes encode(double d) {
     return encode(Double.toString(d));
   }
 
   @Override
-  public boolean decodeBoolean(Bytes b) {
-    return Boolean.parseBoolean(decodeString(b));
+  public Bytes encode(boolean b) {
+    return encode(Boolean.toString(b));
   }
 
   @Override
-  public Bytes encode(boolean b) {
-    return encode(Boolean.toString(b));
+  public int decodeInteger(Bytes b) {
+    return Integer.parseInt(decodeString(b));
+  }
+
+  @Override
+  public long decodeLong(Bytes b) {
+    return Long.parseLong(decodeString(b));
+  }
+
+  @Override
+  public String decodeString(Bytes b) {
+    return b.toString();
+  }
+
+  @Override
+  public float decodeFloat(Bytes b) {
+    return Float.parseFloat(decodeString(b));
+  }
+
+  @Override
+  public double decodeDouble(Bytes b) {
+    return Double.parseDouble(decodeString(b));
+  }
+
+  @Override
+  public boolean decodeBoolean(Bytes b) {
+    return Boolean.parseBoolean(decodeString(b));
   }
 }

@@ -186,6 +186,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     return isLeader;
   }
 
+  private boolean isLeader(Participant participant) {
+    return participant != null && participant.isLeader();
+  }
+
   @VisibleForTesting
   public boolean isConnected() {
     return (started && cnxnListener.isConnected());
@@ -357,10 +361,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     } catch (InterruptedException e) {
       log.warn("Oracle leadership watcher has been interrupted unexpectedly");
     }
-  }
-
-  private boolean isLeader(Participant participant) {
-    return participant != null && participant.isLeader();
   }
 
 }

@@ -181,17 +181,6 @@ public class TimestampTracker implements AutoCloseable {
     zkTimestamp = ts;
   }
 
-  private void updateZkNode(long ts) {
-    if (ts != zkTimestamp) {
-      try {
-        node.setData(LongUtil.toByteArray(ts));
-      } catch (Exception e) {
-        throw new IllegalStateException(e);
-      }
-    }
-    zkTimestamp = ts;
-  }
-
   private void closeZkNode() {
     try {
       if (node != null) {
@@ -202,6 +191,17 @@ public class TimestampTracker implements AutoCloseable {
       log.error("Failed to close timestamp tracker ephemeral node");
       throw new IllegalStateException(e);
     }
+  }
+
+  private void updateZkNode(long ts) {
+    if (ts != zkTimestamp) {
+      try {
+        node.setData(LongUtil.toByteArray(ts));
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    zkTimestamp = ts;
   }
 
   @VisibleForTesting

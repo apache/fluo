@@ -31,12 +31,24 @@ public class DelLockValue {
     return lockTime;
   }
 
+  public static long getTimestamp(byte[] data) {
+    return ByteArrayUtil.decodeLong(data, 1);
+  }
+
   public boolean isPrimary() {
     return primary;
   }
 
+  public static boolean isPrimary(byte[] data) {
+    return (data[0] & 0x01) == 1;
+  }
+
   public boolean isRollback() {
     return rollback;
+  }
+
+  public static boolean isRollback(byte[] data) {
+    return (data[0] & 0x02) == 2;
   }
 
   public static byte[] encode(long ts, boolean primary, boolean rollback) {
@@ -50,17 +62,4 @@ public class DelLockValue {
   public String toString() {
     return (rollback ? "ABORT " : "COMMIT ") + (primary ? "PRIMARY " : "") + lockTime;
   }
-
-  public static boolean isPrimary(byte[] data) {
-    return (data[0] & 0x01) == 1;
-  }
-
-  public static boolean isRollback(byte[] data) {
-    return (data[0] & 0x02) == 2;
-  }
-
-  public static long getTimestamp(byte[] data) {
-    return ByteArrayUtil.decodeLong(data, 1);
-  }
-
 }

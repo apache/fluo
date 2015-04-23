@@ -142,6 +142,31 @@ public class TransactionImpl implements Transaction, Snapshot {
     return getImpl(row, columns);
   }
 
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+    checkIfOpen();
+
+    env.getSharedResources().getVisCache().validate(columns);
+
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
+
+    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
+      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+    }
+
+    return ret;
+  }
+
+  // TODO add a get that uses the batch scanner
+
+  @Override
+  public RowIterator get(ScannerConfiguration config) {
+    checkIfOpen();
+    return getImpl(config);
+  }
+
   private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
 
     // TODO push visibility filtering to server side?
@@ -175,21 +200,8 @@ public class TransactionImpl implements Transaction, Snapshot {
     return ret;
   }
 
-  @Override
-  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
-    checkIfOpen();
-
-    env.getSharedResources().getVisCache().validate(columns);
-
-    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
-
-    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
-
-    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
-      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
-    }
-
-    return ret;
+  private RowIterator getImpl(ScannerConfiguration config) {
+    return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
 
   private void updateColumnsRead(Bytes row, Set<Column> columns) {
@@ -199,18 +211,6 @@ public class TransactionImpl implements Transaction, Snapshot {
       columnsRead.put(row, colsRead);
     }
     colsRead.addAll(columns);
-  }
-
-  // TODO add a get that uses the batch scanner
-
-  @Override
-  public RowIterator get(ScannerConfiguration config) {
-    checkIfOpen();
-    return getImpl(config);
-  }
-
-  private RowIterator getImpl(ScannerConfiguration config) {
-    return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
 
   @Override
@@ -344,6 +344,10 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
+  private boolean isTriggerRow(Bytes row) {
+    return notification != null && notification.getRow().equals(row);
+  }
+
   public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException,
       AccumuloSecurityException, AlreadyAcknowledgedException {
     if (notification != null) {
@@ -356,10 +360,6 @@ public class TransactionImpl implements Transaction, Snapshot {
       return preCommit(cd, prow, pcol);
     }
 
-  }
-
-  private boolean isTriggerRow(Bytes row) {
-    return notification != null && notification.getRow().equals(row);
   }
 
   public boolean preCommit(CommitData cd, Bytes primRow, Column primCol)
