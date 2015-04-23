@@ -19,12 +19,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.beust.jcommander.JCommander;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.util.ClusterUtil;
 import io.fluo.cluster.util.LogbackUtil;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.metrics.MetricNames;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.metrics.config.Reporters;
+import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
@@ -98,7 +100,8 @@ public class FluoOracleMain extends AbstractTwillRunnable {
 
       try (Environment env = new Environment(config);
           Reporters reporters =
-              Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry())) {
+              Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry());
+          NodeCache appIdCache = ClusterUtil.startAppIdWatcher(env)) {
         log.info("Starting Oracle for Fluo '{}' application with the following configuration:",
             config.getApplicationName());
         env.getConfiguration().print();
