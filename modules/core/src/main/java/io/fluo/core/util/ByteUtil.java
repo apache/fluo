@@ -29,8 +29,6 @@ public class ByteUtil {
 
   private ByteUtil() {}
 
-
-
   /**
    * Convert from Bytes to Hadoop Text object
    */
@@ -59,6 +57,21 @@ public class ByteUtil {
   }
 
   /**
+   * Converts from ByteSequence to Bytes. If the ByteSequenc has a backing array, that array (and
+   * the buffer's offset and limit) are used. Otherwise, a new backing array is created.
+   * 
+   * @param bs ByteSequence
+   * @return Bytes object
+   */
+  public static Bytes toBytes(ByteSequence bs) {
+    if (bs.isBackedByArray()) {
+      return Bytes.of(bs.getBackingArray(), bs.offset(), bs.length());
+    } else {
+      return Bytes.of(bs.toArray(), 0, bs.length());
+    }
+  }
+
+  /**
    * Convert from Bytes to ByteSequence
    */
   public static ByteSequence toByteSequence(Bytes b) {
@@ -73,21 +86,6 @@ public class ByteUtil {
       return new ArrayByteSequence(b.getBackingArray(), b.offset(), b.length());
     } else {
       return new ArrayByteSequence(b.toArray());
-    }
-  }
-
-  /**
-   * Converts from ByteSequence to Bytes. If the ByteSequenc has a backing array, that array (and
-   * the buffer's offset and limit) are used. Otherwise, a new backing array is created.
-   * 
-   * @param bs ByteSequence
-   * @return Bytes object
-   */
-  public static Bytes toBytes(ByteSequence bs) {
-    if (bs.isBackedByArray()) {
-      return Bytes.of(bs.getBackingArray(), bs.offset(), bs.length());
-    } else {
-      return Bytes.of(bs.toArray(), 0, bs.length());
     }
   }
 }

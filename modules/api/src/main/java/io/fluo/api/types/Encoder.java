@@ -22,19 +22,9 @@ import io.fluo.api.data.Bytes;
 public interface Encoder {
 
   /**
-   * Decodes an integer from {@link Bytes}
-   */
-  public int decodeInteger(Bytes b);
-
-  /**
    * Encodes an integer to {@link Bytes}
    */
   public Bytes encode(int i);
-
-  /**
-   * Decodes a long from {@link Bytes}
-   */
-  public long decodeLong(Bytes b);
 
   /**
    * Encodes a long to {@link Bytes}
@@ -42,19 +32,9 @@ public interface Encoder {
   public Bytes encode(long l);
 
   /**
-   * Decodes a String from {@link Bytes}
-   */
-  public String decodeString(Bytes b);
-
-  /**
    * Encodes a String to {@link Bytes}
    */
   public Bytes encode(String s);
-
-  /**
-   * Decodes a float from {@link Bytes}
-   */
-  public float decodeFloat(Bytes b);
 
   /**
    * Encodes a float to {@link Bytes}
@@ -62,22 +42,42 @@ public interface Encoder {
   public Bytes encode(float f);
 
   /**
-   * Decodes a double from {@link Bytes}
-   */
-  public double decodeDouble(Bytes b);
-
-  /**
    * Encodes a double to {@link Bytes}
    */
   public Bytes encode(double d);
 
   /**
-   * Decodes a boolean from {@link Bytes}
-   */
-  public boolean decodeBoolean(Bytes b);
-
-  /**
    * Encodes a boolean to {@link Bytes}
    */
   public Bytes encode(boolean b);
+
+  /**
+   * Decodes an integer from {@link Bytes}
+   */
+  public int decodeInteger(Bytes b);
+
+  /**
+   * Decodes a long from {@link Bytes}
+   */
+  public long decodeLong(Bytes b);
+
+  /**
+   * Decodes a String from {@link Bytes}
+   */
+  public String decodeString(Bytes b);
+
+  /**
+   * Decodes a float from {@link Bytes}
+   */
+  public float decodeFloat(Bytes b);
+
+  /**
+   * Decodes a double from {@link Bytes}
+   */
+  public double decodeDouble(Bytes b);
+
+  /**
+   * Decodes a boolean from {@link Bytes}
+   */
+  public boolean decodeBoolean(Bytes b);
 }

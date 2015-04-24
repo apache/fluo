@@ -24,7 +24,7 @@ import io.fluo.api.data.Column;
 
 public class TxInfoCache {
 
-  final static int CACHE_TIMEOUT_MIN = 24 * 60;
+  static final int CACHE_TIMEOUT_MIN = 24 * 60;
 
   private static class TxStatusWeigher implements Weigher<PrimaryRowColumn, TxInfo> {
     @Override

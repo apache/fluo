@@ -23,7 +23,7 @@ import org.apache.commons.configuration.ConfigurationConverter;
 
 public class MainOptions {
 
-  public final static String STDOUT = "STDOUT";
+  public static final String STDOUT = "STDOUT";
 
   @Parameter(names = "-config-dir", description = "Location of Fluo configuration directory")
   private String configDir;
@@ -49,9 +49,8 @@ public class MainOptions {
 
   public void validateConfig() throws IOException {
     if (getConfigDir() == null) {
-      System.err
-          .println("Please set -config-dir option to directory containing fluo.properties file like below: ");
-      System.err.println();
+      System.err.println("Please set -config-dir option to directory containing fluo.properties "
+          + "file like below:\n");
       Properties defaults =
           ConfigurationConverter.getProperties(FluoConfiguration.getDefaultConfiguration());
       defaults.store(System.err, "Fluo properties");

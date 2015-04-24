@@ -23,21 +23,21 @@ import io.fluo.api.exceptions.CommitException;
  */
 public class TypedTransaction extends TypedTransactionBase implements Transaction {
 
-  private final Transaction cTx;
+  private final Transaction closeTx;
 
   @VisibleForTesting
   protected TypedTransaction(Transaction tx, Encoder encoder, TypeLayer tl) {
     super(tx, encoder, tl);
-    cTx = tx;
+    closeTx = tx;
   }
 
   @Override
   public void commit() throws CommitException {
-    cTx.commit();
+    closeTx.commit();
   }
 
   @Override
   public void close() {
-    cTx.close();
+    closeTx.close();
   }
 }

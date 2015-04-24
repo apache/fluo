@@ -107,7 +107,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param b2 second byte sequence to compare
    * @return comparison result
    */
-  final public static int compareBytes(Bytes b1, Bytes b2) {
+  public static final int compareBytes(Bytes b1, Bytes b2) {
 
     int minLen = Math.min(b1.length(), b2.length());
 
@@ -126,7 +126,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Compares this Bytes object to another.
    */
   @Override
-  final public int compareTo(Bytes other) {
+  public final int compareTo(Bytes other) {
     return compareBytes(this, other);
   }
 
@@ -134,7 +134,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * Returns true if this Bytes object equals another.
    */
   @Override
-  final public boolean equals(Object other) {
+  public final boolean equals(Object other) {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
@@ -152,7 +152,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   }
 
   @Override
-  final public int hashCode() {
+  public final int hashCode() {
     if (hashCode == null) {
       int hash = 1;
       for (int i = 0; i < length(); i++) {
@@ -166,7 +166,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Creates a Bytes object by copying the data of the given byte array
    */
-  final public static Bytes of(byte[] array) {
+  public static final Bytes of(byte[] array) {
     Preconditions.checkNotNull(array);
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
@@ -180,7 +180,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
    */
-  final public static Bytes of(byte[] data, int offset, int length) {
+  public static final Bytes of(byte[] data, int offset, int length) {
     Preconditions.checkNotNull(data);
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
@@ -190,7 +190,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Creates a Bytes object by copying the data of the given ByteBuffer
    */
-  final public static Bytes of(ByteBuffer bb) {
+  public static final Bytes of(ByteBuffer bb) {
     Preconditions.checkNotNull(bb);
     byte[] data = new byte[bb.remaining()];
     bb.get(data);
@@ -200,7 +200,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Creates a Bytes object by copying the value of the given String
    */
-  final public static Bytes of(String s) {
+  public static final Bytes of(String s) {
     Preconditions.checkNotNull(s);
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
@@ -209,7 +209,7 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Creates a Bytes object by copying the value of the given String with a given charset
    */
-  final public static Bytes of(String s, Charset c) {
+  public static final Bytes of(String s, Charset c) {
     Preconditions.checkNotNull(s);
     Preconditions.checkNotNull(c);
     byte[] data = s.getBytes(c);
@@ -221,9 +221,8 @@ public abstract class Bytes implements Comparable<Bytes> {
    * 
    * @param out DataOutput
    * @param b Bytes
-   * @throws IOException
    */
-  final public static void write(DataOutput out, Bytes b) throws IOException {
+  public static final void write(DataOutput out, Bytes b) throws IOException {
     writeUtil.writeVInt(out, b.length());
     for (int i = 0; i < b.length(); i++) {
       out.write(b.byteAt(i) & 0xff);
@@ -235,9 +234,8 @@ public abstract class Bytes implements Comparable<Bytes> {
    * 
    * @param in DataInput
    * @return Bytes
-   * @throws IOException
    */
-  final public static Bytes read(DataInput in) throws IOException {
+  public static final Bytes read(DataInput in) throws IOException {
     int len = writeUtil.readVInt(in);
     byte[] b = new byte[len];
     in.readFully(b);
@@ -247,10 +245,10 @@ public abstract class Bytes implements Comparable<Bytes> {
   /**
    * Concatenates of list of Bytes objects to create a byte array
    * 
-   * @param listOfBytes
+   * @param listOfBytes Bytes objects to concatenate
    * @return Bytes
    */
-  final public static Bytes concat(Bytes... listOfBytes) {
+  public static final Bytes concat(Bytes... listOfBytes) {
     try {
       // TODO calculate exact array size needed
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -274,7 +272,7 @@ public abstract class Bytes implements Comparable<Bytes> {
    * @param b Original bytes object
    * @return List of bytes objects
    */
-  final public static List<Bytes> split(Bytes b) {
+  public static final List<Bytes> split(Bytes b) {
     ByteArrayInputStream bais;
     bais = new ByteArrayInputStream(b.toArray());
 
@@ -291,7 +289,7 @@ public abstract class Bytes implements Comparable<Bytes> {
         ret.add(of(field));
       }
     } catch (EOFException ee) {
-
+      // at end of file
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

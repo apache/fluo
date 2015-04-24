@@ -53,8 +53,9 @@ public class WorkTask implements Runnable {
         try {
           txi = new TransactionImpl(env, notification);
           tx = txi;
-          if (TracingTransaction.isTracingEnabled())
+          if (TracingTransaction.isTracingEnabled()) {
             tx = new TracingTransaction(txi, notification, observer.getClass());
+          }
 
           observer.process(tx, notification.getRow(), notification.getColumn());
           tx.commit();

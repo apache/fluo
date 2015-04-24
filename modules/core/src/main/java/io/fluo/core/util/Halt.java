@@ -20,8 +20,8 @@ import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
 public class Halt {
-  static private final Marker fatal = MarkerFactory.getMarker("FATAL");
-  static private final Logger log = LoggerFactory.getLogger(Halt.class);
+  private static final Marker fatal = MarkerFactory.getMarker("FATAL");
+  private static final Logger log = LoggerFactory.getLogger(Halt.class);
 
   private Halt() {}
 

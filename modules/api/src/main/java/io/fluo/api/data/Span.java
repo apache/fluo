@@ -35,7 +35,7 @@ public class Span {
   /**
    * Construct a new Range using a builder class
    * 
-   * @param builder
+   * @param builder Builder object
    */
   public Span(Builder builder) {
     this.startInclusive = builder.start.inclusive;

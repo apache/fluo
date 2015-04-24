@@ -40,6 +40,8 @@
   <property name="charset" value="UTF-8"/>
 
   <property name="severity" value="warning"/>
+  <module name="SuppressWithNearbyCommentFilter"/>
+  <module name="SuppressionCommentFilter"/>
 
   <!-- Checks for whitespace                               -->
   <!-- See http://checkstyle.sf.net/config_whitespace.html -->
@@ -48,6 +50,7 @@
   </module>
 
   <module name="TreeWalker">
+    <module name="FileContentsHolder"/>
     <module name="OuterTypeFilename"/>
     <module name="IllegalTokenText">
       <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
@@ -59,9 +62,10 @@
       <property name="allowEscapesForControlCharacters" value="true"/>
       <property name="allowByTailComment" value="true"/>
       <property name="allowNonPrintableEscapes" value="true"/>
+      <property name="severity" value="info"/>
     </module>
     <module name="LineLength">
-      <property name="max" value="100"/>
+      <property name="max" value="101"/>
       <property name="ignorePattern"
                 value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
     </module>
@@ -126,13 +130,13 @@
                value="Member name ''{0}'' must match pattern ''{1}''."/>
     </module>
     <module name="ParameterName">
-      <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
       <message key="name.invalidPattern"
                value="Parameter name ''{0}'' must match pattern ''{1}''."/>
     </module>
     <module name="LocalVariableName">
       <property name="tokens" value="VARIABLE_DEF"/>
-      <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
       <property name="allowOneCharVarInForLoop" value="true"/>
       <message key="name.invalidPattern"
                value="Local variable name ''{0}'' must match pattern ''{1}''."/>
@@ -169,6 +173,7 @@
     <module name="AbbreviationAsWordInName">
       <property name="ignoreFinal" value="false"/>
       <property name="allowedAbbreviationLength" value="1"/>
+      <property name="severity" value="info"/>
     </module>
     <module name="OverloadMethodsDeclarationOrder"/>
     <module name="VariableDeclarationUsageDistance"/>

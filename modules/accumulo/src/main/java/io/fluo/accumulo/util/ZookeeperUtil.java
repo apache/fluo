@@ -54,7 +54,7 @@ public class ZookeeperUtil {
   /**
    * Parses chroot section of Zookeeper connection string
    * 
-   * @param zookeepers
+   * @param zookeepers Zookeeper connection string
    * @return Returns root path or "/" if none found
    */
   public static String parseRoot(String zookeepers) {

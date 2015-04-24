@@ -50,6 +50,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   public class MyTypeLayer extends TypeLayer {
  *     public MyTypeLayer() {
  *       super(new MyEncoder());
@@ -85,8 +86,10 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void process(Transaction tx, byte[] row, byte[] cf, int cq, long val){
- *     tx.set(Bytes.of(row), new Column(Bytes.of(cf), Bytes.of(Integer.toString(cq))), Bytes.of(Long.toString(val));
+ *     tx.set(Bytes.of(row), new Column(Bytes.of(cf), Bytes.of(Integer.toString(cq))),
+ *        Bytes.of(Long.toString(val));
  *   }
  * </code>
  * </pre>
@@ -99,6 +102,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void process(TypedTransaction tx, byte[] r, byte[] cf, int cq, long v){
  *     tx.mutate().row(r).fam(cf).qual(cq).set(v);
  *   }
@@ -114,6 +118,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void add(Transaction tx, byte[] row, Column col, long amount){
  *     
  *     long balance = 0;
@@ -136,6 +141,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void add(TypedTransaction tx, byte[] r, Column c, long amount){
  *     long balance = tx.get().row(r).col(c).toLong(0);
  *     balance += amount;
@@ -150,6 +156,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void add(TypedTransaction tx, byte[] r, Column c, long amount){
  *     tx.mutate().row(r).col(c).increment(amount);
  *   }
@@ -165,7 +172,8 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
- *   void process(Transaction tx, byte[] row, Column col, long amount){
+ * 
+ *   void process(Transaction tx, byte[] row, Column col, long amount) {
  *     Bytes val =  tx.get(Bytes.of(row), col);
  *     if(val == null)
  *       return;   
@@ -181,6 +189,7 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * <code>
+ * 
  *   void process(TypedTransaction tx, byte[] r, Column c, long amount){
  *     Long balance =  tx.get().row(r).col(c).toLong();
  *     if(balance == null)
@@ -198,19 +207,23 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * {@code
- *   //pretend this method has curly braces, getting javadoc to work w/ less than and curly braces is too hard
+ * 
+ *   // pretend this method has curly braces.  javadoc has issues with less than.
+ * 
  *   void process(TypedTransaction tx, byte[] r, Column c1, Column c2, Column c3, long amount)
+ * 
  *     Map<Column, Value> columns = tx.get().row(r).columns(c1,c2,c3);
  *     
- *     //If c1 does not exist in map, a Value that wraps null will be returned.  When c1 does not exist val1 will be set to null and no NPE will be thrown.
+ *     // If c1 does not exist in map, a Value that wraps null will be returned.
+ *     // When c1 does not exist val1 will be set to null and no NPE will be thrown.
  *     String val1 = columns.get(c1).toString();
  *     
- *     //If c2 does not exist in map, then val2 will be set to empty string.
+ *     // If c2 does not exist in map, then val2 will be set to empty string.
  *     String val2 = columns.get(c2).toString("");
  *     
- *     //If c3 does not exist in map, then val9 will be set to 9.
+ *     // If c3 does not exist in map, then val9 will be set to 9.
  *     Long val3 = columns.get(c3).toLong(9);
- * }
+ * @code}
  * </pre>
  * 
  * <p>
@@ -219,13 +232,19 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * {@code
- *   //also pretend this method has curly braces
- *   void process(TypedTransaction tx, List<String> rows, Column c1, Column c2, Column c3, long amount)
- *     Map<String,Map<Column,Value>> rowCols = tx.get().rowsString(rows).columns(c1,c2,c3).toStringMap();
+ * 
+ *   // pretend this method has curly braces.  javadoc has issues with less than.
+ * 
+ *   void process(TypedTransaction tx, List<String> rows, Column c1, Column c2, Column c3,
+ *     long amount)
+ * 
+ *     Map<String,Map<Column,Value>> rowCols =
+ *        tx.get().rowsString(rows).columns(c1,c2,c3).toStringMap();
  *     
- *     //this will set val1 to null if row does not exist in map and/or column does not exist in child map
+ *     // this will set val1 to null if row does not exist in map and/or column does not
+ *     // exist in child map
  *     String val1 = rowCols.get("row1").get(c1).toString();
- *  }
+ * @code}
  * </pre>
  */
 

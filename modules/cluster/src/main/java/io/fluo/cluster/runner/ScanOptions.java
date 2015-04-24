@@ -27,9 +27,8 @@ public class ScanOptions {
   @Parameter(names = "-e", description = "End row (inclusive) of scan")
   private String endRow;
 
-  @Parameter(
-      names = "-c",
-      description = "Columns of scan in comma separated format: <<columnfamily>[:<columnqualifier>]{,<columnfamily>[:<columnqualifier>]}> ")
+  @Parameter(names = "-c", description = "Columns of scan in comma separated format: "
+      + "<<columnfamily>[:<columnqualifier>]{,<columnfamily>[:<columnqualifier>]}> ")
   private List<String> columns;
 
   @Parameter(names = "-r", description = "Exact row to scan")

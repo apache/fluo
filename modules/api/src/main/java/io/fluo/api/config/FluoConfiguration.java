@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.base.Charsets;
@@ -212,7 +213,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   /**
    * Verifies application name. Avoids characters that Zookeeper does not like in nodes.
    * 
-   * @param name
+   * @param name Application name
    */
   private void verifyApplicationName(String name) {
     if (name == null) {
@@ -682,7 +683,9 @@ public class FluoConfiguration extends CompositeConfiguration {
       valid &= verifyStringPropNotSet(CLIENT_ACCUMULO_ZOOKEEPERS_PROP);
       valid &= verifyStringPropNotSet(CLIENT_ZOOKEEPER_CONNECT_PROP);
       if (valid == false) {
-        log.error("Client properties should not be set in your configuration if MiniFluo is configured to start its own accumulo (indicated by io.fluo.mini.start.accumulo being set to true)");
+        log.error("Client properties should not be set in your configuration if MiniFluo is "
+            + "configured to start its own accumulo (indicated by "
+            + "io.fluo.mini.start.accumulo being set to true)");
       }
     } else {
       valid &= hasRequiredClientProps();

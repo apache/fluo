@@ -63,12 +63,15 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction, Snapshot {
 
+  private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
   private static final Bytes DELETE = Bytes.of("special delete object");
@@ -142,6 +145,31 @@ public class TransactionImpl implements Transaction, Snapshot {
     return getImpl(row, columns);
   }
 
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+    checkIfOpen();
+
+    env.getSharedResources().getVisCache().validate(columns);
+
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
+
+    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
+      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+    }
+
+    return ret;
+  }
+
+  // TODO add a get that uses the batch scanner
+
+  @Override
+  public RowIterator get(ScannerConfiguration config) {
+    checkIfOpen();
+    return getImpl(config);
+  }
+
   private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
 
     // TODO push visibility filtering to server side?
@@ -175,21 +203,8 @@ public class TransactionImpl implements Transaction, Snapshot {
     return ret;
   }
 
-  @Override
-  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
-    checkIfOpen();
-
-    env.getSharedResources().getVisCache().validate(columns);
-
-    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rows, columns, env, startTs, stats);
-
-    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
-
-    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
-      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
-    }
-
-    return ret;
+  private RowIterator getImpl(ScannerConfiguration config) {
+    return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
 
   private void updateColumnsRead(Bytes row, Set<Column> columns) {
@@ -199,18 +214,6 @@ public class TransactionImpl implements Transaction, Snapshot {
       columnsRead.put(row, colsRead);
     }
     colsRead.addAll(columns);
-  }
-
-  // TODO add a get that uses the batch scanner
-
-  @Override
-  public RowIterator get(ScannerConfiguration config) {
-    checkIfOpen();
-    return getImpl(config);
-  }
-
-  private RowIterator getImpl(ScannerConfiguration config) {
-    return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
   }
 
   @Override
@@ -344,6 +347,10 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
+  private boolean isTriggerRow(Bytes row) {
+    return notification != null && notification.getRow().equals(row);
+  }
+
   public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException,
       AccumuloSecurityException, AlreadyAcknowledgedException {
     if (notification != null) {
@@ -356,10 +363,6 @@ public class TransactionImpl implements Transaction, Snapshot {
       return preCommit(cd, prow, pcol);
     }
 
-  }
-
-  private boolean isTriggerRow(Bytes row) {
-    return notification != null && notification.getRow().equals(row);
   }
 
   public boolean preCommit(CommitData cd, Bytes primRow, Column primCol)
@@ -493,11 +496,12 @@ public class TransactionImpl implements Transaction, Snapshot {
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
    * 
+   * <p>
    * In this case TX2 would not roll back TX1, because it never read the column. This function
    * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
    * trying to always read unread columns.
    * 
-   * @param cd
+   * @param cd Commit data
    */
   private void readUnread(CommitData cd) throws Exception {
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
@@ -768,7 +772,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   /**
    * Sets the transactor of this transaction
    * 
-   * @param transactor
+   * @param tnode TransactorNode
    * @return this Transaction
    */
   @VisibleForTesting
@@ -802,8 +806,11 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
+  // CHECKSTYLE:OFF
   @Override
   protected void finalize() throws Throwable {
+    // CHECKSTYLE:ON
+    // TODO Log an error if transaction is not closed (See FLUO-486)
     close();
   }
 }

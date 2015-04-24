@@ -146,7 +146,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   @Override
   public long getTimestamps(String id, int num) throws TException {
-    long start = _getTimestamps(id, num);
+    long start = getTimestampsImpl(id, num);
 
     // do this outside of sync
     stampsHistogram.update(num);
@@ -154,7 +154,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     return start;
   }
 
-  private synchronized long _getTimestamps(String id, int num) throws TException {
+  private synchronized long getTimestampsImpl(String id, int num) throws TException {
     if (!started) {
       throw new IllegalStateException();
     }
@@ -184,6 +184,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   @Override
   public boolean isLeader() throws TException {
     return isLeader;
+  }
+
+  private boolean isLeader(Participant participant) {
+    return participant != null && participant.isLeader();
   }
 
   @VisibleForTesting
@@ -225,7 +229,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       throw new IllegalStateException();
     }
 
-    InetSocketAddress addr = startServer();
+    final InetSocketAddress addr = startServer();
 
     curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
@@ -282,6 +286,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       log.info("Former leader was reachable at " + host + ":" + port);
       return new OracleService.Client(protocol);
     } catch (TTransportException e) {
+      log.debug("Exception thrown in getOracleClient()", e);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -293,8 +298,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
    * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the
    * last timestamp set in zookeeper.
    * 
-   * @param curatorFramework
-   * @throws Exception
+   * @param curatorFramework Curator framework
    */
   @Override
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
@@ -313,6 +317,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
               Thread.sleep(500);
             }
           } catch (Exception e) {
+            log.debug("Exception thrown in takeLeadership()", e);
           }
         }
       }
@@ -358,10 +363,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     } catch (InterruptedException e) {
       log.warn("Oracle leadership watcher has been interrupted unexpectedly");
     }
-  }
-
-  private boolean isLeader(Participant participant) {
-    return participant != null && participant.isLeader();
   }
 
 }

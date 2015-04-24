@@ -21,15 +21,15 @@ import io.fluo.api.client.Snapshot;
  */
 public class TypedSnapshot extends TypedSnapshotBase implements Snapshot {
 
-  private final Snapshot cSnapshot;
+  private final Snapshot closeSnapshot;
 
   TypedSnapshot(Snapshot snapshot, Encoder encoder, TypeLayer tl) {
     super(snapshot, encoder, tl);
-    cSnapshot = snapshot;
+    closeSnapshot = snapshot;
   }
 
   @Override
   public void close() {
-    cSnapshot.close();
+    closeSnapshot.close();
   }
 }

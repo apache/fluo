@@ -43,9 +43,9 @@ public abstract class ClusterAppRunner extends AppRunner {
 
   public class InitOptions {
 
-    @Parameter(
-        names = {"-f", "--force"},
-        description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to setting both --clearTable --clearZookeeper")
+    @Parameter(names = {"-f", "--force"},
+        description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to "
+            + "setting both --clearTable --clearZookeeper")
     private boolean force;
 
     @Parameter(names = {"--clearTable"}, description = "Skips prompt and clears Accumulo table")
@@ -133,10 +133,9 @@ public abstract class ClusterAppRunner extends AppRunner {
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
       if (admin.oracleExists()) {
-        System.err
-            .println("Error - The Fluo '"
-                + config.getApplicationName()
-                + "' application is already running and must be stopped before running 'fluo init'.  Aborted initialization.");
+        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application is "
+            + " already running and must be stopped before running 'fluo init'.  "
+            + "Aborted initialization.");
         System.exit(-1);
       }
 
@@ -156,12 +155,10 @@ public abstract class ClusterAppRunner extends AppRunner {
         if (commandOpts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
-          System.out
-              .print("A Fluo '"
-                  + config.getApplicationName()
-                  + "' application is already initialized in Zookeeper at "
-                  + config.getAppZookeepers()
-                  + " - Would you like to clear and reinitialize Zookeeper for this application (y/n)? ");
+          System.out.print("A Fluo '" + config.getApplicationName()
+              + "' application is already initialized in Zookeeper at " + config.getAppZookeepers()
+              + " - Would you like to clear and reinitialize Zookeeper"
+              + " for this application (y/n)? ");
           if (readYes()) {
             initOpts.setClearZookeeper(true);
           } else {

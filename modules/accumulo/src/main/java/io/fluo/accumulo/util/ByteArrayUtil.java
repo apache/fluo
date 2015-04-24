@@ -63,7 +63,7 @@ public class ByteArrayUtil {
    * @return long value
    */
   public static long decodeLong(byte[] ba, int offset) {
-    // @formatter:off
+    // @formatter:off - Due to formatter putting return statement on one line that is > 100 chars
     return ((((long) ba[offset + 0] << 56) + ((long) (ba[offset + 1] & 255) << 48)
         + ((long) (ba[offset + 2] & 255) << 40) + ((long) (ba[offset + 3] & 255) << 32)
         + ((long) (ba[offset + 4] & 255) << 24) + ((ba[offset + 5] & 255) << 16)

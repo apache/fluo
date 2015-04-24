@@ -25,8 +25,6 @@ import com.google.common.base.Supplier;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.api.data.Bytes;
-import io.fluo.api.data.Column;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.util.ByteUtil;
@@ -62,9 +60,8 @@ public class ScanTask implements Runnable {
 
   static long STABALIZE_TIME = 10 * 1000;
 
-  private long min_sleep_time;
-  private long max_sleep_time;
-
+  private long minSleepTime;
+  private long maxSleepTime;
 
   ScanTask(HashNotificationFinder hashWorkFinder, Environment env, AtomicBoolean stopped) {
     this.hwf = hashWorkFinder;
@@ -78,8 +75,8 @@ public class ScanTask implements Runnable {
     this.env = env;
     this.stopped = stopped;
 
-    min_sleep_time = env.getConfiguration().getInt(MIN_SLEEP_TIME_PROP, 5000);
-    max_sleep_time = env.getConfiguration().getInt(MAX_SLEEP_TIME_PROP, 5 * 60 * 1000);
+    minSleepTime = env.getConfiguration().getInt(MIN_SLEEP_TIME_PROP, 5000);
+    maxSleepTime = env.getConfiguration().getInt(MAX_SLEEP_TIME_PROP, 5 * 60 * 1000);
   }
 
   @Override
@@ -102,7 +99,7 @@ public class ScanTask implements Runnable {
         List<TabletInfo<TabletData>> tablets = new ArrayList<>(tabletInfoCache.getTablets());
         Collections.shuffle(tablets, rand);
 
-        long minRetryTime = max_sleep_time + System.currentTimeMillis();
+        long minRetryTime = maxSleepTime + System.currentTimeMillis();
         int notifications = 0;
         int tabletsScanned = 0;
         try {
@@ -117,7 +114,7 @@ public class ScanTask implements Runnable {
                 count = scan(modParams, tabletInfo.getRange());
                 tabletsScanned++;
               }
-              tabletInfo.getData().updateScanCount(count, max_sleep_time);
+              tabletInfo.getData().updateScanCount(count, maxSleepTime);
               notifications += count;
               if (stopped.get()) {
                 break;
@@ -131,7 +128,7 @@ public class ScanTask implements Runnable {
           waitForFindersToStabalize();
         }
 
-        long sleepTime = Math.max(min_sleep_time, minRetryTime - System.currentTimeMillis());
+        long sleepTime = Math.max(minSleepTime, minRetryTime - System.currentTimeMillis());
 
         qSize = hwf.getWorkerQueue().size();
 

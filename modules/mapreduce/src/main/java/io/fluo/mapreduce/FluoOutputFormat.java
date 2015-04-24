@@ -45,7 +45,6 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   @Override
   public void checkOutputSpecs(JobContext arg0) throws IOException, InterruptedException {
     // TODO Auto-generated method stub
-
   }
 
   @Override
@@ -115,10 +114,9 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   /**
    * Call this method to initialize the Fluo connection props and {@link LoaderExecutorImpl} props
    * 
-   * @param conf
+   * @param conf Job configuration
    * @param props Use {@link io.fluo.api.config.FluoConfiguration} to set props programmatically
    */
-
   public static void configure(Job conf, Properties props) {
     try {
 

@@ -171,7 +171,7 @@ public class OracleClient implements AutoCloseable {
                 localClient = client;
               }
 
-              Context timerContext = responseTimer.time();
+              final Context timerContext = responseTimer.time();
 
               start = localClient.getTimestamps(env.getFluoApplicationID(), request.size());
 
@@ -276,6 +276,7 @@ public class OracleClient implements AutoCloseable {
       try {
         possibleLeader = leaderSelector.getLeader();
       } catch (KeeperException e) {
+        log.debug("Exception throw in getLeaderAttempt()", e);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

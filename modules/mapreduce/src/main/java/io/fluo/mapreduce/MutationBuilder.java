@@ -38,6 +38,7 @@ public class MutationBuilder {
   private Mutation mutation;
 
   /**
+   * Creates builder for given row
    * 
    * @param row Will be encoded using UTF-8
    */
@@ -66,9 +67,9 @@ public class MutationBuilder {
   }
 
   /**
+   * Puts value at given column
    * 
    * @param value Will be encoded using UTF-8
-   * @return
    */
   public MutationBuilder put(Column col, CharSequence value) {
     return put(col, value.toString().getBytes(StandardCharsets.UTF_8));
