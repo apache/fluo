@@ -18,9 +18,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import io.fluo.api.data.Bytes;
+import org.apache.accumulo.core.data.Value;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import io.fluo.api.data.Column;
-import io.fluo.api.data.RowColumn;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.core.ITBaseImpl;
@@ -33,7 +35,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,18 +44,20 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
 
   static final TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  public static class TestMapper extends Mapper<LongWritable, Text, RowColumn, Bytes> {
+  public static class TestMapper extends Mapper<LongWritable, Text, Key, Value> {
+
+    private FluoKeyValueGenerator fkvg = new FluoKeyValueGenerator();
 
     @Override
     public void map(LongWritable key, Text data, Context context) throws IOException,
         InterruptedException {
       String fields[] = data.toString().split(",");
 
-      RowColumn rc =
-          new RowColumn(Bytes.of(fields[0]), new Column(Bytes.of(fields[1]), Bytes.of(fields[2])));
-      Bytes val = Bytes.of(fields[3]);
+      fkvg.setRow(fields[0]).setColumn(new Column(fields[1], fields[2])).setValue(fields[3]);
 
-      context.write(rc, val);
+      for (FluoKeyValue kv : fkvg.getKeyValues()) {
+        context.write(kv.getKey(), kv.getValue());
+      }
     }
   }
 
@@ -64,7 +67,6 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
 
   @Test
   public void testImportFile() throws Exception {
-
 
     File inDir = new File(tempFolder.getRoot(), "in");
     inDir.mkdir();
@@ -87,11 +89,11 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     Job job = new Job(jconf);
     job.setInputFormatClass(TextInputFormat.class);
     FileInputFormat.setInputPaths(job, inDir.toURI().toString());
-    job.setOutputFormatClass(FluoFileOutputFormat.class);
-    FileOutputFormat.setOutputPath(job, new Path(outDir.toURI()));
+    job.setOutputFormatClass(AccumuloFileOutputFormat.class);
+    AccumuloFileOutputFormat.setOutputPath(job, new Path(outDir.toURI()));
     job.setMapperClass(TestMapper.class);
     job.setNumReduceTasks(0);
-    job.waitForCompletion(false);
+    Assert.assertTrue(job.waitForCompletion(false));
 
     // bulk import rfiles
     conn.tableOperations().importDirectory(table, outDir.toString(), failDir.toString(), false);

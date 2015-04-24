@@ -88,4 +88,13 @@ public class ByteUtil {
       return new ArrayByteSequence(b.toArray());
     }
   }
+
+  public static byte[] toByteArray(Text text) {
+    byte[] bytes = text.getBytes();
+    if (bytes.length != text.getLength()) {
+      bytes = new byte[text.getLength()];
+      System.arraycopy(text.getBytes(), 0, bytes, 0, bytes.length);
+    }
+    return bytes;
+  }
 }
