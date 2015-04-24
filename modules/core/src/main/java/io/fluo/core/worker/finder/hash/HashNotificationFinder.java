@@ -21,6 +21,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.fluo.accumulo.data.MutableBytes;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import io.fluo.core.util.ByteUtil;
+import io.fluo.accumulo.iterators.NotificationHashFilter;
+import io.fluo.core.util.ColumnUtil;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.Environment;
@@ -184,5 +191,19 @@ public class HashNotificationFinder implements NotificationFinder {
 
   NotificationProcessor getWorkerQueue() {
     return notificationProcessor;
+  }
+
+  @VisibleForTesting
+  static boolean shouldProcess(Notification notification, int divisor, int remainder) {
+    byte[] cfcq = ColumnUtil.concatCFCQ(notification.getColumn());
+    return NotificationHashFilter.accept(
+        ByteUtil.toByteSequence((MutableBytes) notification.getRow()), new ArrayByteSequence(cfcq),
+        divisor, remainder);
+  }
+
+  @Override
+  public boolean shouldProcess(Notification notification) {
+    ModulusParams mp = getModulusParams();
+    return shouldProcess(notification, mp.divisor, mp.remainder);
   }
 }

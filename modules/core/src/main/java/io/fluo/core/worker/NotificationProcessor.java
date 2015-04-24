@@ -113,7 +113,7 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
-  public boolean addNotification(NotificationFinder notificationFinder,
+  public boolean addNotification(final NotificationFinder notificationFinder,
       final Notification notification) {
 
     final WorkTask workTask = new WorkTask(notificationFinder, env, notification, observers);
@@ -123,7 +123,12 @@ public class NotificationProcessor implements AutoCloseable {
       @Override
       public void run() {
         try {
-          workTask.run();
+          // Its possible that while the notification was in the queue the situation changed and it
+          // should no longer be processed by this worker. So ask as late as possible if this
+          // notification should be processed.
+          if (notificationFinder.shouldProcess(notification)) {
+            workTask.run();
+          }
         } catch (Exception e) {
           log.error(
               "Failed to process work " + notification.getRow() + " " + notification.getColumn()

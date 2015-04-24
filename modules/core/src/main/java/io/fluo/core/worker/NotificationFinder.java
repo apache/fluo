@@ -24,5 +24,7 @@ public interface NotificationFinder {
 
   public void stop();
 
+  public boolean shouldProcess(Notification notification);
+
   public void failedToProcess(Notification notification, TxResult status);
 }
