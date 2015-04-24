@@ -122,6 +122,7 @@ public class FluoAdminImpl implements FluoAdmin {
         rootCurator.delete().deletingChildrenIfNeeded().forPath(appRootDir);
       }
     } catch (KeeperException.NoNodeException nne) {
+      // it's ok if node doesn't exist
     } catch (Exception e) {
       logger.error("An error occurred deleting Zookeeper root of [" + config.getAppZookeepers()
           + "], error=[" + e.getMessage() + "]");

@@ -289,7 +289,7 @@ public abstract class Bytes implements Comparable<Bytes> {
         ret.add(of(field));
       }
     } catch (EOFException ee) {
-
+      // at end of file
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

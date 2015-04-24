@@ -146,7 +146,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   @Override
   public long getTimestamps(String id, int num) throws TException {
-    long start = _getTimestamps(id, num);
+    long start = getTimestampsImpl(id, num);
 
     // do this outside of sync
     stampsHistogram.update(num);
@@ -154,7 +154,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     return start;
   }
 
-  private synchronized long _getTimestamps(String id, int num) throws TException {
+  private synchronized long getTimestampsImpl(String id, int num) throws TException {
     if (!started) {
       throw new IllegalStateException();
     }
@@ -229,7 +229,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       throw new IllegalStateException();
     }
 
-    InetSocketAddress addr = startServer();
+    final InetSocketAddress addr = startServer();
 
     curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
@@ -286,6 +286,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       log.info("Former leader was reachable at " + host + ":" + port);
       return new OracleService.Client(protocol);
     } catch (TTransportException e) {
+      log.debug("Exception thrown in getOracleClient()", e);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -316,6 +317,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
               Thread.sleep(500);
             }
           } catch (Exception e) {
+            log.debug("Exception thrown in takeLeadership()", e);
           }
         }
       }

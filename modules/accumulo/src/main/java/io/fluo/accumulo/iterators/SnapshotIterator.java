@@ -63,7 +63,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
         long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
         if (colType == ColumnConstants.TX_DONE_PREFIX) {
-
+          // do nothing if TX_DONE
         } else if (colType == ColumnConstants.WRITE_PREFIX) {
           // TODO check of truncated writes
 
@@ -99,7 +99,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
           // TODO could possibly seek to next col when ts < dataPointer
         } else if (colType == ColumnConstants.ACK_PREFIX) {
-
+          // do nothing if ACK
         } else {
           throw new IllegalArgumentException();
         }

@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Mutation;
 public class SharedBatchWriter {
 
   private final BatchWriter bw;
-  private ArrayBlockingQueue<MutationBatch> mQueue = new ArrayBlockingQueue<>(1000);
+  private ArrayBlockingQueue<MutationBatch> mutQueue = new ArrayBlockingQueue<>(1000);
   private MutationBatch end = new MutationBatch(new ArrayList<Mutation>());
 
   private AtomicLong asyncBatchesAdded = new AtomicLong(0);
@@ -56,8 +56,8 @@ public class SharedBatchWriter {
         try {
 
           ArrayList<MutationBatch> batches = new ArrayList<>();
-          batches.add(mQueue.take());
-          mQueue.drainTo(batches);
+          batches.add(mutQueue.take());
+          mutQueue.drainTo(batches);
 
           for (MutationBatch mutationBatch : batches) {
             if (mutationBatch != end) {
@@ -116,7 +116,7 @@ public class SharedBatchWriter {
 
     try {
       MutationBatch mb = new MutationBatch(ml);
-      mQueue.put(mb);
+      mutQueue.put(mb);
       mb.cdl.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -125,7 +125,7 @@ public class SharedBatchWriter {
 
   public void close() {
     try {
-      mQueue.put(end);
+      mutQueue.put(end);
       end.cdl.await();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -137,7 +137,7 @@ public class SharedBatchWriter {
       MutationBatch mb = new MutationBatch(ml);
       mb.isAsync = true;
       asyncBatchesAdded.incrementAndGet();
-      mQueue.put(mb);
+      mutQueue.put(mb);
 
     } catch (Exception e) {
       throw new RuntimeException(e);

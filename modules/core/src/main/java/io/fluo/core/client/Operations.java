@@ -64,6 +64,7 @@ public class Operations {
     try {
       curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
     } catch (NoNodeException nne) {
+      // it's ok if node doesn't exist
     } catch (Exception e) {
       logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath
           + "], error=[" + e.getMessage() + "]");

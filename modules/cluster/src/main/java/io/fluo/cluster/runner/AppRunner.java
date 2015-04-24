@@ -176,7 +176,7 @@ public abstract class AppRunner {
     return entriesFound;
   }
 
-  // @formatter:off
+  // @formatter:off - Due to formatter putting method on one line that is > 100 chars
   private static void appendLib(StringBuilder classpath, String libDirName,
       boolean useLibJarsFormat) {
     // @formatter:on

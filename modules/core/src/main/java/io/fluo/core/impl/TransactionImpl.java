@@ -63,12 +63,15 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction, Snapshot {
 
+  private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
   private static final Bytes DELETE = Bytes.of("special delete object");
@@ -493,6 +496,7 @@ public class TransactionImpl implements Transaction, Snapshot {
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
    * 
+   * <p>
    * In this case TX2 would not roll back TX1, because it never read the column. This function
    * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
    * trying to always read unread columns.
@@ -802,8 +806,11 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
+  // CHECKSTYLE:OFF
   @Override
   protected void finalize() throws Throwable {
+    // CHECKSTYLE:ON
+    // TODO Log an error if transaction is not closed (See FLUO-486)
     close();
   }
 }

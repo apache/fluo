@@ -101,7 +101,6 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   @Override
   public void start() {
     checkIfInitialized();
-    TwillPreparer preparer;
 
     if (twillIdExists()) {
       String runId = getTwillId();
@@ -137,7 +136,8 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       System.exit(-1);
     }
 
-    preparer = getTwillRunner().prepare(new FluoTwillApp(config, fluoPath.getAppConfDir()));
+    TwillPreparer preparer =
+        getTwillRunner().prepare(new FluoTwillApp(config, fluoPath.getAppConfDir()));
 
     // Add jars from fluo lib/ directory that are not being loaded by Twill.
     try {

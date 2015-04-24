@@ -106,7 +106,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-
+        // do nothing if TX_DONE
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
 
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());

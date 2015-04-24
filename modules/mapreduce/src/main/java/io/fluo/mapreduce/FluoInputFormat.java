@@ -93,11 +93,6 @@ public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
       public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
           InterruptedException {
         try {
-          // TODO this uses non public Accumulo API!
-          RangeInputSplit ris = (RangeInputSplit) split;
-
-          Span span = SpanUtil.toSpan(ris.getRange());
-
           ByteArrayInputStream bais =
               new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
                   .getBytes("UTF-8"));
@@ -107,6 +102,10 @@ public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
           env = new Environment(new FluoConfiguration(props));
 
           ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
+
+          // TODO this uses non public Accumulo API!
+          RangeInputSplit ris = (RangeInputSplit) split;
+          Span span = SpanUtil.toSpan(ris.getRange());
           ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
 
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0])) {
