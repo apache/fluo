@@ -16,7 +16,8 @@ package io.fluo.mapreduce;
 
 import java.nio.charset.StandardCharsets;
 
-import io.fluo.accumulo.data.MutableBytes;
+import org.apache.accumulo.core.client.BatchWriter;
+
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
@@ -28,12 +29,12 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.hadoop.io.Text;
 
 /**
- * This class allows building Accumulo mutations that are in the Fluo data format. This class is
- * intended to be used with {@link AccumuloOutputFormat} inorder to seed an initialized Fluo table
- * on which no transactions have executed.
+ * This class generates Accumulo mutations that are in the Fluo data format. This class is intended
+ * to be used with {@link AccumuloOutputFormat} or {@link BatchWriter} inorder to seed an
+ * initialized Fluo table on which no transactions have executed.
  */
 
-public class MutationBuilder {
+public class FluoMutationGenerator {
 
   private Mutation mutation;
 
@@ -42,27 +43,19 @@ public class MutationBuilder {
    * 
    * @param row Will be encoded using UTF-8
    */
-  public MutationBuilder(CharSequence row) {
+  public FluoMutationGenerator(CharSequence row) {
     mutation = new Mutation(row);
   }
 
-  public MutationBuilder(Text row) {
+  public FluoMutationGenerator(Text row) {
     mutation = new Mutation(row);
   }
 
-  public MutationBuilder(Bytes row) {
+  public FluoMutationGenerator(Bytes row) {
     mutation = new Mutation(row.toArray());
   }
 
-  public MutationBuilder(MutableBytes row) {
-    if (row.isBackedByArray()) {
-      mutation = new Mutation(row.getBackingArray(), row.offset(), row.length());
-    } else {
-      mutation = new Mutation(row.toArray());
-    }
-  }
-
-  public MutationBuilder(byte[] row) {
+  public FluoMutationGenerator(byte[] row) {
     mutation = new Mutation(row);
   }
 
@@ -71,19 +64,19 @@ public class MutationBuilder {
    * 
    * @param value Will be encoded using UTF-8
    */
-  public MutationBuilder put(Column col, CharSequence value) {
+  public FluoMutationGenerator put(Column col, CharSequence value) {
     return put(col, value.toString().getBytes(StandardCharsets.UTF_8));
   }
 
-  public MutationBuilder put(Column col, Text value) {
+  public FluoMutationGenerator put(Column col, Text value) {
     return put(col, ByteUtil.toBytes(value));
   }
 
-  public MutationBuilder put(Column col, Bytes value) {
+  public FluoMutationGenerator put(Column col, Bytes value) {
     return put(col, value.toArray());
   }
 
-  public MutationBuilder put(Column col, byte[] value) {
+  public FluoMutationGenerator put(Column col, byte[] value) {
     Flutation.put(mutation, col, ColumnConstants.DATA_PREFIX | 0, value);
     Flutation.put(mutation, col, ColumnConstants.WRITE_PREFIX | 1,
         WriteValue.encode(0, false, false));

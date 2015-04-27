@@ -36,14 +36,14 @@ public class MutationBuilderIT extends ITBaseImpl {
     BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
     try {
 
-      MutationBuilder mb1 = new MutationBuilder(Bytes.of("row1"));
+      FluoMutationGenerator mb1 = new FluoMutationGenerator(Bytes.of("row1"));
       mb1.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.of("v1"));
       mb1.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.of("v2"));
       mb1.put(tl.bc().fam("cf1").qual("cq3").vis(), Bytes.of("v3"));
 
       bw.addMutation(mb1.build());
 
-      MutationBuilder mb2 = new MutationBuilder(Bytes.of("row2"));
+      FluoMutationGenerator mb2 = new FluoMutationGenerator(Bytes.of("row2"));
       mb2.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.of("v4"));
       mb2.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.of("v5"));
 
