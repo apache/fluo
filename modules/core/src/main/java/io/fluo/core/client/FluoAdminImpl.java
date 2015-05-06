@@ -26,6 +26,7 @@ import java.util.UUID;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.accumulo.iterators.GarbageCollectionIterator;
+import io.fluo.accumulo.iterators.NotificationIterator;
 import io.fluo.accumulo.util.AccumuloProps;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
@@ -185,19 +186,21 @@ public class FluoAdminImpl implements FluoAdmin {
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'},
         CuratorUtil.NodeExistsPolicy.FAIL);
 
-    // TODO may need to configure an iterator that squishes multiple notifications to one at
-    // compaction time since versioning iterator is not configured for
-    // table...
-
     conn.tableOperations().create(config.getAccumuloTable(), false);
     Map<String, Set<Text>> groups = new HashMap<>();
     groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
     conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
 
-    IteratorSetting gcIter = new IteratorSetting(10, GarbageCollectionIterator.class);
+    IteratorSetting gcIter = new IteratorSetting(10, "gc", GarbageCollectionIterator.class);
     GarbageCollectionIterator.setZookeepers(gcIter, config.getAppZookeepers());
 
     conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter,
+        EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
+
+    // the order relative to gc iter should not matter
+    IteratorSetting ntfyIter = new IteratorSetting(11, "ntfy", NotificationIterator.class);
+
+    conn.tableOperations().attachIterator(config.getAccumuloTable(), ntfyIter,
         EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
 
     conn.tableOperations().setProperty(config.getAccumuloTable(),

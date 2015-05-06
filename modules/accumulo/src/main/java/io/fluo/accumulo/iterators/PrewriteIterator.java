@@ -84,7 +84,11 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
       throws IOException {
     range = IteratorUtil.maximizeStartKeyTimeStamp(range);
 
-    source.seek(range, columnFamilies, inclusive);
+    if (columnFamilies.isEmpty() && !inclusive) {
+      source.seek(range, SnapshotIterator.NOTIFY_CF_SET, false);
+    } else {
+      source.seek(range, columnFamilies, inclusive);
+    }
 
     Key curCol = new Key();
 

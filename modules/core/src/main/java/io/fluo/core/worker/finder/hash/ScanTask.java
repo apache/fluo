@@ -23,11 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Supplier;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.TabletInfoCache;
 import io.fluo.core.worker.TabletInfoCache.TabletInfo;
@@ -38,7 +36,6 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.user.VersioningIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,16 +164,11 @@ public class ScanTask implements Runnable {
 
     scanner.setRange(range);
 
-    // table does not have versioning iterator configured, if there are multiple notification
-    // versions only want to see one
-    IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
-    scanner.addScanIterator(iterCfg);
+    Notification.configureScanner(scanner);
 
-    iterCfg = new IteratorSetting(30, "nhf", NotificationHashFilter.class);
+    IteratorSetting iterCfg = new IteratorSetting(30, "nhf", NotificationHashFilter.class);
     NotificationHashFilter.setModulusParams(iterCfg, lmp.divisor, lmp.remainder);
     scanner.addScanIterator(iterCfg);
-
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
 
     int count = 0;
 

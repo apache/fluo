@@ -26,9 +26,15 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 public class TestIteratorEnv implements IteratorEnvironment {
 
   private IteratorScope scope;
+  private boolean fullMajc = true;
 
   TestIteratorEnv(IteratorScope scope) {
     this.scope = scope;
+  }
+
+  public TestIteratorEnv(IteratorScope scope, boolean fullMajc) {
+    this.scope = scope;
+    this.fullMajc = fullMajc;
   }
 
   @Override
@@ -49,7 +55,9 @@ public class TestIteratorEnv implements IteratorEnvironment {
 
   @Override
   public boolean isFullMajorCompaction() {
-    return scope == IteratorScope.majc;
+    if (scope == IteratorScope.majc)
+      return fullMajc;
+    return false;
   }
 
   @Override

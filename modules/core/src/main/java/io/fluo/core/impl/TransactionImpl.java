@@ -478,8 +478,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
         Flutation m = new Flutation(env, entry.getKey());
         for (Column col : entry.getValue()) {
-          m.put(ColumnConstants.NOTIFY_CF.toArray(), ColumnUtil.concatCFCQ(col), gv(col), commitTs,
-              TransactionImpl.EMPTY);
+          Notification.put(env, m, col, commitTs);
         }
         mutations.add(m);
       }

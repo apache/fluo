@@ -31,9 +31,6 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
-/**
- * 
- */
 public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
 
@@ -72,7 +69,11 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
       throws IOException {
     range = IteratorUtil.maximizeStartKeyTimeStamp(range);
 
-    source.seek(range, columnFamilies, inclusive);
+    if (columnFamilies.isEmpty() && !inclusive) {
+      source.seek(range, SnapshotIterator.NOTIFY_CF_SET, false);
+    } else {
+      source.seek(range, columnFamilies, inclusive);
+    }
 
     Key curCol = new Key();
 

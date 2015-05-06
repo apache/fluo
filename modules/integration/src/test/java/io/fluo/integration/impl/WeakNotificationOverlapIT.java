@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -28,8 +27,8 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedObserver;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.api.types.TypedTransactionBase;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl.CommitData;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import org.apache.accumulo.core.client.Scanner;
@@ -88,7 +87,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     ttx3.mutate().row(1).col(ntfyCol).weaklyNotify();
     ttx3.done();
 
-    Assert.assertEquals(2, countNotifications());
+    Assert.assertEquals(1, countNotifications());
 
     new TotalObserver().process(ttx2, Bytes.of("1"), ntfyCol);
     // should not delete notification created by ttx3
@@ -128,7 +127,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     ttx7.mutate().row(1).col(ntfyCol).weaklyNotify();
     ttx7.done();
 
-    Assert.assertEquals(2, countNotifications());
+    Assert.assertEquals(1, countNotifications());
 
     new TotalObserver().process(ttx6, Bytes.of("1"), ntfyCol);
     // should not delete notification created by ttx7
@@ -180,7 +179,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     ttx2.finishCommit(cd2, commitTs);
     ttx2.close();
 
-    Assert.assertEquals(2, countNotifications());
+    Assert.assertEquals(1, countNotifications());
 
     new TotalObserver().process(ttx3, Bytes.of("1"), ntfyCol);
     ttx3.done();
@@ -205,7 +204,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     env.getSharedResources().getBatchWriter().waitForAsyncFlush();
 
     Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
+    Notification.configureScanner(scanner);
 
     int count = 0;
     for (Iterator<Entry<Key, Value>> iterator = scanner.iterator(); iterator.hasNext();) {

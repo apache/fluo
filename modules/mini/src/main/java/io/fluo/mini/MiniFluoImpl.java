@@ -18,7 +18,6 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
@@ -26,8 +25,8 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.mini.MiniFluo;
 import io.fluo.core.client.FluoClientImpl;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.oracle.OracleServer;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationFinderFactory;
 import io.fluo.core.worker.NotificationProcessor;
@@ -194,7 +193,7 @@ public class MiniFluoImpl implements MiniFluo {
   public void waitForObservers() {
     try {
       Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
-      scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
+      Notification.configureScanner(scanner);
 
       while (isProcessing(scanner)) {
         Thread.sleep(100);
