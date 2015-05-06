@@ -16,15 +16,14 @@ package io.fluo.core.impl;
 
 import java.util.List;
 
-import io.fluo.core.util.ByteUtil;
-import org.apache.accumulo.core.data.Key;
-
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.Flutation;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class Notification extends RowColumn {

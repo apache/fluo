@@ -14,13 +14,13 @@
 
 package io.fluo.mapreduce;
 
-import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import com.google.common.base.Charsets;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.ByteUtil;
+import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.hadoop.io.Text;
 

@@ -22,20 +22,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import io.fluo.accumulo.data.MutableBytes;
-import org.apache.accumulo.core.data.ArrayByteSequence;
-import io.fluo.core.util.ByteUtil;
-import io.fluo.accumulo.iterators.NotificationHashFilter;
-import io.fluo.core.util.ColumnUtil;
 import com.google.common.base.Preconditions;
+import io.fluo.accumulo.data.MutableBytes;
+import io.fluo.accumulo.iterators.NotificationHashFilter;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
+import io.fluo.core.util.ByteUtil;
+import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationProcessor;
 import io.fluo.core.worker.TxResult;
+import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;

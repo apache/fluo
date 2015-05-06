@@ -18,9 +18,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.Filter;
