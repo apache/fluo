@@ -85,7 +85,9 @@
     <module>modules/api</module>
     <module>modules/accumulo</module>
     <module>modules/core</module>
+    <module>modules/mini</module>
     <module>modules/metrics</module>
+    <module>modules/integration</module>
     <module>modules/mapreduce</module>
     <module>modules/cluster</module>
     <module>modules/distribution</module>
@@ -352,6 +354,11 @@
       </dependency>
       <dependency>
         <groupId>io.fluo</groupId>
+        <artifactId>fluo-mini</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
         <artifactId>fluo-mapreduce</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -469,7 +476,7 @@
       <!-- Test Dependencies -->
       <dependency>
         <groupId>io.fluo</groupId>
-        <artifactId>fluo-core</artifactId>
+        <artifactId>fluo-integration</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
       </dependency>

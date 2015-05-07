@@ -205,7 +205,7 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   @VisibleForTesting
-  synchronized void updateZkNode() {
+  public synchronized void updateZkNode() {
     Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
 
     if (allocationsInProgress > 0) {
@@ -220,22 +220,22 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   @VisibleForTesting
-  long getOldestActiveTimestamp() {
+  public long getOldestActiveTimestamp() {
     return timestamps.first();
   }
 
   @VisibleForTesting
-  long getZookeeperTimestamp() {
+  public long getZookeeperTimestamp() {
     return zkTimestamp;
   }
 
   @VisibleForTesting
-  boolean isEmpty() {
+  public boolean isEmpty() {
     return timestamps.isEmpty();
   }
 
   @VisibleForTesting
-  String getNodePath() {
+  public String getNodePath() {
     return ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + tid.toString();
   }
 

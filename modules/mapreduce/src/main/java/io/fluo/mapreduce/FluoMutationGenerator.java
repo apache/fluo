@@ -16,14 +16,13 @@ package io.fluo.mapreduce;
 
 import java.nio.charset.StandardCharsets;
 
-import org.apache.accumulo.core.client.BatchWriter;
-
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Flutation;
+import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.hadoop.io.Text;

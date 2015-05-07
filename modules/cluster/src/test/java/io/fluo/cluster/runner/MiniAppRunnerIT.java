@@ -25,8 +25,8 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedObserver;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
-import io.fluo.core.ITBaseMini;
 import io.fluo.core.impl.Environment;
+import io.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 

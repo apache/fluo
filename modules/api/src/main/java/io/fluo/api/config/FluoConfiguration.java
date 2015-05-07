@@ -109,7 +109,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String MINI_CLASS_PROP = MINI_PREFIX + ".class";
   public static final String MINI_START_ACCUMULO_PROP = MINI_PREFIX + ".start.accumulo";
   public static final String MINI_DATA_DIR_PROP = MINI_PREFIX + ".data.dir";
-  public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".core.mini.MiniFluoImpl";
+  public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".mini.MiniFluoImpl";
   public static final boolean MINI_START_ACCUMULO_DEFAULT = true;
   public static final String MINI_DATA_DIR_DEFAULT = "${env:FLUO_HOME}/mini";
 

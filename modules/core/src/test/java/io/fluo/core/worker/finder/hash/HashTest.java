@@ -18,15 +18,14 @@ package io.fluo.core.worker.finder.hash;
 import java.util.Random;
 
 import com.google.common.math.DoubleMath;
-
-import org.junit.Assert;
-import io.fluo.core.impl.Notification;
-import org.apache.accumulo.core.data.Key;
+import io.fluo.accumulo.iterators.NotificationHashFilter;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.util.ColumnUtil;
-import io.fluo.accumulo.iterators.NotificationHashFilter;
+import org.apache.accumulo.core.data.Key;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class HashTest {

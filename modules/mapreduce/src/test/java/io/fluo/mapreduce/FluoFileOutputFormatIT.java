@@ -18,15 +18,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.apache.accumulo.core.data.Value;
-
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.ITBaseImpl;
-import io.fluo.core.TestTransaction;
+import io.fluo.integration.ITBaseImpl;
+import io.fluo.integration.TestTransaction;
+import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

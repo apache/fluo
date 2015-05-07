@@ -24,13 +24,11 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>fluo-mapreduce</artifactId>
+  <artifactId>fluo-integration</artifactId>
   <packaging>jar</packaging>
 
-  <name>Fluo MapReduce</name>
-  <description>
-    This module provides utility code for MapReduce jobs that read from or write to a Fluo table.    
-  </description>
+  <name>Fluo Integration</name>
+  <description>This module contains Fluo integration tests</description>
 
   <profiles>
     <profile>
@@ -56,59 +54,99 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
+  <!-- Test Dependencies -->
   <dependencies>
     <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-api</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-accumulo</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-mini</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-framework</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-minicluster</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>commons-configuration</groupId>
       <artifactId>commons-configuration</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>guava</artifactId>
-      <groupId>com.google.guava</groupId>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <scope>test</scope>
     </dependency>
-
-    <!-- Test Dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-integration</artifactId>
-      <type>test-jar</type>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-test</artifactId>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
