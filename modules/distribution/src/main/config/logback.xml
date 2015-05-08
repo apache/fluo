@@ -31,11 +31,11 @@ This file configures logging for the Fluo oracle and workers (when using 'fluo' 
       <maxFileSize>100MB</maxFileSize>
     </triggeringPolicy>
 
-  	<encoder>
+    <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
-  
+
   <logger name="io.fluo" level="debug"/>
   <logger name="org.apache.zookeeper" level="error"/>
   <logger name="org.apache.curator" level="error"/>

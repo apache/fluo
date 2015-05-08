@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>15</version>
+    <version>17</version>
   </parent>
 
   <groupId>io.fluo</groupId>
@@ -25,17 +25,9 @@
       <name>Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
-      <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
-  <mailingLists>
-    <mailingList>
-      <name>Dev</name>
-      <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
-      <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
-      <post>fluo-dev@googlegroups.com</post>
-    </mailingList>
-  </mailingLists>
+
   <developers>
     <developer>
       <name>Keith Turner</name>
@@ -46,13 +38,42 @@
     <developer>
       <name>Corey Nolet</name>
     </developer>
+    <developer>
+      <name>Christopher Tubbs</name>
+    </developer>
   </developers>
+
+  <mailingLists>
+    <mailingList>
+      <name>Dev</name>
+      <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
+      <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
+      <post>fluo-dev@googlegroups.com</post>
+    </mailingList>
+  </mailingLists>
+
+  <modules>
+    <module>modules/api</module>
+    <module>modules/accumulo</module>
+    <module>modules/core</module>
+    <module>modules/mini</module>
+    <module>modules/metrics</module>
+    <module>modules/integration</module>
+    <module>modules/mapreduce</module>
+    <module>modules/cluster</module>
+    <module>modules/distribution</module>
+  </modules>
+
   <scm>
-    <connection>scm:git:git@github.com:fluo-io/fluo.git</connection>
+    <connection>scm:git:https://github.com/fluo-io/fluo.git</connection>
     <developerConnection>scm:git:git@github.com:fluo-io/fluo.git</developerConnection>
-    <tag>${project.version}</tag>
-    <url>https://github.com/fluo-io/fluo.git</url>
+    <tag>HEAD</tag>
+    <url>https://github.com/fluo-io/fluo</url>
   </scm>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/fluo-io/fluo/issues</url>
+  </issueManagement>
   <distributionManagement>
     <repository>
       <id>sonatype-nexus-staging</id>
@@ -67,62 +88,252 @@
   </distributionManagement>
 
   <properties>
-    <!-- Version Properties -->
     <accumulo.version>1.6.1</accumulo.version>
     <curator.version>2.7.1</curator.version>
-    <hadoop.version>2.3.0</hadoop.version>
-    <twill.version>0.5.0-incubating</twill.version>
-    <logback.version>1.1.3</logback.version>
-    <slf4j.version>1.7.12</slf4j.version>
-    <zookeeper.version>3.4.6</zookeeper.version>
     <dropwizard.version>0.8.1</dropwizard.version>
-
-    <!-- Other Properties -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- relative path for Eclipse format; should override in child modules if necessary -->
+    <eclipseFormatterStyle>${project.parent.basedir}/contrib/fluo-eclipse-style.xml</eclipseFormatterStyle>
+    <hadoop.version>2.3.0</hadoop.version>
+    <logback.version>1.1.3</logback.version>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+    <slf4j.version>1.7.12</slf4j.version>
+    <twill.version>0.5.0-incubating</twill.version>
+    <zookeeper.version>3.4.6</zookeeper.version>
   </properties>
 
-  <modules>
-    <module>modules/api</module>
-    <module>modules/accumulo</module>
-    <module>modules/core</module>
-    <module>modules/mini</module>
-    <module>modules/metrics</module>
-    <module>modules/integration</module>
-    <module>modules/mapreduce</module>
-    <module>modules/cluster</module>
-    <module>modules/distribution</module>
-  </modules>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.32</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>13.0.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>1.10</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.4</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-configuration</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-metrics</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-metrics-ganglia</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-metrics-graphite</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>3.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-accumulo</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-cluster</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-integration</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-mapreduce</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.fluo</groupId>
+        <artifactId>fluo-mini</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-core</artifactId>
+        <version>${accumulo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-minicluster</artifactId>
+        <version>${accumulo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.accumulo</groupId>
+        <artifactId>accumulo-test</artifactId>
+        <version>${accumulo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-client</artifactId>
+        <version>${curator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-framework</artifactId>
+        <version>${curator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-recipes</artifactId>
+        <version>${curator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-client</artifactId>
+        <version>${hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-minicluster</artifactId>
+        <version>${hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-yarn-client</artifactId>
+        <version>${hadoop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>0.9.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.twill</groupId>
+        <artifactId>twill-api</artifactId>
+        <version>${twill.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.twill</groupId>
+        <artifactId>twill-yarn</artifactId>
+        <version>${twill.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>${zookeeper.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
+          <groupId>com.github.ekryd.sortpom</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>2.4.0</version>
           <configuration>
-            <source>1.7</source>
-            <target>1.7</target>
-            <optimize>true</optimize>
-            <encoding>UTF-8</encoding>
+            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+            <createBackupFile>false</createBackupFile>
+            <lineSeparator>\n</lineSeparator>
+            <expandEmptyElements>false</expandEmptyElements>
+            <nrOfIndentSpace>2</nrOfIndentSpace>
+            <sortDependencies>scope,groupId,artifactId</sortDependencies>
+            <sortProperties>true</sortProperties>
+            <verifyFail>Stop</verifyFail>
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>tidy-maven-plugin</artifactId>
+          <version>1.0-beta-1</version>
+        </plugin>
+        <plugin>
+          <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+          <artifactId>maven-java-formatter-plugin</artifactId>
+          <version>0.4</version>
           <configuration>
-            <systemPropertyVariables>
-              <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
-              <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
-            </systemPropertyVariables>
+            <compilerCompliance>${maven.compiler.source}</compilerCompliance>
+            <compilerSource>${maven.compiler.source}</compilerSource>
+            <compilerTargetPlatform>${maven.compiler.target}</compilerTargetPlatform>
+            <lineEnding>LF</lineEnding>
+            <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
           </configuration>
-          <executions>
-            <execution>
-              <id>run-integration-tests</id>
-              <goals>
-                <goal>integration-test</goal>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>org.eclipse.tycho</groupId>
+              <artifactId>org.eclipse.jdt.core</artifactId>
+              <version>3.10.0.v20140604-1726</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.accumulo</groupId>
@@ -158,7 +369,6 @@
           <artifactId>apache-rat-plugin</artifactId>
           <configuration>
             <excludes>
-              <exclude>**/README.md</exclude>
               <exclude>**/metrics.yaml</exclude>
               <exclude>**/services/io.fluo.core.metrics.ReporterStarter</exclude>
             </excludes>
@@ -230,6 +440,25 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
+            <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <id>run-integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
@@ -251,16 +480,19 @@
         <executions>
           <execution>
             <id>accumulo-api-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
             <configuration>
               <checkstyleRules>
                 <module name="Checker">
                   <module name="TreeWalker">
-                    <module name="AvoidStarImport"/>
+                    <module name="AvoidStarImport" />
                     <module name="RegexpSinglelineJava">
                       <!--check that only Accumulo public APIs are imported-->
-                      <property name="format" value="import\s+org\.apache\.accumulo\.(.*\.(impl|thrift)\..*|(?!core|minicluster).*|core\.(?!client|data|iterators|security\.Authorizations|security\.ColumnVisibility|util\.format\.Formatter).*|core\.data\.(?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)"/>
-                      <property name="ignoreComments" value="true"/>
-                      <property name="message" value="Accumulo non-public classes imported"/>
+                      <property name="format" value="import\s+org\.apache\.accumulo\.(.*\.(impl|thrift)\..*|(?!core|minicluster).*|core\.(?!client|data|iterators|security\.Authorizations|security\.ColumnVisibility|util\.format\.Formatter).*|core\.data\.(?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)" />
+                      <property name="ignoreComments" value="true" />
+                      <property name="message" value="Accumulo non-public classes imported" />
                     </module>
                   </module>
                 </module>
@@ -268,242 +500,82 @@
               <failOnViolation>true</failOnViolation>
               <outputFile>${project.build.directory}/checkstyle-results-accumulo.xml</outputFile>
             </configuration>
-            <goals>
-              <goal>check</goal>
-            </goals>
           </execution>
           <execution>
             <id>java-style-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
             <phase>validate</phase>
             <configuration>
-              <configLocation>modules/contrib/fluo-checks.xml</configLocation>
+              <configLocation>contrib/fluo-checks.xml</configLocation>
               <encoding>UTF-8</encoding>
               <logViolationsToConsole>true</logViolationsToConsole>
               <failOnViolation>true</failOnViolation>
               <violationSeverity>warning</violationSeverity>
-              <outputFile>${project.build.directory}/checkstyle-results-java.xml
-              </outputFile>
+              <outputFile>${project.build.directory}/checkstyle-results-java.xml</outputFile>
               <excludes>**/OracleService*</excludes>
             </configuration>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-      <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-        <artifactId>maven-java-formatter-plugin</artifactId>
-        <version>0.4</version>
-        <configuration>
-          <configFile>${project.basedir}/../../modules/contrib/fluo-eclipse-style.xml</configFile>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>format</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
 
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-configuration</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-metrics</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency> 
-        <groupId>io.dropwizard</groupId> 
-        <artifactId>dropwizard-metrics-ganglia</artifactId>
-        <version>${dropwizard.version}</version> 
-      </dependency>
-      <dependency> 
-        <groupId>io.dropwizard</groupId> 
-        <artifactId>dropwizard-metrics-graphite</artifactId>
-        <version>${dropwizard.version}</version> 
-      </dependency>      
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>3.1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-accumulo</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-mini</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-mapreduce</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-metrics</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-cluster</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>log4j-over-slf4j</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-core</artifactId>
-        <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
-        <version>3.2.1</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-configuration</groupId>
-        <artifactId>commons-configuration</artifactId>
-        <version>1.10</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.zookeeper</groupId>
-        <artifactId>zookeeper</artifactId>
-        <version>${zookeeper.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-client</artifactId>
-        <version>${hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-yarn-client</artifactId>
-        <version>${hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-minicluster</artifactId>
-        <version>${hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-recipes</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-client</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-framework</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.accumulo</groupId>
-        <artifactId>accumulo-core</artifactId>
-        <version>${accumulo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>13.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.twill</groupId>
-        <artifactId>twill-api</artifactId>
-        <version>${twill.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.twill</groupId>
-        <artifactId>twill-yarn</artifactId>
-        <version>${twill.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>0.9.1</version>
-      </dependency>
-      <dependency>
-        <groupId>com.beust</groupId>
-        <artifactId>jcommander</artifactId>
-        <version>1.32</version>
-      </dependency>
-
-      <!-- Test Dependencies -->
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-integration</artifactId>
-        <version>${project.version}</version>
-        <type>test-jar</type>
-      </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.accumulo</groupId>
-        <artifactId>accumulo-minicluster</artifactId>
-        <version>${accumulo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.accumulo</groupId>
-        <artifactId>accumulo-test</artifactId>
-        <version>${accumulo.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-io</groupId>
-        <artifactId>commons-io</artifactId>
-        <version>2.4</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <profiles>
+    <profile>
+      <!-- on by default, but disable with '-P !autoformat' or '-DskipFormat' -->
+      <id>autoformat</id>
+      <activation>
+        <property>
+          <name>!skipFormat</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.ekryd.sortpom</groupId>
+            <artifactId>sortpom-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sort-pom</id>
+                <goals>
+                  <goal>sort</goal>
+                </goals>
+                <phase>validate</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>tidy-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>pom</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+            <artifactId>maven-java-formatter-plugin</artifactId>
+            <configuration>
+              <configFile>${eclipseFormatterStyle}</configFile>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>format</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>sign</id>
       <build>
@@ -517,7 +589,6 @@
                 <goals>
                   <goal>sign</goal>
                 </goals>
-                <phase>verify</phase>
               </execution>
             </executions>
           </plugin>
@@ -548,7 +619,7 @@
                   <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
                   <finalName>fluo-${project.version}</finalName>
                   <descriptorRefs>
-                    <descriptorRef>source-release-zip-tar</descriptorRef>
+                    <descriptorRef>source-release-tar</descriptorRef>
                   </descriptorRefs>
                   <attach>false</attach>
                 </configuration>
@@ -561,7 +632,7 @@
               <execution>
                 <id>attach-sources</id>
                 <goals>
-                  <goal>jar</goal>
+                  <goal>jar-no-fork</goal>
                 </goals>
               </execution>
             </executions>
@@ -582,6 +653,4 @@
       </build>
     </profile>
   </profiles>
-
-
 </project>

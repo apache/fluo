@@ -18,7 +18,7 @@
   <formats>
     <format>tar.gz</format>
   </formats>
-  
+
   <dependencySets>
     <dependencySet>
       <outputDirectory>lib</outputDirectory>
@@ -29,11 +29,11 @@
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <excludes>
-      	<exclude>*:slf4j-log4j12</exclude>
-      	<exclude>*:log4j</exclude>
-     	<exclude>*:logback-classic</exclude>
-      	<exclude>*:logback-core</exclude>
-      	<exclude>*:log4j-over-slf4j</exclude>
+        <exclude>*:slf4j-log4j12</exclude>
+        <exclude>*:log4j</exclude>
+        <exclude>*:logback-classic</exclude>
+        <exclude>*:logback-core</exclude>
+        <exclude>*:log4j-over-slf4j</exclude>
       </excludes>
     </dependencySet>
     <dependencySet>
@@ -46,16 +46,16 @@
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <includes>
-      	<include>io.fluo:fluo-api</include>
+        <include>io.fluo:fluo-api</include>
         <include>io.fluo:fluo-accumulo</include>
-      	<include>io.fluo:fluo-core</include>
+        <include>io.fluo:fluo-core</include>
         <include>io.fluo:fluo-mini</include>
         <include>io.fluo:fluo-mapreduce</include>
         <include>org.slf4j:slf4j-api</include>
       </includes>
       <excludes>
-      	<exclude>org.apache.accumulo:*</exclude>
-      	<exclude>org.apache.zookeeper:zookeeper</exclude>
+        <exclude>org.apache.accumulo:*</exclude>
+        <exclude>org.apache.zookeeper:zookeeper</exclude>
       </excludes>
     </dependencySet>
     <dependencySet>
@@ -68,11 +68,11 @@
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <includes>
-      	<include>org.apache.accumulo:accumulo-core</include>
+        <include>org.apache.accumulo:accumulo-core</include>
         <include>org.apache.accumulo:accumulo-minicluster</include>
       </includes>
       <excludes>
-      	<exclude>org.apache.hadoop:hadoop-minicluster</exclude>
+        <exclude>org.apache.hadoop:hadoop-minicluster</exclude>
       </excludes>
     </dependencySet>
     <dependencySet>
@@ -85,7 +85,7 @@
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <includes>
-      	<include>org.apache.zookeeper:zookeeper</include>
+        <include>org.apache.zookeeper:zookeeper</include>
       </includes>
     </dependencySet>
     <dependencySet>
@@ -97,11 +97,11 @@
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <includes>
-      	<include>*:slf4j-log4j12</include>
-      	<include>*:log4j</include>
+        <include>*:slf4j-log4j12</include>
+        <include>*:log4j</include>
       </includes>
     </dependencySet>
-  	<dependencySet>
+    <dependencySet>
       <outputDirectory>lib/logback</outputDirectory>
       <directoryMode>0755</directoryMode>
       <fileMode>0644</fileMode>
@@ -110,9 +110,9 @@
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <includes>
-      	<include>*:logback-classic</include>
-      	<include>*:logback-core</include>
-      	<include>*:log4j-over-slf4j</include>
+        <include>*:logback-classic</include>
+        <include>*:logback-core</include>
+        <include>*:log4j-over-slf4j</include>
       </includes>
     </dependencySet>
   </dependencySets>

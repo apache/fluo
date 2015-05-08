@@ -23,32 +23,38 @@
     <version>1.0.0-beta-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
+
   <artifactId>fluo-metrics</artifactId>
-  <packaging>jar</packaging>
 
   <name>Fluo Metrics</name>
-  <description>
-    This module contains code needed to configure dropwizard metrics reporters.
-    The reason this module was created was to avoid adding dependencies to fluo-core 
-    for an optional feature.
-  </description>
+  <description>This module contains code needed to configure dropwizard metrics reporters.
+    The reason this module was created was to avoid adding dependencies to fluo-core
+    for an optional feature.</description>
 
   <dependencies>
-    <dependency> 
-      <groupId>io.dropwizard</groupId> 
-      <artifactId>dropwizard-configuration</artifactId> 
-    </dependency> 
-    <dependency> 
-      <groupId>io.dropwizard</groupId> 
-      <artifactId>dropwizard-metrics</artifactId> 
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
-    <dependency> 
-      <groupId>io.dropwizard</groupId> 
-      <artifactId>dropwizard-metrics-ganglia</artifactId> 
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
     </dependency>
-    <dependency> 
-      <groupId>io.dropwizard</groupId> 
-      <artifactId>dropwizard-metrics-graphite</artifactId> 
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-configuration</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-metrics</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-metrics-ganglia</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-metrics-graphite</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
@@ -66,14 +72,5 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>commons-configuration</groupId>
-      <artifactId>commons-configuration</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
   </dependencies>
-
 </project>

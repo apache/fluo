@@ -25,55 +25,38 @@
   </parent>
 
   <artifactId>fluo-accumulo</artifactId>
-  <packaging>jar</packaging>
 
   <name>Fluo Accumulo Extensions</name>
-  <description>
-    This module contains all Fluo code that is run by Accumulo.  This includes iterators and formatters.
-    Given that this module produces a JAR that needs to be included on the Accumulo classpath, external 
+  <description>This module contains all Fluo code that is run by Accumulo.  This includes iterators and formatters.
+    Given that this module produces a JAR that needs to be included on the Accumulo classpath, external
     dependencies should be limited.  Some utility classes in this module are not only used by iterators
-    but also used by fluo-core.
-  </description>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+    but also used by fluo-core.</description>
 
   <dependencies>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
-
-    <!-- Test Dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

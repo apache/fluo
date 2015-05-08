@@ -25,12 +25,56 @@
   </parent>
 
   <artifactId>fluo-mapreduce</artifactId>
-  <packaging>jar</packaging>
 
   <name>Fluo MapReduce</name>
-  <description>
-    This module provides utility code for MapReduce jobs that read from or write to a Fluo table.    
-  </description>
+  <description>This module provides utility code for MapReduce jobs that read from or write to a Fluo table.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-accumulo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-integration</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.accumulo</groupId>
+      <artifactId>accumulo-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <profiles>
     <profile>
@@ -50,66 +94,4 @@
       </build>
     </profile>
   </profiles>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-accumulo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-configuration</groupId>
-      <artifactId>commons-configuration</artifactId>
-    </dependency>
-    <dependency>
-      <artifactId>guava</artifactId>
-      <groupId>com.google.guava</groupId>
-    </dependency>
-
-    <!-- Test Dependencies -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-integration</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.accumulo</groupId>
-      <artifactId>accumulo-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 </project>
