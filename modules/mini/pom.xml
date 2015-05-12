@@ -25,26 +25,19 @@
   </parent>
 
   <artifactId>fluo-mini</artifactId>
-  <packaging>jar</packaging>
 
   <name>Fluo Mini</name>
-  <description>
-    This module contains the implementation code of MiniFluo.  It was separated from fluo-core
-    to remove the dependency on accumulo-minicluster from core.
-  </description>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <description>This module contains the implementation code of MiniFluo.  It was separated from fluo-core
+    to remove the dependency on accumulo-minicluster from core.</description>
 
   <dependencies>
     <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-api</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
@@ -52,27 +45,23 @@
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
-      <artifactId>fluo-core</artifactId>
+      <artifactId>fluo-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>io.fluo</groupId>
+      <artifactId>fluo-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
     <dependency>
-      <artifactId>guava</artifactId>
-      <groupId>com.google.guava</groupId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-configuration</groupId>
-      <artifactId>commons-configuration</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
   </dependencies>
 </project>
