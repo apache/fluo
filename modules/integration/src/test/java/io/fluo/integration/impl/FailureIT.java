@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
@@ -32,10 +31,10 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.StaleScanException;
+import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.impl.TransactorNode;
-import io.fluo.core.util.ByteUtil;
 import io.fluo.integration.BankUtil;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
@@ -397,7 +396,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals(3, tx3.get().row("url0000").fam("attr").qual("lastupdate").toInteger(0));
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), Authorizations.EMPTY);
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
+    Notification.configureScanner(scanner);
     Iterator<Entry<Key, Value>> iter = scanner.iterator();
     Assert.assertTrue(iter.hasNext());
     Assert.assertEquals("url0000", iter.next().getKey().getRow().toString());

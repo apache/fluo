@@ -65,9 +65,23 @@ public class TestData {
     String row = fields[0];
     String cf = fields[1];
     String cq = fields[2];
-    String ct = fields[3];
-    long ts = Long.parseLong(fields[4]);
-    byte[] val = new byte[0];
+    String ct;
+    long ts;
+    byte[] val = new byte[0];;
+
+    if (cf.equals("ntfy")) {
+      ts = Long.parseLong(fields[3]) << 1;
+      ct = cf;
+      if (fields.length == 5) {
+        if (!fields[4].equals("DEL"))
+          throw new IllegalArgumentException("bad ntfy");
+        // its a delete
+        ts |= 1l;
+      }
+    } else {
+      ct = fields[3];
+      ts = Long.parseLong(fields[4]);
+    }
 
     switch (ct) {
       case "ACK":
@@ -96,6 +110,8 @@ public class TestData {
         ts |= ColumnConstants.DEL_LOCK_PREFIX;
         long lockTs = Long.parseLong(value.split("\\s+")[0]);
         val = DelLockValue.encode(lockTs, value.contains("PRIMARY"), value.contains("ROLLBACK"));
+        break;
+      case "ntfy":
         break;
       default:
         throw new IllegalArgumentException("unknown column type " + ct);

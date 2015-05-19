@@ -16,6 +16,7 @@ package io.fluo.integration;
 
 import java.util.Map.Entry;
 
+import io.fluo.accumulo.iterators.NotificationIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
@@ -42,7 +43,6 @@ import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.iterators.user.VersioningIterator;
 import org.apache.hadoop.io.Text;
 
 public class TestTransaction extends TypedTransactionBase implements TransactionBase {
@@ -56,7 +56,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
-    IteratorSetting iterCfg = new IteratorSetting(20, "ver", VersioningIterator.class);
+    IteratorSetting iterCfg = new IteratorSetting(11, NotificationIterator.class);
     scanner.addScanIterator(iterCfg);
 
     Text cv = ByteUtil.toText(col.getVisibility());
@@ -67,7 +67,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
     for (Entry<Key, org.apache.accumulo.core.data.Value> entry : scanner) {
       if (entry.getKey().getColumnVisibility().equals(cv)) {
-        return entry.getKey().getTimestamp();
+        return Notification.from(entry.getKey()).getTimestamp();
       }
     }
 

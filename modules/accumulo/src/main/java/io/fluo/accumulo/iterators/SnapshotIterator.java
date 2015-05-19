@@ -16,7 +16,9 @@ package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.fluo.accumulo.util.ColumnConstants;
@@ -38,6 +40,8 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
   static final String TIMESTAMP_OPT = "timestampOpt";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(
       ColumnConstants.NOTIFY_CF.toArray());
+
+  static final Set<ByteSequence> NOTIFY_CF_SET = Collections.singleton(NOTIFY_CF_BS);
 
   private SortedKeyValueIterator<Key, Value> source;
   private long snaptime;
@@ -152,8 +156,11 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
       }
     }
 
-    // TODO could possibly exclude notification locality group
-    source.seek(range, columnFamilies, inclusive);
+    if (columnFamilies.size() == 0 && inclusive == false) {
+      source.seek(range, NOTIFY_CF_SET, false);
+    } else {
+      source.seek(range, columnFamilies, inclusive);
+    }
 
     findTop();
   }
@@ -170,7 +177,6 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
   @Override
   public SortedKeyValueIterator<Key, Value> deepCopy(IteratorEnvironment env) {
-    // TODO implement
     throw new UnsupportedOperationException();
   }
 

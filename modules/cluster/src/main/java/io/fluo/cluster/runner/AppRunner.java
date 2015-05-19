@@ -22,7 +22,6 @@ import java.util.Map;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.annotations.VisibleForTesting;
-import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -35,7 +34,7 @@ import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.util.ByteUtil;
+import io.fluo.core.impl.Notification;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
@@ -256,7 +255,8 @@ public abstract class AppRunner {
       log.error("An exception was thrown -", e);
       System.exit(-1);
     }
-    scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
+
+    Notification.configureScanner(scanner);
 
     long count = 0;
     for (Iterator<Map.Entry<Key, Value>> iterator = scanner.iterator(); iterator.hasNext(); iterator
