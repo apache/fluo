@@ -22,6 +22,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
+import org.apache.accumulo.core.security.Authorizations;
 
 public class TestIteratorEnv implements IteratorEnvironment {
 
@@ -55,5 +56,11 @@ public class TestIteratorEnv implements IteratorEnvironment {
   @Override
   public void registerSideChannel(SortedKeyValueIterator<Key, Value> iter) {
     throw new UnsupportedOperationException();
+  }
+
+  // this is a new mthod added in Accumulo 1.7.0. Can not add @Override because it will not compile
+  // against 1.6.X
+  public Authorizations getAuthorizations() {
+    return null;
   }
 }
