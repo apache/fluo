@@ -1,21 +1,5 @@
-<!---
-Copyright 2014 Fluo authors (see AUTHORS)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
-Running Fluo applications
-=========================
+Creating Fluo applications
+==========================
 
 Once you have Fluo installed and running on your cluster, you can now run Fluo applications which consist of 
 clients and observers.
@@ -24,6 +8,7 @@ If you are new to Fluo, consider first running the [phrasecount] application on 
 you can create your own Fluo client or observer by the following the steps below.
  
 For both clients and observers, you will need to include the following in your Maven pom:
+
 ```xml
 <dependency>
   <groupId>io.fluo</groupId>
@@ -47,16 +32,18 @@ Creating a Fluo client
 ----------------------
 
 To create a [FluoClient], you will need to provide it with a [FluoConfiguration] object that is configured
-to connect to your Fluo instance.  
+to connect to your Fluo instance.
 
 If you have access to the [fluo.properties] file that was used to configure your Fluo instance, you can use
 it to build a [FluoConfiguration] object with all necessary properties which are all properties with the 
 `io.fluo.client.*` prefix in [fluo.properties]:
+
 ```java
 FluoConfiguration config = new FluoConfiguration(new File("fluo.properties"));
 ```
 
 You can also create an empty [FluoConfiguration] object and set properties using Java:
+
 ```java
 FluoConfiguration config = new FluoConfiguration();
 config.setAccumuloUser("user");
@@ -65,6 +52,7 @@ config.setAccumuloInstance("instance");
 ```
 
 Once you have [FluoConfiguration] object, pass it to the `newClient()` method of [FluoFactory] to create a [FluoClient]:
+
 ```java
 FluoClient client = FluoFactory.newClient(config)
 ```
