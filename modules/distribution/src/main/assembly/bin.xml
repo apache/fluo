@@ -52,6 +52,9 @@
         <include>io.fluo:fluo-mini</include>
         <include>io.fluo:fluo-mapreduce</include>
         <include>org.slf4j:slf4j-api</include>
+        <!--fluo-core has direct dependencies on following, but for some reason maven does not include -->
+        <include>org.apache.curator:curator-framework</include>
+        <include>org.apache.curator:curator-recipes</include>
       </includes>
       <excludes>
         <exclude>org.apache.accumulo:*</exclude>
