@@ -371,6 +371,8 @@
             <excludes>
               <exclude>**/metrics.yaml</exclude>
               <exclude>**/services/io.fluo.core.metrics.ReporterStarter</exclude>
+              <exclude>README.md</exclude>
+              <exclude>docs/**.md</exclude>
             </excludes>
           </configuration>
           <executions>

@@ -1,19 +1,3 @@
-<!---
-Copyright 2014 Fluo authors (see AUTHORS)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
 Fluo
 ====
 
@@ -21,83 +5,45 @@ Fluo
 
 **Fluo is transaction layer that enables incremental processsing on big data.**
 
-Fluo is an implementation of [Percolator] built on [Accumulo] than runs in [YARN].
+Fluo is an implementation of [Percolator] built on [Accumulo] than runs in [YARN]. 
+It is not recommended for production use yet. Check out the Fluo [project website][fluo.io]
+for news and general information.
 
-Fluo is not yet recommended for production use.
+### Getting Started
 
-Check out the [Fluo project website](http://fluo.io) for news and general information.
+There are several ways to run Fluo (listed in order of increasing difficulty):
 
-Quickstart
-----------
+* [quickstart] - Starts a MiniFluo instance that is configured to run a word count application
+* [MiniFluo] - Sets up a minimal Fluo instance that writes its data to single directory
+* [fluo-dev] - Command-line tool for running Fluo and its dependencies on a single machine
+* [fluo-deploy] - Command-line tool that launches an AWS cluster and deploys Fluo and its dependencies to it
+* [Production] - Sets up Fluo on a cluster where Accumulo, Hadoop & Zookeeper are running
 
-If you are new to Fluo, the best way to get started is to follow the [quickstart]
-example which starts a local Fluo instance (called MiniFluo).  By using MiniFluo,
-you can avoid configuring and running your own Fluo instance. For a more comprehensive
-Fluo application, check out the [phrasecount] example.
+Except for [quickstart], all above will set up a Fluo application that will be idle unless you
+create client & observer code for your application.  You can either [create your own
+application][applications] or configure your Fluo application to run an example below:
 
-Building Fluo
--------------
+* [phrasecount] - Computes phrase counts for unique documents
+* [fluo-stress] - Computes the number of unique integers by building bitwise trie
 
-If you have [Git], [Maven], and [Java](version 7+) installed, run these commands
-to build Fluo:
+### Implementation
 
-```
-git clone https://github.com/fluo-io/fluo.git
-cd fluo
-mvn package
-```
+* [Architecture] - Overview of Fluo's architecture
+* [Contributing] - Documentation for developers who want to contribute to Fluo
+* [Metrics] - Fluo metrics are visible via JMX by default but can be configured to send to Graphite or Ganglia
 
-Running Fluo
-------------
-
-If you are new to Fluo, consider following the [quickstart] example which runs a development 
-Fluo instance along with a sample Fluo application.
-
-If you would like to install and run Fluo, follow one of the installation instructions below:
-
-* [Test & development instructions](docs/test-dev-install.md) - sets up a MiniFluo instance that
-is easy to install but should only be used for testing and development.
-* [Production instructions](docs/production-install.md) - sets up a Fluo instance on local 
-machine or cluster where Accumulo, Hadoop, and Zookeeper are installed and running.
-
-Running Fluo applications
--------------------------
-
-Once you have Fluo installed and running on your cluster, you can now run
-Fluo applications. 
-
-Fluo applications consist of clients and observers. If you are new to Fluo,
-consider first building and running the [phrasecount] application on your 
-Fluo instance. Otherwise, follow the [application docs](docs/applications.md)
-to create your own Fluo client or observer.
-
-Testing
--------
-
-Fluo has a test suite that consists of the following:
-* Units tests which are run by `mvn package`
-* Integration tests which are run using `mvn verify`.  These tests start
-a local Fluo instance (called MiniFluo) and run against it.
-* A [Stress test][Stress] application designed to run on a Fluo cluster.
-
-Metrics
--------
-
-Fluo is instrumented using [Dropwizard metrics][Metrics].   Fluo metrics are
-visible via JMX or can be configured to be sent to graphing tools like Graphite
-and Ganglia.  See the [metrics documentation](docs/metrics.md) for more
-information.
-
-
+[fluo.io]: http://fluo.io/
 [Accumulo]: http://accumulo.apache.org
-[Hadoop]: http://hadoop.apache.org
 [Percolator]: http://research.google.com/pubs/pub36726.html
 [YARN]: http://hadoop.apache.org/docs/r2.5.1/hadoop-yarn/hadoop-yarn-site/YARN.html
-[Zookeeper]: http://zookeeper.apache.org/
-[quickstart]: http://fluo.io/quickstart/
+[quickstart]: https://github.com/fluo-io/fluo-quickstart
+[fluo-dev]: https://github.com/fluo-io/fluo-dev
+[fluo-deploy]: https://github.com/fluo-io/fluo-deploy
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[Git]: http://git-scm.com/
-[Java]: https://www.oracle.com/java/index.html
-[Maven]: http://maven.apache.org/
-[Metrics]: https://dropwizard.github.io/metrics/3.1.0/
-[Stress]: https://github.com/fluo-io/fluo-stress
+[fluo-stress]: https://github.com/fluo-io/fluo-stress
+[MiniFluo]: docs/mini-fluo-setup.md
+[Production]: docs/prod-fluo-setup.md
+[applications]: docs/applications.md
+[Metrics]: docs/metrics.md
+[Contributing]: docs/contributing.md
+[Architecture]: docs/architecture.md
