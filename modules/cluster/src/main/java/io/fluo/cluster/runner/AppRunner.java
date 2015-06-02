@@ -137,7 +137,7 @@ public abstract class AppRunner {
     FluoConfiguration sConfig = new FluoConfiguration(config);
     sConfig.setClientRetryTimeout(500);
 
-    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName()
+    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getFluoApplicationName()
         + "' application.");
 
     long entriesFound = 0;

@@ -177,7 +177,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     getAccumuloUser();
     getAccumuloZookeepers();
     getAdminClass();
-    getApplicationName();
+    getFluoApplicationName();
     getAppZookeepers();
     getClientClass();
     getClientRetryTimeout();
@@ -198,16 +198,20 @@ public class FluoConfiguration extends CompositeConfiguration {
     getZookeeperTimeout();
   }
 
-  public FluoConfiguration setApplicationName(String applicationName) {
+  public FluoConfiguration setFluoApplicationName(String applicationName) {
     verifyApplicationName(applicationName);
     setProperty(CLIENT_APPLICATION_NAME_PROP, applicationName);
     return this;
   }
 
-  public String getApplicationName() {
+  public String getFluoApplicationName() {
     String applicationName = getString(CLIENT_APPLICATION_NAME_PROP);
     verifyApplicationName(applicationName);
     return applicationName;
+  }
+
+  public String getYarnApplicationName() {
+    return String.format("fluo-app-%s", getFluoApplicationName());
   }
 
   /**
@@ -254,7 +258,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   public String getAppZookeepers() {
-    return getInstanceZookeepers() + "/" + getApplicationName();
+    return getInstanceZookeepers() + "/" + getFluoApplicationName();
   }
 
   public FluoConfiguration setZookeeperTimeout(int timeout) {

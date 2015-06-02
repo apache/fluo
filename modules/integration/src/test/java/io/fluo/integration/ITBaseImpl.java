@@ -60,7 +60,7 @@ public class ITBaseImpl extends ITBase {
     table = getNextTableName();
 
     config = new FluoConfiguration();
-    config.setApplicationName("impl-test" + testCounter.getAndIncrement());
+    config.setFluoApplicationName("impl-test" + testCounter.getAndIncrement());
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);

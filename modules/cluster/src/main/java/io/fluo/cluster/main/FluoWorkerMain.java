@@ -105,7 +105,7 @@ public class FluoWorkerMain extends AbstractTwillRunnable {
               Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry());
           NodeCache appIdCache = ClusterUtil.startAppIdWatcher(env)) {
         log.info("Starting Worker for Fluo '{}' application with the following configuration:",
-            config.getApplicationName());
+            config.getFluoApplicationName());
         env.getConfiguration().print();
 
         NotificationProcessor np = new NotificationProcessor(env);

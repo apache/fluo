@@ -41,7 +41,7 @@ public class ITBaseMini extends ITBase {
   public void setUpFluo() throws Exception {
 
     config = new FluoConfiguration();
-    config.setApplicationName("mini-test" + testCounter.getAndIncrement());
+    config.setFluoApplicationName("mini-test" + testCounter.getAndIncrement());
     config.setAccumuloInstance(miniAccumulo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
