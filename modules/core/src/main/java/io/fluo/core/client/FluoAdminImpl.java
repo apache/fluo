@@ -119,7 +119,7 @@ public class FluoAdminImpl implements FluoAdmin {
     try {
       if (rootCurator.checkExists().forPath(appRootDir) != null) {
         logger.info("Clearing Fluo '{}' application in Zookeeper at {}",
-            config.getFluoApplicationName(), config.getAppZookeepers());
+            config.getApplicationName(), config.getAppZookeepers());
         rootCurator.delete().deletingChildrenIfNeeded().forPath(appRootDir);
       }
     } catch (KeeperException.NoNodeException nne) {

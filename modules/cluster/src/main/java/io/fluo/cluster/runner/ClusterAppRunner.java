@@ -133,7 +133,7 @@ public abstract class ClusterAppRunner extends AppRunner {
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
       if (admin.oracleExists()) {
-        System.err.println("Error - The Fluo '" + config.getFluoApplicationName() + "' application"
+        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application"
             + " is already running and must be stopped before running 'fluo init'. "
             + " Aborted initialization.");
         System.exit(-1);
@@ -142,8 +142,8 @@ public abstract class ClusterAppRunner extends AppRunner {
       FluoAdmin.InitOpts initOpts = new FluoAdmin.InitOpts();
 
       if (commandOpts.getUpdate()) {
-        System.out.println("Updating configuration for the Fluo '"
-            + config.getFluoApplicationName() + "' application in Zookeeper using " + appPropsPath);
+        System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
+            + "' application in Zookeeper using " + appPropsPath);
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
@@ -155,7 +155,7 @@ public abstract class ClusterAppRunner extends AppRunner {
         if (commandOpts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
-          System.out.print("A Fluo '" + config.getFluoApplicationName()
+          System.out.print("A Fluo '" + config.getApplicationName()
               + "' application is already initialized in Zookeeper at " + config.getAppZookeepers()
               + " - Would you like to clear and reinitialize Zookeeper"
               + " for this application (y/n)? ");
@@ -181,7 +181,7 @@ public abstract class ClusterAppRunner extends AppRunner {
         }
       }
 
-      System.out.println("Initializing Fluo '" + config.getFluoApplicationName()
+      System.out.println("Initializing Fluo '" + config.getApplicationName()
           + "' application using " + appPropsPath);
       try {
         admin.initialize(initOpts);

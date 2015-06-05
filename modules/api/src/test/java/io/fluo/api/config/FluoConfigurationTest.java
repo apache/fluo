@@ -108,9 +108,8 @@ public class FluoConfigurationTest {
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
     Assert.assertEquals("zoos1", config.setInstanceZookeepers("zoos1").getInstanceZookeepers());
     Assert.assertEquals("zoos2", config.setAccumuloZookeepers("zoos2").getAccumuloZookeepers());
-    Assert.assertEquals("myapp", config.setFluoApplicationName("myapp").getFluoApplicationName());
-    Assert.assertEquals("fluo-app-myapp", config.getYarnApplicationName());
-    Assert.assertEquals("zoos1/myapp", config.getAppZookeepers());
+    Assert.assertEquals("app", config.setApplicationName("app").getApplicationName());
+    Assert.assertEquals("zoos1/app", config.getAppZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
     Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
     Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
@@ -123,7 +122,7 @@ public class FluoConfigurationTest {
   public void testHasClientProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredClientProps());
-    config.setFluoApplicationName("app");
+    config.setApplicationName("app");
     Assert.assertFalse(config.hasRequiredClientProps());
     config.setAccumuloUser("user");
     Assert.assertFalse(config.hasRequiredClientProps());
@@ -137,7 +136,7 @@ public class FluoConfigurationTest {
   public void testHasAdminProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredAdminProps());
-    config.setFluoApplicationName("app");
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -149,7 +148,7 @@ public class FluoConfigurationTest {
   public void testHasWorkerProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredWorkerProps());
-    config.setFluoApplicationName("app");
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -160,7 +159,7 @@ public class FluoConfigurationTest {
   public void testHasOracleProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertFalse(config.hasRequiredOracleProps());
-    config.setFluoApplicationName("app");
+    config.setApplicationName("app");
     config.setAccumuloUser("user");
     config.setAccumuloPassword("pass");
     config.setAccumuloInstance("instance");
@@ -171,7 +170,7 @@ public class FluoConfigurationTest {
   public void testHasMiniFluoProps() {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertTrue(config.hasRequiredMiniFluoProps());
-    config.setFluoApplicationName("app");
+    config.setApplicationName("app");
     Assert.assertTrue(config.hasRequiredMiniFluoProps());
     config.setAccumuloUser("user");
     Assert.assertFalse(config.hasRequiredMiniFluoProps());
@@ -280,7 +279,7 @@ public class FluoConfigurationTest {
   private void assertSetNameIAE(String name) {
     FluoConfiguration config = new FluoConfiguration();
     try {
-      config.setFluoApplicationName(name);
+      config.setApplicationName(name);
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
@@ -290,7 +289,7 @@ public class FluoConfigurationTest {
     FluoConfiguration config = new FluoConfiguration();
     try {
       config.setProperty(FluoConfiguration.CLIENT_APPLICATION_NAME_PROP, name);
-      config.getFluoApplicationName();
+      config.getApplicationName();
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
@@ -299,8 +298,8 @@ public class FluoConfigurationTest {
   @Test
   public void testApplicationName() {
     FluoConfiguration config = new FluoConfiguration();
-    config.setFluoApplicationName("valid");
-    Assert.assertEquals("valid", config.getFluoApplicationName());
+    config.setApplicationName("valid");
+    Assert.assertEquals("valid", config.getApplicationName());
     String[] invalidNames = {"/name", "/", "te.t", ".", "", "a/b"};
     for (String name : invalidNames) {
       assertSetNameIAE(name);

@@ -103,7 +103,7 @@ public class FluoOracleMain extends AbstractTwillRunnable {
               Reporters.init(options.getConfigDir(), env.getSharedResources().getMetricRegistry());
           NodeCache appIdCache = ClusterUtil.startAppIdWatcher(env)) {
         log.info("Starting Oracle for Fluo '{}' application with the following configuration:",
-            config.getFluoApplicationName());
+            config.getApplicationName());
         env.getConfiguration().print();
 
         OracleServer server = new OracleServer(env);

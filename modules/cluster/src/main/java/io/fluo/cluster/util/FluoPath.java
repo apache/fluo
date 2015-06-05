@@ -54,9 +54,9 @@ public class FluoPath {
 
   public FluoConfiguration getAppConfiguration() {
     FluoConfiguration config = new FluoConfiguration(new File(getAppPropsPath()));
-    if (!config.getFluoApplicationName().equals(appName)) {
-      throw new IllegalStateException("Application name in config '"
-          + config.getFluoApplicationName() + "' does not match given appName: " + appName);
+    if (!config.getApplicationName().equals(appName)) {
+      throw new IllegalStateException("Application name in config '" + config.getApplicationName()
+          + "' does not match given appName: " + appName);
     }
     return config;
   }

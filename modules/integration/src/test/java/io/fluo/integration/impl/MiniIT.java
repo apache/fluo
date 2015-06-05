@@ -44,7 +44,7 @@ public class MiniIT {
     dataDir.mkdirs();
     try {
       FluoConfiguration config = new FluoConfiguration();
-      config.setFluoApplicationName("mini");
+      config.setApplicationName("mini");
       config.setMiniDataDir(dataDir.getAbsolutePath());
       config.setMiniStartAccumulo(true);
       config.setOraclePort(PortUtils.getRandomFreePort());

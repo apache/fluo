@@ -61,7 +61,7 @@ public class MiniFluoCommand {
         } else {
           File miniDataDir = new File(config.getMiniDataDir());
           if (!miniDataDir.exists()) {
-            System.err.println("Cannot connect to Fluo '" + config.getFluoApplicationName()
+            System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
                 + "' application!  Client properties are not set in fluo.properties and "
                 + " a MiniAccumuloCluster is not running at " + miniDataDir.getAbsolutePath());
             System.exit(-1);
