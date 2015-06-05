@@ -19,6 +19,7 @@ import java.io.File;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.cluster.main.FluoOracleMain;
 import io.fluo.cluster.main.FluoWorkerMain;
+import io.fluo.cluster.runner.YarnAppRunner;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
@@ -75,7 +76,8 @@ public class FluoTwillApp implements TwillApplication {
 
     // Start building Fluo Twill application
     MoreRunnable moreRunnable =
-        TwillSpecification.Builder.with().setName(config.getApplicationName()).withRunnable();
+        TwillSpecification.Builder.with().setName(YarnAppRunner.getYarnApplicationName(config))
+            .withRunnable();
 
     // Configure Oracle
     ResourceSpecification oracleResources =

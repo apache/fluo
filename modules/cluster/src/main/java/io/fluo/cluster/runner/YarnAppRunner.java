@@ -106,7 +106,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       String runId = getTwillId();
 
       TwillController controller =
-          getTwillRunner().lookup(config.getApplicationName(), RunIds.fromString(runId));
+          getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(runId));
       if ((controller != null) && controller.isRunning()) {
         System.err.println("WARNING - A YARN application " + getAppInfo()
             + " is already running for the Fluo '" + config.getApplicationName()
@@ -213,7 +213,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     String twillId = verifyTwillId();
 
     TwillController controller =
-        getTwillRunner().lookup(config.getApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
     if (controller != null) {
       System.out.print("Stopping Fluo '" + config.getApplicationName() + "' application "
           + getAppInfo() + "...");
@@ -230,7 +230,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     String twillId = verifyTwillId();
 
     TwillController controller =
-        getTwillRunner().lookup(config.getApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
     if (controller != null) {
       System.out.print("Killing Fluo '" + config.getApplicationName() + "' application "
           + getAppInfo() + "...");
@@ -259,13 +259,13 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   public void status(boolean extraInfo) {
     checkIfInitialized();
     if (!twillIdExists()) {
-      System.out.print("A Fluo '" + config.getApplicationName()
+      System.out.println("A Fluo '" + config.getApplicationName()
           + "' application is not running in YARN.");
       return;
     }
     String twillId = getTwillId();
     TwillController controller =
-        getTwillRunner().lookup(config.getApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
     if (controller == null) {
       logExistsButNotRunning();
       System.err.println("You can clean up this reference by running 'fluo stop <app>' or "
@@ -354,6 +354,14 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public String getYarnApplicationName() {
+    return getYarnApplicationName(config);
+  }
+
+  public static String getYarnApplicationName(FluoConfiguration config) {
+    return String.format("fluo-app-%s", config.getApplicationName());
   }
 
   @Override
