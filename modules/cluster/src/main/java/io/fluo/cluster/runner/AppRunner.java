@@ -267,6 +267,10 @@ public abstract class AppRunner {
   }
 
   public void waitUntilFinished() {
+    waitUntilFinished(config);
+  }
+
+  public void waitUntilFinished(FluoConfiguration config) {
     FluoConfiguration waitConfig = new FluoConfiguration(config);
     waitConfig.setClientRetryTimeout(500);
     try (Environment env = new Environment(waitConfig)) {

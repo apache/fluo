@@ -20,12 +20,45 @@ import java.util.Arrays;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.runner.AppRunner;
 import io.fluo.cluster.runner.MiniAppRunner;
 import io.fluo.cluster.util.FluoPath;
 import io.fluo.mini.MiniFluoImpl;
 import org.slf4j.LoggerFactory;
 
 public class MiniFluoCommand {
+
+  public static FluoConfiguration chooseConfig(AppRunner runner) {
+    FluoConfiguration config = runner.getConfiguration();
+    FluoConfiguration chosenConfig = null;
+
+    if (config.hasRequiredClientProps()) {
+      chosenConfig = config;
+
+    } else {
+      File miniDataDir = new File(config.getMiniDataDir());
+      if (!miniDataDir.exists()) {
+        System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
+            + "' application!  Client properties are not set in fluo.properties and "
+            + " a MiniAccumuloCluster is not running at " + miniDataDir.getAbsolutePath());
+        System.exit(-1);
+      }
+
+      if (!config.hasRequiredMiniFluoProps()) {
+        System.err.println("Fluo properties are not configured correctly!");
+        System.exit(-1);
+      }
+
+      File clientPropsFile = new File(MiniFluoImpl.clientPropsPath(config));
+      if (!clientPropsFile.exists()) {
+        System.err.println("MiniFluo client.properties do not exist at "
+            + clientPropsFile.getAbsolutePath());
+        System.exit(-1);
+      }
+      chosenConfig = new FluoConfiguration(clientPropsFile);
+    }
+    return chosenConfig;
+  }
 
   public static void main(String[] args) {
 
@@ -44,6 +77,11 @@ public class MiniFluoCommand {
       for (String logger : new String[] {Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
         ((Logger) LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
       }
+    } else if (command.equalsIgnoreCase("classpath")) {
+      AppRunner.classpath("fluo", fluoHomeDir, remainArgs);
+      return;
+    } else if (command.equalsIgnoreCase("wait")) {
+      ((Logger) LoggerFactory.getLogger(FluoConfiguration.class)).setLevel(Level.ERROR);
     }
 
     FluoPath cu = new FluoPath(fluoHomeDir, appName);
@@ -52,38 +90,13 @@ public class MiniFluoCommand {
 
     switch (command.toLowerCase()) {
       case "scan":
-        FluoConfiguration config = runner.getConfiguration();
-        FluoConfiguration chosenConfig = null;
-
-        if (config.hasRequiredClientProps()) {
-          chosenConfig = config;
-
-        } else {
-          File miniDataDir = new File(config.getMiniDataDir());
-          if (!miniDataDir.exists()) {
-            System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
-                + "' application!  Client properties are not set in fluo.properties and "
-                + " a MiniAccumuloCluster is not running at " + miniDataDir.getAbsolutePath());
-            System.exit(-1);
-          }
-
-          if (!config.hasRequiredMiniFluoProps()) {
-            System.err.println("Fluo properties are not configured correctly!");
-            System.exit(-1);
-          }
-
-          File clientPropsFile = new File(MiniFluoImpl.clientPropsPath(config));
-          if (!clientPropsFile.exists()) {
-            System.err.println("MiniFluo client.properties do not exist at "
-                + clientPropsFile.getAbsolutePath());
-            System.exit(-1);
-          }
-          chosenConfig = new FluoConfiguration(clientPropsFile);
-        }
-        runner.scan(chosenConfig, remainArgs);
+        runner.scan(chooseConfig(runner), remainArgs);
         break;
       case "cleanup":
         runner.cleanup();
+        break;
+      case "wait":
+        runner.waitUntilFinished(chooseConfig(runner));
         break;
       default:
         System.err.println("Unknown command: " + command);
