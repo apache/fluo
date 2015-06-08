@@ -232,6 +232,9 @@ public abstract class AppRunner {
     if (options.getZookeepers()) {
       appendLib(classpath, fluoHomeDir + "/lib/zookeeper", options.getLibJars());
     }
+    if (options.getHadoop()) {
+      appendLib(classpath, fluoHomeDir + "/lib/hadoop-client", options.getLibJars());
+    }
 
     System.out.println(classpath.toString());
   }

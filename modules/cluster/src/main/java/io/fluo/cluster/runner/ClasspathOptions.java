@@ -25,6 +25,9 @@ public class ClasspathOptions {
       description = "Additionally prints Zookeeper client jars")
   private boolean zookeeper = false;
 
+  @Parameter(names = {"-H", "--hadoop"}, description = "Additionally prints Hadoop client jars")
+  private boolean hadoop = false;
+
   @Parameter(names = {"-l", "--lib-jars"},
       description = "Prints classpath in format suitable for Hadoop -libjars")
   private boolean libJars = false;
@@ -34,6 +37,10 @@ public class ClasspathOptions {
 
   public boolean getAccumulo() {
     return accumulo;
+  }
+
+  public boolean getHadoop() {
+    return hadoop;
   }
 
   public boolean getZookeepers() {
