@@ -14,6 +14,8 @@
 
 package io.fluo.core.worker;
 
+import java.util.Random;
+
 import io.fluo.api.client.Transaction;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.observer.Observer;
@@ -22,6 +24,7 @@ import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.log.TracingTransaction;
+import io.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +49,16 @@ public class WorkTask implements Runnable {
   public void run() {
     Observer observer = observers.getObserver(notification.getColumn());
     try {
+      int sleepTime = 0;
+      Random rand = null;
+
       while (true) {
         TransactionImpl txi = null;
         Transaction tx = txi;
         TxResult status = TxResult.UNKNOWN;
         try {
+          UtilWaitThread.sleep(sleepTime);
+
           txi = new TransactionImpl(env, notification);
           tx = txi;
           if (TracingTransaction.isTracingEnabled()) {
@@ -68,6 +76,12 @@ public class WorkTask implements Runnable {
         } catch (CommitException e) {
           // retry
           status = TxResult.COMMIT_EXCEPTION;
+          if (sleepTime == 0) {
+            rand = new Random();
+            sleepTime = 10 + rand.nextInt(10);
+          } else if (sleepTime < 300000) {
+            sleepTime = sleepTime + rand.nextInt(sleepTime);
+          }
         } catch (Exception e) {
           status = TxResult.ERROR;
           log.warn("Failed to execute observer " + observer.getClass().getSimpleName(), e);

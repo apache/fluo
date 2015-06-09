@@ -25,6 +25,10 @@ public class UtilWaitThread {
   private UtilWaitThread() {}
 
   public static void sleep(long millis, AtomicBoolean skipLog) {
+    if (millis == 0) {
+      return;
+    }
+
     try {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
