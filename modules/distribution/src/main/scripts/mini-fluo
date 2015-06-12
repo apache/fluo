@@ -138,7 +138,7 @@ kill)
   ;;
 scan|wait)
   check_dirs
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME $@
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME "$@"
   ;;
 classpath)
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME $1 app ${*:2}
