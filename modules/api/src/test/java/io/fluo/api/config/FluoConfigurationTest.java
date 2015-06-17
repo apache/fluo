@@ -54,7 +54,6 @@ public class FluoConfigurationTest {
         base.getTransactionRollbackTime());
     Assert.assertEquals(FluoConfiguration.LOADER_NUM_THREADS_DEFAULT, base.getLoaderThreads());
     Assert.assertEquals(FluoConfiguration.LOADER_QUEUE_SIZE_DEFAULT, base.getLoaderQueueSize());
-    Assert.assertEquals(FluoConfiguration.ORACLE_PORT_DEFAULT, base.getOraclePort());
     Assert.assertEquals(FluoConfiguration.ORACLE_INSTANCES_DEFAULT, base.getOracleInstances());
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
     Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
@@ -101,7 +100,6 @@ public class FluoConfigurationTest {
     Assert.assertEquals(0, config.setLoaderThreads(0).getLoaderThreads());
     Assert.assertEquals("mini", config.setMiniClass("mini").getMiniClass());
     Assert.assertEquals(8, config.setOracleMaxMemory(8).getOracleMaxMemory());
-    Assert.assertEquals(9, config.setOraclePort(9).getOraclePort());
     Assert.assertEquals(10, config.setOracleInstances(10).getOracleInstances());
     Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
     Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
@@ -311,13 +309,13 @@ public class FluoConfigurationTest {
   @Test
   public void testCopyConfig() {
     FluoConfiguration c1 = new FluoConfiguration();
-    c1.setOraclePort(1);
-    Assert.assertEquals(1, c1.getOraclePort());
+    c1.setOracleNumCores(1);
+    Assert.assertEquals(1, c1.getOracleNumCores());
     FluoConfiguration c2 = new FluoConfiguration(c1);
-    Assert.assertEquals(1, c2.getOraclePort());
-    c2.setOraclePort(2);
-    Assert.assertEquals(2, c2.getOraclePort());
-    Assert.assertEquals(1, c1.getOraclePort());
+    Assert.assertEquals(1, c2.getOracleNumCores());
+    c2.setOracleNumCores(2);
+    Assert.assertEquals(2, c2.getOracleNumCores());
+    Assert.assertEquals(1, c1.getOracleNumCores());
   }
 
   @Test

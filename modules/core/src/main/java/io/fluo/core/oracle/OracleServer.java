@@ -20,15 +20,18 @@ import java.util.TimerTask;
 
 import com.codahale.metrics.Histogram;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.thrift.OracleService;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.Halt;
 import io.fluo.core.util.HostUtil;
+import io.fluo.core.util.PortUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -79,6 +82,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private volatile long maxTs = 0;
   private volatile boolean started = false;
   private long zkTs = 0;
+  private int port = 0;
 
   private LeaderSelector leaderSelector;
   private PathChildrenCache pathChildrenCache;
@@ -191,13 +195,25 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   @VisibleForTesting
+  public int getPort() {
+    return port;
+  }
+
+  @VisibleForTesting
   public boolean isConnected() {
     return (started && cnxnListener.isConnected());
   }
 
   private InetSocketAddress startServer() throws TTransportException {
 
-    InetSocketAddress addr = new InetSocketAddress(env.getConfiguration().getOraclePort());
+    if (env.getConfiguration().containsKey(FluoConfigurationImpl.ORACLE_PORT_PROP)) {
+      port = env.getConfiguration().getInt(FluoConfigurationImpl.ORACLE_PORT_PROP);
+      Preconditions.checkArgument(port >= 1 && port <= 65535,
+          FluoConfigurationImpl.ORACLE_PORT_PROP + " must be valid port (1-65535)");
+    } else {
+      port = PortUtils.getRandomFreePort();
+    }
+    InetSocketAddress addr = new InetSocketAddress(port);
 
     TNonblockingServerSocket socket = new TNonblockingServerSocket(addr);
 

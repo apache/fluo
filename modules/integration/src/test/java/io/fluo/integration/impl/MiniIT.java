@@ -47,7 +47,6 @@ public class MiniIT {
       config.setApplicationName("mini");
       config.setMiniDataDir(dataDir.getAbsolutePath());
       config.setMiniStartAccumulo(true);
-      config.setOraclePort(PortUtils.getRandomFreePort());
       try (MiniFluo mini = FluoFactory.newMiniFluo(config)) {
         try (FluoClient client = FluoFactory.newClient(mini.getClientConfiguration())) {
           Assert.assertNotNull(client);

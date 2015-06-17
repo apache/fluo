@@ -423,8 +423,7 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    FluoConfiguration fc =
-        new FluoConfiguration(config).setOraclePort(FluoConfiguration.ORACLE_PORT_DEFAULT);
+    FluoConfiguration fc = new FluoConfiguration(config);
     Environment env2 = new Environment(fc);
     env2.setAuthorizations(new Authorizations("B"));
 
