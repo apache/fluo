@@ -21,6 +21,7 @@ import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.util.PortUtils;
 import org.junit.After;
@@ -35,6 +36,12 @@ public class ITBaseImpl extends ITBase {
   protected String table;
   protected OracleServer oserver;
 
+  private static Environment initOracleEnv(FluoConfiguration config, int port) {
+    FluoConfiguration c = new FluoConfiguration(config);
+    c.setProperty(FluoConfigurationImpl.ORACLE_PORT_PROP, port);
+    return new Environment(c);
+  }
+
   protected class TestOracle extends OracleServer implements AutoCloseable {
 
     private Environment env;
@@ -45,7 +52,7 @@ public class ITBaseImpl extends ITBase {
     }
 
     TestOracle(int port) throws Exception {
-      this(new Environment(new FluoConfiguration(config).setOraclePort(port)));
+      this(initOracleEnv(config, port));
     }
 
     @Override
@@ -69,7 +76,6 @@ public class ITBaseImpl extends ITBase {
     config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.setObservers(getObservers());
-    config.setOraclePort(PortUtils.getRandomFreePort());
 
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);

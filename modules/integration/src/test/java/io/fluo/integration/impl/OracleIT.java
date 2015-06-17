@@ -108,8 +108,7 @@ public class OracleIT extends ITBaseImpl {
     Logger.getLogger(THsHaServer.class).setLevel(Level.FATAL);
 
     Socket socket = new Socket();
-    socket.connect(new InetSocketAddress(HostUtil.getHostName(), env.getConfiguration()
-        .getOraclePort()));
+    socket.connect(new InetSocketAddress(HostUtil.getHostName(), oserver.getPort()));
     OutputStream outstream = socket.getOutputStream();
     try (PrintWriter out = new PrintWriter(outstream)) {
       out.print("abcd");
@@ -192,8 +191,7 @@ public class OracleIT extends ITBaseImpl {
       assertEquals(i, timestamp);
     }
 
-    assertTrue(client.getOracle()
-        .endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
+    assertTrue(client.getOracle().endsWith(Integer.toString(oserver.getPort())));
 
     oserver.stop();
     sleepWhileConnected(oserver);
@@ -245,8 +243,7 @@ public class OracleIT extends ITBaseImpl {
 
     assertEquals(1002, client.getTimestamp());
 
-    assertTrue(client.getOracle()
-        .endsWith(Integer.toString(env.getConfiguration().getOraclePort())));
+    assertTrue(client.getOracle().endsWith(Integer.toString(oserver.getPort())));
 
     oserver.stop();
   }

@@ -95,11 +95,9 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
-  public static final String ORACLE_PORT_PROP = ORACLE_PREFIX + ".port";
   public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
   public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
-  public static final int ORACLE_PORT_DEFAULT = 9913;
   public static final int ORACLE_INSTANCES_DEFAULT = 1;
   public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 512;
   public static final int ORACLE_NUM_CORES_DEFAULT = 1;
@@ -189,7 +187,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     getOracleInstances();
     getOracleMaxMemory();
     getOracleNumCores();
-    getOraclePort();
     getTransactionRollbackTime();
     getWorkerInstances();
     getWorkerMaxMemory();
@@ -486,14 +483,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
   }
 
-  public FluoConfiguration setOraclePort(int oraclePort) {
-    return setPort(ORACLE_PORT_PROP, oraclePort);
-  }
-
-  public int getOraclePort() {
-    return getPort(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
-  }
-
   public FluoConfiguration setOracleInstances(int oracleInstances) {
     return setPositiveInt(ORACLE_INSTANCES_PROP, oracleInstances);
   }
@@ -735,7 +724,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
     config.setProperty(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
     config.setProperty(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
-    config.setProperty(ORACLE_PORT_PROP, ORACLE_PORT_DEFAULT);
     config.setProperty(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
     config.setProperty(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
     config.setProperty(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);

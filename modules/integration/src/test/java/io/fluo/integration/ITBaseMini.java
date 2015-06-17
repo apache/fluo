@@ -50,7 +50,6 @@ public class ITBaseMini extends ITBase {
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);
     config.setObservers(getObservers());
-    config.setOraclePort(PortUtils.getRandomFreePort());
     config.setMiniStartAccumulo(false);
 
     setConfig(config);
