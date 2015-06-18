@@ -12,16 +12,24 @@
  * the License.
  */
 
-package io.fluo.core.impl;
+package io.fluo.cluster.util;
 
 import io.fluo.api.config.FluoConfiguration;
 
-/**
- * Contains implementation-related Fluo properties that should be exposed in the API in
- * {@link FluoConfiguration}
- */
-public class FluoConfigurationImpl {
+public class ValidateAppName {
 
-  public static final String ORACLE_PORT_PROP = FluoConfiguration.FLUO_PREFIX + ".impl.oracle.port";
+  public static void main(String[] args) {
+    if (args.length != 1) {
+      System.out.println("ERROR - Expected usage: ValidateAppName <fluoApplicationName>");
+      System.exit(-1);
+    }
 
+    FluoConfiguration config = new FluoConfiguration();
+    try {
+      config.setApplicationName(args[0]);
+    } catch (IllegalArgumentException e) {
+      System.out.println("ERROR - " + e.getMessage());
+      System.exit(-1);
+    }
+  }
 }

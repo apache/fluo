@@ -27,6 +27,9 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/impl/config.sh
 
+# stop if any command fails
+set -e
+
 APP=$2
 APP_DIR=$FLUO_HOME/apps/$APP
 APP_LIB_DIR=$APP_DIR/lib
@@ -44,7 +47,7 @@ function print_usage {
   exit 1
 }
 
-function validate_app {
+function validate_app_full {
   if [ -z "$APP" ]; then
     echo -e "The application name (set by <app>) cannot be an empty string!\n"
     print_usage
@@ -52,6 +55,7 @@ function validate_app {
   if [[ $APP = *"-h"* ]]; then
     print_usage
   fi
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.util.ValidateAppName $APP
 }
 
 function check_dirs {
@@ -79,7 +83,7 @@ LOCAL_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*"
 
 case "$1" in
 start-oracle)
-  validate_app
+  validate_app_full
   check_dirs
   SERVICE="oracle"
   java -Dfluo.app=$APP -cp "$LOCAL_LIB" io.fluo.cluster.main.FluoOracleMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
@@ -89,7 +93,7 @@ kill-oracle)
   kill_if_running FluoOracleMain
   ;;
 start-worker)
-  validate_app
+  validate_app_full
   check_dirs
   SERVICE="worker"
   java -Dfluo.app=$APP -cp "$LOCAL_LIB:$APP_LIB_DIR/*" io.fluo.cluster.main.FluoWorkerMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
