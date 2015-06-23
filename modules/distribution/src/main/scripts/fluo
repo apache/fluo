@@ -27,6 +27,9 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/impl/config.sh
 
+# stop if any command fails
+set -e
+
 APP=$2
 APP_DIR=$FLUO_HOME/apps/$APP
 APP_CONF_DIR=$APP_DIR/conf
@@ -69,6 +72,11 @@ function validate_app {
   fi
 }
 
+function validate_app_full {
+  validate_app
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.util.ValidateAppName $APP
+}
+
 function check_dirs {
   if [[ -z $HADOOP_PREFIX ]]; then
     echo "HADOOP_PREFIX needs to be set!"
@@ -78,7 +86,6 @@ function check_dirs {
     echo "HADOOP_PREFIX=$HADOOP_PREFIX is not a valid directory.  Please correct it in your .bashrc or fluo-env.sh"
     exit 1
   fi
-  validate_app
   if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
     echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'fluo new $APP' to create this configuration"
     exit 1
@@ -87,7 +94,7 @@ function check_dirs {
 
 case "$1" in
 new)
-  validate_app
+  validate_app_full
   if [ -d $APP_DIR ]; then
     echo "The Fluo '$APP' application already has a directory in apps/"
     exit 1
@@ -101,6 +108,7 @@ new)
   copy_config metrics.yaml
   ;;
 init)
+  validate_app_full
   check_dirs
   if [[ $@ != *"-h"* && $@ != *"-u"* ]]; then
     echo "Copying Fluo jars to HDFS at /fluo/lib to be accessible by Accumulo for iterators"
@@ -113,6 +121,7 @@ init)
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 start|stop|kill|status|info|scan|wait)
+  validate_app
   check_dirs
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;

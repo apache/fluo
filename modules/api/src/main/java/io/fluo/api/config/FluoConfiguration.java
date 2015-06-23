@@ -208,7 +208,8 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   /**
-   * Verifies application name. Avoids characters that Zookeeper does not like in nodes.
+   * Verifies application name. Avoids characters that Zookeeper does not like in nodes & Hadoop
+   * does not like in HDFS paths.
    * 
    * @param name Application name
    */
@@ -227,8 +228,8 @@ public class FluoConfiguration extends CompositeConfiguration {
       if (c == 0) {
         reason = "null character not allowed @" + i;
         break;
-      } else if (c == '/' || c == '.') {
-        reason = "invalid character @" + i;
+      } else if (c == '/' || c == '.' || c == ':') {
+        reason = "invalid character '" + c + "'";
         break;
       } else if (c > '\u0000' && c <= '\u001f' || c >= '\u007f' && c <= '\u009F' || c >= '\ud800'
           && c <= '\uf8ff' || c >= '\ufff0' && c <= '\uffff') {

@@ -27,6 +27,9 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/impl/config.sh
 
+# stop if any command fails
+set -e
+
 APP=$2
 APP_DIR=$FLUO_HOME/apps/$APP
 APP_LIB_DIR=$APP_DIR/lib
@@ -58,8 +61,12 @@ function validate_app {
   fi
 }
 
-function check_dirs {
+function validate_app_full {  
   validate_app
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.util.ValidateAppName $APP
+}
+
+function check_dirs {
   if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
     echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'mini-fluo new $APP' to create this configuration"
     exit 1
@@ -103,7 +110,7 @@ new)
     echo "The Fluo '$APP' application already has a directory in apps/"
     exit 1
   fi
-  validate_app
+  validate_app_full
   mkdir -p $APP_DIR
   mkdir -p $APP_CONF_DIR
   mkdir -p $APP_LIB_DIR
@@ -116,6 +123,7 @@ new)
   copy_config metrics.yaml
   ;;
 start)
+  validate_app
   check_dirs
   java $START_OPTS -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.main.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
   echo "Started '$APP' application in MiniFluo.  View logs at $APP_LOG_DIR"
@@ -137,6 +145,7 @@ kill)
   echo "Killed '$APP' application running in MiniFluo"
   ;;
 scan|wait)
+  validate_app
   check_dirs
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.MiniFluoCommand $FLUO_HOME "$@"
   ;;
