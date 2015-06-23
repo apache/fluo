@@ -23,7 +23,6 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.oracle.OracleServer;
-import io.fluo.core.util.PortUtils;
 import org.junit.After;
 import org.junit.Before;
 

@@ -24,7 +24,6 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.mini.MiniFluo;
-import io.fluo.core.util.PortUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;

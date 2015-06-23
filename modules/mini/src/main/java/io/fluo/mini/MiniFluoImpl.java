@@ -25,12 +25,12 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.mini.MiniFluo;
 import io.fluo.core.client.FluoClientImpl;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.oracle.OracleServer;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationFinderFactory;
 import io.fluo.core.worker.NotificationProcessor;
-import io.fluo.core.worker.finder.hash.ScanTask;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
@@ -107,8 +107,8 @@ public class MiniFluoImpl implements MiniFluo {
         startMiniAccumulo();
       }
 
-      config.setProperty(ScanTask.MIN_SLEEP_TIME_PROP, 50);
-      config.setProperty(ScanTask.MAX_SLEEP_TIME_PROP, 100);
+      config.setProperty(FluoConfigurationImpl.MIN_SLEEP_TIME_PROP, 50);
+      config.setProperty(FluoConfigurationImpl.MAX_SLEEP_TIME_PROP, 100);
 
       env = new Environment(config);
 

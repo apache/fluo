@@ -21,7 +21,6 @@ import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.mini.MiniFluo;
-import io.fluo.core.util.PortUtils;
 import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;

@@ -14,15 +14,14 @@
 
 package io.fluo.core.worker;
 
-import io.fluo.api.config.FluoConfiguration;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.worker.finder.hash.HashNotificationFinder;
 import org.apache.commons.configuration.Configuration;
 
 public class NotificationFinderFactory {
   public static NotificationFinder newNotificationFinder(Configuration conf) {
-    // this config is intentionally not public for now
     String clazz =
-        conf.getString(FluoConfiguration.FLUO_PREFIX + ".worker.finder",
+        conf.getString(FluoConfigurationImpl.WORKER_FINDER_PROP,
             HashNotificationFinder.class.getName());
     try {
       return Class.forName(clazz).asSubclass(NotificationFinder.class).newInstance();

@@ -15,13 +15,28 @@
 package io.fluo.core.impl;
 
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.core.worker.finder.hash.ScanTask;
 
 /**
- * Contains implementation-related Fluo properties that should be exposed in the API in
+ * Contains implementation-related Fluo properties that should not be exposed in the API in
  * {@link FluoConfiguration}
  */
 public class FluoConfigurationImpl {
 
-  public static final String ORACLE_PORT_PROP = FluoConfiguration.FLUO_PREFIX + ".impl.oracle.port";
+  public static final String FLUO_IMPL_PREFIX = FluoConfiguration.FLUO_PREFIX + ".impl";
 
+  public static final String ORACLE_PORT_PROP = FLUO_IMPL_PREFIX + ".oracle.port";
+  public static final String WORKER_FINDER_PROP = FLUO_IMPL_PREFIX + ".worker.finder";
+  public static final String MIN_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
+      + ScanTask.class.getSimpleName() + ".minSleep";
+  public static final int MIN_SLEEP_TIME_DEFAULT = 5000;
+  public static final String MAX_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
+      + ScanTask.class.getSimpleName() + ".maxSleep";
+  public static final int MAX_SLEEP_TIME_DEFAULT = 5 * 60 * 1000;
+
+  // Time period that each client will update ZK with their oldest active timestamp
+  // If period is too short, Zookeeper may be overloaded. If too long, garbage collection
+  // may keep older versions of table data unnecessarily.
+  public static final String ZK_UPDATE_PERIOD_PROP = FLUO_IMPL_PREFIX + ".timestamp.update.period";
+  public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
 }

@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
-import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
@@ -123,8 +122,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     };
     timer = new Timer("Oracle timestamp timer", true);
     long updatePeriod =
-        env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP,
-            ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT);
+        env.getConfiguration().getLong(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP,
+            FluoConfigurationImpl.ZK_UPDATE_PERIOD_MS_DEFAULT);
     timer.schedule(tt, updatePeriod, updatePeriod);
   }
 
