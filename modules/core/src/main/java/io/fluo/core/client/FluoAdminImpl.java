@@ -62,7 +62,7 @@ public class FluoAdminImpl implements FluoAdmin {
   private static Logger logger = LoggerFactory.getLogger(FluoAdminImpl.class);
   private final FluoConfiguration config;
   private final CuratorFramework rootCurator;
-  private CuratorFramework fluoCurator = null;
+  private CuratorFramework appCurator = null;
 
   private final String appRootDir;
 
@@ -77,12 +77,12 @@ public class FluoAdminImpl implements FluoAdmin {
     rootCurator.start();
   }
 
-  private synchronized CuratorFramework getFluoCurator() {
-    if (fluoCurator == null) {
-      fluoCurator = CuratorUtil.newAppCurator(config);
-      fluoCurator.start();
+  private synchronized CuratorFramework getAppCurator() {
+    if (appCurator == null) {
+      appCurator = CuratorUtil.newAppCurator(config);
+      appCurator.start();
     }
-    return fluoCurator;
+    return appCurator;
   }
 
   @Override
@@ -165,7 +165,7 @@ public class FluoAdminImpl implements FluoAdmin {
     CuratorUtil.putData(rootCurator, appRootDir, new byte[0], CuratorUtil.NodeExistsPolicy.FAIL);
 
     // Retrieve Fluo curator now that chroot has been created
-    CuratorFramework curator = getFluoCurator();
+    CuratorFramework curator = getAppCurator();
 
     // Initialize Zookeeper & Accumulo for this Fluo instance
     // TODO set Fluo data version
@@ -260,7 +260,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
 
     try {
-      CuratorFramework curator = getFluoCurator();
+      CuratorFramework curator = getAppCurator();
       Operations.updateObservers(curator, colObservers, weakObservers);
       Operations.updateSharedConfig(curator, sharedProps);
     } catch (Exception e) {
@@ -271,13 +271,13 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void close() {
     rootCurator.close();
-    if (fluoCurator != null) {
-      fluoCurator.close();
+    if (appCurator != null) {
+      appCurator.close();
     }
   }
 
   public boolean oracleExists() {
-    CuratorFramework curator = getFluoCurator();
+    CuratorFramework curator = getAppCurator();
     try {
       return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
           && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
