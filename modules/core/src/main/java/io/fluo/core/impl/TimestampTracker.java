@@ -25,7 +25,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
-import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
@@ -113,8 +112,8 @@ public class TimestampTracker implements AutoCloseable {
   }
 
   public TimestampTracker(Environment env, TransactorID tid) {
-    this(env, tid, env.getConfiguration().getLong(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP,
-        ZookeeperUtil.ZK_UPDATE_PERIOD_MS_DEFAULT));
+    this(env, tid, env.getConfiguration().getLong(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP,
+        FluoConfigurationImpl.ZK_UPDATE_PERIOD_MS_DEFAULT));
   }
 
   /**

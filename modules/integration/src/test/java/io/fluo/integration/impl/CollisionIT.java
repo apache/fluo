@@ -33,6 +33,7 @@ import io.fluo.api.types.TypedLoader;
 import io.fluo.api.types.TypedObserver;
 import io.fluo.api.types.TypedSnapshot;
 import io.fluo.api.types.TypedTransactionBase;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.integration.ITBaseMini;
 import org.apache.accumulo.core.client.Scanner;
@@ -101,7 +102,7 @@ public class CollisionIT extends ITBaseMini {
     config.setWorkerThreads(20);
 
     // make updates in ZK related to Fluo GC more frequent
-    config.setProperty(ZookeeperUtil.ZK_UPDATE_PERIOD_PROP, "100");
+    config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "100");
   }
 
   @Test

@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.base.Supplier;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
-import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.TabletInfoCache;
@@ -49,12 +49,6 @@ public class ScanTask implements Runnable {
   private final TabletInfoCache<TabletData, Supplier<TabletData>> tabletInfoCache;
   private final Environment env;
 
-  public static final String MIN_SLEEP_TIME_PROP = FluoConfiguration.FLUO_PREFIX + ".impl."
-      + ScanTask.class.getSimpleName() + ".minSleep";
-  public static final String MAX_SLEEP_TIME_PROP = FluoConfiguration.FLUO_PREFIX + ".impl."
-      + ScanTask.class.getSimpleName() + ".maxSleep";
-
-
   static long STABALIZE_TIME = 10 * 1000;
 
   private long minSleepTime;
@@ -72,8 +66,12 @@ public class ScanTask implements Runnable {
     this.env = env;
     this.stopped = stopped;
 
-    minSleepTime = env.getConfiguration().getInt(MIN_SLEEP_TIME_PROP, 5000);
-    maxSleepTime = env.getConfiguration().getInt(MAX_SLEEP_TIME_PROP, 5 * 60 * 1000);
+    minSleepTime =
+        env.getConfiguration().getInt(FluoConfigurationImpl.MIN_SLEEP_TIME_PROP,
+            FluoConfigurationImpl.MIN_SLEEP_TIME_DEFAULT);
+    maxSleepTime =
+        env.getConfiguration().getInt(FluoConfigurationImpl.MAX_SLEEP_TIME_PROP,
+            FluoConfigurationImpl.MAX_SLEEP_TIME_DEFAULT);
   }
 
   @Override
