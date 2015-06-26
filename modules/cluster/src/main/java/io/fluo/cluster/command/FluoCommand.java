@@ -18,15 +18,23 @@ import java.util.Arrays;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.fluo.cluster.runner.AppRunner;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.cluster.runner.YarnAppRunner;
-import io.fluo.cluster.util.FluoPath;
+import io.fluo.cluster.util.FluoInstall;
 import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of Fluo command
  */
 public class FluoCommand {
+
+  public static void verifyNoArgs(String[] remainArgs) {
+    if (remainArgs.length != 0) {
+      System.err.println("ERROR - Received unexpected command-line arguments: "
+          + Arrays.toString(remainArgs));
+      System.exit(-1);
+    }
+  }
 
   public static void main(String[] args) {
 
@@ -42,48 +50,63 @@ public class FluoCommand {
     String appName = args[3];
     String[] remainArgs = Arrays.copyOfRange(args, 4, args.length);
 
-    FluoPath fluoPath = new FluoPath(fluoHomeDir, appName);
-
     if (command.equalsIgnoreCase("scan")) {
       for (String logger : new String[] {Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
         ((Logger) LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
       }
-    } else if (command.equalsIgnoreCase("classpath")) {
-      AppRunner.classpath("fluo", fluoHomeDir, remainArgs);
-      return;
     }
 
-    try (YarnAppRunner runner =
-        new YarnAppRunner(fluoPath.getAppConfiguration(), fluoPath, hadoopPrefix)) {
+    FluoInstall fluoInstall = new FluoInstall(fluoHomeDir);
+
+    try (YarnAppRunner runner = new YarnAppRunner(hadoopPrefix)) {
       switch (command.toLowerCase()) {
+        case "classpath":
+          runner.classpath(fluoHomeDir, remainArgs);
+          break;
         case "init":
-          runner.init(remainArgs);
+          runner.init(fluoInstall.getAppConfiguration(appName),
+              fluoInstall.getAppPropsPath(appName), remainArgs);
+          break;
+        case "list":
+          verifyNoArgs(remainArgs);
+          runner.list(fluoInstall.getFluoConfiguration());
           break;
         case "start":
-          runner.start();
+          verifyNoArgs(remainArgs);
+          runner.start(fluoInstall.getAppConfiguration(appName),
+              fluoInstall.getAppConfDir(appName), fluoInstall.getAppLibDir(appName),
+              fluoInstall.getLibDir());
           break;
         case "scan":
-          runner.scan(remainArgs);
+          runner.scan(fluoInstall.resolveFluoConfiguration(appName), remainArgs);
           break;
         case "stop":
-          runner.stop();
+          verifyNoArgs(remainArgs);
+          runner.stop(fluoInstall.resolveFluoConfiguration(appName));
           break;
         case "kill":
-          runner.kill();
+          verifyNoArgs(remainArgs);
+          runner.kill(fluoInstall.resolveFluoConfiguration(appName));
           break;
         case "status":
-          runner.status(false);
+          verifyNoArgs(remainArgs);
+          runner.status(fluoInstall.resolveFluoConfiguration(appName), false);
           break;
         case "info":
-          runner.status(true);
+          verifyNoArgs(remainArgs);
+          runner.status(fluoInstall.resolveFluoConfiguration(appName), true);
           break;
         case "wait":
-          runner.waitUntilFinished();
+          verifyNoArgs(remainArgs);
+          runner.waitUntilFinished(fluoInstall.resolveFluoConfiguration(appName));
           break;
         default:
           System.err.println("Unknown command: " + command);
           break;
       }
+    } catch (FluoException e) {
+      System.err.println("ERROR - " + e.getMessage());
+      System.exit(-1);
     } catch (Exception e) {
       System.err.println("Command failed due to exception below:");
       e.printStackTrace();

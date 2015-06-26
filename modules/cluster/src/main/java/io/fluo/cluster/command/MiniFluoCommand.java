@@ -20,36 +20,45 @@ import java.util.Arrays;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.runner.AppRunner;
 import io.fluo.cluster.runner.MiniAppRunner;
-import io.fluo.cluster.util.FluoPath;
+import io.fluo.cluster.util.FluoInstall;
 import io.fluo.mini.MiniFluoImpl;
 import org.slf4j.LoggerFactory;
 
 public class MiniFluoCommand {
 
-  public static FluoConfiguration chooseConfig(AppRunner runner) {
-    FluoConfiguration config = runner.getConfiguration();
+  static FluoInstall fluoInstall;
+
+  public static void verifyNoArgs(String[] remainArgs) {
+    if (remainArgs.length != 0) {
+      System.err.println("ERROR - Received unexpected command-line arguments: "
+          + Arrays.toString(remainArgs));
+      System.exit(-1);
+    }
+  }
+
+  public static FluoConfiguration chooseConfig(String appName) {
+
     FluoConfiguration chosenConfig = null;
-
-    if (config.hasRequiredClientProps()) {
-      chosenConfig = config;
-
+    String propsPath;
+    FluoConfiguration fluoConfig = fluoInstall.resolveFluoConfiguration(appName, false);
+    if (fluoConfig.hasRequiredClientProps()) {
+      chosenConfig = fluoConfig;
+      propsPath = fluoInstall.getFluoPropsPath();
     } else {
-      File miniDataDir = new File(config.getMiniDataDir());
+      File miniDataDir = new File(fluoConfig.getMiniDataDir());
       if (!miniDataDir.exists()) {
-        System.err.println("Cannot connect to Fluo '" + config.getApplicationName()
+        System.err.println("Cannot connect to Fluo '" + fluoConfig.getApplicationName()
             + "' application!  Client properties are not set in fluo.properties and "
             + " a MiniAccumuloCluster is not running at " + miniDataDir.getAbsolutePath());
         System.exit(-1);
       }
-
-      if (!config.hasRequiredMiniFluoProps()) {
+      if (!fluoConfig.hasRequiredMiniFluoProps()) {
         System.err.println("Fluo properties are not configured correctly!");
         System.exit(-1);
       }
-
-      File clientPropsFile = new File(MiniFluoImpl.clientPropsPath(config));
+      propsPath = MiniFluoImpl.clientPropsPath(fluoConfig);
+      File clientPropsFile = new File(propsPath);
       if (!clientPropsFile.exists()) {
         System.err.println("MiniFluo client.properties do not exist at "
             + clientPropsFile.getAbsolutePath());
@@ -57,6 +66,9 @@ public class MiniFluoCommand {
       }
       chosenConfig = new FluoConfiguration(clientPropsFile);
     }
+
+    System.out.println("Connecting to MiniFluo instance (" + chosenConfig.getInstanceZookeepers()
+        + ") using config (" + fluoInstall.stripFluoHomeDir(propsPath) + ")");
     return chosenConfig;
   }
 
@@ -64,7 +76,7 @@ public class MiniFluoCommand {
 
     if (args.length < 3) {
       System.err.println("ERROR - Expected at least two arguments.  "
-          + "Usage: FluoCommand <fluoHomeDir> <command> <appName> ...");
+          + "Usage: MiniFluoCommand <fluoHomeDir> <command> <appName> ...");
       System.exit(-1);
     }
 
@@ -77,26 +89,27 @@ public class MiniFluoCommand {
       for (String logger : new String[] {Logger.ROOT_LOGGER_NAME, "io.fluo"}) {
         ((Logger) LoggerFactory.getLogger(logger)).setLevel(Level.ERROR);
       }
-    } else if (command.equalsIgnoreCase("classpath")) {
-      AppRunner.classpath("fluo", fluoHomeDir, remainArgs);
-      return;
     } else if (command.equalsIgnoreCase("wait")) {
       ((Logger) LoggerFactory.getLogger(FluoConfiguration.class)).setLevel(Level.ERROR);
     }
 
-    FluoPath cu = new FluoPath(fluoHomeDir, appName);
-
-    MiniAppRunner runner = new MiniAppRunner(cu.getAppConfiguration());
+    fluoInstall = new FluoInstall(fluoHomeDir);
+    MiniAppRunner runner = new MiniAppRunner();
 
     switch (command.toLowerCase()) {
+      case "classpath":
+        runner.classpath(fluoHomeDir, remainArgs);
+        break;
       case "scan":
-        runner.scan(chooseConfig(runner), remainArgs);
+        runner.scan(chooseConfig(appName), remainArgs);
         break;
       case "cleanup":
-        runner.cleanup();
+        verifyNoArgs(remainArgs);
+        runner.cleanup(fluoInstall.resolveFluoConfiguration(appName, false));
         break;
       case "wait":
-        runner.waitUntilFinished(chooseConfig(runner));
+        verifyNoArgs(remainArgs);
+        runner.waitUntilFinished(chooseConfig(appName));
         break;
       default:
         System.err.println("Unknown command: " + command);

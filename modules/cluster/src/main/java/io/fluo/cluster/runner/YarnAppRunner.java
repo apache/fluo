@@ -18,14 +18,18 @@ import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Service;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.cluster.main.FluoOracleMain;
 import io.fluo.cluster.main.FluoWorkerMain;
-import io.fluo.cluster.util.FluoPath;
 import io.fluo.cluster.yarn.FluoTwillApp;
 import io.fluo.cluster.yarn.TwillUtil;
 import io.fluo.core.client.FluoAdminImpl;
@@ -48,34 +52,35 @@ import org.slf4j.LoggerFactory;
 public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
   private static final Logger log = LoggerFactory.getLogger(YarnAppRunner.class);
-  private TwillRunnerService twillRunner;
-  private CuratorFramework curator;
-  private FluoPath fluoPath;
+  private Map<String, TwillRunnerService> twillRunners = new HashMap<>();
+  private Map<String, CuratorFramework> curators = new HashMap<>();
   private String hadoopPrefix;
 
-  public YarnAppRunner(FluoConfiguration config, FluoPath fluoPath, String hadoopPrefix) {
-    super(config, "fluo", fluoPath.getAppPropsPath());
-    this.fluoPath = fluoPath;
+  public YarnAppRunner(String hadoopPrefix) {
+    super("fluo");
     this.hadoopPrefix = hadoopPrefix;
   }
 
-  private synchronized CuratorFramework getCurator() {
-    if (curator == null) {
-      curator = CuratorUtil.newAppCurator(config);
+  private synchronized CuratorFramework getAppCurator(FluoConfiguration config) {
+    if (!curators.containsKey(config.getApplicationName())) {
+      CuratorFramework curator = CuratorUtil.newAppCurator(config);
       curator.start();
+      curators.put(config.getApplicationName(), curator);
     }
-    return curator;
+    return curators.get(config.getApplicationName());
   }
 
-  private synchronized TwillRunnerService getTwillRunner() {
-    if (twillRunner == null) {
+  private synchronized TwillRunnerService getTwillRunner(FluoConfiguration config) {
+    if (!twillRunners.containsKey(config.getApplicationName())) {
       YarnConfiguration yarnConfig = new YarnConfiguration();
       yarnConfig.addResource(new Path(hadoopPrefix + "/etc/hadoop/core-site.xml"));
       yarnConfig.addResource(new Path(hadoopPrefix + "/etc/hadoop/yarn-site.xml"));
 
-      twillRunner =
+      TwillRunnerService twillRunner =
           new YarnTwillRunnerService(yarnConfig, config.getAppZookeepers() + ZookeeperPath.TWILL);
       twillRunner.startAndWait();
+
+      twillRunners.put(config.getApplicationName(), twillRunner);
 
       // sleep to give twill time to retrieve state from zookeeper
       try {
@@ -84,64 +89,106 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
         throw new IllegalStateException(e);
       }
     }
-    return twillRunner;
+    return twillRunners.get(config.getApplicationName());
   }
 
-  private void checkIfInitialized() {
+  private void checkIfInitialized(FluoConfiguration config) {
+
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.zookeeperInitialized()) {
-        System.out.println("ERROR - A Fluo '" + config.getApplicationName()
-            + "' application has not been initialized yet in Zookeeper at "
-            + config.getAppZookeepers());
-        System.exit(-1);
+        throw new FluoException("A Fluo '" + config.getApplicationName() + "' application has not "
+            + "been initialized yet in Zookeeper at " + config.getAppZookeepers());
       }
     }
   }
 
-  @Override
-  public void start() {
-    checkIfInitialized();
+  public void list(FluoConfiguration config) {
+    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
+      curator.start();
 
-    if (twillIdExists()) {
-      String runId = getTwillId();
+      try {
+        if (curator.checkExists().forPath("/") == null) {
+          System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") has not been "
+              + "created yet in Zookeeper.  It will be created when the first Fluo application is "
+              + "initialized for this instance.");
+          return;
+        }
+        List<String> children = curator.getChildren().forPath("/");
+        if (children.isEmpty()) {
+          System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") does not "
+              + "contain any Fluo applications.");
+          return;
+        }
+        Collections.sort(children);
+
+        System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") contains "
+            + children.size() + " application(s)\n");
+        System.out.println("Application     Status      YarnAppName          YarnAppId");
+        System.out.println("-----------     ------      -----------          ---------");
+        for (String path : children) {
+          FluoConfiguration appConfig = new FluoConfiguration(config);
+          appConfig.setApplicationName(path);
+          String state = "INITIALIZED";
+          String yarnId = "not started yet";
+          String yarnAppName = getYarnApplicationName(path);
+          if (twillIdExists(appConfig)) {
+            String twillId = getTwillId(appConfig);
+            yarnId = getAppId(appConfig);
+            TwillController controller =
+                getTwillRunner(appConfig).lookup(
+                    getYarnApplicationName(appConfig.getApplicationName()),
+                    RunIds.fromString(twillId));
+            if (controller == null) {
+              state = "STOPPED";
+            } else {
+              state = controller.state().toString();
+            }
+          }
+          System.out.format("%-15s %-11s %-20s %s\n", path, state, yarnAppName, yarnId);
+        }
+      } catch (Exception e) {
+        throw new FluoException(e);
+      }
+    }
+  }
+
+  public void start(FluoConfiguration config, String appConfDir, String appLibPath,
+      String fluoLibPath) {
+
+    checkIfInitialized(config);
+
+    if (twillIdExists(config)) {
+      String runId = getTwillId(config);
 
       TwillController controller =
-          getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(runId));
+          getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
+              RunIds.fromString(runId));
       if ((controller != null) && controller.isRunning()) {
-        System.err.println("WARNING - A YARN application " + getAppInfo()
+        throw new FluoException("A YARN application " + getAppInfo(config)
             + " is already running for the Fluo '" + config.getApplicationName()
             + "' application!  Please stop it using 'fluo stop " + config.getApplicationName()
             + "' before starting a new one.");
-        System.exit(-1);
-      } else {
-        logExistsButNotRunning();
-        System.exit(-1);
       }
     }
 
     if (!config.hasRequiredOracleProps() || !config.hasRequiredWorkerProps()) {
-      System.err.println("Failed to start Fluo '" + config.getApplicationName()
+      throw new FluoException("Failed to start Fluo '" + config.getApplicationName()
           + "' application because fluo.properties is missing required properties.");
-      System.exit(-1);
     }
 
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties due to " + e.getMessage());
-      System.exit(-1);
+      throw new FluoException("Invalid fluo.properties due to " + e.getMessage());
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties due to " + e.getMessage());
-      e.printStackTrace();
-      System.exit(-1);
+      throw new FluoException("Invalid fluo.properties due to " + e.getMessage(), e);
     }
 
-    TwillPreparer preparer =
-        getTwillRunner().prepare(new FluoTwillApp(config, fluoPath.getAppConfDir()));
+    TwillPreparer preparer = getTwillRunner(config).prepare(new FluoTwillApp(config, appConfDir));
 
     // Add jars from fluo lib/ directory that are not being loaded by Twill.
     try {
-      File libDir = new File(fluoPath.getLibDir());
+      File libDir = new File(fluoLibPath);
       File[] libFiles = libDir.listFiles();
       if (libFiles != null) {
         for (File f : libFiles) {
@@ -154,7 +201,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       }
 
       // Add jars found in application's lib dir
-      File appLibDir = new File(fluoPath.getAppLibDir());
+      File appLibDir = new File(appLibPath);
       File[] appFiles = appLibDir.listFiles();
       if (appFiles != null) {
         for (File f : appFiles) {
@@ -176,23 +223,23 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     try {
       // set twill run id zookeeper
       String twillId = controller.getRunId().toString();
-      CuratorUtil.putData(getCurator(), ZookeeperPath.YARN_TWILL_ID,
-          twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_TWILL_ID,
+          twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
       while (!controller.isRunning()) {
         Thread.sleep(500);
       }
       // set app id in zookeeper
       String appId = controller.getResourceReport().getApplicationId();
-      CuratorUtil.putData(getCurator(), ZookeeperPath.YARN_APP_ID,
-          appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
+      CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_APP_ID,
+          appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
       log.info("The Fluo '{}' application is running in YARN {}", config.getApplicationName(),
-          getAppInfo());
+          getAppInfo(config));
 
       log.info("Waiting for all desired containers to start...");
       int checks = 0;
-      while (!allContainersRunning(controller)) {
+      while (!allContainersRunning(controller, config)) {
         Thread.sleep(500);
         checks++;
         if (checks == 30) {
@@ -201,84 +248,86 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
               + "'fluo info <app>'.");
         }
       }
-      log.info("All desired containers are running in YARN " + getAppInfo());
+      log.info("All desired containers are running in YARN " + getAppInfo(config));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
 
-  @Override
-  public void stop() {
-    checkIfInitialized();
-    String twillId = verifyTwillId();
+  public void stop(FluoConfiguration config) {
+    checkIfInitialized(config);
+    String twillId = verifyTwillId(config);
 
     TwillController controller =
-        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
+            RunIds.fromString(twillId));
     if (controller != null) {
       System.out.print("Stopping Fluo '" + config.getApplicationName() + "' application "
-          + getAppInfo() + "...");
+          + getAppInfo(config) + "...");
       controller.stopAndWait();
       System.out.println("DONE");
     } else {
-      logExistsButNotRunning();
+      System.out.println("Fluo '" + config.getApplicationName() + "' application "
+          + getAppInfo(config) + " is already stopped.");
     }
-    deleteZkData();
   }
 
-  public void kill() throws Exception {
-    checkIfInitialized();
-    String twillId = verifyTwillId();
+  public void kill(FluoConfiguration config) throws Exception {
+    checkIfInitialized(config);
+
+    String twillId = verifyTwillId(config);
 
     TwillController controller =
-        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
+            RunIds.fromString(twillId));
     if (controller != null) {
       System.out.print("Killing Fluo '" + config.getApplicationName() + "' application "
-          + getAppInfo() + "...");
+          + getAppInfo(config) + "...");
       controller.kill();
       System.out.println("DONE");
     } else {
-      logExistsButNotRunning();
+      System.out.println("Fluo '" + config.getApplicationName() + "' application "
+          + getAppInfo(config) + " is already stopped.");
     }
-    deleteZkData();
   }
 
-  private boolean allContainersRunning(TwillController controller) {
+  private boolean allContainersRunning(TwillController controller, FluoConfiguration config) {
     return TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) == config
         .getOracleInstances()
         && TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) == config
             .getWorkerInstances();
   }
 
-  private String containerStatus(TwillController controller) {
+  private String containerStatus(TwillController controller, FluoConfiguration config) {
     return "" + TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) + " of "
         + config.getOracleInstances() + " Oracle containers and "
         + TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) + " of "
         + config.getWorkerInstances() + " Worker containers";
   }
 
-  public void status(boolean extraInfo) {
-    checkIfInitialized();
-    if (!twillIdExists()) {
-      System.out.println("A Fluo '" + config.getApplicationName()
-          + "' application is not running in YARN.");
+  public void status(FluoConfiguration config, boolean extraInfo) {
+    checkIfInitialized(config);
+    if (!twillIdExists(config)) {
+      System.out.println("Fluo '" + config.getApplicationName()
+          + "' application was initialized but has not been started.");
       return;
     }
-    String twillId = getTwillId();
+    String twillId = getTwillId(config);
     TwillController controller =
-        getTwillRunner().lookup(getYarnApplicationName(), RunIds.fromString(twillId));
+        getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
+            RunIds.fromString(twillId));
     if (controller == null) {
-      logExistsButNotRunning();
-      System.err.println("You can clean up this reference by running 'fluo stop <app>' or "
-          + "'fluo kill <app>'.");
+      System.out.print("Fluo '" + config.getApplicationName() + "' application "
+          + getAppInfo(config) + " has stopped.");
     } else {
       Service.State state = controller.state();
       System.out.println("A Fluo '" + config.getApplicationName() + "' application is " + state
-          + " in YARN " + getFullInfo());
+          + " in YARN " + getFullInfo(config));
 
-      if (state.equals(Service.State.RUNNING) && !allContainersRunning(controller)) {
+      if (state.equals(Service.State.RUNNING) && !allContainersRunning(controller, config)) {
         System.out.println("\nWARNING - The Fluo application is not running all desired "
             + "containers!  YARN may not have enough available resources.  Application is "
-            + "currently running " + containerStatus(controller));
+            + "currently running " + containerStatus(controller, config));
       }
 
       if (extraInfo) {
@@ -296,80 +345,60 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     }
   }
 
-  private String verifyTwillId() {
-    if (!twillIdExists()) {
-      System.err.println("WARNING - A YARN application is not referenced in Zookeeper for this "
+  private String verifyTwillId(FluoConfiguration config) {
+    if (!twillIdExists(config)) {
+      throw new FluoException("A YARN application is not referenced in Zookeeper for this "
           + " Fluo application.  Check if there is a Fluo application running in YARN using the "
           + "command 'yarn application -list`. If so, verify that your fluo.properties is "
           + "configured correctly.");
-      System.exit(-1);
     }
-    return getTwillId();
+    return getTwillId(config);
   }
 
-  private void logExistsButNotRunning() {
-    System.err.println("WARNING - A Fluo '" + config.getApplicationName()
-        + "' application is not running in YARN but it is " + getAppInfo()
-        + " is referenced in Zookeeper");
+  private String getAppInfo(FluoConfiguration config) {
+    return "(yarn id = " + getAppId(config) + ")";
   }
 
-  private String getAppInfo() {
-    return "(yarn id = " + getAppId() + ")";
+  private String getFullInfo(FluoConfiguration config) {
+    return "(yarn id = " + getAppId(config) + ", twill id = " + getTwillId(config) + ")";
   }
 
-  private String getFullInfo() {
-    return "(yarn id = " + getAppId() + ", twill id = " + getTwillId() + ")";
-  }
-
-  private boolean twillIdExists() {
+  private boolean twillIdExists(FluoConfiguration config) {
     try {
-      return getCurator().checkExists().forPath(ZookeeperPath.YARN_TWILL_ID) != null;
+      return getAppCurator(config).checkExists().forPath(ZookeeperPath.YARN_TWILL_ID) != null;
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
 
-  private String getTwillId() {
+  private String getTwillId(FluoConfiguration config) {
     try {
-      return new String(getCurator().getData().forPath(ZookeeperPath.YARN_TWILL_ID),
+      return new String(getAppCurator(config).getData().forPath(ZookeeperPath.YARN_TWILL_ID),
           StandardCharsets.UTF_8);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
 
-  private void deleteZkData() {
+  private String getAppId(FluoConfiguration config) {
     try {
-      getCurator().delete().forPath(ZookeeperPath.YARN_TWILL_ID);
-      getCurator().delete().forPath(ZookeeperPath.YARN_APP_ID);
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private String getAppId() {
-    try {
-      return new String(getCurator().getData().forPath(ZookeeperPath.YARN_APP_ID),
+      return new String(getAppCurator(config).getData().forPath(ZookeeperPath.YARN_APP_ID),
           StandardCharsets.UTF_8);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
 
-  public String getYarnApplicationName() {
-    return getYarnApplicationName(config);
-  }
-
-  public static String getYarnApplicationName(FluoConfiguration config) {
-    return String.format("fluo-app-%s", config.getApplicationName());
+  public static String getYarnApplicationName(String appName) {
+    return String.format("fluo-app-%s", appName);
   }
 
   @Override
   public void close() throws Exception {
-    if (twillRunner != null) {
+    for (TwillRunnerService twillRunner : twillRunners.values()) {
       twillRunner.stop();
     }
-    if (curator != null) {
+    for (CuratorFramework curator : curators.values()) {
       curator.close();
     }
   }
