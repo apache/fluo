@@ -39,11 +39,19 @@ public class CuratorUtil {
   private CuratorUtil() {}
 
   /**
-   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo
-   * chroot.
+   * Creates a curator built using Applications's zookeeper connection string. Root path will start
+   * at Fluo application chroot.
    */
   public static CuratorFramework newAppCurator(FluoConfiguration config) {
     return newCurator(config.getAppZookeepers(), config.getZookeeperTimeout());
+  }
+
+  /**
+   * Creates a curator built using Fluo's zookeeper connection string. Root path will start at Fluo
+   * chroot.
+   */
+  public static CuratorFramework newFluoCurator(FluoConfiguration config) {
+    return newCurator(config.getInstanceZookeepers(), config.getZookeeperTimeout());
   }
 
   /**
@@ -51,7 +59,7 @@ public class CuratorUtil {
    * "/" of Zoookeper.
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
-    return newCurator(ZookeeperUtil.parseServers(config.getAppZookeepers()),
+    return newCurator(ZookeeperUtil.parseServers(config.getInstanceZookeepers()),
         config.getZookeeperTimeout());
   }
 

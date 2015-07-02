@@ -15,6 +15,7 @@
 package io.fluo.cluster.runner;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -23,6 +24,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.util.FluoInstall;
 import io.fluo.core.client.FluoAdminImpl;
 
 /**
@@ -30,16 +32,9 @@ import io.fluo.core.client.FluoAdminImpl;
  */
 public abstract class ClusterAppRunner extends AppRunner {
 
-  private String appPropsPath;
-
-  public ClusterAppRunner(FluoConfiguration config, String scriptName, String appPropsPath) {
-    super(config, scriptName);
-    this.appPropsPath = appPropsPath;
+  public ClusterAppRunner(String scriptName) {
+    super(scriptName);
   }
-
-  public abstract void start();
-
-  public abstract void stop();
 
   public class InitOptions {
 
@@ -96,7 +91,7 @@ public abstract class ClusterAppRunner extends AppRunner {
     }
   }
 
-  public void init(String[] args) {
+  public void init(FluoConfiguration config, String propsPath, String[] args) {
     InitOptions commandOpts = new InitOptions();
     JCommander jcommand = new JCommander(commandOpts);
     jcommand.setProgramName("fluo init");
@@ -114,17 +109,17 @@ public abstract class ClusterAppRunner extends AppRunner {
     }
 
     if (!config.hasRequiredAdminProps()) {
-      System.err.println("Error - Required properties are not set in " + appPropsPath);
+      System.err.println("Error - Required properties are not set in " + propsPath);
       System.exit(-1);
     }
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties (" + appPropsPath + ") due to "
+      System.err.println("Error - Invalid fluo.properties (" + propsPath + ") due to "
           + e.getMessage());
       System.exit(-1);
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties (" + appPropsPath + ") due to "
+      System.err.println("Error - Invalid fluo.properties (" + propsPath + ") due to "
           + e.getMessage());
       e.printStackTrace();
       System.exit(-1);
@@ -143,7 +138,7 @@ public abstract class ClusterAppRunner extends AppRunner {
 
       if (commandOpts.getUpdate()) {
         System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
-            + "' application in Zookeeper using " + appPropsPath);
+            + "' application in Zookeeper using " + propsPath);
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
@@ -182,7 +177,7 @@ public abstract class ClusterAppRunner extends AppRunner {
       }
 
       System.out.println("Initializing Fluo '" + config.getApplicationName()
-          + "' application using " + appPropsPath);
+          + "' application using " + propsPath);
       try {
         admin.initialize(initOpts);
       } catch (Exception e) {

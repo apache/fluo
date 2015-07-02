@@ -76,10 +76,11 @@ public class FluoTwillApp implements TwillApplication {
 
     // Start building Fluo Twill application
     MoreRunnable moreRunnable =
-        TwillSpecification.Builder.with().setName(YarnAppRunner.getYarnApplicationName(config))
+        TwillSpecification.Builder.with()
+            .setName(YarnAppRunner.getYarnApplicationName(config.getApplicationName()))
             .withRunnable();
 
-    // Configure Oracle
+    // Configure Oracle(s)
     ResourceSpecification oracleResources =
         ResourceSpecification.Builder.with().setVirtualCores(config.getOracleNumCores())
             .setMemory(config.getOracleMaxMemory(), SizeUnit.MEGA)
@@ -90,7 +91,7 @@ public class FluoTwillApp implements TwillApplication {
             .withLocalFiles();
     RunnableSetter runnableSetter = addConfigFiles(fileAdder).apply();
 
-    // Configure Worker
+    // Configure Worker(s)
     ResourceSpecification workerResources =
         ResourceSpecification.Builder.with().setVirtualCores(config.getWorkerNumCores())
             .setMemory(config.getWorkerMaxMemory(), SizeUnit.MEGA)

@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 
 import io.fluo.api.config.FluoConfiguration;
+import io.fluo.cluster.util.FluoInstall;
 import org.apache.commons.io.FileUtils;
 
 /**
@@ -25,13 +26,13 @@ import org.apache.commons.io.FileUtils;
  */
 public class MiniAppRunner extends AppRunner {
 
-  public MiniAppRunner(FluoConfiguration config) {
-    super(config, "mini-fluo");
+  public MiniAppRunner() {
+    super("mini-fluo");
   }
 
-  public void cleanup() {
-    File dataDir = new File(config.getMiniDataDir());
-    if (dataDir.exists() && config.getMiniStartAccumulo()) {
+  public void cleanup(FluoConfiguration appConfig) {
+    File dataDir = new File(appConfig.getMiniDataDir());
+    if (dataDir.exists() && appConfig.getMiniStartAccumulo()) {
       try {
         FileUtils.deleteDirectory(dataDir);
       } catch (IOException e) {

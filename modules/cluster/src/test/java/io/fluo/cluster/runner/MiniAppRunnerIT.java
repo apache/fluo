@@ -71,17 +71,17 @@ public class MiniAppRunnerIT extends ITBaseMini {
     }
 
     Environment env = new Environment(config);
-    MiniAppRunner runner = new MiniAppRunner(config);
+    MiniAppRunner runner = new MiniAppRunner();
 
     Assert.assertEquals(3, runner.countNotifications(env));
 
-    runner.waitUntilFinished();
+    runner.waitUntilFinished(config);
 
     Assert.assertEquals(0, runner.countNotifications(env));
-    Assert.assertEquals(3, runner.scan(new String[] {}));
-    Assert.assertEquals(1, runner.scan(new String[] {"-r", "row1"}));
-    Assert.assertEquals(1, runner.scan(new String[] {"-r", "row2"}));
-    Assert.assertEquals(3, runner.scan(new String[] {"-c", "count"}));
-    Assert.assertEquals(0, runner.scan(new String[] {"-c", "ingest"}));
+    Assert.assertEquals(3, runner.scan(config, new String[] {}));
+    Assert.assertEquals(1, runner.scan(config, new String[] {"-r", "row1"}));
+    Assert.assertEquals(1, runner.scan(config, new String[] {"-r", "row2"}));
+    Assert.assertEquals(3, runner.scan(config, new String[] {"-c", "count"}));
+    Assert.assertEquals(0, runner.scan(config, new String[] {"-c", "ingest"}));
   }
 }

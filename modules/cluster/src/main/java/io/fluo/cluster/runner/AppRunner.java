@@ -33,6 +33,7 @@ import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.cluster.util.FluoInstall;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import org.apache.accumulo.core.client.Scanner;
@@ -51,16 +52,10 @@ public abstract class AppRunner {
   private static final long MIN_SLEEP_SEC = 10;
   private static final long MAX_SLEEP_SEC = 300;
 
-  protected FluoConfiguration config;
   private String scriptName;
 
-  public AppRunner(FluoConfiguration config, String scriptName) {
-    this.config = config;
+  public AppRunner(String scriptName) {
     this.scriptName = scriptName;
-  }
-
-  public FluoConfiguration getConfiguration() {
-    return config;
   }
 
   public static ScannerConfiguration buildScanConfig(ScanOptions options) {
@@ -111,12 +106,7 @@ public abstract class AppRunner {
     return scanConfig;
   }
 
-  public long scan(String[] args) {
-    return scan(config, args);
-  }
-
   public long scan(FluoConfiguration config, String[] args) {
-
     ScanOptions options = new ScanOptions();
     JCommander jcommand = new JCommander(options);
     jcommand.setProgramName(scriptName + " scan <app>");
@@ -206,7 +196,7 @@ public abstract class AppRunner {
     }
   }
 
-  public static void classpath(String scriptName, String fluoHomeDir, String[] args) {
+  public void classpath(String fluoHomeDir, String[] args) {
     ClasspathOptions options = new ClasspathOptions();
     JCommander jcommand = new JCommander(options);
     jcommand.setProgramName(scriptName + " classpath");
@@ -256,7 +246,7 @@ public abstract class AppRunner {
       scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
     } catch (TableNotFoundException e) {
       log.error("An exception was thrown -", e);
-      System.exit(-1);
+      throw new FluoException(e);
     }
 
     Notification.configureScanner(scanner);
@@ -267,10 +257,6 @@ public abstract class AppRunner {
       count++;
     }
     return count;
-  }
-
-  public void waitUntilFinished() {
-    waitUntilFinished(config);
   }
 
   public void waitUntilFinished(FluoConfiguration config) {
