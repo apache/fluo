@@ -27,15 +27,15 @@ public interface TransactionBase extends SnapshotBase {
   /**
    * Sets a weak notification at the given row and {@link Column}
    */
-  public void setWeakNotification(Bytes row, Column col);
+  void setWeakNotification(Bytes row, Column col);
 
   /**
    * Sets a value (in {@link Bytes}) at the given row and {@link Column}
    */
-  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException;
+  void set(Bytes row, Column col, Bytes value) throws AlreadySetException;
 
   /**
    * Deletes the value at the given row and {@link Column}
    */
-  public void delete(Bytes row, Column col);
+  void delete(Bytes row, Column col);
 }

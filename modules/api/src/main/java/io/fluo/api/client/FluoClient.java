@@ -28,13 +28,13 @@ public interface FluoClient extends AutoCloseable {
    * Creates a {@link LoaderExecutor} for loading data into Fluo. Use within a try-with-resources
    * statement or call {@link LoaderExecutor#close()} when you are finished using it.
    */
-  public LoaderExecutor newLoaderExecutor();
+  LoaderExecutor newLoaderExecutor();
 
   /**
    * Creates a {@link Snapshot} for reading data from Fluo. Use within a try-with-resources
    * statement or call {@link Snapshot#close()} when you are finished using it.
    */
-  public Snapshot newSnapshot();
+  Snapshot newSnapshot();
 
   /**
    * Creates a {@link Transaction} for reading and writing data to Fluo. Unlike the transactions
@@ -42,7 +42,7 @@ public interface FluoClient extends AutoCloseable {
    * {@link Transaction#commit()}. Use within a try-with-resources statement or call
    * {@link Transaction#close()} when you are finished.
    */
-  public Transaction newTransaction();
+  Transaction newTransaction();
 
   /**
    * @return All properties w/ the prefix {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX}
@@ -56,11 +56,11 @@ public interface FluoClient extends AutoCloseable {
    *         not update Zookeeper.
    */
 
-  public Configuration getAppConfiguration();
+  Configuration getAppConfiguration();
 
   /**
    * Closes client resources
    */
   @Override
-  public void close();
+  void close();
 }

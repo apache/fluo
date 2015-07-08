@@ -24,7 +24,7 @@ public interface FluoAdmin extends AutoCloseable {
   /**
    * Specifies Fluo initialization options such as clearing Zookeeper or existing Accumulo table.
    */
-  public static class InitOpts {
+  class InitOpts {
 
     private boolean clearZookeeper = false;
     private boolean clearTable = false;
@@ -62,7 +62,7 @@ public interface FluoAdmin extends AutoCloseable {
    * the property io.fluo.client.zookeeper.connect. If this directory can be cleared, set
    * {@link InitOpts#setClearTable(boolean)} to true
    */
-  public static class AlreadyInitializedException extends Exception {
+  class AlreadyInitializedException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
@@ -80,7 +80,7 @@ public interface FluoAdmin extends AutoCloseable {
    * initialization. If this table can be cleared, set {@link InitOpts#setClearZookeeper(boolean)}
    * to true
    */
-  public static class TableExistsException extends Exception {
+  class TableExistsException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
@@ -103,7 +103,7 @@ public interface FluoAdmin extends AutoCloseable {
    * true. Throws {@link TableExistsException} if Accumulo table exists. If you want to clear table,
    * set {@link InitOpts#setClearTable(boolean)} to true.
    */
-  public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException;
+  void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException;
 
   /**
    * Updates shared configuration in Zookeeper. Shared configuration consists of properties with
@@ -118,8 +118,8 @@ public interface FluoAdmin extends AutoCloseable {
    * existing shared configuration stored in zookeeper. So make sure all config needed by observers
    * is present.
    */
-  public void updateSharedConfig();
+  void updateSharedConfig();
 
   @Override
-  public void close();
+  void close();
 }

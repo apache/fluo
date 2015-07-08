@@ -18,13 +18,13 @@ import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 
 public interface NotificationFinder {
-  public void init(Environment env, NotificationProcessor processor);
+  void init(Environment env, NotificationProcessor processor);
 
-  public void start();
+  void start();
 
-  public void stop();
+  void stop();
 
-  public boolean shouldProcess(Notification notification);
+  boolean shouldProcess(Notification notification);
 
-  public void failedToProcess(Notification notification, TxResult status);
+  void failedToProcess(Notification notification, TxResult status);
 }

@@ -26,11 +26,11 @@ public interface Transaction extends TransactionBase, AutoCloseable {
   /**
    * Commits the transaction. A {@link CommitException} will be thrown if the commit failed.
    */
-  public void commit() throws CommitException;
+  void commit() throws CommitException;
 
   /**
    * Closes resources
    */
   @Override
-  public void close();
+  void close();
 }

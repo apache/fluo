@@ -31,14 +31,14 @@ import org.apache.commons.configuration.Configuration;
  */
 public interface Observer {
 
-  public static enum NotificationType {
+  enum NotificationType {
     WEAK, STRONG
   }
 
   /**
    * A {@link Column} and {@link NotificationType} pair
    */
-  public static class ObservedColumn {
+  class ObservedColumn {
     private final Column col;
     private final NotificationType notificationType;
 
@@ -56,17 +56,17 @@ public interface Observer {
     }
   }
 
-  public static interface Context {
+  interface Context {
     /**
      * @return A configuration object with application configuration like that returned by
      *         {@link FluoClient#getAppConfiguration()}
      */
-    public Configuration getAppConfiguration();
+    Configuration getAppConfiguration();
 
     /**
      * @return The parameters configured for this observer
      */
-    public Map<String, String> getParameters();
+    Map<String, String> getParameters();
 
   }
 
@@ -75,7 +75,7 @@ public interface Observer {
    * 
    * @param context Observer context
    */
-  public void init(Context context) throws Exception;
+  void init(Context context) throws Exception;
 
   /**
    * Implemented by users to process notifications on a {@link ObservedColumn}. If a notification
@@ -84,7 +84,7 @@ public interface Observer {
    * read and write to Fluo. After this method returns, {@link TransactionBase} will be committed
    * and closed by Fluo.
    */
-  public void process(TransactionBase tx, Bytes row, Column col) throws Exception;
+  void process(TransactionBase tx, Bytes row, Column col) throws Exception;
 
   /**
    * Implemented by user to return an {@link ObservedColumn} that will trigger this observer. During
@@ -94,10 +94,10 @@ public interface Observer {
    * called before this method. If the return value of the method is derived from what is passed to
    * {@link #init(Context)}, then the derivation process should be deterministic.
    */
-  public ObservedColumn getObservedColumn();
+  ObservedColumn getObservedColumn();
 
   /**
    * Implemented by user to close resources used by Observer
    */
-  public void close();
+  void close();
 }

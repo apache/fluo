@@ -23,11 +23,11 @@ public interface LoaderExecutor extends AutoCloseable {
   /**
    * Executes {@link Loader} implemented by users
    */
-  public void execute(Loader loader);
+  void execute(Loader loader);
 
   /**
    * Closes resources
    */
   @Override
-  public void close();
+  void close();
 }

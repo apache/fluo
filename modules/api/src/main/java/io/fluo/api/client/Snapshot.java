@@ -25,5 +25,5 @@ public interface Snapshot extends SnapshotBase, AutoCloseable {
    * Closes resources
    */
   @Override
-  public void close();
+  void close();
 }

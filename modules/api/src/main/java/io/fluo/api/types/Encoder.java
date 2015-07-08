@@ -24,60 +24,60 @@ public interface Encoder {
   /**
    * Encodes an integer to {@link Bytes}
    */
-  public Bytes encode(int i);
+  Bytes encode(int i);
 
   /**
    * Encodes a long to {@link Bytes}
    */
-  public Bytes encode(long l);
+  Bytes encode(long l);
 
   /**
    * Encodes a String to {@link Bytes}
    */
-  public Bytes encode(String s);
+  Bytes encode(String s);
 
   /**
    * Encodes a float to {@link Bytes}
    */
-  public Bytes encode(float f);
+  Bytes encode(float f);
 
   /**
    * Encodes a double to {@link Bytes}
    */
-  public Bytes encode(double d);
+  Bytes encode(double d);
 
   /**
    * Encodes a boolean to {@link Bytes}
    */
-  public Bytes encode(boolean b);
+  Bytes encode(boolean b);
 
   /**
    * Decodes an integer from {@link Bytes}
    */
-  public int decodeInteger(Bytes b);
+  int decodeInteger(Bytes b);
 
   /**
    * Decodes a long from {@link Bytes}
    */
-  public long decodeLong(Bytes b);
+  long decodeLong(Bytes b);
 
   /**
    * Decodes a String from {@link Bytes}
    */
-  public String decodeString(Bytes b);
+  String decodeString(Bytes b);
 
   /**
    * Decodes a float from {@link Bytes}
    */
-  public float decodeFloat(Bytes b);
+  float decodeFloat(Bytes b);
 
   /**
    * Decodes a double from {@link Bytes}
    */
-  public double decodeDouble(Bytes b);
+  double decodeDouble(Bytes b);
 
   /**
    * Decodes a boolean from {@link Bytes}
    */
-  public boolean decodeBoolean(Bytes b);
+  boolean decodeBoolean(Bytes b);
 }
