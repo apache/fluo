@@ -234,7 +234,7 @@ public class Environment implements AutoCloseable {
     return config;
   }
 
-  public synchronized MetricNames getMeticNames() {
+  public synchronized MetricNames getMetricNames() {
     if (metricNames == null) {
       String mid = System.getProperty(MetricNames.METRICS_ID_PROP);
       if (mid == null) {

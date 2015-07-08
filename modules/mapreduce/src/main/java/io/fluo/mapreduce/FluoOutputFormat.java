@@ -92,7 +92,7 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
       return new RecordWriter<Loader, NullWritable>() {
 
         @Override
-        public void close(TaskAttemptContext conext) throws IOException, InterruptedException {
+        public void close(TaskAttemptContext context) throws IOException, InterruptedException {
           try {
             lexecutor.close();
           } finally {

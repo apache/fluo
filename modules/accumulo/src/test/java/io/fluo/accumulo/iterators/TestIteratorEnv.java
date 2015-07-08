@@ -66,7 +66,7 @@ public class TestIteratorEnv implements IteratorEnvironment {
     throw new UnsupportedOperationException();
   }
 
-  // this is a new mthod added in Accumulo 1.7.0. Can not add @Override because it will not compile
+  // this is a new method added in Accumulo 1.7.0. Can not add @Override because it will not compile
   // against 1.6.X
   public Authorizations getAuthorizations() {
     return null;

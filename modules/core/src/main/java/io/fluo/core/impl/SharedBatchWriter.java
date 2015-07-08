@@ -150,7 +150,7 @@ public class SharedBatchWriter {
 
   /**
    * waits for all async mutations that were added before this was called to be flushed. Does not
-   * wait for asyn mutations added after call.
+   * wait for async mutations added after call.
    */
   public void waitForAsyncFlush() {
     long numAdded = asyncBatchesAdded.get();

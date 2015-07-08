@@ -90,7 +90,7 @@ public class WorkTask implements Runnable {
         } finally {
           if (txi != null) {
             try {
-              txi.getStats().report(env.getMeticNames(), status.toString(), observer.getClass(),
+              txi.getStats().report(env.getMetricNames(), status.toString(), observer.getClass(),
                   env.getSharedResources().getMetricRegistry());
             } finally {
               tx.close();

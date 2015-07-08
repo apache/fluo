@@ -94,7 +94,7 @@ public class NotificationIteratorTest {
     input.add("7 ntfy foo:baz 3 DEL", "");
     input.add("7 ntfy foo:baz 3", "");
 
-    // disorderly nfty and delete pattern
+    // disorderly ntfy and delete pattern
     input.add("8 ntfy foo:baz 5 DEL", "");
     input.add("8 ntfy foo:baz 4", "");
     input.add("8 ntfy foo:baz 3", "");
@@ -134,7 +134,7 @@ public class NotificationIteratorTest {
     return input;
   }
 
-  // test the behavior thats expected to be the same in all scopes
+  // test the behavior that is expected to be the same in all scopes
   @Test
   public void testAllScopes() {
     for (IteratorScope scope : IteratorScope.values()) {

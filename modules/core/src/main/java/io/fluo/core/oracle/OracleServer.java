@@ -100,7 +100,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     stampsHistogram =
         env.getSharedResources().getMetricRegistry()
-            .histogram(env.getMeticNames().getOracleServerStamps());
+            .histogram(env.getMetricNames().getOracleServerStamps());
 
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
@@ -132,7 +132,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
     byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(maxTsPath);
 
     // TODO check that d is expected
-    // TODO check that stil server when setting
+    // TODO check that still server when setting
     // TODO make num allocated variable... when a server first starts allocate a small amount... the
     // longer it runs and the busier it is, allocate bigger blocks
 

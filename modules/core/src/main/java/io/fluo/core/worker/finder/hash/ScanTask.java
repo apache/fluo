@@ -49,7 +49,7 @@ public class ScanTask implements Runnable {
   private final TabletInfoCache<TabletData, Supplier<TabletData>> tabletInfoCache;
   private final Environment env;
 
-  static long STABALIZE_TIME = 10 * 1000;
+  static long STABILIZE_TIME = 10 * 1000;
 
   private long minSleepTime;
   private long maxSleepTime;
@@ -120,7 +120,7 @@ public class ScanTask implements Runnable {
           }
         } catch (ModParamsChangedException mpce) {
           hwf.getWorkerQueue().clear();
-          waitForFindersToStabalize();
+          waitForFindersToStabilize();
         }
 
         long sleepTime = Math.max(minSleepTime, minRetryTime - System.currentTimeMillis());
@@ -186,11 +186,11 @@ public class ScanTask implements Runnable {
     return count;
   }
 
-  private void waitForFindersToStabalize() {
+  private void waitForFindersToStabilize() {
     ModulusParams lmp = hwf.getModulusParams();
     long startTime = System.currentTimeMillis();
 
-    while (System.currentTimeMillis() - startTime < STABALIZE_TIME) {
+    while (System.currentTimeMillis() - startTime < STABILIZE_TIME) {
       UtilWaitThread.sleep(500, stopped);
       ModulusParams lmp2 = hwf.getModulusParams();
       if (lmp.update != lmp2.update) {

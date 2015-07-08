@@ -50,7 +50,7 @@ public class NotificationProcessor implements AutoCloseable {
     this.tracker = new NotificationTracker();
     this.observers = new Observers(env);
     env.getSharedResources().getMetricRegistry()
-        .register(env.getMeticNames().getNotificationQueued(), new Gauge<Integer>() {
+        .register(env.getMetricNames().getNotificationQueued(), new Gauge<Integer>() {
           @Override
           public Integer getValue() {
             return queue.size();

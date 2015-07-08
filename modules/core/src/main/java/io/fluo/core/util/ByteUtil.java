@@ -57,7 +57,7 @@ public class ByteUtil {
   }
 
   /**
-   * Converts from ByteSequence to Bytes. If the ByteSequenc has a backing array, that array (and
+   * Converts from ByteSequence to Bytes. If the ByteSequence has a backing array, that array (and
    * the buffer's offset and limit) are used. Otherwise, a new backing array is created.
    * 
    * @param bs ByteSequence

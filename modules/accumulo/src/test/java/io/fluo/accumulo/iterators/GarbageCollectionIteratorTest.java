@@ -316,7 +316,7 @@ public class GarbageCollectionIteratorTest {
 
     Assert.assertEquals(expected, output);
 
-    // test del_lock thats primary
+    // test del_lock that is primary
     input = new TestData();
     input.add("0 f q WRITE 22", "19");
     input.add("0 f q DEL_LOCK 13", "11 PRIMARY");

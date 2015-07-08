@@ -42,10 +42,10 @@ import io.fluo.api.data.Column;
  * <h3>Using</h3>
  * 
  * <p>
- * A TypeLayer is created with a certain encoder thats used for converting from bytes to primitives
- * and visa versa. In order to ensure that all of your code uses the same encoder, its probably best
- * to centralize the choice of an encoder within your project. There are many ways do to this, below
- * is an example of one way to centralize and use.
+ * A TypeLayer is created with a certain encoder that is used for converting from bytes to
+ * primitives and visa versa. In order to ensure that all of your code uses the same encoder, its
+ * probably best to centralize the choice of an encoder within your project. There are many ways do
+ * to this, below is an example of one way to centralize and use.
  * </p>
  * 
  * <pre>
@@ -445,7 +445,7 @@ public class TypeLayer {
   }
 
   /**
-   * Intiates the chain of calls needed to build a column.
+   * Initiates the chain of calls needed to build a column.
    * 
    * @return a column builder
    */
