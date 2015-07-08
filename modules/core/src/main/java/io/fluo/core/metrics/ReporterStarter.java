@@ -21,20 +21,20 @@ import org.apache.commons.configuration.Configuration;
 
 public interface ReporterStarter {
 
-  public static interface Params {
+  interface Params {
     /**
      * 
      * @return Fluo's configuration
      */
-    public Configuration getConfiguration();
+    Configuration getConfiguration();
 
     /**
      * 
      * @return The metric registry used by Fluo
      */
-    public MetricRegistry getMetricRegistry();
+    MetricRegistry getMetricRegistry();
 
-    public String getDomain();
+    String getDomain();
   }
 
   /**
@@ -44,6 +44,6 @@ public interface ReporterStarter {
    * @param params Elements of Fluo environemnt needed to setup reporters.
    * @return A list of closables which represent reporters.
    */
-  public List<AutoCloseable> start(Params params);
+  List<AutoCloseable> start(Params params);
 
 }

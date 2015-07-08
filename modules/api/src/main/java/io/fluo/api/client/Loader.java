@@ -22,17 +22,17 @@ import org.apache.commons.configuration.Configuration;
  */
 public interface Loader {
 
-  public static interface Context {
+  interface Context {
     /**
      * @return A configuration object with application configuration like that returned by
      *         {@link FluoClient#getAppConfiguration()}
      */
-    public Configuration getAppConfiguration();
+    Configuration getAppConfiguration();
   }
 
   /**
    * Users implement this method to load data into Fluo using the provided {@link TransactionBase}.
    * The transaction will be committed and closed by Fluo after this method returns
    */
-  public void load(TransactionBase tx, Context context) throws Exception;
+  void load(TransactionBase tx, Context context) throws Exception;
 }
