@@ -24,7 +24,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * Encapsulates the information needed to indentify a transactions primary row and column.
+ * Encapsulates the information needed to identify a transactions primary row and column.
  */
 class PrimaryRowColumn {
 

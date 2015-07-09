@@ -315,7 +315,7 @@ public class FluoIT extends ITBaseImpl {
     tx1.mutate().row("bob").col(addrCol).set("1 loop pl");
     tx2.mutate().row("bob").col(addrCol).set("1 loop pl");
 
-    // this test overlaps the commmits of two transactions w/ the same trigger
+    // this test overlaps the commits of two transactions w/ the same trigger
 
     CommitData cd = tx1.createCommitData();
     Assert.assertTrue(tx1.preCommit(cd));

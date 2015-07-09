@@ -3,7 +3,7 @@ Fluo
 
 [![Build Status](https://travis-ci.org/fluo-io/fluo.svg?branch=master)](https://travis-ci.org/fluo-io/fluo)
 
-**Fluo is transaction layer that enables incremental processsing on big data.**
+**Fluo is transaction layer that enables incremental processing on big data.**
 
 Fluo is an implementation of [Percolator] built on [Accumulo] than runs in [YARN]. 
 It is not recommended for production use yet. Check out the Fluo [project website][fluo.io]

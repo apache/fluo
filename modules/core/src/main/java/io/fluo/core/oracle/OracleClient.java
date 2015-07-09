@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Connects to an oracle to retrieve timestamps. If mutliple oracle servers are run, it will
+ * Connects to an oracle to retrieve timestamps. If multiple oracle servers are run, it will
  * automatically fail over to different leaders.
  */
 public class OracleClient implements AutoCloseable {
@@ -329,10 +329,10 @@ public class OracleClient implements AutoCloseable {
 
     responseTimer =
         env.getSharedResources().getMetricRegistry()
-            .timer(env.getMeticNames().getOracleClientGetStamps());
+            .timer(env.getMetricNames().getOracleClientGetStamps());
     stampsHistogram =
         env.getSharedResources().getMetricRegistry()
-            .histogram(env.getMeticNames().getOrcaleClientStamps());
+            .histogram(env.getMetricNames().getOracleClientStamps());
 
     timestampRetriever = new TimestampRetriever();
     thread = new Thread(timestampRetriever);

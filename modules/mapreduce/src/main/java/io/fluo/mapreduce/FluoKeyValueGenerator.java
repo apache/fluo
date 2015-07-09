@@ -165,12 +165,12 @@ public class FluoKeyValueGenerator {
   }
 
   /**
-   * Translates the Fluo row, column, and value set into the persistent format thats stored in
+   * Translates the Fluo row, column, and value set into the persistent format that is stored in
    * Accumulo.
    * 
    * <p>
    * The objects returned by this method are reused each time its called. So each time this is
-   * called it invalidates what was retuned by previous calls to this method.
+   * called it invalidates what was returned by previous calls to this method.
    * 
    * @return A an array of Accumulo key values in correct sorted order.
    */

@@ -138,7 +138,7 @@ public class TransactorIT extends ITBaseImpl {
     Assert.assertFalse(cache.checkTimedout(id2, 5));
     Assert.assertFalse(cache.checkTimedout(id2, 6));
 
-    // esnure setting a lower lockTs than previously set has no effect
+    // ensure setting a lower lockTs than previously set has no effect
     cache.addTimedoutTransactor(id1, 3, System.currentTimeMillis() - 3);
 
     Assert.assertTrue(cache.checkTimedout(id1, 7));

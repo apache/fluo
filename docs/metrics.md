@@ -23,7 +23,7 @@ Configuring Fluo Clients
 ------------------------
 
 Fluo client code that uses the basic API or map reduce API can configure
-reporters by setting `io.fluo.metrics.yaml.base64` in `fluo.propeties`.  The
+reporters by setting `io.fluo.metrics.yaml.base64` in `fluo.properties`.  The
 value of this property should be a single line base64 encoded yaml config.
 This can easily be generated with the following command.  Also,
 FluoConfiguration has some convenience methods for setting this property.
@@ -64,13 +64,13 @@ Metrics reported by Fluo
 Some of the metrics reported have the class name as the suffix.  This classname
 is the observer or load task that executed the transactions.   This should
 allow things like transaction collisions to be tracked per class.  In the
-table below this is denoted with `<cn>`.  In the table below `io.flou` is
+table below this is denoted with `<cn>`.  In the table below `io.fluo` is
 shortened to `i.f`.  
 
 Since multiple processes can report the same metrics to services like Graphite
 or Ganglia, each process adds a unique id.  When running in yarn, this id is of
 the format `worker-<instance id>` or `oracle-<instance id>`.  When not running
-from yarn, this id consist of a hostname and a base36 long thats unique across
+from yarn, this id consist of a hostname and a base36 long that is unique across
 all fluo processes.  In the table below this composite id is represented with
 `<pid>`. 
 
@@ -80,7 +80,7 @@ all fluo processes.  In the table below this composite id is represented with
 |i.f.&lt;pid&gt;.tx.time.&lt;cn&gt;                   | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute.  Updated for failed and successful transactions. |
 |i.f.&lt;pid&gt;.tx.collisions.&lt;cn&gt;             | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of collisions a transaction had.  |
 |i.f.&lt;pid&gt;.tx.set.&lt;cn&gt;                    | [Histogram][H] | *WHEN:* After each transaction. *WHAT:* Number of row/columns set by transaction |
-|i.f.&lt;pid&gt;.tx.read.&lt;cn&gt;                   | [Histogram][H] | *WHEN:* After each transaction. *WHAT:* Number of row/columns read by transaction that existed.  There is currently no count of all reads (including non-existant data) |
+|i.f.&lt;pid&gt;.tx.read.&lt;cn&gt;                   | [Histogram][H] | *WHEN:* After each transaction. *WHAT:* Number of row/columns read by transaction that existed.  There is currently no count of all reads (including non-existent data) |
 |i.f.&lt;pid&gt;.tx.locks.timedout.&lt;cn&gt;         | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of timedout locks rolled back by transaction.  These are locks that are held for very long periods by another transaction that appears to be alive based on zookeeper.  |
 |i.f.&lt;pid&gt;.tx.locks.dead.&lt;cn&gt;             | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of dead locks rolled by a transaction.  These are locks held by a process that appears to be dead according to zookeeper.  |
 |i.f.&lt;pid&gt;.tx.status.&lt;status&gt;.&lt;cn&gt;  | [Counter][C]   | *WHEN:* After each transaction.  *WHAT:* Counts for the different ways a transaction can terminate |

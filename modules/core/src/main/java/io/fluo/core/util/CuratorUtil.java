@@ -39,7 +39,7 @@ public class CuratorUtil {
   private CuratorUtil() {}
 
   /**
-   * Creates a curator built using Applications's zookeeper connection string. Root path will start
+   * Creates a curator built using Application's zookeeper connection string. Root path will start
    * at Fluo application chroot.
    */
   public static CuratorFramework newAppCurator(FluoConfiguration config) {
@@ -56,7 +56,7 @@ public class CuratorUtil {
 
   /**
    * Creates a curator built using Fluo's zookeeper connection string. Root path will start at root
-   * "/" of Zoookeper.
+   * "/" of Zookeeper.
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
     return newCurator(ZookeeperUtil.parseServers(config.getInstanceZookeepers()),
@@ -122,7 +122,7 @@ public class CuratorUtil {
     try {
       while (node.waitForInitialCreate(1, TimeUnit.SECONDS) == false) {
         waitTime += 1;
-        log.info("Waited " + waitTime + " sec for ephmeral node to be created");
+        log.info("Waited " + waitTime + " sec for ephemeral node to be created");
         if (waitTime > maxWaitSec) {
           throw new IllegalStateException("Failed to create ephemeral node");
         }

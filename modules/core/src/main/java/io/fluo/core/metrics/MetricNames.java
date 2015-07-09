@@ -91,7 +91,7 @@ public class MetricNames {
     return notificationsQueued;
   }
 
-  public String getOrcaleClientStamps() {
+  public String getOracleClientStamps() {
     return oracleClientStamps;
   }
 

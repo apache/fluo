@@ -41,8 +41,8 @@ public interface ReporterStarter {
    * A fluo extension point that allows configuration of metrics reporters. This method should
    * configure and start reporters.
    * 
-   * @param params Elements of Fluo environemnt needed to setup reporters.
-   * @return A list of closables which represent reporters.
+   * @param params Elements of Fluo environment needed to setup reporters.
+   * @return A list of closeables which represent reporters.
    */
   List<AutoCloseable> start(Params params);
 

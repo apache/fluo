@@ -580,7 +580,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     // about weak notifications would need to be persisted in the lock phase. Setting here is safe
     // because any observers that run as a result of the weak
     // notification will wait for the commit to finish. Setting here may cause an observer to run
-    // unessecarily in the case of rollback, but thats ok.
+    // unnecessarily in the case of rollback, but that is ok.
     // TODO look into setting weak notification as part of lock and commit phases to avoid this
     // synchronous step
     writeWeakNotifications(commitTs);
@@ -801,7 +801,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   private synchronized void checkIfOpen() {
     if (status != TxStatus.OPEN) {
-      throw new IllegalStateException("Transation is no longer open! status = " + status);
+      throw new IllegalStateException("Transaction is no longer open! status = " + status);
     }
   }
 

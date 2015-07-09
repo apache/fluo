@@ -52,7 +52,7 @@ public class LoaderExecutorImpl implements LoaderExecutor {
 
     if (numThreads <= 0) {
       throw new IllegalArgumentException(
-          "numThreads must be positivie OR numThreads and queueSize must both be 0");
+          "numThreads must be positive OR numThreads and queueSize must both be 0");
     }
 
     if (queueSize < 0) {

@@ -232,7 +232,7 @@ public class FluoConfiguration extends CompositeConfiguration {
         break;
       } else if (c > '\u0000' && c <= '\u001f' || c >= '\u007f' && c <= '\u009F' || c >= '\ud800'
           && c <= '\uf8ff' || c >= '\ufff0' && c <= '\uffff') {
-        reason = "invalid charater @" + i;
+        reason = "invalid character @" + i;
         break;
       }
     }
@@ -511,7 +511,7 @@ public class FluoConfiguration extends CompositeConfiguration {
    * @return A {@link SubsetConfiguration} using the prefix {@value #APP_PREFIX}. Any change made to
    *         subset will be reflected in this configuration, but with the prefix added. This method
    *         is useful for setting application configuration before initialization. For reading
-   *         application configration after initialization, see
+   *         application configuration after initialization, see
    *         {@link FluoClient#getAppConfiguration()}
    */
   public Configuration getAppConfiguration() {
@@ -550,7 +550,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   /**
-   * Consider using {@link #getMetricsYaml()} wich will automatically decode the base 64 value of
+   * Consider using {@link #getMetricsYaml()} which will automatically decode the base 64 value of
    * this property.
    * 
    * @return base64 encoded yaml metrics config.

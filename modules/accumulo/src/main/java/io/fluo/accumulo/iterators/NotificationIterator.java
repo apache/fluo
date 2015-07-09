@@ -36,7 +36,7 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
  * that deletes sort first. Accumulo deletes are not used because notifications after a delete can
  * not be seen and analyzed. This iterator analyzes notifications after a delete marker to determine
  * if a deleter marker should be carried forward by a partial compaction. This is done try to lessen
- * the number of persisted delete markers over time. If Accumulo supported independant compaction of
+ * the number of persisted delete markers over time. If Accumulo supported independent compaction of
  * locality groups, then this would not be needed.
  * 
  * <p>This iterator also ensure only one notification per column is returned, similar to what the
@@ -92,9 +92,9 @@ public class NotificationIterator extends SkippingIterator {
         source.next();
         skipRowCol(source, keyCopy);
       } else {
-        // need to make a decision about propgating delete... IF the pattern of notifications and
+        // need to make a decision about propagating delete... IF the pattern of notifications and
         // deletes seems orderly AND it does not end with a delete THEN
-        // do not propogate delete
+        // do not propagate delete
         Value valCopy = new Value(source.getTopValue());
 
         boolean lastKeyWasDelete = true;
@@ -109,7 +109,7 @@ public class NotificationIterator extends SkippingIterator {
         }
 
         if (!isOrderly || lastKeyWasDelete) {
-          // dropping this delete on a partial compaction does not look promising, so propogate the
+          // dropping this delete on a partial compaction does not look promising, so propagate the
           // delete marker
           source.pushback(keyCopy, valCopy);
           break;

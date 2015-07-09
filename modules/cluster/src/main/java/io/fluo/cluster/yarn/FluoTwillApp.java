@@ -41,9 +41,9 @@ public class FluoTwillApp implements TwillApplication {
   private final FluoConfiguration config;
   private final String fluoConf;
 
-  public FluoTwillApp(FluoConfiguration config, String flouConf) {
+  public FluoTwillApp(FluoConfiguration config, String fluoConf) {
     this.config = config;
-    this.fluoConf = flouConf;
+    this.fluoConf = fluoConf;
   }
 
   private MoreFile addConfigFiles(LocalFileAdder fileAdder) {

@@ -197,7 +197,7 @@ public class TypeLayerTest {
             tts.get().row("r2").col(new Column("cf2", "8"))
                 .toByteBuffer(ByteBuffer.wrap("14".getBytes()))).toString());
 
-    // test non-existant
+    // test non-existent
     Assert.assertNull(tts.get().row("r2").fam("cf3").qual(8).toInteger());
     Assert.assertEquals(14, tts.get().row("r2").fam("cf3").qual(8).toInteger(14));
     Assert.assertNull(tts.get().row("r2").fam("cf3").qual(8).toLong());
@@ -274,11 +274,11 @@ public class TypeLayerTest {
     ttx.mutate().row("13").fam("9").qual(18).increment(2);
     ttx.mutate().row("13").fam("9").qual(19l).increment(3);
     ttx.mutate().row("13").fam("9").qual("20".getBytes()).increment(4);
-    ttx.mutate().row("13").fam("9").qual(Bytes.of("21")).increment(5); // increment non existant
-    ttx.mutate().row("13").col(new Column("9", "22")).increment(6); // increment non existant
+    ttx.mutate().row("13").fam("9").qual(Bytes.of("21")).increment(5); // increment non existent
+    ttx.mutate().row("13").col(new Column("9", "22")).increment(6); // increment non existent
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("23".getBytes())).increment(7); // increment
                                                                                          // non
-                                                                                         // existant
+                                                                                         // existent
 
     Assert.assertEquals(MockTransactionBase.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23",
         "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);
@@ -289,11 +289,11 @@ public class TypeLayerTest {
     ttx.mutate().row("13").fam("9").qual(18).increment(2l);
     ttx.mutate().row("13").fam("9").qual(19l).increment(3l);
     ttx.mutate().row("13").fam("9").qual("20".getBytes()).increment(4l);
-    ttx.mutate().row("13").fam("9").qual(Bytes.of("21")).increment(5l); // increment non existant
-    ttx.mutate().row("13").col(new Column("9", "22")).increment(6l); // increment non existant
+    ttx.mutate().row("13").fam("9").qual(Bytes.of("21")).increment(5l); // increment non existent
+    ttx.mutate().row("13").col(new Column("9", "22")).increment(6l); // increment non existent
     ttx.mutate().row("13").fam("9").qual(ByteBuffer.wrap("23".getBytes())).increment(7l); // increment
                                                                                           // non
-                                                                                          // existant
+                                                                                          // existent
 
     Assert.assertEquals(MockTransactionBase.toRCVM("13,9:17,21", "13,9:18,22", "13,9:19,23",
         "13,9:20,24", "13,9:21,5", "13,9:22,6", "13,9:23,7"), tt.setData);

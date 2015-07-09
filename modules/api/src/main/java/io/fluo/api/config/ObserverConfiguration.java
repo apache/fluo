@@ -37,7 +37,7 @@ public class ObserverConfiguration {
   }
 
   /**
-   * For configuration thats the same across multiple observers consider using Application
+   * For configuration that is the same across multiple observers consider using Application
    * configuration.
    * 
    * @param params Parameters that should be passed to
