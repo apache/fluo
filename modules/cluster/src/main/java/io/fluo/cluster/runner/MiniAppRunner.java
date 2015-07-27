@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.FluoInstall;
 import org.apache.commons.io.FileUtils;
 
 /**

@@ -22,9 +22,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Service;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.exceptions.FluoException;
@@ -37,6 +37,7 @@ import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunResources;
@@ -78,7 +79,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
       TwillRunnerService twillRunner =
           new YarnTwillRunnerService(yarnConfig, config.getAppZookeepers() + ZookeeperPath.TWILL);
-      twillRunner.startAndWait();
+      twillRunner.start();
 
       twillRunners.put(config.getApplicationName(), twillRunner);
 
@@ -141,7 +142,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
             if (controller == null) {
               state = "STOPPED";
             } else {
-              state = controller.state().toString();
+              state = "RUNNING";
             }
           }
           System.out.format("%-15s %-11s %-20s %s\n", path, state, yarnAppName, yarnId);
@@ -163,7 +164,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       TwillController controller =
           getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
               RunIds.fromString(runId));
-      if ((controller != null) && controller.isRunning()) {
+      if ((controller != null) && isReady(controller)) {
         throw new FluoException("A YARN application " + getAppInfo(config)
             + " is already running for the Fluo '" + config.getApplicationName()
             + "' application!  Please stop it using 'fluo stop " + config.getApplicationName()
@@ -215,10 +216,9 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     }
 
     Preconditions.checkNotNull(preparer, "Failed to prepare twill application");
-    TwillController controller = preparer.start();
 
     log.info("Starting Fluo '{}' application in YARN...", config.getApplicationName());
-    controller.start();
+    TwillController controller = preparer.start();
 
     try {
       // set twill run id zookeeper
@@ -226,11 +226,9 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_TWILL_ID,
           twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
-      while (!controller.isRunning()) {
-        Thread.sleep(500);
-      }
       // set app id in zookeeper
-      String appId = controller.getResourceReport().getApplicationId();
+      String appId = getResourceReport(controller).getApplicationId();
+      Preconditions.checkNotNull(appId, "Failed to retrieve YARN app ID from Twill");
       CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_APP_ID,
           appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
@@ -254,17 +252,17 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     }
   }
 
-  public void stop(FluoConfiguration config) {
+  public void stop(FluoConfiguration config) throws InterruptedException, ExecutionException {
     checkIfInitialized(config);
     String twillId = verifyTwillId(config);
 
     TwillController controller =
         getTwillRunner(config).lookup(getYarnApplicationName(config.getApplicationName()),
             RunIds.fromString(twillId));
-    if (controller != null) {
+    if ((controller != null) && isReady(controller)) {
       System.out.print("Stopping Fluo '" + config.getApplicationName() + "' application "
-          + getAppInfo(config) + "...");
-      controller.stopAndWait();
+                       + getAppInfo(config) + "...");
+      controller.terminate().get();
       System.out.println("DONE");
     } else {
       System.out.println("Fluo '" + config.getApplicationName() + "' application "
@@ -289,6 +287,35 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       System.out.println("Fluo '" + config.getApplicationName() + "' application "
           + getAppInfo(config) + " is already stopped.");
     }
+  }
+
+  private ResourceReport getResourceReport(TwillController controller) {
+    ResourceReport report = controller.getResourceReport();
+    int elapsed = 0;
+    while (report == null) {
+      report = controller.getResourceReport();
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        throw new IllegalStateException(e);
+      }
+      elapsed += 500;
+      if (elapsed > 30000) {
+        throw new IllegalStateException("Failed to get resource report");
+      }
+    }
+    return report;
+  }
+
+  private boolean isReady(TwillController controller) {
+    try {
+      if (getResourceReport(controller) != null) {
+        return true;
+      }
+    } catch (Exception e) {
+      log.error("Exception occurred while getting Twill resource report", e);
+    }
+    return false;
   }
 
   private boolean allContainersRunning(TwillController controller, FluoConfiguration config) {
@@ -320,24 +347,24 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       System.out.print("Fluo '" + config.getApplicationName() + "' application "
           + getAppInfo(config) + " has stopped.");
     } else {
-      Service.State state = controller.state();
-      System.out.println("A Fluo '" + config.getApplicationName() + "' application is " + state
+      System.out.println("A Fluo '" + config.getApplicationName() + "' application is running"
           + " in YARN " + getFullInfo(config));
 
-      if (state.equals(Service.State.RUNNING) && !allContainersRunning(controller, config)) {
+      if (!allContainersRunning(controller, config)) {
         System.out.println("\nWARNING - The Fluo application is not running all desired "
             + "containers!  YARN may not have enough available resources.  Application is "
             + "currently running " + containerStatus(controller, config));
       }
 
       if (extraInfo) {
-        Collection<TwillRunResources> resources =
-            controller.getResourceReport().getRunnableResources(FluoOracleMain.ORACLE_NAME);
+        ResourceReport report = getResourceReport(controller);
+        Collection<TwillRunResources> resources;
+        resources = report.getRunnableResources(FluoOracleMain.ORACLE_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
             + config.getOracleInstances() + " desired Oracle containers:\n");
         TwillUtil.printResources(resources);
 
-        resources = controller.getResourceReport().getRunnableResources(FluoWorkerMain.WORKER_NAME);
+        resources = report.getRunnableResources(FluoWorkerMain.WORKER_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
             + config.getWorkerInstances() + " desired Worker containers:\n");
         TwillUtil.printResources(resources);

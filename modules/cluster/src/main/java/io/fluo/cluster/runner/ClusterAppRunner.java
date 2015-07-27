@@ -15,7 +15,6 @@
 package io.fluo.cluster.runner;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -24,7 +23,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.cluster.util.FluoInstall;
 import io.fluo.core.client.FluoAdminImpl;
 
 /**
