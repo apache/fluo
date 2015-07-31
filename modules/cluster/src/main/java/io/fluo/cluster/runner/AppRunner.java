@@ -33,7 +33,6 @@ import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
-import io.fluo.cluster.util.FluoInstall;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import org.apache.accumulo.core.client.Scanner;
