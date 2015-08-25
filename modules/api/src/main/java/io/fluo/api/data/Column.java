@@ -14,6 +14,8 @@
 
 package io.fluo.api.data;
 
+import java.io.Serializable;
+
 import com.google.common.base.Preconditions;
 
 /**
@@ -21,8 +23,9 @@ import com.google.common.base.Preconditions;
  * A column with no fields set is represented by {@link Column.EMPTY}. Column is immutable after it
  * is created.
  */
-public class Column {
+public class Column implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   public static final Bytes UNSET = Bytes.of(new byte[0]);
 
   private Bytes family = UNSET;
