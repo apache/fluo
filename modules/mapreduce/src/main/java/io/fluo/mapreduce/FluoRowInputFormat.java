@@ -43,13 +43,13 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * This input format reads a consistent snapshot from a Fluo table.
+ * This input format reads a consistent snapshot of Fluo rows from a Fluo table.
  */
-public class FluoInputFormat extends InputFormat<Bytes, ColumnIterator> {
+public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
-  private static String TIMESTAMP_CONF_KEY = FluoInputFormat.class.getName() + ".timestamp";
-  private static String PROPS_CONF_KEY = FluoInputFormat.class.getName() + ".props";
-  private static String FAMS_CONF_KEY = FluoInputFormat.class.getName() + ".families";
+  private static String TIMESTAMP_CONF_KEY = FluoRowInputFormat.class.getName() + ".timestamp";
+  private static String PROPS_CONF_KEY = FluoRowInputFormat.class.getName() + ".props";
+  private static String FAMS_CONF_KEY = FluoRowInputFormat.class.getName() + ".families";
 
   @Override
   public RecordReader<Bytes, ColumnIterator> createRecordReader(InputSplit split,

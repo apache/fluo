@@ -14,14 +14,17 @@
 
 package io.fluo.api.data;
 
+import java.io.Serializable;
+
 import com.google.common.base.Preconditions;
 
 /**
  * Represents all or subset of a Fluo row and {@link Column}. RowColumn is similar to an Accumulo
  * Key. RowColumn is immutable after it is created.
  */
-public class RowColumn {
+public class RowColumn implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   public static RowColumn EMPTY = new RowColumn();
 
   private Bytes row = Bytes.EMPTY;

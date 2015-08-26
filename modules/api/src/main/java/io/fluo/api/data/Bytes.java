@@ -22,6 +22,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,8 +35,9 @@ import com.google.common.base.Preconditions;
  * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
  * created. {@link Bytes.EMPTY} is used to represent a Bytes object with no data.
  */
-public abstract class Bytes implements Comparable<Bytes> {
+public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
+  private static final long serialVersionUID = 1L;
   private static final String BYTES_FACTORY_CLASS = "io.fluo.accumulo.data.MutableBytesFactory";
   private static final String WRITE_UTIL_CLASS = "io.fluo.accumulo.data.WriteUtilImpl";
 

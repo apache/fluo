@@ -14,14 +14,17 @@
 
 package io.fluo.api.data;
 
+import java.io.Serializable;
+
 import com.google.common.base.Preconditions;
 
 /**
  * Represents a range between two {@link RowColumn}s in a Fluo table. Similar to an Accumulo Range.
  * Span is immutable after it is created.
  */
-public class Span {
+public class Span implements Serializable {
 
+  private static final long serialVersionUID = 1L;
   private RowColumn start = RowColumn.EMPTY;
   private boolean startInclusive = true;
   private RowColumn end = RowColumn.EMPTY;
