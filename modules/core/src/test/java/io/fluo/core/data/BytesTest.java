@@ -74,4 +74,15 @@ public class BytesTest {
     Bytes imm = Bytes.of(d1);
     Assert.assertNotSame(d1, imm.toArray());
   }
+
+  @Test
+  public void testCompare() {
+    Bytes b1 = Bytes.of("a");
+    Bytes b2 = Bytes.of("b");
+    Bytes b3 = Bytes.of("a");
+    Assert.assertEquals(-1, b1.compareTo(b2));
+    Assert.assertEquals(1, b2.compareTo(b1));
+    Assert.assertEquals(0, b1.compareTo(b3));
+    Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+  }
 }

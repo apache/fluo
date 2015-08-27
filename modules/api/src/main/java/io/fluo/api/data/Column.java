@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
  * A column with no fields set is represented by {@link Column.EMPTY}. Column is immutable after it
  * is created.
  */
-public class Column implements Serializable {
+public class Column implements Comparable<Column>, Serializable {
 
   private static final long serialVersionUID = 1L;
   public static final Bytes UNSET = Bytes.of(new byte[0]);
@@ -150,6 +150,18 @@ public class Column implements Serializable {
   @Override
   public int hashCode() {
     return family.hashCode() + qualifier.hashCode() + visibility.hashCode();
+  }
+
+  @Override
+  public int compareTo(Column other) {
+    int result = family.compareTo(other.family);
+    if (result == 0) {
+      result = qualifier.compareTo(other.qualifier);
+      if (result == 0) {
+        result = visibility.compareTo(other.visibility);
+      }
+    }
+    return result;
   }
 
   @Override
