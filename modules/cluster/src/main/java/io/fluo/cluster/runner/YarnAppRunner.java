@@ -261,7 +261,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
             RunIds.fromString(twillId));
     if ((controller != null) && isReady(controller)) {
       System.out.print("Stopping Fluo '" + config.getApplicationName() + "' application "
-                       + getAppInfo(config) + "...");
+          + getAppInfo(config) + "...");
       controller.terminate().get();
       System.out.println("DONE");
     } else {

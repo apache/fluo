@@ -75,4 +75,23 @@ public class ColumnTest {
     Assert.assertEquals(Bytes.of("cv3"), col.getVisibility());
     Assert.assertEquals(new Column("cf3", "cq3", "cv3"), col);
   }
+
+  @Test
+  public void testCompare() {
+    Column c1 = new Column("a", "b");
+    Column c2 = new Column("a", "c");
+    Column c3 = new Column("a", "b", "d");
+    Column c4 = new Column("a");
+    Column c5 = Column.EMPTY;
+    Column c6 = new Column("a", "b");
+
+    Assert.assertEquals(-1, c1.compareTo(c2));
+    Assert.assertEquals(1, c2.compareTo(c1));
+    Assert.assertEquals(0, c1.compareTo(c6));
+    Assert.assertEquals(1, c1.compareTo(c5));
+    Assert.assertEquals(-1, c4.compareTo(c1));
+    Assert.assertEquals(-1, c1.compareTo(c3));
+    Assert.assertEquals(1, c4.compareTo(c5));
+    Assert.assertEquals(-1, c3.compareTo(c2));
+  }
 }

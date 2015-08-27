@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
  * Represents all or subset of a Fluo row and {@link Column}. RowColumn is similar to an Accumulo
  * Key. RowColumn is immutable after it is created.
  */
-public class RowColumn implements Serializable {
+public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   private static final long serialVersionUID = 1L;
   public static RowColumn EMPTY = new RowColumn();
@@ -143,5 +143,14 @@ public class RowColumn implements Serializable {
 
   private Bytes followingBytes(Bytes b) {
     return Bytes.of(followingArray(b.toArray()));
+  }
+
+  @Override
+  public int compareTo(RowColumn other) {
+    int result = row.compareTo(other.row);
+    if (result == 0) {
+      result = col.compareTo(other.col);
+    }
+    return result;
   }
 }

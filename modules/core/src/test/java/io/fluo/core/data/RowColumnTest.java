@@ -64,4 +64,19 @@ public class RowColumnTest {
     Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), Bytes.of("cq"), fb)),
         new RowColumn("row", new Column("cf", "cq", "data")).following());
   }
+
+  @Test
+  public void testCompare() {
+    RowColumn rc1 = new RowColumn("a", new Column("b"));
+    RowColumn rc2 = new RowColumn("b");
+    RowColumn rc3 = new RowColumn("a", new Column("c"));
+    RowColumn rc4 = new RowColumn("a", new Column("c", "d"));
+    Assert.assertEquals(-1, rc1.compareTo(rc2));
+    Assert.assertEquals(1, rc2.compareTo(rc1));
+    Assert.assertEquals(-1, rc1.compareTo(rc3));
+    Assert.assertEquals(-1, rc3.compareTo(rc2));
+    Assert.assertEquals(0, rc3.compareTo(rc3));
+    Assert.assertEquals(1, rc2.compareTo(RowColumn.EMPTY));
+    Assert.assertEquals(-1, rc3.compareTo(rc4));
+  }
 }
