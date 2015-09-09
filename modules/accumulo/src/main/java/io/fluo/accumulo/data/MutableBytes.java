@@ -32,6 +32,12 @@ public class MutableBytes extends Bytes implements Serializable {
   private final int offset;
   private final int length;
 
+  public MutableBytes() {
+    this.data = null;
+    this.offset = 0;
+    this.length = 0;
+  }
+
   /**
    * Creates a new MutableBytes. The given byte array is used directly as the backing array so later
    * changes made to the array reflect into the new sequence.
