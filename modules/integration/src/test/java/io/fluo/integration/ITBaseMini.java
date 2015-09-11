@@ -48,7 +48,7 @@ public class ITBaseMini extends ITBase {
     config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setAccumuloTable(getNextTableName());
     config.setWorkerThreads(5);
-    config.setObservers(getObservers());
+    config.addObservers(getObservers());
     config.setMiniStartAccumulo(false);
 
     setConfig(config);
