@@ -1,11 +1,11 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -210,7 +210,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   /**
    * Verifies application name. Avoids characters that Zookeeper does not like in nodes & Hadoop
    * does not like in HDFS paths.
-   * 
+   *
    * @param name Application name
    */
   private void verifyApplicationName(String name) {
@@ -399,32 +399,67 @@ public class FluoConfiguration extends CompositeConfiguration {
     return configList;
   }
 
-  /**
-   * Sets the {@link ObserverConfiguration} for observers
-   */
-  public FluoConfiguration setObservers(List<ObserverConfiguration> observers) {
-
-    Iterator<String> iter1 = getKeys(OBSERVER_PREFIX);
+  private int getNextObserverId() {
+    Iterator<String> iter1 = getKeys(OBSERVER_PREFIX.substring(0, OBSERVER_PREFIX.length() - 1));
+    int max = -1;
     while (iter1.hasNext()) {
       String key = iter1.next();
-      if (key.substring(OBSERVER_PREFIX.length()).matches("\\d+")) {
-        clearProperty(key);
+      String suffix = key.substring(OBSERVER_PREFIX.length());
+      if (suffix.matches("\\d+")) {
+        try {
+          max = Math.max(max, Integer.parseInt(suffix));
+        } catch (NumberFormatException e) {
+          // not a number so ignore it... will not conflict with the number used later
+        }
       }
     }
 
-    int count = 0;
-    for (ObserverConfiguration oconf : observers) {
-      Map<String, String> params = oconf.getParameters();
-      StringBuilder paramString = new StringBuilder();
-      for (java.util.Map.Entry<String, String> pentry : params.entrySet()) {
-        paramString.append(',');
-        paramString.append(pentry.getKey());
-        paramString.append('=');
-        paramString.append(pentry.getValue());
-      }
-      setProperty(OBSERVER_PREFIX + "" + count, oconf.getClassName() + paramString);
-      count++;
+    return max + 1;
+  }
+
+  private void addObserver(ObserverConfiguration oconf, int next) {
+    Map<String, String> params = oconf.getParameters();
+    StringBuilder paramString = new StringBuilder();
+    for (java.util.Map.Entry<String, String> pentry : params.entrySet()) {
+      paramString.append(',');
+      paramString.append(pentry.getKey());
+      paramString.append('=');
+      paramString.append(pentry.getValue());
     }
+    setProperty(OBSERVER_PREFIX + "" + next, oconf.getClassName() + paramString);
+  }
+
+  /**
+   * Adds an {@link ObserverConfiguration} to the configuration using a unique integer prefix thats
+   * not currently in use.
+   */
+  public FluoConfiguration addObserver(ObserverConfiguration oconf) {
+    int next = getNextObserverId();
+    addObserver(oconf, next);
+    return this;
+  }
+
+  /**
+   * Adds multiple observers using unique integer prefixes for each.
+   */
+  public FluoConfiguration addObservers(Iterable<ObserverConfiguration> observers) {
+    int next = getNextObserverId();
+    for (ObserverConfiguration oconf : observers) {
+      addObserver(oconf, next++);
+    }
+    return this;
+  }
+
+  /**
+   * Removes any configured observers.
+   */
+  public FluoConfiguration clearObservers() {
+    Iterator<String> iter1 = getKeys(OBSERVER_PREFIX.substring(0, OBSERVER_PREFIX.length() - 1));
+    while (iter1.hasNext()) {
+      String key = iter1.next();
+      clearProperty(key);
+    }
+
     return this;
   }
 
@@ -521,7 +556,7 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   /**
    * Base64 encodes yaml and stores it in metrics yaml base64 property
-   * 
+   *
    * @param in yaml input
    */
   public void setMetricsYaml(InputStream in) {
@@ -543,7 +578,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   /**
    * This property must be base64 encoded. If you have raw yaml, then consider using
    * {@link #setMetricsYaml(InputStream)} which will do the base64 encoding for you.
-   * 
+   *
    * @param base64Yaml A base64 encoded yaml metrics config.
    */
   public FluoConfiguration setMetricsYamlBase64(String base64Yaml) {
@@ -553,7 +588,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   /**
    * Consider using {@link #getMetricsYaml()} which will automatically decode the base 64 value of
    * this property.
-   * 
+   *
    * @return base64 encoded yaml metrics config.
    */
 
@@ -563,7 +598,7 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   /**
    * This method will decode the base64 yaml metrics config.
-   * 
+   *
    * @return stream that can be used to read yaml
    */
   public InputStream getMetricsYaml() {

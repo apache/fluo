@@ -74,7 +74,7 @@ public class ITBaseImpl extends ITBase {
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
     config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
-    config.setObservers(getObservers());
+    config.addObservers(getObservers());
 
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);

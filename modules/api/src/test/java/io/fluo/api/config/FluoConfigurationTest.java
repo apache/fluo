@@ -16,10 +16,14 @@ package io.fluo.api.config;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -272,6 +276,39 @@ public class FluoConfigurationTest {
     Assert.assertEquals(1, ocList.size());
     Assert.assertEquals("Class", ocList.get(0).getClassName());
     Assert.assertEquals(0, ocList.get(0).getParameters().size());
+  }
+
+  @Test
+  public void testObserverConfig2() {
+    FluoConfiguration config = new FluoConfiguration();
+
+    ObserverConfiguration oc1 =
+        new ObserverConfiguration("foo.class1").setParameters(ImmutableMap.of("param1", "a"));
+    ObserverConfiguration oc2 =
+        new ObserverConfiguration("foo.class2").setParameters(ImmutableMap.of("param1", "b"));
+    ObserverConfiguration oc3 = new ObserverConfiguration("foo.class3");
+
+    config.addObserver(oc1);
+    config.addObserver(oc2);
+    config.addObserver(oc3);
+
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3), new HashSet<>(config.getObserverConfig()));
+
+    config.clearObservers();
+
+    Assert.assertEquals(0, config.getObserverConfig().size());
+
+    config.addObservers(Arrays.asList(oc1, oc2));
+
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2), new HashSet<>(config.getObserverConfig()));
+
+    config.addObserver(oc3);
+
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3), new HashSet<>(config.getObserverConfig()));
+
+    config.clearObservers();
+
+    Assert.assertEquals(0, config.getObserverConfig().size());
   }
 
   private void assertSetNameIAE(String name) {

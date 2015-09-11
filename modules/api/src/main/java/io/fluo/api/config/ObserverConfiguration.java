@@ -15,6 +15,7 @@
 package io.fluo.api.config;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import io.fluo.api.observer.AbstractObserver;
@@ -39,23 +40,37 @@ public class ObserverConfiguration {
   /**
    * For configuration that is the same across multiple observers consider using Application
    * configuration.
-   * 
+   *
    * @param params Parameters that should be passed to
    *        {@link Observer#init(io.fluo.api.observer.Observer.Context)}
    * @return
-   * 
+   *
    * @see FluoConfiguration#getAppConfiguration()
    */
   public ObserverConfiguration setParameters(Map<String, String> params) {
     if (params == null) {
       throw new IllegalArgumentException();
     }
-    this.params = params;
+    this.params = new HashMap<>(params);
     return this;
   }
 
   public Map<String, String> getParameters() {
-    return params;
+    return Collections.unmodifiableMap(params);
   }
 
+  @Override
+  public int hashCode() {
+    return className.hashCode() + 17 * params.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof ObserverConfiguration) {
+      ObserverConfiguration ooc = (ObserverConfiguration) o;
+      return className.equals(ooc.className) && params.equals(ooc.params);
+    }
+
+    return false;
+  }
 }
