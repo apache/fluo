@@ -165,4 +165,9 @@ public class MockSnapshotBase implements SnapshotBase {
     }
     return ret;
   }
+
+  @Override
+  public long getStartTimestamp() {
+    throw new UnsupportedOperationException();
+  }
 }
