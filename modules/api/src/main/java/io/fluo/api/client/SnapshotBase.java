@@ -50,4 +50,9 @@ public interface SnapshotBase {
    * Retrieves a {@link RowIterator} with the given {@link ScannerConfiguration}
    */
   RowIterator get(ScannerConfiguration config);
+
+  /**
+   * @return transactions start timestamp allocated from Oracle.
+   */
+  long getStartTimestamp();
 }

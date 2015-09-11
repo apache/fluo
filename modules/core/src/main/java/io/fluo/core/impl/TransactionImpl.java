@@ -1,11 +1,11 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -488,18 +488,18 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   /**
    * This function helps handle the following case
-   * 
+   *
    * <OL>
    * <LI>TX1 locls r1 col1
    * <LI>TX1 fails before unlocking
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
-   * 
+   *
    * <p>
    * In this case TX2 would not roll back TX1, because it never read the column. This function
    * attempts to handle this case if TX2 fails. Only doing this in case of failures is cheaper than
    * trying to always read unread columns.
-   * 
+   *
    * @param cd Commit data
    */
   private void readUnread(CommitData cd) throws Exception {
@@ -770,7 +770,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   /**
    * Sets the transactor of this transaction
-   * 
+   *
    * @param tnode TransactorNode
    * @return this Transaction
    */
@@ -811,5 +811,10 @@ public class TransactionImpl implements Transaction, Snapshot {
     // CHECKSTYLE:ON
     // TODO Log an error if transaction is not closed (See FLUO-486)
     close();
+  }
+
+  @Override
+  public long getStartTimestamp() {
+    return startTs;
   }
 }
