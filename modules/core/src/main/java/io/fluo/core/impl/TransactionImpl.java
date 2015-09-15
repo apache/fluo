@@ -63,15 +63,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction, Snapshot {
 
-  private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
   private static final Bytes DELETE = Bytes.of("special delete object");
@@ -148,6 +145,10 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     checkIfOpen();
+
+    if (rows.size() == 0 || columns.size() == 0) {
+      return Collections.emptyMap();
+    }
 
     env.getSharedResources().getVisCache().validate(columns);
 
