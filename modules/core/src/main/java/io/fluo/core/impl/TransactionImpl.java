@@ -1,11 +1,11 @@
 /*
  * Copyright 2014 Fluo authors (see AUTHORS)
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -63,15 +63,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Transaction implementation
  */
 public class TransactionImpl implements Transaction, Snapshot {
 
-  private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
   private static final Bytes DELETE = Bytes.of("special delete object");
@@ -148,6 +145,10 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     checkIfOpen();
+
+    if (rows.size() == 0 || columns.size() == 0) {
+      return Collections.emptyMap();
+    }
 
     env.getSharedResources().getVisCache().validate(columns);
 
