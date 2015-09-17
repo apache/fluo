@@ -27,3 +27,10 @@ sudo: false
 cache:
   directories:
     - $HOME/.m2
+env:
+  global:
+    - secure: "HxekWtv02foIqO3e+i3SZ1vRWA9OzkuEGB5zMOmS9lcsg6w6aRkDS1y2gbSxS2n0kqPMCigGp6OcSDAptyeY4ztjVwvrWiKIdjK2Jd9dJ7INAHAhvf0xGcPNKkEWtTGWExrzstl1nXPFBDeEtjtg9+29PiiZW6JpxtUrSH5JcY0="
+    - secure: "Hg7Sx0IBHgQZViVM0zrutDYZiSLtvvnZRLNrk02mNsWGnU7geMGZsSQzGCJtBoLqptlJ9E3CuZggWBH5XgYPLNk3jUiGN1SENFC60EXGHLNDHhYCO6ietpEE7gMLlK6UQAFGHRHHJrsqpqeSRFp49uK3HdwOwSAJR944H8z7/t0="
+after_success:
+  - echo "<settings><servers><server><id>sonatype-nexus-snapshots</id><username>\${env.SONATYPE_USER}</username><password>\${env.SONATYPE_PASS}</password></server></servers></settings>" > ~/deploy-settings.xml
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" -a "$TRAVIS_BRANCH" = "master" ]; then mvn deploy -DskipTests --settings ~/deploy-settings.xml; else echo 'Skipping deploy.'; fi
