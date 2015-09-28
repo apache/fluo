@@ -75,6 +75,7 @@ public class ITBaseImpl extends ITBase {
     config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     config.addObservers(getObservers());
+    config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "1000");
 
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
@@ -98,11 +99,11 @@ public class ITBaseImpl extends ITBase {
 
   @After
   public void tearDownFluo() throws Exception {
-    conn.tableOperations().delete(table);
+    client.close();
     if (oserver.isConnected()) {
       oserver.stop();
     }
     env.close();
-    client.close();
+    conn.tableOperations().delete(table);
   }
 }

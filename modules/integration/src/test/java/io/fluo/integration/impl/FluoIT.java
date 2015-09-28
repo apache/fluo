@@ -38,6 +38,7 @@ import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl.CommitData;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import org.apache.accumulo.core.security.Authorizations;
@@ -132,6 +133,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(5, tx3.get().row("bob").col(balanceCol).toInteger(0));
     Assert.assertEquals(20, tx3.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(65, tx3.get().row("jill").col(balanceCol).toInteger(0));
+    tx3.done();
   }
 
   private void assertCommitFails(TestTransaction tx) {
@@ -211,6 +213,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(15l, tx3.get().row("joe").col(balanceCol).toLong(0));
     Assert.assertEquals(70l, tx3.get().row("jill").col(balanceCol).toLong(0));
     Assert.assertNull(tx3.get().row("jane").col(balanceCol).toLong());
+    tx3.done();
 
     TestTransaction tx5 = new TestTransaction(env);
 
@@ -218,6 +221,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(15l, tx5.get().row("joe").col(balanceCol).toLong(0));
     Assert.assertEquals(70l, tx5.get().row("jill").col(balanceCol).toLong(0));
     Assert.assertEquals(3l, tx5.get().row("jane").col(balanceCol).toLong(0));
+    tx5.done();
   }
 
   @Test
@@ -275,6 +279,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(11, tx6.get().row("bob").col(balanceCol).toInteger(0));
     Assert.assertEquals(21, tx6.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(61, tx6.get().row("jill").col(balanceCol).toInteger(0));
+    tx6.done();
 
     tx7.get().row("joe").col(balanceCol);
     tx7.mutate().row("bob").col(balanceCol).set(15);
@@ -287,6 +292,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(11, tx8.get().row("bob").col(balanceCol).toInteger(0));
     Assert.assertEquals(21, tx8.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(61, tx8.get().row("jill").col(balanceCol).toInteger(0));
+    tx8.done();
   }
 
   @Test
@@ -322,9 +328,10 @@ public class FluoIT extends ITBaseImpl {
 
     assertCommitFails(tx2);
 
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx1.commitPrimaryColumn(cd, commitTs));
     tx1.finishCommit(cd, commitTs);
+    tx1.close();
 
     tx3.mutate().row("bob").col(addrCol).set("2 loop pl");
     assertAAck(tx3);
@@ -404,6 +411,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(20, tx3.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(61, tx3.get().row("jill").col(balanceCol).toInteger(0));
 
+    tx3.done();
   }
 
   @Test
@@ -431,6 +439,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertEquals(10, tx2.get().row("bob").col(balanceCol).toInteger(0));
     Assert.assertEquals(20, tx2.get().row("joe").col(balanceCol).toInteger(0));
     Assert.assertEquals(60, tx2.get().row("jill").col(balanceCol).toInteger(0));
+    tx2.done();
     env2.close();
 
     Environment env3 = new Environment(fc);
@@ -440,6 +449,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertNull(tx3.get().row("bob").col(balanceCol).toInteger());
     Assert.assertNull(tx3.get().row("joe").col(balanceCol).toInteger());
     Assert.assertNull(tx3.get().row("jill").col(balanceCol).toInteger());
+    tx3.done();
     env3.close();
   }
 
@@ -487,6 +497,8 @@ public class FluoIT extends ITBaseImpl {
       }
     }
 
+    tx2.done();
+
     HashSet<Column> expected = new HashSet<>();
     expected.add(typeLayer.bc().fam("outlink").qual("http://a.com").vis());
     expected.add(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
@@ -508,6 +520,6 @@ public class FluoIT extends ITBaseImpl {
     expected.add(typeLayer.bc().fam("outlink").qual("http://z.com").vis());
     expected.remove(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
     Assert.assertEquals(expected, columns);
-
+    tx4.done();
   }
 }

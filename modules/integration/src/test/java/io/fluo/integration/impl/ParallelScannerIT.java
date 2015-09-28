@@ -23,6 +23,7 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedSnapshotBase.Value;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.impl.TransactorNode;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import org.junit.Assert;
@@ -55,7 +56,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     final CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
-    final long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    final Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd2, commitTs));
 
     // create a thread that will unlock column while transaction tx3 is executing
@@ -136,7 +137,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     CommitData cd3 = tx3.createCommitData();
     Assert.assertTrue(tx3.preCommit(cd3));
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     tx3.commitPrimaryColumn(cd3, commitTs);
 
     if (closeTransID) {

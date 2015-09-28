@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import io.fluo.accumulo.util.LongUtil;
+import io.fluo.accumulo.util.ZookeeperUtil;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
@@ -35,6 +36,7 @@ import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.impl.TransactorNode;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.integration.BankUtil;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
@@ -42,6 +44,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.curator.framework.CuratorFramework;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -123,11 +126,11 @@ public class FailureIT extends ITBaseImpl {
     }
 
     if (killTransactor) {
-      long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+      Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
       exception.expect(IllegalStateException.class);
       tx2.commitPrimaryColumn(cd, commitTs);
     } else {
-      long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+      Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
       t2.close();
     }
@@ -174,7 +177,7 @@ public class FailureIT extends ITBaseImpl {
 
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
     if (killTransactor) {
@@ -242,7 +245,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals(joeBal, tx4.get().row("joe").col(BALANCE).toInteger(0));
     Assert.assertEquals(67, tx4.get().row("jill").col(BALANCE).toInteger(0));
 
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
 
     BankUtil.transfer(env, "bob", "joe", 2);
@@ -307,7 +310,7 @@ public class FailureIT extends ITBaseImpl {
       Assert.assertEquals(1, tx3.getStats().getTimedOutLocks());
     }
 
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
 
     if (killTransactor) {
       // test for exception
@@ -343,7 +346,7 @@ public class FailureIT extends ITBaseImpl {
     // get locks
     CommitData cd = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd));
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx2.commitPrimaryColumn(cd, commitTs));
 
     // test rolling forward primary and non-primary columns
@@ -408,7 +411,7 @@ public class FailureIT extends ITBaseImpl {
     cd = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd, Bytes.of("idx:abc"), typeLayer.bc().fam("doc").qual("url")
         .vis()));
-    long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
 
     // should roll tx5 forward
@@ -461,12 +464,10 @@ public class FailureIT extends ITBaseImpl {
 
     conn.tableOperations().flush(table, null, null, true);
 
+    Assert.assertEquals(20, tx2.get().row("joe").col(BALANCE).toInteger(0));
+
     // Stale scan should not occur due to oldest active timestamp tracking in Zookeeper
-    try {
-      tx2.get().row("joe").col(BALANCE).toInteger(0);
-    } catch (StaleScanException sse) {
-      Assert.assertFalse(true);
-    }
+    tx2.close();
 
     TestTransaction tx3 = new TestTransaction(env);
 
@@ -475,7 +476,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals(59, tx3.get().row("jill").col(BALANCE).toInteger(0));
   }
 
-  @Test
+  @Test(timeout = 60000)
   public void testForcedStaleScan() throws Exception {
 
     TestTransaction tx = new TestTransaction(env);
@@ -483,11 +484,15 @@ public class FailureIT extends ITBaseImpl {
     tx.mutate().row("bob").col(BALANCE).set(10);
     tx.mutate().row("joe").col(BALANCE).set(20);
     tx.mutate().row("jill").col(BALANCE).set(60);
+    tx.mutate().row("john").col(BALANCE).set(3);
 
     tx.done();
 
     TestTransaction tx2 = new TestTransaction(env);
     Assert.assertEquals(10, tx2.get().row("bob").col(BALANCE).toInteger(0));
+
+    TestTransaction tx3 = new TestTransaction(env);
+    tx3.get().row("john").col(BALANCE).toInteger(0);
 
     BankUtil.transfer(env, "joe", "jill", 1);
     BankUtil.transfer(env, "joe", "bob", 1);
@@ -497,27 +502,49 @@ public class FailureIT extends ITBaseImpl {
     // Force a stale scan be modifying the oldest active timestamp to a
     // more recent time in Zookeeper. This disables timestamp tracking.
     Long nextTs = new TestTransaction(env).getStartTs();
-    env.getSharedResources()
-        .getCurator()
-        .setData()
-        .forPath(env.getSharedResources().getTimestampTracker().getNodePath(),
-            LongUtil.toByteArray(nextTs));
+    CuratorFramework curator = env.getSharedResources().getCurator();
+    curator.setData().forPath(env.getSharedResources().getTimestampTracker().getNodePath(),
+        LongUtil.toByteArray(nextTs));
+
+    long gcTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
+    while (gcTs < nextTs) {
+      Thread.sleep(500);
+      // keep setting timestamp tracker time in ZK until GC picks it up
+      curator.setData().forPath(env.getSharedResources().getTimestampTracker().getNodePath(),
+          LongUtil.toByteArray(nextTs));
+      gcTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
+    }
 
     // GC iterator will clear data that tx2 wants to scan
     conn.tableOperations().flush(table, null, null, true);
 
-    // Tx2 should throw stale scan exception
+    // this data should have been GCed, but the problem is not detected here
+    Assert.assertNull(tx2.get().row("joe").col(BALANCE).toInteger());
+
     try {
-      tx2.get().row("joe").col(BALANCE).toInteger();
+      // closing should detect the stale scan
+      tx2.close();
       Assert.assertFalse(true);
     } catch (StaleScanException sse) {
+
     }
 
-    TestTransaction tx3 = new TestTransaction(env);
+    tx3.mutate().row("john").col(BALANCE).set(5l);
 
-    Assert.assertEquals(9, tx3.get().row("bob").col(BALANCE).toInteger(0));
-    Assert.assertEquals(22, tx3.get().row("joe").col(BALANCE).toInteger(0));
-    Assert.assertEquals(59, tx3.get().row("jill").col(BALANCE).toInteger(0));
+    try {
+      tx3.commit();
+      Assert.assertFalse(true);
+    } catch (CommitException e) {
+      // should not throw an exception
+      tx3.close();
+    }
+
+    TestTransaction tx4 = new TestTransaction(env);
+
+    Assert.assertEquals(9, tx4.get().row("bob").col(BALANCE).toInteger(0));
+    Assert.assertEquals(22, tx4.get().row("joe").col(BALANCE).toInteger(0));
+    Assert.assertEquals(59, tx4.get().row("jill").col(BALANCE).toInteger(0));
+    Assert.assertEquals(3, tx4.get().row("john").col(BALANCE).toInteger(0));
   }
 
   @Test

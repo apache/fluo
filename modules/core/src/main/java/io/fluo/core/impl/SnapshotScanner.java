@@ -23,12 +23,10 @@ import java.util.Set;
 
 import io.fluo.accumulo.iterators.SnapshotIterator;
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
-import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.SpanUtil;
 import io.fluo.core.util.UtilWaitThread;
@@ -199,14 +197,8 @@ public class SnapshotScanner implements Iterator<Entry<Key, Value>> {
       } else if (colType == ColumnConstants.DATA_PREFIX) {
         stats.incrementEntriesReturned(1);
         return entry;
-      } else if (colType == ColumnConstants.WRITE_PREFIX) {
-        if (WriteValue.isTruncated(entry.getValue().get())) {
-          throw new StaleScanException();
-        } else {
-          throw new IllegalArgumentException();
-        }
       } else {
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Unexpected column type " + colType);
       }
     }
   }

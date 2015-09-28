@@ -162,7 +162,8 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
     try {
       FluoConfiguration fconfig = new FluoConfiguration(config);
       try (Environment env = new Environment(fconfig)) {
-        long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
+        long ts =
+            env.getSharedResources().getTimestampTracker().allocateTimestamp().getTxTimestamp();
         conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

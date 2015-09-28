@@ -33,6 +33,7 @@ import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TransactionImpl.CommitData;
 import io.fluo.core.impl.TransactorNode;
 import io.fluo.core.impl.TxStats;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.SpanUtil;
@@ -99,7 +100,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   /**
    * Calls commit() and then close()
-   * 
+   *
    * @throws CommitException
    */
   public void done() throws CommitException {
@@ -133,14 +134,14 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     return tx.preCommit(cd, trow, tcol);
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
+  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) throws AccumuloException,
       AccumuloSecurityException {
-    return tx.commitPrimaryColumn(cd, commitTs);
+    return tx.commitPrimaryColumn(cd, commitStamp);
   }
 
-  public void finishCommit(CommitData cd, long commitTs) throws MutationsRejectedException,
+  public void finishCommit(CommitData cd, Stamp commitStamp) throws MutationsRejectedException,
       TableNotFoundException {
-    tx.finishCommit(cd, commitTs);
+    tx.finishCommit(cd, commitStamp);
   }
 
   public long getStartTs() {

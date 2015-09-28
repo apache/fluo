@@ -17,6 +17,7 @@ package io.fluo.integration.impl;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Iterables;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
@@ -39,7 +40,16 @@ import org.junit.Test;
  */
 public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
-  @Test
+  private void waitForGcTime(long expectedTime) throws Exception {
+    env.getSharedResources().getTimestampTracker().updateZkNode();
+    long oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
+    while (oldestTs < expectedTime) {
+      Thread.sleep(500);
+      oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
+    }
+  }
+
+  @Test(timeout = 60000)
   public void testVerifyAfterGC() throws Exception {
 
     TestTransaction tx1 = new TestTransaction(env);
@@ -54,9 +64,9 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     BankUtil.transfer(env, "jill", "joe", 2);
 
     TestTransaction tx2 = new TestTransaction(env);
+    waitForGcTime(tx2.getStartTimestamp());
 
-    env.getSharedResources().getTimestampTracker().updateZkNode();
-    long oldestTs = ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
+    long oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
     Assert.assertEquals(tx2.getStartTs(), oldestTs);
 
     // Force a garbage collection
@@ -72,6 +82,42 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx2.done();
   }
 
+  @Test(timeout = 60000)
+  public void testDeletedDataIsDropped() throws Exception {
+    TestTransaction tx1 = new TestTransaction(env);
+    tx1.mutate().row("001").fam("doc").qual("uri").set("file:///abc.txt");
+    tx1.done();
+
+    TestTransaction tx2 = new TestTransaction(env);
+
+    TestTransaction tx3 = new TestTransaction(env);
+    tx3.mutate().row("001").fam("doc").qual("uri").delete();
+    tx3.done();
+
+    TestTransaction tx4 = new TestTransaction(env);
+
+    waitForGcTime(tx2.getStartTimestamp());
+
+    // Force a garbage collection
+    conn.tableOperations().compact(table, null, null, true, true);
+
+    Assert.assertEquals("file:///abc.txt", tx2.get().row("001").fam("doc").qual("uri").toString());
+
+    tx2.done();
+
+    Assert.assertNull(tx4.get().row("001").fam("doc").qual("uri").toString());
+
+    waitForGcTime(tx4.getStartTimestamp());
+    conn.tableOperations().compact(table, null, null, true, true);
+
+    Assert.assertNull(tx4.get().row("001").fam("doc").qual("uri").toString());
+
+    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    Assert.assertEquals(0, Iterables.size(scanner));
+
+    tx4.done();
+  }
+
   @Test
   public void testGetOldestTimestamp() throws Exception {
     // we are expecting an error in this test
@@ -79,12 +125,12 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Logger.getLogger(ZookeeperUtil.class).setLevel(Level.FATAL);
 
     // verify that oracle initial current ts
-    Assert.assertEquals(0, ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
+    Assert.assertEquals(0, ZookeeperUtil.getGcTimestamp(config.getAppZookeepers()));
     // delete the oracle current timestamp path
-    env.getSharedResources().getCurator().delete().forPath(ZookeeperPath.ORACLE_CUR_TIMESTAMP);
+    env.getSharedResources().getCurator().delete().forPath(ZookeeperPath.ORACLE_GC_TIMESTAMP);
     // verify that oldest possible is returned
     Assert.assertEquals(ZookeeperUtil.OLDEST_POSSIBLE,
-        ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers()));
+        ZookeeperUtil.getGcTimestamp(config.getAppZookeepers()));
 
     // set level back
     Logger.getLogger(ZookeeperUtil.class).setLevel(curLevel);
@@ -92,7 +138,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   /**
    * Verifies that older versions of data are newer than given timestamp
-   * 
+   *
    * @param oldestTs
    * @throws TableNotFoundException
    */

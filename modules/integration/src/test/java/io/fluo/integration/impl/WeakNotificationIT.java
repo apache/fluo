@@ -33,6 +33,7 @@ import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl.CommitData;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.integration.ITBaseMini;
 import io.fluo.integration.TestTransaction;
 import org.junit.Assert;
@@ -116,10 +117,10 @@ public class WeakNotificationIT extends ITBaseMini {
     CommitData cd6 = tx6.createCommitData();
     Assert.assertTrue(tx6.preCommit(cd6));
 
-    long commitTs5 = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs5 = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd5, commitTs5));
 
-    long commitTs6 = env.getSharedResources().getOracleClient().getTimestamp();
+    Stamp commitTs6 = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx6.commitPrimaryColumn(cd6, commitTs6));
 
     tx6.finishCommit(cd6, commitTs6);

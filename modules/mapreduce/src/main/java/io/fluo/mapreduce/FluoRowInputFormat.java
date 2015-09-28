@@ -137,7 +137,7 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
   /**
    * Configure properties needed to connect to a Fluo application
-   * 
+   *
    * @param conf Job configuration
    * @param config use {@link io.fluo.api.config.FluoConfiguration} to configure programmatically
    */
@@ -146,7 +146,8 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
     try {
       FluoConfiguration fconfig = new FluoConfiguration(config);
       try (Environment env = new Environment(fconfig)) {
-        long ts = env.getSharedResources().getTimestampTracker().allocateTimestamp();
+        long ts =
+            env.getSharedResources().getTimestampTracker().allocateTimestamp().getTxTimestamp();
         conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

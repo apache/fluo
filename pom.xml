@@ -568,7 +568,7 @@
               <failOnViolation>true</failOnViolation>
               <violationSeverity>warning</violationSeverity>
               <outputFile>${project.build.directory}/checkstyle-results-java.xml</outputFile>
-              <excludes>**/OracleService*</excludes>
+              <excludes>**/thrift/*</excludes>
             </configuration>
           </execution>
         </executions>

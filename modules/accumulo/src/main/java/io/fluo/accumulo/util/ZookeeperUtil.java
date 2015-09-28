@@ -45,7 +45,7 @@ public class ZookeeperUtil {
 
   /**
    * Parses chroot section of Zookeeper connection string
-   * 
+   *
    * @param zookeepers Zookeeper connection string
    * @return Returns root path or "/" if none found
    */
@@ -58,55 +58,20 @@ public class ZookeeperUtil {
   }
 
   /**
-   * Retrieves the oldest active timestamp in Fluo by scanning zookeeper
-   * 
+   * Retrieves the GC timestamp, set by the Oracle, from zookeeper
+   *
    * @param zookeepers Zookeeper connection string
    * @return Oldest active timestamp or oldest possible ts (-1) if not found
    */
-  public static long getOldestTimestamp(String zookeepers) {
-    long oldestTs = Long.MAX_VALUE;
-    boolean nodeFound = false;
-
+  public static long getGcTimestamp(String zookeepers) {
     ZooKeeper zk = null;
     try {
       zk = new ZooKeeper(zookeepers, 30000, null);
-
-      // Try to find oldest active timestamp of transactors
-      String tsRootPath = ZookeeperPath.TRANSACTOR_TIMESTAMPS;
-      try {
-        if (zk.exists(tsRootPath, false) != null) {
-          for (String child : zk.getChildren(tsRootPath, false)) {
-            Long ts = LongUtil.fromByteArray(zk.getData(tsRootPath + "/" + child, false, null));
-            nodeFound = true;
-            if (ts < oldestTs) {
-              oldestTs = ts;
-            }
-          }
-        }
-      } catch (Exception e) {
-        log.error("Failed to get oldest timestamp of transactors from Zookeeper", e);
-        return OLDEST_POSSIBLE;
-      }
-
-      // If no transactors found, lookup oldest active timestamp set by oracle in zookeeper
-      if (nodeFound == false) {
-        try {
-          byte[] d = zk.getData(ZookeeperPath.ORACLE_CUR_TIMESTAMP, false, null);
-          oldestTs = LongUtil.fromByteArray(d);
-          nodeFound = true;
-        } catch (KeeperException | InterruptedException e) {
-          log.error("Failed to get oldest timestamp of Oracle from Zookeeper", e);
-          return OLDEST_POSSIBLE;
-        }
-      }
-
-      // Return oldest possible timestamp if no node found
-      if (!nodeFound) {
-        return OLDEST_POSSIBLE;
-      }
-      return oldestTs;
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+      byte[] d = zk.getData(ZookeeperPath.ORACLE_GC_TIMESTAMP, false, null);
+      return LongUtil.fromByteArray(d);
+    } catch (KeeperException | InterruptedException | IOException e) {
+      log.warn("Failed to get oldest timestamp of Oracle from Zookeeper", e);
+      return OLDEST_POSSIBLE;
     } finally {
       if (zk != null) {
         try {

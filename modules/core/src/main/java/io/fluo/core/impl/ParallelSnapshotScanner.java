@@ -24,10 +24,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
-import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -144,12 +142,6 @@ public class ParallelSnapshotScanner {
           }
 
           cols.put(col, Bytes.of(entry.getValue().get()));
-        } else if (colType == ColumnConstants.WRITE_PREFIX) {
-          if (WriteValue.isTruncated(entry.getValue().get())) {
-            throw new StaleScanException();
-          } else {
-            throw new IllegalArgumentException();
-          }
         } else {
           throw new IllegalArgumentException("Unexpected column type " + colType);
         }

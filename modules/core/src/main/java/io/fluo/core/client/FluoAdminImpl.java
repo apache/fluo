@@ -183,7 +183,7 @@ public class FluoAdminImpl implements FluoAdmin {
         CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'},
         CuratorUtil.NodeExistsPolicy.FAIL);
-    CuratorUtil.putData(curator, ZookeeperPath.ORACLE_CUR_TIMESTAMP, new byte[] {'0'},
+    CuratorUtil.putData(curator, ZookeeperPath.ORACLE_GC_TIMESTAMP, new byte[] {'0'},
         CuratorUtil.NodeExistsPolicy.FAIL);
 
     conn.tableOperations().create(config.getAccumuloTable(), false);

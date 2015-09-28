@@ -264,9 +264,9 @@ public abstract class AppRunner {
     try (Environment env = new Environment(waitConfig)) {
       log.info("The wait command will exit when all notifications are processed");
       while (true) {
-        long ts1 = env.getSharedResources().getOracleClient().getTimestamp();
+        long ts1 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
         long ntfyCount = countNotifications(env);
-        long ts2 = env.getSharedResources().getOracleClient().getTimestamp();
+        long ts2 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
         if (ntfyCount == 0 && ts1 == (ts2 - 1)) {
           log.info("All processing has finished!");
           break;

@@ -39,7 +39,7 @@ public class FluoMutationGenerator {
 
   /**
    * Creates builder for given row
-   * 
+   *
    * @param row Will be encoded using UTF-8
    */
   public FluoMutationGenerator(CharSequence row) {
@@ -60,7 +60,7 @@ public class FluoMutationGenerator {
 
   /**
    * Puts value at given column
-   * 
+   *
    * @param value Will be encoded using UTF-8
    */
   public FluoMutationGenerator put(Column col, CharSequence value) {

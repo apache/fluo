@@ -51,14 +51,14 @@ public class OracleIT extends ITBaseImpl {
   public void testRestart() throws Exception {
     OracleClient client = env.getSharedResources().getOracleClient();
 
-    long ts1 = client.getTimestamp();
-    long ts2 = client.getTimestamp();
+    long ts1 = client.getStamp().getTxTimestamp();
+    long ts2 = client.getStamp().getTxTimestamp();
 
     oserver.stop();
     oserver.start();
 
-    long ts3 = client.getTimestamp();
-    long ts4 = client.getTimestamp();
+    long ts3 = client.getStamp().getTxTimestamp();
+    long ts4 = client.getStamp().getTxTimestamp();
 
     assertTrue(ts1 + " " + ts2, ts1 < ts2);
     assertTrue(ts2 + " " + ts3, ts2 < ts3);
@@ -84,7 +84,7 @@ public class OracleIT extends ITBaseImpl {
 
       for (int i = 0; i < numToGet; i++) {
         try {
-          output.add(oclient.getTimestamp());
+          output.add(oclient.getStamp().getTxTimestamp());
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -97,7 +97,7 @@ public class OracleIT extends ITBaseImpl {
   /**
    * Test that bogus input into the oracle server doesn't cause an OOM exception. This essentially
    * tests for THRIFT-602
-   * 
+   *
    * @throws TTransportException
    */
   @Test
@@ -119,7 +119,7 @@ public class OracleIT extends ITBaseImpl {
 
     OracleClient client = env.getSharedResources().getOracleClient();
 
-    assertEquals(2, client.getTimestamp());
+    assertEquals(2, client.getStamp().getTxTimestamp());
 
     Logger.getLogger(THsHaServer.class).setLevel(curLevel);
   }
@@ -187,7 +187,7 @@ public class OracleIT extends ITBaseImpl {
 
     long timestamp;
     for (long i = 2; i <= 7; i++) {
-      timestamp = client.getTimestamp();
+      timestamp = client.getStamp().getTxTimestamp();
       assertEquals(i, timestamp);
     }
 
@@ -196,14 +196,14 @@ public class OracleIT extends ITBaseImpl {
     oserver.stop();
     sleepWhileConnected(oserver);
 
-    assertEquals(1002, client.getTimestamp());
+    assertEquals(1002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port2)));
 
     oserver2.stop();
     sleepWhileConnected(oserver2);
     oserver2.close();
 
-    assertEquals(2002, client.getTimestamp());
+    assertEquals(2002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
 
     oserver3.stop();
@@ -223,7 +223,7 @@ public class OracleIT extends ITBaseImpl {
 
     long timestamp;
     for (long i = 2; i <= 7; i++) {
-      timestamp = client.getTimestamp();
+      timestamp = client.getStamp().getTxTimestamp();
       assertEquals(i, timestamp);
     }
 
@@ -241,7 +241,7 @@ public class OracleIT extends ITBaseImpl {
     oserver.start();
     sleepUntilConnected(oserver);
 
-    assertEquals(1002, client.getTimestamp());
+    assertEquals(1002, client.getStamp().getTxTimestamp());
 
     assertTrue(client.getOracle().endsWith(Integer.toString(oserver.getPort())));
 

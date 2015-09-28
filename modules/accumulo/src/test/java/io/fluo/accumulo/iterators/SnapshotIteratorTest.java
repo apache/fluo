@@ -65,30 +65,6 @@ public class SnapshotIteratorTest {
   }
 
   @Test
-  public void testTruncation() {
-    TestData input = new TestData();
-
-    input.add("0 f q WRITE 16", "11");
-    input.add("0 f q DATA 11", "15");
-
-    input.add("0 f q WRITE 10", "9 TRUNCATION");
-    input.add("0 f q DATA 9", "14");
-
-    TestData output = new TestData(newSI(input, 6));
-    TestData expected = new TestData().add("0 f q WRITE 10", "9 TRUNCATION");
-    Assert.assertEquals(expected, output);
-
-    output = new TestData(newSI(input, 11));
-    expected = new TestData().add("0 f q DATA 9", "14");
-    Assert.assertEquals(expected, output);
-
-    output = new TestData(newSI(input, 17));
-    expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
-
-  }
-
-  @Test
   public void testLock() {
     TestData input = new TestData();
 
