@@ -560,7 +560,6 @@
             <goals>
               <goal>check</goal>
             </goals>
-            <phase>validate</phase>
             <configuration>
               <configLocation>contrib/fluo-checks.xml</configLocation>
               <encoding>UTF-8</encoding>
