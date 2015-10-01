@@ -16,6 +16,7 @@ package io.fluo.integration.impl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.google.common.collect.Iterables;
 import io.fluo.accumulo.util.ColumnConstants;
@@ -27,15 +28,23 @@ import io.fluo.integration.ITBaseMini;
 import io.fluo.integration.TestTransaction;
 import io.fluo.integration.impl.WeakNotificationIT.SimpleObserver;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class NotificationGcIT extends ITBaseMini {
 
-  public static int countRawNotifications(Environment env) throws Exception {
+  public static void assertRawNotifications(int expected, Environment env) throws Exception {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
-    return Iterables.size(scanner);
+    int size = Iterables.size(scanner);
+    if (size != expected) {
+      for (Entry<Key, Value> entry : scanner) {
+        System.out.println(entry);
+      }
+    }
+    Assert.assertEquals(expected, size);
   }
 
   public static int countNotifications(Environment env) throws Exception {
@@ -77,12 +86,13 @@ public class NotificationGcIT extends ITBaseMini {
     Assert.assertEquals(8, tx5.get().row("r1").fam("stat").qual("count").toInteger(0));
     Assert.assertEquals(14, tx5.get().row("r2").fam("stat").qual("count").toInteger(0));
 
-    Assert.assertEquals(4, countRawNotifications(env));
+
+    assertRawNotifications(4, env);
     Assert.assertEquals(0, countNotifications(env));
 
     env.getConnector().tableOperations().flush(env.getTable(), null, null, true);
 
-    Assert.assertEquals(0, countRawNotifications(env));
+    assertRawNotifications(0, env);
     Assert.assertEquals(0, countNotifications(env));
   }
 }

@@ -14,13 +14,17 @@
 
 package io.fluo.integration.impl;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import io.fluo.accumulo.util.LongUtil;
-import io.fluo.accumulo.util.ZookeeperUtil;
+import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.TimestampTracker;
 import io.fluo.core.impl.TransactorID;
 import io.fluo.integration.ITBaseImpl;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,13 +45,13 @@ public class TimestampTrackerIT extends ITBaseImpl {
     TimestampTracker tracker = new TimestampTracker(env, new TransactorID(env));
     Assert.assertTrue(tracker.isEmpty());
     Assert.assertFalse(zkNodeExists(tracker));
-    long ts1 = tracker.allocateTimestamp();
+    long ts1 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertFalse(tracker.isEmpty());
     Assert.assertTrue(zkNodeExists(tracker));
     Assert.assertTrue(ts1 > zkNodeValue(tracker));
     Assert.assertEquals(tracker.getZookeeperTimestamp(), zkNodeValue(tracker));
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
-    long ts2 = tracker.allocateTimestamp();
+    long ts2 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
     tracker.removeTimestamp(ts1);
     Assert.assertFalse(tracker.isEmpty());
@@ -58,19 +62,20 @@ public class TimestampTrackerIT extends ITBaseImpl {
     tracker.removeTimestamp(ts2);
     Assert.assertTrue(tracker.isEmpty());
     Assert.assertTrue(zkNodeExists(tracker));
+    tracker.close();
   }
 
   @Test
   public void testTrackingWithZkUpdate() throws Exception {
     TimestampTracker tracker = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts1 = tracker.allocateTimestamp();
+    long ts1 = tracker.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertNotNull(ts1);
     Assert.assertTrue(zkNodeExists(tracker));
     Assert.assertNotNull(zkNodeValue(tracker));
     Assert.assertEquals(tracker.getZookeeperTimestamp(), zkNodeValue(tracker));
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
-    long ts2 = tracker.allocateTimestamp();
+    long ts2 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
     Thread.sleep(15);
     tracker.removeTimestamp(ts1);
@@ -81,19 +86,20 @@ public class TimestampTrackerIT extends ITBaseImpl {
     Thread.sleep(15);
     Assert.assertTrue(tracker.isEmpty());
     Assert.assertFalse(zkNodeExists(tracker));
+    tracker.close();
   }
 
   @Test
-  public void testTimestampUtilGetOldestTs() throws InterruptedException {
+  public void testTimestampUtilGetOldestTs() throws Exception {
     Assert.assertEquals(0, getOldestTs());
     TimestampTracker tr1 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts1 = tr1.allocateTimestamp();
+    long ts1 = tr1.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertEquals(tr1.getZookeeperTimestamp(), getOldestTs());
     TimestampTracker tr2 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts2 = tr2.allocateTimestamp();
+    long ts2 = tr2.allocateTimestamp().getTxTimestamp();
     TimestampTracker tr3 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts3 = tr3.allocateTimestamp();
+    long ts3 = tr3.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertEquals(ts1, getOldestTs());
     tr1.removeTimestamp(ts1);
@@ -108,8 +114,28 @@ public class TimestampTrackerIT extends ITBaseImpl {
     tr3.close();
   }
 
-  private long getOldestTs() {
-    return ZookeeperUtil.getOldestTimestamp(config.getAppZookeepers());
+  private long getOldestTs() throws Exception {
+
+    CuratorFramework curator = env.getSharedResources().getCurator();
+    List<String> children;
+    try {
+      children = curator.getChildren().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS);
+    } catch (NoNodeException nne) {
+      children = Collections.emptyList();
+    }
+
+    long oldestTs = Long.MAX_VALUE;
+
+    for (String child : children) {
+      Long ts =
+          LongUtil.fromByteArray(curator.getData().forPath(
+              ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
+      if (ts < oldestTs) {
+        oldestTs = ts;
+      }
+    }
+
+    return oldestTs == Long.MAX_VALUE ? 0 : oldestTs;
   }
 
   private boolean zkNodeExists(TimestampTracker tracker) throws Exception {

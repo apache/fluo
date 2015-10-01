@@ -37,7 +37,6 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
-import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.impl.Environment;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
@@ -167,8 +166,6 @@ public class StochasticBankIT extends ITBaseImpl {
           tx.done();
           break;
 
-        } catch (StaleScanException sse) {
-          // retry
         } catch (CommitException ce) {
           // retry
         }

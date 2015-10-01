@@ -93,7 +93,7 @@ public class TestData {
       case "WRITE":
         ts |= ColumnConstants.WRITE_PREFIX;
         long writeTs = Long.parseLong(value.split("\\s+")[0]);
-        val = WriteValue.encode(writeTs, value.contains("PRIMARY"), value.contains("TRUNCATION"));
+        val = WriteValue.encode(writeTs, value.contains("PRIMARY"), value.contains("DELETE"));
         break;
       case "LOCK":
         ts |= ColumnConstants.LOCK_PREFIX;

@@ -28,16 +28,16 @@ import org.apache.hadoop.io.Text;
  * This class allows generating Accumulo key values that are in the Fluo data format. This class is
  * intended to be used with {@link AccumuloFileOutputFormat} inorder to seed an initialized Fluo
  * table on which no transactions have executed.
- * 
+ *
  * <p>
  * This class generates multiple Accumulo key values for a single Fluo row and column. The key
  * values generated are guaranteed to be in sorted order.
- * 
+ *
  * <p>
  * This class is designed to be reused inorder to avoid object creation in a map reduce job.
- * 
+ *
  * <p>
- * 
+ *
  * <pre>
  * {@code
  *   // this could be shared between calls to map or reduce, to avoid creating for each call.
@@ -60,7 +60,7 @@ import org.apache.hadoop.io.Text;
  * 
  * @code}
  * </pre>
- * 
+ *
  * <p>
  */
 
@@ -106,7 +106,7 @@ public class FluoKeyValueGenerator {
 
   /**
    * This method will use UTF-8 to encode the string as bytes.
-   * 
+   *
    * @return this
    */
   public FluoKeyValueGenerator setRow(String row) {
@@ -156,7 +156,7 @@ public class FluoKeyValueGenerator {
 
   /**
    * This method will use UTF-8 to encode the string as bytes.
-   * 
+   *
    * @return this
    */
   public FluoKeyValueGenerator setValue(String val) {
@@ -167,11 +167,11 @@ public class FluoKeyValueGenerator {
   /**
    * Translates the Fluo row, column, and value set into the persistent format that is stored in
    * Accumulo.
-   * 
+   *
    * <p>
    * The objects returned by this method are reused each time its called. So each time this is
    * called it invalidates what was returned by previous calls to this method.
-   * 
+   *
    * @return A an array of Accumulo key values in correct sorted order.
    */
   public FluoKeyValue[] getKeyValues() {

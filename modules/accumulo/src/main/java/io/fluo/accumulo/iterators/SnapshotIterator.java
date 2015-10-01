@@ -80,8 +80,6 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
           if (dataPointer == -1) {
             if (ts <= snaptime) {
               dataPointer = timePtr;
-            } else if (WriteValue.isTruncated(source.getTopValue().get())) {
-              return;
             }
           }
         } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {

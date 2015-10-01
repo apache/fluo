@@ -16,17 +16,14 @@ package io.fluo.accumulo.values;
 
 import io.fluo.accumulo.util.ByteArrayUtil;
 
-/**
- * 
- */
 public class WriteValue {
   private final boolean primary;
-  private final boolean truncated;
+  private final boolean delete;
   private final long ts;
 
   public WriteValue(byte[] data) {
     primary = isPrimary(data);
-    truncated = isTruncated(data);
+    delete = isDelete(data);
     ts = getTimestamp(data);
   }
 
@@ -38,11 +35,11 @@ public class WriteValue {
     return (data[0] & 0x01) == 1;
   }
 
-  public boolean isTruncated() {
-    return truncated;
+  public boolean isDelete() {
+    return delete;
   }
 
-  public static boolean isTruncated(byte[] data) {
+  public static boolean isDelete(byte[] data) {
     return (data[0] & 0x02) == 2;
   }
 
@@ -56,12 +53,12 @@ public class WriteValue {
 
   @Override
   public String toString() {
-    return ts + (truncated ? " TRUNCATION" : "") + " " + (primary ? "PRIMARY" : "");
+    return ts + (delete ? " DELETE" : "") + " " + (primary ? "PRIMARY" : "");
   }
 
-  public static byte[] encode(long ts, boolean primary, boolean truncated) {
+  public static byte[] encode(long ts, boolean primary, boolean delete) {
     byte[] ba = new byte[9];
-    ba[0] = (byte) ((primary ? 1 : 0) | (truncated ? 2 : 0));
+    ba[0] = (byte) ((primary ? 1 : 0) | (delete ? 2 : 0));
     ByteArrayUtil.encode(ba, 1, ts);
     return ba;
   }

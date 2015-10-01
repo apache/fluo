@@ -32,7 +32,10 @@ import static org.junit.Assert.fail;
 public class FluoAdminImplIT extends ITBaseImpl {
 
   @Test
-  public void testInitializeTwiceFails() throws AlreadyInitializedException, TableExistsException {
+  public void testInitializeTwiceFails() throws Exception {
+
+    // stop oracle to avoid spurious exceptions when initializing
+    oserver.stop();
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
 
@@ -67,7 +70,10 @@ public class FluoAdminImplIT extends ITBaseImpl {
   }
 
   @Test
-  public void testInitializeWithNoChroot() throws AlreadyInitializedException, TableExistsException {
+  public void testInitializeWithNoChroot() throws Exception {
+
+    // stop oracle to avoid spurious exceptions when initializing
+    oserver.stop();
 
     InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
 
@@ -83,6 +89,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
   @Test
   public void testInitializeLongChroot() throws Exception {
+
+    // stop oracle to avoid spurious exceptions when initializing
+    oserver.stop();
 
     String zk = config.getAppZookeepers();
     String longPath = "/very/long/path";

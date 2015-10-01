@@ -26,10 +26,14 @@ import org.junit.Test;
 public class GarbageCollectionIteratorTest {
 
   GarbageCollectionIterator newGCI(TestData input, long oldestActive) {
+    return newGCI(input, oldestActive, true);
+  }
+
+  GarbageCollectionIterator newGCI(TestData input, long oldestActive, boolean fullMajc) {
     GarbageCollectionIterator gci = new GarbageCollectionIterator();
     Map<String, String> options = new HashMap<>();
-    options.put(GarbageCollectionIterator.OLDEST_ACTIVE_TS_OPT, Long.toString(oldestActive));
-    TestIteratorEnv env = new TestIteratorEnv(IteratorScope.majc);
+    options.put(GarbageCollectionIterator.GC_TIMESTAMP_OPT, Long.toString(oldestActive));
+    TestIteratorEnv env = new TestIteratorEnv(IteratorScope.majc, fullMajc);
 
     try {
       gci.init(new SortedMapIterator(input.data), options, env);
@@ -57,7 +61,7 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 60));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 16", "11 TRUNCATION");
+    expected.add("0 f q WRITE 16", "11");
     expected.add("0 f q DATA 11", "15");
 
     Assert.assertEquals(expected, output);
@@ -69,14 +73,14 @@ public class GarbageCollectionIteratorTest {
     TestData input = new TestData();
     // TODO need to test w/ more types
     input.add("0 f q TX_DONE 21", "");
-    input.add("0 f q WRITE 21", "20 TRUNCATION PRIMARY");
+    input.add("0 f q WRITE 21", "20 PRIMARY");
     input.add("0 f q ACK 20", "");
     input.add("0 f q ACK 16", "");
     input.add("0 f q ACK 14", "");
 
     TestData expected = new TestData();
     expected.add("0 f q TX_DONE 21", "");
-    expected.add("0 f q WRITE 21", "20 TRUNCATION PRIMARY");
+    expected.add("0 f q WRITE 21", "20 PRIMARY");
 
     TestData output = new TestData(newGCI(input, 5));
 
@@ -99,13 +103,13 @@ public class GarbageCollectionIteratorTest {
     Assert.assertEquals(expected, output);
 
     input = new TestData();
-    input.add("0 f q WRITE 19", "16 TRUNCATION PRIMARY");
+    input.add("0 f q WRITE 19", "16 PRIMARY");
     input.add("0 f q ACK 20", "");
     input.add("0 f q ACK 16", "");
     input.add("0 f q ACK 14", "");
 
     expected = new TestData();
-    expected.add("0 f q WRITE 19", "16 TRUNCATION PRIMARY");
+    expected.add("0 f q WRITE 19", "16 PRIMARY");
     expected.add("0 f q ACK 20", "");
 
     output = new TestData(newGCI(input, 5));
@@ -121,7 +125,7 @@ public class GarbageCollectionIteratorTest {
     input.add("0 f q WRITE 52", "48");
     input.add("0 f q WRITE 45", "41");
     input.add("0 f q WRITE 38", "33");
-    input.add("0 f q WRITE 20", "17 TRUNCATION");
+    input.add("0 f q WRITE 20", "17");
     input.add("0 f q DATA 48", "18");
     input.add("0 f q DATA 41", "15");
     input.add("0 f q DATA 33", "13");
@@ -138,7 +142,7 @@ public class GarbageCollectionIteratorTest {
     TestData expected = new TestData();
     expected.add("0 f q WRITE 52", "48");
     expected.add("0 f q WRITE 45", "41");
-    expected.add("0 f q WRITE 38", "33 TRUNCATION");
+    expected.add("0 f q WRITE 38", "33");
     expected.add("0 f q DATA 48", "18");
     expected.add("0 f q DATA 41", "15");
     expected.add("0 f q DATA 33", "13");
@@ -149,7 +153,7 @@ public class GarbageCollectionIteratorTest {
 
     expected = new TestData();
     expected.add("0 f q WRITE 52", "48");
-    expected.add("0 f q WRITE 45", "41 TRUNCATION");
+    expected.add("0 f q WRITE 45", "41");
     expected.add("0 f q DATA 48", "18");
     expected.add("0 f q DATA 41", "15");
 
@@ -158,7 +162,7 @@ public class GarbageCollectionIteratorTest {
     Assert.assertEquals(expected, output);
 
     expected = new TestData();
-    expected.add("0 f q WRITE 52", "48 TRUNCATION");
+    expected.add("0 f q WRITE 52", "48");
     expected.add("0 f q DATA 48", "18");
 
     output = new TestData(newGCI(input, 53));
@@ -183,12 +187,12 @@ public class GarbageCollectionIteratorTest {
     TestData input = new TestData(inputBase);
 
     input.add("0 f q TX_DONE 20", "");
-    input.add("0 f q WRITE 20", "17 TRUNCATION PRIMARY");
+    input.add("0 f q WRITE 20", "17 PRIMARY");
 
     TestData output = new TestData(newGCI(input, 60));
 
     TestData expected = new TestData();
-    expected.add("0 f q WRITE 52", "48 TRUNCATION");
+    expected.add("0 f q WRITE 52", "48");
     expected.add("0 f q DATA 48", "18");
 
     Assert.assertEquals(expected, output);
@@ -196,13 +200,13 @@ public class GarbageCollectionIteratorTest {
     // test with only primary
     input = new TestData(inputBase);
 
-    input.add("0 f q WRITE 20", "17 TRUNCATION PRIMARY");
+    input.add("0 f q WRITE 20", "17 PRIMARY");
 
     output = new TestData(newGCI(input, 60));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 52", "48 TRUNCATION");
-    expected.add("0 f q WRITE 20", "17 TRUNCATION PRIMARY");
+    expected.add("0 f q WRITE 52", "48");
+    expected.add("0 f q WRITE 20", "17 PRIMARY");
     expected.add("0 f q DATA 48", "18");
 
     Assert.assertEquals(expected, output);
@@ -216,7 +220,7 @@ public class GarbageCollectionIteratorTest {
 
     expected = new TestData();
     expected.add("0 f q TX_DONE 20", "");
-    expected.add("0 f q WRITE 52", "48 TRUNCATION");
+    expected.add("0 f q WRITE 52", "48");
     expected.add("0 f q DATA 48", "18");
 
     Assert.assertEquals(expected, output);
@@ -225,14 +229,14 @@ public class GarbageCollectionIteratorTest {
     input = new TestData(inputBase);
 
     input.add("0 f q TX_DONE 17", "");
-    input.add("0 f q WRITE 20", "17 TRUNCATION PRIMARY");
+    input.add("0 f q WRITE 20", "17 PRIMARY");
 
     output = new TestData(newGCI(input, 60));
 
     expected = new TestData();
     expected.add("0 f q TX_DONE 17", "");
-    expected.add("0 f q WRITE 52", "48 TRUNCATION");
-    expected.add("0 f q WRITE 20", "17 TRUNCATION PRIMARY");
+    expected.add("0 f q WRITE 52", "48");
+    expected.add("0 f q WRITE 20", "17 PRIMARY");
     expected.add("0 f q DATA 48", "18");
 
     Assert.assertEquals(expected, output);
@@ -293,7 +297,7 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 23));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 22", "21 TRUNCATION");
+    expected.add("0 f q WRITE 22", "21");
     expected.add("0 f q DATA 21", "17");
 
     Assert.assertEquals(expected, output);
@@ -310,7 +314,7 @@ public class GarbageCollectionIteratorTest {
 
     expected = new TestData();
     expected.add("0 f q DEL_LOCK 19", "19");
-    expected.add("0 f q WRITE 15", "11 TRUNCATION");
+    expected.add("0 f q WRITE 15", "11");
     expected.add("0 f q DATA 19", "19");
     expected.add("0 f q DATA 11", "15");
 
@@ -327,7 +331,7 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 23));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 22", "19 TRUNCATION");
+    expected.add("0 f q WRITE 22", "19");
     expected.add("0 f q DEL_LOCK 13", "11 PRIMARY");
     expected.add("0 f q DATA 19", "19");
 
@@ -339,7 +343,7 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 23));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 22", "19 TRUNCATION");
+    expected.add("0 f q WRITE 22", "19");
     expected.add("0 f q DATA 19", "19");
 
     Assert.assertEquals(expected, output);
@@ -367,13 +371,171 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 23));
 
     expected = new TestData();
-    expected.add("0 f q WRITE 11", "10 TRUNCATION");
+    expected.add("0 f q WRITE 11", "10");
     expected.add("0 f q DATA 10", "17");
 
     Assert.assertEquals(expected, output);
   }
 
+  @Test
+  public void testDeletes() {
+    TestData inputBase = new TestData();
 
+    inputBase.add("0 f q WRITE 52", "48 DELETE");
+    inputBase.add("0 f q WRITE 45", "41");
+    inputBase.add("0 f q LOCK 41", "0 f q");
+    inputBase.add("0 f q WRITE 38", "33");
+    inputBase.add("0 f q LOCK 33", "0 f q");
+    inputBase.add("0 f q DATA 41", "15");
+    inputBase.add("0 f q DATA 33", "13");
+    inputBase.add("0 g q WRITE 42", "38 DELETE");
+    inputBase.add("0 g q WRITE 35", "31");
+    inputBase.add("0 g q WRITE 28", "23");
+    inputBase.add("0 g q DATA 31", "15");
+    inputBase.add("0 g q DATA 23", "13");
+    inputBase.add("0 h q WRITE 37", "33");
+    inputBase.add("0 h q DATA 33", "9");
+
+    TestData output = new TestData(newGCI(inputBase, 60));
+    TestData expected = new TestData();
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(inputBase, 60, false));
+    expected = new TestData();
+    expected.add("0 g q WRITE 42", "38 DELETE");
+    expected.add("0 f q WRITE 52", "48 DELETE");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(output, 60));
+    expected = new TestData();
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(inputBase, 37));
+    expected = new TestData();
+    expected.add("0 f q WRITE 52", "48 DELETE");
+    expected.add("0 f q WRITE 45", "41");
+    expected.add("0 f q WRITE 38", "33");
+    expected.add("0 f q DATA 41", "15");
+    expected.add("0 f q DATA 33", "13");
+    expected.add("0 g q WRITE 42", "38 DELETE");
+    expected.add("0 g q WRITE 35", "31");
+    expected.add("0 g q DATA 31", "15");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(inputBase, 43));
+    expected = new TestData();
+    expected.add("0 f q WRITE 52", "48 DELETE");
+    expected.add("0 f q WRITE 45", "41");
+    expected.add("0 f q WRITE 38", "33");
+    expected.add("0 f q DATA 41", "15");
+    expected.add("0 f q DATA 33", "13");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    // test write that supercededs a delete... delete should not cause write to be GCed
+    TestData input = new TestData(inputBase);
+    input.add("0 f q WRITE 60", "55");
+    input.add("0 f q DATA 55", "abc");
+    output = new TestData(newGCI(input, 70));
+    expected = new TestData();
+    expected.add("0 f q WRITE 60", "55");
+    expected.add("0 f q DATA 55", "abc");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    // test lock after delete write
+    input = new TestData(inputBase);
+    input.add("0 g q LOCK 50", "0 g q");
+    output = new TestData(newGCI(input, 70));
+    expected = new TestData();
+    expected.add("0 g q LOCK 50", "0 g q");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    // test ack before delete write
+    input = new TestData(inputBase);
+    input.add("0 g q ACK 37", "");
+    output = new TestData(newGCI(input, 70));
+    expected = new TestData();
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    // test ack after delete write
+    input = new TestData(inputBase);
+    input.add("0 g q ACK 45", "");
+    output = new TestData(newGCI(input, 70));
+    expected = new TestData();
+    expected.add("0 g q ACK 45", "");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+  }
+
+  @Test
+  public void testDeletePrimary() {
+    TestData inputBase = new TestData();
+
+    inputBase.add("0 f q WRITE 52", "48 DELETE PRIMARY");
+    inputBase.add("0 f q WRITE 45", "41");
+    inputBase.add("0 f q WRITE 38", "33");
+    inputBase.add("0 f q DATA 41", "15");
+    inputBase.add("0 f q DATA 33", "13");
+    inputBase.add("0 g q WRITE 42", "38 DELETE");
+    inputBase.add("0 g q WRITE 35", "31");
+    inputBase.add("0 g q WRITE 28", "23");
+    inputBase.add("0 g q DATA 31", "15");
+    inputBase.add("0 g q DATA 23", "13");
+    inputBase.add("0 h q WRITE 37", "33");
+    inputBase.add("0 h q DATA 33", "9");
+
+    // ensure delete is not dropped if its primary (unless there is a TX DONE marker)
+    TestData output = new TestData(newGCI(inputBase, 60));
+    TestData expected = new TestData();
+    expected.add("0 f q WRITE 52", "48 DELETE PRIMARY");
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+
+    TestData input = new TestData(inputBase);
+    input.add("0 f q TX_DONE 52", "");
+    output = new TestData(newGCI(input, 60));
+    expected = new TestData();
+    expected.add("0 h q WRITE 37", "33");
+    expected.add("0 h q DATA 33", "9");
+    Assert.assertEquals(expected, output);
+  }
+
+
+  @Test
+  public void testNotifications() {
+    // should pass notifications through
+    TestData input = new TestData();
+
+    input.add("0 ntfy foo:bar 7", "");
+    input.add("0 ntfy foo:bar 5", "");
+    input.add("0 ntfy foo:bar 4", "");
+
+    input.add("1 ntfy foo:bar 3", "");
+    input.add("1 ntfy foo:bar 2", "");
+
+    input.add("1 ntfy foo:baz 1", "");
+    input.add("2 ntfy foo:baz 3", "");
+
+    TestData output = new TestData(newGCI(input, 60, false));
+    Assert.assertEquals(input, output);
+  }
 
   @Test
   public void testMultiColumn() {
@@ -390,7 +552,7 @@ public class GarbageCollectionIteratorTest {
     input.add("0 f c TX_DONE 20", "");
 
     input.add("0 f d WRITE 25", "21");
-    input.add("0 f d WRITE 20", "17 TRUNCATION PRIMARY");
+    input.add("0 f d WRITE 20", "17 PRIMARY");
     input.add("0 f d DATA 21", "19");
     input.add("0 f d DATA 17", "15");
 
@@ -409,8 +571,8 @@ public class GarbageCollectionIteratorTest {
 
     expected.add("0 f c TX_DONE 20", "");
 
-    expected.add("0 f d WRITE 25", "21 TRUNCATION");
-    expected.add("0 f d WRITE 20", "17 TRUNCATION PRIMARY");
+    expected.add("0 f d WRITE 25", "21");
+    expected.add("0 f d WRITE 20", "17 PRIMARY");
     expected.add("0 f d DATA 21", "19");
 
     expected.add("0 f e LOCK 19", "1 f q");

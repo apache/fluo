@@ -56,12 +56,12 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   }
 
   @VisibleForTesting
-  static final String OLDEST_ACTIVE_TS_OPT = "timestamp.oldest.active";
+  static final String GC_TIMESTAMP_OPT = "timestamp.gc";
 
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
   private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(
       ColumnConstants.NOTIFY_CF.toArray());
-  private Long oldestActiveTs;
+  private Long gcTimestamp;
   private SortedKeyValueIterator<Key, Value> source;
 
   private ArrayList<KeyValue> keys = new ArrayList<>();
@@ -70,6 +70,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   private Key curCol = new Key();
   private long truncationTime;
   private int position = 0;
+  boolean isFullMajc;
 
   @Override
   public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
@@ -79,21 +80,38 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
     }
     this.source = source;
 
-    String oats = options.get(OLDEST_ACTIVE_TS_OPT);
+    isFullMajc = env.getIteratorScope() == IteratorScope.majc && env.isFullMajorCompaction();
+
+    String oats = options.get(GC_TIMESTAMP_OPT);
     if (oats != null) {
-      oldestActiveTs = Long.valueOf(oats);
+      gcTimestamp = Long.valueOf(oats);
     } else {
       String zookeepers = options.get(ZOOKEEPER_CONNECT_OPT);
       if (zookeepers == null) {
         throw new IllegalArgumentException("A configuration item for GC iterator was not set");
       }
-      oldestActiveTs = ZookeeperUtil.getOldestTimestamp(zookeepers);
+      gcTimestamp = ZookeeperUtil.getGcTimestamp(zookeepers);
     }
   }
 
   @Override
   public boolean hasTop() {
     return position < keysFiltered.size() || source.hasTop();
+  }
+
+
+  private void findTop() throws IOException {
+    while (source.hasTop()) {
+      readColMetadata();
+      if (keysFiltered.size() == 0) {
+        if (!consumeData()) {
+          // not all data for current column was consumed
+          break;
+        }
+      } else {
+        break;
+      }
+    }
   }
 
   @Override
@@ -107,6 +125,15 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       source.next();
     }
 
+    if (consumeData()) {
+      findTop();
+    }
+  }
+
+  /**
+   * @return true when all data columns in current column were consumed
+   */
+  private boolean consumeData() throws IOException {
     while (source.hasTop()
         && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
@@ -114,39 +141,30 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
 
       if (colType == ColumnConstants.DATA_PREFIX) {
         if (ts >= truncationTime) {
-          break;
+          return false;
         }
       } else {
         // TODO check if its a notify
-        break;
+        return false;
       }
 
       source.next();
     }
 
-    // @formatter:off - Due to formatter putting if statement on one line that is > 100 chars
-    if (source.hasTop()
-        && !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      // @formatter:on
-      readColMetadata();
-    }
+    return true;
   }
 
   @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive)
       throws IOException {
     source.seek(range, columnFamilies, inclusive);
-
-    if (source.hasTop()) {
-      readColMetadata();
-    }
+    findTop();
   }
 
   private void readColMetadata() throws IOException {
 
     long invalidationTime = -1;
 
-    boolean truncationSeen = false;
     boolean oldestSeen = false;
     boolean sawAck = false;
     long firstWrite = -1;
@@ -183,28 +201,19 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
           keep = true;
         }
 
-        if (!oldestSeen && !truncationSeen) {
-          keep = true;
-
+        if (!oldestSeen) {
           if (firstWrite == -1) {
             firstWrite = ts;
           }
 
-          if (ts < oldestActiveTs) {
+          if (ts < gcTimestamp) {
             oldestSeen = true;
-          }
-
-          if (WriteValue.isTruncated(val)) {
-            truncationSeen = true;
-          }
-
-          if (oldestSeen || truncationSeen) {
-            if (truncationTime != -1) {
-              throw new IllegalStateException();
-            }
-
             truncationTime = timePtr;
-            val = WriteValue.encode(truncationTime, WriteValue.isPrimary(val), true);
+            if (!(WriteValue.isDelete(val) && isFullMajc)) {
+              keep = true;
+            }
+          } else {
+            keep = true;
           }
         }
 
@@ -267,11 +276,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       } else {
         keysFiltered.add(kv);
       }
-    }
-
-    if (keysFiltered.size() == 0 && source.hasTop()
-        && !curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      throw new IllegalStateException();
     }
   }
 

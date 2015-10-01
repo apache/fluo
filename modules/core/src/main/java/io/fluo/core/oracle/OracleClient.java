@@ -20,7 +20,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
@@ -30,6 +30,7 @@ import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.thrift.OracleService;
+import io.fluo.core.thrift.Stamps;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.curator.framework.CuratorFramework;
@@ -66,7 +67,7 @@ public class OracleClient implements AutoCloseable {
 
   private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
-    AtomicLong timestamp = new AtomicLong();
+    AtomicReference<Stamp> stampRef = new AtomicReference<>();
   }
 
   private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable,
@@ -159,7 +160,8 @@ public class OracleClient implements AutoCloseable {
           request.add(trh);
           queue.drainTo(request);
 
-          long start;
+          long txStampsStart;
+          long gcStamp;
 
           while (true) {
 
@@ -173,7 +175,9 @@ public class OracleClient implements AutoCloseable {
 
               final Context timerContext = responseTimer.time();
 
-              start = localClient.getTimestamps(env.getFluoApplicationID(), request.size());
+              Stamps stamps = localClient.getTimestamps(env.getFluoApplicationID(), request.size());
+              txStampsStart = stamps.txStampsStart;
+              gcStamp = stamps.gcStamp;
 
               String leaderId = getOracle();
               if (leaderId != null && !leaderId.equals(currentLeaderId)) {
@@ -196,7 +200,7 @@ public class OracleClient implements AutoCloseable {
 
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
-            tr.timestamp.set(start + i);
+            tr.stampRef.set(new Stamp(txStampsStart + i, gcStamp));
             tr.cdl.countDown();
           }
         } catch (InterruptedException e) {
@@ -343,7 +347,7 @@ public class OracleClient implements AutoCloseable {
   /**
    * Retrieves time stamp from Oracle. Throws {@link FluoException} if timed out or interrupted.
    */
-  public long getTimestamp() {
+  public Stamp getStamp() {
     checkClosed();
 
     TimeRequest tr = new TimeRequest();
@@ -370,7 +374,7 @@ public class OracleClient implements AutoCloseable {
     } catch (InterruptedException e) {
       throw new FluoException("Interrupted while retrieving timestamp from Oracle", e);
     }
-    return tr.timestamp.get();
+    return tr.stampRef.get();
   }
 
   /**

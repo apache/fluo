@@ -58,7 +58,7 @@ public class ColumnUtil {
       Set<Column> observedColumns, Mutation m) {
     if (isWrite) {
       Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
-          WriteValue.encode(startTs, isPrimary, false));
+          WriteValue.encode(startTs, isPrimary, isDelete));
     } else {
       Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs,
           DelLockValue.encode(startTs, isPrimary, false));

@@ -15,6 +15,8 @@
 package io.fluo.core.oracle;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,6 +29,7 @@ import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.thrift.OracleService;
+import io.fluo.core.thrift.Stamps;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.util.Halt;
 import io.fluo.core.util.HostUtil;
@@ -49,6 +52,7 @@ import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,14 +77,12 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public static final long ORACLE_MAX_READ_BUFFER_BYTES = 2048;
 
   private final Environment env;
-  private final Timer timer;
 
   private Thread serverThread;
   private THsHaServer server;
   private volatile long currentTs = 0;
   private volatile long maxTs = 0;
   private volatile boolean started = false;
-  private long zkTs = 0;
   private int port = 0;
 
   private LeaderSelector leaderSelector;
@@ -90,10 +92,87 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   private Participant currentLeader;
 
   private final String maxTsPath;
-  private final String curTsPath;
   private final String oraclePath;
 
   private volatile boolean isLeader = false;
+
+  private GcTimestampTracker gcTsTracker;
+
+
+  private class GcTimestampTracker {
+    private volatile long advertisedGcTimetamp;
+    private CuratorFramework curator;
+    private Timer timer;
+
+    GcTimestampTracker() throws Exception {
+      this.curator = env.getSharedResources().getCurator();
+    }
+
+    private void updateAdvertisedGcTimestamp(long newTs) throws Exception {
+      if (newTs > advertisedGcTimetamp && isLeader) {
+        // set volatile var before setting in ZK in case Oracle dies... this ensures that client
+        // making a request for timestamps see the new GC time before GC iters
+        advertisedGcTimetamp = newTs;
+        curator.setData().forPath(ZookeeperPath.ORACLE_GC_TIMESTAMP,
+            LongUtil.toByteArray(advertisedGcTimetamp));
+      }
+    }
+
+    private void updateGcTimestamp() throws Exception {
+      List<String> children;
+      try {
+        children = curator.getChildren().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS);
+      } catch (NoNodeException nne) {
+        children = Collections.emptyList();
+      }
+
+      long oldestTs = Long.MAX_VALUE;
+      boolean nodeFound = false;
+
+      for (String child : children) {
+        Long ts =
+            LongUtil.fromByteArray(curator.getData().forPath(
+                ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
+        nodeFound = true;
+        if (ts < oldestTs) {
+          oldestTs = ts;
+        }
+      }
+
+      if (nodeFound) {
+        updateAdvertisedGcTimestamp(oldestTs);
+      } else {
+        updateAdvertisedGcTimestamp(currentTs);
+      }
+    }
+
+    void start() throws Exception {
+      advertisedGcTimetamp =
+          LongUtil.fromByteArray(curator.getData().forPath(ZookeeperPath.ORACLE_GC_TIMESTAMP));
+      TimerTask tt = new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            updateGcTimestamp();
+          } catch (Exception e) {
+            log.warn("Failed to update GC timestamp.", e);
+          }
+        }
+      };
+      timer = new Timer("Oracle gc update timer", true);
+      long updatePeriod =
+          env.getConfiguration().getLong(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP,
+              FluoConfigurationImpl.ZK_UPDATE_PERIOD_MS_DEFAULT);
+      timer.schedule(tt, updatePeriod, updatePeriod);
+    }
+
+    void stop() {
+      if (timer != null) {
+        timer.cancel();
+        timer = null;
+      }
+    }
+  }
 
   public OracleServer(Environment env) throws Exception {
     this.env = env;
@@ -104,27 +183,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
-    this.curTsPath = ZookeeperPath.ORACLE_CUR_TIMESTAMP;
     this.oraclePath = ZookeeperPath.ORACLE_SERVER;
-    TimerTask tt = new TimerTask() {
-      @Override
-      public void run() {
-        long lastTs = currentTs - 1;
-        if (isLeader && (zkTs != lastTs)) {
-          try {
-            curatorFramework.setData().forPath(curTsPath, LongUtil.toByteArray(lastTs));
-          } catch (Exception e) {
-            throw new IllegalStateException(e);
-          }
-          zkTs = lastTs;
-        }
-      }
-    };
-    timer = new Timer("Oracle timestamp timer", true);
-    long updatePeriod =
-        env.getConfiguration().getLong(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP,
-            FluoConfigurationImpl.ZK_UPDATE_PERIOD_MS_DEFAULT);
-    timer.schedule(tt, updatePeriod, updatePeriod);
   }
 
   private void allocateTimestamp() throws Exception {
@@ -148,13 +207,13 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   }
 
   @Override
-  public long getTimestamps(String id, int num) throws TException {
+  public Stamps getTimestamps(String id, int num) throws TException {
     long start = getTimestampsImpl(id, num);
 
     // do this outside of sync
     stampsHistogram.update(num);
 
-    return start;
+    return new Stamps(start, gcTsTracker.advertisedGcTimetamp);
   }
 
   private synchronized long getTimestampsImpl(String id, int num) throws TException {
@@ -279,6 +338,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       server.stop();
       serverThread.join();
 
+      if (gcTsTracker != null) {
+        gcTsTracker.stop();
+      }
+
       started = false;
 
       currentLeader = null;
@@ -312,7 +375,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   /**
    * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the
    * last timestamp set in zookeeper.
-   * 
+   *
    * @param curatorFramework Curator framework
    */
   @Override
@@ -341,6 +404,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
         byte[] d = curatorFramework.getData().forPath(maxTsPath);
         currentTs = maxTs = LongUtil.fromByteArray(d);
       }
+
+      gcTsTracker = new GcTimestampTracker();
+      gcTsTracker.start();
 
       isLeader = true;
 

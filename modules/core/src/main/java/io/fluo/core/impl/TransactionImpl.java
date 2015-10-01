@@ -42,6 +42,8 @@ import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
+import io.fluo.core.exceptions.StaleScanException;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.ConditionalFlutation;
 import io.fluo.core.util.FluoCondition;
@@ -62,7 +64,6 @@ import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.security.ColumnVisibility;
 
 /**
  * Transaction implementation
@@ -88,10 +89,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   private Notification weakNotification;
   private TransactorNode tnode = null;
   private TxStatus status = TxStatus.OPEN;
-
-  private ColumnVisibility gv(Column colvis) {
-    return env.getSharedResources().getVisCache().getCV(colvis);
-  }
+  private boolean commitAttempted = false;
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Preconditions.checkNotNull(env, "environment cannot be null");
@@ -114,18 +112,18 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   public TransactionImpl(Environment env, Notification trigger) {
-    this(env, trigger, allocateTimestamp(env));
+    this(env, trigger, allocateTimestamp(env).getTxTimestamp());
   }
 
   public TransactionImpl(Environment env) {
-    this(env, null, allocateTimestamp(env));
+    this(env, null, allocateTimestamp(env).getTxTimestamp());
   }
 
   public TransactionImpl(Environment env, long startTs) {
     this(env, null, startTs);
   }
 
-  private static Long allocateTimestamp(Environment env) {
+  private static Stamp allocateTimestamp(Environment env) {
     return env.getSharedResources().getTimestampTracker().allocateTimestamp();
   }
 
@@ -574,6 +572,16 @@ public class TransactionImpl implements Transaction, Snapshot {
     return false;
   }
 
+  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) throws AccumuloException,
+      AccumuloSecurityException {
+    if (startTs < commitStamp.getGcTimestamp()) {
+      rollback(cd);
+      return false;
+    }
+
+    return commitPrimaryColumn(cd, commitStamp.getTxTimestamp());
+  }
+
   public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
       AccumuloSecurityException {
     // set weak notifications after all locks are written, but before finishing commit. If weak
@@ -629,7 +637,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     return true;
   }
 
-  private void rollback(CommitData cd) throws TableNotFoundException, MutationsRejectedException {
+  private void rollback(CommitData cd) throws MutationsRejectedException {
     // roll back locks
 
     // TODO let rollback be done lazily? this makes GC more difficult
@@ -660,8 +668,9 @@ public class TransactionImpl implements Transaction, Snapshot {
     env.getSharedResources().getBatchWriter().writeMutation(m);
   }
 
-  public boolean finishCommit(CommitData cd, long commitTs) throws TableNotFoundException,
+  public boolean finishCommit(CommitData cd, Stamp commitStamp) throws TableNotFoundException,
       MutationsRejectedException {
+    long commitTs = commitStamp.getTxTimestamp();
     // delete locks and add writes for other columns
     ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
     for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
@@ -715,6 +724,8 @@ public class TransactionImpl implements Transaction, Snapshot {
       throw new CommitException("Transaction was previously committed");
     }
 
+    commitAttempted = true;
+
     if (updates.size() == 0) {
       deleteWeakRow();
       stats.setFinishTime(System.currentTimeMillis());
@@ -733,12 +744,12 @@ public class TransactionImpl implements Transaction, Snapshot {
         throw new CommitException("Pre-commit failed");
       }
 
-      long commitTs = env.getSharedResources().getOracleClient().getTimestamp();
-      stats.setCommitTs(commitTs);
-      if (commitPrimaryColumn(cd, commitTs)) {
-        finishCommit(cd, commitTs);
+      Stamp commitStamp = env.getSharedResources().getOracleClient().getStamp();
+      if (commitPrimaryColumn(cd, commitStamp)) {
+        stats.setCommitTs(commitStamp.getTxTimestamp());
+        finishCommit(cd, commitStamp);
       } else {
-        // TODO write TX_DONE
+        // TODO write TX_DONE (done in case where startTs < gcTimestamp)
         throw new CommitException("Commit failed");
       }
     } catch (CommitException e) {
@@ -792,12 +803,24 @@ public class TransactionImpl implements Transaction, Snapshot {
     return tnode.getTransactorID().getLongID();
   }
 
-  @Override
-  public synchronized void close() {
+  private synchronized void close(boolean checkForStaleScan) {
     if (status != TxStatus.CLOSED) {
       status = TxStatus.CLOSED;
+
+      if (checkForStaleScan && !commitAttempted) {
+        Stamp stamp = env.getSharedResources().getOracleClient().getStamp();
+        if (startTs < stamp.getGcTimestamp()) {
+          throw new StaleScanException();
+        }
+      }
+
       env.getSharedResources().getTimestampTracker().removeTimestamp(startTs);
     }
+  }
+
+  @Override
+  public void close() {
+    close(true);
   }
 
   private synchronized void checkIfOpen() {
@@ -811,7 +834,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   protected void finalize() throws Throwable {
     // CHECKSTYLE:ON
     // TODO Log an error if transaction is not closed (See FLUO-486)
-    close();
+    close(false);
   }
 
   @Override

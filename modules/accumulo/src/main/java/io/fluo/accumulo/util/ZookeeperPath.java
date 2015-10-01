@@ -29,7 +29,7 @@ public class ZookeeperPath {
 
   public static final String ORACLE = "/oracle";
   public static final String ORACLE_MAX_TIMESTAMP = ORACLE + "/max-timestamp";
-  public static final String ORACLE_CUR_TIMESTAMP = ORACLE + "/cur-timestamp";
+  public static final String ORACLE_GC_TIMESTAMP = ORACLE + "/gc-timestamp";
   public static final String ORACLE_SERVER = ORACLE + "/server";
 
   public static final String TRANSACTOR = "/transactor";

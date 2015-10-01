@@ -25,6 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
+import io.fluo.core.oracle.Stamp;
 import io.fluo.core.util.CuratorUtil;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
@@ -119,7 +120,7 @@ public class TimestampTracker implements AutoCloseable {
   /**
    * Allocate a timestamp
    */
-  public long allocateTimestamp() {
+  public Stamp allocateTimestamp() {
 
     synchronized (this) {
       Preconditions.checkState(!closed, "tracker closed ");
@@ -129,17 +130,17 @@ public class TimestampTracker implements AutoCloseable {
             "expected allocationsInProgress == 0 when node == null");
         Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
 
-        createZkNode(getTimestamp());
+        createZkNode(getTimestamp().getTxTimestamp());
       }
 
       allocationsInProgress++;
     }
 
     try {
-      long ts = getTimestamp();
+      Stamp ts = getTimestamp();
 
       synchronized (this) {
-        timestamps.add(ts);
+        timestamps.add(ts.getTxTimestamp());
       }
 
       return ts;
@@ -167,8 +168,8 @@ public class TimestampTracker implements AutoCloseable {
     allocationsInProgress--;
   }
 
-  private long getTimestamp() {
-    return env.getSharedResources().getOracleClient().getTimestamp();
+  private Stamp getTimestamp() {
+    return env.getSharedResources().getOracleClient().getStamp();
   }
 
   private void createZkNode(long ts) {
