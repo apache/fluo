@@ -227,7 +227,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
           twillId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
       // set app id in zookeeper
-      String appId = getResourceReport(controller).getApplicationId();
+      String appId = getResourceReport(controller, -1).getApplicationId();
       Preconditions.checkNotNull(appId, "Failed to retrieve YARN app ID from Twill");
       CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_APP_ID,
           appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
@@ -289,7 +289,11 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
     }
   }
 
-  private ResourceReport getResourceReport(TwillController controller) {
+  /**
+   * Attempts to retrieves ResourceReport until maxWaitMs time is reached.
+   * Set maxWaitMs to -1 to retry forever.
+   */
+  private ResourceReport getResourceReport(TwillController controller, int maxWaitMs) {
     ResourceReport report = controller.getResourceReport();
     int elapsed = 0;
     while (report == null) {
@@ -300,8 +304,14 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
         throw new IllegalStateException(e);
       }
       elapsed += 500;
-      if (elapsed > 30000) {
-        throw new IllegalStateException("Failed to get resource report");
+      if ((maxWaitMs != -1) && (elapsed > maxWaitMs)) {
+        String msg = String.format("Exceeded max wait time to retrieve ResourceReport from Twill."
+                                   + " Elapsed time = %s ms", elapsed);
+        log.error(msg);
+        throw new IllegalStateException(msg);
+      }
+      if ((elapsed % 10000) == 0) {
+        log.info("Waiting for ResourceReport from Twill. Elapsed time = {} ms", elapsed);
       }
     }
     return report;
@@ -309,7 +319,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
   private boolean isReady(TwillController controller) {
     try {
-      if (getResourceReport(controller) != null) {
+      if (getResourceReport(controller, 30000) != null) {
         return true;
       }
     } catch (Exception e) {
@@ -357,7 +367,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       }
 
       if (extraInfo) {
-        ResourceReport report = getResourceReport(controller);
+        ResourceReport report = getResourceReport(controller, 30000);
         Collection<TwillRunResources> resources;
         resources = report.getRunnableResources(FluoOracleMain.ORACLE_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
