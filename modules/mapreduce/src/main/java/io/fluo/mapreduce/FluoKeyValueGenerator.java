@@ -19,6 +19,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumnValue;
 import io.fluo.core.util.ByteUtil;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
@@ -161,6 +162,18 @@ public class FluoKeyValueGenerator {
    */
   public FluoKeyValueGenerator setValue(String val) {
     this.val = val.getBytes(Charsets.UTF_8);
+    return this;
+  }
+
+  /**
+   * Set the row, column, and value
+   *
+   * @return this
+   */
+  public FluoKeyValueGenerator set(RowColumnValue rcv) {
+    setRow(rcv.getRow());
+    setColumn(rcv.getColumn());
+    setValue(rcv.getValue());
     return this;
   }
 
