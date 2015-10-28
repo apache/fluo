@@ -290,8 +290,8 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   }
 
   /**
-   * Attempts to retrieves ResourceReport until maxWaitMs time is reached.
-   * Set maxWaitMs to -1 to retry forever.
+   * Attempts to retrieves ResourceReport until maxWaitMs time is reached. Set maxWaitMs to -1 to
+   * retry forever.
    */
   private ResourceReport getResourceReport(TwillController controller, int maxWaitMs) {
     ResourceReport report = controller.getResourceReport();
@@ -305,8 +305,9 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       }
       elapsed += 500;
       if ((maxWaitMs != -1) && (elapsed > maxWaitMs)) {
-        String msg = String.format("Exceeded max wait time to retrieve ResourceReport from Twill."
-                                   + " Elapsed time = %s ms", elapsed);
+        String msg =
+            String.format("Exceeded max wait time to retrieve ResourceReport from Twill."
+                + " Elapsed time = %s ms", elapsed);
         log.error(msg);
         throw new IllegalStateException(msg);
       }

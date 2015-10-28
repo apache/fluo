@@ -218,15 +218,17 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   private synchronized long getTimestampsImpl(String id, int num) throws TException {
     if (!started) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Received timestamp request but Oracle has not started");
     }
 
     if (!id.equals(env.getFluoApplicationID())) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("Received timestamp request with a Fluo application ID ["
+          + id + "] that does not match the application ID [" + env.getFluoApplicationID()
+          + "] of the Oracle");
     }
 
     if (!isLeader) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Received timestamp request but Oracle is not leader");
     }
 
     try {
