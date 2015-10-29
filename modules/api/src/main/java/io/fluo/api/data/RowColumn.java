@@ -37,7 +37,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Constructs a RowColumn with only a row. Column will be set to Column.EMPTY
-   * 
+   *
    * @param row Bytes Row
    */
   public RowColumn(Bytes row) {
@@ -47,7 +47,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Constructs a RowColumn with only a row. Column will be set to Column.EMPTY
-   * 
+   *
    * @param row (will be UTF-8 encoded)
    */
   public RowColumn(String row) {
@@ -56,7 +56,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Constructs a RowColumn
-   * 
+   *
    * @param row Bytes Row
    * @param col Column
    */
@@ -69,7 +69,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Constructs a RowColumn
-   * 
+   *
    * @param row Row String (will be UTF-8 encoded)
    * @param col Column
    */
@@ -79,7 +79,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Retrieves Row in RowColumn
-   * 
+   *
    * @return Row
    */
   public Bytes getRow() {
@@ -88,7 +88,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   /**
    * Retrieves Column in RowColumn
-   * 
+   *
    * @return Column
    */
   public Column getColumn() {
@@ -111,12 +111,12 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
 
   @Override
   public int hashCode() {
-    return row.hashCode() + col.hashCode();
+    return row.hashCode() + 31 * col.hashCode();
   }
 
   /**
    * Returns a RowColumn following the current one
-   * 
+   *
    * @return RowColumn following this one
    */
   public RowColumn following() {

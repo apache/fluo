@@ -20,6 +20,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumnValue;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Flutation;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -56,6 +57,11 @@ public class FluoMutationGenerator {
 
   public FluoMutationGenerator(byte[] row) {
     mutation = new Mutation(row);
+  }
+
+  public FluoMutationGenerator(RowColumnValue rcv) {
+    this(rcv.getRow());
+    put(rcv.getColumn(), rcv.getValue());
   }
 
   /**
