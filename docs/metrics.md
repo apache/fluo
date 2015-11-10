@@ -3,10 +3,17 @@ Fluo Metrics
 
 Fluo core is instrumented using [dropwizard metrics][1].  This allows fluo
 users to easily gather information about Fluo by configuring different
-reporters.  Fluo will always setup a JMX reporter, regardless of the number of
-reporters configured.  This is done because the dropwizard config mechanism does
-not currently support the JMX reporter.   The JMX reporter makes it easy to see
-fluo stats in jconsole or jvisualvm.
+reporters.  While dropwizard can be configured to report Fluo metrics to many
+different tools, below are some tools that have been used with Fluo.
+
+1. [Grafana/InfluxDB][3] - Fluo has [documentation][3] for sending metrics to
+   InfluxDB and viewing them in Grafana. The [fluo-dev] tool can also set up
+   these tools for you and configure Fluo to send to them.
+
+2. JMX -  Fluo will always setup a JMX reporter, regardless of the number of
+   reporters configured.  This is done because the dropwizard config mechanism does
+   not currently support the JMX reporter.   The JMX reporter makes it easy to see
+   fluo stats in jconsole or jvisualvm.  
 
 Configuring Fluo processes
 --------------------------
@@ -61,33 +68,32 @@ this has not been tested.
 Metrics reported by Fluo
 ------------------------
 
+All metrics reported by Fluo have the prefix `io.fluo.<APP>.<PID>.` which is denoted by `<prefix>` in
+the table below.  In the prefix, `<APP>` represents the Fluo application name and `<PID>` is the 
+process ID of the Fluo oracle or worker that is reporting the metric.  When running in yarn, this 
+id is of the format `worker-<instance id>` or `oracle-<instance id>`.  When not running from yarn, 
+this id consist of a hostname and a base36 long that is unique across all fluo processes. 
+
 Some of the metrics reported have the class name as the suffix.  This classname
 is the observer or load task that executed the transactions.   This should
 allow things like transaction collisions to be tracked per class.  In the
-table below this is denoted with `<cn>`.  In the table below `io.fluo` is
-shortened to `i.f`.  
+table below this is denoted with `<cn>`.  
 
-Since multiple processes can report the same metrics to services like Graphite
-or Ganglia, each process adds a unique id.  When running in yarn, this id is of
-the format `worker-<instance id>` or `oracle-<instance id>`.  When not running
-from yarn, this id consist of a hostname and a base36 long that is unique across
-all fluo processes.  In the table below this composite id is represented with
-`<pid>`. 
-
-|Metric                                   | Type           | Description                         |
-|-----------------------------------------|----------------|-------------------------------------|
-|i.f.&lt;pid&gt;.tx.lockWait.&lt;cn&gt;               | [Timer][T]     | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Time transaction spent waiting on locks held by other transactions.   |
-|i.f.&lt;pid&gt;.tx.time.&lt;cn&gt;                   | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute.  Updated for failed and successful transactions. |
-|i.f.&lt;pid&gt;.tx.collisions.&lt;cn&gt;             | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of collisions a transaction had.  |
-|i.f.&lt;pid&gt;.tx.set.&lt;cn&gt;                    | [Histogram][H] | *WHEN:* After each transaction. *WHAT:* Number of row/columns set by transaction |
-|i.f.&lt;pid&gt;.tx.read.&lt;cn&gt;                   | [Histogram][H] | *WHEN:* After each transaction. *WHAT:* Number of row/columns read by transaction that existed.  There is currently no count of all reads (including non-existent data) |
-|i.f.&lt;pid&gt;.tx.locks.timedout.&lt;cn&gt;         | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of timedout locks rolled back by transaction.  These are locks that are held for very long periods by another transaction that appears to be alive based on zookeeper.  |
-|i.f.&lt;pid&gt;.tx.locks.dead.&lt;cn&gt;             | [Histogram][H] | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Number of dead locks rolled by a transaction.  These are locks held by a process that appears to be dead according to zookeeper.  |
-|i.f.&lt;pid&gt;.tx.status.&lt;status&gt;.&lt;cn&gt;  | [Counter][C]   | *WHEN:* After each transaction.  *WHAT:* Counts for the different ways a transaction can terminate |
-|i.f.&lt;pid&gt;.oracle.client.rpc.getStamps.time     | [Timer][T]     | *WHEN:* For each request for stamps to the server. *WHAT:* Time RPC call to oracle took |
-|i.f.&lt;pid&gt;.oracle.client.stamps                 | [Histogram][H] | *WHEN:* For each request for stamps to the server. *WHAT:*  The number of stamps requested. |
-|i.f.&lt;pid&gt;.oracle.server.stamps                 | [Histogram][H] | *WHEN:* For each request for stamps from a client.  *WHAT:* The number of stamps requested    |
-|i.f.&lt;pid&gt;.worker.notifications.queued          | [Gauge][G]     | *WHAT:* The current number of notifications queued for processing    |
+|Metric                                 | Type           | Description                         |
+|---------------------------------------|----------------|-------------------------------------|
+|\<prefix\>.tx.lock_wait_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Time transaction spent waiting on locks held by other transactions.   |
+|\<prefix\>.tx.execution_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute.  Updated for failed and successful transactions. |
+|\<prefix\>.tx.with_collision.\<cn\>    | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of transactions with collisions.  |
+|\<prefix\>.tx.collisions.\<cn\>        | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of collisions.  |
+|\<prefix\>.tx.entries_set.\<cn\>       | [Meter][H]     | *WHEN:* After each transaction. *WHAT:* Rate of row/columns set by transaction |
+|\<prefix\>.tx.entries_read.\<cn\>      | [Meter][H]     | *WHEN:* After each transaction. *WHAT:* Rate of row/columns read by transaction that existed.  There is currently no count of all reads (including non-existent data) |
+|\<prefix\>.tx.locks_timedout.\<cn\>    | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of timedout locks rolled back by transaction.  These are locks that are held for very long periods by another transaction that appears to be alive based on zookeeper.  |
+|\<prefix\>.tx.locks_dead.\<cn\>        | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of dead locks rolled by a transaction.  These are locks held by a process that appears to be dead according to zookeeper.  |
+|\<prefix\>.tx.status_\<status\>.\<cn\> | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of different ways a transaction can terminate |
+|\<prefix\>.oracle.response_time        | [Timer][T]     | *WHEN:* For each request for stamps to the server. *WHAT:* Time RPC call to oracle took |
+|\<prefix\>.oracle.client_stamps        | [Histogram][H] | *WHEN:* For each request for stamps to the server. *WHAT:* The number of stamps requested. |
+|\<prefix\>.oracle.server_stamps        | [Histogram][H] | *WHEN:* For each request for stamps from a client. *WHAT:* The number of stamps requested. |
+|\<prefix\>.worker.notifications_queued | [Gauge][G]     | *WHAT:* The current number of notifications queued for processing. |
 
 The table above outlines when a particular metric is updated and whats updated.
 The use of *COND* indicates that the metric is not always updated.   For
@@ -102,7 +108,10 @@ be 2 and the mean would be (5+3)/2.
 
 [1]: https://dropwizard.github.io/metrics/3.1.0/
 [2]: https://dropwizard.github.io/dropwizard/manual/configuration.html#metrics
+[3]: grafana.md
 [T]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#timers
 [C]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#counters
 [H]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#histograms
 [G]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#gauges
+[M]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#meters
+[fluo-dev]: https://github.com/fluo-io/fluo-dev

@@ -167,5 +167,12 @@
         <include>*</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../../contrib/grafana</directory>
+      <outputDirectory>contrib/grafana</outputDirectory>
+      <includes>
+        <include>*</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </assembly>

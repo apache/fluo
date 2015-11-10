@@ -1,0 +1,2038 @@
+{
+  "id": null,
+  "title": "Fluo",
+  "originalTitle": "Fluo",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 12,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_execution_time",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_execution_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transactions Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 1,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "worker notifications queued",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "worker_notifications_queued",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"worker_notifications_queued\" WHERE \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Queued Notifications",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 11,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_lock_wait_time",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_lock_wait_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transactions with Lock Wait Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "Row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 16,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_entries_set",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_entries_set\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Entries Set Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 5,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "asExpr": "",
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_status_committed",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_status_committed\" WHERE \"field\" = 'm1_rate' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transactions Commited Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 13,
+          "interval": ">10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_lock_wait_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"tx_lock_wait_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Average Lock Wait Time By Observer (ms)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 3,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_entries_read",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_entries_read\" WHERE \"field\" = 'm1_rate' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Entries Read Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 6,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_status_commit_exception",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_status_commit_exception\" WHERE \"field\" = 'm1_rate' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transaction Commit Exceptions Per Second by Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 9,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "max",
+              "fields": [
+                {
+                  "func": "max",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_lock_wait_time",
+              "query": "SELECT max(\"value\") AS \"value\" FROM \"tx_lock_wait_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'max' AND $timeFilter GROUP BY time($interval)",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "max"
+                }
+              ]
+            },
+            {
+              "alias": "mean",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_lock_wait_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"tx_lock_wait_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval)",
+              "refId": "B",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            },
+            {
+              "alias": "min",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_lock_wait_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"tx_lock_wait_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'min' AND $timeFilter GROUP BY time($interval)",
+              "refId": "C",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "min"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Lock Wait Time (ms)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_collisions",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_collisions\" WHERE \"field\" = 'm1_rate' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Collisions Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 14,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_status_aacked",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_status_aacked\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transactions Already Acknowledged Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 18,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_locks_dead",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_dead\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Dead Locks Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 10,
+          "interval": ">10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_execution_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"tx_execution_time\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Average Transaction Execution Time by Observer (ms)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 15,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_status_error",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_status_error\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transaction Errors Per Second By Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 19,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "$tag_observer",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                },
+                {
+                  "key": "observer",
+                  "type": "tag"
+                }
+              ],
+              "measurement": "tx_locks_timedout",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_timedout\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Timed Out Locks Per Second by Observer",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 4,
+          "interval": ">10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "max",
+              "fields": [
+                {
+                  "func": "max",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_execution_time",
+              "query": "SELECT max(\"value\") AS \"value\" FROM \"tx_execution_time\" WHERE \"field\" = 'max' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "max"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            },
+            {
+              "alias": "mean",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_execution_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"tx_execution_time\" WHERE \"field\" = 'mean' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "refId": "B",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            },
+            {
+              "alias": "min",
+              "fields": [
+                {
+                  "func": "min",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "tx_execution_time",
+              "query": "SELECT min(\"value\") AS \"value\" FROM \"tx_execution_time\" WHERE \"field\" = 'min' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "refId": "C",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "min"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Transaction Execution Time (ms)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 8,
+          "interval": ">10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "response time (ms)",
+              "fields": [
+                {
+                  "func": "mean",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "oracle_response_time",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"oracle_response_time\" WHERE \"field\" = 'mean' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Oracle Response Time (ms)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 7,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "requests / sec",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "oracle_response_time",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"oracle_response_time\" WHERE \"field\" = 'm1_rate' AND \"app\" =~ /$app$/ AND $timeFilter GROUP BY time($interval)",
+              "rawQuery": false,
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "field",
+                  "operator": "=",
+                  "value": "m1_rate"
+                },
+                {
+                  "condition": "AND",
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Requests to Oracle Per Second",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 17,
+          "interval": "10s",
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "Reported by oracle",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "oracle_server_stamps",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"oracle_server_stamps\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval)",
+              "refId": "A",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            },
+            {
+              "alias": "Reported by clients",
+              "fields": [
+                {
+                  "func": "sum",
+                  "name": "value"
+                }
+              ],
+              "groupBy": [
+                {
+                  "interval": "auto",
+                  "type": "time"
+                }
+              ],
+              "measurement": "oracle_client_stamps",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"oracle_client_stamps\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval)",
+              "refId": "B",
+              "tags": [
+                {
+                  "key": "app",
+                  "operator": "=~",
+                  "value": "/$app$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "field",
+                  "operator": "=",
+                  "value": "mean"
+                }
+              ]
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Average Number of Timestamps Requested",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    }
+  ],
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "current": null,
+        "datasource": null,
+        "includeAll": false,
+        "label": "Fluo Application",
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "app",
+        "options": null,
+        "query": "show tag values from worker_notifications_queued with key = \"app\"",
+        "refresh": true,
+        "refresh_on_load": true,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "10s",
+  "schemaVersion": 7,
+  "version": 0,
+  "links": []
+}

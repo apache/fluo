@@ -251,8 +251,8 @@ public class Environment implements AutoCloseable {
       }
 
       mid = mid.replace('.', '_');
-
-      metricNames = new MetricNames(mid);
+      String appName = config.getApplicationName().replace('.', '_');
+      metricNames = new MetricNames(mid, appName);
     }
     return metricNames;
   }
