@@ -35,6 +35,7 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
+import io.fluo.core.util.Hex;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
@@ -147,13 +148,29 @@ public abstract class AppRunner {
           System.out.println("\nNo data found\n");
         }
 
+        StringBuilder sb = new StringBuilder();
         while (iter.hasNext() && !System.out.checkError()) {
           Map.Entry<Bytes, ColumnIterator> rowEntry = iter.next();
           ColumnIterator citer = rowEntry.getValue();
           while (citer.hasNext() && !System.out.checkError()) {
             Map.Entry<Column, Bytes> colEntry = citer.next();
-            System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t"
-                + colEntry.getValue());
+            if (options.hexEncNonAscii) {
+              sb.setLength(0);
+              Hex.encNonAscii(sb, rowEntry.getKey());
+              sb.append(" ");
+              Hex.encNonAscii(sb, colEntry.getKey(), " ");
+              sb.append("\t");
+              Hex.encNonAscii(sb, colEntry.getValue());
+              System.out.println(sb.toString());
+            } else {
+              sb.setLength(0);
+              sb.append(rowEntry.getKey());
+              sb.append(" ");
+              sb.append(colEntry.getKey());
+              sb.append("\t");
+              sb.append(colEntry.getValue());
+              System.out.println(sb.toString());
+            }
             entriesFound++;
           }
         }

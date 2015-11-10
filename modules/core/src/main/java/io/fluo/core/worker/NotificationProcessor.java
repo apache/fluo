@@ -28,6 +28,7 @@ import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
+import io.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,9 +131,7 @@ public class NotificationProcessor implements AutoCloseable {
             workTask.run();
           }
         } catch (Exception e) {
-          log.error(
-              "Failed to process work " + notification.getRow() + " " + notification.getColumn()
-                  + " " + notification.getTimestamp(), e);
+          log.error("Failed to process work " + Hex.encNonAscii(notification), e);
         } finally {
           tracker.remove(notification);
           workFinished();

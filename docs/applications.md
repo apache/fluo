@@ -136,6 +136,11 @@ shows that a transaction with a start timestamp of `106` and a class name of
 2015-02-11 18:17:02,639 [tx.collisions] TRACE: txid: 106 collisions: {r1=[fam1 qual1 ]}
 ```
 
+When applications read and write arbitrary binary data, this does not log so
+well.  In order to make the trace logs human readable, non ASCII chars are
+escaped using hex.  The convention used it `\xDD`  where D is a hex digit. Also
+the `\` character is escaped to make the output unambiguous.
+
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [FluoFactory]: ../modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
 [FluoClient]: ../modules/api/src/main/java/io/fluo/api/client/FluoClient.java

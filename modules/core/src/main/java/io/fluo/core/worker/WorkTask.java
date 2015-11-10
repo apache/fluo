@@ -24,6 +24,7 @@ import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.log.TracingTransaction;
+import io.fluo.core.util.Hex;
 import io.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,8 @@ public class WorkTask implements Runnable {
           }
         } catch (Exception e) {
           status = TxResult.ERROR;
-          log.warn("Failed to execute observer " + observer.getClass().getSimpleName(), e);
+          log.warn("Failed to execute observer " + observer.getClass().getSimpleName()
+              + " notification : " + Hex.encNonAscii(notification), e);
           notificationFinder.failedToProcess(notification, status);
           break;
         } finally {

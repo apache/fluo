@@ -21,6 +21,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.accumulo.values.WriteValue;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.format.Formatter;
@@ -41,6 +42,26 @@ public class FluoFormatter implements Formatter {
   public String next() {
     Entry<Key, Value> entry = scanner.next();
     return toString(entry);
+  }
+
+  private static void appendByte(StringBuilder sb, byte b) {
+    if (b >= 32 && b <= 126 && b != '\\') {
+      sb.append((char) b);
+    } else {
+      sb.append(String.format("\\x%02x", b & 0xff));
+    }
+  }
+
+  public static void encNonAscii(StringBuilder sb, byte[] bytes) {
+    for (int i = 0; i < bytes.length; i++) {
+      appendByte(sb, bytes[i]);
+    }
+  }
+
+  public static void encNonAscii(StringBuilder sb, ByteSequence bytes) {
+    for (int i = 0; i < bytes.length(); i++) {
+      appendByte(sb, bytes.byteAt(i));
+    }
   }
 
   public static String toString(Entry<Key, Value> entry) {
@@ -68,6 +89,8 @@ public class FluoFormatter implements Formatter {
       type = "ACK";
     }
 
+    StringBuilder sb = new StringBuilder();
+
     String val;
     if (type.equals("WRITE")) {
       val = new WriteValue(entry.getValue().get()).toString();
@@ -77,12 +100,26 @@ public class FluoFormatter implements Formatter {
       // TODO can Value be made to extend Bytes w/o breaking API?
       val = new LockValue(entry.getValue().get()).toString();
     } else {
-      val = entry.getValue().toString();
+      encNonAscii(sb, entry.getValue().get());
+      val = sb.toString();
     }
 
-    return key.getRow() + " " + key.getColumnFamily() + ":" + key.getColumnQualifier() + " ["
-        + key.getColumnVisibility() + "] " + (ts & ColumnConstants.TIMESTAMP_MASK) + "-" + type
-        + "\t" + val;
+    sb.setLength(0);
+    encNonAscii(sb, key.getRowData());
+    sb.append(" ");
+    encNonAscii(sb, key.getColumnFamilyData());
+    sb.append(":");
+    encNonAscii(sb, key.getColumnQualifierData());
+    sb.append(" [");
+    encNonAscii(sb, key.getColumnVisibilityData());
+    sb.append("] ");
+    sb.append(ts & ColumnConstants.TIMESTAMP_MASK);
+    sb.append('-');
+    sb.append(type);
+    sb.append("\t");
+    sb.append(val);
+
+    return sb.toString();
   }
 
   @Override
