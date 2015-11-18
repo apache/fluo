@@ -18,6 +18,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.collect.ImmutableSet;
 import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
@@ -62,6 +63,47 @@ public class LogIT extends ITBaseMini {
     }
   }
 
+  private static Bytes bRow1 = Bytes.of(new byte[] {'r', 0x05, '1'});
+  private static Bytes bRow2 = Bytes.of(new byte[] {'r', 0x06, '2'});
+
+  private static Column bCol1 = new Column(Bytes.of(new byte[] {'c', 0x02, '1'}),
+      Bytes.of(new byte[] {'c', (byte) 0xf5, '1'}));
+  private static Column bCol2 = new Column(Bytes.of(new byte[] {'c', 0x09, '2'}),
+      Bytes.of(new byte[] {'c', (byte) 0xe5, '2'}));
+
+
+  static class BinaryLoader1 extends TypedLoader {
+
+    @Override
+    public void load(TypedTransactionBase tx, Context context) throws Exception {
+      tx.delete(bRow1, bCol1);
+      tx.get(bRow2, bCol1);
+
+      tx.get(bRow2, ImmutableSet.of(bCol1, bCol2));
+      tx.get(ImmutableSet.of(bRow1, bRow2), ImmutableSet.of(bCol1, bCol2));
+
+      tx.set(bRow1, bCol2, Bytes.of(new byte[] {'v', (byte) 0x99, '2'}));
+      tx.set(bRow2, bCol2, Bytes.of(new byte[] {'v', (byte) 0xd9, '1'}));
+
+      tx.setWeakNotification(bRow2, bCol2);
+    }
+  }
+
+  public static class BinaryObserver extends TypedObserver {
+
+    @Override
+    public ObservedColumn getObservedColumn() {
+      return new ObservedColumn(bCol2, NotificationType.WEAK);
+    }
+
+    @Override
+    public void process(TypedTransactionBase tx, Bytes row, Column col) {
+      tx.get(bRow1, bCol2);
+      tx.get(bRow2, ImmutableSet.of(bCol1, bCol2));
+      tx.get(ImmutableSet.of(bRow1, bRow2), ImmutableSet.of(bCol1, bCol2));
+    }
+  }
+
   public static class TestObserver extends TypedObserver {
 
     @Override
@@ -77,7 +119,8 @@ public class LogIT extends ITBaseMini {
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
-    return Arrays.asList(new ObserverConfiguration(TestObserver.class.getName()));
+    return Arrays.asList(new ObserverConfiguration(TestObserver.class.getName()),
+        new ObserverConfiguration(BinaryObserver.class.getName()));
   }
 
   @Test
@@ -199,7 +242,7 @@ public class LogIT extends ITBaseMini {
       miniFluo.waitForObservers();
 
       try (TypedSnapshot snap = tl.wrap(client.newSnapshot())) {
-        Assert.assertEquals(1, snap.get().row("all").fam("stat").qual("count").toInteger(-1));
+        Assert.assertTrue(snap.get().row("all").fam("stat").qual("count").toInteger(-1) >= 1);
         Assert.assertEquals(1, snap.get().row("r1").fam("a").qual("b").toInteger(-1));
       }
     } finally {
@@ -248,5 +291,69 @@ public class LogIT extends ITBaseMini {
     pattern += ".*txid: \\1 get\\(r1, a b \\) -> 1";
     pattern += ".*txid: \\1 close\\(\\).*";
     Assert.assertTrue(logMsgs.matches(pattern));
+  }
+
+  @Test
+  public void testBinaryLogging() throws Exception {
+    Logger logger = Logger.getLogger("io.fluo.tx");
+
+    StringWriter writer = new StringWriter();
+    WriterAppender appender =
+        new WriterAppender(new PatternLayout("%d{ISO8601} [%-8c{2}] %-5p: %m%n"), writer);
+
+    Level level = logger.getLevel();
+    boolean additivity = logger.getAdditivity();
+
+    try {
+      logger.setLevel(Level.TRACE);
+      logger.setAdditivity(false);
+      logger.addAppender(appender);
+
+      try (LoaderExecutor le = client.newLoaderExecutor()) {
+        le.execute(new BinaryLoader1());
+      }
+
+      miniFluo.waitForObservers();
+    } finally {
+      logger.removeAppender(appender);
+      logger.setAdditivity(additivity);
+      logger.setLevel(level);
+    }
+
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
+
+
+    String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern += ".*txid: \\1 class: io.fluo.integration.log.LogIT\\$BinaryLoader1";
+    pattern += ".*txid: \\1 \\Qdelete(r\\x051, c\\x021 c\\xf51 )\\E";
+    pattern += ".*txid: \\1 \\Qget(r\\x062, c\\x021 c\\xf51 ) -> null\\E";
+    pattern += ".*txid: \\1 \\Qget(r\\x062, [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> []\\E";
+    pattern +=
+        ".*txid: \\1 \\Qget([r\\x051, r\\x062], [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> []\\E";
+    pattern += ".*txid: \\1 \\Qset(r\\x051, c\\x092 c\\xe52 , v\\x992)\\E";
+    pattern += ".*txid: \\1 \\Qset(r\\x062, c\\x092 c\\xe52 , v\\xd91)\\E";
+    pattern += ".*txid: \\1 \\QsetWeakNotification(r\\x062, c\\x092 c\\xe52 )\\E";
+    pattern += ".*txid: \\1 \\Qcommit()\\E -> SUCCESSFUL commitTs: \\d+";
+    pattern += ".*txid: \\1 \\Qclose()\\E";
+    pattern += ".*";
+    Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
+
+    String v1 = "\\Qr\\x051=[c\\x092 c\\xe52 =v\\x992]\\E";
+    String v2 = "\\Qr\\x062=[c\\x092 c\\xe52 =v\\xd91]\\E";
+
+    pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern += ".*txid: \\1 \\Qtrigger: r\\x062 c\\x092 c\\xe52  4\\E";
+    pattern += ".*txid: \\1 \\Qclass: io.fluo.integration.log.LogIT$BinaryObserver\\E";
+    pattern += ".*txid: \\1 \\Qget(r\\x051, c\\x092 c\\xe52 ) -> v\\x992\\E";
+    pattern +=
+        ".*txid: \\1 \\Qget(r\\x062, [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> [c\\x092 c\\xe52 =v\\xd91]\\E";
+    pattern +=
+        ".*txid: \\1 \\Qget([r\\x051, r\\x062], [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> [\\E("
+            + v1 + "|" + v2 + ")\\, (" + v1 + "|" + v2 + ")\\]";
+    pattern += ".*txid: \\1 \\Qcommit() -> SUCCESSFUL commitTs: -1\\E";
+    pattern += ".*txid: \\1 \\Qclose()\\E";
+    pattern += ".*";
+    Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
   }
 }

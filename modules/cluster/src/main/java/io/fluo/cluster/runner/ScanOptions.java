@@ -40,6 +40,10 @@ public class ScanOptions {
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   public boolean help;
 
+  @Parameter(names = {"-esc", "--escape-non-ascii"}, help = true,
+      description = "Hex encode non ascii bytes", arity = 1)
+  public boolean hexEncNonAscii = true;
+
   public String getStartRow() {
     return startRow;
   }

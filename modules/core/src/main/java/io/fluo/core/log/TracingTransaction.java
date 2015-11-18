@@ -16,8 +16,11 @@ package io.fluo.core.log;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import io.fluo.api.client.Snapshot;
 import io.fluo.api.client.Transaction;
 import io.fluo.api.config.FluoConfiguration;
@@ -30,6 +33,7 @@ import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TxStats;
+import io.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,12 +51,61 @@ public class TracingTransaction implements Transaction, Snapshot {
   private Class<?> clazz;
   private boolean committed = false;
 
+  private static String enc(Bytes b) {
+    return Hex.encNonAscii(b);
+  }
+
+  private static String enc(Column c) {
+    return Hex.encNonAscii(c);
+  }
+
   public TracingTransaction(TransactionImpl tx) {
     this(tx, null, null);
   }
 
   public TracingTransaction(TransactionImpl tx, Class<?> clazz) {
     this(tx, null, clazz);
+  }
+
+  private String encB(Collection<Bytes> columns) {
+    return Iterators.toString(Iterators.transform(columns.iterator(),
+        new Function<Bytes, String>() {
+          @Override
+          public String apply(Bytes b) {
+            return Hex.encNonAscii(b);
+          }
+        }));
+  }
+
+
+  private String encRC(Map<Bytes, Map<Column, Bytes>> ret) {
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        new Function<Entry<Bytes, Map<Column, Bytes>>, String>() {
+          @Override
+          public String apply(Entry<Bytes, Map<Column, Bytes>> e) {
+            return enc(e.getKey()) + "=" + encC(e.getValue());
+          }
+        }));
+  }
+
+  private String encC(Collection<Column> columns) {
+    return Iterators.toString(Iterators.transform(columns.iterator(),
+        new Function<Column, String>() {
+          @Override
+          public String apply(Column col) {
+            return Hex.encNonAscii(col);
+          }
+        }));
+  }
+
+  private String encC(Map<Column, Bytes> ret) {
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        new Function<Entry<Column, Bytes>, String>() {
+          @Override
+          public String apply(Entry<Column, Bytes> e) {
+            return enc(e.getKey()) + "=" + enc(e.getValue());
+          }
+        }));
   }
 
   public TracingTransaction(TransactionImpl tx, Notification notification, Class<?> clazz) {
@@ -62,15 +115,17 @@ public class TracingTransaction implements Transaction, Snapshot {
     this.notification = notification;
     this.clazz = clazz;
 
-    log.trace("txid: {} begin() thread: {}", txid, Thread.currentThread().getId());
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} begin() thread: {}", txid, Thread.currentThread().getId());
 
-    if (notification != null) {
-      log.trace("txid: {} trigger: {} {} {}", txid, notification.getRow(),
-          notification.getColumn(), notification.getTimestamp());
-    }
+      if (notification != null) {
+        log.trace("txid: {} trigger: {} {} {}", txid, enc(notification.getRow()),
+            enc(notification.getColumn()), notification.getTimestamp());
+      }
 
-    if (clazz != null) {
-      log.trace("txid: {} class: {}", txid, clazz.getName());
+      if (clazz != null) {
+        log.trace("txid: {} class: {}", txid, clazz.getName());
+      }
     }
 
   }
@@ -78,21 +133,27 @@ public class TracingTransaction implements Transaction, Snapshot {
   @Override
   public Bytes get(Bytes row, Column column) {
     Bytes ret = tx.get(row, column);
-    log.trace("txid: {} get({}, {}) -> {}", txid, row, column, ret);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} get({}, {}) -> {}", txid, enc(row), enc(column), enc(ret));
+    }
     return ret;
   }
 
   @Override
   public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     Map<Column, Bytes> ret = tx.get(row, columns);
-    log.trace("txid: {} get({}, {}) -> {}", txid, row, columns, ret);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} get({}, {}) -> {}", txid, enc(row), encC(columns), encC(ret));
+    }
     return ret;
   }
 
   @Override
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     Map<Bytes, Map<Column, Bytes>> ret = tx.get(rows, columns);
-    log.trace("txid: {} get({}, {}) -> {}", txid, rows, columns, ret);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} get({}, {}) -> {}", txid, encB(rows), encC(columns), encRC(ret));
+    }
     return ret;
   }
 
@@ -105,19 +166,25 @@ public class TracingTransaction implements Transaction, Snapshot {
 
   @Override
   public void setWeakNotification(Bytes row, Column col) {
-    log.trace("txid: {} setWeakNotification({}, {})", txid, row, col);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} setWeakNotification({}, {})", txid, enc(row), enc(col));
+    }
     tx.setWeakNotification(row, col);
   }
 
   @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
-    log.trace("txid: {} set({}, {}, {})", txid, row, col, value);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} set({}, {}, {})", txid, enc(row), enc(col), enc(value));
+    }
     tx.set(row, col, value);
   }
 
   @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
-    log.trace("txid: {} delete({}, {})", txid, row, col);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} delete({}, {})", txid, enc(row), enc(col));
+    }
     tx.delete(row, col);
   }
 
