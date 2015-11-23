@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedMapIterator;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ public class GarbageCollectionIteratorTest {
     GarbageCollectionIterator gci = new GarbageCollectionIterator();
     Map<String, String> options = new HashMap<>();
     options.put(GarbageCollectionIterator.GC_TIMESTAMP_OPT, Long.toString(oldestActive));
-    TestIteratorEnv env = new TestIteratorEnv(IteratorScope.majc, fullMajc);
+    IteratorEnvironment env = TestIteratorEnv.create(IteratorScope.majc, fullMajc);
 
     try {
       gci.init(new SortedMapIterator(input.data), options, env);
