@@ -176,7 +176,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   public OracleServer(Environment env) throws Exception {
     this.env = env;
-
     stampsHistogram =
         env.getSharedResources().getMetricRegistry()
             .histogram(env.getMetricNames().getOracleServerStamps());

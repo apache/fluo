@@ -14,65 +14,81 @@
 
 package io.fluo.core.metrics;
 
+import com.google.common.base.Preconditions;
 import io.fluo.api.config.FluoConfiguration;
 
 public class MetricNames {
 
-  private final String txLockWait;
-  private final String txTime;
+  private final String txLockWaitTime;
+  private final String txExecTime;
+  private final String txWithCollision;
   private final String txCollisions;
-  private final String txSet;
-  private final String txRead;
+  private final String txEntriesSet;
+  private final String txEntriesRead;
   private final String txLocksTimedOut;
   private final String txLocksDead;
   private final String txStatus;
 
   private final String notificationsQueued;
 
+  private final String oracleResponseTime;
   private final String oracleClientStamps;
-  private final String oracleClientRpc;
   private final String oracleServerStamps;
-
 
   public static final String METRICS_ID_PROP = FluoConfiguration.FLUO_PREFIX + ".metrics.id";
 
-  public MetricNames(String hostId) {
-    txLockWait = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.lockWait.";
-    txTime = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.time.";
-    txCollisions = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.collisions.";
-    txSet = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.set.";
-    txRead = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.read.";
-    txLocksTimedOut = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.locks.timedout.";
-    txLocksDead = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.locks.dead.";
-    txStatus = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".tx.status.";
+  public MetricNames(String hostId, String appName) {
+    Preconditions.checkArgument(!appName.contains("."), "Fluo App name should not contain '.': "
+        + appName);
+    Preconditions.checkArgument(!hostId.contains("."), "Host ID should not contain '.': " + hostId);
 
-    notificationsQueued =
-        FluoConfiguration.FLUO_PREFIX + "." + hostId + ".worker.notifications.queued";
+    // All metrics start with prefix "io.fluo.APP.HOST."
+    final String metricsPrefix = FluoConfiguration.FLUO_PREFIX + "." + appName + "." + hostId + ".";
 
-    oracleClientStamps = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.client.stamps";
-    oracleClientRpc =
-        FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.client.rpc.getStamps.time";
-    oracleServerStamps = FluoConfiguration.FLUO_PREFIX + "." + hostId + ".oracle.server.stamps";
+    // Transaction metrics: io.fluo.APP.HOST.tx.METRIC.OBSERVER
+    final String txPrefix = metricsPrefix + "tx.";
+    txLockWaitTime = txPrefix + "lock_wait_time.";
+    txExecTime = txPrefix + "execution_time.";
+    txWithCollision = txPrefix + "with_collision.";
+    txCollisions = txPrefix + "collisions.";
+    txEntriesSet = txPrefix + "entries_set.";
+    txEntriesRead = txPrefix + "entries_read.";
+    txLocksTimedOut = txPrefix + "locks_timedout.";
+    txLocksDead = txPrefix + "locks_dead.";
+    txStatus = txPrefix + "status_";
+
+    // Worker metrics: io.fluo.APP.HOST.worker.METRIC
+    notificationsQueued = metricsPrefix + "worker.notifications_queued";
+
+    // Oracle metrics: io.fluo.APP.HOST.oracle.METRIC
+    final String oraclePrefix = metricsPrefix + "oracle.";
+    oracleResponseTime = oraclePrefix + "response_time";
+    oracleClientStamps = oraclePrefix + "client_stamps";
+    oracleServerStamps = oraclePrefix + "server_stamps";
   }
 
-  public String getTxLockwait() {
-    return txLockWait;
+  public String getTxLockWaitTime() {
+    return txLockWaitTime;
   }
 
-  public String getTxTime() {
-    return txTime;
+  public String getTxExecTime() {
+    return txExecTime;
+  }
+
+  public String getTxWithCollision() {
+    return txWithCollision;
   }
 
   public String getTxCollisions() {
     return txCollisions;
   }
 
-  public String getTxSet() {
-    return txSet;
+  public String getTxEntriesSet() {
+    return txEntriesSet;
   }
 
-  public String getTxRead() {
-    return txRead;
+  public String getTxEntriesRead() {
+    return txEntriesRead;
   }
 
   public String getTxLocksTimedout() {
@@ -91,12 +107,12 @@ public class MetricNames {
     return notificationsQueued;
   }
 
-  public String getOracleClientStamps() {
-    return oracleClientStamps;
+  public String getOracleResponseTime() {
+    return oracleResponseTime;
   }
 
-  public String getOracleClientGetStamps() {
-    return oracleClientRpc;
+  public String getOracleClientStamps() {
+    return oracleClientStamps;
   }
 
   public String getOracleServerStamps() {

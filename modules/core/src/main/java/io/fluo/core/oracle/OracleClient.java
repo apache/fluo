@@ -330,14 +330,12 @@ public class OracleClient implements AutoCloseable {
 
   public OracleClient(Environment env) {
     this.env = env;
-
     responseTimer =
         env.getSharedResources().getMetricRegistry()
-            .timer(env.getMetricNames().getOracleClientGetStamps());
+            .timer(env.getMetricNames().getOracleResponseTime());
     stampsHistogram =
         env.getSharedResources().getMetricRegistry()
             .histogram(env.getMetricNames().getOracleClientStamps());
-
     timestampRetriever = new TimestampRetriever();
     thread = new Thread(timestampRetriever);
     thread.setDaemon(true);
