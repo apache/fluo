@@ -20,6 +20,7 @@ import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedMapIterator;
 import org.junit.Assert;
@@ -32,7 +33,7 @@ public class SnapshotIteratorTest {
     Map<String, String> options = new HashMap<>();
     options.put(SnapshotIterator.TIMESTAMP_OPT, startTs + "");
 
-    TestIteratorEnv env = new TestIteratorEnv(IteratorScope.scan);
+    IteratorEnvironment env = TestIteratorEnv.create(IteratorScope.scan, true);
 
     try {
       si.init(new SortedMapIterator(input.data), options, env);

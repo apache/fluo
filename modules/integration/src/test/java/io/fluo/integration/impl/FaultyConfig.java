@@ -14,16 +14,81 @@
 
 package io.fluo.integration.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Random;
+
 import io.fluo.core.impl.Environment;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.test.FaultyConditionalWriter;
+import org.apache.accumulo.core.data.ConditionalMutation;
 
-/**
- * 
- */
 public class FaultyConfig extends Environment {
+
+  /**
+   * A writer that will sometimes return unknown. When it returns unknown the condition may or may
+   * not have been written.
+   *
+   * <p>
+   * The following code was copied from Accumulo in order to avoid depedning on accumulo test
+   * module.
+   */
+  private static class FaultyConditionalWriter implements ConditionalWriter {
+
+    private ConditionalWriter cw;
+    private double up;
+    private Random rand;
+    private double wp;
+
+    public FaultyConditionalWriter(ConditionalWriter cw, double unknownProbability,
+        double writeProbability) {
+      this.cw = cw;
+      this.up = unknownProbability;
+      this.wp = writeProbability;
+      this.rand = new Random();
+
+    }
+
+    @Override
+    public Iterator<Result> write(Iterator<ConditionalMutation> mutations) {
+      ArrayList<Result> resultList = new ArrayList<Result>();
+      ArrayList<ConditionalMutation> writes = new ArrayList<ConditionalMutation>();
+
+      while (mutations.hasNext()) {
+        ConditionalMutation cm = mutations.next();
+        if (rand.nextDouble() <= up && rand.nextDouble() > wp)
+          resultList.add(new Result(Status.UNKNOWN, cm, null));
+        else
+          writes.add(cm);
+      }
+
+      if (writes.size() > 0) {
+        Iterator<Result> results = cw.write(writes.iterator());
+
+        while (results.hasNext()) {
+          Result result = results.next();
+
+          if (rand.nextDouble() <= up && rand.nextDouble() <= wp)
+            result = new Result(Status.UNKNOWN, result.getMutation(), result.getTabletServer());
+          resultList.add(result);
+        }
+      }
+      return resultList.iterator();
+    }
+
+    @Override
+    public Result write(ConditionalMutation mutation) {
+      return write(Collections.singleton(mutation).iterator()).next();
+    }
+
+    @Override
+    public void close() {
+      cw.close();
+    }
+  }
+
 
   private double up;
   private double wp;

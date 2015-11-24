@@ -14,61 +14,16 @@
 
 package io.fluo.accumulo.iterators;
 
-import java.io.IOException;
-
-import org.apache.accumulo.core.conf.AccumuloConfiguration;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
-import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.accumulo.core.security.Authorizations;
+import org.easymock.EasyMock;
 
-public class TestIteratorEnv implements IteratorEnvironment {
-
-  private IteratorScope scope;
-  private boolean fullMajc = true;
-
-  TestIteratorEnv(IteratorScope scope) {
-    this.scope = scope;
-  }
-
-  public TestIteratorEnv(IteratorScope scope, boolean fullMajc) {
-    this.scope = scope;
-    this.fullMajc = fullMajc;
-  }
-
-  @Override
-  public SortedKeyValueIterator<Key, Value> reserveMapFileReader(String mapFileName)
-      throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AccumuloConfiguration getConfig() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public IteratorScope getIteratorScope() {
-    return scope;
-  }
-
-  @Override
-  public boolean isFullMajorCompaction() {
-    if (scope == IteratorScope.majc)
-      return fullMajc;
-    return false;
-  }
-
-  @Override
-  public void registerSideChannel(SortedKeyValueIterator<Key, Value> iter) {
-    throw new UnsupportedOperationException();
-  }
-
-  // this is a new method added in Accumulo 1.7.0. Can not add @Override because it will not compile
-  // against 1.6.X
-  public Authorizations getAuthorizations() {
-    return null;
+public class TestIteratorEnv {
+  public static IteratorEnvironment create(IteratorScope scope, boolean fullMajc) {
+    IteratorEnvironment iterEnv = EasyMock.createMock(IteratorEnvironment.class);
+    EasyMock.expect(iterEnv.getIteratorScope()).andReturn(scope).anyTimes();
+    EasyMock.expect(iterEnv.isFullMajorCompaction()).andReturn(fullMajc).anyTimes();
+    EasyMock.replay(iterEnv);
+    return iterEnv;
   }
 }
