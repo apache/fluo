@@ -57,7 +57,6 @@
     <module>modules/accumulo</module>
     <module>modules/core</module>
     <module>modules/mini</module>
-    <module>modules/metrics</module>
     <module>modules/integration</module>
     <module>modules/mapreduce</module>
     <module>modules/cluster</module>
@@ -140,28 +139,13 @@
         <version>2.4</version>
       </dependency>
       <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-configuration</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-metrics</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-metrics-ganglia</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard</groupId>
-        <artifactId>dropwizard-metrics-graphite</artifactId>
-        <version>${dropwizard.version}</version>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>3.1.1</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
+        <artifactId>metrics-graphite</artifactId>
         <version>3.1.1</version>
       </dependency>
       <dependency>
@@ -374,7 +358,6 @@
           <artifactId>apache-rat-plugin</artifactId>
           <configuration>
             <excludes>
-              <exclude>**/metrics.yaml</exclude>
               <exclude>**/services/io.fluo.core.metrics.ReporterStarter</exclude>
               <exclude>README.md</exclude>
               <exclude>docs/**.md</exclude>

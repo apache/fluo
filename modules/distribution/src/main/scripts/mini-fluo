@@ -120,7 +120,6 @@ new)
   $SED "s/io.fluo.admin.accumulo.classpath/#io.fluo.admin.accumulo.classpath/g" $APP_CONF_DIR/fluo.properties
   $SED "s/#io.fluo.mini/io.fluo.mini/g" $APP_CONF_DIR/fluo.properties
   copy_config log4j.xml
-  copy_config metrics.yaml
   ;;
 start)
   validate_app

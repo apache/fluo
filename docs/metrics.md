@@ -10,61 +10,21 @@ different tools, below are some tools that have been used with Fluo.
    InfluxDB and viewing them in Grafana. The [fluo-dev] tool can also set up
    these tools for you and configure Fluo to send to them.
 
-2. JMX -  Fluo will always setup a JMX reporter, regardless of the number of
-   reporters configured.  This is done because the dropwizard config mechanism does
-   not currently support the JMX reporter.   The JMX reporter makes it easy to see
-   fluo stats in jconsole or jvisualvm.  
+2. JMX -  Fluo will setup a JMX reporter if no reporters are configured. The
+   JMX reporter makes it easy to see fluo stats in jconsole or jvisualvm.  
 
-Configuring Fluo processes
---------------------------
-
-When starting an oracle or workers, using the `fluo` script, the
-`$FLUO_CONF_DIR/metrics.yaml` file is used to configure reporters.  Consult the
-[dropwizard config docs][2] inorder to learn how to populate this file.  There
-is one important difference with that documentation. Because Fluo is only
-leveraging the dropwizard metrics config code, you do not need the top level
-`metrics:` element in your `metrics.yaml` file.  The example `metrics.yaml`
-file does not have this element.
-
-Configuring Fluo Clients
-------------------------
-
-Fluo client code that uses the basic API or map reduce API can configure
-reporters by setting `io.fluo.metrics.yaml.base64` in `fluo.properties`.  The
-value of this property should be a single line base64 encoded yaml config.
-This can easily be generated with the following command.  Also,
-FluoConfiguration has some convenience methods for setting this property.
-
-```
-cat conf/metrics.yaml | base64 -w 0
-```  
-
-The property `io.fluo.metrics.yaml.base64` is not used by processes started
-with the fluo script.  The primary motivation of having this property is to
-enable collection of metrics from map task executing load transaction using 
-FluoOutputFormat.
-
-In order for the `io.fluo.metrics.yaml.base64` property to work, a map reduce
-job must include the `fluo-metrics` module.  This module contains the code that
-configures reporters based on yaml.  The module is separate from `fluo-core`
-inorder to avoid adding a lot of dependencies that are only needed when
-configuring reporters.
-
-Reporter Dependencies
+Configuring Reporters
 ---------------------
 
-The core dropwizard metrics library has a few reporters.  However if you would
-like to utilize additional reporters, then you will need to add dependencies.
-For example if you wanted to use Ganglia, then you would need to depend on
-specific dropwizard ganglia maven artifacts.
+Inorder to configure metrics reporters, look at the metrics section in an
+applications `fluo.properties` file.  This sections has a lot of commented out
+options for configuring reporters.  
 
-Custom Reporters
-----------------
+    io.fluo.metrics.reporter.console.enable=false
+    io.fluo.metrics.reporter.console.frequency=30
 
-If a reporter follows the discovery mechanisms used by dropwizard
-configuration, then it may be automatically configurable via yaml.  However
-this has not been tested.
-
+The frequency is in seconds for all reporters.
+  
 Metrics reported by Fluo
 ------------------------
 
@@ -107,7 +67,6 @@ request for 3 timestamps, then the count for `i.f.<pid>.oracle.server.stamps` wo
 be 2 and the mean would be (5+3)/2.
 
 [1]: https://dropwizard.github.io/metrics/3.1.0/
-[2]: https://dropwizard.github.io/dropwizard/manual/configuration.html#metrics
 [3]: grafana.md
 [T]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#timers
 [C]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#counters

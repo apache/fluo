@@ -25,7 +25,6 @@ import java.util.Properties;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,7 +61,6 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
     Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
     Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
-    Assert.assertEquals(FluoConfiguration.METRICS_YAML_BASE64_DEFAULT, base.getMetricsYamlBase64());
     Assert.assertEquals(FluoConfiguration.MINI_START_ACCUMULO_DEFAULT, base.getMiniStartAccumulo());
     Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
   }
@@ -216,14 +214,13 @@ public class FluoConfigurationTest {
   @Test
   public void testMetricsProp() throws Exception {
     FluoConfiguration config = new FluoConfiguration();
-    config.setMetricsYaml(getClass().getClassLoader().getResourceAsStream("metrics.yaml"));
-    Assert.assertEquals(
-        "LS0tCmZyZXF1ZW5jeTogMTAgc2Vjb25kcwpyZXBvcnRlcnM6CiAgLSB0eXBlOiBjb25zb2xlCg==",
-        config.getMetricsYamlBase64());
-    byte[] bytes1 =
-        IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("metrics.yaml"));
-    byte[] bytes2 = IOUtils.toByteArray(config.getMetricsYaml());
-    Assert.assertArrayEquals(bytes1, bytes2);
+    config.setProperty(FluoConfiguration.REPORTER_PREFIX + ".slf4j.logger", "m1");
+    config.setProperty(FluoConfiguration.REPORTER_PREFIX + ".slf4j.frequency", "77");
+    config.setProperty(FluoConfiguration.REPORTER_PREFIX + ".jmx.frequency", "33");
+
+    Assert.assertEquals("m1", config.getReporterConfiguration("slf4j").getString("logger"));
+    Assert.assertEquals("77", config.getReporterConfiguration("slf4j").getString("frequency"));
+    Assert.assertEquals("33", config.getReporterConfiguration("jmx").getString("frequency"));
   }
 
   @Test
@@ -377,8 +374,8 @@ public class FluoConfigurationTest {
     }
     String[] nonEmptyMethods =
         {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser", "setAccumuloZookeepers",
-            "setAdminClass", "setClientClass", "setMetricsYamlBase64", "setMiniClass",
-            "setMiniDataDir", "setInstanceZookeepers"};
+            "setAdminClass", "setClientClass", "setMiniClass", "setMiniDataDir",
+            "setInstanceZookeepers"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

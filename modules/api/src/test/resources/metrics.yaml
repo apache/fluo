@@ -1,4 +1,0 @@
----
-frequency: 10 seconds
-reporters:
-  - type: console
