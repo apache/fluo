@@ -54,6 +54,7 @@ function print_usage {
   echo "  init <app>    Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
   echo "  start <app>   Starts Fluo application on cluster"
   echo "  stop <app>    Stops Fluo application on cluster"
+  echo "  kill <app>    Kills Fluo application on cluster"
   echo "  status <app>  Prints status of Fluo application"
   echo "  info <app>    Prints information about containers of Fluo application"
   echo "  scan <app>    Prints snapshot of data in Fluo application"
