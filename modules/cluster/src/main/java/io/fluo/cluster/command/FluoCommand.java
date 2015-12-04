@@ -100,6 +100,9 @@ public class FluoCommand {
           verifyNoArgs(remainArgs);
           runner.waitUntilFinished(fluoInstall.resolveFluoConfiguration(appName));
           break;
+        case "exec":
+          runner.exec(fluoInstall.resolveFluoConfiguration(appName), remainArgs);
+          break;
         default:
           System.err.println("Unknown command: " + command);
           break;

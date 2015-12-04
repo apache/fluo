@@ -72,7 +72,7 @@ public class MiniFluoCommand {
     return chosenConfig;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
 
     if (args.length < 3) {
       System.err.println("ERROR - Expected at least two arguments.  "
@@ -110,6 +110,9 @@ public class MiniFluoCommand {
       case "wait":
         verifyNoArgs(remainArgs);
         runner.waitUntilFinished(chooseConfig(appName));
+        break;
+      case "exec":
+        runner.exec(chooseConfig(appName), remainArgs);
         break;
       default:
         System.err.println("Unknown command: " + command);

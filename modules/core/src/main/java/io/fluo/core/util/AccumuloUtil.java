@@ -33,7 +33,7 @@ public class AccumuloUtil {
    */
   public static Instance getInstance(FluoConfiguration config) {
     ClientConfiguration clientConfig =
-        ClientConfiguration.loadDefault().withInstance(config.getAccumuloInstance())
+        new ClientConfiguration().withInstance(config.getAccumuloInstance())
             .withZkHosts(config.getAccumuloZookeepers())
             .withZkTimeout(config.getZookeeperTimeout() / 1000);
     return new ZooKeeperInstance(clientConfig);

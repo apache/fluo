@@ -15,6 +15,7 @@
 package io.fluo.cluster.runner;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,6 +23,9 @@ import java.util.Map;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Provider;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -306,5 +310,43 @@ public abstract class AppRunner {
       log.error("An exception was thrown -", e);
       System.exit(-1);
     }
+  }
+
+  private static class FluoConfigModule extends AbstractModule {
+
+    private Class<?> clazz;
+    private FluoConfiguration fluoConfig;
+
+    FluoConfigModule(Class<?> clazz, FluoConfiguration fluoConfig) {
+      this.clazz = clazz;
+      this.fluoConfig = fluoConfig;
+    }
+
+    @Override
+    protected void configure() {
+      requestStaticInjection(clazz);
+      bind(FluoConfiguration.class).toProvider(new Provider<FluoConfiguration>() {
+        @Override
+        public FluoConfiguration get() {
+          // TODO Auto-generated method stub
+          return fluoConfig;
+        }
+      });
+    }
+
+  }
+
+  public void exec(FluoConfiguration fluoConfig, String[] args) throws Exception {
+
+    String className = args[0];
+    Arrays.copyOfRange(args, 1, args.length);
+
+    Class<?> clazz = Class.forName(className);
+
+    // inject fluo configuration
+    Guice.createInjector(new FluoConfigModule(clazz, fluoConfig));
+
+    Method method = clazz.getMethod("main", String[].class);
+    method.invoke(null, (Object) Arrays.copyOfRange(args, 1, args.length));
   }
 }

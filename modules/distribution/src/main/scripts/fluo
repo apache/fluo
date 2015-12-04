@@ -60,6 +60,7 @@ function print_usage {
   echo "  scan <app>    Prints snapshot of data in Fluo application"
   echo "  classpath     Prints the classpath needed for fluo clients.  Run with -h to learn more."
   echo "  wait <app>    Waits until all notifications are processed"
+  echo "  exec <app> <class>  {<argument>}";
   echo " "
   exit 1
 }
@@ -139,6 +140,9 @@ list)
   ;;
 classpath)
   java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME none $1 app ${*:2}
+  ;;
+exec)
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" io.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 *)
   print_usage

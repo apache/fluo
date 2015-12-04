@@ -59,6 +59,33 @@ FluoClient client = FluoFactory.newClient(config)
 
 It may help to reference the [API javadocs][API] while you are learning the Fluo API.
 
+Running application code
+------------------------
+
+The `fluo exec <app name> <class> {arguments}` provides an easy way to execute
+application code.  It will execute a class with a main method if a jar
+containing the class is placed in the lib directory of the application.  When
+the class is run, Fluo classes and dependencies will be on the classpath.  The
+`fluo exec` command can inject the applications configuration if the class is
+written in the following way.  Defining the injection point is optional.
+
+```java
+import javax.inject.Inject;
+
+public class AppCommand {
+
+  //when run with fluo exec command, the applications configuration will be injected
+  @Inject
+  private static FluoConfiguration fluoConfig;
+
+  public static void main(String[] args) throws Exception {
+    try(FluoClient fluoClient = FluoFactory.newClient(fluoConfig)) {
+      //do stuff with Fluo
+    }
+  }
+}
+```
+
 Creating a Fluo observer
 ------------------------
 
