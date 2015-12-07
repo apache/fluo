@@ -43,6 +43,10 @@
       <artifactId>metrics-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-graphite</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.fluo</groupId>
       <artifactId>fluo-accumulo</artifactId>
     </dependency>

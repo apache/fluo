@@ -72,10 +72,6 @@
     </dependency>
     <dependency>
       <groupId>io.fluo</groupId>
-      <artifactId>fluo-metrics</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
       <artifactId>fluo-mini</artifactId>
     </dependency>
     <dependency>

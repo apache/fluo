@@ -1,0 +1,5 @@
+io.fluo.core.metrics.starters.ConsoleReporterStarter
+io.fluo.core.metrics.starters.CsvReporterStarter
+io.fluo.core.metrics.starters.GraphiteReporterStarter
+io.fluo.core.metrics.starters.JmxReporterStarter
+io.fluo.core.metrics.starters.Slf4jReporterStarter

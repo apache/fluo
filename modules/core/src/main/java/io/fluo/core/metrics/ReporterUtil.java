@@ -20,11 +20,17 @@ import java.util.ServiceLoader;
 
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.metrics.ReporterStarter.Params;
 import org.apache.commons.configuration.Configuration;
 
 public class ReporterUtil {
+
+  public static AutoCloseable setupReporters(final Environment env) {
+    return setupReporters(env, FluoConfiguration.FLUO_PREFIX);
+  }
+
   public static AutoCloseable setupReporters(final Environment env, final String domain) {
     ServiceLoader<ReporterStarter> serviceLoader = ServiceLoader.load(ReporterStarter.class);
 

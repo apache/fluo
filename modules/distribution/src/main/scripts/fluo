@@ -108,7 +108,6 @@ new)
   copy_config fluo.properties
   $SED "s/io.fluo.client.application.name=/io.fluo.client.application.name=$APP/g" $APP_CONF_DIR/fluo.properties
   copy_config logback.xml
-  copy_config metrics.yaml
   ;;
 init)
   validate_app_full

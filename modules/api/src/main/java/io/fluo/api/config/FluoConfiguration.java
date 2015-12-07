@@ -14,11 +14,7 @@
 
 package io.fluo.api.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,9 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.bind.DatatypeConverter;
-
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.fluo.api.client.FluoClient;
 import org.apache.commons.configuration.AbstractConfiguration;
@@ -121,9 +114,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final long TRANSACTION_ROLLBACK_TIME_DEFAULT = 300000;
 
   // Metrics
-  public static final String METRICS_YAML_BASE64 = FLUO_PREFIX + ".metrics.yaml.base64";
-  public static final String METRICS_YAML_BASE64_DEFAULT = DatatypeConverter.printBase64Binary(
-      "---\nfrequency: 60 seconds\n".getBytes(Charsets.UTF_8)).replace("\n", "");
+  public static final String REPORTER_PREFIX = FLUO_PREFIX + ".metrics.reporter";
 
   // application config
   public static final String APP_PREFIX = FLUO_PREFIX + ".app";
@@ -181,8 +172,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     getClientRetryTimeout();
     getLoaderQueueSize();
     getLoaderThreads();
-    getMetricsYaml();
-    getMetricsYamlBase64();
     getObserverConfig();
     getOracleInstances();
     getOracleMaxMemory();
@@ -544,6 +533,16 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   /**
+   * @param reporter The name of the reporter to get configuration for, i.e. console, jmx, graphite.
+   * @return A {@link SubsetConfiguration} using the prefix {@value #REPORTER_PREFIX} with the
+   *         reporter parameter appended. Any change made to subset will be reflected in this
+   *         configuration, but with the prefix added.
+   */
+  public Configuration getReporterConfiguration(String reporter) {
+    return subset(REPORTER_PREFIX + "." + reporter);
+  }
+
+  /**
    * @return A {@link SubsetConfiguration} using the prefix {@value #APP_PREFIX}. Any change made to
    *         subset will be reflected in this configuration, but with the prefix added. This method
    *         is useful for setting application configuration before initialization. For reading
@@ -552,57 +551,6 @@ public class FluoConfiguration extends CompositeConfiguration {
    */
   public Configuration getAppConfiguration() {
     return subset(APP_PREFIX);
-  }
-
-  /**
-   * Base64 encodes yaml and stores it in metrics yaml base64 property
-   *
-   * @param in yaml input
-   */
-  public void setMetricsYaml(InputStream in) {
-    byte[] data = new byte[4096];
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    int len;
-    try {
-      while ((len = in.read(data)) > 0) {
-        baos.write(data, 0, len);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    setProperty(METRICS_YAML_BASE64, DatatypeConverter.printBase64Binary(baos.toByteArray())
-        .replace("\n", ""));
-  }
-
-  /**
-   * This property must be base64 encoded. If you have raw yaml, then consider using
-   * {@link #setMetricsYaml(InputStream)} which will do the base64 encoding for you.
-   *
-   * @param base64Yaml A base64 encoded yaml metrics config.
-   */
-  public FluoConfiguration setMetricsYamlBase64(String base64Yaml) {
-    return setNonEmptyString(METRICS_YAML_BASE64, base64Yaml);
-  }
-
-  /**
-   * Consider using {@link #getMetricsYaml()} which will automatically decode the base 64 value of
-   * this property.
-   *
-   * @return base64 encoded yaml metrics config.
-   */
-
-  public String getMetricsYamlBase64() {
-    return getNonEmptyString(METRICS_YAML_BASE64, METRICS_YAML_BASE64_DEFAULT);
-  }
-
-  /**
-   * This method will decode the base64 yaml metrics config.
-   *
-   * @return stream that can be used to read yaml
-   */
-  public InputStream getMetricsYaml() {
-    return new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(getMetricsYamlBase64()));
   }
 
   public FluoConfiguration setMiniStartAccumulo(boolean startAccumulo) {
@@ -800,20 +748,6 @@ public class FluoConfiguration extends CompositeConfiguration {
   private long getPositiveLong(String property, long defaultValue) {
     long value = getLong(property, defaultValue);
     Preconditions.checkArgument(value > 0, property + " must be positive");
-    return value;
-  }
-
-  private FluoConfiguration setPort(String property, int value) {
-    Preconditions.checkArgument(value >= 1 && value <= 65535, property
-        + " must be valid port (1-65535)");
-    setProperty(property, value);
-    return this;
-  }
-
-  private int getPort(String property, int defaultValue) {
-    int value = getInt(property, defaultValue);
-    Preconditions.checkArgument(value >= 1 && value <= 65535, property
-        + " must be valid port (1-65535)");
     return value;
   }
 

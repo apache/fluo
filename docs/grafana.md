@@ -44,16 +44,15 @@ Grafana on your own.
       ]
     ```
 
-3. Configure the `metrics.yml` in your Fluo app configuration to send Graphite 
+3. Configure `fluo.properties` in your Fluo app configuration to send Graphite 
    metrics to InfluxDB.  Below is example configuration. Remember to replace
    `<INFLUXDB_HOST>` with the actual host.
 
     ```
-    frequency: 10 seconds
-    reporters:
-        - type: graphite
-          host: <INFLUXDB_HOST>
-          port: 2003
+    io.fluo.metrics.reporter.graphite.enable=true
+    io.fluo.metrics.reporter.graphite.host=<INFLUXDB_HOST>
+    io.fluo.metrics.reporter.graphite.port=2003
+    io.fluo.metrics.reporter.graphite.frequency=10
     ```
 
 4.  Grafana needs to be configured to load dashboard JSON templates from a
@@ -69,7 +68,7 @@ Grafana on your own.
     ```
 
 5.  If you restart Grafana, you will see the Fluo dashboard configured but all of its charts will 
-    be empty unless you have a Fluo application running and configured with a `metrics.yml` to send 
+    be empty unless you have a Fluo application running and configured to send
     data to InfluxDB.  When you start sending data, you may need to refresh the dashboard page in 
     the browser to start viewing metrics.
 
