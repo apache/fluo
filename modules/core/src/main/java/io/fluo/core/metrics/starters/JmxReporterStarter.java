@@ -22,8 +22,12 @@ import com.codahale.metrics.JmxReporter;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.metrics.ReporterStarter;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JmxReporterStarter implements ReporterStarter {
+
+  private static final Logger log = LoggerFactory.getLogger(JmxReporterStarter.class);
 
   @Override
   public List<AutoCloseable> start(Params params) {
@@ -42,6 +46,9 @@ public class JmxReporterStarter implements ReporterStarter {
         JmxReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
             .convertRatesTo(rateUnit).inDomain(params.getDomain()).build();
     reporter.start();
+
+    log.info("Reporting metrics to JMX");
+
     return Collections.singletonList((AutoCloseable) reporter);
   }
 }

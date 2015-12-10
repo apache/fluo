@@ -68,8 +68,7 @@ public class LoadTask implements Runnable {
       } finally {
         if (txi != null) {
           try {
-            txi.getStats().report(env.getMetricNames(), status, loader.getClass(),
-                env.getSharedResources().getMetricRegistry());
+            txi.getStats().report(status, loader.getClass());
           } finally {
             tx.close();
           }
