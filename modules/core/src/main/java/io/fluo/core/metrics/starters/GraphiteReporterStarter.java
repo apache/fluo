@@ -23,8 +23,12 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.metrics.ReporterStarter;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphiteReporterStarter implements ReporterStarter {
+
+  private static final Logger log = LoggerFactory.getLogger(GraphiteReporterStarter.class);
 
   @Override
   public List<AutoCloseable> start(Params params) {
@@ -47,6 +51,8 @@ public class GraphiteReporterStarter implements ReporterStarter {
         GraphiteReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
             .convertRatesTo(rateUnit).prefixedWith(prefix).build(graphite);
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
+
+    log.info("Reporting metrics to graphite server {}:{}", host, port);
 
     return Collections.singletonList((AutoCloseable) reporter);
   }

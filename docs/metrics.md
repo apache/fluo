@@ -10,8 +10,10 @@ different tools, below are some tools that have been used with Fluo.
    InfluxDB and viewing them in Grafana. The [fluo-dev] tool can also set up
    these tools for you and configure Fluo to send to them.
 
-2. JMX -  Fluo will setup a JMX reporter if no reporters are configured. The
-   JMX reporter makes it easy to see fluo stats in jconsole or jvisualvm.  
+2. JMX - Fluo can be configured to reports metrics via JMX which can be viewed
+   in jconsole or jvisualvm.  
+   
+3. CSV - Fluo can be configured to output metrics as CSV to a specified directory.
 
 Configuring Reporters
 ---------------------

@@ -84,7 +84,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   private final Set<Column> observedColumns;
   private final Environment env;
   final Map<Bytes, Set<Column>> columnsRead = new HashMap<>();
-  private final TxStats stats = new TxStats();
+  private final TxStats stats;
   private Notification notification;
   private Notification weakNotification;
   private TransactorNode tnode = null;
@@ -95,6 +95,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     Preconditions.checkNotNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
+    this.stats = new TxStats(env);
     this.startTs = startTs;
     this.observedColumns = env.getObservers().keySet();
 

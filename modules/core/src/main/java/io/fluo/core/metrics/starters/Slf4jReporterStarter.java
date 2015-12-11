@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 public class Slf4jReporterStarter implements ReporterStarter {
 
+  private static final Logger log = LoggerFactory.getLogger(Slf4jReporterStarter.class);
+
   @Override
   public List<AutoCloseable> start(Params params) {
     Configuration config =
@@ -45,6 +47,9 @@ public class Slf4jReporterStarter implements ReporterStarter {
         Slf4jReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
             .convertRatesTo(rateUnit).outputTo(logger).build();
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
+
+    log.info("Reporting metrics using slf4j");
+
     return Collections.singletonList((AutoCloseable) reporter);
   }
 

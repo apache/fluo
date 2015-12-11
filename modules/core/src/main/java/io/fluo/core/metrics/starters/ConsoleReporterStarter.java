@@ -23,8 +23,12 @@ import com.codahale.metrics.ConsoleReporter;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.metrics.ReporterStarter;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConsoleReporterStarter implements ReporterStarter {
+
+  private static final Logger log = LoggerFactory.getLogger(ConsoleReporterStarter.class);
 
   @Override
   public List<AutoCloseable> start(Params params) {
@@ -47,6 +51,9 @@ public class ConsoleReporterStarter implements ReporterStarter {
         ConsoleReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
             .convertRatesTo(rateUnit).outputTo(out).build();
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
+
+    log.info("Reporting metrics to console");
+
     return Collections.singletonList((AutoCloseable) reporter);
   }
 

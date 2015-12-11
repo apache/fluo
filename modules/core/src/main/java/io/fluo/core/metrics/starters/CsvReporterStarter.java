@@ -23,16 +23,20 @@ import com.codahale.metrics.CsvReporter;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.metrics.ReporterStarter;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CsvReporterStarter implements ReporterStarter {
+
+  private static final Logger log = LoggerFactory.getLogger(CsvReporterStarter.class);
 
   @Override
   public List<AutoCloseable> start(Params params) {
     Configuration config =
         new FluoConfiguration(params.getConfiguration()).getReporterConfiguration("csv");
 
-    String file = config.getString("file", "");
-    if (!config.getBoolean("enable", false) || file.isEmpty()) {
+    String dir = config.getString("dir", "");
+    if (!config.getBoolean("enable", false) || dir.isEmpty()) {
       return Collections.emptyList();
     }
 
@@ -42,8 +46,11 @@ public class CsvReporterStarter implements ReporterStarter {
 
     CsvReporter reporter =
         CsvReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
-            .convertRatesTo(rateUnit).build(new File(file));
+            .convertRatesTo(rateUnit).build(new File(dir));
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
+
+    log.info("Reporting metrics as csv to directory {}", dir);
+
     return Collections.singletonList((AutoCloseable) reporter);
   }
 

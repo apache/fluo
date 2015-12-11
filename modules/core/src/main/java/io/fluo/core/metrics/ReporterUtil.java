@@ -18,14 +18,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.impl.FluoConfigurationImpl;
 import io.fluo.core.metrics.ReporterStarter.Params;
 import org.apache.commons.configuration.Configuration;
+import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotReservoir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReporterUtil {
+
+  private static final Logger log = LoggerFactory.getLogger(ReporterUtil.class);
 
   public static AutoCloseable setupReporters(final Environment env) {
     return setupReporters(env, FluoConfiguration.FLUO_PREFIX);
@@ -55,16 +60,20 @@ public class ReporterUtil {
         }
       });
 
+
       allReporters.addAll(reporters);
     }
 
-    if (allReporters.size() == 0) {
-      JmxReporter jmxReporter =
-          JmxReporter.forRegistry(env.getSharedResources().getMetricRegistry()).inDomain(domain)
-              .build();
-      jmxReporter.start();
-      allReporters.add(jmxReporter);
+    final String hdrSnapshotClass = HdrHistogramResetOnSnapshotReservoir.class.getName();
+    String clazz =
+        env.getConfiguration().getString(FluoConfigurationImpl.METRICS_RESERVOIR_PROP,
+            hdrSnapshotClass);
+    if ((allReporters.size() > 1) && (clazz.equals(hdrSnapshotClass))) {
+      throw new IllegalStateException("Multiple metrics reporters cannot be configured when using "
+          + hdrSnapshotClass + " as corrupt metrics can be reported");
     }
+
+    log.info("Started {} metrics reporters", allReporters.size());
 
     return new AutoCloseable() {
 

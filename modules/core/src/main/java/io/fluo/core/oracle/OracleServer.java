@@ -28,6 +28,7 @@ import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
+import io.fluo.core.metrics.MetricsUtil;
 import io.fluo.core.thrift.OracleService;
 import io.fluo.core.thrift.Stamps;
 import io.fluo.core.util.CuratorUtil;
@@ -177,9 +178,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
   public OracleServer(Environment env) throws Exception {
     this.env = env;
     stampsHistogram =
-        env.getSharedResources().getMetricRegistry()
-            .histogram(env.getMetricNames().getOracleServerStamps());
-
+        MetricsUtil.getHistogram(env.getConfiguration(), env.getSharedResources()
+            .getMetricRegistry(), env.getMetricNames().getOracleServerStamps());
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
     this.oraclePath = ZookeeperPath.ORACLE_SERVER;

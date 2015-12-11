@@ -29,6 +29,7 @@ import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.impl.CuratorCnxnListener;
 import io.fluo.core.impl.Environment;
+import io.fluo.core.metrics.MetricsUtil;
 import io.fluo.core.thrift.OracleService;
 import io.fluo.core.thrift.Stamps;
 import io.fluo.core.util.CuratorUtil;
@@ -331,11 +332,11 @@ public class OracleClient implements AutoCloseable {
   public OracleClient(Environment env) {
     this.env = env;
     responseTimer =
-        env.getSharedResources().getMetricRegistry()
-            .timer(env.getMetricNames().getOracleResponseTime());
+        MetricsUtil.getTimer(env.getConfiguration(), env.getSharedResources().getMetricRegistry(),
+            env.getMetricNames().getOracleResponseTime());
     stampsHistogram =
-        env.getSharedResources().getMetricRegistry()
-            .histogram(env.getMetricNames().getOracleClientStamps());
+        MetricsUtil.getHistogram(env.getConfiguration(), env.getSharedResources()
+            .getMetricRegistry(), env.getMetricNames().getOracleClientStamps());
     timestampRetriever = new TimestampRetriever();
     thread = new Thread(timestampRetriever);
     thread.setDaemon(true);

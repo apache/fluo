@@ -20,10 +20,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.base.Preconditions;
+import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.metrics.MetricNames;
+import io.fluo.core.metrics.MetricsUtil;
 
 public class TxStats {
   private final long startTime;
@@ -38,9 +41,11 @@ public class TxStats {
   private long timedOutLocks = 0;
   private Map<Bytes, Set<Column>> rejected = Collections.emptyMap();
   private long commitTs = -1;
+  private final Environment env;
 
-  TxStats() {
+  TxStats(Environment env) {
     this.startTime = System.currentTimeMillis();
+    this.env = env;
   }
 
   public long getLockWaitTime() {
@@ -132,13 +137,16 @@ public class TxStats {
     finishTime = t;
   }
 
-  public void report(MetricNames names, String status, Class<?> execClass, MetricRegistry registry) {
+  public void report(String status, Class<?> execClass) {
+    MetricNames names = env.getMetricNames();
+    MetricRegistry registry = env.getSharedResources().getMetricRegistry();
     String sn = execClass.getSimpleName();
     if (getLockWaitTime() > 0) {
-      registry.timer(names.getTxLockWaitTime() + sn).update(getLockWaitTime(),
-          TimeUnit.MILLISECONDS);
+      MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime() + sn)
+          .update(getLockWaitTime(), TimeUnit.MILLISECONDS);
     }
-    registry.timer(names.getTxExecTime() + sn).update(getTime(), TimeUnit.MILLISECONDS);
+    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime() + sn).update(
+        getTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0) {
       registry.meter(names.getTxWithCollision() + sn).mark();
       registry.meter(names.getTxCollisions() + sn).mark(getCollisions());
