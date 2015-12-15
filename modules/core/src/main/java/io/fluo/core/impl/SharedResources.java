@@ -53,9 +53,13 @@ public class SharedResources implements AutoCloseable {
     curator.start();
     bw = env.getConnector().createBatchWriter(env.getTable(), new BatchWriterConfig());
     sbw = new SharedBatchWriter(bw);
+
+    int numCWThreads = FluoConfigurationImpl.getNumCWThreads(env.getConfiguration());
     cw =
-        env.getConnector().createConditionalWriter(env.getTable(),
-            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations()));
+        env.getConnector().createConditionalWriter(
+            env.getTable(),
+            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
+                .setMaxWriteThreads(numCWThreads));
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
