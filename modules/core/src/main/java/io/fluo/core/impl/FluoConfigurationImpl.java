@@ -40,4 +40,27 @@ public class FluoConfigurationImpl {
   // may keep older versions of table data unnecessarily.
   public static final String ZK_UPDATE_PERIOD_PROP = FLUO_IMPL_PREFIX + ".timestamp.update.period";
   public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
+
+
+  public static final String CW_MIN_THREADS_PROP = FLUO_IMPL_PREFIX + ".cw.threads.min";
+  public static final int CW_MIN_THREADS_DEFAULT = 3;
+  public static final String CW_MAX_THREADS_PROP = FLUO_IMPL_PREFIX + ".cw.threads.max";
+  public static final int CW_MAX_THREADS_DEFAULT = 20;
+
+  public static int getNumCWThreads(FluoConfiguration conf) {
+    int min = conf.getInt(CW_MIN_THREADS_PROP, CW_MIN_THREADS_DEFAULT);
+    int max = conf.getInt(CW_MAX_THREADS_PROP, CW_MAX_THREADS_DEFAULT);
+
+    if (min < 0 || max < 0 || min > max) {
+      throw new IllegalArgumentException("Bad conditional writer thread props " + min + " " + max);
+    }
+
+    int numWorkers = conf.getWorkerInstances();
+
+    int numThreads = numWorkers / 2;
+    numThreads = Math.min(numThreads, max);
+    numThreads = Math.max(numThreads, min);
+
+    return numThreads;
+  }
 }
