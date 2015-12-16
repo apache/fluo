@@ -17,7 +17,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -111,7 +111,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -195,7 +195,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -297,7 +297,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -391,7 +391,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -486,7 +486,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -588,7 +588,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -682,7 +682,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -776,7 +776,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -936,7 +936,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1030,7 +1030,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1124,7 +1124,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1226,7 +1226,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1320,7 +1320,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1414,7 +1414,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1515,7 +1515,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1667,7 +1667,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1757,7 +1757,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1856,7 +1856,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": null,
+          "datasource": "fluo_metrics",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -2013,7 +2013,7 @@
       {
         "allFormat": "glob",
         "current": null,
-        "datasource": null,
+        "datasource": "fluo_metrics",
         "includeAll": false,
         "label": "Fluo Application",
         "multi": false,
