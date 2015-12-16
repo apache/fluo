@@ -73,7 +73,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Gets a byte within this sequence of bytes
-   * 
+   *
    * @param i index into sequence
    * @return byte
    * @throws IllegalArgumentException if i is out of range
@@ -87,7 +87,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Returns a portion of the Bytes object
-   * 
+   *
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
    */
@@ -104,7 +104,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * is performed starting with the first byte of each sequence, and proceeds until a pair of bytes
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
-   * 
+   *
    * @param b1 first byte sequence to compare
    * @param b2 second byte sequence to compare
    * @return comparison result
@@ -177,7 +177,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Creates a Bytes object by copying the data of a subsequence of the given byte array
-   * 
+   *
    * @param data Byte data
    * @param offset Starting offset in byte array (inclusive)
    * @param length Number of bytes to include
@@ -220,7 +220,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Writes Bytes to DataOutput
-   * 
+   *
    * @param out DataOutput
    * @param b Bytes
    */
@@ -233,7 +233,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Wraps data input as Bytes
-   * 
+   *
    * @param in DataInput
    * @return Bytes
    */
@@ -245,8 +245,22 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
+   * Provides an efficient and reusable way to build immutable Bytes objects.
+   */
+  public static BytesBuilder newBuilder() {
+    return new BytesBuilder();
+  }
+
+  /**
+   * @param initialCapacity The initial size of the byte builders internal array.
+   */
+  public static BytesBuilder newBuilder(int initialCapacity) {
+    return new BytesBuilder(initialCapacity);
+  }
+
+  /**
    * Concatenates of list of Bytes objects to create a byte array
-   * 
+   *
    * @param listOfBytes Bytes objects to concatenate
    * @return Bytes
    */
@@ -270,7 +284,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Splits a bytes object into several bytes objects
-   * 
+   *
    * @param b Original bytes object
    * @return List of bytes objects
    */
