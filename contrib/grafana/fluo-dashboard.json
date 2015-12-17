@@ -1931,7 +1931,7 @@
               "alias": "Reported by clients",
               "fields": [
                 {
-                  "func": "sum",
+                  "func": "mean",
                   "name": "value"
                 }
               ],
@@ -1942,7 +1942,7 @@
                 }
               ],
               "measurement": "oracle_client_stamps",
-              "query": "SELECT sum(\"value\") AS \"value\" FROM \"oracle_client_stamps\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval)",
+              "query": "SELECT mean(\"value\") AS \"value\" FROM \"oracle_client_stamps\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval)",
               "refId": "B",
               "tags": [
                 {
