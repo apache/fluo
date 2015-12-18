@@ -20,9 +20,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.google.common.base.Preconditions;
-import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.metrics.MetricNames;
@@ -42,6 +40,9 @@ public class TxStats {
   private Map<Bytes, Set<Column>> rejected = Collections.emptyMap();
   private long commitTs = -1;
   private final Environment env;
+  private long precommitTime = -1;
+  private long commitPrimaryTime = -1;
+  private long finishCommitTime = -1;
 
   TxStats(Environment env) {
     this.startTime = System.currentTimeMillis();
@@ -62,6 +63,18 @@ public class TxStats {
 
   public long getTime() {
     return finishTime - startTime;
+  }
+
+  public long getPrecommitTime() {
+    return precommitTime;
+  }
+
+  public long getCommitPrimaryTime() {
+    return commitPrimaryTime;
+  }
+
+  public long getFinishCommitTime() {
+    return finishCommitTime;
   }
 
   public long getCollisions() {
@@ -160,5 +173,11 @@ public class TxStats {
       registry.meter(names.getTxLocksDead() + sn).mark(getDeadLocks());
     }
     registry.meter(names.getTxStatus() + status.toLowerCase() + "." + sn).mark();
+  }
+
+  public void setCommitTimes(long precommitTime, long commitPrimaryTime, long finishCommitTime) {
+    this.precommitTime = precommitTime;
+    this.commitPrimaryTime = commitPrimaryTime;
+    this.finishCommitTime = finishCommitTime;
   }
 }

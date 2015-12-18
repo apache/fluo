@@ -35,6 +35,7 @@ public class SharedResources implements AutoCloseable {
   private final Environment env;
   private final BatchWriter bw;
   private final ConditionalWriter cw;
+  private final ConditionalWriter bulkCw;
   private final SharedBatchWriter sbw;
   private final CuratorFramework curator;
   private OracleClient oracleClient = null;
@@ -60,6 +61,11 @@ public class SharedResources implements AutoCloseable {
             env.getTable(),
             new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
                 .setMaxWriteThreads(numCWThreads));
+    bulkCw =
+        env.getConnector().createConditionalWriter(
+            env.getTable(),
+            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
+                .setMaxWriteThreads(numCWThreads));
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
@@ -73,6 +79,11 @@ public class SharedResources implements AutoCloseable {
   public ConditionalWriter getConditionalWriter() {
     checkIfClosed();
     return cw;
+  }
+
+  public ConditionalWriter getBulkConditionalWriter() {
+    checkIfClosed();
+    return bulkCw;
   }
 
   public TxInfoCache getTxInfoCache() {
@@ -154,6 +165,7 @@ public class SharedResources implements AutoCloseable {
       oracleClient.close();
     }
     cw.close();
+    bulkCw.close();
     sbw.close();
     try {
       bw.close();

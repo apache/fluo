@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -313,6 +314,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   public static class CommitData {
     ConditionalWriter cw;
+    ConditionalWriter bulkCw;
     private Bytes prow;
     private Column pcol;
     private Bytes pval;
@@ -422,6 +424,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     // try to lock other columns
     ArrayList<ConditionalMutation> mutations = new ArrayList<>();
 
+    int numUpdates = 0;
     for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
       ConditionalFlutation cm = null;
       boolean isTriggerRow = isTriggerRow(rowUpdates.getKey());
@@ -437,13 +440,22 @@ public class TransactionImpl implements Transaction, Snapshot {
       }
 
       mutations.add(cm);
+
+      numUpdates += rowUpdates.getValue().size();
     }
 
     cd.acceptedRows = new HashSet<>();
 
     boolean ackCollision = false;
 
-    Iterator<Result> resultsIter = cd.cw.write(mutations.iterator());
+    Iterator<Result> resultsIter;
+
+    if (numUpdates < 10) {
+      resultsIter = cd.cw.write(mutations.iterator());
+    } else {
+      resultsIter = cd.bulkCw.write(mutations.iterator());
+    }
+
     while (resultsIter.hasNext()) {
       Result result = resultsIter.next();
       // TODO handle unknown?
@@ -713,6 +725,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   public CommitData createCommitData() {
     CommitData cd = new CommitData();
     cd.cw = env.getSharedResources().getConditionalWriter();
+    cd.bulkCw = env.getSharedResources().getBulkConditionalWriter();
     return cd;
   }
 
@@ -740,15 +753,20 @@ public class TransactionImpl implements Transaction, Snapshot {
     CommitData cd = createCommitData();
 
     try {
+      long t1 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
       if (!preCommit(cd)) {
         readUnread(cd);
         throw new CommitException("Pre-commit failed");
       }
+      long t2 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
       Stamp commitStamp = env.getSharedResources().getOracleClient().getStamp();
       if (commitPrimaryColumn(cd, commitStamp)) {
+        long t3 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
         stats.setCommitTs(commitStamp.getTxTimestamp());
         finishCommit(cd, commitStamp);
+        long t4 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        stats.setCommitTimes(t2 - t1, t3 - t2, t4 - t3);
       } else {
         // TODO write TX_DONE (done in case where startTs < gcTimestamp)
         throw new CommitException("Commit failed");
