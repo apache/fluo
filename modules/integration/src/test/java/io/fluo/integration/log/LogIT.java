@@ -197,23 +197,24 @@ public class LogIT extends ITBaseMini {
       logger.setLevel(level);
     }
 
+
     String logMsgs = writer.toString().replace('\n', ' ');
 
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(-1 -1 -1\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(-1 -1 -1\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
   }
 
   @Test
