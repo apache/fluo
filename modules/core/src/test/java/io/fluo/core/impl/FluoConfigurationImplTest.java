@@ -21,31 +21,24 @@ public class FluoConfigurationImplTest {
   @Test
   public void testBasic() {
     FluoConfiguration conf = new FluoConfiguration();
-    conf.setWorkerInstances(3);
 
     Assert.assertEquals(FluoConfigurationImpl.CW_MIN_THREADS_DEFAULT,
-        FluoConfigurationImpl.getNumCWThreads(conf));
+        FluoConfigurationImpl.getNumCWThreads(conf, 3));
 
-    conf.setWorkerInstances(10);
-
-    Assert.assertEquals(5, FluoConfigurationImpl.getNumCWThreads(conf));
-
-    conf.setWorkerInstances(100);
+    Assert.assertEquals(10, FluoConfigurationImpl.getNumCWThreads(conf, 10));
 
     Assert.assertEquals(FluoConfigurationImpl.CW_MAX_THREADS_DEFAULT,
-        FluoConfigurationImpl.getNumCWThreads(conf));
+        FluoConfigurationImpl.getNumCWThreads(conf, 100));
 
     conf.setProperty(FluoConfigurationImpl.CW_MAX_THREADS_PROP, 40);
 
-    Assert.assertEquals(40, FluoConfigurationImpl.getNumCWThreads(conf));
-
-    conf.setWorkerInstances(3);
+    Assert.assertEquals(40, FluoConfigurationImpl.getNumCWThreads(conf, 100));
 
     Assert.assertEquals(FluoConfigurationImpl.CW_MIN_THREADS_DEFAULT,
-        FluoConfigurationImpl.getNumCWThreads(conf));
+        FluoConfigurationImpl.getNumCWThreads(conf, 3));
 
     conf.setProperty(FluoConfigurationImpl.CW_MIN_THREADS_PROP, 5);
 
-    Assert.assertEquals(5, FluoConfigurationImpl.getNumCWThreads(conf));
+    Assert.assertEquals(5, FluoConfigurationImpl.getNumCWThreads(conf, 3));
   }
 }
