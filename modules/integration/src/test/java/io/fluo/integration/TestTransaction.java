@@ -49,6 +49,7 @@ import org.apache.hadoop.io.Text;
 public class TestTransaction extends TypedTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
+  private Environment env;
 
   public static long getNotificationTS(Environment env, String row, Column col) {
     Scanner scanner;
@@ -77,16 +78,18 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   @SuppressWarnings("resource")
   public TestTransaction(Environment env, TransactorNode transactor) {
-    this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder());
+    this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder(), env);
   }
 
   public TestTransaction(Environment env) {
-    this(new TransactionImpl(env), new StringEncoder());
+    this(new TransactionImpl(env), new StringEncoder(), env);
   }
 
-  public TestTransaction(TransactionImpl transactionImpl, StringEncoder stringEncoder) {
+  private TestTransaction(TransactionImpl transactionImpl, StringEncoder stringEncoder,
+      Environment env) {
     super(transactionImpl, stringEncoder, new TypeLayer(stringEncoder));
     this.tx = transactionImpl;
+    this.env = env;
   }
 
   public TestTransaction(Environment env, String trow, Column tcol) {
@@ -95,7 +98,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   public TestTransaction(Environment env, String trow, Column tcol, long notificationTS) {
     this(new TransactionImpl(env, new Notification(Bytes.of(trow), tcol, notificationTS)),
-        new StringEncoder());
+        new StringEncoder(), env);
   }
 
   /**
@@ -113,6 +116,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   public void commit() throws CommitException {
     tx.commit();
+    env.getSharedResources().getBatchWriter().waitForAsyncFlush();
   }
 
   public void close() {
@@ -142,6 +146,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
   public void finishCommit(CommitData cd, Stamp commitStamp) throws MutationsRejectedException,
       TableNotFoundException {
     tx.finishCommit(cd, commitStamp);
+    env.getSharedResources().getBatchWriter().waitForAsyncFlush();
   }
 
   public long getStartTs() {
