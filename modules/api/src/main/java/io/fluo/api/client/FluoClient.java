@@ -41,6 +41,12 @@ public interface FluoClient extends AutoCloseable {
    * provided by the {@link Loader} and {@link Observer}, users will need to call
    * {@link Transaction#commit()}. Use within a try-with-resources statement or call
    * {@link Transaction#close()} when you are finished.
+   *
+   * <p>
+   * Executing many transactions using this method may be less optimal than using a LoaderExecutor.
+   * When a transaction created via this method is committed and closed, the caller must wait for
+   * data to be persisted. Using a LoaderExecutor, multiple transactions commit processing may be
+   * batched w/o the need to wait for each transaction until the LoaderExecutor is closed.
    */
   Transaction newTransaction();
 
