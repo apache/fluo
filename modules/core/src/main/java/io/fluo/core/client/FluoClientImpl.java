@@ -84,7 +84,14 @@ public class FluoClientImpl implements FluoClient {
 
   @Override
   public Transaction newTransaction() {
-    TransactionImpl tx = new TransactionImpl(env);
+    TransactionImpl tx = new TransactionImpl(env) {
+      @Override
+      public void commit() {
+        super.commit();
+        // wait for any async mutations that transaction write to flush
+        env.getSharedResources().getBatchWriter().waitForAsyncFlush();
+      }
+    };
     if (TracingTransaction.isTracingEnabled()) {
       return new TracingTransaction(tx);
     }

@@ -699,25 +699,22 @@ public class TransactionImpl implements Transaction, Snapshot {
       mutations.add(m);
     }
 
-    env.getSharedResources().getBatchWriter().writeMutations(mutations);
-
-    // mark transaction as complete for garbage collection purposes
-
-    mutations.clear();
+    ArrayList<Mutation> afterFlushMutations = new ArrayList<>(2);
 
     Flutation m = new Flutation(env, cd.prow);
+    // mark transaction as complete for garbage collection purposes
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
-    mutations.add(m);
+    afterFlushMutations.add(m);
 
     if (weakNotification != null) {
-      mutations.add(weakNotification.newDelete(env, startTs));
+      afterFlushMutations.add(weakNotification.newDelete(env, startTs));
     }
 
     if (notification != null) {
-      mutations.add(notification.newDelete(env, startTs));
+      afterFlushMutations.add(notification.newDelete(env, startTs));
     }
 
-    env.getSharedResources().getBatchWriter().writeMutationsAsync(mutations);
+    env.getSharedResources().getBatchWriter().writeMutationsAsync(mutations, afterFlushMutations);
 
     return true;
   }

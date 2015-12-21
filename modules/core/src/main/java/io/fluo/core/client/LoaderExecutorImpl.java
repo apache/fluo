@@ -123,6 +123,9 @@ public class LoaderExecutorImpl implements LoaderExecutor {
     if (exceptionRef.get() != null) {
       throw new RuntimeException(exceptionRef.get());
     }
+
+    // wait for any async mutations that transactions write to flush
+    env.getSharedResources().getBatchWriter().waitForAsyncFlush();
   }
 
 }
