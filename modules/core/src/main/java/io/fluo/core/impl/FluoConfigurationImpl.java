@@ -41,13 +41,13 @@ public class FluoConfigurationImpl {
   public static final String ZK_UPDATE_PERIOD_PROP = FLUO_IMPL_PREFIX + ".timestamp.update.period";
   public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
 
-
+  // CW is short for ConditionalWriter
   public static final String CW_MIN_THREADS_PROP = FLUO_IMPL_PREFIX + ".cw.threads.min";
   public static final int CW_MIN_THREADS_DEFAULT = 3;
   public static final String CW_MAX_THREADS_PROP = FLUO_IMPL_PREFIX + ".cw.threads.max";
   public static final int CW_MAX_THREADS_DEFAULT = 20;
 
-  public static int getNumCWThreads(FluoConfiguration conf) {
+  public static int getNumCWThreads(FluoConfiguration conf, int numTservers) {
     int min = conf.getInt(CW_MIN_THREADS_PROP, CW_MIN_THREADS_DEFAULT);
     int max = conf.getInt(CW_MAX_THREADS_PROP, CW_MAX_THREADS_DEFAULT);
 
@@ -55,9 +55,28 @@ public class FluoConfigurationImpl {
       throw new IllegalArgumentException("Bad conditional writer thread props " + min + " " + max);
     }
 
-    int numWorkers = conf.getWorkerInstances();
+    int numThreads = numTservers;
+    numThreads = Math.min(numThreads, max);
+    numThreads = Math.max(numThreads, min);
 
-    int numThreads = numWorkers / 2;
+    return numThreads;
+  }
+
+  // BW is short for BatchWriter
+  public static final String BW_MIN_THREADS_PROP = FLUO_IMPL_PREFIX + ".bw.threads.min";
+  public static final int BW_MIN_THREADS_DEFAULT = 3;
+  public static final String BW_MAX_THREADS_PROP = FLUO_IMPL_PREFIX + ".bw.threads.max";
+  public static final int BW_MAX_THREADS_DEFAULT = 20;
+
+  public static int getNumBWThreads(FluoConfiguration conf, int numTservers) {
+    int min = conf.getInt(BW_MIN_THREADS_PROP, BW_MIN_THREADS_DEFAULT);
+    int max = conf.getInt(BW_MAX_THREADS_PROP, BW_MAX_THREADS_DEFAULT);
+
+    if (min < 0 || max < 0 || min > max) {
+      throw new IllegalArgumentException("Bad batch writer thread props " + min + " " + max);
+    }
+
+    int numThreads = numTservers;
     numThreads = Math.min(numThreads, max);
     numThreads = Math.max(numThreads, min);
 
