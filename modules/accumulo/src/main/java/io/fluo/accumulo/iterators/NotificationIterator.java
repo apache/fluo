@@ -31,6 +31,9 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SkippingIterator;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
+import static io.fluo.accumulo.util.NotificationUtil.isDelete;
+import static io.fluo.accumulo.util.NotificationUtil.isNtfy;
+
 /*
  * <p>When persisted, the last bit of the notification indicates if its a delete. This is done so
  * that deletes sort first. Accumulo deletes are not used because notifications after a delete can
@@ -45,17 +48,8 @@ import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
  */
 public class NotificationIterator extends SkippingIterator {
 
-  static final ByteSequence NTFY_CF = new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
-
-  private static final long DEL_MASK = 0x0000000000000001L;
-
-  static boolean isDelete(Key key) {
-    return (key.getTimestamp() & DEL_MASK) == DEL_MASK;
-  }
-
-  static boolean isNtfy(Key key) {
-    return key.getColumnFamilyData().equals(NotificationIterator.NTFY_CF);
-  }
+  public static final ByteSequence NTFY_CF = new ArrayByteSequence(
+      ColumnConstants.NOTIFY_CF.toArray());
 
   private void skipRowCol(PushbackIterator source, Key key) throws IOException {
     while (source.hasTop() && source.getTopKey().equals(key, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {

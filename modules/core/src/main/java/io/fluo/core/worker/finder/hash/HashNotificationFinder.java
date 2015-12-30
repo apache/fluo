@@ -25,11 +25,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.fluo.accumulo.data.MutableBytes;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
+import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.UtilWaitThread;
 import io.fluo.core.worker.NotificationFinder;
 import io.fluo.core.worker.NotificationProcessor;
@@ -194,7 +194,7 @@ public class HashNotificationFinder implements NotificationFinder {
 
   @VisibleForTesting
   static boolean shouldProcess(Notification notification, int divisor, int remainder) {
-    byte[] cfcq = ColumnUtil.concatCFCQ(notification.getColumn());
+    byte[] cfcq = NotificationUtil.encodeCol(notification.getColumn());
     return NotificationHashFilter.accept(
         ByteUtil.toByteSequence((MutableBytes) notification.getRow()), new ArrayByteSequence(cfcq),
         divisor, remainder);

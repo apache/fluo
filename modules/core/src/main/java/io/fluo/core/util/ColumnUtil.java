@@ -45,10 +45,6 @@ public class ColumnUtil {
 
   private ColumnUtil() {}
 
-  public static byte[] concatCFCQ(Column c) {
-    return Bytes.concat(c.getFamily(), c.getQualifier()).toArray();
-  }
-
   static ColumnVisibility gv(Environment env, Column col) {
     return env.getSharedResources().getVisCache().getCV(col);
   }
