@@ -21,8 +21,10 @@ import io.fluo.accumulo.util.LongUtil;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 
+import static io.fluo.accumulo.format.FluoFormatter.encNonAscii;
+
 /**
- * 
+ *
  */
 public class LockValue {
 
@@ -91,8 +93,23 @@ public class LockValue {
 
   @Override
   public String toString() {
-    return prow + " " + pcol + " " + (isWrite ? "WRITE" : "NOT_WRITE") + " "
-        + (isDelete ? "DELETE" : "NOT_DELETE") + " " + (isTrigger ? "TRIGGER" : "NOT_TRIGGER")
-        + " " + LongUtil.toMaxRadixString(transactor);
+    StringBuilder sb = new StringBuilder();
+    encNonAscii(sb, prow);
+    sb.append(" ");
+    encNonAscii(sb, pcol.getFamily());
+    sb.append(" ");
+    encNonAscii(sb, pcol.getQualifier());
+    sb.append(" ");
+    encNonAscii(sb, pcol.getVisibility());
+    sb.append(" ");
+    sb.append(isWrite ? "WRITE" : "NOT_WRITE");
+    sb.append(" ");
+    sb.append(isDelete ? "DELETE" : "NOT_DELETE");
+    sb.append(" ");
+    sb.append(isTrigger ? "TRIGGER" : "NOT_TRIGGER");
+    sb.append(" ");
+    sb.append(LongUtil.toMaxRadixString(transactor));
+
+    return sb.toString();
   }
 }

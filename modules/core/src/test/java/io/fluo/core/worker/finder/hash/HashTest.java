@@ -20,10 +20,10 @@ import java.util.Random;
 import com.google.common.math.DoubleMath;
 import io.fluo.accumulo.iterators.NotificationHashFilter;
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.core.impl.Notification;
-import io.fluo.core.util.ColumnUtil;
 import org.apache.accumulo.core.data.Key;
 import org.junit.Assert;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class HashTest {
   private boolean check(byte[] row, byte[] cf, byte[] cq) {
     Column col = new Column(Bytes.of(cf), Bytes.of(cq));
 
-    byte[] cfcq = ColumnUtil.concatCFCQ(col);
+    byte[] cfcq = NotificationUtil.encodeCol(col);
     Key k = new Key(row, ColumnConstants.NOTIFY_CF.toArray(), cfcq, new byte[0], 6);
     boolean accept = NotificationHashFilter.accept(k, 7, 3);
     Assert.assertEquals(accept, HashNotificationFinder.shouldProcess(Notification.from(k), 7, 3));

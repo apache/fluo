@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import io.fluo.accumulo.iterators.NotificationIterator;
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -35,7 +36,6 @@ import io.fluo.core.impl.TransactorNode;
 import io.fluo.core.impl.TxStats;
 import io.fluo.core.oracle.Stamp;
 import io.fluo.core.util.ByteUtil;
-import io.fluo.core.util.ColumnUtil;
 import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -65,7 +65,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
     scanner.setRange(SpanUtil.toRange(Span.prefix(row)));
     scanner.fetchColumn(ByteUtil.toText(ColumnConstants.NOTIFY_CF),
-        new Text(ColumnUtil.concatCFCQ(col)));
+        new Text(NotificationUtil.encodeCol(col)));
 
     for (Entry<Key, org.apache.accumulo.core.data.Value> entry : scanner) {
       if (entry.getKey().getColumnVisibility().equals(cv)) {

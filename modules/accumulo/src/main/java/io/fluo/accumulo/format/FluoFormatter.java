@@ -18,9 +18,12 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import io.fluo.accumulo.util.ColumnConstants;
+import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.accumulo.values.WriteValue;
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -64,62 +67,90 @@ public class FluoFormatter implements Formatter {
     }
   }
 
+  public static void encNonAscii(StringBuilder sb, Bytes bytes) {
+    for (int i = 0; i < bytes.length(); i++) {
+      appendByte(sb, bytes.byteAt(i));
+    }
+  }
+
   public static String toString(Entry<Key, Value> entry) {
     Key key = entry.getKey();
 
-    long ts = key.getTimestamp();
-    String type = "";
-
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX) {
-      type = "TX_DONE";
-    }
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX) {
-      type = "DEL_LOCK";
-    }
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX) {
-      type = "LOCK";
-    }
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX) {
-      type = "DATA";
-    }
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX) {
-      type = "WRITE";
-    }
-    if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX) {
-      type = "ACK";
-    }
-
-    StringBuilder sb = new StringBuilder();
-
-    String val;
-    if (type.equals("WRITE")) {
-      val = new WriteValue(entry.getValue().get()).toString();
-    } else if (type.equals("DEL_LOCK")) {
-      val = new DelLockValue(entry.getValue().get()).toString();
-    } else if (type.equals("LOCK")) {
-      // TODO can Value be made to extend Bytes w/o breaking API?
-      val = new LockValue(entry.getValue().get()).toString();
-    } else {
+    if (NotificationUtil.isNtfy(key)) {
+      StringBuilder sb = new StringBuilder();
+      encNonAscii(sb, key.getRowData());
+      sb.append(" ");
+      encNonAscii(sb, key.getColumnFamilyData());
+      sb.append(":");
+      Column col = NotificationUtil.decodeCol(key);
+      encNonAscii(sb, col.getFamily());
+      sb.append(":");
+      encNonAscii(sb, col.getQualifier());
+      sb.append(" [");
+      encNonAscii(sb, key.getColumnVisibilityData());
+      sb.append("] ");
+      sb.append(NotificationUtil.decodeTs(key));
+      sb.append('-');
+      sb.append(NotificationUtil.isDelete(key) ? "DELETE" : "INSERT");
+      sb.append("\t");
       encNonAscii(sb, entry.getValue().get());
-      val = sb.toString();
+
+      return sb.toString();
+    } else {
+      long ts = key.getTimestamp();
+      String type = "";
+
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX) {
+        type = "TX_DONE";
+      }
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX) {
+        type = "DEL_LOCK";
+      }
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX) {
+        type = "LOCK";
+      }
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX) {
+        type = "DATA";
+      }
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX) {
+        type = "WRITE";
+      }
+      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX) {
+        type = "ACK";
+      }
+
+      StringBuilder sb = new StringBuilder();
+
+      String val;
+      if (type.equals("WRITE")) {
+        val = new WriteValue(entry.getValue().get()).toString();
+      } else if (type.equals("DEL_LOCK")) {
+        val = new DelLockValue(entry.getValue().get()).toString();
+      } else if (type.equals("LOCK")) {
+        // TODO can Value be made to extend Bytes w/o breaking API?
+        val = new LockValue(entry.getValue().get()).toString();
+      } else {
+        encNonAscii(sb, entry.getValue().get());
+        val = sb.toString();
+      }
+
+      sb.setLength(0);
+      encNonAscii(sb, key.getRowData());
+      sb.append(" ");
+      encNonAscii(sb, key.getColumnFamilyData());
+      sb.append(":");
+      encNonAscii(sb, key.getColumnQualifierData());
+      sb.append(" [");
+      encNonAscii(sb, key.getColumnVisibilityData());
+      sb.append("] ");
+      sb.append(ts & ColumnConstants.TIMESTAMP_MASK);
+      sb.append('-');
+      sb.append(type);
+      sb.append("\t");
+      sb.append(val);
+
+      return sb.toString();
     }
-
-    sb.setLength(0);
-    encNonAscii(sb, key.getRowData());
-    sb.append(" ");
-    encNonAscii(sb, key.getColumnFamilyData());
-    sb.append(":");
-    encNonAscii(sb, key.getColumnQualifierData());
-    sb.append(" [");
-    encNonAscii(sb, key.getColumnVisibilityData());
-    sb.append("] ");
-    sb.append(ts & ColumnConstants.TIMESTAMP_MASK);
-    sb.append('-');
-    sb.append(type);
-    sb.append("\t");
-    sb.append(val);
-
-    return sb.toString();
   }
 
   @Override
