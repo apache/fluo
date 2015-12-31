@@ -21,12 +21,13 @@ package io.fluo.api.client;
 public interface LoaderExecutor extends AutoCloseable {
 
   /**
-   * Executes {@link Loader} implemented by users
+   * Queues {@link Loader} task implemented by users for execution. The load Task may not have
+   * completed when the method returns. If the queue is full, this method will block.
    */
   void execute(Loader loader);
 
   /**
-   * Closes resources
+   * Waits for all queued and running Loader task to complete, then cleans up resources.
    */
   @Override
   void close();
