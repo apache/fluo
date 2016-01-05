@@ -44,6 +44,13 @@ public class ScanOptions {
       description = "Hex encode non ascii bytes", arity = 1)
   public boolean hexEncNonAscii = true;
 
+  @Parameter(
+      names = "--raw",
+      help = true,
+      description = "Show underlying key/values stored in Accumulo. Interprets the data using Fluo "
+          + "internal schema, making it easier to comprehend.")
+  public boolean scanAccumuloTable = false;
+
   public String getStartRow() {
     return startRow;
   }

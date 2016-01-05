@@ -14,9 +14,9 @@
 
 package io.fluo.accumulo.format;
 
-import java.util.Iterator;
 import java.util.Map.Entry;
 
+import com.google.common.base.Function;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.accumulo.values.DelLockValue;
@@ -27,25 +27,11 @@ import io.fluo.api.data.Column;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.util.format.Formatter;
 
 /**
  * Converts Accumulo table data to a human-readable Fluo format
  */
-public class FluoFormatter implements Formatter {
-
-  private Iterator<Entry<Key, Value>> scanner;
-
-  @Override
-  public boolean hasNext() {
-    return scanner.hasNext();
-  }
-
-  @Override
-  public String next() {
-    Entry<Key, Value> entry = scanner.next();
-    return toString(entry);
-  }
+public class FluoFormatter implements Function<Entry<Key, Value>, String> {
 
   private static void appendByte(StringBuilder sb, byte b) {
     if (b >= 32 && b <= 126 && b != '\\') {
@@ -154,12 +140,7 @@ public class FluoFormatter implements Formatter {
   }
 
   @Override
-  public void remove() {
-    scanner.remove();
-  }
-
-  @Override
-  public void initialize(Iterable<Entry<Key, Value>> scanner, boolean printTimestamps) {
-    this.scanner = scanner.iterator();
+  public String apply(Entry<Key, Value> input) {
+    return toString(input);
   }
 }
