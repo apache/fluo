@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Iterables;
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -259,11 +260,9 @@ public class StochasticBankIT extends ITBaseImpl {
     Writer fw = new BufferedWriter(new FileWriter(tmpFile));
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
-    FluoFormatter af = new FluoFormatter();
-    af.initialize(scanner, true);
 
-    while (af.hasNext()) {
-      fw.append(af.next());
+    for (String cell : Iterables.transform(scanner, new FluoFormatter())) {
+      fw.append(cell);
       fw.append("\n");
     }
 

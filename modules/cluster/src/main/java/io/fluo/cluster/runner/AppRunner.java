@@ -23,9 +23,11 @@ import java.util.Map;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Provider;
+import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Snapshot;
@@ -39,11 +41,16 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
+import io.fluo.core.util.AccumuloUtil;
+import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.Hex;
+import io.fluo.core.util.SpanUtil;
+import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,6 +138,14 @@ public abstract class AppRunner {
     FluoConfiguration sConfig = new FluoConfiguration(config);
     sConfig.setClientRetryTimeout(500);
 
+    if (options.scanAccumuloTable) {
+      return scanAccumulo(options, sConfig);
+    } else {
+      return scanFluo(options, sConfig);
+    }
+  }
+
+  private long scanFluo(ScanOptions options, FluoConfiguration sConfig) {
     System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName()
         + "' application.");
 
@@ -182,6 +197,46 @@ public abstract class AppRunner {
         System.out.println("Scan failed - " + e.getMessage());
       }
     }
+    return entriesFound;
+  }
+
+  private long scanAccumulo(ScanOptions options, FluoConfiguration sConfig) {
+    System.out.println("Scanning data in Accumulo directly for '" + sConfig.getApplicationName()
+        + "' application.");
+
+    Connector conn = AccumuloUtil.getConnector(sConfig);
+
+    ScannerConfiguration scanConfig = null;
+    try {
+      scanConfig = buildScanConfig(options);
+    } catch (IllegalArgumentException e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    }
+
+    long entriesFound = 0;
+
+    try {
+      Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
+      scanner.setRange(SpanUtil.toRange(scanConfig.getSpan()));
+      for (Column col : scanConfig.getColumns()) {
+        if (col.isQualifierSet()) {
+          scanner
+              .fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
+        } else {
+          scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
+        }
+      }
+
+      for (String entry : Iterables.transform(scanner, new FluoFormatter())) {
+        System.out.println(entry);
+      }
+    } catch (Exception e) {
+      System.out.println("Scan failed - " + e.getMessage());
+      entriesFound++;
+    }
+
+
     return entriesFound;
   }
 

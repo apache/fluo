@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.Snapshot;
 import io.fluo.api.config.FluoConfiguration;
@@ -32,9 +31,7 @@ import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.accumulo.minicluster.MiniAccumuloInstance;
@@ -97,17 +94,6 @@ public class ITBase {
 
   public String getNextTableName() {
     return TABLE_BASE + tableCounter.incrementAndGet();
-  }
-
-  protected void printTable() throws Exception {
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    FluoFormatter af = new FluoFormatter();
-
-    af.initialize(scanner, true);
-
-    while (af.hasNext()) {
-      System.out.println(af.next());
-    }
   }
 
   protected void printSnapshot() throws Exception {
