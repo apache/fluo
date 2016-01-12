@@ -13,12 +13,12 @@ For both clients and observers, you will need to include the following in your M
 <dependency>
   <groupId>io.fluo</groupId>
   <artifactId>fluo-api</artifactId>
-  <version>1.0.0-beta-1</version>
+  <version>1.0.0-beta-2</version>
 </dependency>
 <dependency>
   <groupId>io.fluo</groupId>
   <artifactId>fluo-core</artifactId>
-  <version>1.0.0-beta-1</version>
+  <version>1.0.0-beta-2</version>
   <scope>runtime</scope>
 </dependency>
 ```

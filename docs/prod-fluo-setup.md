@@ -32,7 +32,7 @@ First, clone Fluo:
 
 Optionally, check out a stable tag (if you don't want to build a release from master):
 
-    git checkout 1.0.0-beta-1
+    git checkout 1.0.0-beta-2
 
 Next, build a distribution for your environment. The tarball will be created in 
 `modules/distribution/target`.
@@ -47,11 +47,11 @@ to install Fluo.
 
 First, choose a directory with plenty of space and untar the distribution:
 
-    tar -xvzf fluo-1.0.0-beta-1-bin.tar.gz
+    tar -xvzf fluo-1.0.0-beta-2-bin.tar.gz
 
 Verify that your distribution has the same versions of Hadoop & Accumulo as your environment:
 
-    cd fluo-1.0.0-beta-1
+    cd fluo-1.0.0-beta-2
     ls lib/hadoop-* lib/accumulo-*
 
 Next, copy the example configuration to the base of your configuration directory to create
@@ -76,7 +76,7 @@ commands are invoked by this script.
 Modify and add the following to your `~/.bashrc` if you want to be able to execute the
 fluo script from any directory:
 
-    export PATH=/path/to/fluo-1.0.0-beta-1/bin:$PATH
+    export PATH=/path/to/fluo-1.0.0-beta-2/bin:$PATH
 
 Source your `.bashrc` for the changes to take effect and test the script
 
