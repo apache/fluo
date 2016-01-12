@@ -25,7 +25,7 @@ import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
 
 /**
- * Contains configuration for a {@link Snapshot} scanner. Passed to
+ * Contains configuration for a {@link io.fluo.api.client.Snapshot} scanner. Passed to
  * {@link SnapshotBase#get(ScannerConfiguration)}.
  */
 public class ScannerConfiguration implements Cloneable {

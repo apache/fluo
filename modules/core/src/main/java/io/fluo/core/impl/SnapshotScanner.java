@@ -38,7 +38,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
 /**
- * Allows users to iterate over entries of a {@link Snapshot}
+ * Allows users to iterate over entries of a {@link io.fluo.api.client.Snapshot}
  */
 public class SnapshotScanner implements Iterator<Entry<Key, Value>> {
 

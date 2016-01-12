@@ -23,7 +23,7 @@ import io.fluo.api.observer.Observer;
 
 /**
  * Used to pass configuration to an {@link AbstractObserver}. Set using
- * {@link FluoConfiguration#setObservers(java.util.List)}
+ * {@link FluoConfiguration#addObserver(ObserverConfiguration)}
  */
 public class ObserverConfiguration {
   private final String className;

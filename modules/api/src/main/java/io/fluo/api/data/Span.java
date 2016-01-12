@@ -31,7 +31,7 @@ public class Span implements Serializable {
   private boolean endInclusive = true;
 
   /**
-   * Constructs a span with infinite start & end
+   * Constructs a span with infinite start and end
    */
   public Span() {}
 

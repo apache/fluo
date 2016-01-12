@@ -26,7 +26,7 @@ import org.apache.commons.configuration.Configuration;
  * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the
  * {@link #process(TransactionBase, Bytes, Column)} method. An observer is created for each worker
  * thread and reused for the lifetime of a worker thread. Consider extending
- * {@link AbstractObserver} as it will let you optionally implement {@link #init(Configuration)} and
+ * {@link AbstractObserver} as it will let you optionally implement {@link #init(Context)} and
  * {@link #close()}. The abstract class will also shield you from the addition of interface methods.
  */
 public interface Observer {

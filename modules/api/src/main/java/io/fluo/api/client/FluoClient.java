@@ -38,8 +38,8 @@ public interface FluoClient extends AutoCloseable {
 
   /**
    * Creates a {@link Transaction} for reading and writing data to Fluo. Unlike the transactions
-   * provided by the {@link Loader} and {@link Observer}, users will need to call
-   * {@link Transaction#commit()}. Use within a try-with-resources statement or call
+   * provided by the {@link Loader} and {@link io.fluo.api.observer.Observer}, users will need to
+   * call {@link Transaction#commit()}. Use within a try-with-resources statement or call
    * {@link Transaction#close()} when you are finished.
    *
    * <p>

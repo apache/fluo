@@ -20,8 +20,8 @@ import com.google.common.base.Preconditions;
 
 /**
  * Represents all or a subset of the column family, column qualifier, and column visibility fields.
- * A column with no fields set is represented by {@link Column.EMPTY}. Column is immutable after it
- * is created.
+ * A column with no fields set is represented by Column.EMPTY. Column is immutable after it is
+ * created.
  */
 public class Column implements Comparable<Column>, Serializable {
 
@@ -99,7 +99,7 @@ public class Column implements Comparable<Column>, Serializable {
   }
 
   /**
-   * Retrieves Column Family (in Bytes). Returns {@link Bytes.EMPTY} if not set.
+   * Retrieves Column Family (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getFamily() {
     if (!isFamilySet()) {
@@ -116,7 +116,7 @@ public class Column implements Comparable<Column>, Serializable {
   }
 
   /**
-   * Retrieves Column Qualifier (in Bytes). Returns {@link Bytes.EMPTY} if not set.
+   * Retrieves Column Qualifier (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getQualifier() {
     if (!isQualifierSet()) {
@@ -133,7 +133,7 @@ public class Column implements Comparable<Column>, Serializable {
   }
 
   /**
-   * Retrieves Column Visibility (in Bytes). Returns {@link Bytes.EMPTY} if not set.
+   * Retrieves Column Visibility (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getVisibility() {
     if (!isVisibilitySet()) {

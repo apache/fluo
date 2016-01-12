@@ -207,7 +207,6 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * {@code
- * 
  *   // pretend this method has curly braces.  javadoc has issues with less than.
  * 
  *   void process(TypedTransaction tx, byte[] r, Column c1, Column c2, Column c3, long amount)
@@ -223,7 +222,7 @@ import io.fluo.api.data.Column;
  *     
  *     // If c3 does not exist in map, then val9 will be set to 9.
  *     Long val3 = columns.get(c3).toLong(9);
- * @code}
+ * }
  * </pre>
  * 
  * <p>
@@ -232,7 +231,6 @@ import io.fluo.api.data.Column;
  * 
  * <pre>
  * {@code
- * 
  *   // pretend this method has curly braces.  javadoc has issues with less than.
  * 
  *   void process(TypedTransaction tx, List<String> rows, Column c1, Column c2, Column c3,
@@ -244,7 +242,7 @@ import io.fluo.api.data.Column;
  *     // this will set val1 to null if row does not exist in map and/or column does not
  *     // exist in child map
  *     String val1 = rowCols.get("row1").get(c1).toString();
- * @code}
+ * }
  * </pre>
  */
 

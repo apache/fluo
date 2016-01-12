@@ -64,7 +64,7 @@ public class CuratorUtil {
   }
 
   /**
-   * Creates a curator built using the given zookeeper connection string & timeout
+   * Creates a curator built using the given zookeeper connection string and timeout
    */
   public static CuratorFramework newCurator(String zookeepers, int timeout) {
     return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout,

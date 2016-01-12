@@ -110,8 +110,8 @@ public interface FluoAdmin extends AutoCloseable {
    * {@value io.fluo.api.config.FluoConfiguration#APP_PREFIX},
    * {@value io.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
    * {@value io.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. This method is
-   * called if a user has previously called {@link #initialize()} but wants changes to shared
-   * configuration updated in Zookeeper.
+   * called if a user has previously called {@link #initialize(InitOpts)} but wants changes to
+   * shared configuration updated in Zookeeper.
    * 
    * <p>
    * During this method Observers are reinitialized using configuration passed to FluoAdmin and not

@@ -40,7 +40,7 @@ import org.apache.hadoop.io.Text;
  * <p>
  *
  * <pre>
- * {@code
+ * <code>
  *   // this could be shared between calls to map or reduce, to avoid creating for each call.
  *   FluoKeyValueGenerator fkvg = new FluoKeyValueGenerator();
  *   // could also reuse column objects.
@@ -58,8 +58,7 @@ import org.apache.hadoop.io.Text;
  *   // invalidates what was returned by previous calls to getKeyValues().
  *   for (FluoKeyValue fluoKeyValue : fkvg.getKeyValues())
  *     writeToAccumuloFile(fluoKeyValue);
- * 
- * @code}
+ * </code>
  * </pre>
  *
  * <p>

@@ -17,10 +17,12 @@ package io.fluo.api.observer;
 import io.fluo.api.client.TransactionBase;
 
 /**
- * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the
- * {@link #process(TransactionBase, Bytes, Column)} method. AbstractObserver extends
- * {@link Observer} but provides a default implementation for the {@link #init(Context)} and
- * {@link #close()} method so that they can be optionally implemented by user.
+ * Implemented by users to a watch a {@link io.fluo.api.data.Column} and be notified of changes to
+ * the Column via the
+ * {@link #process(TransactionBase, io.fluo.api.data.Bytes, io.fluo.api.data.Column)} method.
+ * AbstractObserver extends {@link Observer} but provides a default implementation for the
+ * {@link #init(Context)} and {@link #close()} method so that they can be optionally implemented by
+ * user.
  */
 public abstract class AbstractObserver implements Observer {
 

@@ -62,7 +62,8 @@ import org.slf4j.LoggerFactory;
  * Oracle server is the responsible for providing incrementing logical timestamps to clients. It
  * should never give the same timestamp to two clients and it should always provide an incrementing
  * timestamp.
- * <p/>
+ * 
+ * <p>
  * If multiple oracle servers are run, they will choose a leader and clients will automatically
  * connect to that leader. If the leader goes down, the client will automatically fail over to the
  * next leader. In the case where an oracle fails over, the next oracle will begin a new block of

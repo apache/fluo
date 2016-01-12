@@ -33,7 +33,7 @@ import com.google.common.base.Preconditions;
 
 /**
  * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
- * created. {@link Bytes.EMPTY} is used to represent a Bytes object with no data.
+ * created. Bytes.EMPTY is used to represent a Bytes object with no data.
  */
 public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
