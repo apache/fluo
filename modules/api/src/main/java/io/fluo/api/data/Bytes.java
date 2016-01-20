@@ -195,7 +195,8 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
   public static final Bytes of(ByteBuffer bb) {
     Preconditions.checkNotNull(bb);
     byte[] data = new byte[bb.remaining()];
-    bb.get(data);
+    // duplicate so that it does not change position
+    bb.duplicate().get(data);
     return bytesFactory.get(data);
   }
 
