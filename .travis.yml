@@ -27,6 +27,8 @@ sudo: false
 cache:
   directories:
     - $HOME/.m2
+addons:
+  artifacts: true
 env:
   global:
     - secure: "HxekWtv02foIqO3e+i3SZ1vRWA9OzkuEGB5zMOmS9lcsg6w6aRkDS1y2gbSxS2n0kqPMCigGp6OcSDAptyeY4ztjVwvrWiKIdjK2Jd9dJ7INAHAhvf0xGcPNKkEWtTGWExrzstl1nXPFBDeEtjtg9+29PiiZW6JpxtUrSH5JcY0="
