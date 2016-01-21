@@ -40,6 +40,12 @@ public class BytesTest {
     Assert.assertArrayEquals(s2.getBytes(), b2.toArray());
     Assert.assertEquals(s2, b2.toString());
 
+    // call again to ensure that position was not changed by previous call
+    b2 = Bytes.of(bb);
+    Assert.assertArrayEquals(s2.getBytes(), b2.toArray());
+    Assert.assertEquals(s2, b2.toString());
+
+
     String s3 = "test3";
     Bytes b3 = Bytes.of(s3.getBytes());
     Assert.assertArrayEquals(s3.getBytes(), b3.toArray());

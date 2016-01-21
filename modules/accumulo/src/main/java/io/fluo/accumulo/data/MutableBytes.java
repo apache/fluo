@@ -15,7 +15,6 @@
 package io.fluo.accumulo.data;
 
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -52,7 +51,7 @@ public class MutableBytes extends Bytes implements Serializable {
    * Creates a new MutableBytes from a subsequence of the given byte array. The given byte array is
    * used directly as the backing array, so later changes made to the (relevant portion of the)
    * array reflect into the new sequence.
-   * 
+   *
    * @param data byte data
    * @param offset starting offset in byte array (inclusive)
    * @param length number of bytes to include in sequence
@@ -72,7 +71,7 @@ public class MutableBytes extends Bytes implements Serializable {
   /**
    * Creates a new MutableBytes from the given string. The bytes are determined from the string
    * using UTF-8 encoding
-   * 
+   *
    * @param s String to represent as Bytes
    */
   public MutableBytes(String s) {
@@ -82,33 +81,12 @@ public class MutableBytes extends Bytes implements Serializable {
   /**
    * Creates a new MutableBytes from the given string. The bytes are determined from the string
    * using the specified charset
-   * 
+   *
    * @param s String to represent as Bytes
    * @param cs Charset
    */
   public MutableBytes(String s, Charset cs) {
     this(s.getBytes(cs));
-  }
-
-  /**
-   * Creates a new MutableBytes based on a ByteBuffer. If the byte buffer has an array, that array
-   * (and the buffer's offset and limit) are used; otherwise, a new backing array is created and a
-   * relative bulk get is performed to transfer the buffer's contents (starting at its current
-   * position and not beyond its limit).
-   * 
-   * @param buffer byte buffer
-   */
-  public MutableBytes(ByteBuffer buffer) {
-    this.length = buffer.remaining();
-
-    if (buffer.hasArray()) {
-      this.data = buffer.array();
-      this.offset = buffer.position();
-    } else {
-      this.data = new byte[length];
-      this.offset = 0;
-      buffer.get(data);
-    }
   }
 
   @Override
@@ -134,7 +112,7 @@ public class MutableBytes extends Bytes implements Serializable {
 
   /**
    * Determines whether this sequence is backed by a byte array.
-   * 
+   *
    * @return true if sequence is backed by a byte array
    */
   public boolean isBackedByArray() {
@@ -149,7 +127,7 @@ public class MutableBytes extends Bytes implements Serializable {
   /**
    * Gets the offset for this byte sequence. This value represents the starting point for the
    * sequence in the backing array, if there is one.
-   * 
+   *
    * @return offset (inclusive)
    */
   public int offset() {
