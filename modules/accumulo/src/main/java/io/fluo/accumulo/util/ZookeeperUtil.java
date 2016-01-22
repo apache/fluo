@@ -15,7 +15,9 @@
 package io.fluo.accumulo.util;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
@@ -67,6 +69,13 @@ public class ZookeeperUtil {
     ZooKeeper zk = null;
     try {
       zk = new ZooKeeper(zookeepers, 30000, null);
+
+      // wait until zookeeper is connected
+      long start = System.currentTimeMillis();
+      while (!zk.getState().isConnected() && System.currentTimeMillis() - start < 30000) {
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
+      }
+
       byte[] d = zk.getData(ZookeeperPath.ORACLE_GC_TIMESTAMP, false, null);
       return LongUtil.fromByteArray(d);
     } catch (KeeperException | InterruptedException | IOException e) {
