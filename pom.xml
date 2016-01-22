@@ -97,6 +97,7 @@
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
     <slf4j.version>1.7.12</slf4j.version>
+    <thrift.version>0.9.1</thrift.version>
     <twill.version>0.6.0-incubating</twill.version>
     <zookeeper.version>3.4.6</zookeeper.version>
   </properties>
@@ -242,7 +243,7 @@
       <dependency>
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
-        <version>0.9.1</version>
+        <version>${thrift.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
