@@ -44,15 +44,12 @@ import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.io.WritableUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Holds common environment configuration and shared resources
  */
 public class Environment implements AutoCloseable {
 
-  private static Logger log = LoggerFactory.getLogger(Environment.class);
   private String table;
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;

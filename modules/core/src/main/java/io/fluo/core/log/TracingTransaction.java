@@ -77,7 +77,6 @@ public class TracingTransaction implements Transaction, Snapshot {
         }));
   }
 
-
   private String encRC(Map<Bytes, Map<Column, Bytes>> ret) {
     return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
         new Function<Entry<Bytes, Map<Column, Bytes>>, String>() {

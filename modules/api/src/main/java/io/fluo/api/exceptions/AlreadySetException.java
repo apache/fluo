@@ -14,6 +14,9 @@
 
 package io.fluo.api.exceptions;
 
+import io.fluo.api.data.Bytes;
+import io.fluo.api.data.Column;
+
 /**
  * Thrown if {@link io.fluo.api.client.Transaction#set(Bytes, Column, Bytes)} is called multiple
  * times for the same row and column

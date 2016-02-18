@@ -67,7 +67,6 @@ public class HashNotificationFinder implements NotificationFinder {
     private static final long serialVersionUID = 1L;
   }
 
-
   private class FindersListener implements PathChildrenCacheListener {
 
     @Override
@@ -89,7 +88,6 @@ public class HashNotificationFinder implements NotificationFinder {
     }
 
   }
-
 
   private synchronized void updateFinders() {
 
@@ -134,7 +132,6 @@ public class HashNotificationFinder implements NotificationFinder {
 
     this.env = env;
     this.curator = env.getSharedResources().getCurator();
-
 
     try {
       myESNode =

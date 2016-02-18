@@ -43,7 +43,6 @@ public class BytesBuilderTest {
     Bytes bytes2 = bb.append(Bytes.of("ab")).append("cd").append(new byte[] {'e', 'f'}).toBytes();
     Assert.assertEquals(Bytes.of("abcdef"), bytes2);
 
-
     bb.setLength(10);
     Bytes bytes3 = bb.toBytes();
     Assert.assertEquals(Bytes.of(new byte[] {'a', 'b', 'c', 'd', 'e', 'f', 0, 0, 0, 0}), bytes3);
@@ -75,7 +74,6 @@ public class BytesBuilderTest {
       bb3.append(s);
       sb.append(s);
     }
-
 
     Assert.assertEquals(Bytes.of(sb.toString()), bb.toBytes());
     Assert.assertEquals(Bytes.of(sb.toString()), bb2.toBytes());

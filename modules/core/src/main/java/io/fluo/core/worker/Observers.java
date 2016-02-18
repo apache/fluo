@@ -38,7 +38,7 @@ public class Observers implements AutoCloseable {
     synchronized (observers) {
       observerList = observers.get(col);
       if (observerList == null) {
-        observerList = new ArrayList<Observer>();
+        observerList = new ArrayList<>();
         observers.put(col, observerList);
       }
     }
@@ -88,8 +88,6 @@ public class Observers implements AutoCloseable {
     return observer;
   }
 
-
-
   public void returnObserver(Observer observer) {
     List<Observer> olist = getObserverList(observer.getObservedColumn().getColumn());
     synchronized (olist) {
@@ -97,6 +95,7 @@ public class Observers implements AutoCloseable {
     }
   }
 
+  @Override
   public void close() {
     if (observers == null) {
       return;

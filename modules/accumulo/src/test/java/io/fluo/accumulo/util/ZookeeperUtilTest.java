@@ -14,7 +14,6 @@
 
 package io.fluo.accumulo.util;
 
-
 import org.junit.Assert;
 import org.junit.Test;
 

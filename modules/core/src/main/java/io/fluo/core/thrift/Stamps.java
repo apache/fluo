@@ -21,6 +21,7 @@ import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     java.io.Serializable, Cloneable, Comparable<Stamps> {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
@@ -33,8 +34,8 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
       new org.apache.thrift.protocol.TField("gcStamp", org.apache.thrift.protocol.TType.I64,
           (short) 2);
 
-  private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
-      new HashMap<Class<? extends IScheme>, SchemeFactory>();
+  private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<>();
+
   static {
     schemes.put(StandardScheme.class, new StampsStandardSchemeFactory());
     schemes.put(TupleScheme.class, new StampsTupleSchemeFactory());
@@ -50,7 +51,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TX_STAMPS_START((short) 1, "txStampsStart"), GC_STAMP((short) 2, "gcStamp");
 
-    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+    private static final Map<String, _Fields> byName = new HashMap<>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
@@ -97,10 +98,12 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
       _fieldName = fieldName;
     }
 
+    @Override
     public short getThriftFieldId() {
       return _thriftId;
     }
 
+    @Override
     public String getFieldName() {
       return _fieldName;
     }
@@ -111,9 +114,9 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
   private static final int __GCSTAMP_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
-    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
-        new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+    Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<>(_Fields.class);
     tmpMap.put(_Fields.TX_STAMPS_START, new org.apache.thrift.meta_data.FieldMetaData(
         "txStampsStart", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
@@ -143,6 +146,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     this.gcStamp = other.gcStamp;
   }
 
+  @Override
   public Stamps deepCopy() {
     return new Stamps(this);
   }
@@ -201,6 +205,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __GCSTAMP_ISSET_ID, value);
   }
 
+  @Override
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
       case TX_STAMPS_START:
@@ -222,6 +227,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     }
   }
 
+  @Override
   public Object getFieldValue(_Fields field) {
     switch (field) {
       case TX_STAMPS_START:
@@ -238,6 +244,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
    * Returns true if field corresponding to fieldID is set (has been assigned a value) and false
    * otherwise
    */
+  @Override
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
@@ -323,14 +330,17 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     return 0;
   }
 
+  @Override
   public _Fields fieldForId(int fieldId) {
     return _Fields.findByThriftId(fieldId);
   }
 
+  @Override
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
   }
 
+  @Override
   public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
     schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
@@ -380,6 +390,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
   }
 
   private static class StampsStandardSchemeFactory implements SchemeFactory {
+    @Override
     public StampsStandardScheme getScheme() {
       return new StampsStandardScheme();
     }
@@ -387,6 +398,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
 
   private static class StampsStandardScheme extends StandardScheme<Stamps> {
 
+    @Override
     public void read(org.apache.thrift.protocol.TProtocol iprot, Stamps struct)
         throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField schemeField;
@@ -424,6 +436,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
       struct.validate();
     }
 
+    @Override
     public void write(org.apache.thrift.protocol.TProtocol oprot, Stamps struct)
         throws org.apache.thrift.TException {
       struct.validate();
@@ -442,6 +455,7 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
   }
 
   private static class StampsTupleSchemeFactory implements SchemeFactory {
+    @Override
     public StampsTupleScheme getScheme() {
       return new StampsTupleScheme();
     }

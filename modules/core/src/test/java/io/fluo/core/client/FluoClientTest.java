@@ -40,8 +40,7 @@ public class FluoClientTest {
     } catch (FluoException e) {
     }
 
-    try {
-      new FluoClientImpl(config);
+    try (FluoClientImpl impl = new FluoClientImpl(config)) {
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
@@ -52,8 +51,7 @@ public class FluoClientTest {
     config.setAccumuloInstance("test");
     config.setZookeeperTimeout(5);
 
-    try {
-      new FluoClientImpl(config);
+    try (FluoClientImpl impl = new FluoClientImpl(config)) {
       Assert.fail();
     } catch (IllegalStateException e) {
     }

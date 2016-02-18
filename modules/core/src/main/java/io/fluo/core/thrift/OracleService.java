@@ -26,6 +26,7 @@ import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"rawtypes", "unchecked", "unused", "serial"})
 public class OracleService {
 
   public interface Iface {
@@ -118,6 +119,7 @@ public class OracleService {
     }
 
   }
+
   public static class AsyncClient extends org.apache.thrift.async.TAsyncClient implements
       AsyncIface {
     public static class Factory implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
@@ -477,6 +479,7 @@ public class OracleService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
         new HashMap<Class<? extends IScheme>, SchemeFactory>();
+
     static {
       schemes.put(StandardScheme.class, new getTimestamps_argsStandardSchemeFactory());
       schemes.put(TupleScheme.class, new getTimestamps_argsTupleSchemeFactory());
@@ -554,6 +557,7 @@ public class OracleService {
     private static final int __NUM_ISSET_ID = 0;
     private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -967,6 +971,7 @@ public class OracleService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
         new HashMap<Class<? extends IScheme>, SchemeFactory>();
+
     static {
       schemes.put(StandardScheme.class, new getTimestamps_resultStandardSchemeFactory());
       schemes.put(TupleScheme.class, new getTimestamps_resultTupleSchemeFactory());
@@ -1039,6 +1044,7 @@ public class OracleService {
 
     // isset id assignments
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -1356,14 +1362,13 @@ public class OracleService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
         new org.apache.thrift.protocol.TStruct("isLeader_args");
 
-
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
         new HashMap<Class<? extends IScheme>, SchemeFactory>();
+
     static {
       schemes.put(StandardScheme.class, new isLeader_argsStandardSchemeFactory());
       schemes.put(TupleScheme.class, new isLeader_argsTupleSchemeFactory());
     }
-
 
     /**
      * The set of fields this struct contains, along with convenience methods for finding and
@@ -1427,6 +1432,7 @@ public class OracleService {
     }
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -1640,6 +1646,7 @@ public class OracleService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
         new HashMap<Class<? extends IScheme>, SchemeFactory>();
+
     static {
       schemes.put(StandardScheme.class, new isLeader_resultStandardSchemeFactory());
       schemes.put(TupleScheme.class, new isLeader_resultTupleSchemeFactory());
@@ -1714,6 +1721,7 @@ public class OracleService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);

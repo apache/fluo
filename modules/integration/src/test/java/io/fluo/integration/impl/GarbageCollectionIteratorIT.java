@@ -139,8 +139,6 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
   /**
    * Verifies that older versions of data are newer than given timestamp
    *
-   * @param oldestTs
-   * @throws TableNotFoundException
    */
   private void verify(long oldestTs) throws TableNotFoundException {
     Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);

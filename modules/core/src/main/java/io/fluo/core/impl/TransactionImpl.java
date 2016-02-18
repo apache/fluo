@@ -244,7 +244,6 @@ public class TransactionImpl implements Transaction, Snapshot {
     colUpdates.put(col, value);
   }
 
-
   @Override
   public void setWeakNotification(Bytes row, Column col) {
     checkIfOpen();
@@ -310,7 +309,6 @@ public class TransactionImpl implements Transaction, Snapshot {
       Column primaryColumn, boolean isTriggerRow) {
     prewrite(cm, null, col, val, primaryRow, primaryColumn, isTriggerRow);
   }
-
 
   public static class CommitData {
     ConditionalWriter cw;

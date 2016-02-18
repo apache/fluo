@@ -113,7 +113,6 @@ public class FluoInstall {
 
   public FluoConfiguration resolveFluoConfiguration(String appName, boolean debug) {
     FluoConfiguration config;
-    String propsPath;
     try {
       config = getAppConfiguration(appName, debug);
     } catch (FluoException e) {

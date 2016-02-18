@@ -12,7 +12,6 @@
  * the License.
  */
 
-
 package io.fluo.core.worker.finder.hash;
 
 import java.util.Random;

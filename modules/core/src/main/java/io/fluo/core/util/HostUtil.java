@@ -20,7 +20,6 @@ import java.io.InputStreamReader;
 
 public class HostUtil {
 
-
   private HostUtil() {}
 
   public static String getHostName() throws IOException {

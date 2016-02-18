@@ -58,7 +58,6 @@ public class Hex {
     return sb.toString();
   }
 
-
   public static void encNonAscii(StringBuilder sb, RowColumn rc, String sep) {
     encNonAscii(sb, rc.getRow());
     sb.append(sep);

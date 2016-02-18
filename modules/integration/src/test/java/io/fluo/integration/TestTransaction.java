@@ -103,8 +103,6 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   /**
    * Calls commit() and then close()
-   *
-   * @throws CommitException
    */
   public void done() throws CommitException {
     try {

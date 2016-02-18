@@ -100,7 +100,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   private GcTimestampTracker gcTsTracker;
 
-
   private class GcTimestampTracker {
     private volatile long advertisedGcTimetamp;
     private CuratorFramework curator;

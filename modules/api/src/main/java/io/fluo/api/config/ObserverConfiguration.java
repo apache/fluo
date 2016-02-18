@@ -43,7 +43,6 @@ public class ObserverConfiguration {
    *
    * @param params Parameters that should be passed to
    *        {@link Observer#init(io.fluo.api.observer.Observer.Context)}
-   * @return
    *
    * @see FluoConfiguration#getAppConfiguration()
    */
