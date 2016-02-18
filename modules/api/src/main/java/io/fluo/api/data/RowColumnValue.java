@@ -37,6 +37,10 @@ public class RowColumnValue extends RowColumn {
     this.val = Bytes.of(val);
   }
 
+  public RowColumn getRowColumn() {
+    return new RowColumn(getRow(), getColumn());
+  }
+
   public Bytes getValue() {
     return val;
   }
