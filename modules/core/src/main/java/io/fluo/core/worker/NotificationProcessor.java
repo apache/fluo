@@ -111,7 +111,6 @@ public class NotificationProcessor implements AutoCloseable {
       notify();
     }
 
-
   }
 
   public boolean addNotification(final NotificationFinder notificationFinder,

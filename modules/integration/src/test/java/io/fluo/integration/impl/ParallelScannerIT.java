@@ -92,7 +92,6 @@ public class ParallelScannerIT extends ITBaseImpl {
     Assert.assertEquals("no", votes.get("eve2").get(e1Col).toString(""));
     Assert.assertEquals(4, votes.size());
 
-
   }
 
   @Test

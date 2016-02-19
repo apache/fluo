@@ -76,8 +76,6 @@ public class AppConfigIT extends ITBaseMini {
 
   }
 
-
-
   public static class TestLoader extends TypedLoader {
 
     private String row;
@@ -107,6 +105,7 @@ public class AppConfigIT extends ITBaseMini {
       return new ObservedColumn(new Column("data", "foo"), NotificationType.STRONG);
     }
 
+    @Override
     public void init(Context context) {
       limit = context.getAppConfiguration().getInt("myapp.sizeLimit");
     }
@@ -120,7 +119,6 @@ public class AppConfigIT extends ITBaseMini {
     }
 
   }
-
 
   @Test
   public void testLoaderAndObserver() {

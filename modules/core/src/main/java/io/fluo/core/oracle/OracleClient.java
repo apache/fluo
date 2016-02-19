@@ -315,7 +315,6 @@ public class OracleClient implements AutoCloseable {
       return participant != null && participant.isLeader();
     }
 
-
     /**
      * NOTE: This isn't competing for leadership, so it doesn't need to be started.
      */

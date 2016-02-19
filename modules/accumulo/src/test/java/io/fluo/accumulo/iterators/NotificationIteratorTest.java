@@ -131,7 +131,6 @@ public class NotificationIteratorTest {
     input.add("2 zoo bar WRITE 16", "11");
     input.add("2 zoo bar DATA 11", "15");
 
-
     return input;
   }
 

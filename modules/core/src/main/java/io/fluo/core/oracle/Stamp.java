@@ -23,7 +23,6 @@ public class Stamp {
     this.gcStamp = gcStamp;
   }
 
-
   public long getTxTimestamp() {
     return txStamp;
   }

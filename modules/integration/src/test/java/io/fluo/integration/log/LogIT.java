@@ -71,7 +71,6 @@ public class LogIT extends ITBaseMini {
   private static Column bCol2 = new Column(Bytes.of(new byte[] {'c', 0x09, '2'}),
       Bytes.of(new byte[] {'c', (byte) 0xe5, '2'}));
 
-
   static class BinaryLoader1 extends TypedLoader {
 
     @Override
@@ -196,7 +195,6 @@ public class LogIT extends ITBaseMini {
       logger.setAdditivity(additivity);
       logger.setLevel(level);
     }
-
 
     String logMsgs = writer.toString().replace('\n', ' ');
 
@@ -323,7 +321,6 @@ public class LogIT extends ITBaseMini {
 
     String origLogMsgs = writer.toString();
     String logMsgs = origLogMsgs.replace('\n', ' ');
-
 
     String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
     pattern += ".*txid: \\1 class: io.fluo.integration.log.LogIT\\$BinaryLoader1";

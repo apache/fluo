@@ -23,19 +23,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.iterators.IteratorUtil;
-import org.apache.commons.configuration.ConfigurationUtils;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.hadoop.io.Text;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Preconditions;
-
 import io.fluo.accumulo.iterators.GarbageCollectionIterator;
 import io.fluo.accumulo.iterators.NotificationIterator;
 import io.fluo.accumulo.util.AccumuloProps;
@@ -54,6 +42,16 @@ import io.fluo.core.util.AccumuloUtil;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.CuratorUtil;
 import io.fluo.core.worker.ObserverContext;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.iterators.IteratorUtil;
+import org.apache.commons.configuration.ConfigurationUtils;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.hadoop.io.Text;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fluo Admin Implementation

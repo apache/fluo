@@ -236,7 +236,6 @@ public abstract class AppRunner {
       entriesFound++;
     }
 
-
     return entriesFound;
   }
 

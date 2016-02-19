@@ -359,7 +359,6 @@ public class GarbageCollectionIteratorTest {
 
     Assert.assertEquals(input, output);
 
-
     // ensure timestamp in value is used test 2
     input = new TestData();
 
@@ -517,7 +516,6 @@ public class GarbageCollectionIteratorTest {
     expected.add("0 h q DATA 33", "9");
     Assert.assertEquals(expected, output);
   }
-
 
   @Test
   public void testNotifications() {

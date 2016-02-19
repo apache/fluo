@@ -86,7 +86,6 @@ public class NotificationGcIT extends ITBaseMini {
     Assert.assertEquals(8, tx5.get().row("r1").fam("stat").qual("count").toInteger(0));
     Assert.assertEquals(14, tx5.get().row("r2").fam("stat").qual("count").toInteger(0));
 
-
     assertRawNotifications(4, env);
     Assert.assertEquals(0, countNotifications(env));
 

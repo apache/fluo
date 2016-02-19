@@ -84,8 +84,8 @@ public class MockSnapshotBase implements SnapshotBase {
 
   /**
    * toRCVM stands for "To Row Column Value Map". This is a convenience function that takes strings
-   * of the format {@code <row>,<col fam>:<col qual>[:col vis],<value>} and generates a row, column,
-   * value map.
+   * of the format {@code <row>,<col fam>:<col qual>[:col vis],
+   * <value>} and generates a row, column, value map.
    */
   public static Map<Bytes, Map<Column, Bytes>> toRCVM(String... entries) {
     Map<Bytes, Map<Column, Bytes>> ret = new HashMap<>();

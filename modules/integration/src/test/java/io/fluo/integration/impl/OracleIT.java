@@ -35,7 +35,6 @@ import io.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.server.THsHaServer;
-import org.apache.thrift.transport.TTransportException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -97,8 +96,6 @@ public class OracleIT extends ITBaseImpl {
   /**
    * Test that bogus input into the oracle server doesn't cause an OOM exception. This essentially
    * tests for THRIFT-602
-   *
-   * @throws TTransportException
    */
   @Test
   public void bogusDataTest() throws Exception {
@@ -257,7 +254,6 @@ public class OracleIT extends ITBaseImpl {
     List<Long> output = Collections.synchronizedList(new ArrayList<Long>());
     ExecutorService tpool = Executors.newFixedThreadPool(numThreads);
     CountDownLatch cdl = new CountDownLatch(numThreads);
-
 
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();

@@ -60,7 +60,6 @@ public class ReporterUtil {
         }
       });
 
-
       allReporters.addAll(reporters);
     }
 

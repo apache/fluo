@@ -43,15 +43,12 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This input format reads a consistent snapshot of Fluo entries from a Fluo table.
  */
 public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
 
-  private static Logger log = LoggerFactory.getLogger(FluoEntryInputFormat.class);
   private static String TIMESTAMP_CONF_KEY = FluoEntryInputFormat.class.getName() + ".timestamp";
   private static String PROPS_CONF_KEY = FluoEntryInputFormat.class.getName() + ".props";
   private static String FAMS_CONF_KEY = FluoEntryInputFormat.class.getName() + ".families";

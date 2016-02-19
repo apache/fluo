@@ -99,7 +99,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
     return position < keysFiltered.size() || source.hasTop();
   }
 
-
   private void findTop() throws IOException {
     while (source.hasTop()) {
       readColMetadata();

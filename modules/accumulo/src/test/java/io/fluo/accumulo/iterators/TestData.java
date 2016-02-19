@@ -34,7 +34,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 public class TestData {
-  TreeMap<Key, Value> data = new TreeMap<Key, Value>();
+  TreeMap<Key, Value> data = new TreeMap<>();
 
   TestData() {}
 
