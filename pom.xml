@@ -11,7 +11,7 @@
   <version>1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Fluo.io Parent POM</name>
-  <description>Parent pom to configure common project build tools for fluo.io projects</description>
+  <description>Parent pom to configure common project build resources for fluo.io projects</description>
   <url>https://github.com/fluo-io/fluo-io-parent</url>
   <organization>
     <name>Fluo.io</name>
@@ -45,9 +45,9 @@
     <url>https://github.com/fluo-io/fluo-io-parent/issues</url>
   </issueManagement>
   <properties>
-    <build-tools.version>1.0.0-SNAPSHOT</build-tools.version>
-    <checkstyle.config>io/fluo/build-tools/java-checkstyle.xml</checkstyle.config>
-    <formatter.config>io/fluo/build-tools/eclipse-formatter.xml</formatter.config>
+    <build-resources.version>1.0.0</build-resources.version>
+    <checkstyle.config>io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
+    <formatter.config>io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
@@ -85,8 +85,8 @@
           <dependencies>
             <dependency>
               <groupId>io.fluo</groupId>
-              <artifactId>build-tools</artifactId>
-              <version>${build-tools.version}</version>
+              <artifactId>build-resources</artifactId>
+              <version>${build-resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -106,8 +106,8 @@
           <dependencies>
             <dependency>
               <groupId>io.fluo</groupId>
-              <artifactId>build-tools</artifactId>
-              <version>${build-tools.version}</version>
+              <artifactId>build-resources</artifactId>
+              <version>${build-resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
