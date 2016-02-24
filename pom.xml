@@ -7,12 +7,12 @@
     <version>9</version>
   </parent>
   <groupId>io.fluo</groupId>
-  <artifactId>build-tools</artifactId>
+  <artifactId>build-resources</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>Fluo.io Build Tools</name>
-  <description>Build tools for fluo.io projects</description>
-  <url>https://github.com/fluo-io/build-tools</url>
+  <name>Fluo.io Build Resources</name>
+  <description>Build resources for fluo.io projects</description>
+  <url>https://github.com/fluo-io/build-resources</url>
   <organization>
     <name>Fluo.io</name>
     <url>http://fluo.io</url>
@@ -35,18 +35,18 @@
   </mailingLists>
   <prerequisites />
   <scm>
-    <connection>scm:git:https://github.com/fluo-io/build-tools.git</connection>
-    <developerConnection>scm:git:git@github.com:fluo-io/build-tools.git</developerConnection>
+    <connection>scm:git:https://github.com/fluo-io/build-resources.git</connection>
+    <developerConnection>scm:git:git@github.com:fluo-io/build-resources.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/fluo-io/build-tools</url>
+    <url>https://github.com/fluo-io/build-resources</url>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/fluo-io/build-tools/issues</url>
+    <url>https://github.com/fluo-io/build-resources/issues</url>
   </issueManagement>
   <properties>
-    <checkstyle.config>src/main/resources/io/fluo/build-tools/java-checkstyle.xml</checkstyle.config>
-    <formatter.config>src/main/resources/io/fluo/build-tools/eclipse-formatter.xml</formatter.config>
+    <checkstyle.config>src/main/resources/io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
+    <formatter.config>src/main/resources/io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>

@@ -15,12 +15,12 @@
 [![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Issues][ii]][il]
 [![Forks][fi]][fl] [![Stars][si]][sl] [![Apache License][li]][ll]
 
-# Build Tools
+# Build Resources
 
 View documentation at:
 http://fluo.io
 
-Build tools for fluo-io projects
+Build resources for fluo-io projects
 
 This project uses [Semantic Versioning 2.0.0][semver], with its API being the
 resources it contains. Breaking changes, such as the removal of a resource,
@@ -29,15 +29,15 @@ will increment the minor version, and bugfixes to existing resources will
 increment the patch version.
 
 [semver]: http://semver.org/spec/v2.0.0.html
-[ti]: https://travis-ci.org/fluo-io/build-tools.svg?branch=master
-[tl]: https://travis-ci.org/fluo-io/build-tools
-[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-tools/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-tools
-[ii]: https://img.shields.io/github/issues/fluo-io/build-tools.svg
-[il]: https://github.com/fluo-io/build-tools/issues
-[fi]: https://img.shields.io/github/forks/fluo-io/build-tools.svg
-[fl]: https://github.com/fluo-io/build-tools/network
-[si]: https://img.shields.io/github/stars/fluo-io/build-tools.svg
-[sl]: https://github.com/fluo-io/build-tools/stargazers
+[ti]: https://travis-ci.org/fluo-io/build-resources.svg?branch=master
+[tl]: https://travis-ci.org/fluo-io/build-resources
+[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-resources/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-resources
+[ii]: https://img.shields.io/github/issues/fluo-io/build-resources.svg
+[il]: https://github.com/fluo-io/build-resources/issues
+[fi]: https://img.shields.io/github/forks/fluo-io/build-resources.svg
+[fl]: https://github.com/fluo-io/build-resources/network
+[si]: https://img.shields.io/github/stars/fluo-io/build-resources.svg
+[sl]: https://github.com/fluo-io/build-resources/stargazers
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/fluo-io/build-tools/blob/master/LICENSE
+[ll]: https://github.com/fluo-io/build-resources/blob/master/LICENSE
