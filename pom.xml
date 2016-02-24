@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
-  </parent>
   <groupId>io.fluo</groupId>
   <artifactId>fluo-io-parent</artifactId>
   <version>1-SNAPSHOT</version>
@@ -44,17 +39,46 @@
     <system>GitHub</system>
     <url>https://github.com/fluo-io/fluo-io-parent/issues</url>
   </issueManagement>
+  <distributionManagement>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <name>Nexus Release Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>${sonatypeOssDistMgmtSnapshotsUrl}</url>
+    </snapshotRepository>
+  </distributionManagement>
   <properties>
     <build-resources.version>1.0.0</build-resources.version>
     <checkstyle.config>io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
+    <extraReleaseArguments />
     <formatter.config>io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
     <maven.min-version>3.0.5</maven.min-version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
+    <sourceReleaseAssemblyDescriptor>source-release-tar</sourceReleaseAssemblyDescriptor>
     <surefire.version>2.19.1</surefire.version>
   </properties>
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
   <build>
     <pluginManagement>
       <plugins>
@@ -94,6 +118,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>2.6</version>
+          <configuration>
+            <tarLongFileMode>gnu</tarLongFileMode>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -104,6 +131,11 @@
             <excludes>**/thrift/*</excludes>
           </configuration>
           <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>6.15</version>
+            </dependency>
             <dependency>
               <groupId>io.fluo</groupId>
               <artifactId>build-resources</artifactId>
@@ -131,6 +163,11 @@
               <arg>5</arg>
             </compilerArgs>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.10</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -174,6 +211,17 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>2.6</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+              <manifestEntries>
+                <Sealed>true</Sealed>
+              </manifestEntries>
+            </archive>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -185,14 +233,29 @@
           <artifactId>maven-release-plugin</artifactId>
           <version>2.5.3</version>
           <configuration>
-            <pushChanges>false</pushChanges>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <arguments>-Pfluo-io-release ${extraReleaseArguments}</arguments>
+            <goals>clean deploy</goals>
             <localCheckout>true</localCheckout>
+            <mavenExecutorId>forked-path</mavenExecutorId>
+            <pushChanges>false</pushChanges>
+            <useReleaseProfile>false</useReleaseProfile>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-remote-resources-plugin</artifactId>
+          <version>1.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
           <version>2.7</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-plugin</artifactId>
+          <version>1.9.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -344,6 +407,75 @@
   </build>
   <profiles>
     <profile>
+      <id>fluo-io-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.apache.resources</groupId>
+                <artifactId>apache-source-release-assembly-descriptor</artifactId>
+                <version>1.0.5</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>source-release-assembly</id>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <phase>validate</phase>
+                <configuration>
+                  <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+                  <descriptorRefs>
+                    <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
+                  </descriptorRefs>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
       <!-- on by default, but disable with '-P !autoformat' or '-Dfluo-io.skipFormat' -->
       <id>autoformat</id>
       <activation>
@@ -404,7 +536,7 @@
                       <pluginExecutionFilter>
                         <groupId>org.apache.rat</groupId>
                         <artifactId>apache-rat-plugin</artifactId>
-                        <versionRange>[0.11,)</versionRange>
+                        <versionRange>[0,)</versionRange>
                         <goals>
                           <goal>check</goal>
                         </goals>
@@ -417,9 +549,10 @@
                       <pluginExecutionFilter>
                         <groupId>com.github.ekryd.sortpom</groupId>
                         <artifactId>sortpom-maven-plugin</artifactId>
-                        <versionRange>[2.4.0,)</versionRange>
+                        <versionRange>[0,)</versionRange>
                         <goals>
                           <goal>sort</goal>
+                          <goal>verify</goal>
                         </goals>
                       </pluginExecutionFilter>
                       <action>
@@ -430,7 +563,7 @@
                       <pluginExecutionFilter>
                         <groupId>net.revelc.code</groupId>
                         <artifactId>formatter-maven-plugin</artifactId>
-                        <versionRange>[0.5.2,)</versionRange>
+                        <versionRange>[0,)</versionRange>
                         <goals>
                           <goal>format</goal>
                         </goals>
@@ -443,7 +576,7 @@
                       <pluginExecutionFilter>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
-                        <versionRange>[2.17,)</versionRange>
+                        <versionRange>[0,)</versionRange>
                         <goals>
                           <goal>check</goal>
                         </goals>
@@ -454,11 +587,37 @@
                     </pluginExecution>
                     <pluginExecution>
                       <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>enforce</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
                         <groupId>org.gaul</groupId>
                         <artifactId>modernizer-maven-plugin</artifactId>
-                        <versionRange>[1.4.0,)</versionRange>
+                        <versionRange>[0,)</versionRange>
                         <goals>
                           <goal>modernizer</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-remote-resources-plugin</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>process</goal>
                         </goals>
                       </pluginExecutionFilter>
                       <action>
