@@ -320,7 +320,7 @@
   </build>
   <profiles>
     <profile>
-      <id>fluo-release</id>
+      <id>fluo-io-release</id>
       <build>
         <pluginManagement>
           <plugins>
