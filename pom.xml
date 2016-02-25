@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.fluo</groupId>
   <artifactId>fluo-io-parent</artifactId>
-  <version>1</version>
+  <version>2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Fluo.io Parent POM</name>
   <description>Parent pom to configure common project build resources for fluo.io projects</description>
@@ -38,7 +38,7 @@
   <scm>
     <connection>scm:git:https://github.com/fluo-io/fluo-io-parent.git</connection>
     <developerConnection>scm:git:git@github.com:fluo-io/fluo-io-parent.git</developerConnection>
-    <tag>fluo-io-parent-1</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/fluo-io/fluo-io-parent</url>
   </scm>
   <issueManagement>
