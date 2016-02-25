@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.fluo</groupId>
   <artifactId>resources</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Fluo.io Resources</name>
   <description>Build resources for fluo.io projects</description>
@@ -38,7 +38,7 @@
   <scm>
     <connection>scm:git:https://github.com/fluo-io/resources.git</connection>
     <developerConnection>scm:git:git@github.com:fluo-io/resources.git</developerConnection>
-    <tag>resources-1.0.0</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/fluo-io/resources</url>
   </scm>
   <issueManagement>
