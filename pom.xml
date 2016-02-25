@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.fluo</groupId>
-  <artifactId>build-resources</artifactId>
+  <artifactId>resources</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>Fluo.io Build Resources</name>
+  <name>Fluo.io Resources</name>
   <description>Build resources for fluo.io projects</description>
-  <url>https://github.com/fluo-io/build-resources</url>
+  <url>https://github.com/fluo-io/resources</url>
   <organization>
     <name>Fluo.io</name>
     <url>http://fluo.io</url>
@@ -19,6 +19,12 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <name>Fluo.io contributors</name>
+      <organization>Fluo.io</organization>
+    </developer>
+  </developers>
   <mailingLists>
     <mailingList>
       <name>Dev</name>
@@ -30,14 +36,14 @@
   </mailingLists>
   <prerequisites />
   <scm>
-    <connection>scm:git:https://github.com/fluo-io/build-resources.git</connection>
-    <developerConnection>scm:git:git@github.com:fluo-io/build-resources.git</developerConnection>
+    <connection>scm:git:https://github.com/fluo-io/resources.git</connection>
+    <developerConnection>scm:git:git@github.com:fluo-io/resources.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/fluo-io/build-resources</url>
+    <url>https://github.com/fluo-io/resources</url>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/fluo-io/build-resources/issues</url>
+    <url>https://github.com/fluo-io/resources/issues</url>
   </issueManagement>
   <distributionManagement>
     <repository>
@@ -52,13 +58,13 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <checkstyle.config>src/main/resources/io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
+    <checkstyle.config>src/main/resources/io/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
     <findbugs.effort>Max</findbugs.effort>
     <findbugs.includeTests>true</findbugs.includeTests>
     <findbugs.maxRank>16</findbugs.maxRank>
     <findbugs.xmlOutput>true</findbugs.xmlOutput>
-    <formatter.config>src/main/resources/io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
+    <formatter.config>src/main/resources/io/fluo/resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>

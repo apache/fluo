@@ -15,7 +15,7 @@
 [![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Issues][ii]][il]
 [![Forks][fi]][fl] [![Stars][si]][sl] [![Apache License][li]][ll]
 
-# Build Resources
+# Resources
 
 View documentation at:
 http://fluo.io
@@ -29,15 +29,15 @@ will increment the minor version, and bugfixes to existing resources will
 increment the patch version.
 
 [semver]: http://semver.org/spec/v2.0.0.html
-[ti]: https://travis-ci.org/fluo-io/build-resources.svg?branch=master
-[tl]: https://travis-ci.org/fluo-io/build-resources
-[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-resources/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/build-resources
-[ii]: https://img.shields.io/github/issues/fluo-io/build-resources.svg
-[il]: https://github.com/fluo-io/build-resources/issues
-[fi]: https://img.shields.io/github/forks/fluo-io/build-resources.svg
-[fl]: https://github.com/fluo-io/build-resources/network
-[si]: https://img.shields.io/github/stars/fluo-io/build-resources.svg
-[sl]: https://github.com/fluo-io/build-resources/stargazers
+[ti]: https://travis-ci.org/fluo-io/resources.svg?branch=master
+[tl]: https://travis-ci.org/fluo-io/resources
+[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/resources/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/resources
+[ii]: https://img.shields.io/github/issues/fluo-io/resources.svg
+[il]: https://github.com/fluo-io/resources/issues
+[fi]: https://img.shields.io/github/forks/fluo-io/resources.svg
+[fl]: https://github.com/fluo-io/resources/network
+[si]: https://img.shields.io/github/stars/fluo-io/resources.svg
+[sl]: https://github.com/fluo-io/resources/stargazers
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/fluo-io/build-resources/blob/master/LICENSE
+[ll]: https://github.com/fluo-io/resources/blob/master/LICENSE
