@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.fluo.cluster.runner;
+package io.fluo.cluster.runner.it;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +25,7 @@ import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedObserver;
 import io.fluo.api.types.TypedTransaction;
 import io.fluo.api.types.TypedTransactionBase;
+import io.fluo.cluster.runner.MiniAppRunner;
 import io.fluo.core.impl.Environment;
 import io.fluo.integration.ITBaseMini;
 import org.junit.Assert;

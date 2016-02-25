@@ -1,68 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>17</version>
+    <groupId>io.fluo</groupId>
+    <artifactId>fluo-io-parent</artifactId>
+    <version>1</version>
   </parent>
-
-  <groupId>io.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
   <version>1.0.0-beta-3-SNAPSHOT</version>
   <packaging>pom</packaging>
-
   <name>Fluo Parent</name>
   <description>An implementation of Percolator for Apache Accumulo</description>
-  <url>http://www.fluo.io</url>
-  <organization>
-    <name>Fluo IO</name>
-    <url>http://www.fluo.io</url>
-  </organization>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
-
-  <developers>
-    <developer>
-      <name>Keith Turner</name>
-    </developer>
-    <developer>
-      <name>Mike Walch</name>
-    </developer>
-    <developer>
-      <name>Corey Nolet</name>
-    </developer>
-    <developer>
-      <name>Christopher Tubbs</name>
-    </developer>
-  </developers>
-
-  <mailingLists>
-    <mailingList>
-      <name>Dev</name>
-      <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
-      <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
-      <post>fluo-dev@googlegroups.com</post>
-    </mailingList>
-  </mailingLists>
-
   <modules>
-    <module>modules/api</module>
     <module>modules/accumulo</module>
+    <module>modules/api</module>
+    <module>modules/cluster</module>
     <module>modules/core</module>
-    <module>modules/mini</module>
+    <module>modules/distribution</module>
     <module>modules/integration</module>
     <module>modules/mapreduce</module>
-    <module>modules/cluster</module>
-    <module>modules/distribution</module>
+    <module>modules/mini</module>
   </modules>
-
   <scm>
     <connection>scm:git:https://github.com/fluo-io/fluo.git</connection>
     <developerConnection>scm:git:git@github.com:fluo-io/fluo.git</developerConnection>
@@ -73,35 +38,19 @@
     <system>GitHub</system>
     <url>https://github.com/fluo-io/fluo/issues</url>
   </issueManagement>
-  <distributionManagement>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-      <layout>default</layout>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <layout>default</layout>
-    </snapshotRepository>
-  </distributionManagement>
-
   <properties>
     <accumulo.version>1.6.4</accumulo.version>
     <curator.version>2.7.1</curator.version>
     <dropwizard.version>0.8.1</dropwizard.version>
-    <!-- relative path for Eclipse format; should override in child modules if necessary -->
-    <eclipseFormatterStyle>${project.parent.basedir}/contrib/fluo-eclipse-style.xml</eclipseFormatterStyle>
+    <findbugs.maxRank>9</findbugs.maxRank>
     <hadoop.version>2.6.3</hadoop.version>
     <logback.version>1.1.3</logback.version>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <modernizer.skip>true</modernizer.skip>
     <slf4j.version>1.7.12</slf4j.version>
     <thrift.version>0.9.1</thrift.version>
     <twill.version>0.6.0-incubating</twill.version>
     <zookeeper.version>3.4.6</zookeeper.version>
   </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -292,49 +241,9 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>com.github.ekryd.sortpom</groupId>
-          <artifactId>sortpom-maven-plugin</artifactId>
-          <version>2.4.0</version>
-          <configuration>
-            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-            <createBackupFile>false</createBackupFile>
-            <lineSeparator>\n</lineSeparator>
-            <expandEmptyElements>false</expandEmptyElements>
-            <nrOfIndentSpace>2</nrOfIndentSpace>
-            <sortDependencies>scope,groupId,artifactId</sortDependencies>
-            <sortProperties>true</sortProperties>
-            <verifyFail>Stop</verifyFail>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>tidy-maven-plugin</artifactId>
-          <version>1.0-beta-1</version>
-        </plugin>
-        <plugin>
-          <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-          <artifactId>maven-java-formatter-plugin</artifactId>
-          <version>0.4</version>
-          <configuration>
-            <compilerCompliance>${maven.compiler.source}</compilerCompliance>
-            <compilerSource>${maven.compiler.source}</compilerSource>
-            <compilerTargetPlatform>${maven.compiler.target}</compilerTargetPlatform>
-            <lineEnding>LF</lineEnding>
-            <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.eclipse.tycho</groupId>
-              <artifactId>org.eclipse.jdt.core</artifactId>
-              <version>3.10.0.v20140604-1726</version>
-            </dependency>
-          </dependencies>
-        </plugin>
         <plugin>
           <groupId>org.apache.accumulo</groupId>
           <artifactId>accumulo-maven-plugin</artifactId>
@@ -354,17 +263,6 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <configuration>
-            <archive>
-              <manifestEntries>
-                <Sealed>true</Sealed>
-              </manifestEntries>
-            </archive>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
           <configuration>
@@ -375,83 +273,20 @@
               <exclude>contrib/grafana/**.json</exclude>
             </excludes>
           </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
+          <artifactId>maven-failsafe-plugin</artifactId>
           <configuration>
-            <arguments>-Pfull,sign -DskipTests</arguments>
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-            <goals>clean deploy</goals>
-            <preparationGoals>clean verify</preparationGoals>
-            <tagNameFormat>@{project.version}</tagNameFormat>
-            <useReleaseProfile>false</useReleaseProfile>
-            <pushChanges>false</pushChanges>
-            <localCheckout>true</localCheckout>
+            <systemPropertyVariables>
+              <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
+              <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
+            </systemPropertyVariables>
           </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>findbugs-maven-plugin</artifactId>
-          <version>3.0.0</version>
-          <configuration>
-            <xmlOutput>true</xmlOutput>
-            <effort>Max</effort>
-            <failOnError>true</failOnError>
-            <includeTests>true</includeTests>
-            <maxRank>9</maxRank>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.15</version>
         </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <systemPropertyVariables>
-            <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
-            <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
-          </systemPropertyVariables>
-        </configuration>
-        <executions>
-          <execution>
-            <id>run-integration-tests</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>run-findbugs</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -479,268 +314,29 @@
               <outputFile>${project.build.directory}/checkstyle-results-accumulo.xml</outputFile>
             </configuration>
           </execution>
-          <execution>
-            <id>java-style-check</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <configLocation>contrib/fluo-checks.xml</configLocation>
-              <encoding>UTF-8</encoding>
-              <logViolationsToConsole>true</logViolationsToConsole>
-              <failOnViolation>true</failOnViolation>
-              <violationSeverity>warning</violationSeverity>
-              <outputFile>${project.build.directory}/checkstyle-results-java.xml</outputFile>
-              <excludes>**/thrift/*</excludes>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
-      <!-- on by default, but disable with '-P !autoformat' or '-DskipFormat' -->
-      <id>autoformat</id>
-      <activation>
-        <property>
-          <name>!skipFormat</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.github.ekryd.sortpom</groupId>
-            <artifactId>sortpom-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sort-pom</id>
-                <goals>
-                  <goal>sort</goal>
-                </goals>
-                <phase>validate</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>tidy-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>pom</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-            <artifactId>maven-java-formatter-plugin</artifactId>
-            <configuration>
-              <configFile>${eclipseFormatterStyle}</configFile>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>format</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>sign</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>full</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <dependencies>
-              <dependency>
-                <groupId>org.apache.apache.resources</groupId>
-                <artifactId>apache-source-release-assembly-descriptor</artifactId>
-                <version>1.0.5</version>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <id>source-release-assembly</id>
-                <goals>
-                  <goal>single</goal>
-                </goals>
-                <phase>validate</phase>
-                <configuration>
-                  <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
-                  <finalName>fluo-${project.version}</finalName>
-                  <descriptorRefs>
-                    <descriptorRef>source-release-tar</descriptorRef>
-                  </descriptorRefs>
-                  <attach>false</attach>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>m2e</id>
-      <activation>
-        <property>
-          <name>m2e.version</name>
-        </property>
-      </activation>
+      <id>fluo-io-release</id>
       <build>
         <pluginManagement>
           <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
             <plugin>
-              <groupId>org.eclipse.m2e</groupId>
-              <artifactId>lifecycle-mapping</artifactId>
-              <version>1.0.0</version>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-assembly-plugin</artifactId>
               <configuration>
-                <lifecycleMappingMetadata>
-                  <pluginExecutions>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.apache.rat</groupId>
-                        <artifactId>apache-rat-plugin</artifactId>
-                        <versionRange>[0.8,)</versionRange>
-                        <goals>
-                          <goal>check</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>com.github.ekryd.sortpom</groupId>
-                        <artifactId>sortpom-maven-plugin</artifactId>
-                        <versionRange>[2.4.0,)</versionRange>
-                        <goals>
-                          <goal>sort</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-                        <artifactId>maven-java-formatter-plugin</artifactId>
-                        <versionRange>[0.4,)</versionRange>
-                        <goals>
-                          <goal>format</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                        <versionRange>[2.15,)</versionRange>
-                        <goals>
-                          <goal>check</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>tidy-maven-plugin</artifactId>
-                        <versionRange>[1.0-beta-1,)</versionRange>
-                        <goals>
-                          <goal>pom</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.gaul</groupId>
-                        <artifactId>modernizer-maven-plugin</artifactId>
-                        <versionRange>[1.4.0,)</versionRange>
-                        <goals>
-                          <goal>modernizer</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-remote-resources-plugin</artifactId>
-                        <versionRange>[1.0,)</versionRange>
-                        <goals>
-                          <goal>process</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                  </pluginExecutions>
-                </lifecycleMappingMetadata>
+                <finalName>fluo-${project.version}</finalName>
+                <attach>false</attach>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-release-plugin</artifactId>
+              <configuration>
+                <tagNameFormat>fluo-@{project.version}</tagNameFormat>
               </configuration>
             </plugin>
           </plugins>
