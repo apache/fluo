@@ -19,6 +19,12 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <name>Fluo.io contributors</name>
+      <organization>Fluo.io</organization>
+    </developer>
+  </developers>
   <mailingLists>
     <mailingList>
       <name>Dev</name>
@@ -52,15 +58,15 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
-    <build-resources.version>1.0.0</build-resources.version>
-    <checkstyle.config>io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
+    <checkstyle.config>io/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
     <findbugs.effort>Max</findbugs.effort>
     <findbugs.includeTests>true</findbugs.includeTests>
     <findbugs.maxRank>16</findbugs.maxRank>
     <findbugs.xmlOutput>true</findbugs.xmlOutput>
-    <formatter.config>io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
+    <formatter.config>io/fluo/resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
+    <io.fluo.resources.version>1.0.0</io.fluo.resources.version>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
     <maven.min-version>3.0.5</maven.min-version>
@@ -113,8 +119,8 @@
           <dependencies>
             <dependency>
               <groupId>io.fluo</groupId>
-              <artifactId>build-resources</artifactId>
-              <version>${build-resources.version}</version>
+              <artifactId>resources</artifactId>
+              <version>${io.fluo.resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -142,8 +148,8 @@
             </dependency>
             <dependency>
               <groupId>io.fluo</groupId>
-              <artifactId>build-resources</artifactId>
-              <version>${build-resources.version}</version>
+              <artifactId>resources</artifactId>
+              <version>${io.fluo.resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
