@@ -12,13 +12,15 @@
  * the License.
  */
 
-package io.fluo.mapreduce;
+package io.fluo.mapreduce.it;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
+import io.fluo.mapreduce.FluoMutationGenerator;
+
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.junit.Assert;

@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.fluo.mapreduce;
+package io.fluo.mapreduce.it;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +23,9 @@ import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
+import io.fluo.mapreduce.FluoKeyValue;
+import io.fluo.mapreduce.FluoKeyValueGenerator;
+
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
