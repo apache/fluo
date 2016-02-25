@@ -55,6 +55,10 @@
     <build-resources.version>1.0.0</build-resources.version>
     <checkstyle.config>io/fluo/build-resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
+    <findbugs.effort>Max</findbugs.effort>
+    <findbugs.includeTests>true</findbugs.includeTests>
+    <findbugs.maxRank>16</findbugs.maxRank>
+    <findbugs.xmlOutput>true</findbugs.xmlOutput>
     <formatter.config>io/fluo/build-resources/eclipse-formatter.xml</formatter.config>
     <gpg.useagent>true</gpg.useagent>
     <maven.compiler.source>1.7</maven.compiler.source>
@@ -294,14 +298,6 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>3.0.3</version>
-          <configuration>
-            <xmlOutput>true</xmlOutput>
-            <effort>Max</effort>
-            <failOnError>true</failOnError>
-            <includeTests>true</includeTests>
-            <maxRank>16</maxRank>
-            <excludeFilterFile>src/main/findbugs/exclude-filter.xml</excludeFilterFile>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.gaul</groupId>
@@ -513,6 +509,17 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>use-findbugs-filters</id>
+      <activation>
+        <file>
+          <exists>src/main/findbugs/exclude-filter.xml</exists>
+        </file>
+      </activation>
+      <properties>
+        <findbugs.excludeFilterFile>src/main/findbugs/exclude-filter.xml</findbugs.excludeFilterFile>
+      </properties>
     </profile>
     <profile>
       <id>m2e</id>
