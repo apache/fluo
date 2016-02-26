@@ -16,6 +16,7 @@ package io.fluo.core.impl;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -51,8 +52,8 @@ public class TimestampTracker implements AutoCloseable {
   private boolean updatingZk = false;
 
   public TimestampTracker(Environment env, TransactorID tid, long updatePeriodMs) {
-    Preconditions.checkNotNull(env, "environment cannot be null");
-    Preconditions.checkNotNull(tid, "tid cannot be null");
+    Objects.requireNonNull(env, "environment cannot be null");
+    Objects.requireNonNull(tid, "tid cannot be null");
     Preconditions.checkArgument(updatePeriodMs > 0, "update period must be positive");
     this.env = env;
     this.tid = tid;
@@ -159,7 +160,7 @@ public class TimestampTracker implements AutoCloseable {
     Preconditions.checkState(!closed, "tracker closed ");
     Preconditions.checkState(allocationsInProgress > 0, "allocationsInProgress should be > 0 "
         + allocationsInProgress);
-    Preconditions.checkNotNull(node);
+    Objects.requireNonNull(node);
     if (timestamps.remove(ts) == false) {
       throw new NoSuchElementException("Timestamp " + ts
           + " was previously removed or does not exist");

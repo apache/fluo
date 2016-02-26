@@ -17,6 +17,7 @@ package io.fluo.mapreduce;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -95,7 +96,7 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
         try {
           ByteArrayInputStream bais =
               new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
-                  .getBytes("UTF-8"));
+                  .getBytes(StandardCharsets.UTF_8));
           PropertiesConfiguration props = new PropertiesConfiguration();
           props.load(bais);
 
@@ -152,7 +153,8 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ConfigurationConverter.getProperties(config).store(baos, "");
-        conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
+        conf.getConfiguration().set(PROPS_CONF_KEY,
+            new String(baos.toByteArray(), StandardCharsets.UTF_8));
 
         AccumuloInputFormat.setZooKeeperInstance(conf, fconfig.getAccumuloInstance(),
             fconfig.getAccumuloZookeepers());

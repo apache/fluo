@@ -28,8 +28,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
@@ -169,7 +168,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * Creates a Bytes object by copying the data of the given byte array
    */
   public static final Bytes of(byte[] array) {
-    Preconditions.checkNotNull(array);
+    Objects.requireNonNull(array);
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
     return bytesFactory.get(copy);
@@ -183,7 +182,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * @param length Number of bytes to include
    */
   public static final Bytes of(byte[] data, int offset, int length) {
-    Preconditions.checkNotNull(data);
+    Objects.requireNonNull(data);
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
     return bytesFactory.get(copy);
@@ -193,7 +192,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * Creates a Bytes object by copying the data of the given ByteBuffer
    */
   public static final Bytes of(ByteBuffer bb) {
-    Preconditions.checkNotNull(bb);
+    Objects.requireNonNull(bb);
     byte[] data = new byte[bb.remaining()];
     // duplicate so that it does not change position
     bb.duplicate().get(data);
@@ -204,7 +203,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * Creates a Bytes object by copying the value of the given String
    */
   public static final Bytes of(String s) {
-    Preconditions.checkNotNull(s);
+    Objects.requireNonNull(s);
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
   }
@@ -213,8 +212,8 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * Creates a Bytes object by copying the value of the given String with a given charset
    */
   public static final Bytes of(String s, Charset c) {
-    Preconditions.checkNotNull(s);
-    Preconditions.checkNotNull(c);
+    Objects.requireNonNull(s);
+    Objects.requireNonNull(c);
     byte[] data = s.getBytes(c);
     return bytesFactory.get(data);
   }

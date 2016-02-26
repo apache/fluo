@@ -15,8 +15,7 @@
 package io.fluo.api.data;
 
 import java.io.Serializable;
-
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Represents a range between two {@link RowColumn}s in a Fluo table. Similar to an Accumulo Range.
@@ -37,7 +36,7 @@ public class Span implements Serializable {
 
   /**
    * Construct a new Range using a builder class
-   * 
+   *
    * @param builder Builder object
    */
   public Span(Builder builder) {
@@ -75,15 +74,15 @@ public class Span implements Serializable {
   /**
    * Construct a new span from a start and end RowColumn. Set either key to RowColumn.EMPTY to
    * indicate positive or negative infinite
-   * 
+   *
    * @param start Start RowColumn
    * @param startInclusive Include start in Range
    * @param end End RowColumn
    * @param endInclusive Include end in Range
    */
   public Span(RowColumn start, boolean startInclusive, RowColumn end, boolean endInclusive) {
-    Preconditions.checkNotNull(start, "start must not be null");
-    Preconditions.checkNotNull(end, "end must not be null");
+    Objects.requireNonNull(start, "start must not be null");
+    Objects.requireNonNull(end, "end must not be null");
     this.start = start;
     this.startInclusive = startInclusive;
     this.end = end;
@@ -93,15 +92,15 @@ public class Span implements Serializable {
   /**
    * Construct a new Span from a start and end row. Set either row to Bytes.EMPTY to indicate
    * positive or negative infinite.
-   * 
+   *
    * @param startRow Start row
    * @param startRowInclusive Start row inclusive
    * @param endRow End row
    * @param endRowInclusive End row inclusive
    */
   public Span(Bytes startRow, boolean startRowInclusive, Bytes endRow, boolean endRowInclusive) {
-    Preconditions.checkNotNull(startRow, "startRow must not be null");
-    Preconditions.checkNotNull(endRow, "endRow must not be null");
+    Objects.requireNonNull(startRow, "startRow must not be null");
+    Objects.requireNonNull(endRow, "endRow must not be null");
     this.startInclusive = startRowInclusive;
     if (!startRow.equals(Bytes.EMPTY)) {
       this.start = new RowColumn(startRow);
@@ -122,7 +121,7 @@ public class Span implements Serializable {
 
   /**
    * Construct a new Span from a start and end row. Strings will be encoded as UTF-8.
-   * 
+   *
    * @param startRow Start row
    * @param startRowInclusive Start row inclusive
    * @param endRow End row
@@ -134,7 +133,7 @@ public class Span implements Serializable {
 
   /**
    * Return start RowColumn of Span.
-   * 
+   *
    * @return start or RowColumn.EMPTY if infinite start
    */
   public RowColumn getStart() {
@@ -143,7 +142,7 @@ public class Span implements Serializable {
 
   /**
    * Return end RowColumn of Span
-   * 
+   *
    * @return end or RowColumn.EMPTY if infinite end
    */
   public RowColumn getEnd() {
@@ -152,7 +151,7 @@ public class Span implements Serializable {
 
   /**
    * Checks if start RowColumn is inclusive
-   * 
+   *
    * @return True if start key is inclusive
    */
   public boolean isStartInclusive() {
@@ -161,7 +160,7 @@ public class Span implements Serializable {
 
   /**
    * Check if end RowColumn is inclusive
-   * 
+   *
    * @return True if end key is inclusive
    */
   public boolean isEndInclusive() {
@@ -175,7 +174,7 @@ public class Span implements Serializable {
 
   /**
    * Checks if span is equal to another span
-   * 
+   *
    * @param other Span
    * @return true if equal
    */
@@ -196,7 +195,7 @@ public class Span implements Serializable {
    * Creates a span that covers an exact row
    */
   public static Span exact(Bytes row) {
-    Preconditions.checkNotNull(row);
+    Objects.requireNonNull(row);
     return new Span(row, true, row, true);
   }
 
@@ -204,7 +203,7 @@ public class Span implements Serializable {
    * Creates a Span that covers an exact row. String parameters will be encoded as UTF-8
    */
   public static Span exact(String row) {
-    Preconditions.checkNotNull(row);
+    Objects.requireNonNull(row);
     return exact(Bytes.of(row));
   }
 
@@ -214,8 +213,8 @@ public class Span implements Serializable {
    * qualifier level.
    */
   public static Span exact(Bytes row, Column col) {
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(col);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(col);
     RowColumn start = new RowColumn(row, col);
     return new Span(start, true, start.following(), false);
   }
@@ -226,8 +225,8 @@ public class Span implements Serializable {
    * qualifier level. String parameters will be encoded as UTF-8
    */
   public static Span exact(String row, Column col) {
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(col);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(col);
     return exact(Bytes.of(row), col);
   }
 
@@ -256,7 +255,7 @@ public class Span implements Serializable {
    * Returns a Span that covers all rows beginning with a prefix.
    */
   public static Span prefix(Bytes rowPrefix) {
-    Preconditions.checkNotNull(rowPrefix);
+    Objects.requireNonNull(rowPrefix);
     Bytes fp = followingPrefix(rowPrefix);
     return new Span(rowPrefix, true, fp == null ? Bytes.EMPTY : fp, false);
   }
@@ -266,7 +265,7 @@ public class Span implements Serializable {
    * as UTF-8
    */
   public static Span prefix(String rowPrefix) {
-    Preconditions.checkNotNull(rowPrefix);
+    Objects.requireNonNull(rowPrefix);
     return prefix(Bytes.of(rowPrefix));
   }
 
@@ -276,8 +275,8 @@ public class Span implements Serializable {
    * create a prefix Span at the family or qualifier level.
    */
   public static Span prefix(Bytes row, Column colPrefix) {
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(colPrefix);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(colPrefix);
     Bytes cf = colPrefix.getFamily();
     Bytes cq = colPrefix.getQualifier();
     Bytes cv = colPrefix.getVisibility();
@@ -311,8 +310,8 @@ public class Span implements Serializable {
    * UTF-8
    */
   public static Span prefix(String row, Column colPrefix) {
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(colPrefix);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(colPrefix);
     return prefix(Bytes.of(row), colPrefix);
   }
 

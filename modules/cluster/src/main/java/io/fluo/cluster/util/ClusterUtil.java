@@ -15,8 +15,8 @@
 package io.fluo.cluster.util;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
-import com.google.common.base.Charsets;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.util.Halt;
@@ -64,14 +64,14 @@ public class ClusterUtil {
         throw new RuntimeException(); // make findbugs happy
       }
 
-      final String uuid = new String(uuidBytes, Charsets.UTF_8);
+      final String uuid = new String(uuidBytes, StandardCharsets.UTF_8);
 
       final NodeCache nodeCache = new NodeCache(curator, ZookeeperPath.CONFIG_FLUO_APPLICATION_ID);
       nodeCache.getListenable().addListener(new NodeCacheListener() {
         @Override
         public void nodeChanged() throws Exception {
           ChildData node = nodeCache.getCurrentData();
-          if (node == null || !uuid.equals(new String(node.getData(), Charsets.UTF_8))) {
+          if (node == null || !uuid.equals(new String(node.getData(), StandardCharsets.UTF_8))) {
             Halt.halt("Fluo Application UUID has changed or disappeared");
           }
         }

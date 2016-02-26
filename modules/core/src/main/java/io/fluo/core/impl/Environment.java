@@ -19,6 +19,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,7 +67,7 @@ public class Environment implements AutoCloseable {
 
   /**
    * Constructs an environment from given FluoConfiguration
-   * 
+   *
    * @param configuration Configuration used to configure environment
    */
   public Environment(FluoConfiguration configuration) {
@@ -94,7 +95,7 @@ public class Environment implements AutoCloseable {
 
   /**
    * Constructs an environment from another environment
-   * 
+   *
    * @param env Environment
    */
   @VisibleForTesting
@@ -122,13 +123,17 @@ public class Environment implements AutoCloseable {
 
       accumuloInstance =
           new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME),
-              "UTF-8");
+              StandardCharsets.UTF_8);
       accumuloInstanceID =
-          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID), "UTF-8");
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID),
+              StandardCharsets.UTF_8);
       fluoApplicationID =
-          new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID), "UTF-8");
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID),
+              StandardCharsets.UTF_8);
 
-      table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE), "UTF-8");
+      table =
+          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE),
+              StandardCharsets.UTF_8);
 
       ByteArrayInputStream bais =
           new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));

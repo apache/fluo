@@ -22,9 +22,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-import com.google.common.base.Preconditions;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.exceptions.FluoException;
@@ -215,7 +215,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       throw new IllegalStateException(e);
     }
 
-    Preconditions.checkNotNull(preparer, "Failed to prepare twill application");
+    Objects.requireNonNull(preparer, "Failed to prepare twill application");
 
     log.info("Starting Fluo '{}' application in YARN...", config.getApplicationName());
     TwillController controller = preparer.start();
@@ -228,7 +228,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
       // set app id in zookeeper
       String appId = getResourceReport(controller, -1).getApplicationId();
-      Preconditions.checkNotNull(appId, "Failed to retrieve YARN app ID from Twill");
+      Objects.requireNonNull(appId, "Failed to retrieve YARN app ID from Twill");
       CuratorUtil.putData(getAppCurator(config), ZookeeperPath.YARN_APP_ID,
           appId.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.OVERWRITE);
 

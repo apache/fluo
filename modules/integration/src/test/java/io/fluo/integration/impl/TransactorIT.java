@@ -29,8 +29,8 @@ import org.junit.rules.ExpectedException;
  */
 public class TransactorIT extends ITBaseImpl {
 
-  public static Long id1 = new Long(2);
-  public static Long id2 = new Long(3);
+  public static Long id1 = Long.valueOf(2);
+  public static Long id2 = Long.valueOf(3);
   public static long NUM_OPEN_TIMEOUT_MS = 1000;
 
   @Rule

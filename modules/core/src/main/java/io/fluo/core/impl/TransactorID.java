@@ -14,7 +14,8 @@
 
 package io.fluo.core.impl;
 
-import com.google.common.base.Preconditions;
+import java.util.Objects;
+
 import io.fluo.accumulo.util.LongUtil;
 import io.fluo.accumulo.util.ZookeeperPath;
 import org.apache.curator.framework.CuratorFramework;
@@ -31,7 +32,7 @@ public class TransactorID {
   private final Long id;
 
   public TransactorID(CuratorFramework curator) {
-    Preconditions.checkNotNull(curator);
+    Objects.requireNonNull(curator);
     id = createID(curator);
   }
 

@@ -17,6 +17,7 @@ package io.fluo.accumulo.iterators;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -89,8 +90,8 @@ public class PushbackIterator implements SortedKeyValueIterator<Key, Value> {
   }
 
   public void pushback(Key key, Value val) {
-    Preconditions.checkNotNull(key);
-    Preconditions.checkNotNull(val);
+    Objects.requireNonNull(key);
+    Objects.requireNonNull(val);
     Preconditions.checkState(pushedKey == null);
     Preconditions.checkState(pushedValue == null);
     if (source.hasTop()) {

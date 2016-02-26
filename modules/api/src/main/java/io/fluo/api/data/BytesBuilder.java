@@ -14,9 +14,9 @@
 
 package io.fluo.api.data;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
@@ -53,7 +53,7 @@ public class BytesBuilder {
    * @return self
    */
   public BytesBuilder append(String s) {
-    return append(s.getBytes(Charsets.UTF_8));
+    return append(s.getBytes(StandardCharsets.UTF_8));
   }
 
   public BytesBuilder append(Bytes b) {

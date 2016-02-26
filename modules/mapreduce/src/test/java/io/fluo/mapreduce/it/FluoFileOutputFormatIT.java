@@ -17,6 +17,7 @@ package io.fluo.mapreduce.it;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 import io.fluo.api.data.Column;
 import io.fluo.api.types.StringEncoder;
@@ -25,7 +26,6 @@ import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import io.fluo.mapreduce.FluoKeyValue;
 import io.fluo.mapreduce.FluoKeyValueGenerator;
-
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -77,7 +77,8 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     failDir.mkdir();
 
     // generate some data for map reduce to read
-    PrintWriter writer = new PrintWriter(new File(inDir, "file1.txt"), "UTF-8");
+    PrintWriter writer =
+        new PrintWriter(new File(inDir, "file1.txt"), StandardCharsets.UTF_8.name());
     writer.println("a,b,c,1");
     writer.println("d,b,c,2");
     writer.println("foo,moo,moo,90");

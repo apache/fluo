@@ -15,8 +15,7 @@
 package io.fluo.api.data;
 
 import java.io.Serializable;
-
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Represents all or subset of a Fluo row and {@link Column}. RowColumn is similar to an Accumulo
@@ -41,7 +40,7 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
    * @param row Bytes Row
    */
   public RowColumn(Bytes row) {
-    Preconditions.checkNotNull(row, "Row must not be null");
+    Objects.requireNonNull(row, "Row must not be null");
     this.row = row;
   }
 
@@ -61,8 +60,8 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
    * @param col Column
    */
   public RowColumn(Bytes row, Column col) {
-    Preconditions.checkNotNull(row, "Row must not be null");
-    Preconditions.checkNotNull(col, "Col must not be null");
+    Objects.requireNonNull(row, "Row must not be null");
+    Objects.requireNonNull(col, "Col must not be null");
     this.row = row;
     this.col = col;
   }

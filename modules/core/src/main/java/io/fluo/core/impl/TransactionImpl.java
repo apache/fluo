@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -93,7 +94,7 @@ public class TransactionImpl implements Transaction, Snapshot {
   private boolean commitAttempted = false;
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
-    Preconditions.checkNotNull(env, "environment cannot be null");
+    Objects.requireNonNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
     this.stats = new TxStats(env);
@@ -220,9 +221,9 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     checkIfOpen();
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(col);
-    Preconditions.checkNotNull(value);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(col);
+    Objects.requireNonNull(value);
 
     if (col.getFamily().equals(ColumnConstants.NOTIFY_CF)) {
       throw new IllegalArgumentException(ColumnConstants.NOTIFY_CF + " is a reserved family");
@@ -247,8 +248,8 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void setWeakNotification(Bytes row, Column col) {
     checkIfOpen();
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(col);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(col);
 
     if (!env.getWeakObservers().containsKey(col)) {
       throw new IllegalArgumentException("Column not configured for weak notifications " + col);
@@ -268,8 +269,8 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
-    Preconditions.checkNotNull(row);
-    Preconditions.checkNotNull(col);
+    Objects.requireNonNull(row);
+    Objects.requireNonNull(col);
     set(row, col, DELETE);
   }
 

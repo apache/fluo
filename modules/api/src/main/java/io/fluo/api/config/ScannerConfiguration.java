@@ -16,9 +16,9 @@ package io.fluo.api.config;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-import com.google.common.base.Preconditions;
 import io.fluo.api.client.SnapshotBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -37,7 +37,7 @@ public class ScannerConfiguration implements Cloneable {
    * Sets {@link Span} for ScannerConfiguration
    */
   public ScannerConfiguration setSpan(Span span) {
-    Preconditions.checkNotNull(span);
+    Objects.requireNonNull(span);
     this.span = span;
     return this;
   }
@@ -60,7 +60,7 @@ public class ScannerConfiguration implements Cloneable {
    * Configures scanner to retrieve column with the given family
    */
   public ScannerConfiguration fetchColumnFamily(Bytes fam) {
-    Preconditions.checkNotNull(fam);
+    Objects.requireNonNull(fam);
     columns.add(new Column(fam));
     return this;
   }
@@ -69,7 +69,8 @@ public class ScannerConfiguration implements Cloneable {
    * Configures scanner to retrieve column with the given family and qualifier
    */
   public ScannerConfiguration fetchColumn(Bytes fam, Bytes qual) {
-    Preconditions.checkNotNull(fam, qual);
+    Objects.requireNonNull(fam);
+    Objects.requireNonNull(qual);
     columns.add(new Column(fam, qual));
     return this;
   }
