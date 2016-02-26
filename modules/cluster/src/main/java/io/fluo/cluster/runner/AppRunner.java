@@ -20,13 +20,14 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.inject.Provider;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Provider;
 import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;

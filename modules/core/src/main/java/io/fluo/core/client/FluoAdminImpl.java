@@ -14,6 +14,7 @@
 
 package io.fluo.core.client;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -171,13 +172,13 @@ public class FluoAdminImpl implements FluoAdmin {
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG, new byte[0],
         CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable()
-        .getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+        .getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME,
-        accumuloInstanceName.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+        accumuloInstanceName.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID,
-        accumuloInstanceID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+        accumuloInstanceID.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_FLUO_APPLICATION_ID,
-        fluoApplicationID.getBytes("UTF-8"), CuratorUtil.NodeExistsPolicy.FAIL);
+        fluoApplicationID.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_SERVER, new byte[0],
         CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_MAX_TIMESTAMP, new byte[] {'2'},

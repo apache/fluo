@@ -17,6 +17,7 @@ package io.fluo.mapreduce;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import io.fluo.api.client.FluoClient;
@@ -78,7 +79,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
       throws IOException, InterruptedException {
 
     ByteArrayInputStream bais =
-        new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY).getBytes("UTF-8"));
+        new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
+            .getBytes(StandardCharsets.UTF_8));
     Properties props = new Properties();
     props.load(bais);
 
@@ -113,7 +115,7 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
 
   /**
    * Call this method to initialize the Fluo connection props and {@link LoaderExecutorImpl} props
-   * 
+   *
    * @param conf Job configuration
    * @param props Use {@link io.fluo.api.config.FluoConfiguration} to set props programmatically
    */
@@ -123,7 +125,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       props.store(baos, "");
 
-      conf.getConfiguration().set(PROPS_CONF_KEY, new String(baos.toByteArray(), "UTF8"));
+      conf.getConfiguration().set(PROPS_CONF_KEY,
+          new String(baos.toByteArray(), StandardCharsets.UTF_8));
 
     } catch (Exception e) {
       throw new RuntimeException(e);

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Preconditions;
@@ -752,7 +753,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   }
 
   private FluoConfiguration setNonEmptyString(String property, String value) {
-    Preconditions.checkNotNull(value, property + " cannot be null");
+    Objects.requireNonNull(value, property + " cannot be null");
     Preconditions.checkArgument(!value.isEmpty(), property + " cannot be empty");
     setProperty(property, value);
     return this;
@@ -760,20 +761,20 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   private String getNonEmptyString(String property, String defaultValue) {
     String value = getString(property, defaultValue);
-    Preconditions.checkNotNull(value, property + " cannot be null");
+    Objects.requireNonNull(value, property + " cannot be null");
     Preconditions.checkArgument(!value.isEmpty(), property + " cannot be empty");
     return value;
   }
 
   private String getNonEmptyString(String property) {
     String value = getString(property);
-    Preconditions.checkNotNull(value, property + " cannot be null");
+    Objects.requireNonNull(value, property + " cannot be null");
     Preconditions.checkArgument(!value.isEmpty(), property + " cannot be empty");
     return value;
   }
 
   private static String verifyNotNull(String property, String value) {
-    Preconditions.checkNotNull(value, property + " cannot be null");
+    Objects.requireNonNull(value, property + " cannot be null");
     return value;
   }
 }

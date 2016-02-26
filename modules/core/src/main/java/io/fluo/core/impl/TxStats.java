@@ -16,6 +16,7 @@ package io.fluo.core.impl;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -128,7 +129,7 @@ public class TxStats {
   }
 
   public void setRejected(Map<Bytes, Set<Column>> rejected) {
-    Preconditions.checkNotNull(rejected);
+    Objects.requireNonNull(rejected);
     Preconditions.checkState(this.rejected.size() == 0);
     this.rejected = rejected;
     this.collisions = -1;

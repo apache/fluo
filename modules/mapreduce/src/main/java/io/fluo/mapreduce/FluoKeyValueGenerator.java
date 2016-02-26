@@ -14,7 +14,8 @@
 
 package io.fluo.mapreduce;
 
-import com.google.common.base.Charsets;
+import java.nio.charset.StandardCharsets;
+
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.WriteValue;
 import io.fluo.api.data.Bytes;
@@ -110,7 +111,7 @@ public class FluoKeyValueGenerator {
    * @return this
    */
   public FluoKeyValueGenerator setRow(String row) {
-    this.row = row.getBytes(Charsets.UTF_8);
+    this.row = row.getBytes(StandardCharsets.UTF_8);
     return this;
   }
 
@@ -160,7 +161,7 @@ public class FluoKeyValueGenerator {
    * @return this
    */
   public FluoKeyValueGenerator setValue(String val) {
-    this.val = val.getBytes(Charsets.UTF_8);
+    this.val = val.getBytes(StandardCharsets.UTF_8);
     return this;
   }
 

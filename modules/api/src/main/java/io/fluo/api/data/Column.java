@@ -15,8 +15,7 @@
 package io.fluo.api.data;
 
 import java.io.Serializable;
-
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Represents all or a subset of the column family, column qualifier, and column visibility fields.
@@ -43,7 +42,7 @@ public class Column implements Comparable<Column>, Serializable {
    * Creates Column with only a family.
    */
   public Column(Bytes family) {
-    Preconditions.checkNotNull(family, "Family must not be null");
+    Objects.requireNonNull(family, "Family must not be null");
     this.family = family;
   }
 
@@ -58,8 +57,8 @@ public class Column implements Comparable<Column>, Serializable {
    * Creates Column with a family and qualifier.
    */
   public Column(Bytes family, Bytes qualifier) {
-    Preconditions.checkNotNull(family, "Family must not be null");
-    Preconditions.checkNotNull(qualifier, "Qualifier must not be null");
+    Objects.requireNonNull(family, "Family must not be null");
+    Objects.requireNonNull(qualifier, "Qualifier must not be null");
     this.family = family;
     this.qualifier = qualifier;
   }
@@ -75,9 +74,9 @@ public class Column implements Comparable<Column>, Serializable {
    * Creates Column with family, qualifier, and visibility
    */
   public Column(Bytes family, Bytes qualifier, Bytes visibility) {
-    Preconditions.checkNotNull(family, "Family must not be null");
-    Preconditions.checkNotNull(qualifier, "Qualifier must not be null");
-    Preconditions.checkNotNull(visibility, "Visibility must not be null");
+    Objects.requireNonNull(family, "Family must not be null");
+    Objects.requireNonNull(qualifier, "Qualifier must not be null");
+    Objects.requireNonNull(visibility, "Visibility must not be null");
     this.family = family;
     this.qualifier = qualifier;
     this.visibility = visibility;
