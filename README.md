@@ -1,7 +1,7 @@
 Fluo
 ====
 
-[![Build Status](https://travis-ci.org/fluo-io/fluo.svg?branch=master)](https://travis-ci.org/fluo-io/fluo)
+[![Build Status][ti]][tl] [![Apache License][li]][ll]
 
 **Fluo is transaction layer that enables incremental processing on big data.**
 
@@ -16,15 +16,16 @@ There are several ways to run Fluo (listed in order of increasing difficulty):
 * [quickstart] - Starts a MiniFluo instance that is configured to run a word count application
 * [MiniFluo] - Sets up a minimal Fluo instance that writes its data to single directory
 * [fluo-dev] - Command-line tool for running Fluo and its dependencies on a single machine
-* [fluo-deploy] - Command-line tool that launches an AWS cluster and deploys Fluo and its dependencies to it
+* [Zetten] - Command-line tool that launches an AWS cluster and sets up Fluo/Accumulo on it
 * [Production] - Sets up Fluo on a cluster where Accumulo, Hadoop & Zookeeper are running
 
 Except for [quickstart], all above will set up a Fluo application that will be idle unless you
 create client & observer code for your application.  You can either [create your own
-application][applications] or configure your Fluo application to run an example below:
+application][applications] or configure Fluo to run an example application below:
 
 * [phrasecount] - Computes phrase counts for unique documents
 * [fluo-stress] - Computes the number of unique integers by building bitwise trie
+* [webindex] - Creates a web index using Common Crawl data
 
 ### Implementation
 
@@ -38,12 +39,17 @@ application][applications] or configure your Fluo application to run an example 
 [YARN]: http://hadoop.apache.org/docs/r2.5.1/hadoop-yarn/hadoop-yarn-site/YARN.html
 [quickstart]: https://github.com/fluo-io/fluo-quickstart
 [fluo-dev]: https://github.com/fluo-io/fluo-dev
-[fluo-deploy]: https://github.com/fluo-io/fluo-deploy
+[Zetten]: https://github.com/fluo-io/zetten
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo-stress]: https://github.com/fluo-io/fluo-stress
+[webindex]: https://github.com/fluo-io/webindex
 [MiniFluo]: docs/mini-fluo-setup.md
 [Production]: docs/prod-fluo-setup.md
 [applications]: docs/applications.md
 [Metrics]: docs/metrics.md
 [Contributing]: docs/contributing.md
 [Architecture]: docs/architecture.md
+[ti]: https://travis-ci.org/fluo-io/fluo.svg?branch=master
+[tl]: https://travis-ci.org/fluo-io/fluo
+[li]: http://img.shields.io/badge/license-ASL-blue.svg
+[ll]: https://github.com/fluo-io/fluo/blob/master/LICENSE
