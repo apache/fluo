@@ -21,7 +21,7 @@ Obtain a distribution
 
 Before you can install Fluo, you will need to obtain a distribution tarball that
 works for your environment. Fluo distributions are built for specific releases
-of Hadoop and Accumulo. If you are using Accumulo 1.6.4 and Hadoop 2.6.3,
+of Hadoop and Accumulo. If you are using Accumulo 1.7.1 and Hadoop 2.6.3,
 you can download the [latest release][release].  If you need a release for a
 different environment or one built from the master branch, follow these steps:
 
@@ -37,7 +37,7 @@ Optionally, check out a stable tag (if you don't want to build a release from ma
 Next, build a distribution for your environment. The tarball will be created in 
 `modules/distribution/target`.
 
-    mvn package -Daccumulo.version=1.6.4 -Dhadoop.version=2.7.1
+    mvn package -Daccumulo.version=1.7.1 -Dhadoop.version=2.7.1
 
 Install Fluo
 ------------
