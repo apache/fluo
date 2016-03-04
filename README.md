@@ -1,6 +1,5 @@
-Fluo
-====
-
+[![Fluo][logo]][fluo.io]
+---
 [![Build Status][ti]][tl] [![Apache License][li]][ll]
 
 **Fluo is transaction layer that enables incremental processing on big data.**
@@ -53,3 +52,4 @@ application][applications] or configure Fluo to run an example application below
 [tl]: https://travis-ci.org/fluo-io/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
 [ll]: https://github.com/fluo-io/fluo/blob/master/LICENSE
+[logo]: contrib/fluo-logo.png
