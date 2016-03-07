@@ -14,6 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -29,8 +30,8 @@
    inkscape:version="0.47 r22583"
    sodipodi:docname="fluo-logo.svg"
    inkscape:export-filename="/tmp/fluo-logo.png"
-   inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:export-xdpi="37.127754"
+   inkscape:export-ydpi="37.127754">
   <defs
      id="defs5082">
     <inkscape:perspective
@@ -76,16 +77,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.73548823"
-     inkscape:cx="372.04724"
-     inkscape:cy="526.18109"
+     inkscape:zoom="3.4033776"
+     inkscape:cx="401.89062"
+     inkscape:cy="552.87781"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1876"
-     inkscape:window-height="1029"
-     inkscape:window-x="15"
-     inkscape:window-y="25"
+     inkscape:window-width="1550"
+     inkscape:window-height="1060"
+     inkscape:window-x="57"
+     inkscape:window-y="44"
      inkscape:window-maximized="0"
      inkscape:object-paths="false" />
   <metadata
@@ -116,15 +117,15 @@
     <rect
        style="fill:#00b8ff;fill-opacity:1"
        id="rect5763"
-       width="30.000484"
-       height="52.317932"
-       x="361.45309"
-       y="503.87988" />
+       width="29.905197"
+       height="55.302277"
+       x="361.42819"
+       y="504.12024" />
     <rect
        style="fill:#00b8ff;fill-opacity:1"
        id="rect5763-7"
-       width="30.192749"
-       height="52.540482"
+       width="30.132664"
+       height="55.829109"
        x="458.8251"
        y="504.05469" />
     <path
@@ -134,10 +135,10 @@
     <rect
        style="fill:#808080;fill-opacity:1"
        id="rect5831"
-       width="36.359089"
-       height="180.14981"
-       x="172.7348"
-       y="439.94662" />
+       width="36.428627"
+       height="181.79333"
+       x="172.63951"
+       y="438.60956" />
     <rect
        style="fill:#808080;fill-opacity:1"
        id="rect5833"
@@ -149,12 +150,12 @@
        style="fill:#ff00ff;fill-opacity:1"
        id="rect5837"
        width="33.533699"
-       height="237.57854"
+       height="238.02145"
        x="318.6423"
        y="382.28754" />
     <path
        style="fill:#0048ff;fill-opacity:1"
-       d="M 292.71875 476.1875 L 274.75 516.40625 L 274.65625 516.625 L 274.75 516.625 C 274.84301 529.31667 282.84651 539.5625 292.71875 539.5625 C 302.59099 539.5625 310.59449 529.31667 310.6875 516.625 L 310.78125 516.625 L 310.6875 516.40625 L 292.71875 476.1875 z "
+       d="m 291.77919,476.1875 -17.96875,40.21875 -0.0937,0.21875 0.0937,0 c 0.093,12.69167 8.09651,22.9375 17.96875,22.9375 9.87224,0 17.87574,-10.24583 17.96875,-22.9375 l 0.0937,0 -0.0937,-0.21875 -17.96875,-40.21875 z"
        id="path5839" />
   </g>
 </svg>
