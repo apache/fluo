@@ -16,6 +16,7 @@ package io.fluo.accumulo.iterators;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
@@ -51,15 +52,29 @@ public class NotificationIterator extends SkippingIterator {
   public static final ByteSequence NTFY_CF = new ArrayByteSequence(
       ColumnConstants.NOTIFY_CF.toArray());
 
-  private void skipRowCol(PushbackIterator source, Key key) throws IOException {
-    while (source.hasTop() && source.getTopKey().equals(key, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      source.next();
-    }
-  }
-
   private boolean scanOrFullMajc;
   private boolean lastKeySet = false;
   private Key lastKey = new Key();
+  private Range seekRange;
+  private Collection<ByteSequence> colFams;
+  private boolean inclusive;
+
+  private void skipRowCol(PushbackIterator source, Key key) throws IOException {
+    int count = 0;
+    while (source.hasTop() && source.getTopKey().equals(key, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+      if (count == 10) {
+        Key nextKey = key.followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
+        if (!seekRange.afterEndKey(nextKey)) {
+          seekRange =
+              new Range(nextKey, true, seekRange.getEndKey(), seekRange.isEndKeyInclusive());
+          source.seek(seekRange, colFams, inclusive);
+          break;
+        }
+      }
+      source.next();
+      count++;
+    }
+  }
 
   @Override
   protected void consume() throws IOException {
@@ -117,7 +132,9 @@ public class NotificationIterator extends SkippingIterator {
       throws IOException {
     lastKeySet = false;
 
-    Range seekRange = IteratorUtil.maximizeStartKeyTimeStamp(range);
+    seekRange = IteratorUtil.maximizeStartKeyTimeStamp(range);
+    this.colFams = new HashSet<>(columnFamilies);
+    this.inclusive = inclusive;
     super.seek(seekRange, columnFamilies, inclusive);
 
     while (hasTop() && range.beforeStartKey(getTopKey())) {
