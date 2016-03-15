@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
@@ -289,6 +290,32 @@ public class NotificationIteratorTest {
     expected.add("2 zoo bar DATA 11", "15");
 
     output = new TestData(newNI(input, scope, true));
+    Assert.assertEquals(expected, output);
+  }
+
+  @Test
+  public void testLots() {
+    IteratorScope scope = IteratorScope.scan;
+
+    Random rand = new Random(42L);
+
+    TestData input = new TestData();
+    for (int i = 0; i < 1000; i++) {
+      int maxTs = Math.max(1, rand.nextInt(50));
+      for (int j = 0; j < maxTs; j++) {
+        input.add("row" + i + " ntfy foo:baz " + j, "");
+      }
+    }
+
+    TestData output = new TestData(newNI(input, scope, true));
+
+    rand = new Random(42L);
+    TestData expected = new TestData();
+    for (int i = 0; i < 1000; i++) {
+      int maxTs = Math.max(1, rand.nextInt(50)) - 1;
+      expected.add("row" + i + " ntfy foo:baz " + maxTs, "");
+    }
+
     Assert.assertEquals(expected, output);
   }
 }
