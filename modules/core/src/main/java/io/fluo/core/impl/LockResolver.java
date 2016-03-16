@@ -85,7 +85,7 @@ public class LockResolver {
 
   /**
    * Attempts to roll forward or roll back a set of locks encountered by a transaction reading data.
-   * 
+   *
    * @param env environment
    * @param startTs The logical start time from the oracle of the transaction that encountered the
    *        lock
@@ -189,8 +189,8 @@ public class LockResolver {
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);
       Key k = entry.getKey();
       mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
-          k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
-          DelLockValue.encode(lockTs, false, true));
+          k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | lockTs,
+          DelLockValue.encodeRollback(false, true));
     }
 
   }
@@ -205,10 +205,8 @@ public class LockResolver {
         new ConditionalFlutation(env, prc.prow, new FluoCondition(env, prc.pcol).setIterators(
             iterConf).setValue(lockValue));
 
-    // TODO sanity check on lockTs vs startTs
-
-    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(prc.startTs, true, true));
+    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | prc.startTs,
+        DelLockValue.encodeRollback(true, true));
 
     ConditionalWriter cw = null;
 

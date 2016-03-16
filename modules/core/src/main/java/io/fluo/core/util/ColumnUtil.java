@@ -56,8 +56,8 @@ public class ColumnUtil {
       Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
           WriteValue.encode(startTs, isPrimary, isDelete));
     } else {
-      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | commitTs,
-          DelLockValue.encode(startTs, isPrimary, false));
+      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+          DelLockValue.encodeCommit(commitTs, isPrimary));
     }
 
     if (isTrigger) {

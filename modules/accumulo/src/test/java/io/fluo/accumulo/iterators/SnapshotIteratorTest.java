@@ -19,9 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
+import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.SortedMapIterator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +39,8 @@ public class SnapshotIteratorTest {
     IteratorEnvironment env = TestIteratorEnv.create(IteratorScope.scan, true);
 
     try {
-      si.init(new SortedMapIterator(input.data), options, env);
+      SortedKeyValueIterator<Key, Value> source = new SortedMapIterator(input.data);
+      si.init(source, options, env);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -96,28 +100,53 @@ public class SnapshotIteratorTest {
 
     TestData input = new TestData();
 
-    for (int delLockTime : new int[] {21, 22}) {
-      input.add("0 f q DEL_LOCK " + delLockTime, "21 ROLLBACK");
-      input.add("0 f q WRITE 16", "11");
-      input.add("0 f q LOCK 21", "1 f q");
-      input.add("0 f q LOCK 11", "1 f q");
-      input.add("0 f q DATA 21", "16");
-      input.add("0 f q DATA 11", "15");
 
-      TestData output = new TestData(newSI(input, 6));
-      Assert.assertEquals(0, output.data.size());
+    input.add("0 f q DEL_LOCK 21", "0 ROLLBACK");
+    input.add("0 f q WRITE 16", "11");
+    input.add("0 f q LOCK 21", "1 f q");
+    input.add("0 f q LOCK 11", "1 f q");
+    input.add("0 f q DATA 21", "16");
+    input.add("0 f q DATA 11", "15");
 
-      output = new TestData(newSI(input, 15));
-      Assert.assertEquals(0, output.data.size());
+    TestData output = new TestData(newSI(input, 6));
+    Assert.assertEquals(0, output.data.size());
 
-      output = new TestData(newSI(input, 17));
-      TestData expected = new TestData().add("0 f q DATA 11", "15");
-      Assert.assertEquals(expected, output);
+    output = new TestData(newSI(input, 15));
+    Assert.assertEquals(0, output.data.size());
 
-      output = new TestData(newSI(input, 23));
-      expected = new TestData().add("0 f q DATA 11", "15");
-      Assert.assertEquals(expected, output);
-    }
+    output = new TestData(newSI(input, 17));
+    TestData expected = new TestData().add("0 f q DATA 11", "15");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newSI(input, 23));
+    expected = new TestData().add("0 f q DATA 11", "15");
+    Assert.assertEquals(expected, output);
+
+
+    // test case where there is newer lock thats not invalidated by DEL_LOCK
+    input = new TestData();
+    input.add("0 f q DEL_LOCK 18", "0 ABORT");
+    input.add("0 f q WRITE 16", "11");
+    input.add("0 f q LOCK 21", "1 f q");
+    input.add("0 f q LOCK 18", "1 f q");
+    input.add("0 f q LOCK 11", "1 f q");
+    input.add("0 f q DATA 21", "16");
+    input.add("0 f q DATA 11", "15");
+
+    output = new TestData(newSI(input, 6));
+    Assert.assertEquals(0, output.data.size());
+
+    output = new TestData(newSI(input, 17));
+    expected = new TestData().add("0 f q DATA 11", "15");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newSI(input, 19));
+    expected = new TestData().add("0 f q DATA 11", "15");
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newSI(input, 23));
+    expected = new TestData().add("0 f q LOCK 21", "1 f q");
+    Assert.assertEquals(expected, output);
   }
 
   @Test
@@ -139,7 +168,7 @@ public class SnapshotIteratorTest {
     input.add("0 f q2 DATA 20", "b");
     input.add("0 f q2 DATA 9", "a");
 
-    input.add("1 f q1 DEL_LOCK 22", "21 ROLLBACK");
+    input.add("1 f q1 DEL_LOCK 21", "0 ROLLBACK");
     input.add("1 f q1 WRITE 18", "9");
     input.add("1 f q1 LOCK 21", "1 f q");
     input.add("1 f q1 LOCK 9", "1 f q");
@@ -175,6 +204,68 @@ public class SnapshotIteratorTest {
       expected.addIfInRange("0 f q1 LOCK 21", "1 f q", range);
       expected.addIfInRange("0 f q2 DATA 20", "b", range);
       expected.addIfInRange("1 f q1 DATA 9", "x", range);
+      Assert.assertEquals(expected, output);
+    }
+  }
+
+  @Test
+  public void testColumnsWithManyWrites() throws Exception {
+    TestData input = new TestData();
+
+    int numToWrite = 1000;
+
+    for (int i = 0; i < numToWrite * 3; i += 3) {
+      int commitTime = i + 1;
+      int startTime = i;
+      int val1 = ("" + i).hashCode();
+      int val2 = ("" + val1).hashCode();
+
+      input.add("0 f q1 WRITE " + commitTime, "" + startTime);
+      input.add("0 f q1 LOCK " + startTime, "1 f q");
+      input.add("0 f q1 DATA " + startTime, "" + val1);
+
+      input.add("1 f q1 TX_DONE " + commitTime, "" + startTime);
+      input.add("1 f q1 WRITE " + commitTime, "" + startTime);
+      input.add("1 f q1 LOCK " + startTime, "1 f q");
+      input.add("1 f q1 DATA " + startTime, "" + val2);
+    }
+
+    Range[] ranges =
+        new Range[] {new Range(), Range.exact("0", "f", "q1"), Range.exact("1", "f", "q1"),
+            Range.exact("2", "f", "q1")};
+
+
+    for (Range range : ranges) {
+      checkManyColumnData(input, numToWrite, range);
+    }
+
+    // add locks
+    int startTime = numToWrite * 3;
+    input.add("1 f q1 LOCK " + startTime, "1 f q");
+    input.add("1 f q1 DATA " + startTime, "foo");
+    TestData output = new TestData(newSI(input, startTime + 1), new Range());
+    TestData expected = new TestData();
+    expected.add("1 f q1 LOCK " + startTime, "1 f q");
+    startTime -= 3;
+    expected.add("0 f q1 DATA " + startTime, ("" + startTime).hashCode() + "");
+    Assert.assertEquals(expected, output);
+
+    for (Range range : ranges) {
+      checkManyColumnData(input, numToWrite, range);
+    }
+
+  }
+
+  private void checkManyColumnData(TestData input, int numToWrite, Range range) throws IOException {
+    for (int i = numToWrite * 3 - 1; i > 3; i -= 3) {
+      TestData output = new TestData(newSI(input, i), range);
+      TestData expected = new TestData();
+      // snapshot time of commited transaction
+      int st = i - 2;
+      int val1 = ("" + st).hashCode();
+      int val2 = ("" + val1).hashCode();
+      expected.addIfInRange("0 f q1 DATA " + st, val1 + "", range);
+      expected.addIfInRange("1 f q1 DATA " + st, val2 + "", range);
       Assert.assertEquals(expected, output);
     }
   }

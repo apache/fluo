@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -28,7 +27,6 @@ import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
-import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 
 /**
@@ -39,7 +37,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   private static final String CHECK_ACK_OPT = "checkAckOpt";
   private static final String NTFY_TIMESTAMP_OPT = "ntfyTsOpt";
 
-  private SortedKeyValueIterator<Key, Value> source;
+  private TimestampSkippingIterator source;
   private long snaptime;
 
   boolean hasTop = false;
@@ -61,7 +59,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   @Override
   public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
       IteratorEnvironment env) throws IOException {
-    this.source = source;
+    this.source = new TimestampSkippingIterator(source);
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
     if (options.containsKey(CHECK_ACK_OPT)) {
       this.checkAck = Boolean.parseBoolean(options.get(CHECK_ACK_OPT));
@@ -82,37 +80,43 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   @Override
   public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive)
       throws IOException {
-    range = IteratorUtil.maximizeStartKeyTimeStamp(range);
 
+    Collection<ByteSequence> fams;
     if (columnFamilies.isEmpty() && !inclusive) {
-      source.seek(range, SnapshotIterator.NOTIFY_CF_SET, false);
+      fams = SnapshotIterator.NOTIFY_CF_SET;
+      inclusive = false;
     } else {
-      source.seek(range, columnFamilies, inclusive);
+      fams = columnFamilies;
     }
 
-    Key curCol = new Key();
-
-    if (source.hasTop()) {
-      curCol.set(source.getTopKey());
-
-      // TODO can this optimization cause problems?
-      if (!curCol.equals(range.getStartKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-        return;
-      }
+    Key endKey = new Key(range.getStartKey());
+    if (checkAck) {
+      endKey.setTimestamp(ColumnConstants.DATA_PREFIX | ColumnConstants.TIMESTAMP_MASK);
+    } else {
+      endKey.setTimestamp(ColumnConstants.ACK_PREFIX | ColumnConstants.TIMESTAMP_MASK);
     }
 
-    long invalidationTime = -1;
+    // Tried seeking directly to WRITE_PREFIX, however this did not work well because of how
+    // TimestampSkippingIterator currently works. Currently, it can not remove the deleting iterator
+    // until after the first seek.
+    Range seekRange = new Range(range.getStartKey(), true, endKey, false);
+
+    source.seek(seekRange, fams, inclusive);
 
     hasTop = false;
+    long invalidationTime = -1;
+
     while (source.hasTop()
-        && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+        && seekRange.getStartKey().equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        // do nothing if TX_DONE
+        // tried to make 1st seek go to WRITE_PREFIX, but this did not allow the DeleteIterator to
+        // be removed from the stack so it was slower.
+        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.WRITE_PREFIX);
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
-
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
         if (timePtr > invalidationTime) {
@@ -124,23 +128,29 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
           return;
         }
 
+        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.DEL_LOCK_PREFIX);
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
+        if (ts > invalidationTime) {
+          invalidationTime = ts;
 
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
-
-          // this delete marker will hide locks, so can not let a lock be written before it
-          // TODO need unit test for this iterator... for this case
-          if (timePtr >= snaptime) {
+          if (ts >= snaptime) {
             hasTop = true;
             return;
           }
         }
+
+        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime) {
           // nothing supersedes this lock, therefore the column is locked
           hasTop = true;
+          return;
+        }
+
+        if (checkAck) {
+          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.ACK_PREFIX);
+        } else {
+          // only ack and data left and not interested in either so stop looking
           return;
         }
       } else if (colType == ColumnConstants.DATA_PREFIX) {
@@ -150,12 +160,13 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
         if (checkAck && ts > ntfyTimestamp) {
           hasTop = true;
           return;
+        } else {
+          // nothing else to look at in this column
+          return;
         }
       } else {
         throw new IllegalArgumentException();
       }
-
-      source.next();
     }
   }
 

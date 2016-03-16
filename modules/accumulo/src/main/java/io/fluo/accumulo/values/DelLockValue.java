@@ -19,19 +19,19 @@ import io.fluo.accumulo.util.ByteArrayUtil;
 public class DelLockValue {
   private final boolean primary;
   private final boolean rollback;
-  private final long lockTime;
+  private final long txDoneTs;
 
   public DelLockValue(byte[] data) {
     primary = isPrimary(data);
     rollback = isRollback(data);
-    lockTime = getTimestamp(data);
+    txDoneTs = getTxDoneTimestamp(data);
   }
 
-  public long getTimestamp() {
-    return lockTime;
+  public long getCommitTimestamp() {
+    return txDoneTs;
   }
 
-  public static long getTimestamp(byte[] data) {
+  public static long getTxDoneTimestamp(byte[] data) {
     return ByteArrayUtil.decodeLong(data, 1);
   }
 
@@ -51,7 +51,21 @@ public class DelLockValue {
     return (data[0] & 0x02) == 2;
   }
 
-  public static byte[] encode(long ts, boolean primary, boolean rollback) {
+  public static byte[] encodeCommit(long ts, boolean primary) {
+    byte[] ba = new byte[9];
+    ba[0] = (byte) (primary ? 1 : 0);
+    ByteArrayUtil.encode(ba, 1, ts);
+    return ba;
+  }
+
+  public static byte[] encodeRollback(boolean primary, boolean rollback) {
+    byte[] ba = new byte[9];
+    ba[0] = (byte) ((primary ? 1 : 0) | (rollback ? 2 : 0));
+    ByteArrayUtil.encode(ba, 1, 0);
+    return ba;
+  }
+
+  public static byte[] encodeRollback(long ts, boolean primary, boolean rollback) {
     byte[] ba = new byte[9];
     ba[0] = (byte) ((primary ? 1 : 0) | (rollback ? 2 : 0));
     ByteArrayUtil.encode(ba, 1, ts);
@@ -60,6 +74,6 @@ public class DelLockValue {
 
   @Override
   public String toString() {
-    return (rollback ? "ABORT " : "COMMIT ") + (primary ? "PRIMARY " : "") + lockTime;
+    return (rollback ? "ABORT " : "COMMIT ") + (primary ? "PRIMARY " : "") + txDoneTs;
   }
 }

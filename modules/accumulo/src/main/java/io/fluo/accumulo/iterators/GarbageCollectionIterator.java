@@ -227,23 +227,22 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
         }
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
         boolean keep = false;
-        boolean complete = completeTxs.contains(ts);
+        long txDoneTs = DelLockValue.getTxDoneTimestamp(source.getTopValue().get());
+        boolean complete = completeTxs.contains(txDoneTs);
 
-        if (DelLockValue.isPrimary(source.getTopValue().get()) && !complete) {
+        if (!complete && DelLockValue.isPrimary(source.getTopValue().get())) {
           keep = true;
         }
 
-        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
-
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
+        if (ts > invalidationTime) {
+          invalidationTime = ts;
           keep = true;
         }
 
         if (keep) {
           keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         } else if (complete) {
-          completeTxs.remove(ts);
+          completeTxs.remove(txDoneTs);
         }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime) {

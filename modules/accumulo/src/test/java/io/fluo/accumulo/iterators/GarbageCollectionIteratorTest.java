@@ -324,7 +324,7 @@ public class GarbageCollectionIteratorTest {
     // test del_lock that is primary
     input = new TestData();
     input.add("0 f q WRITE 22", "19");
-    input.add("0 f q DEL_LOCK 13", "11 PRIMARY");
+    input.add("0 f q DEL_LOCK 11", "13 PRIMARY");
     input.add("0 f q LOCK 11", "0 f q");
     input.add("0 f q DATA 19", "19");
     input.add("0 f q DATA 11", "15");
@@ -333,7 +333,7 @@ public class GarbageCollectionIteratorTest {
 
     expected = new TestData();
     expected.add("0 f q WRITE 22", "19");
-    expected.add("0 f q DEL_LOCK 13", "11 PRIMARY");
+    expected.add("0 f q DEL_LOCK 11", "13 PRIMARY");
     expected.add("0 f q DATA 19", "19");
 
     Assert.assertEquals(expected, output);
@@ -351,7 +351,7 @@ public class GarbageCollectionIteratorTest {
 
     // ensure that timestamp in value is used
     input = new TestData();
-    input.add("0 f q DEL_LOCK 13", "3 PRIMARY");
+    input.add("0 f q DEL_LOCK 3", "13 PRIMARY");
     input.add("0 f q LOCK 11", "0 f q");
     input.add("0 f q DATA 11", "15");
 
@@ -363,7 +363,7 @@ public class GarbageCollectionIteratorTest {
     input = new TestData();
 
     input.add("0 f q WRITE 11", "10");
-    input.add("0 f q DEL_LOCK 13", "3");
+    input.add("0 f q DEL_LOCK 3", "13");
     input.add("0 f q LOCK 3", "0 f q");
     input.add("0 f q DATA 10", "17");
     input.add("0 f q DATA 3", "15");

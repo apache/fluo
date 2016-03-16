@@ -63,17 +63,16 @@ public class TxInfo {
     } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
       DelLockValue dlv = new DelLockValue(entry.getValue().get());
 
-      if (dlv.getTimestamp() != startTs) {
+      if (ts != startTs) {
         // expect this to always be false, must be a bug in the iterator
-        throw new IllegalStateException(prow + " " + pcol + " (" + dlv.getTimestamp() + " != "
-            + startTs + ") ");
+        throw new IllegalStateException(prow + " " + pcol + " (" + ts + " != " + startTs + ") ");
       }
 
       if (dlv.isRollback()) {
         txInfo.status = TxStatus.ROLLED_BACK;
       } else {
         txInfo.status = TxStatus.COMMITTED;
-        txInfo.commitTs = ts;
+        txInfo.commitTs = dlv.getCommitTimestamp();
       }
     } else if (colType == ColumnConstants.WRITE_PREFIX) {
       long timePtr = WriteValue.getTimestamp(entry.getValue().get());
