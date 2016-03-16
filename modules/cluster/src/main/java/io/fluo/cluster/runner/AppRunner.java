@@ -240,10 +240,7 @@ public abstract class AppRunner {
     return entriesFound;
   }
 
-  // @formatter:off - Due to formatter putting method on one line that is > 100 chars
-  private static void appendLib(StringBuilder classpath, String libDirName,
-      boolean useLibJarsFormat) {
-    // @formatter:on
+  private static void appendLib(StringBuilder classpath, String libDirName, boolean useLibJarsFormat) {
     File libDir = new File(libDirName);
     if (!libDir.exists()) {
       System.err.println("ERROR - Directory needed for classpath does not exist: " + libDirName);

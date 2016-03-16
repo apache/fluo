@@ -70,11 +70,7 @@ public class TransactorCache implements AutoCloseable {
         lockTs);
   }
 
-  // @formatter:off - Due to formatter putting method on one line that is > 100 chars
-  public void addTimedoutTransactor(final Long transactorId, final long lockTs,
-                                    final Long startTime) {
-    // @formatter:on
-
+  public void addTimedoutTransactor(final Long transactorId, final long lockTs, final Long startTime) {
     try {
       AtomicLong cachedLockTs = timeoutCache.get(transactorId, new Callable<AtomicLong>() {
         @Override
