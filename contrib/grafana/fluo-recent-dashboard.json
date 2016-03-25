@@ -1,7 +1,7 @@
 {
   "id": null,
-  "title": "Fluo",
-  "originalTitle": "Fluo",
+  "title": "Fluo Recent",
+  "originalTitle": "Fluo Recent",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -34,7 +34,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 12,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -128,7 +128,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 1,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -212,7 +212,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 11,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -314,7 +314,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 16,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -408,7 +408,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 5,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -503,7 +503,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 13,
-          "interval": ">10s",
+          "interval": ">30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -605,7 +605,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 3,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -699,7 +699,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 6,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -793,7 +793,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 9,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -953,7 +953,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 2,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1047,7 +1047,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 14,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1141,7 +1141,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 18,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1183,7 +1183,7 @@
                 }
               ],
               "measurement": "tx_locks_dead",
-              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_dead\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_dead\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
               "refId": "A",
               "tags": [
                 {
@@ -1195,7 +1195,7 @@
                   "condition": "AND",
                   "key": "field",
                   "operator": "=",
-                  "value": "mean"
+                  "value": "m1_rate"
                 }
               ]
             }
@@ -1243,7 +1243,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 10,
-          "interval": ">10s",
+          "interval": ">30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1337,7 +1337,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 15,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1472,7 +1472,7 @@
                 }
               ],
               "measurement": "tx_locks_timedout",
-              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_timedout\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'mean' AND $timeFilter GROUP BY time($interval), \"observer\"",
+              "query": "SELECT sum(\"value\") AS \"value\" FROM \"tx_locks_timedout\" WHERE \"app\" =~ /$app$/ AND \"field\" = 'm1_rate' AND $timeFilter GROUP BY time($interval), \"observer\"",
               "refId": "A",
               "tags": [
                 {
@@ -1484,7 +1484,7 @@
                   "condition": "AND",
                   "key": "field",
                   "operator": "=",
-                  "value": "mean"
+                  "value": "m1_rate"
                 }
               ]
             }
@@ -1532,7 +1532,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 4,
-          "interval": ">10s",
+          "interval": ">30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1684,7 +1684,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 8,
-          "interval": ">10s",
+          "interval": ">30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1774,7 +1774,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 7,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1873,7 +1873,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)"
           },
           "id": 17,
-          "interval": "10s",
+          "interval": "30s",
           "legend": {
             "avg": false,
             "current": false,
@@ -1979,13 +1979,12 @@
     }
   ],
   "time": {
-    "from": "now-5m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
     "now": true,
     "refresh_intervals": [
-      "5s",
       "10s",
       "30s",
       "1m",
@@ -2031,7 +2030,7 @@
   "annotations": {
     "list": []
   },
-  "refresh": "10s",
+  "refresh": "30s",
   "schemaVersion": 7,
   "version": 0,
   "links": []

@@ -174,5 +174,12 @@
         <include>*</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/../../contrib/influxdb</directory>
+      <outputDirectory>contrib/influxdb</outputDirectory>
+      <includes>
+        <include>*</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </assembly>

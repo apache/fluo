@@ -1,0 +1,28 @@
+# DDL
+CREATE USER fluo WITH PASSWORD 'secret' WITH ALL PRIVILEGES
+CREATE DATABASE IF NOT EXISTS fluo_metrics
+CREATE RETENTION POLICY r3d ON fluo_metrics DURATION 3d REPLICATION 1 DEFAULT
+CREATE RETENTION POLICY r3m ON fluo_metrics DURATION 12w REPLICATION 1
+
+CREATE CONTINUOUS QUERY cq1 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.oracle_client_stamps_10m FROM oracle_client_stamps WHERE "field" = 'mean' GROUP BY time(10m), app, host END
+CREATE CONTINUOUS QUERY cq2 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.oracle_response_time_count_10m FROM oracle_response_time WHERE "field" = 'm1_rate' GROUP BY time(10m), app, host END
+CREATE CONTINUOUS QUERY cq3 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.oracle_response_time_mean_10m FROM oracle_response_time WHERE "field" = 'mean' GROUP BY time(10m), app, host END
+CREATE CONTINUOUS QUERY cq4 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.oracle_server_stamps_10m FROM oracle_server_stamps WHERE "field" = 'mean' GROUP BY time(10m), app, host END
+CREATE CONTINUOUS QUERY cq5 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_collisions_10m FROM tx_collisions WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq6 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_execution_time_count_10m FROM tx_execution_time WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq7 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_execution_time_max_10m FROM tx_execution_time WHERE "field" = 'max' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq8 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_execution_time_mean_10m FROM tx_execution_time WHERE "field" = 'mean' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq9 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_execution_time_min_10m FROM tx_execution_time WHERE "field" = 'min' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq10 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_entries_read_10m FROM tx_entries_read WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq11 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_entries_set_10m FROM tx_entries_set WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq12 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_lock_wait_count_10m FROM tx_lock_wait_time WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq13 ON fluo_metrics BEGIN SELECT max(value) as "value" INTO fluo_metrics.r3m.tx_lock_wait_max_10m FROM tx_lock_wait_time WHERE "field" = 'max' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq14 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_lock_wait_mean_10m FROM tx_lock_wait_time WHERE "field" = 'mean' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq15 ON fluo_metrics BEGIN SELECT min(value) as "value" INTO fluo_metrics.r3m.tx_lock_wait_min_10m FROM tx_lock_wait_time WHERE "field" = 'min' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq16 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_locks_dead_10m FROM tx_locks_dead_10m WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq17 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_locks_timedout_10m FROM tx_locks_timedout_10m WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq19 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_aacked_10m FROM tx_status_aacked WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq20 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_error_10m FROM tx_status_error WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq21 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_committed_10m FROM tx_status_committed WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq22 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_commit_exception_10m FROM tx_status_commit_exception WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
+CREATE CONTINUOUS QUERY cq23 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.worker_notifications_queued_10m FROM worker_notifications_queued GROUP BY time(10m), app, host END
