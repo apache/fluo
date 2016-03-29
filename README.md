@@ -4,7 +4,7 @@
 
 **Fluo is transaction layer that enables incremental processing on big data.**
 
-Fluo is an implementation of [Percolator] built on [Accumulo] than runs in [YARN]. 
+Fluo is an implementation of [Percolator] built on [Accumulo] that runs in [YARN].
 It is not recommended for production use yet. Check out the Fluo [project website][fluo.io]
 for news and general information.
 
