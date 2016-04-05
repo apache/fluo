@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The purpose of this iterator it make seeking within a columns timestamp range efficient.
+ * The purpose of this iterator is to make seeking within a columns timestamp range efficient.
  * Accumulo's builtin deleting iterator gets in the way when trying to efficiently do these seeks.
  * Therefore this class attempts to remove that iterator via reflection.
  */
