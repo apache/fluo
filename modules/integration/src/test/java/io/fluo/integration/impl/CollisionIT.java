@@ -45,14 +45,14 @@ import org.junit.Test;
 
 /**
  * Run end to end test with lots of collisions and verify the following :
- * 
+ *
  * <p>
  * <ul>
  * <li/>LoaderExecutor works correctly w/ lots of collisions
  * <li/>Observers work correctly w/ lots of collisions
  * <li/>Fluo GC works correctly after lots of collisions
  * </ul>
- * 
+ *
  */
 public class CollisionIT extends ITBaseMini {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());

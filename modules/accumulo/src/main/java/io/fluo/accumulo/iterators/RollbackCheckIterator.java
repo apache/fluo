@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import io.fluo.accumulo.util.ColumnConstants;
-import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.WriteValue;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -108,13 +107,11 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
           return;
         }
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-        long timePtr = DelLockValue.getTimestamp(source.getTopValue().get());
-
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
+        if (ts > invalidationTime) {
+          invalidationTime = ts;
         }
 
-        if (timePtr == lockTime) {
+        if (ts == lockTime) {
           hasTop = true;
           return;
         }

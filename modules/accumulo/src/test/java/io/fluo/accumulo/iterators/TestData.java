@@ -108,8 +108,12 @@ public class TestData {
         break;
       case "DEL_LOCK":
         ts |= ColumnConstants.DEL_LOCK_PREFIX;
-        long lockTs = Long.parseLong(value.split("\\s+")[0]);
-        val = DelLockValue.encode(lockTs, value.contains("PRIMARY"), value.contains("ROLLBACK"));
+        if (value.contains("ROLLBACK") || value.contains("ABORT")) {
+          val = DelLockValue.encodeRollback(value.contains("PRIMARY"), true);
+        } else {
+          long commitTs = Long.parseLong(value.split("\\s+")[0]);
+          val = DelLockValue.encodeCommit(commitTs, value.contains("PRIMARY"));
+        }
         break;
       case "ntfy":
         break;

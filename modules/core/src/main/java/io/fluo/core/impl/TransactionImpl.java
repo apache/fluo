@@ -665,7 +665,7 @@ public class TransactionImpl implements Transaction, Snapshot {
       m = new Flutation(env, row);
       for (Column col : updates.get(row).keySet()) {
         m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-            DelLockValue.encode(startTs, false, true));
+            DelLockValue.encodeRollback(false, true));
       }
       mutations.add(m);
     }
@@ -678,7 +678,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     // TODO writing the primary column with a batch writer is iffy
 
     m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encode(startTs, false, true));
+        DelLockValue.encodeRollback(startTs, false, true));
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
     env.getSharedResources().getBatchWriter().writeMutation(m);
