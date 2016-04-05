@@ -31,4 +31,7 @@ public interface MiniFluo extends AutoCloseable {
    * verification.
    */
   void waitForObservers();
+
+  @Override
+  void close();
 }

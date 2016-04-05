@@ -16,8 +16,8 @@ package io.fluo.core.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,6 +26,7 @@ import java.util.Set;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.core.util.ByteUtil;
 import io.fluo.core.util.UtilWaitThread;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -38,20 +39,41 @@ public class ParallelSnapshotScanner {
 
   private Environment env;
   private long startTs;
-  private HashSet<Bytes> unscannedRows;
+  private Collection<Bytes> rows;
   private Set<Column> columns;
   private TxStats stats;
+  private List<Range> rangesToScan = new ArrayList<>();
 
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
       long startTs, TxStats stats) {
-    this.unscannedRows = new HashSet<>(rows);
+    this.rows = rows;
     this.columns = columns;
     this.env = env;
     this.startTs = startTs;
     this.stats = stats;
   }
 
-  private BatchScanner setupBatchScanner(Collection<Bytes> rows, Set<Column> columns) {
+  ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats) {
+    for (RowColumn rc : cells) {
+      byte[] r = rc.getRow().toArray();
+      byte[] cf = rc.getColumn().getFamily().toArray();
+      byte[] cq = rc.getColumn().getQualifier().toArray();
+      byte[] cv = rc.getColumn().getVisibility().toArray();
+
+      Key start = new Key(r, cf, cq, cv, Long.MAX_VALUE, false, false);
+      Key end = new Key(start);
+      end.setTimestamp(Long.MIN_VALUE);
+
+      rangesToScan.add(new Range(start, true, end, true));
+    }
+    this.rows = null;
+    this.env = env;
+    this.startTs = startTs;
+    this.stats = stats;
+  }
+
+  private BatchScanner setupBatchScanner() {
+
     BatchScanner scanner;
     try {
       // TODO hardcoded number of threads!
@@ -64,15 +86,22 @@ public class ParallelSnapshotScanner {
     scanner.clearColumns();
     scanner.clearScanIterators();
 
-    List<Range> ranges = new ArrayList<>(rows.size());
+    if (rangesToScan.size() > 0) {
+      scanner.setRanges(rangesToScan);
+      SnapshotScanner.setupScanner(scanner, Collections.<Column>emptySet(), startTs);
+    } else if (rows != null) {
+      List<Range> ranges = new ArrayList<>(rows.size());
 
-    for (Bytes row : rows) {
-      ranges.add(Range.exact(ByteUtil.toText(row)));
+      for (Bytes row : rows) {
+        ranges.add(Range.exact(ByteUtil.toText(row)));
+      }
+
+      scanner.setRanges(ranges);
+
+      SnapshotScanner.setupScanner(scanner, columns, startTs);
+    } else {
+      return null;
     }
-
-    scanner.setRanges(ranges);
-
-    SnapshotScanner.setupScanner(scanner, columns, startTs);
 
     return scanner;
   }
@@ -98,15 +127,17 @@ public class ParallelSnapshotScanner {
           stats.incrementLockWaitTime(waitTime);
           waitTime = Math.min(SnapshotScanner.MAX_WAIT_TIME, waitTime * 2);
         }
-        // TODO, could only rescan the row/cols that were locked instead of just the entire row
 
         // retain the rows that were locked for future scans
-        HashSet<Bytes> lockedRows = new HashSet<>();
+        rangesToScan.clear();
+        rows = null;
         for (Entry<Key, Value> entry : locks) {
-          lockedRows.add(ByteUtil.toBytes(entry.getKey().getRowData()));
+          Key start = new Key(entry.getKey());
+          start.setTimestamp(Long.MAX_VALUE);
+          Key end = new Key(entry.getKey());
+          end.setTimestamp(Long.MIN_VALUE);
+          rangesToScan.add(new Range(start, true, end, true));
         }
-
-        unscannedRows.retainAll(lockedRows);
 
         continue;
       }
@@ -119,9 +150,9 @@ public class ParallelSnapshotScanner {
     }
   }
 
-  void scan(Map<Bytes, Map<Column, Bytes>> ret, List<Entry<Key, Value>> locks) {
+  private void scan(Map<Bytes, Map<Column, Bytes>> ret, List<Entry<Key, Value>> locks) {
 
-    BatchScanner bs = setupBatchScanner(unscannedRows, columns);
+    BatchScanner bs = setupBatchScanner();
     try {
       for (Entry<Key, Value> entry : bs) {
         Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());

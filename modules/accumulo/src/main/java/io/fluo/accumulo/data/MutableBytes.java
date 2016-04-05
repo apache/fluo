@@ -103,35 +103,9 @@ public class MutableBytes extends Bytes implements Serializable {
     return data[offset + i];
   }
 
-  /**
-   * Returns the backing byte array for this Bytes object
-   */
-  public byte[] getBackingArray() {
-    return data;
-  }
-
-  /**
-   * Determines whether this sequence is backed by a byte array.
-   *
-   * @return true if sequence is backed by a byte array
-   */
-  public boolean isBackedByArray() {
-    return true;
-  }
-
   @Override
   public int length() {
     return length;
-  }
-
-  /**
-   * Gets the offset for this byte sequence. This value represents the starting point for the
-   * sequence in the backing array, if there is one.
-   *
-   * @return offset (inclusive)
-   */
-  public int offset() {
-    return offset;
   }
 
   @Override
@@ -145,19 +119,6 @@ public class MutableBytes extends Bytes implements Serializable {
 
   @Override
   public byte[] toArray() {
-    byte[] copy = new byte[length];
-    System.arraycopy(data, offset, copy, 0, length);
-    return copy;
-  }
-
-  /**
-   * Returns a byte array of data and only copies if necessary
-   */
-  public byte[] getArray() {
-    if (offset == 0 && length == data.length) {
-      return data;
-    }
-
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
     return copy;

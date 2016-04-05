@@ -180,7 +180,7 @@ public class TypeLayerTest {
     Assert.assertEquals("13", tts.get().row("r2").fam("cf2").qual(8).toString("b"));
     Assert.assertEquals((Integer) 13, tts.get().row("r2").fam("cf2").qual(8).toInteger());
     Assert.assertEquals(13, tts.get().row("r2").fam("cf2").qual(8).toInteger(14));
-    Assert.assertEquals((Long) 13l, (Long) tts.get().row("r2").fam("cf2").qual(8).toLong());
+    Assert.assertEquals((Long) 13l, tts.get().row("r2").fam("cf2").qual(8).toLong());
     Assert.assertEquals(13l, tts.get().row("r2").fam("cf2").qual(8).toLong(14l));
     Assert.assertEquals("13", new String(tts.get().row("r2").fam("cf2").qual(8).toBytes()));
     Assert.assertEquals("13",
@@ -224,10 +224,9 @@ public class TypeLayerTest {
     Assert.assertEquals(28.195d, tts.get().row("r3").fam("cf3").qual("cq3").toDouble(39.383d), 0.0);
 
     // test boolean
-    Assert.assertEquals((Boolean) true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean());
     Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean());
-    Assert
-        .assertEquals((Boolean) true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean(false));
+    Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean());
+    Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean(false));
     Assert.assertEquals(true, tts.get().row("r4").fam("cf4").qual("cq4").toBoolean(false));
 
     // try different types for row
@@ -368,6 +367,8 @@ public class TypeLayerTest {
     Map<Bytes, Map<Column, Value>> map1 =
         ttx.get().rows(Arrays.asList(br1, br2)).columns(c1).toBytesMap();
 
+    Assert.assertEquals(map1, ttx.get().rows(br1, br2).columns(c1).toBytesMap());
+
     Assert.assertEquals("1", map1.get(br1).get(c1).toString());
     Assert.assertEquals("1", map1.get(br1).get(c1).toString("5"));
     Assert.assertEquals((Long) (1l), map1.get(br1).get(c1).toLong());
@@ -390,6 +391,8 @@ public class TypeLayerTest {
     Map<String, Map<Column, Value>> map2 =
         ttx.get().rowsString(Arrays.asList("11", "13")).columns(c1).toStringMap();
 
+    Assert.assertEquals(map2, ttx.get().rowsString("11", "13").columns(c1).toStringMap());
+
     Assert.assertEquals(2, map2.size());
     Assert.assertEquals(1, map2.get("11").size());
     Assert.assertEquals(1, map2.get("13").size());
@@ -398,6 +401,8 @@ public class TypeLayerTest {
 
     Map<Long, Map<Column, Value>> map3 =
         ttx.get().rowsLong(Arrays.asList(11l, 13l)).columns(c1).toLongMap();
+
+    Assert.assertEquals(map3, ttx.get().rowsLong(11l, 13l).columns(c1).toLongMap());
 
     Assert.assertEquals(2, map3.size());
     Assert.assertEquals(1, map3.get(11l).size());
@@ -408,6 +413,8 @@ public class TypeLayerTest {
     Map<Integer, Map<Column, Value>> map4 =
         ttx.get().rowsInteger(Arrays.asList(11, 13)).columns(c1).toIntegerMap();
 
+    Assert.assertEquals(map4, ttx.get().rowsInteger(11, 13).columns(c1).toIntegerMap());
+
     Assert.assertEquals(2, map4.size());
     Assert.assertEquals(1, map4.get(11).size());
     Assert.assertEquals(1, map4.get(13).size());
@@ -417,6 +424,9 @@ public class TypeLayerTest {
     Map<Integer, Map<Column, Value>> map5 =
         ttx.get().rowsBytes(Arrays.asList("11".getBytes(), "13".getBytes())).columns(c1)
             .toIntegerMap();
+
+    Assert.assertEquals(map5, ttx.get().rowsBytes("11".getBytes(), "13".getBytes()).columns(c1)
+        .toIntegerMap());
 
     Assert.assertEquals(2, map5.size());
     Assert.assertEquals(1, map5.get(11).size());
@@ -429,6 +439,12 @@ public class TypeLayerTest {
             .rowsByteBuffers(
                 Arrays.asList(ByteBuffer.wrap("11".getBytes()), ByteBuffer.wrap("13".getBytes())))
             .columns(c1).toIntegerMap();
+
+    Assert.assertEquals(
+        map6,
+        ttx.get()
+            .rowsByteBuffers(ByteBuffer.wrap("11".getBytes()), ByteBuffer.wrap("13".getBytes()))
+            .columns(c1).toIntegerMap());
 
     Assert.assertEquals(2, map6.size());
     Assert.assertEquals(1, map6.get(11).size());

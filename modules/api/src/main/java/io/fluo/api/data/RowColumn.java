@@ -86,6 +86,15 @@ public class RowColumn implements Comparable<RowColumn>, Serializable {
   }
 
   /**
+   * Retrieves Row in RowColumn as a String using UTF-8 encoding.
+   *
+   * @return Row
+   */
+  public String getsRow() {
+    return row.toString();
+  }
+
+  /**
    * Retrieves Column in RowColumn
    *
    * @return Column

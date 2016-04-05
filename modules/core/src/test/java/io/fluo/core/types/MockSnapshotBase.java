@@ -24,7 +24,9 @@ import io.fluo.api.client.SnapshotBase;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.core.impl.TxStringUtil;
 
 public class MockSnapshotBase implements SnapshotBase {
 
@@ -168,6 +170,32 @@ public class MockSnapshotBase implements SnapshotBase {
 
   @Override
   public long getStartTimestamp() {
+    throw new UnsupportedOperationException();
+  }
+
+
+  @Override
+  public String gets(String row, Column column) {
+    return TxStringUtil.gets(this, row, column);
+  }
+
+  @Override
+  public Map<Column, String> gets(String row, Set<Column> columns) {
+    return TxStringUtil.gets(this, row, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+    return TxStringUtil.gets(this, rows, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+    return TxStringUtil.gets(this, rowColumns);
+  }
+
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
     throw new UnsupportedOperationException();
   }
 }

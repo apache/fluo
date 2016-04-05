@@ -14,10 +14,12 @@
 
 package io.fluo.integration.impl;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableSet;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedSnapshotBase.Value;
@@ -31,6 +33,41 @@ import org.junit.Test;
 
 public class ParallelScannerIT extends ITBaseImpl {
   static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+
+  @Test
+  public void testRowColumn() {
+    TestTransaction tx1 = new TestTransaction(env);
+
+    tx1.set("node1", new Column("edge", "node2"), "");
+    tx1.set("node1", new Column("edge", "node3"), "");
+    tx1.set("node3", new Column("edge", "node4"), "");
+    tx1.set("node5", new Column("edge", "node7"), "");
+    tx1.set("node5", new Column("edge", "node2"), "");
+    tx1.set("node5", new Column("edge", "node8"), "");
+
+    tx1.done();
+
+    TestTransaction tx2 = new TestTransaction(env);
+
+    ArrayList<RowColumn> newEdges = new ArrayList<>();
+
+    newEdges.add(new RowColumn("node1", new Column("edge", "node3")));
+    newEdges.add(new RowColumn("node5", new Column("edge", "node2")));
+    newEdges.add(new RowColumn("node5", new Column("edge", "node9")));
+    newEdges.add(new RowColumn("node1", new Column("edge", "node8")));
+    newEdges.add(new RowColumn("node8", new Column("edge", "node3")));
+    newEdges.add(new RowColumn("node5", new Column("edge", "node7")));
+
+    Map<String, Map<Column, String>> existing = tx2.gets(newEdges);
+
+    tx2.done();
+
+    Assert.assertEquals(ImmutableSet.of("node1", "node5"), existing.keySet());
+    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node3")), existing.get("node1")
+        .keySet());
+    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node2"), new Column("edge", "node7")),
+        existing.get("node5").keySet());
+  }
 
   @Test
   public void testConcurrentParallelScan() throws Exception {
@@ -83,15 +120,13 @@ public class ParallelScannerIT extends ITBaseImpl {
     // normally when this test runs, some of the row/columns being read below will be locked for a
     // bit
     Map<String, Map<Column, Value>> votes =
-        tx3.get().rowsString(Arrays.asList("bob9", "joe3", "sue4", "eve2")).columns(e1Col)
-            .toStringMap();
+        tx3.get().rowsString("bob9", "joe3", "sue4", "eve2").columns(e1Col).toStringMap();
 
     Assert.assertEquals("N", votes.get("bob9").get(e1Col).toString(""));
     Assert.assertEquals("nay", votes.get("joe3").get(e1Col).toString(""));
     Assert.assertEquals("+1", votes.get("sue4").get(e1Col).toString(""));
     Assert.assertEquals("no", votes.get("eve2").get(e1Col).toString(""));
     Assert.assertEquals(4, votes.size());
-
   }
 
   @Test
@@ -155,8 +190,7 @@ public class ParallelScannerIT extends ITBaseImpl {
     TestTransaction tx = new TestTransaction(env);
     Column scol = typeLayer.bc().fam(7).qual(7).vis();
     Map<String, Map<Column, Value>> votes =
-        tx.get().rowsString(Arrays.asList("5", "12", "19", "26", "33", "40", "47")).columns(scol)
-            .toStringMap();
+        tx.get().rowsString("5", "12", "19", "26", "33", "40", "47").columns(scol).toStringMap();
 
     // following should be rolled back
     Assert.assertEquals(3, votes.get("5").get(scol).toInteger(0));

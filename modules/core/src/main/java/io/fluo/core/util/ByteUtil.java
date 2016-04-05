@@ -14,7 +14,6 @@
 
 package io.fluo.core.util;
 
-import io.fluo.accumulo.data.MutableBytes;
 import io.fluo.api.data.Bytes;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -37,19 +36,6 @@ public class ByteUtil {
   }
 
   /**
-   * Convert from {@link MutableBytes} to Hadoop {@link Text}
-   */
-  public static Text toText(MutableBytes b) {
-    if (b.isBackedByArray()) {
-      Text t = new Text(EMPTY);
-      t.set(b.getBackingArray(), b.offset(), b.length());
-      return t;
-    } else {
-      return new Text(b.toArray());
-    }
-  }
-
-  /**
    * Convert from Hadoop Text to Bytes
    */
   public static Bytes toBytes(Text t) {
@@ -59,7 +45,7 @@ public class ByteUtil {
   /**
    * Converts from ByteSequence to Bytes. If the ByteSequence has a backing array, that array (and
    * the buffer's offset and limit) are used. Otherwise, a new backing array is created.
-   * 
+   *
    * @param bs ByteSequence
    * @return Bytes object
    */
@@ -76,17 +62,6 @@ public class ByteUtil {
    */
   public static ByteSequence toByteSequence(Bytes b) {
     return new ArrayByteSequence(b.toArray());
-  }
-
-  /**
-   * Convert from MutableBytes to ByteSequence
-   */
-  public static ByteSequence toByteSequence(MutableBytes b) {
-    if (b.isBackedByArray()) {
-      return new ArrayByteSequence(b.getBackingArray(), b.offset(), b.length());
-    } else {
-      return new ArrayByteSequence(b.toArray());
-    }
   }
 
   public static byte[] toByteArray(Text text) {

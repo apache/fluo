@@ -41,6 +41,10 @@ public class RowColumnValue extends RowColumn {
     return val;
   }
 
+  public String getsValue() {
+    return val.toString();
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode() + 31 * val.hashCode();

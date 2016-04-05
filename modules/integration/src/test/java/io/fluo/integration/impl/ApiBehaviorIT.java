@@ -19,6 +19,7 @@ import java.util.Set;
 
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import org.junit.Assert;
@@ -30,11 +31,14 @@ public class ApiBehaviorIT extends ITBaseImpl {
 
     TestTransaction tx1 = new TestTransaction(env);
 
+    Set<String> rss = Collections.singleton("foo");
     Set<Bytes> rowSet = Collections.singleton(Bytes.of("foo"));
     Set<Column> colSet = Collections.singleton(new Column("a", "b"));
 
     Assert.assertEquals(0, tx1.get(Bytes.of("foo"), colSet).size());
+    Assert.assertEquals(0, tx1.gets("foo", colSet).size());
     Assert.assertEquals(0, tx1.get(rowSet, colSet).size());
+    Assert.assertEquals(0, tx1.gets(rss, colSet).size());
   }
 
   @Test
@@ -46,10 +50,23 @@ public class ApiBehaviorIT extends ITBaseImpl {
 
     Set<Bytes> emptyRowSet = Collections.emptySet();
     Set<Column> emptyColSet = Collections.emptySet();
+    Set<RowColumn> emptyRowColSet = Collections.emptySet();
 
     Assert.assertEquals(0, tx1.get(Bytes.of("foo"), emptyColSet).size());
     Assert.assertEquals(0, tx1.get(emptyRowSet, emptyColSet).size());
     Assert.assertEquals(0, tx1.get(emptyRowSet, colSet).size());
     Assert.assertEquals(0, tx1.get(rowSet, emptyColSet).size());
+    Assert.assertEquals(0, tx1.get(rowSet, emptyColSet).size());
+    Assert.assertEquals(0, tx1.get(emptyRowColSet).size());
+
+    Set<String> erss = Collections.emptySet();
+    Set<String> rss = Collections.singleton("foo");
+
+    Assert.assertEquals(0, tx1.gets("foo", emptyColSet).size());
+    Assert.assertEquals(0, tx1.gets(erss, emptyColSet).size());
+    Assert.assertEquals(0, tx1.gets(erss, colSet).size());
+    Assert.assertEquals(0, tx1.gets(rss, emptyColSet).size());
+    Assert.assertEquals(0, tx1.gets(rss, emptyColSet).size());
+    Assert.assertEquals(0, tx1.gets(emptyRowColSet).size());
   }
 }

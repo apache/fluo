@@ -25,9 +25,15 @@ import io.fluo.api.exceptions.AlreadySetException;
 public interface TransactionBase extends SnapshotBase {
 
   /**
-   * Sets a weak notification at the given row and {@link Column}
+   * Deletes the value at the given row and {@link Column}
    */
-  void setWeakNotification(Bytes row, Column col);
+  void delete(Bytes row, Column col);
+
+  /**
+   * Wrapper for {@link #delete(Bytes, Column)} that uses Strings. All String are encoded using
+   * UTF-8.
+   */
+  void delete(String row, Column col);
 
   /**
    * Sets a value (in {@link Bytes}) at the given row and {@link Column}
@@ -35,7 +41,19 @@ public interface TransactionBase extends SnapshotBase {
   void set(Bytes row, Column col, Bytes value) throws AlreadySetException;
 
   /**
-   * Deletes the value at the given row and {@link Column}
+   * Wrapper for {@link #set(Bytes, Column, Bytes)} that uses Strings. All String are encoded using
+   * UTF-8.
    */
-  void delete(Bytes row, Column col);
+  void set(String row, Column col, String value) throws AlreadySetException;
+
+  /**
+   * Sets a weak notification at the given row and {@link Column}
+   */
+  void setWeakNotification(Bytes row, Column col);
+
+  /**
+   * Wrapper for {@link #setWeakNotification(Bytes, Column)} that uses Strings. All String are
+   * encoded using UTF-8.
+   */
+  void setWeakNotification(String row, Column col);
 }

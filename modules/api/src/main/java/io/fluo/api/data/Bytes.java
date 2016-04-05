@@ -64,7 +64,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     }
   }
 
-  public static final Bytes EMPTY = Bytes.of(new byte[0]);
+  public static final Bytes EMPTY = bytesFactory.get(new byte[0]);
 
   private Integer hashCode = null;
 
@@ -169,6 +169,9 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static final Bytes of(byte[] array) {
     Objects.requireNonNull(array);
+    if (array.length == 0) {
+      return EMPTY;
+    }
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
     return bytesFactory.get(copy);
@@ -183,6 +186,9 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static final Bytes of(byte[] data, int offset, int length) {
     Objects.requireNonNull(data);
+    if (length == 0) {
+      return EMPTY;
+    }
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
     return bytesFactory.get(copy);
@@ -193,6 +199,9 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static final Bytes of(ByteBuffer bb) {
     Objects.requireNonNull(bb);
+    if (bb.remaining() == 0) {
+      return EMPTY;
+    }
     byte[] data = new byte[bb.remaining()];
     // duplicate so that it does not change position
     bb.duplicate().get(data);
@@ -204,6 +213,9 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static final Bytes of(String s) {
     Objects.requireNonNull(s);
+    if (s.length() == 0) {
+      return EMPTY;
+    }
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
     return bytesFactory.get(data);
   }
@@ -214,6 +226,9 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
   public static final Bytes of(String s, Charset c) {
     Objects.requireNonNull(s);
     Objects.requireNonNull(c);
+    if (s.length() == 0) {
+      return EMPTY;
+    }
     byte[] data = s.getBytes(c);
     return bytesFactory.get(data);
   }

@@ -108,6 +108,13 @@ public class Column implements Comparable<Column>, Serializable {
   }
 
   /**
+   * Get the column family as a string using UTF-8 encoding.
+   */
+  public String getsFamily() {
+    return getFamily().toString();
+  }
+
+  /**
    * Returns true if qualifier is set
    */
   public boolean isQualifierSet() {
@@ -125,6 +132,13 @@ public class Column implements Comparable<Column>, Serializable {
   }
 
   /**
+   * Get the column family as a string using UTF-8 encoding.
+   */
+  public String getsQualifier() {
+    return getQualifier().toString();
+  }
+
+  /**
    * Returns true if visibility is set.
    */
   public boolean isVisibilitySet() {
@@ -139,6 +153,13 @@ public class Column implements Comparable<Column>, Serializable {
       return Bytes.EMPTY;
     }
     return visibility;
+  }
+
+  /**
+   * Get the column visibility as a string using UTF-8 encoding.
+   */
+  public String getsVisibility() {
+    return getVisibility().toString();
   }
 
   @Override

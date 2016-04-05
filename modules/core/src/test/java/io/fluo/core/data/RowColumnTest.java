@@ -31,18 +31,21 @@ public class RowColumnTest {
     RowColumn rc = new RowColumn();
     Assert.assertEquals(RowColumn.EMPTY, rc);
     Assert.assertEquals(Bytes.EMPTY, rc.getRow());
+    Assert.assertEquals("", rc.getsRow());
     Assert.assertEquals(Column.EMPTY, rc.getColumn());
     Assert.assertEquals("   ", rc.toString());
     Assert.assertNotEquals(RowColumn.EMPTY, Column.EMPTY);
 
     rc = new RowColumn(Bytes.of("r1"));
     Assert.assertEquals(Bytes.of("r1"), rc.getRow());
+    Assert.assertEquals("r1", rc.getsRow());
     Assert.assertEquals(Column.EMPTY, rc.getColumn());
     Assert.assertEquals(new RowColumn("r1"), rc);
     Assert.assertEquals("r1   ", rc.toString());
 
     rc = new RowColumn("r2", new Column("cf2"));
     Assert.assertEquals(Bytes.of("r2"), rc.getRow());
+    Assert.assertEquals("r2", rc.getsRow());
     Assert.assertEquals(new Column("cf2"), rc.getColumn());
     Assert.assertEquals(new RowColumn(Bytes.of("r2"), new Column("cf2")), rc);
     Assert.assertEquals("r2 cf2  ", rc.toString());

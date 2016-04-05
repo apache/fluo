@@ -38,6 +38,7 @@ import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
@@ -167,7 +168,24 @@ public class TransactionImpl implements Transaction, Snapshot {
     return ret;
   }
 
-  // TODO add a get that uses the batch scanner
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+    checkIfOpen();
+
+    if (rowColumns.size() == 0) {
+      return Collections.emptyMap();
+    }
+
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rowColumns, env, startTs, stats);
+
+    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
+      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+    }
+
+    return ret;
+  }
 
   @Override
   public RowIterator get(ScannerConfiguration config) {
@@ -250,6 +268,11 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
+  public void set(String row, Column col, String value) throws AlreadySetException {
+    set(Bytes.of(row), col, Bytes.of(value));
+  }
+
+  @Override
   public void setWeakNotification(Bytes row, Column col) {
     checkIfOpen();
     Objects.requireNonNull(row);
@@ -271,11 +294,21 @@ public class TransactionImpl implements Transaction, Snapshot {
   }
 
   @Override
+  public void setWeakNotification(String row, Column col) {
+    setWeakNotification(Bytes.of(row), col);
+  }
+
+  @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
     Objects.requireNonNull(row);
     Objects.requireNonNull(col);
     set(row, col, DELETE);
+  }
+
+  @Override
+  public void delete(String row, Column col) {
+    delete(Bytes.of(row), col);
   }
 
   private ConditionalFlutation prewrite(ConditionalFlutation cm, Bytes row, Column col, Bytes val,
@@ -859,5 +892,25 @@ public class TransactionImpl implements Transaction, Snapshot {
   @Override
   public long getStartTimestamp() {
     return startTs;
+  }
+
+  @Override
+  public String gets(String row, Column column) {
+    return TxStringUtil.gets(this, row, column);
+  }
+
+  @Override
+  public Map<Column, String> gets(String row, Set<Column> columns) {
+    return TxStringUtil.gets(this, row, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+    return TxStringUtil.gets(this, rows, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+    return TxStringUtil.gets(this, rowColumns);
   }
 }
