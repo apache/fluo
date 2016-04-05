@@ -74,7 +74,10 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
-  private static final Bytes DELETE = Bytes.of("special delete object");
+  private static final Bytes DELETE = Bytes
+      .of("special delete object f804266bf94935edd45ae3e6c287b93c1814295c");
+  private static final Bytes NTFY_VAL = Bytes
+      .of("special ntfy value ce0c523e6e4dc093be8a2736b82eca1b95f97ed4");
 
   private static enum TxStatus {
     OPEN, COMMIT_STARTED, COMMITTED, CLOSED
@@ -109,7 +112,7 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     if (notification != null) {
       Map<Column, Bytes> colUpdates = new HashMap<>();
-      colUpdates.put(notification.getColumn(), null);
+      colUpdates.put(notification.getColumn(), NTFY_VAL);
       updates.put(notification.getRow(), colUpdates);
     }
   }
@@ -239,7 +242,8 @@ public class TransactionImpl implements Transaction, Snapshot {
       updates.put(row, colUpdates);
     }
 
-    if (colUpdates.get(col) != null) {
+    Bytes curVal = colUpdates.get(col);
+    if (curVal != null && curVal != NTFY_VAL) {
       throw new AlreadySetException("Value already set " + row + " " + col);
     }
     colUpdates.put(col, value);
@@ -291,12 +295,12 @@ public class TransactionImpl implements Transaction, Snapshot {
       cm.addCondition(cond);
     }
 
-    if (val != null && val != DELETE) {
+    if (val != NTFY_VAL && val != DELETE) {
       cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
     }
 
     cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn,
-        val != null, val == DELETE, isTriggerRow, getTransactorID()));
+        val != NTFY_VAL, val == DELETE, isTriggerRow, getTransactorID()));
 
     return cm;
   }
@@ -613,11 +617,11 @@ public class TransactionImpl implements Transaction, Snapshot {
 
     Condition lockCheck =
         new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
-            LockValue.encode(cd.prow, cd.pcol, cd.pval != null, cd.pval == DELETE, isTrigger,
+            LockValue.encode(cd.prow, cd.pcol, cd.pval != NTFY_VAL, cd.pval == DELETE, isTrigger,
                 getTransactorID()));
     ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
 
-    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, cd.pval != null, cd.pval == DELETE,
+    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, cd.pval != NTFY_VAL, cd.pval == DELETE,
         startTs, commitTs, observedColumns, delLockMutation);
 
     Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
@@ -691,8 +695,8 @@ public class TransactionImpl implements Transaction, Snapshot {
       for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
         ColumnUtil.commitColumn(env,
             isTriggerRow && colUpdates.getKey().equals(notification.getColumn()), false,
-            colUpdates.getKey(), colUpdates.getValue() != null, colUpdates.getValue() == DELETE,
-            startTs, commitTs, observedColumns, m);
+            colUpdates.getKey(), colUpdates.getValue() != NTFY_VAL,
+            colUpdates.getValue() == DELETE, startTs, commitTs, observedColumns, m);
       }
 
       mutations.add(m);
