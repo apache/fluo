@@ -270,6 +270,7 @@
               <exclude>README.md</exclude>
               <exclude>docs/**.md</exclude>
               <exclude>contrib/grafana/**.json</exclude>
+              <exclude>contrib/influxdb/**.txt</exclude>
             </excludes>
           </configuration>
         </plugin>
