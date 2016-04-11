@@ -135,14 +135,10 @@ public abstract class AppRunner {
       System.exit(0);
     }
 
-    // Limit client to retry for only 500ms as user is waiting
-    FluoConfiguration sConfig = new FluoConfiguration(config);
-    sConfig.setClientRetryTimeout(500);
-
     if (options.scanAccumuloTable) {
-      return scanAccumulo(options, sConfig);
+      return scanAccumulo(options, config);
     } else {
-      return scanFluo(options, sConfig);
+      return scanFluo(options, config);
     }
   }
 
@@ -332,9 +328,7 @@ public abstract class AppRunner {
   }
 
   public void waitUntilFinished(FluoConfiguration config) {
-    FluoConfiguration waitConfig = new FluoConfiguration(config);
-    waitConfig.setClientRetryTimeout(500);
-    try (Environment env = new Environment(waitConfig)) {
+    try (Environment env = new Environment(config)) {
       log.info("The wait command will exit when all notifications are processed");
       while (true) {
         long ts1 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
@@ -346,7 +340,7 @@ public abstract class AppRunner {
         }
 
         try {
-          long sleepSec = calculateSleep(ntfyCount, waitConfig.getWorkerInstances());
+          long sleepSec = calculateSleep(ntfyCount, config.getWorkerInstances());
           log.info("{} notifications are still outstanding.  Will try again in {} seconds...",
               ntfyCount, sleepSec);
           Thread.sleep(1000 * sleepSec);
