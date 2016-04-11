@@ -22,6 +22,7 @@ import java.util.Set;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.exceptions.AlreadySetException;
 
 /**
  * A very simple implementation of {@link TransactionBase} used for testing. All reads are serviced
@@ -69,5 +70,20 @@ public class MockTransactionBase extends MockSnapshotBase implements Transaction
     }
 
     cols.add(col);
+  }
+
+  @Override
+  public void setWeakNotification(String row, Column col) {
+    setWeakNotification(Bytes.of(row), col);
+  }
+
+  @Override
+  public void set(String row, Column col, String value) throws AlreadySetException {
+    set(Bytes.of(row), col, Bytes.of(value));
+  }
+
+  @Override
+  public void delete(String row, Column col) {
+    delete(Bytes.of(row), col);
   }
 }

@@ -21,6 +21,7 @@ import java.util.Set;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.iterator.RowIterator;
 
 /**
@@ -47,9 +48,39 @@ public interface SnapshotBase {
   Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns);
 
   /**
+   * Given a collection of {@link RowColumn}s, retrieves a map contains the values at those rows and
+   * {@link Column}s. Only rows and columns that exists will be returned in map.
+   */
+  Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns);
+
+  /**
    * Retrieves a {@link RowIterator} with the given {@link ScannerConfiguration}
    */
   RowIterator get(ScannerConfiguration config);
+
+  /**
+   * Wrapper for {@link #get(Collection)} that uses Strings. All strings are encoded and decoded
+   * using UTF-8.
+   */
+  Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns);
+
+  /**
+   * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
+   * decoded using UTF-8.
+   */
+  Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns);
+
+  /**
+   * Wrapper for {@link #get(Bytes, Column)} that uses Strings. All strings are encoded and decoded
+   * using UTF-8.
+   */
+  String gets(String row, Column column);
+
+  /**
+   * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
+   * using UTF-8.
+   */
+  Map<Column, String> gets(String row, Set<Column> columns);
 
   /**
    * @return transactions start timestamp allocated from Oracle.

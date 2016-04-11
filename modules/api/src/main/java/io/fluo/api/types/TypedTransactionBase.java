@@ -98,7 +98,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     /**
      * Reads the current value of the row/column, adds i, sets the sum. If the row/column does not
      * have a current value, then it defaults to zero.
-     * 
+     *
      * @param i Integer increment amount
      * @throws AlreadySetException if value was previously set in transaction
      */
@@ -115,7 +115,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     /**
      * Reads the current value of the row/column, adds l, sets the sum. If the row/column does not
      * have a current value, then it defaults to zero.
-     * 
+     *
      * @param l Long increment amount
      * @throws AlreadySetException if value was previously set in transaction
      */
@@ -234,12 +234,27 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   }
 
   @Override
+  public void set(String row, Column col, String value) throws AlreadySetException {
+    tx.set(row, col, value);
+  }
+
+  @Override
   public void setWeakNotification(Bytes row, Column col) {
     tx.setWeakNotification(row, col);
   }
 
   @Override
+  public void setWeakNotification(String row, Column col) {
+    tx.setWeakNotification(row, col);
+  }
+
+  @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
+    tx.delete(row, col);
+  }
+
+  @Override
+  public void delete(String row, Column col) {
     tx.delete(row, col);
   }
 }

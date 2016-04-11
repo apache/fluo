@@ -15,9 +15,13 @@
 package io.fluo.integration.impl;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoClient;
 import io.fluo.api.client.FluoFactory;
@@ -521,5 +525,50 @@ public class FluoIT extends ITBaseImpl {
     expected.remove(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
     Assert.assertEquals(expected, columns);
     tx4.done();
+  }
+
+  @Test
+  public void testStringMethods() {
+    TestTransaction tx = new TestTransaction(env);
+
+    Column ccol = new Column("doc", "content");
+    Column tcol = new Column("doc", "time");
+
+    tx.set("d:0001", ccol, "abc def");
+    tx.set("d:0001", tcol, "45");
+    tx.set("d:0002", ccol, "neb feg");
+    tx.set("d:0002", tcol, "97");
+    tx.set("d:0003", ccol, "xyz abc");
+    tx.set("d:0003", tcol, "42");
+
+    tx.done();
+
+    TestTransaction tx2 = new TestTransaction(env);
+
+    Map<String, Map<Column, String>> map1 =
+        tx2.gets(Arrays.asList("d:0001", "d:0002"), Collections.singleton(ccol));
+    Map<String, ImmutableMap<Column, String>> expected1 =
+        ImmutableMap.of("d:0001", ImmutableMap.of(ccol, "abc def"), "d:0002",
+            ImmutableMap.of(ccol, "neb feg"));
+    Assert.assertEquals(expected1, map1);
+
+    Assert.assertEquals("45", tx2.gets("d:0001", tcol));
+    Assert.assertEquals("xyz abc", tx2.gets("d:0003", ccol));
+
+    Map<Column, String> map2 = tx2.gets("d:0002", ImmutableSet.of(ccol, tcol));
+    Map<Column, String> expected2 = ImmutableMap.of(ccol, "neb feg", tcol, "97");
+    Assert.assertEquals(expected2, map2);
+
+    tx2.delete("d:0003", ccol);
+    tx2.delete("d:0003", tcol);
+
+    tx2.done();
+
+    TestTransaction tx3 = new TestTransaction(env);
+
+    Assert.assertNull(tx3.gets("d:0003", ccol));
+    Assert.assertNull(tx3.gets("d:0003", tcol));
+
+    tx3.done();
   }
 }

@@ -31,6 +31,7 @@ import io.fluo.api.client.SnapshotBase;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.api.types.TypeLayer.Data;
 import io.fluo.api.types.TypeLayer.FamilyMethods;
@@ -392,6 +393,14 @@ public class TypedSnapshotBase implements SnapshotBase {
       return new ColumnsMethods(rows);
     }
 
+    public ColumnsMethods rows(Bytes... rows) {
+      return new ColumnsMethods(Arrays.asList(rows));
+    }
+
+    public ColumnsMethods rowsString(String... rows) {
+      return rowsString(Arrays.asList(rows));
+    }
+
     public ColumnsMethods rowsString(Collection<String> rows) {
       ArrayList<Bytes> conv = new ArrayList<>();
       for (String row : rows) {
@@ -399,6 +408,10 @@ public class TypedSnapshotBase implements SnapshotBase {
       }
 
       return rows(conv);
+    }
+
+    public ColumnsMethods rowsLong(Long... rows) {
+      return rowsLong(Arrays.asList(rows));
     }
 
     public ColumnsMethods rowsLong(Collection<Long> rows) {
@@ -410,6 +423,10 @@ public class TypedSnapshotBase implements SnapshotBase {
       return rows(conv);
     }
 
+    public ColumnsMethods rowsInteger(Integer... rows) {
+      return rowsInteger(Arrays.asList(rows));
+    }
+
     public ColumnsMethods rowsInteger(Collection<Integer> rows) {
       ArrayList<Bytes> conv = new ArrayList<>();
       for (Integer row : rows) {
@@ -419,6 +436,10 @@ public class TypedSnapshotBase implements SnapshotBase {
       return rows(conv);
     }
 
+    public ColumnsMethods rowsBytes(byte[]... rows) {
+      return rowsBytes(Arrays.asList(rows));
+    }
+
     public ColumnsMethods rowsBytes(Collection<byte[]> rows) {
       ArrayList<Bytes> conv = new ArrayList<>();
       for (byte[] row : rows) {
@@ -426,6 +447,10 @@ public class TypedSnapshotBase implements SnapshotBase {
       }
 
       return rows(conv);
+    }
+
+    public ColumnsMethods rowsByteBuffers(ByteBuffer... rows) {
+      return rowsByteBuffers(Arrays.asList(rows));
     }
 
     public ColumnsMethods rowsByteBuffers(Collection<ByteBuffer> rows) {
@@ -453,6 +478,11 @@ public class TypedSnapshotBase implements SnapshotBase {
   @Override
   public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     return snapshot.get(row, columns);
+  }
+
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+    return snapshot.get(rowColumns);
   }
 
   @Override
@@ -484,5 +514,25 @@ public class TypedSnapshotBase implements SnapshotBase {
   @Override
   public long getStartTimestamp() {
     return snapshot.getStartTimestamp();
+  }
+
+  @Override
+  public String gets(String row, Column column) {
+    return snapshot.gets(row, column);
+  }
+
+  @Override
+  public Map<Column, String> gets(String row, Set<Column> columns) {
+    return snapshot.gets(row, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+    return snapshot.gets(rows, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+    return snapshot.gets(rowColumns);
   }
 }

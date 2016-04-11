@@ -27,12 +27,14 @@ import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.RowIterator;
 import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TxStats;
+import io.fluo.core.impl.TxStringUtil;
 import io.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +75,16 @@ public class TracingTransaction implements Transaction, Snapshot {
           @Override
           public String apply(Bytes b) {
             return Hex.encNonAscii(b);
+          }
+        }));
+  }
+
+  private String encRC(Collection<RowColumn> ret) {
+    return Iterators.toString(Iterators.transform(ret.iterator(),
+        new Function<RowColumn, String>() {
+          @Override
+          public String apply(RowColumn rc) {
+            return Hex.encNonAscii(rc);
           }
         }));
   }
@@ -157,6 +169,15 @@ public class TracingTransaction implements Transaction, Snapshot {
   }
 
   @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+    Map<Bytes, Map<Column, Bytes>> ret = tx.get(rowColumns);
+    if (log.isTraceEnabled()) {
+      log.trace("txid: {} get({}) -> {}", txid, encRC(rowColumns), encRC(ret));
+    }
+    return ret;
+  }
+
+  @Override
   public RowIterator get(ScannerConfiguration config) {
     // TODO log something better (see fluo-425)
     log.trace("txid: {} get(ScannerConfiguration)", txid);
@@ -172,6 +193,11 @@ public class TracingTransaction implements Transaction, Snapshot {
   }
 
   @Override
+  public void setWeakNotification(String row, Column col) {
+    setWeakNotification(Bytes.of(row), col);
+  }
+
+  @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     if (log.isTraceEnabled()) {
       log.trace("txid: {} set({}, {}, {})", txid, enc(row), enc(col), enc(value));
@@ -180,11 +206,21 @@ public class TracingTransaction implements Transaction, Snapshot {
   }
 
   @Override
+  public void set(String row, Column col, String value) throws AlreadySetException {
+    set(Bytes.of(row), col, Bytes.of(value));
+  }
+
+  @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     if (log.isTraceEnabled()) {
       log.trace("txid: {} delete({}, {})", txid, enc(row), enc(col));
     }
     tx.delete(row, col);
+  }
+
+  @Override
+  public void delete(String row, Column col) {
+    delete(Bytes.of(row), col);
   }
 
   @Override
@@ -238,5 +274,25 @@ public class TracingTransaction implements Transaction, Snapshot {
   @Override
   public long getStartTimestamp() {
     return tx.getStartTimestamp();
+  }
+
+  @Override
+  public String gets(String row, Column column) {
+    return TxStringUtil.gets(this, row, column);
+  }
+
+  @Override
+  public Map<Column, String> gets(String row, Set<Column> columns) {
+    return TxStringUtil.gets(this, row, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+    return TxStringUtil.gets(this, rows, columns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+    return TxStringUtil.gets(this, rowColumns);
   }
 }

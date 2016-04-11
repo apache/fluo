@@ -29,9 +29,6 @@ public class MutableBytesTest {
     byte[] d1 = Bytes.of("mydata").toArray();
 
     MutableBytes mutable = new MutableBytes(d1);
-    Assert.assertTrue(mutable.isBackedByArray());
-    Assert.assertSame(d1, mutable.getBackingArray());
-    Assert.assertSame(d1, mutable.getArray());
     Assert.assertNotSame(d1, mutable.toArray());
 
     Bytes immutable = Bytes.of(d1);
@@ -39,7 +36,7 @@ public class MutableBytesTest {
     Assert.assertEquals(mutable, immutable);
     Assert.assertNotSame(mutable, immutable);
 
-    Bytes read = (Bytes) mutable;
+    Bytes read = mutable;
     Assert.assertEquals(read, immutable);
     Assert.assertSame(read, mutable);
     Assert.assertEquals(read, mutable);
@@ -50,7 +47,5 @@ public class MutableBytesTest {
     Assert.assertNotSame(write, mutable);
     byte[] d2 = write.toArray();
     Assert.assertNotSame(d2, write.toArray());
-    Assert.assertNotSame(d2, write.getArray());
-    Assert.assertNotSame(d2, write.getBackingArray());
   }
 }

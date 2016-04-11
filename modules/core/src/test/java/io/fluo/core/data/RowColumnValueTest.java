@@ -54,6 +54,7 @@ public class RowColumnValueTest {
 
     Assert.assertEquals(rcv1.getRow(), Bytes.of("row1"));
     Assert.assertEquals(rcv1.getValue(), Bytes.of("a"));
+    Assert.assertEquals(rcv1.getsValue(), "a");
     Assert.assertEquals(rcv1.getColumn(), new Column("fam1", "qual1"));
   }
 

@@ -20,9 +20,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 import io.fluo.api.client.LoaderExecutor;
+import io.fluo.api.client.Snapshot;
+import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
 import io.fluo.api.types.TypedLoader;
@@ -288,6 +291,61 @@ public class LogIT extends ITBaseMini {
     pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
     pattern += ".*txid: \\1 get\\(all, stat count \\) -> 1";
     pattern += ".*txid: \\1 get\\(r1, a b \\) -> 1";
+    pattern += ".*txid: \\1 close\\(\\).*";
+    Assert.assertTrue(logMsgs.matches(pattern));
+  }
+
+  @Test
+  public void testGetMethods() {
+
+    Column c1 = new Column("f1", "q1");
+    Column c2 = new Column("f1", "q2");
+
+    try (Transaction tx = client.newTransaction()) {
+      tx.set("r1", c1, "v1");
+      tx.set("r1", c2, "v2");
+      tx.set("r2", c1, "v3");
+      tx.set("r2", c2, "v4");
+      tx.commit();
+    }
+
+
+    Logger logger = Logger.getLogger("io.fluo.tx");
+
+    StringWriter writer = new StringWriter();
+    WriterAppender appender =
+        new WriterAppender(new PatternLayout("%d{ISO8601} [%-8c{2}] %-5p: %m%n"), writer);
+
+    Level level = logger.getLevel();
+    boolean additivity = logger.getAdditivity();
+
+    try {
+      logger.setLevel(Level.TRACE);
+      logger.setAdditivity(false);
+      logger.addAppender(appender);
+
+      try (Snapshot snap = client.newSnapshot()) {
+        snap.gets(Arrays.asList(new RowColumn("r1", c1), new RowColumn("r2", c2)));
+        snap.gets(Arrays.asList("r1", "r2"), ImmutableSet.of(c1));
+        snap.gets("r1", ImmutableSet.of(c1, c2));
+        snap.gets("r1", c1);
+      }
+
+      miniFluo.waitForObservers();
+    } finally {
+      logger.removeAppender(appender);
+      logger.setAdditivity(additivity);
+      logger.setLevel(level);
+    }
+
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
+
+    String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern += ".*txid: \\1 \\Qget([r1 f1 q1 , r2 f1 q2 ]) -> [r1=[f1 q1 =v1], r2=[f1 q2 =v4]]\\E";
+    pattern += ".*txid: \\1 \\Qget([r1, r2], [f1 q1 ]) -> [r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
+    pattern += ".*txid: \\1 \\Qget(r1, [f1 q1 , f1 q2 ]) -> [f1 q1 =v1, f1 q2 =v2]\\E";
+    pattern += ".*txid: \\1 \\Qget(r1, f1 q1 ) -> v1\\E";
     pattern += ".*txid: \\1 close\\(\\).*";
     Assert.assertTrue(logMsgs.matches(pattern));
   }

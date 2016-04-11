@@ -94,4 +94,28 @@ public class ColumnTest {
     Assert.assertEquals(1, c4.compareTo(c5));
     Assert.assertEquals(-1, c3.compareTo(c2));
   }
+
+  @Test
+  public void testStringGetters() {
+    Column c0 = Column.EMPTY;
+    Column c1 = new Column("cf");
+    Column c2 = new Column("cf", "cq");
+    Column c3 = new Column("cf", "cq", "cv");
+
+    Assert.assertEquals("", c0.getsFamily());
+    Assert.assertEquals("", c0.getsQualifier());
+    Assert.assertEquals("", c0.getsVisibility());
+
+    Assert.assertEquals("cf", c1.getsFamily());
+    Assert.assertEquals("", c1.getsQualifier());
+    Assert.assertEquals("", c1.getsVisibility());
+
+    Assert.assertEquals("cf", c2.getsFamily());
+    Assert.assertEquals("cq", c2.getsQualifier());
+    Assert.assertEquals("", c2.getsVisibility());
+
+    Assert.assertEquals("cf", c3.getsFamily());
+    Assert.assertEquals("cq", c3.getsQualifier());
+    Assert.assertEquals("cv", c3.getsVisibility());
+  }
 }
