@@ -20,11 +20,20 @@ There are several ways to run Fluo (listed in order of increasing difficulty):
 
 Except for [quickstart], all above will set up a Fluo application that will be idle unless you
 create client & observer code for your application.  You can either [create your own
-application][applications] or configure Fluo to run an example application below:
+application][apps] or configure Fluo to run an example application below:
 
 * [phrasecount] - Computes phrase counts for unique documents
 * [fluo-stress] - Computes the number of unique integers by building bitwise trie
 * [webindex] - Creates a web index using Common Crawl data
+
+### Applications
+
+Below are helpful resources for Fluo application developers:
+
+* [Instructions][apps] for creating Fluo applications
+* [Fluo API][api] javadocs
+* [Fluo Recipes][recipes] is a project that provides common code for Fluo application developers implemented 
+  using the Fluo API.
 
 ### Implementation
 
@@ -44,7 +53,9 @@ application][applications] or configure Fluo to run an example application below
 [webindex]: https://github.com/fluo-io/webindex
 [MiniFluo]: docs/mini-fluo-setup.md
 [Production]: docs/prod-fluo-setup.md
-[applications]: docs/applications.md
+[apps]: docs/applications.md
+[api]: http://fluo.io/apidocs/
+[recipes]: https://github.com/fluo-io/fluo-recipes
 [Metrics]: docs/metrics.md
 [Contributing]: docs/contributing.md
 [Architecture]: docs/architecture.md
