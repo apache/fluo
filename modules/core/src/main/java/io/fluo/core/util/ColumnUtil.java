@@ -28,7 +28,6 @@ import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.data.Span;
 import io.fluo.core.impl.Environment;
-import io.fluo.core.impl.Notification;
 import io.fluo.core.impl.TransactionImpl;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
@@ -62,9 +61,6 @@ public class ColumnUtil {
 
     if (isTrigger) {
       Flutation.put(env, m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
-    }
-    if (observedColumns.contains(col) && isWrite && !isDelete) {
-      Notification.put(env, m, col, commitTs);
     }
   }
 
