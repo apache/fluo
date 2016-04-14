@@ -526,19 +526,46 @@ public class TransactionImpl implements Transaction, Snapshot {
     return true;
   }
 
-  private void writeWeakNotifications(long commitTs) {
-    if (weakNotifications.size() > 0) {
-      SharedBatchWriter sbw = env.getSharedResources().getBatchWriter();
-      ArrayList<Mutation> mutations = new ArrayList<>();
+  private void writeNotifications(CommitData cd, long commitTs) {
 
-      for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
-        Flutation m = new Flutation(env, entry.getKey());
-        for (Column col : entry.getValue()) {
-          Notification.put(env, m, col, commitTs);
+    HashMap<Bytes, Mutation> mutations = new HashMap<>();
+
+    if (env.getObservers().containsKey(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
+      Flutation m = new Flutation(env, cd.prow);
+      Notification.put(env, m, cd.pcol, commitTs);
+      mutations.put(cd.prow, m);
+    }
+
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
+
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        if (env.getObservers().containsKey(colUpdates.getKey())) {
+          Bytes val = colUpdates.getValue();
+          if (isWrite(val) && !isDelete(val)) {
+            Mutation m = mutations.get(rowUpdates.getKey());
+            if (m == null) {
+              m = new Flutation(env, rowUpdates.getKey());
+              mutations.put(rowUpdates.getKey(), m);
+            }
+            Notification.put(env, m, colUpdates.getKey(), commitTs);
+          }
         }
-        mutations.add(m);
       }
-      sbw.writeMutations(mutations);
+    }
+
+    for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
+      Mutation m = mutations.get(entry.getKey());
+      if (m == null) {
+        m = new Flutation(env, entry.getKey());
+        mutations.put(entry.getKey(), m);
+      }
+      for (Column col : entry.getValue()) {
+        Notification.put(env, m, col, commitTs);
+      }
+    }
+
+    if (mutations.size() > 0) {
+      env.getSharedResources().getBatchWriter().writeMutations(mutations.values());
     }
   }
 
@@ -641,15 +668,21 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
       AccumuloSecurityException {
-    // set weak notifications after all locks are written, but before finishing commit. If weak
-    // notifications were set after the commit, then information
-    // about weak notifications would need to be persisted in the lock phase. Setting here is safe
-    // because any observers that run as a result of the weak
-    // notification will wait for the commit to finish. Setting here may cause an observer to run
-    // unnecessarily in the case of rollback, but that is ok.
-    // TODO look into setting weak notification as part of lock and commit phases to avoid this
-    // synchronous step
-    writeWeakNotifications(commitTs);
+
+    // Notification are written here synchronously for the following reasons :
+    // * At this point all columns are locked, this guarantees that anything triggering as a
+    // result of this transaction will see all of this transactions changes.
+    // * The transaction is not yet committed. If the process dies at this point whatever
+    // was running this transaction should rerun and recreate all of the notifications.
+    // The next transactions will rerun because this transaction will have to be rolled back.
+    // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
+    // partially succeeds notifications may never be written. Because in the case of failure
+    // notifications would not be written until a column is read and it may never be read.
+    // See https://github.com/fluo-io/fluo/issues/642
+    //
+    // Its very important the notifications which trigger an observer are deleted after the 2nd
+    // phase of commit finishes.
+    writeNotifications(cd, commitTs);
 
     // try to delete lock and add write for primary column
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);

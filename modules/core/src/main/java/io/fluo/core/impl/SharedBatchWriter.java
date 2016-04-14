@@ -15,6 +15,7 @@
 package io.fluo.core.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,12 +39,12 @@ public class SharedBatchWriter {
 
   private static class MutationBatch {
 
-    private List<Mutation> mutations;
+    private Collection<Mutation> mutations;
     private CountDownLatch cdl;
     private boolean isAsync = false;
     private MutationBatch afterFlushBatch;
 
-    public MutationBatch(List<Mutation> mutations, boolean isAsync) {
+    public MutationBatch(Collection<Mutation> mutations, boolean isAsync) {
       this.mutations = mutations;
       this.isAsync = isAsync;
       if (!isAsync) {
@@ -144,7 +145,7 @@ public class SharedBatchWriter {
     writeMutations(Collections.singletonList(m));
   }
 
-  public void writeMutations(List<Mutation> ml) {
+  public void writeMutations(Collection<Mutation> ml) {
 
     if (ml.size() == 0) {
       return;
