@@ -15,9 +15,12 @@
 package io.fluo.mini;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.fluo.api.client.FluoAdmin;
 import io.fluo.api.client.FluoAdmin.InitOpts;
 import io.fluo.api.client.FluoFactory;
@@ -51,8 +54,7 @@ public class MiniFluoImpl implements MiniFluo {
   private final Environment env;
   private OracleServer oserver;
 
-  private int numProcessing = 0;
-  private MiniNotificationProcessor mnp;
+  private NotificationProcessor mnp;
   private NotificationFinder notificationFinder;
   private FluoConfiguration config;
   private MiniAccumuloCluster cluster = null;
@@ -66,34 +68,9 @@ public class MiniFluoImpl implements MiniFluo {
     return config.getMiniDataDir() + "/client.properties";
   }
 
-  private class MiniNotificationProcessor extends NotificationProcessor {
-
-    public MiniNotificationProcessor(Environment env) {
-      super(env);
-    }
-
-    @Override
-    protected void workAdded() {
-      synchronized (MiniFluoImpl.this) {
-        numProcessing++;
-      }
-    }
-
-    @Override
-    protected void workFinished() {
-      synchronized (MiniFluoImpl.this) {
-        numProcessing--;
-      }
-    }
-  }
-
   @VisibleForTesting
   public NotificationProcessor getNotificationProcessor() {
     return mnp;
-  }
-
-  private synchronized boolean isProcessing(Scanner scanner) {
-    return scanner.iterator().hasNext() || numProcessing > 0;
   }
 
   public MiniFluoImpl(FluoConfiguration fluoConfig) {
@@ -117,7 +94,7 @@ public class MiniFluoImpl implements MiniFluo {
       oserver = new OracleServer(env);
       oserver.start();
 
-      mnp = new MiniNotificationProcessor(env);
+      mnp = new NotificationProcessor(env);
       notificationFinder = NotificationFinderFactory.newNotificationFinder(env.getConfiguration());
       notificationFinder.init(env, mnp);
       notificationFinder.start();
@@ -195,8 +172,17 @@ public class MiniFluoImpl implements MiniFluo {
       Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
       Notification.configureScanner(scanner);
 
-      while (isProcessing(scanner)) {
-        Thread.sleep(100);
+      while (true) {
+        long ts1 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
+        long ntfyCount = Iterables.size(scanner);
+        long ts2 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
+        if (ntfyCount == 0 && ts1 == (ts2 - 1)) {
+          break;
+        }
+
+        long sleepTime = ntfyCount / 2;
+        sleepTime = Math.min(Math.max(10, sleepTime), 10000);
+        Uninterruptibles.sleepUninterruptibly(sleepTime, TimeUnit.MILLISECONDS);
       }
 
     } catch (Exception e) {

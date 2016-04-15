@@ -22,7 +22,6 @@ import java.util.Set;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import io.fluo.api.client.Snapshot;
-import io.fluo.api.client.Transaction;
 import io.fluo.api.config.FluoConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
@@ -31,15 +30,16 @@ import io.fluo.api.data.RowColumn;
 import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.core.async.AsyncCommitObserver;
+import io.fluo.core.async.AsyncTransaction;
 import io.fluo.core.impl.Notification;
-import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.impl.TxStats;
 import io.fluo.core.impl.TxStringUtil;
 import io.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TracingTransaction implements Transaction, Snapshot {
+public class TracingTransaction implements AsyncTransaction, Snapshot {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX);
   private static final Logger collisionLog = LoggerFactory
@@ -47,7 +47,7 @@ public class TracingTransaction implements Transaction, Snapshot {
   private static final Logger summaryLog = LoggerFactory
       .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
 
-  private final TransactionImpl tx;
+  private final AsyncTransaction tx;
   private final long txid;
   private Notification notification;
   private Class<?> clazz;
@@ -61,11 +61,11 @@ public class TracingTransaction implements Transaction, Snapshot {
     return Hex.encNonAscii(c);
   }
 
-  public TracingTransaction(TransactionImpl tx) {
+  public TracingTransaction(AsyncTransaction tx) {
     this(tx, null, null);
   }
 
-  public TracingTransaction(TransactionImpl tx, Class<?> clazz) {
+  public TracingTransaction(AsyncTransaction tx, Class<?> clazz) {
     this(tx, null, clazz);
   }
 
@@ -119,9 +119,9 @@ public class TracingTransaction implements Transaction, Snapshot {
         }));
   }
 
-  public TracingTransaction(TransactionImpl tx, Notification notification, Class<?> clazz) {
+  public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz) {
     this.tx = tx;
-    this.txid = tx.getStartTs();
+    this.txid = tx.getStartTimestamp();
 
     this.notification = notification;
     this.clazz = clazz;
@@ -230,21 +230,24 @@ public class TracingTransaction implements Transaction, Snapshot {
       committed = true;
       log.trace("txid: {} commit() -> SUCCESSFUL commitTs: {}", txid, tx.getStats().getCommitTs());
     } catch (CommitException ce) {
-      log.trace("txid: {} commit() -> UNSUCCESSFUL commitTs: {}", txid, tx.getStats().getCommitTs());
-
-      if (!log.isTraceEnabled() && notification != null) {
-        collisionLog.trace("txid: {} trigger: {} {} {}", txid, notification.getRow(),
-            notification.getColumn(), notification.getTimestamp());
-      }
-
-      if (!log.isTraceEnabled() && clazz != null) {
-        collisionLog.trace("txid: {} class: {}", txid, clazz.getName());
-      }
-
-      collisionLog.trace("txid: {} collisions: {}", txid, tx.getStats().getRejected());
-
+      logUnsuccessfulCommit();
       throw ce;
     }
+  }
+
+  private void logUnsuccessfulCommit() {
+    log.trace("txid: {} commit() -> UNSUCCESSFUL commitTs: {}", txid, tx.getStats().getCommitTs());
+
+    if (!log.isTraceEnabled() && notification != null) {
+      collisionLog.trace("txid: {} trigger: {} {} {}", txid, notification.getRow(),
+          notification.getColumn(), notification.getTimestamp());
+    }
+
+    if (!log.isTraceEnabled() && clazz != null) {
+      collisionLog.trace("txid: {} class: {}", txid, clazz.getName());
+    }
+
+    collisionLog.trace("txid: {} collisions: {}", txid, tx.getStats().getRejected());
   }
 
   @Override
@@ -257,12 +260,11 @@ public class TracingTransaction implements Transaction, Snapshot {
         className = clazz.getSimpleName();
       }
       // TODO log total # read, see fluo-426
-      summaryLog.trace(
-          "txid: {} thread : {} time: {} ({} {} {}) #ret: {} #set: {} #collisions: {} "
-              + "waitTime: {} committed: {} class: {}", txid, Thread.currentThread().getId(),
-          stats.getTime(), stats.getPrecommitTime(), stats.getCommitPrimaryTime(),
-          stats.getFinishCommitTime(), stats.getEntriesReturned(), stats.getEntriesSet(),
-          stats.getCollisions(), stats.getLockWaitTime(), committed, className);
+      summaryLog.trace("txid: {} thread : {} time: {} ({} {}) #ret: {} #set: {} #collisions: {} "
+          + "waitTime: {} committed: {} class: {}", txid, Thread.currentThread().getId(),
+          stats.getTime(), stats.getReadTime(), stats.getCommitTime(), stats.getEntriesReturned(),
+          stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
+          className);
     }
     tx.close();
   }
@@ -294,5 +296,55 @@ public class TracingTransaction implements Transaction, Snapshot {
   @Override
   public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);
+  }
+
+  public class LoggingCommitObserver implements AsyncCommitObserver {
+
+    AsyncCommitObserver aco;
+
+    LoggingCommitObserver(AsyncCommitObserver aco) {
+      this.aco = aco;
+    }
+
+    @Override
+    public void committed() {
+      log.trace("txid: {} commit() -> SUCCESSFUL commitTs: {}", txid, tx.getStats().getCommitTs());
+      committed = true;
+      aco.committed();
+    }
+
+    @Override
+    public void failed(Throwable t) {
+      aco.failed(t);
+      log.trace("txid: {} failed {}", txid, t.getMessage());
+    }
+
+    @Override
+    public void alreadyAcknowledged() {
+      aco.alreadyAcknowledged();
+      logUnsuccessfulCommit();
+    }
+
+    @Override
+    public void commitFailed() {
+      aco.commitFailed();
+      logUnsuccessfulCommit();
+    }
+
+  }
+
+  @Override
+  public void commitAsync(AsyncCommitObserver commitCallback) {
+    tx.commitAsync(new LoggingCommitObserver(commitCallback));
+  }
+
+  @Override
+  public TxStats getStats() {
+    return tx.getStats();
+  }
+
+  @Override
+  public int getSize() {
+    return tx.getSize();
   }
 }

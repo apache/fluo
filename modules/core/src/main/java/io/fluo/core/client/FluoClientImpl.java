@@ -66,7 +66,7 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public LoaderExecutor newLoaderExecutor() {
     try {
-      return new LoaderExecutorImpl(config, env);
+      return new LoaderExecutorAsyncImpl(config, env);
     } catch (Exception e) {
       log.error("Failed to create a LoaderExecutor");
       throw new IllegalStateException(e);

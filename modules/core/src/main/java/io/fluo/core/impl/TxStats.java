@@ -29,10 +29,11 @@ import io.fluo.core.metrics.MetricsUtil;
 
 public class TxStats {
   private final long startTime;
+  private long beginCommitTime;
+  private long finishCommitTime;
   private long lockWaitTime = 0;
   private long entriesReturned = 0;
   private long entriesSet = 0;
-  private long finishTime = 0;
   private long collisions = -1;
   // number of entries recovered from other transactions
   private long recovered = 0;
@@ -41,9 +42,6 @@ public class TxStats {
   private Map<Bytes, Set<Column>> rejected = Collections.emptyMap();
   private long commitTs = -1;
   private final Environment env;
-  private long precommitTime = -1;
-  private long commitPrimaryTime = -1;
-  private long finishCommitTime = -1;
 
   TxStats(Environment env) {
     this.startTime = System.currentTimeMillis();
@@ -63,19 +61,15 @@ public class TxStats {
   }
 
   public long getTime() {
-    return finishTime - startTime;
+    return finishCommitTime - startTime;
   }
 
-  public long getPrecommitTime() {
-    return precommitTime;
+  public long getReadTime() {
+    return beginCommitTime - startTime;
   }
 
-  public long getCommitPrimaryTime() {
-    return commitPrimaryTime;
-  }
-
-  public long getFinishCommitTime() {
-    return finishCommitTime;
+  public long getCommitTime() {
+    return finishCommitTime - beginCommitTime;
   }
 
   public long getCollisions() {
@@ -147,10 +141,6 @@ public class TxStats {
     timedOutLocks += amt;
   }
 
-  void setFinishTime(long t) {
-    finishTime = t;
-  }
-
   public void report(String status, Class<?> execClass) {
     MetricNames names = env.getMetricNames();
     MetricRegistry registry = env.getSharedResources().getMetricRegistry();
@@ -160,7 +150,7 @@ public class TxStats {
           .update(getLockWaitTime(), TimeUnit.MILLISECONDS);
     }
     MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime() + sn).update(
-        getTime(), TimeUnit.MILLISECONDS);
+        getReadTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0) {
       registry.meter(names.getTxWithCollision() + sn).mark();
       registry.meter(names.getTxCollisions() + sn).mark(getCollisions());
@@ -176,9 +166,11 @@ public class TxStats {
     registry.meter(names.getTxStatus() + status.toLowerCase() + "." + sn).mark();
   }
 
-  public void setCommitTimes(long precommitTime, long commitPrimaryTime, long finishCommitTime) {
-    this.precommitTime = precommitTime;
-    this.commitPrimaryTime = commitPrimaryTime;
-    this.finishCommitTime = finishCommitTime;
+  public void setCommitBeginTime(long t) {
+    this.beginCommitTime = t;
+  }
+
+  public void setCommitFinishTime(long t) {
+    this.finishCommitTime = t;
   }
 }

@@ -17,6 +17,7 @@ package io.fluo.core.oracle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,6 +26,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.api.exceptions.FluoException;
 import io.fluo.core.impl.CuratorCnxnListener;
@@ -66,9 +69,15 @@ public class OracleClient implements AutoCloseable {
 
   private Participant currentLeader;
 
-  private static final class TimeRequest {
+  private static final class TimeRequest implements Callable<Stamp> {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicReference<Stamp> stampRef = new AtomicReference<>();
+    ListenableFutureTask<Stamp> lf = null;
+
+    @Override
+    public Stamp call() throws Exception {
+      return stampRef.get();
+    }
   }
 
   private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable,
@@ -202,7 +211,11 @@ public class OracleClient implements AutoCloseable {
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
             tr.stampRef.set(new Stamp(txStampsStart + i, gcStamp));
-            tr.cdl.countDown();
+            if (tr.lf == null) {
+              tr.cdl.countDown();
+            } else {
+              tr.lf.run();
+            }
           }
         } catch (InterruptedException e) {
           if (!closed.get()) {
@@ -323,7 +336,7 @@ public class OracleClient implements AutoCloseable {
   }
 
   private final Environment env;
-  private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(1000);
+  private final ArrayBlockingQueue<TimeRequest> queue = new ArrayBlockingQueue<>(10000);
   private final Thread thread;
   private AtomicBoolean closed = new AtomicBoolean(false);
   private final TimestampRetriever timestampRetriever;
@@ -349,8 +362,8 @@ public class OracleClient implements AutoCloseable {
     checkClosed();
 
     TimeRequest tr = new TimeRequest();
-    queue.add(tr);
     try {
+      queue.put(tr);
       int timeout = env.getConfiguration().getClientRetryTimeout();
       if (timeout < 0) {
         long waitPeriod = 1;
@@ -373,6 +386,20 @@ public class OracleClient implements AutoCloseable {
       throw new FluoException("Interrupted while retrieving timestamp from Oracle", e);
     }
     return tr.stampRef.get();
+  }
+
+  public ListenableFuture<Stamp> getStampAsync() {
+    checkClosed();
+
+    TimeRequest tr = new TimeRequest();
+    ListenableFutureTask<Stamp> lf = ListenableFutureTask.create(tr);
+    tr.lf = lf;
+    try {
+      queue.put(tr);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return lf;
   }
 
   /**

@@ -44,7 +44,7 @@ table below this is denoted with `<cn>`.
 |Metric                                 | Type           | Description                         |
 |---------------------------------------|----------------|-------------------------------------|
 |\<prefix\>.tx.lock_wait_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Time transaction spent waiting on locks held by other transactions.   |
-|\<prefix\>.tx.execution_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute.  Updated for failed and successful transactions. |
+|\<prefix\>.tx.execution_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute.  Updated for failed and successful transactions.  This does not include commit time, only the time from start until commit is called. |
 |\<prefix\>.tx.with_collision.\<cn\>    | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of transactions with collisions.  |
 |\<prefix\>.tx.collisions.\<cn\>        | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of collisions.  |
 |\<prefix\>.tx.entries_set.\<cn\>       | [Meter][H]     | *WHEN:* After each transaction. *WHAT:* Rate of row/columns set by transaction |
@@ -56,6 +56,7 @@ table below this is denoted with `<cn>`.
 |\<prefix\>.oracle.client_stamps        | [Histogram][H] | *WHEN:* For each request for stamps to the server. *WHAT:* The number of stamps requested. |
 |\<prefix\>.oracle.server_stamps        | [Histogram][H] | *WHEN:* For each request for stamps from a client. *WHAT:* The number of stamps requested. |
 |\<prefix\>.worker.notifications_queued | [Gauge][G]     | *WHAT:* The current number of notifications queued for processing. |
+|\<prefix\>.transactor.committing       | [Gauge][G]     | *WHAT:* The current number of transactions that are working their way through the commit steps. |
 
 The table above outlines when a particular metric is updated and whats updated.
 The use of *COND* indicates that the metric is not always updated.   For

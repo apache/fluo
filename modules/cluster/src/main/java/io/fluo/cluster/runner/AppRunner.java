@@ -17,7 +17,6 @@ package io.fluo.cluster.runner;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.inject.Provider;
@@ -49,8 +48,6 @@ import io.fluo.core.util.SpanUtil;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -323,12 +320,7 @@ public abstract class AppRunner {
 
     Notification.configureScanner(scanner);
 
-    long count = 0;
-    for (Iterator<Map.Entry<Key, Value>> iterator = scanner.iterator(); iterator.hasNext(); iterator
-        .next()) {
-      count++;
-    }
-    return count;
+    return Iterables.size(scanner);
   }
 
   public void waitUntilFinished(FluoConfiguration config) {

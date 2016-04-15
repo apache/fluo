@@ -14,11 +14,19 @@
 
 package io.fluo.core.impl;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import com.codahale.metrics.MetricRegistry;
+import io.fluo.core.async.AsyncConditionalWriter;
+import io.fluo.core.async.CommitManager;
 import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
+import io.fluo.core.util.FluoThreadFactory;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -48,6 +56,12 @@ public class SharedResources implements AutoCloseable {
   private final VisibilityCache visCache;
   private final MetricRegistry metricRegistry;
 
+  private AsyncConditionalWriter acw;
+  private AsyncConditionalWriter bulkAcw;
+  private ExecutorService commitExecutor;
+  private CommitManager commitManager;
+
+
   public SharedResources(Environment env) throws TableNotFoundException {
     this.env = env;
     curator = CuratorUtil.newAppCurator(env.getConfiguration());
@@ -75,6 +89,15 @@ public class SharedResources implements AutoCloseable {
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
+
+    // set to 32 for cases when commit is executing some error handling synchronously
+    int commitThreads =
+        env.getConfiguration().getInt(FluoConfigurationImpl.COMMIT_THREADS,
+            FluoConfigurationImpl.COMMIT_THREADS_DEFAULT);
+    commitExecutor = Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("commits"));
+
+    acw = new AsyncConditionalWriter(env, cw);
+    bulkAcw = new AsyncConditionalWriter(env, bulkCw);
   }
 
   public SharedBatchWriter getBatchWriter() {
@@ -85,11 +108,6 @@ public class SharedResources implements AutoCloseable {
   public ConditionalWriter getConditionalWriter() {
     checkIfClosed();
     return cw;
-  }
-
-  public ConditionalWriter getBulkConditionalWriter() {
-    checkIfClosed();
-    return bulkCw;
   }
 
   public TxInfoCache getTxInfoCache() {
@@ -158,6 +176,17 @@ public class SharedResources implements AutoCloseable {
   @Override
   public synchronized void close() {
     isClosed = true;
+
+    if (commitManager != null) {
+      commitManager.close();
+    }
+    commitExecutor.shutdownNow();
+    try {
+      commitExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e1) {
+      throw new RuntimeException(e1);
+    }
+
     if (tnode != null) {
       tnode.close();
     }
@@ -170,6 +199,7 @@ public class SharedResources implements AutoCloseable {
     if (oracleClient != null) {
       oracleClient.close();
     }
+    acw.close();
     cw.close();
     bulkCw.close();
     sbw.close();
@@ -185,5 +215,25 @@ public class SharedResources implements AutoCloseable {
     if (isClosed) {
       throw new IllegalStateException("SharedResources is closed!");
     }
+  }
+
+  public Executor getCommitExecutor() {
+    return commitExecutor;
+  }
+
+  public AsyncConditionalWriter getAsyncConditionalWriter() {
+    return acw;
+  }
+
+  public AsyncConditionalWriter getBulkAsyncConditionalWriter() {
+    return bulkAcw;
+  }
+
+  public synchronized CommitManager getCommitManager() {
+    checkIfClosed();
+    if (commitManager == null) {
+      commitManager = new CommitManager(env);
+    }
+    return commitManager;
   }
 }
