@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -41,12 +41,12 @@ public class NotificationProcessor implements AutoCloseable {
   private ThreadPoolExecutor executor;
   private Environment env;
   private Observers observers;
-  private LinkedBlockingQueue<Runnable> queue;
+  private PriorityBlockingQueue<Runnable> queue;
 
   public NotificationProcessor(Environment env) {
     int numThreads = env.getConfiguration().getWorkerThreads();
     this.env = env;
-    this.queue = new LinkedBlockingQueue<>();
+    this.queue = new PriorityBlockingQueue<>();
     this.executor =
         new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, queue,
             new FluoThreadFactory("ntfyProc"));
@@ -153,14 +153,28 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
+  private static class FutureNotificationTask extends FutureTask<Void> implements
+      Comparable<FutureNotificationTask> {
+
+    private final Notification notification;
+
+    public FutureNotificationTask(Notification n, NotificationFinder nf, WorkTaskAsync wt) {
+      super(new NotificationProcessingTask(n, nf, wt), null);
+      this.notification = n;
+    }
+
+    @Override
+    public int compareTo(FutureNotificationTask o) {
+      return Long.compare(notification.getTimestamp(), o.notification.getTimestamp());
+    }
+  }
+
   public boolean addNotification(final NotificationFinder notificationFinder,
       final Notification notification) {
 
-    final WorkTaskAsync workTask =
+    WorkTaskAsync workTask =
         new WorkTaskAsync(this, notificationFinder, env, notification, observers);
-    FutureTask<?> ft =
-        new FutureTask<Void>(new NotificationProcessingTask(notification, notificationFinder,
-            workTask), null);
+    FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
 
     if (!tracker.add(notification, ft)) {
       return false;
@@ -179,11 +193,10 @@ public class NotificationProcessor implements AutoCloseable {
   public void requeueNotification(final NotificationFinder notificationFinder,
       final Notification notification) {
 
-    final WorkTaskAsync workTask =
+    WorkTaskAsync workTask =
         new WorkTaskAsync(this, notificationFinder, env, notification, observers);
-    FutureTask<?> ft =
-        new FutureTask<Void>(new NotificationProcessingTask(notification, notificationFinder,
-            workTask), null);
+    FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
+
     if (tracker.requeue(notification, ft)) {
       try {
         executor.execute(ft);
