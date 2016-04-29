@@ -22,6 +22,7 @@ import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
@@ -144,7 +145,7 @@ public class WorkerIT extends ITBaseMini {
     tx6.mutate().row("N0003").fam("link").qual("N0050").set("");
     tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, Bytes.of("N0003"), typeLayer.bc().fam("attr").qual("lastupdate").vis());
+    tx6.preCommit(cd, new RowColumn("N0003", new Column("attr", "lastupdate")));
 
     miniFluo.waitForObservers();
 

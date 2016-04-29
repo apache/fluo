@@ -25,7 +25,6 @@ import io.fluo.api.client.FluoFactory;
 import io.fluo.api.client.Loader;
 import io.fluo.api.client.LoaderExecutor;
 import io.fluo.api.config.FluoConfiguration;
-import io.fluo.core.client.LoaderExecutorImpl;
 import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;

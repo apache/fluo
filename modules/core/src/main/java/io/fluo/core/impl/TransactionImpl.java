@@ -25,16 +25,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.fluo.accumulo.iterators.PrewriteIterator;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.DelLockValue;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.client.Snapshot;
-import io.fluo.api.client.Transaction;
 import io.fluo.api.config.ScannerConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
@@ -42,8 +44,13 @@ import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.AlreadySetException;
 import io.fluo.api.exceptions.CommitException;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.iterator.ColumnIterator;
 import io.fluo.api.iterator.RowIterator;
+import io.fluo.core.async.AsyncCommitObserver;
+import io.fluo.core.async.AsyncConditionalWriter;
+import io.fluo.core.async.AsyncTransaction;
+import io.fluo.core.async.SyncCommitObserver;
 import io.fluo.core.exceptions.AlreadyAcknowledgedException;
 import io.fluo.core.exceptions.StaleScanException;
 import io.fluo.core.oracle.Stamp;
@@ -52,8 +59,6 @@ import io.fluo.core.util.ConditionalFlutation;
 import io.fluo.core.util.FluoCondition;
 import io.fluo.core.util.Flutation;
 import io.fluo.core.util.SpanUtil;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
@@ -71,7 +76,7 @@ import org.apache.accumulo.core.data.Range;
 /**
  * Transaction implementation
  */
-public class TransactionImpl implements Transaction, Snapshot {
+public class TransactionImpl implements AsyncTransaction, Snapshot {
 
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
@@ -104,6 +109,10 @@ public class TransactionImpl implements Transaction, Snapshot {
   private TransactorNode tnode = null;
   private TxStatus status = TxStatus.OPEN;
   private boolean commitAttempted = false;
+
+  // for testing
+  private boolean stopAfterPreCommit = false;
+  private boolean stopAfterPrimaryCommit = false;
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Objects.requireNonNull(env, "environment cannot be null");
@@ -358,7 +367,6 @@ public class TransactionImpl implements Transaction, Snapshot {
 
   public static class CommitData {
     ConditionalWriter cw;
-    ConditionalWriter bulkCw;
     private Bytes prow;
     private Column pcol;
     private Bytes pval;
@@ -391,182 +399,43 @@ public class TransactionImpl implements Transaction, Snapshot {
     public String toString() {
       return prow + " " + pcol + " " + pval + " " + rejected.size();
     }
+
+    // async stuff
+    private AsyncConditionalWriter acw;
+    private AsyncConditionalWriter bacw;
+    private AsyncCommitObserver commitObserver;
+
   }
 
   private boolean isTriggerRow(Bytes row) {
     return notification != null && notification.getRow().equals(row);
   }
 
-  public boolean preCommit(CommitData cd) throws TableNotFoundException, AccumuloException,
-      AccumuloSecurityException, AlreadyAcknowledgedException {
-    if (notification != null) {
-      // always want to throw already ack exception if collision, so process trigger first
-      return preCommit(cd, notification.getRow(), notification.getColumn());
-    } else {
-      Bytes prow = updates.keySet().iterator().next();
-      Map<Column, Bytes> colSet = updates.get(prow);
-      Column pcol = colSet.keySet().iterator().next();
-      return preCommit(cd, prow, pcol);
-    }
-
+  public boolean preCommit(CommitData cd) {
+    return preCommit(cd, null);
   }
 
-  public boolean preCommit(CommitData cd, Bytes primRow, Column primCol)
-      throws TableNotFoundException, AccumuloException, AccumuloSecurityException,
-      AlreadyAcknowledgedException {
+  @VisibleForTesting
+  public boolean preCommit(CommitData cd, RowColumn primary) {
 
-    checkIfOpen();
-    status = TxStatus.COMMIT_STARTED;
+    synchronized (this) {
+      checkIfOpen();
+      status = TxStatus.COMMIT_STARTED;
+      commitAttempted = true;
 
-    // get a primary column
-    cd.prow = primRow;
-    Map<Column, Bytes> colSet = updates.get(cd.prow);
-    cd.pcol = primCol;
-    cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0) {
-      updates.remove(cd.prow);
+      stopAfterPreCommit = true;
     }
 
-    // try to lock primary column
-    ConditionalMutation pcm =
-        prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, isTriggerRow(cd.prow));
-
-    Status mutationStatus = cd.cw.write(pcm).getStatus();
-
-    while (mutationStatus == Status.UNKNOWN) {
-
-      TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-
-      switch (txInfo.status) {
-        case LOCKED:
-          mutationStatus = Status.ACCEPTED;
-          break;
-        case ROLLED_BACK:
-          mutationStatus = Status.REJECTED;
-          break;
-        case UNKNOWN:
-          mutationStatus = cd.cw.write(pcm).getStatus();
-          // TODO handle case were data other tx has lock
-          break;
-        case COMMITTED:
-        default:
-          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow
-              + " " + cd.pcol);
-
-      }
-    }
-
-    if (mutationStatus != Status.ACCEPTED) {
-      cd.addPrimaryToRejected();
-      if (checkForAckCollision(pcm)) {
-        throw new AlreadyAcknowledgedException();
-      }
+    SyncCommitObserver sco = new SyncCommitObserver();
+    beginCommitAsync(cd, sco, primary);
+    try {
+      sco.waitForCommit();
+    } catch (AlreadyAcknowledgedException e) {
+      throw e;
+    } catch (CommitException e) {
       return false;
     }
-
-    // TODO if trigger is always primary row:col, then do not need checks elsewhere
-    // try to lock other columns
-    ArrayList<ConditionalMutation> mutations = new ArrayList<>();
-
-    int numUpdates = 0;
-    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
-      ConditionalFlutation cm = null;
-      boolean isTriggerRow = isTriggerRow(rowUpdates.getKey());
-
-      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (cm == null) {
-          cm =
-              prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
-                  cd.pcol, isTriggerRow);
-        } else {
-          prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, isTriggerRow);
-        }
-      }
-
-      mutations.add(cm);
-
-      numUpdates += rowUpdates.getValue().size();
-    }
-
-    cd.acceptedRows = new HashSet<>();
-
-    boolean ackCollision = false;
-
-    Iterator<Result> resultsIter;
-
-    if (numUpdates < 10) {
-      resultsIter = cd.cw.write(mutations.iterator());
-    } else {
-      resultsIter = cd.bulkCw.write(mutations.iterator());
-    }
-
-    while (resultsIter.hasNext()) {
-      Result result = resultsIter.next();
-      // TODO handle unknown?
-      Bytes row = Bytes.of(result.getMutation().getRow());
-      if (result.getStatus() == Status.ACCEPTED) {
-        cd.acceptedRows.add(row);
-      } else {
-        // TODO if trigger is always primary row:col, then do not need checks elsewhere
-        ackCollision |= checkForAckCollision(result.getMutation());
-        cd.addToRejected(row, updates.get(row).keySet());
-      }
-    }
-
-    if (cd.getRejected().size() > 0) {
-      rollback(cd);
-
-      if (ackCollision) {
-        throw new AlreadyAcknowledgedException();
-      }
-
-      return false;
-    }
-
     return true;
-  }
-
-  private void writeNotifications(CommitData cd, long commitTs) {
-
-    HashMap<Bytes, Mutation> mutations = new HashMap<>();
-
-    if (env.getObservers().containsKey(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
-      Flutation m = new Flutation(env, cd.prow);
-      Notification.put(env, m, cd.pcol, commitTs);
-      mutations.put(cd.prow, m);
-    }
-
-    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
-
-      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (env.getObservers().containsKey(colUpdates.getKey())) {
-          Bytes val = colUpdates.getValue();
-          if (isWrite(val) && !isDelete(val)) {
-            Mutation m = mutations.get(rowUpdates.getKey());
-            if (m == null) {
-              m = new Flutation(env, rowUpdates.getKey());
-              mutations.put(rowUpdates.getKey(), m);
-            }
-            Notification.put(env, m, colUpdates.getKey(), commitTs);
-          }
-        }
-      }
-    }
-
-    for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
-      Mutation m = mutations.get(entry.getKey());
-      if (m == null) {
-        m = new Flutation(env, entry.getKey());
-        mutations.put(entry.getKey(), m);
-      }
-      for (Column col : entry.getValue()) {
-        Notification.put(env, m, col, commitTs);
-      }
-    }
-
-    if (mutations.size() > 0) {
-      env.getSharedResources().getBatchWriter().writeMutations(mutations.values());
-    }
   }
 
   /**
@@ -586,6 +455,7 @@ public class TransactionImpl implements Transaction, Snapshot {
    * @param cd Commit data
    */
   private void readUnread(CommitData cd) throws Exception {
+    // TODO make async
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
     // may not iterate over entire range
     Map<Bytes, Set<Column>> columnsToRead = new HashMap<>();
@@ -656,206 +526,36 @@ public class TransactionImpl implements Transaction, Snapshot {
     return false;
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) throws AccumuloException,
-      AccumuloSecurityException {
-    if (startTs < commitStamp.getGcTimestamp()) {
-      rollback(cd);
+  @VisibleForTesting
+  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) {
+    stopAfterPrimaryCommit = true;
+
+    SyncCommitObserver sco = new SyncCommitObserver();
+    cd.commitObserver = sco;
+    try {
+      beginSecondCommitPhase(cd, commitStamp);
+      sco.waitForCommit();
+    } catch (CommitException e) {
       return false;
+    } catch (Exception e) {
+      throw new FluoException(e);
     }
-
-    return commitPrimaryColumn(cd, commitStamp.getTxTimestamp());
-  }
-
-  public boolean commitPrimaryColumn(CommitData cd, long commitTs) throws AccumuloException,
-      AccumuloSecurityException {
-
-    // Notification are written here synchronously for the following reasons :
-    // * At this point all columns are locked, this guarantees that anything triggering as a
-    // result of this transaction will see all of this transactions changes.
-    // * The transaction is not yet committed. If the process dies at this point whatever
-    // was running this transaction should rerun and recreate all of the notifications.
-    // The next transactions will rerun because this transaction will have to be rolled back.
-    // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
-    // partially succeeds notifications may never be written. Because in the case of failure
-    // notifications would not be written until a column is read and it may never be read.
-    // See https://github.com/fluo-io/fluo/issues/642
-    //
-    // Its very important the notifications which trigger an observer are deleted after the 2nd
-    // phase of commit finishes.
-    writeNotifications(cd, commitTs);
-
-    // try to delete lock and add write for primary column
-    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
-    PrewriteIterator.setSnaptime(iterConf, startTs);
-    boolean isTrigger = isTriggerRow(cd.prow) && cd.pcol.equals(notification.getColumn());
-
-    Condition lockCheck =
-        new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
-            LockValue.encode(cd.prow, cd.pcol, isWrite(cd.pval), isDelete(cd.pval), isTrigger,
-                getTransactorID()));
-    ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
-
-    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
-        startTs, commitTs, observedColumns, delLockMutation);
-
-    Status mutationStatus = cd.cw.write(delLockMutation).getStatus();
-
-    while (mutationStatus == Status.UNKNOWN) {
-
-      TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-
-      switch (txInfo.status) {
-        case COMMITTED:
-          if (txInfo.commitTs != commitTs) {
-            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!="
-                + commitTs);
-          }
-          mutationStatus = Status.ACCEPTED;
-          break;
-        case LOCKED:
-          mutationStatus = cd.cw.write(delLockMutation).getStatus();
-          break;
-        default:
-          mutationStatus = Status.REJECTED;
-      }
-    }
-
-    if (mutationStatus != Status.ACCEPTED) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private void rollback(CommitData cd) throws MutationsRejectedException {
-    // roll back locks
-
-    // TODO let rollback be done lazily? this makes GC more difficult
-
-    Flutation m;
-
-    ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
-    for (Bytes row : cd.acceptedRows) {
-      m = new Flutation(env, row);
-      for (Column col : updates.get(row).keySet()) {
-        m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-            DelLockValue.encodeRollback(false, true));
-      }
-      mutations.add(m);
-    }
-
-    env.getSharedResources().getBatchWriter().writeMutations(mutations);
-
-    // mark transaction as complete for garbage collection purposes
-    m = new Flutation(env, cd.prow);
-    // TODO timestamp?
-    // TODO writing the primary column with a batch writer is iffy
-
-    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encodeRollback(startTs, false, true));
-    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
-
-    env.getSharedResources().getBatchWriter().writeMutation(m);
-  }
-
-  public boolean finishCommit(CommitData cd, Stamp commitStamp) throws TableNotFoundException,
-      MutationsRejectedException {
-    long commitTs = commitStamp.getTxTimestamp();
-    // delete locks and add writes for other columns
-    ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
-    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
-      Flutation m = new Flutation(env, rowUpdates.getKey());
-      boolean isTriggerRow = isTriggerRow(rowUpdates.getKey());
-      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        ColumnUtil.commitColumn(env,
-            isTriggerRow && colUpdates.getKey().equals(notification.getColumn()), false,
-            colUpdates.getKey(), isWrite(colUpdates.getValue()), isDelete(colUpdates.getValue()),
-            startTs, commitTs, observedColumns, m);
-      }
-
-      mutations.add(m);
-    }
-
-    ArrayList<Mutation> afterFlushMutations = new ArrayList<>(2);
-
-    Flutation m = new Flutation(env, cd.prow);
-    // mark transaction as complete for garbage collection purposes
-    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
-    afterFlushMutations.add(m);
-
-    if (weakNotification != null) {
-      afterFlushMutations.add(weakNotification.newDelete(env, startTs));
-    }
-
-    if (notification != null) {
-      afterFlushMutations.add(notification.newDelete(env, startTs));
-    }
-
-    env.getSharedResources().getBatchWriter().writeMutationsAsync(mutations, afterFlushMutations);
-
     return true;
   }
 
   public CommitData createCommitData() {
     CommitData cd = new CommitData();
     cd.cw = env.getSharedResources().getConditionalWriter();
-    cd.bulkCw = env.getSharedResources().getBulkConditionalWriter();
+    cd.acw = env.getSharedResources().getAsyncConditionalWriter();
+    cd.bacw = env.getSharedResources().getBulkAsyncConditionalWriter();
     return cd;
   }
 
   @Override
   public synchronized void commit() throws CommitException {
-
-    if (status == TxStatus.CLOSED) {
-      throw new CommitException("Transaction was previously closed");
-    } else if (status == TxStatus.COMMITTED) {
-      throw new CommitException("Transaction was previously committed");
-    }
-
-    commitAttempted = true;
-
-    if (updates.size() == 0) {
-      deleteWeakRow();
-      stats.setFinishTime(System.currentTimeMillis());
-      return;
-    }
-
-    for (Map<Column, Bytes> cols : updates.values()) {
-      stats.incrementEntriesSet(cols.size());
-    }
-
-    CommitData cd = createCommitData();
-
-    try {
-      long t1 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-      if (!preCommit(cd)) {
-        readUnread(cd);
-        throw new CommitException("Pre-commit failed");
-      }
-      long t2 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-
-      Stamp commitStamp = env.getSharedResources().getOracleClient().getStamp();
-      if (commitPrimaryColumn(cd, commitStamp)) {
-        long t3 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-        stats.setCommitTs(commitStamp.getTxTimestamp());
-        finishCommit(cd, commitStamp);
-        long t4 = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-        stats.setCommitTimes(t2 - t1, t3 - t2, t4 - t3);
-      } else {
-        // TODO write TX_DONE (done in case where startTs < gcTimestamp)
-        throw new CommitException("Commit failed");
-      }
-    } catch (CommitException e) {
-      throw e;
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      stats.setFinishTime(System.currentTimeMillis());
-      stats.setRejected(cd.getRejected());
-      status = TxStatus.COMMITTED;
-    }
+    SyncCommitObserver sco = new SyncCommitObserver();
+    commitAsync(sco);
+    sco.waitForCommit();
   }
 
   void deleteWeakRow() {
@@ -865,6 +565,7 @@ public class TransactionImpl implements Transaction, Snapshot {
     }
   }
 
+  @Override
   public TxStats getStats() {
     return stats;
   }
@@ -954,4 +655,474 @@ public class TransactionImpl implements Transaction, Snapshot {
   public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);
   }
+
+  // async experiment
+
+  private abstract static class CommitCallback<V> implements FutureCallback<V> {
+
+    private CommitData cd;
+
+    CommitCallback(CommitData cd) {
+      this.cd = cd;
+    }
+
+    @Override
+    public void onSuccess(V result) {
+      try {
+        onSuccess(cd, result);
+      } catch (Exception e) {
+        cd.commitObserver.failed(e);
+      }
+    }
+
+    protected abstract void onSuccess(CommitData cd, V result) throws Exception;
+
+
+    @Override
+    public void onFailure(Throwable t) {
+      cd.commitObserver.failed(t);
+    }
+
+  }
+
+  @Override
+  public int getSize() {
+    // TODO could calculate as items are added/set
+    int size = 0;
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : updates.entrySet()) {
+      size += entry.getKey().length();
+      for (Entry<Column, Bytes> entry2 : entry.getValue().entrySet()) {
+        Column c = entry2.getKey();
+        size += c.getFamily().length();
+        size += c.getQualifier().length();
+        size += c.getVisibility().length();
+        size += entry2.getValue().length();
+      }
+    }
+
+    for (Entry<Bytes, Set<Column>> entry : columnsRead.entrySet()) {
+      size += entry.getKey().length();
+      for (Column c : entry.getValue()) {
+        size += c.getFamily().length();
+        size += c.getQualifier().length();
+        size += c.getVisibility().length();
+      }
+    }
+
+    return size;
+  }
+
+  @Override
+  public synchronized void commitAsync(AsyncCommitObserver commitCallback) {
+
+    checkIfOpen();
+    status = TxStatus.COMMIT_STARTED;
+    commitAttempted = true;
+
+    try {
+      CommitData cd = createCommitData();
+      beginCommitAsync(cd, commitCallback, null);
+    } catch (Exception e) {
+      e.printStackTrace();
+      commitCallback.failed(e);
+    }
+  }
+
+  private void beginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback, RowColumn primary) {
+
+    if (updates.size() == 0) {
+      // TODO do async
+      deleteWeakRow();
+      commitCallback.committed();
+      return;
+    }
+
+    for (Map<Column, Bytes> cols : updates.values()) {
+      stats.incrementEntriesSet(cols.size());
+    }
+
+    Bytes primRow;
+    Column primCol;
+
+    if (primary != null) {
+      primRow = primary.getRow();
+      primCol = primary.getColumn();
+      if (notification != null && !primary.equals(notification)) {
+        throw new IllegalArgumentException("Primary must be notification");
+      }
+    } else if (notification != null) {
+      primRow = notification.getRow();
+      primCol = notification.getColumn();
+    } else {
+      primRow = updates.keySet().iterator().next();
+      Map<Column, Bytes> colSet = updates.get(primRow);
+      primCol = colSet.keySet().iterator().next();
+    }
+
+    // get a primary column
+    cd.prow = primRow;
+    Map<Column, Bytes> colSet = updates.get(cd.prow);
+    cd.pcol = primCol;
+    cd.pval = colSet.remove(primCol);
+    if (colSet.size() == 0) {
+      updates.remove(cd.prow);
+    }
+
+    cd.commitObserver = commitCallback;
+
+    // try to lock primary column
+    final ConditionalMutation pcm =
+        prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, isTriggerRow(cd.prow));
+
+
+    ListenableFuture<Iterator<Result>> future = cd.acw.apply(Collections.singletonList(pcm));
+    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
+        postLockPrimary(cd, pcm, Iterators.getOnlyElement(result));
+      }
+    }, env.getSharedResources().getCommitExecutor());
+  }
+
+  private void postLockPrimary(CommitData cd, ConditionalMutation pcm, Result result)
+      throws Exception {
+    Status mutationStatus = result.getStatus();
+
+    while (mutationStatus == Status.UNKNOWN) {
+      // TODO do async.. this could turn into and if and this func could call itself async
+      TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
+
+      switch (txInfo.status) {
+        case LOCKED:
+          mutationStatus = Status.ACCEPTED;
+          break;
+        case ROLLED_BACK:
+          mutationStatus = Status.REJECTED;
+          break;
+        case UNKNOWN:
+          // TODO async
+          mutationStatus = cd.cw.write(pcm).getStatus();
+          // TODO handle case were data other tx has lock
+          break;
+        case COMMITTED:
+        default:
+          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow
+              + " " + cd.pcol);
+
+      }
+    }
+
+    if (mutationStatus != Status.ACCEPTED) {
+      cd.addPrimaryToRejected();
+      getStats().setRejected(cd.getRejected());
+      // TODO do async
+      readUnread(cd);
+      if (checkForAckCollision(pcm)) {
+        cd.commitObserver.alreadyAcknowledged();
+      } else {
+        cd.commitObserver.commitFailed();
+      }
+      return;
+    }
+
+    ArrayList<ConditionalMutation> mutations = new ArrayList<>();
+
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
+      ConditionalFlutation cm = null;
+
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        if (cm == null) {
+          cm =
+              prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
+                  cd.pcol, false);
+        } else {
+          prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, false);
+        }
+      }
+
+      mutations.add(cm);
+    }
+
+    cd.acceptedRows = new HashSet<>();
+
+
+
+    ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
+    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Iterator<Result> results) throws Exception {
+        postLockOther(cd, results);
+      }
+    }, env.getSharedResources().getCommitExecutor());
+
+  }
+
+  private void postLockOther(CommitData cd, Iterator<Result> results) throws Exception {
+    while (results.hasNext()) {
+      Result result = results.next();
+      // TODO handle unknown?
+      Bytes row = Bytes.of(result.getMutation().getRow());
+      if (result.getStatus() == Status.ACCEPTED) {
+        cd.acceptedRows.add(row);
+      } else {
+        cd.addToRejected(row, updates.get(row).keySet());
+        getStats().setRejected(cd.getRejected());
+      }
+    }
+
+    if (cd.getRejected().size() > 0) {
+      readUnread(cd);
+      rollbackOtherLocks(cd);
+    } else if (stopAfterPreCommit) {
+      cd.commitObserver.committed();
+    } else {
+      ListenableFuture<Stamp> future = env.getSharedResources().getOracleClient().getStampAsync();
+      Futures.addCallback(future, new CommitCallback<Stamp>(cd) {
+        @Override
+        protected void onSuccess(CommitData cd, Stamp stamp) throws Exception {
+          beginSecondCommitPhase(cd, stamp);
+        }
+      }, env.getSharedResources().getCommitExecutor());
+    }
+  }
+
+
+  private void rollbackOtherLocks(CommitData cd) throws Exception {
+    // roll back locks
+
+    // TODO let rollback be done lazily? this makes GC more difficult
+
+    Flutation m;
+
+    ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
+    for (Bytes row : cd.acceptedRows) {
+      m = new Flutation(env, row);
+      for (Column col : updates.get(row).keySet()) {
+        m.put(col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+            DelLockValue.encodeRollback(false, true));
+      }
+      mutations.add(m);
+    }
+
+    ListenableFuture<Void> future =
+        env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
+    Futures.addCallback(future, new CommitCallback<Void>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Void v) throws Exception {
+        rollbackPrimaryLock(cd);
+      }
+    }, env.getSharedResources().getCommitExecutor());
+  }
+
+  private void rollbackPrimaryLock(CommitData cd) throws Exception {
+
+    // mark transaction as complete for garbage collection purposes
+    Flutation m = new Flutation(env, cd.prow);
+
+    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+        DelLockValue.encodeRollback(startTs, false, true));
+    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
+
+    ListenableFuture<Void> future =
+        env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
+    Futures.addCallback(future, new CommitCallback<Void>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Void v) throws Exception {
+        cd.commitObserver.commitFailed();
+      }
+    }, env.getSharedResources().getCommitExecutor());
+  }
+
+
+  private void beginSecondCommitPhase(CommitData cd, Stamp commitStamp) throws Exception {
+    if (startTs < commitStamp.getGcTimestamp()) {
+      rollbackOtherLocks(cd);
+    } else {
+      // Notification are written here for the following reasons :
+      // * At this point all columns are locked, this guarantees that anything triggering as a
+      // result of this transaction will see all of this transactions changes.
+      // * The transaction is not yet committed. If the process dies at this point whatever
+      // was running this transaction should rerun and recreate all of the notifications.
+      // The next transactions will rerun because this transaction will have to be rolled back.
+      // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
+      // partially succeeds notifications may never be written. Because in the case of failure
+      // notifications would not be written until a column is read and it may never be read.
+      // See https://github.com/fluo-io/fluo/issues/642
+      //
+      // Its very important the notifications which trigger an observer are deleted after the 2nd
+      // phase of commit finishes.
+      getStats().setCommitTs(commitStamp.getTxTimestamp());
+      writeNotificationsAsync(cd, commitStamp.getTxTimestamp());
+    }
+  }
+
+  private void writeNotificationsAsync(CommitData cd, final long commitTs) {
+
+    HashMap<Bytes, Mutation> mutations = new HashMap<>();
+
+    if (env.getObservers().containsKey(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
+      Flutation m = new Flutation(env, cd.prow);
+      Notification.put(env, m, cd.pcol, commitTs);
+      mutations.put(cd.prow, m);
+    }
+
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
+
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        if (env.getObservers().containsKey(colUpdates.getKey())) {
+          Bytes val = colUpdates.getValue();
+          if (isWrite(val) && !isDelete(val)) {
+            Mutation m = mutations.get(rowUpdates.getKey());
+            if (m == null) {
+              m = new Flutation(env, rowUpdates.getKey());
+              mutations.put(rowUpdates.getKey(), m);
+            }
+            Notification.put(env, m, colUpdates.getKey(), commitTs);
+          }
+        }
+      }
+    }
+
+    for (Entry<Bytes, Set<Column>> entry : weakNotifications.entrySet()) {
+      Mutation m = mutations.get(entry.getKey());
+      if (m == null) {
+        m = new Flutation(env, entry.getKey());
+        mutations.put(entry.getKey(), m);
+      }
+      for (Column col : entry.getValue()) {
+        Notification.put(env, m, col, commitTs);
+      }
+    }
+
+
+    ListenableFuture<Void> future =
+        env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations.values());
+    Futures.addCallback(future, new CommitCallback<Void>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Void v) throws Exception {
+        commmitPrimary(cd, commitTs);
+      }
+    }, env.getSharedResources().getCommitExecutor());
+
+  }
+
+  private void commmitPrimary(CommitData cd, final long commitTs) {
+    // try to delete lock and add write for primary column
+    IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
+    PrewriteIterator.setSnaptime(iterConf, startTs);
+    boolean isTrigger = isTriggerRow(cd.prow) && cd.pcol.equals(notification.getColumn());
+
+    Condition lockCheck =
+        new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
+            LockValue.encode(cd.prow, cd.pcol, isWrite(cd.pval), isDelete(cd.pval), isTrigger,
+                getTransactorID()));
+    final ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
+
+    ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
+        startTs, commitTs, observedColumns, delLockMutation);
+
+
+    ListenableFuture<Iterator<Result>> future =
+        cd.acw.apply(Collections.singletonList(delLockMutation));
+    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
+        postCommitPrimary(cd, commitTs, delLockMutation, Iterators.getOnlyElement(result));
+      }
+    }, env.getSharedResources().getCommitExecutor());
+  }
+
+  private void postCommitPrimary(CommitData cd, long commitTs, ConditionalMutation delLockMutation,
+      Result result) throws Exception {
+    Status mutationStatus = result.getStatus();
+
+    // TODO aync
+    while (mutationStatus == Status.UNKNOWN) {
+
+      TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
+
+      switch (txInfo.status) {
+        case COMMITTED:
+          if (txInfo.commitTs != commitTs) {
+            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!="
+                + commitTs);
+          }
+          mutationStatus = Status.ACCEPTED;
+          break;
+        case LOCKED:
+          mutationStatus = cd.cw.write(delLockMutation).getStatus();
+          break;
+        default:
+          mutationStatus = Status.REJECTED;
+      }
+    }
+
+    if (mutationStatus != Status.ACCEPTED) {
+      cd.commitObserver.commitFailed();
+    } else {
+      if (stopAfterPrimaryCommit) {
+        cd.commitObserver.committed();
+      } else {
+        deleteLocks(cd, commitTs);
+      }
+    }
+  }
+
+  private void deleteLocks(CommitData cd, final long commitTs) {
+    // delete locks and add writes for other columns
+    ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
+    for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
+      Flutation m = new Flutation(env, rowUpdates.getKey());
+      boolean isTriggerRow = isTriggerRow(rowUpdates.getKey());
+      for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
+        ColumnUtil.commitColumn(env,
+            isTriggerRow && colUpdates.getKey().equals(notification.getColumn()), false,
+            colUpdates.getKey(), isWrite(colUpdates.getValue()), isDelete(colUpdates.getValue()),
+            startTs, commitTs, observedColumns, m);
+      }
+
+      mutations.add(m);
+    }
+
+
+    ListenableFuture<Void> future =
+        env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
+    Futures.addCallback(future, new CommitCallback<Void>(cd) {
+      @Override
+      protected void onSuccess(CommitData cd, Void v) throws Exception {
+        finishCommit(cd, commitTs);
+      }
+    }, env.getSharedResources().getCommitExecutor());
+
+  }
+
+  @VisibleForTesting
+  public boolean finishCommit(CommitData cd, Stamp commitStamp) throws TableNotFoundException,
+      MutationsRejectedException {
+    deleteLocks(cd, commitStamp.getTxTimestamp());
+    return true;
+  }
+
+  private void finishCommit(CommitData cd, long commitTs) {
+    ArrayList<Mutation> afterFlushMutations = new ArrayList<>(2);
+
+    Flutation m = new Flutation(env, cd.prow);
+    // mark transaction as complete for garbage collection purposes
+    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
+    afterFlushMutations.add(m);
+
+    if (weakNotification != null) {
+      afterFlushMutations.add(weakNotification.newDelete(env, startTs));
+    }
+
+    if (notification != null) {
+      afterFlushMutations.add(notification.newDelete(env, startTs));
+    }
+
+    env.getSharedResources().getBatchWriter().writeMutationsAsync(afterFlushMutations);
+
+    cd.commitObserver.committed();
+  }
+
 }

@@ -22,6 +22,7 @@ import io.fluo.accumulo.util.NotificationUtil;
 import io.fluo.api.client.TransactionBase;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.api.data.RowColumn;
 import io.fluo.api.data.Span;
 import io.fluo.api.exceptions.CommitException;
 import io.fluo.api.types.StringEncoder;
@@ -130,10 +131,8 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     return tx.preCommit(cd);
   }
 
-  public boolean preCommit(CommitData cd, Bytes trow, Column tcol)
-      throws AlreadyAcknowledgedException, TableNotFoundException, AccumuloException,
-      AccumuloSecurityException {
-    return tx.preCommit(cd, trow, tcol);
+  public boolean preCommit(CommitData cd, RowColumn primary) {
+    return tx.preCommit(cd, primary);
   }
 
   public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) throws AccumuloException,

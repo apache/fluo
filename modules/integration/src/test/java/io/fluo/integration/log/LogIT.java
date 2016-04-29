@@ -199,23 +199,24 @@ public class LogIT extends ITBaseMini {
       logger.setLevel(level);
     }
 
-    String logMsgs = writer.toString().replace('\n', ' ');
+    String logMsgs = writer.toString();
+    logMsgs = logMsgs.replace('\n', ' ');
 
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(-1 -1 -1\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
     Assert
         .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(-1 -1 -1\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
+            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
   }
 
   @Test
@@ -283,7 +284,7 @@ public class LogIT extends ITBaseMini {
     pattern += ".*txid: \\1 get\\(0, stat count \\) -> 1";
     pattern += ".*txid: \\1 get\\(all, stat count \\) -> null";
     pattern += ".*txid: \\1 set\\(all, stat count , 1\\)";
-    pattern += ".*txid: \\1 commit\\(\\) -> SUCCESSFUL commitTs: 9";
+    pattern += ".*txid: \\1 commit\\(\\) -> SUCCESSFUL commitTs: \\d+";
     pattern += ".*txid: \\1 close\\(\\).*";
     Assert.assertTrue(logMsgs.matches(pattern));
 

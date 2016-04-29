@@ -27,6 +27,7 @@ import io.fluo.api.config.ObserverConfiguration;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
 import io.fluo.api.exceptions.CommitException;
+import io.fluo.api.exceptions.FluoException;
 import io.fluo.api.observer.AbstractObserver;
 import io.fluo.api.types.StringEncoder;
 import io.fluo.api.types.TypeLayer;
@@ -127,7 +128,7 @@ public class FailureIT extends ITBaseImpl {
 
     if (killTransactor) {
       Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
-      exception.expect(IllegalStateException.class);
+      exception.expect(FluoException.class);
       tx2.commitPrimaryColumn(cd, commitTs);
     } else {
       Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
@@ -314,7 +315,7 @@ public class FailureIT extends ITBaseImpl {
 
     if (killTransactor) {
       // test for exception
-      exception.expect(IllegalStateException.class);
+      exception.expect(FluoException.class);
       tx2.commitPrimaryColumn(cd, commitTs);
     } else {
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
@@ -409,8 +410,7 @@ public class FailureIT extends ITBaseImpl {
     tx5.mutate().row("idx:abc").fam("doc").qual("url").set("url0000");
     tx5.mutate().row("idx:def").fam("doc").qual("url").set("url0000");
     cd = tx5.createCommitData();
-    Assert.assertTrue(tx5.preCommit(cd, Bytes.of("idx:abc"), typeLayer.bc().fam("doc").qual("url")
-        .vis()));
+    Assert.assertTrue(tx5.preCommit(cd));
     Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(tx5.commitPrimaryColumn(cd, commitTs));
 

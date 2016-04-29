@@ -28,6 +28,7 @@ public class MetricNames {
   private final String txLocksTimedOut;
   private final String txLocksDead;
   private final String txStatus;
+  private final String txCommitting;
 
   private final String notificationsQueued;
 
@@ -56,6 +57,8 @@ public class MetricNames {
     txLocksTimedOut = txPrefix + "locks_timedout.";
     txLocksDead = txPrefix + "locks_dead.";
     txStatus = txPrefix + "status_";
+
+    txCommitting = metricsPrefix + "transactor.committing";
 
     // Worker metrics: io.fluo.APP.HOST.worker.METRIC
     notificationsQueued = metricsPrefix + "worker.notifications_queued";
@@ -117,5 +120,9 @@ public class MetricNames {
 
   public String getOracleServerStamps() {
     return oracleServerStamps;
+  }
+
+  public String getCommitsProcessing() {
+    return txCommitting;
   }
 }

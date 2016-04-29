@@ -82,4 +82,25 @@ public class FluoConfigurationImpl {
 
     return numThreads;
   }
+
+  // max memory to buffer committing transactions.. when this is full submitting transactions for
+  // commit will wait
+  public static final String COMMIT_MEMORY_PROP = FLUO_IMPL_PREFIX + ".tx.commit.memory";
+  public static final int COMMIT_MEMORY_DEFAULT = 20 * 1024 * 1024;
+
+  public static int getTxCommitMemory(FluoConfiguration conf) {
+    int m = conf.getInt(COMMIT_MEMORY_PROP, COMMIT_MEMORY_DEFAULT);
+    if (m <= 0) {
+      throw new IllegalArgumentException("Bad value for " + COMMIT_MEMORY_PROP + " " + m);
+    }
+    return m;
+  }
+
+  public static final String ASYNC_CW_THREADS = FLUO_IMPL_PREFIX + ".async.cw.threads";
+  public static final int ASYNC_CW_THREADS_DEFAULT = 8;
+  public static final String ASYNC_CW_LIMIT = FLUO_IMPL_PREFIX + ".async.cw.limit";
+  public static final int ASYNC_CW_LIMIT_DEFAULT = 100000;
+
+  public static final String COMMIT_THREADS = FLUO_IMPL_PREFIX + ".tx.commit.threads";
+  public static final int COMMIT_THREADS_DEFAULT = 32;
 }
