@@ -20,6 +20,7 @@ import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.values.LockValue;
 import io.fluo.api.data.Bytes;
 import io.fluo.api.data.Column;
+import io.fluo.core.util.Hex;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 
@@ -68,6 +69,6 @@ class PrimaryRowColumn {
 
   @Override
   public String toString() {
-    return prow + " " + pcol + " " + startTs;
+    return Hex.encNonAscii(prow) + " " + Hex.encNonAscii(pcol) + " " + startTs;
   }
 }

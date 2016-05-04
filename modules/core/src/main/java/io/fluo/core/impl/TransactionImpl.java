@@ -921,7 +921,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     Flutation m = new Flutation(env, cd.prow);
 
     m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encodeRollback(startTs, false, true));
+        DelLockValue.encodeRollback(startTs, true, true));
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
     ListenableFuture<Void> future =
