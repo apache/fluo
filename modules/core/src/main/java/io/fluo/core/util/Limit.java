@@ -30,7 +30,7 @@ public class Limit {
   }
 
   public synchronized void acquire(int num) {
-    Preconditions.checkArgument(num > 0, "num <=0 : %s", num);
+    Preconditions.checkArgument(num >= 0, "num < 0 : %s", num);
     while (leased >= permits) {
       try {
         wait();
