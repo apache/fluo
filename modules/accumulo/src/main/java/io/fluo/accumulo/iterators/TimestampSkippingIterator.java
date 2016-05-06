@@ -105,8 +105,9 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
         Key seekKey = curCol.followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
         Range newRange;
         if (range.afterEndKey(seekKey)) {
-          newRange =
-              new Range(range.getEndKey(), true, range.getEndKey(), range.isEndKeyInclusive());
+          // this range will force source.hasTop() to return false, because nothing can exist in the
+          // range.
+          newRange = new Range(range.getEndKey(), true, range.getEndKey(), false);
         } else {
           newRange = new Range(seekKey, true, range.getEndKey(), range.isEndKeyInclusive());
         }
