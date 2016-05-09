@@ -15,13 +15,13 @@
 package io.fluo.core.async;
 
 import java.util.Objects;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.codahale.metrics.Gauge;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
+import io.fluo.core.util.Limit;
 import io.fluo.core.worker.TxResult;
 import org.slf4j.LoggerFactory;
 
@@ -36,12 +36,11 @@ import org.slf4j.LoggerFactory;
 
 public class CommitManager {
 
-  private Semaphore memorySemaphore;
+  private Limit memoryLimit;
   private AtomicInteger commitingTransactions;
 
   public CommitManager(final Environment env) {
-    memorySemaphore =
-        new Semaphore(FluoConfigurationImpl.getTxCommitMemory(env.getConfiguration()));
+    memoryLimit = new Limit(FluoConfigurationImpl.getTxCommitMemory(env.getConfiguration()));
     commitingTransactions = new AtomicInteger(0);
 
     env.getSharedResources().getMetricRegistry()
@@ -67,7 +66,7 @@ public class CommitManager {
         commitingTransactions.decrementAndGet();
         tx.getStats().setCommitFinishTime(System.currentTimeMillis());
         tx.getStats().report(status.toString(), txExecClass);
-        memorySemaphore.release(size);
+        memoryLimit.release(size);
         try {
           tx.close();
         } catch (Exception e) {
@@ -129,7 +128,7 @@ public class CommitManager {
     Objects.requireNonNull(aco);
 
     int size = tx.getSize();
-    memorySemaphore.acquireUninterruptibly(size);
+    memoryLimit.acquire(size);
     commitingTransactions.incrementAndGet();
     CQCommitObserver myAco = new CQCommitObserver(tx, aco, txExecClass, size);
     tx.getStats().setCommitBeginTime(System.currentTimeMillis());
