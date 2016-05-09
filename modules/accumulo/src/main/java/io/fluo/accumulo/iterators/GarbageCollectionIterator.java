@@ -67,6 +67,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   private ArrayList<KeyValue> keys = new ArrayList<>();
   private ArrayList<KeyValue> keysFiltered = new ArrayList<>();
   private HashSet<Long> completeTxs = new HashSet<>();
+  private HashSet<Long> rolledback = new HashSet<>();
   private Key curCol = new Key();
   private long truncationTime;
   private int position = 0;
@@ -139,7 +140,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
       if (colType == ColumnConstants.DATA_PREFIX) {
-        if (ts >= truncationTime) {
+        if (ts >= truncationTime && !rolledback.contains(ts)) {
           return false;
         }
       } else {
@@ -174,6 +175,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
     keys.clear();
     keysFiltered.clear();
     completeTxs.clear();
+    rolledback.clear();
 
     curCol.set(source.getTopKey());
 
@@ -230,13 +232,19 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
         long txDoneTs = DelLockValue.getTxDoneTimestamp(source.getTopValue().get());
         boolean complete = completeTxs.contains(txDoneTs);
 
-        if (!complete && DelLockValue.isPrimary(source.getTopValue().get())) {
+        byte[] val = source.getTopValue().get();
+
+        if (!complete && DelLockValue.isPrimary(val)) {
           keep = true;
+        }
+
+        if (DelLockValue.isRollback(val)) {
+          rolledback.add(ts);
+          keep |= !isFullMajc;
         }
 
         if (ts > invalidationTime) {
           invalidationTime = ts;
-          keep = true;
         }
 
         if (keep) {

@@ -18,14 +18,19 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Iterables;
+import io.fluo.accumulo.format.FluoFormatter;
 import io.fluo.accumulo.util.ColumnConstants;
 import io.fluo.accumulo.util.ZookeeperPath;
 import io.fluo.accumulo.util.ZookeeperUtil;
+import io.fluo.api.data.Column;
+import io.fluo.core.impl.TransactionImpl.CommitData;
+import io.fluo.core.impl.TransactorNode;
 import io.fluo.integration.BankUtil;
 import io.fluo.integration.ITBaseImpl;
 import io.fluo.integration.TestTransaction;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.admin.CompactionConfig;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Value;
@@ -116,6 +121,65 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(0, Iterables.size(scanner));
 
     tx4.done();
+  }
+
+  @Test(timeout = 60000)
+  public void testRolledBackDataIsDropped() throws Exception {
+
+    Column col1 = new Column("fam1", "q1");
+    Column col2 = new Column("fam1", "q2");
+
+    TransactorNode t2 = new TransactorNode(env);
+    TestTransaction tx2 = new TestTransaction(env, t2);
+
+    for (int r = 0; r < 10; r++) {
+      tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
+      tx2.mutate().row(r + "").col(col2).set("1" + r + "1");
+    }
+
+    CommitData cd = tx2.createCommitData();
+    Assert.assertTrue(tx2.preCommit(cd));
+
+    t2.close();
+
+    // rollback data
+    TestTransaction tx3 = new TestTransaction(env, t2);
+    for (int r = 0; r < 10; r++) {
+      tx3.gets(r + "", col1);
+      tx3.gets(r + "", col2);
+    }
+    tx3.done();
+
+    Assert.assertEquals(20, countInTable("-LOCK"));
+    Assert.assertEquals(20, countInTable("-DEL_LOCK"));
+    Assert.assertEquals(20, countInTable("-DATA"));
+
+    // flush should drop locks and data
+    conn.tableOperations().flush(table, null, null, true);
+
+    Assert.assertEquals(0, countInTable("-LOCK"));
+    Assert.assertEquals(20, countInTable("-DEL_LOCK"));
+    Assert.assertEquals(0, countInTable("-DATA"));
+
+    // compact should drop all del locks except for primary
+    conn.tableOperations().compact(table, new CompactionConfig().setWait(true));
+
+    Assert.assertEquals(0, countInTable("-LOCK"));
+    Assert.assertEquals(1, countInTable("-DEL_LOCK"));
+    Assert.assertEquals(0, countInTable("-DATA"));
+  }
+
+  private int countInTable(String str) throws TableNotFoundException {
+    int count = 0;
+    FluoFormatter ff = new FluoFormatter();
+    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    for (String e : Iterables.transform(scanner, ff)) {
+      if (e.contains(str)) {
+        count++;
+      }
+    }
+
+    return count;
   }
 
   @Test

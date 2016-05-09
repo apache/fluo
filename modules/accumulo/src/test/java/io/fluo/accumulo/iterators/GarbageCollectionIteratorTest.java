@@ -265,12 +265,35 @@ public class GarbageCollectionIteratorTest {
   }
 
   @Test
+  public void testDelLockPartialCompaction() {
+    // on partial compaction can delete data that del lock points to... but should keep del lock
+    // until full major compaction
+
+    TestData input = new TestData();
+
+    input.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
+    input.add("0 f q LOCK 19", "1 f q");
+    input.add("0 f q DEL_LOCK 11", "0 ROLLBACK");
+    input.add("0 f q LOCK 11", "1 f q");
+    input.add("0 f q DATA 19", "19");
+    input.add("0 f q DATA 11", "15");
+
+    TestData output = new TestData(newGCI(input, 23, false));
+
+    TestData expected = new TestData();
+    expected.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
+    expected.add("0 f q DEL_LOCK 11", "0 ROLLBACK");
+
+    Assert.assertEquals(expected, output);
+  }
+
+  @Test
   public void testDelLock() {
     TestData input = new TestData();
 
-    input.add("0 f q DEL_LOCK 19", "19");
+    input.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
     input.add("0 f q LOCK 19", "1 f q");
-    input.add("0 f q DEL_LOCK 11", "11");
+    input.add("0 f q DEL_LOCK 11", "0 ROLLBACK");
     input.add("0 f q LOCK 11", "1 f q");
     input.add("0 f q DATA 19", "19");
     input.add("0 f q DATA 11", "15");
@@ -278,18 +301,15 @@ public class GarbageCollectionIteratorTest {
     TestData output = new TestData(newGCI(input, 23));
 
     TestData expected = new TestData();
-    expected.add("0 f q DEL_LOCK 19", "19");
-    expected.add("0 f q DATA 19", "19");
-    expected.add("0 f q DATA 11", "15");
 
     Assert.assertEquals(expected, output);
 
     // test write that supercedes a del lock
     input = new TestData();
     input.add("0 f q WRITE 22", "21");
-    input.add("0 f q DEL_LOCK 19", "19");
+    input.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
     input.add("0 f q LOCK 19", "1 f q");
-    input.add("0 f q DEL_LOCK 11", "11");
+    input.add("0 f q DEL_LOCK 11", "0 ROLLBACK");
     input.add("0 f q LOCK 11", "1 f q");
     input.add("0 f q DATA 21", "17");
     input.add("0 f q DATA 19", "19");
@@ -303,9 +323,9 @@ public class GarbageCollectionIteratorTest {
 
     Assert.assertEquals(expected, output);
 
-    // test del_lock followed by write... should keep del_lock
+    // test del_lock followed by write...
     input = new TestData();
-    input.add("0 f q DEL_LOCK 19", "19");
+    input.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
     input.add("0 f q LOCK 19", "1 f q");
     input.add("0 f q WRITE 15", "11");
     input.add("0 f q DATA 19", "19");
@@ -314,9 +334,7 @@ public class GarbageCollectionIteratorTest {
     output = new TestData(newGCI(input, 23));
 
     expected = new TestData();
-    expected.add("0 f q DEL_LOCK 19", "19");
     expected.add("0 f q WRITE 15", "11");
-    expected.add("0 f q DATA 19", "19");
     expected.add("0 f q DATA 11", "15");
 
     Assert.assertEquals(expected, output);
@@ -541,7 +559,9 @@ public class GarbageCollectionIteratorTest {
 
     TestData input = new TestData();
 
-    input.add("0 f a DEL_LOCK 19", "19");
+    // important that del lock has same timestamp as lock in another column... should not delete the
+    // lock or data in other column
+    input.add("0 f a DEL_LOCK 19", "0 ROLLBACK");
     input.add("0 f a LOCK 19", "1 f q");
     input.add("0 f a DATA 19", "15");
 
@@ -561,9 +581,6 @@ public class GarbageCollectionIteratorTest {
     TestData output = new TestData(newGCI(input, 27));
 
     TestData expected = new TestData();
-
-    expected.add("0 f a DEL_LOCK 19", "19");
-    expected.add("0 f a DATA 19", "15");
 
     expected.add("0 f b LOCK 19", "1 f q");
     expected.add("0 f b DATA 19", "16");
