@@ -97,7 +97,7 @@ function kill_if_running {
 
 FLUO_LOG_HOST=$(hostname)
 FLUO_APP="mini"
-MINI_OPTS="-config-dir $APP_CONF_DIR -log-output $APP_LOG_DIR"
+MINI_OPTS="$APP_CONF_DIR/fluo.properties"
 MINI_OUT=${APP_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.out
 MINI_ERR=${APP_LOG_DIR}/${FLUO_APP}_${FLUO_LOG_HOST}.err
 MINI_LIB="$APP_CONF_DIR/*:$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/log4j/*"
@@ -124,7 +124,7 @@ new)
 start)
   validate_app
   check_dirs
-  java $START_OPTS -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" org.apache.fluo.cluster.main.MiniFluoMain $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
+  java $START_OPTS -cp "$MINI_LIB:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" org.apache.fluo.mini.MiniFluoImpl $MINI_OPTS >$MINI_OUT 2>$MINI_ERR &
   echo "Started '$APP' application in MiniFluo.  View logs at $APP_LOG_DIR"
   echo "MiniFluo will create properties file for Fluo clients at $APP_CLIENT_PROPS"
   echo -n "Waiting for MiniFluo to create client.properties..."

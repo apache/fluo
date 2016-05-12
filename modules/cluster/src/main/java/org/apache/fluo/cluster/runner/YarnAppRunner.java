@@ -30,8 +30,8 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.cluster.main.FluoOracleMain;
-import org.apache.fluo.cluster.main.FluoWorkerMain;
+import org.apache.fluo.cluster.runnable.OracleRunnable;
+import org.apache.fluo.cluster.runnable.WorkerRunnable;
 import org.apache.fluo.cluster.yarn.FluoTwillApp;
 import org.apache.fluo.cluster.yarn.TwillUtil;
 import org.apache.fluo.core.client.FluoAdminImpl;
@@ -331,16 +331,16 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   }
 
   private boolean allContainersRunning(TwillController controller, FluoConfiguration config) {
-    return TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) == config
+    return TwillUtil.numRunning(controller, OracleRunnable.ORACLE_NAME) == config
         .getOracleInstances()
-        && TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) == config
+        && TwillUtil.numRunning(controller, WorkerRunnable.WORKER_NAME) == config
             .getWorkerInstances();
   }
 
   private String containerStatus(TwillController controller, FluoConfiguration config) {
-    return "" + TwillUtil.numRunning(controller, FluoOracleMain.ORACLE_NAME) + " of "
+    return "" + TwillUtil.numRunning(controller, OracleRunnable.ORACLE_NAME) + " of "
         + config.getOracleInstances() + " Oracle containers and "
-        + TwillUtil.numRunning(controller, FluoWorkerMain.WORKER_NAME) + " of "
+        + TwillUtil.numRunning(controller, WorkerRunnable.WORKER_NAME) + " of "
         + config.getWorkerInstances() + " Worker containers";
   }
 
@@ -371,12 +371,12 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       if (extraInfo) {
         ResourceReport report = getResourceReport(controller, 30000);
         Collection<TwillRunResources> resources;
-        resources = report.getRunnableResources(FluoOracleMain.ORACLE_NAME);
+        resources = report.getRunnableResources(OracleRunnable.ORACLE_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
             + config.getOracleInstances() + " desired Oracle containers:\n");
         TwillUtil.printResources(resources);
 
-        resources = report.getRunnableResources(FluoWorkerMain.WORKER_NAME);
+        resources = report.getRunnableResources(WorkerRunnable.WORKER_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
             + config.getWorkerInstances() + " desired Worker containers:\n");
         TwillUtil.printResources(resources);

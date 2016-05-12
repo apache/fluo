@@ -72,6 +72,8 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Worker
   private static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
+  public static final String WORKER_CLASS_PROP = WORKER_PREFIX + ".class";
+  public static final String WORKER_CLASS_DEFAULT = FLUO_PREFIX + ".core.worker.FluoWorkerImpl";
   public static final String WORKER_NUM_THREADS_PROP = WORKER_PREFIX + ".num.threads";
   public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
   public static final String WORKER_MAX_MEMORY_MB_PROP = WORKER_PREFIX + ".max.memory.mb";
@@ -90,6 +92,8 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
+  public static final String ORACLE_CLASS_PROP = ORACLE_PREFIX + ".class";
+  public static final String ORACLE_CLASS_DEFAULT = FLUO_PREFIX + ".core.oracle.FluoOracleImpl";
   public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
   public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
@@ -175,10 +179,12 @@ public class FluoConfiguration extends CompositeConfiguration {
     getLoaderQueueSize();
     getLoaderThreads();
     getObserverConfig();
+    getOracleClass();
     getOracleInstances();
     getOracleMaxMemory();
     getOracleNumCores();
     getTransactionRollbackTime();
+    getWorkerClass();
     getWorkerInstances();
     getWorkerMaxMemory();
     getWorkerNumCores();
@@ -335,6 +341,14 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public String getAdminClass() {
     return getNonEmptyString(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
+  }
+
+  public FluoConfiguration setWorkerClass(String workerClass) {
+    return setNonEmptyString(WORKER_CLASS_PROP, workerClass);
+  }
+
+  public String getWorkerClass() {
+    return getNonEmptyString(WORKER_CLASS_PROP, WORKER_CLASS_DEFAULT);
   }
 
   public FluoConfiguration setWorkerThreads(int numThreads) {
@@ -500,6 +514,14 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public int getLoaderQueueSize() {
     return getNonNegativeInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
+  }
+
+  public FluoConfiguration setOracleClass(String oracleClass) {
+    return setNonEmptyString(ORACLE_CLASS_PROP, oracleClass);
+  }
+
+  public String getOracleClass() {
+    return getNonEmptyString(ORACLE_CLASS_PROP, ORACLE_CLASS_DEFAULT);
   }
 
   public FluoConfiguration setOracleMaxMemory(int oracleMaxMemory) {

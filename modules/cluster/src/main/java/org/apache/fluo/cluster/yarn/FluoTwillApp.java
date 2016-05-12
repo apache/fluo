@@ -18,8 +18,8 @@ package org.apache.fluo.cluster.yarn;
 import java.io.File;
 
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.cluster.main.FluoOracleMain;
-import org.apache.fluo.cluster.main.FluoWorkerMain;
+import org.apache.fluo.cluster.runnable.OracleRunnable;
+import org.apache.fluo.cluster.runnable.WorkerRunnable;
 import org.apache.fluo.cluster.runner.YarnAppRunner;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents Fluo oracle application in Twill
+ * Represents Fluo application in Twill
  */
 public class FluoTwillApp implements TwillApplication {
 
@@ -50,13 +50,16 @@ public class FluoTwillApp implements TwillApplication {
   private MoreFile addConfigFiles(LocalFileAdder fileAdder) {
     File confDir = new File(fluoConf);
     MoreFile moreFile = null;
-    for (File f : confDir.listFiles()) {
-      if (f.isFile()) {
-        log.trace("Adding config file - " + f.getAbsolutePath());
-        if (moreFile == null) {
-          moreFile = fileAdder.add(String.format("./conf/%s", f.getName()), f);
-        } else {
-          moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
+    File[] confFiles = confDir.listFiles();
+    if (confFiles != null) {
+      for (File f : confFiles) {
+        if (f.isFile()) {
+          log.trace("Adding config file - " + f.getAbsolutePath());
+          if (moreFile == null) {
+            moreFile = fileAdder.add(String.format("./conf/%s", f.getName()), f);
+          } else {
+            moreFile = moreFile.add(String.format("./conf/%s", f.getName()), f);
+          }
         }
       }
     }
@@ -88,7 +91,7 @@ public class FluoTwillApp implements TwillApplication {
             .setInstances(config.getOracleInstances()).build();
 
     LocalFileAdder fileAdder =
-        moreRunnable.add(FluoOracleMain.ORACLE_NAME, new FluoOracleMain(), oracleResources)
+        moreRunnable.add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources)
             .withLocalFiles();
     RunnableSetter runnableSetter = addConfigFiles(fileAdder).apply();
 
@@ -99,12 +102,12 @@ public class FluoTwillApp implements TwillApplication {
             .setInstances(config.getWorkerInstances()).build();
 
     fileAdder =
-        runnableSetter.add(FluoWorkerMain.WORKER_NAME, new FluoWorkerMain(), workerResources)
+        runnableSetter.add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources)
             .withLocalFiles();
     runnableSetter = addConfigFiles(fileAdder).apply();
 
     // Set runnable order, build and return TwillSpecification
-    return runnableSetter.withOrder().begin(FluoOracleMain.ORACLE_NAME)
-        .nextWhenStarted(FluoWorkerMain.WORKER_NAME).build();
+    return runnableSetter.withOrder().begin(OracleRunnable.ORACLE_NAME)
+        .nextWhenStarted(WorkerRunnable.WORKER_NAME).build();
   }
 }
