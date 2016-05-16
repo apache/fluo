@@ -74,6 +74,19 @@ public class BytesBuilder {
   }
 
   /**
+   * Append a single byte.
+   *
+   * @param b take the lower 8 bits and appends it.
+   * @return self
+   */
+  public BytesBuilder append(int b) {
+    ensureCapacity(len + 1);
+    ba[len] = (byte) b;
+    len += 1;
+    return this;
+  }
+
+  /**
    * Sets the point at which appending will start. This method can shrink or grow the ByteBuilder
    * from its current state. If it grows it will zero pad.
    */
