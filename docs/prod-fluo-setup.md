@@ -181,6 +181,16 @@ has enough threads.  Should probably increase the
 Using at least Accumulo 1.6.1 is recommended because multiple performance bugs
 were fixed.
 
+Tuning YARN
+-----------
+
+When running Fluo oracles and workers in YARN, the number of instances, max memory, and number
+of cores for Fluo processes can be configured in [fluo.properties]. If YARN is killing processes
+consider increasing `twill.java.reserved.memory.mb` (which defaults to 200 and is set in yarn-site.xml).
+The `twill.java.reserved.memory.mb` config determines the gap between the YARN memory limit set in
+[fluo.properties] and the java -Xmx setting.  For example, if max memory is 1024 and twill reserved
+memory is 200, the java -Xmx setting will be 1024-200 = 824 MB.
+
 Run locally without YARN
 ------------------------
 
