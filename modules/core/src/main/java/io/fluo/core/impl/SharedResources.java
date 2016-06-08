@@ -58,7 +58,8 @@ public class SharedResources implements AutoCloseable {
 
   private AsyncConditionalWriter acw;
   private AsyncConditionalWriter bulkAcw;
-  private ExecutorService commitExecutor;
+  private ExecutorService asyncCommitExecutor;
+  private ExecutorService syncCommitExecutor;
   private CommitManager commitManager;
 
 
@@ -90,11 +91,17 @@ public class SharedResources implements AutoCloseable {
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
 
-    // set to 32 for cases when commit is executing some error handling synchronously
     int commitThreads =
-        env.getConfiguration().getInt(FluoConfigurationImpl.COMMIT_THREADS,
-            FluoConfigurationImpl.COMMIT_THREADS_DEFAULT);
-    commitExecutor = Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("commits"));
+        env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_COMMIT_THREADS,
+            FluoConfigurationImpl.ASYNC_COMMIT_THREADS_DEFAULT);
+    asyncCommitExecutor =
+        Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("async-commits"));
+
+    commitThreads =
+        env.getConfiguration().getInt(FluoConfigurationImpl.SYNC_COMMIT_THREADS,
+            FluoConfigurationImpl.SYNC_COMMIT_THREADS_DEFAULT);
+    syncCommitExecutor =
+        Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("sync-commits"));
 
     acw = new AsyncConditionalWriter(env, cw);
     bulkAcw = new AsyncConditionalWriter(env, bulkCw);
@@ -180,9 +187,9 @@ public class SharedResources implements AutoCloseable {
     if (commitManager != null) {
       commitManager.close();
     }
-    commitExecutor.shutdownNow();
+    asyncCommitExecutor.shutdownNow();
     try {
-      commitExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      asyncCommitExecutor.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException e1) {
       throw new RuntimeException(e1);
     }
@@ -217,8 +224,12 @@ public class SharedResources implements AutoCloseable {
     }
   }
 
-  public Executor getCommitExecutor() {
-    return commitExecutor;
+  public Executor getSyncCommitExecutor() {
+    return syncCommitExecutor;
+  }
+
+  public Executor getAsyncCommitExecutor() {
+    return asyncCommitExecutor;
   }
 
   public AsyncConditionalWriter getAsyncConditionalWriter() {
