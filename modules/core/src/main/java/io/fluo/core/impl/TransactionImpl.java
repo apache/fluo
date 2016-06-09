@@ -59,6 +59,8 @@ import io.fluo.core.util.ConditionalFlutation;
 import io.fluo.core.util.FluoCondition;
 import io.fluo.core.util.Flutation;
 import io.fluo.core.util.SpanUtil;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
@@ -685,6 +687,26 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
   }
 
+  private abstract static class SynchronousCommitTask implements Runnable {
+
+    private CommitData cd;
+
+    SynchronousCommitTask(CommitData cd) {
+      this.cd = cd;
+    }
+
+    protected abstract void runCommitStep(CommitData cd) throws Exception;
+
+    @Override
+    public void run() {
+      try {
+        runCommitStep(cd);
+      } catch (Exception e) {
+        cd.commitObserver.failed(e);
+      }
+    }
+  }
+
   @Override
   public int getSize() {
     // TODO could calculate as items are added/set
@@ -782,15 +804,29 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
         postLockPrimary(cd, pcm, Iterators.getOnlyElement(result));
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
-  private void postLockPrimary(CommitData cd, ConditionalMutation pcm, Result result)
+  private void postLockPrimary(final CommitData cd, final ConditionalMutation pcm, Result result)
       throws Exception {
-    Status mutationStatus = result.getStatus();
+    final Status mutationStatus = result.getStatus();
 
+    if (mutationStatus == Status.ACCEPTED) {
+      lockOtherColumns(cd);
+    } else {
+      env.getSharedResources().getSyncCommitExecutor().execute(new SynchronousCommitTask(cd) {
+        @Override
+        protected void runCommitStep(CommitData cd) throws Exception {
+          synchronousPostLockPrimary(cd, pcm, mutationStatus);
+        }
+      });
+    }
+  }
+
+  private void synchronousPostLockPrimary(CommitData cd, ConditionalMutation pcm,
+      Status mutationStatus) throws AccumuloException, AccumuloSecurityException, Exception {
+    // TODO convert this code to async
     while (mutationStatus == Status.UNKNOWN) {
-      // TODO do async.. this could turn into and if and this func could call itself async
       TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
 
       switch (txInfo.status) {
@@ -826,6 +862,10 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       return;
     }
 
+    lockOtherColumns(cd);
+  }
+
+  private void lockOtherColumns(CommitData cd) {
     ArrayList<ConditionalMutation> mutations = new ArrayList<>();
 
     for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
@@ -854,11 +894,10 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Iterator<Result> results) throws Exception {
         postLockOther(cd, results);
       }
-    }, env.getSharedResources().getCommitExecutor());
-
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
-  private void postLockOther(CommitData cd, Iterator<Result> results) throws Exception {
+  private void postLockOther(final CommitData cd, Iterator<Result> results) throws Exception {
     while (results.hasNext()) {
       Result result = results.next();
       // TODO handle unknown?
@@ -872,8 +911,13 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     }
 
     if (cd.getRejected().size() > 0) {
-      readUnread(cd);
-      rollbackOtherLocks(cd);
+      env.getSharedResources().getSyncCommitExecutor().execute(new SynchronousCommitTask(cd) {
+        @Override
+        protected void runCommitStep(CommitData cd) throws Exception {
+          readUnread(cd);
+          rollbackOtherLocks(cd);
+        }
+      });
     } else if (stopAfterPreCommit) {
       cd.commitObserver.committed();
     } else {
@@ -883,7 +927,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
         protected void onSuccess(CommitData cd, Stamp stamp) throws Exception {
           beginSecondCommitPhase(cd, stamp);
         }
-      }, env.getSharedResources().getCommitExecutor());
+      }, env.getSharedResources().getAsyncCommitExecutor());
     }
   }
 
@@ -912,7 +956,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Void v) throws Exception {
         rollbackPrimaryLock(cd);
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
   private void rollbackPrimaryLock(CommitData cd) throws Exception {
@@ -931,7 +975,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Void v) throws Exception {
         cd.commitObserver.commitFailed();
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
 
@@ -1003,7 +1047,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Void v) throws Exception {
         commmitPrimary(cd, commitTs);
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
 
   }
 
@@ -1028,36 +1072,59 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
       @Override
       protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
-        postCommitPrimary(cd, commitTs, delLockMutation, Iterators.getOnlyElement(result));
+        handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
+            Iterators.getOnlyElement(result));
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
-  private void postCommitPrimary(CommitData cd, long commitTs, ConditionalMutation delLockMutation,
-      Result result) throws Exception {
-    Status mutationStatus = result.getStatus();
+  private void handleUnkownStatsAfterPrimary(CommitData cd, final long commitTs,
+      final ConditionalMutation delLockMutation, Result result) throws Exception {
 
-    // TODO aync
-    while (mutationStatus == Status.UNKNOWN) {
+    final Status mutationStatus = result.getStatus();
+    if (mutationStatus == Status.UNKNOWN) {
+      // the code for handing this is synchronous and needs to be handled in another thread pool
+      Runnable task = new SynchronousCommitTask(cd) {
+        @Override
+        protected void runCommitStep(CommitData cd) throws Exception {
 
-      TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
+          Status ms = mutationStatus;
 
-      switch (txInfo.status) {
-        case COMMITTED:
-          if (txInfo.commitTs != commitTs) {
-            throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!="
-                + commitTs);
+          while (ms == Status.UNKNOWN) {
+
+            // TODO async
+            TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
+
+            switch (txInfo.status) {
+              case COMMITTED:
+                if (txInfo.commitTs != commitTs) {
+                  throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs
+                      + "!=" + commitTs);
+                }
+                ms = Status.ACCEPTED;
+                break;
+              case LOCKED:
+                // TODO async
+                ms = cd.cw.write(delLockMutation).getStatus();
+                break;
+              default:
+                ms = Status.REJECTED;
+            }
           }
-          mutationStatus = Status.ACCEPTED;
-          break;
-        case LOCKED:
-          mutationStatus = cd.cw.write(delLockMutation).getStatus();
-          break;
-        default:
-          mutationStatus = Status.REJECTED;
-      }
-    }
 
+          postCommitPrimary(cd, commitTs, ms);
+        }
+      };
+
+      env.getSharedResources().getSyncCommitExecutor().execute(task);
+    } else {
+      postCommitPrimary(cd, commitTs, mutationStatus);
+    }
+  }
+
+
+  private void postCommitPrimary(CommitData cd, long commitTs, Status mutationStatus)
+      throws Exception {
     if (mutationStatus != Status.ACCEPTED) {
       cd.commitObserver.commitFailed();
     } else {
@@ -1093,7 +1160,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
       protected void onSuccess(CommitData cd, Void v) throws Exception {
         finishCommit(cd, commitTs);
       }
-    }, env.getSharedResources().getCommitExecutor());
+    }, env.getSharedResources().getAsyncCommitExecutor());
 
   }
 

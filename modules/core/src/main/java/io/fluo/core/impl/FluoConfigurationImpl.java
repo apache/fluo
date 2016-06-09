@@ -101,6 +101,9 @@ public class FluoConfigurationImpl {
   public static final String ASYNC_CW_LIMIT = FLUO_IMPL_PREFIX + ".async.cw.limit";
   public static final int ASYNC_CW_LIMIT_DEFAULT = 100000;
 
-  public static final String COMMIT_THREADS = FLUO_IMPL_PREFIX + ".tx.commit.threads";
-  public static final int COMMIT_THREADS_DEFAULT = 32;
+  public static final String ASYNC_COMMIT_THREADS = FLUO_IMPL_PREFIX + ".tx.commit.threads.async";
+  public static final int ASYNC_COMMIT_THREADS_DEFAULT = 8;
+
+  public static final String SYNC_COMMIT_THREADS = FLUO_IMPL_PREFIX + ".tx.commit.threads.sync";
+  public static final int SYNC_COMMIT_THREADS_DEFAULT = 32;
 }
