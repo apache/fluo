@@ -28,7 +28,7 @@ import io.fluo.api.data.Column;
 import io.fluo.api.data.RowColumn;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.Notification;
-import io.fluo.core.util.FluoThreadFactory;
+import io.fluo.core.util.FluoExecutors;
 import io.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +47,7 @@ public class NotificationProcessor implements AutoCloseable {
     int numThreads = env.getConfiguration().getWorkerThreads();
     this.env = env;
     this.queue = new PriorityBlockingQueue<>();
-    this.executor =
-        new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, queue,
-            new FluoThreadFactory("ntfyProc"));
+    this.executor = FluoExecutors.newFixedThreadPool(numThreads, queue, "ntfyProc");
     this.tracker = new NotificationTracker();
     this.observers = new Observers(env);
     env.getSharedResources().getMetricRegistry()
@@ -166,6 +164,13 @@ public class NotificationProcessor implements AutoCloseable {
     @Override
     public int compareTo(FutureNotificationTask o) {
       return Long.compare(notification.getTimestamp(), o.notification.getTimestamp());
+    }
+
+    @Override
+    protected void setException(Throwable t) {
+      super.setException(t);
+      System.err.println("Uncaught Exception ");
+      t.printStackTrace();
     }
   }
 

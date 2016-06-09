@@ -15,7 +15,6 @@
 package io.fluo.core.client;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,7 @@ import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.TransactionImpl;
 import io.fluo.core.log.TracingTransaction;
 import io.fluo.core.util.Counter;
-import io.fluo.core.util.FluoThreadFactory;
+import io.fluo.core.util.FluoExecutors;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.LoggerFactory;
 
@@ -115,11 +114,11 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
       };
       try {
         loader.load(txi, context);
+        env.getSharedResources().getCommitManager().beginCommit(txi, loader.getClass(), this);
       } catch (Exception e) {
         LoggerFactory.getLogger(LoaderCommitObserver.class).debug(e.getMessage(), e);
         exceptionRef.compareAndSet(null, e);
       }
-      env.getSharedResources().getCommitManager().beginCommit(txi, loader.getClass(), this);
     }
   }
 
@@ -163,7 +162,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     if (numThreads == 0) {
       this.executor = MoreExecutors.sameThreadExecutor();
     } else {
-      this.executor = Executors.newFixedThreadPool(numThreads, new FluoThreadFactory("loader"));
+      this.executor = FluoExecutors.newFixedThreadPool(numThreads, "loader");
     }
   }
 
