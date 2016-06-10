@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableList;
@@ -30,7 +29,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.fluo.core.impl.Environment;
 import io.fluo.core.impl.FluoConfigurationImpl;
-import io.fluo.core.util.FluoThreadFactory;
+import io.fluo.core.util.FluoExecutors;
 import io.fluo.core.util.Limit;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
@@ -53,8 +52,7 @@ public class AsyncConditionalWriter implements
         env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
             FluoConfigurationImpl.ASYNC_CW_LIMIT_DEFAULT);
     this.les =
-        MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads,
-            new FluoThreadFactory("asyncCW")));
+        MoreExecutors.listeningDecorator(FluoExecutors.newFixedThreadPool(numThreads, "asyncCW"));
     // the conditional writer currently has not memory limits... give it too much and it blows out
     // memory.. need to fix this in conditional writer
     // for now this needs to be memory based

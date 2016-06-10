@@ -14,6 +14,7 @@
 
 package io.fluo.core.impl;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -137,6 +138,13 @@ public class SharedBatchWriter {
     this.bw = bw;
     this.mutQueue = new ArrayBlockingQueue<>(100000);
     Thread thread = new FluoThreadFactory("sharedBW").newThread(new FlushTask());
+    thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        System.err.println("Uncaught exception in shared batch writer");
+        e.printStackTrace();
+      }
+    });
     thread.setDaemon(true);
     thread.start();
   }

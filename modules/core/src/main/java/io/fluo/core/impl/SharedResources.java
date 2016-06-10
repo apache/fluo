@@ -16,7 +16,6 @@ package io.fluo.core.impl;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
@@ -26,7 +25,7 @@ import io.fluo.core.impl.TransactorCache.TcStatus;
 import io.fluo.core.impl.TransactorNode.TrStatus;
 import io.fluo.core.oracle.OracleClient;
 import io.fluo.core.util.CuratorUtil;
-import io.fluo.core.util.FluoThreadFactory;
+import io.fluo.core.util.FluoExecutors;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -94,14 +93,12 @@ public class SharedResources implements AutoCloseable {
     int commitThreads =
         env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_COMMIT_THREADS,
             FluoConfigurationImpl.ASYNC_COMMIT_THREADS_DEFAULT);
-    asyncCommitExecutor =
-        Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("async-commits"));
+    asyncCommitExecutor = FluoExecutors.newFixedThreadPool(commitThreads, "async-commits");
 
     commitThreads =
         env.getConfiguration().getInt(FluoConfigurationImpl.SYNC_COMMIT_THREADS,
             FluoConfigurationImpl.SYNC_COMMIT_THREADS_DEFAULT);
-    syncCommitExecutor =
-        Executors.newFixedThreadPool(commitThreads, new FluoThreadFactory("sync-commits"));
+    syncCommitExecutor = FluoExecutors.newFixedThreadPool(commitThreads, "sync-commits");
 
     acw = new AsyncConditionalWriter(env, cw);
     bulkAcw = new AsyncConditionalWriter(env, bulkCw);
