@@ -16,20 +16,16 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>io.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-
   <artifactId>fluo-mini</artifactId>
-
   <name>Fluo Mini</name>
   <description>This module contains the implementation code of MiniFluo.  It was separated from fluo-core
     to remove the dependency on accumulo-minicluster from core.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -58,6 +54,13 @@
     <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-minicluster</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- See #677 -->
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
