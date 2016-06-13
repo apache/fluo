@@ -26,3 +26,4 @@ CREATE CONTINUOUS QUERY cq20 ON fluo_metrics BEGIN SELECT mean(value) as "value"
 CREATE CONTINUOUS QUERY cq21 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_committed_10m FROM tx_status_committed WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
 CREATE CONTINUOUS QUERY cq22 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.tx_status_commit_exception_10m FROM tx_status_commit_exception WHERE "field" = 'm1_rate' GROUP BY time(10m), app, observer, host END
 CREATE CONTINUOUS QUERY cq23 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.worker_notifications_queued_10m FROM worker_notifications_queued GROUP BY time(10m), app, host END
+CREATE CONTINUOUS QUERY cq24 ON fluo_metrics BEGIN SELECT mean(value) as "value" INTO fluo_metrics.r3m.transactor_committing_10m FROM transactor_committing GROUP BY time(10m), app, host END
