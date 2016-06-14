@@ -55,7 +55,7 @@ function validate_app_full {
   if [[ $APP = *"-h"* ]]; then
     print_usage
   fi
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" io.fluo.cluster.util.ValidateAppName $APP
+  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.util.ValidateAppName $APP
 }
 
 function check_dirs {
@@ -86,7 +86,7 @@ start-oracle)
   validate_app_full
   check_dirs
   SERVICE="oracle"
-  java -Dfluo.app=$APP -cp "$LOCAL_LIB" io.fluo.cluster.main.FluoOracleMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -Dfluo.app=$APP -cp "$LOCAL_LIB" org.apache.fluo.cluster.main.FluoOracleMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
   echo "Started oracle for Fluo '$APP' application.  View its logs at $APP_LOG_DIR"
   ;;
 kill-oracle)
@@ -96,7 +96,7 @@ start-worker)
   validate_app_full
   check_dirs
   SERVICE="worker"
-  java -Dfluo.app=$APP -cp "$LOCAL_LIB:$APP_LIB_DIR/*" io.fluo.cluster.main.FluoWorkerMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -Dfluo.app=$APP -cp "$LOCAL_LIB:$APP_LIB_DIR/*" org.apache.fluo.cluster.main.FluoWorkerMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
   echo "Started worker for Fluo '$APP' application.  View its logs at $APP_LOG_DIR"
   ;;
 kill-worker)

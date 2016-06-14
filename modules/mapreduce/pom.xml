@@ -16,19 +16,15 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
-    <groupId>io.fluo</groupId>
+    <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-
   <artifactId>fluo-mapreduce</artifactId>
-
   <name>Fluo MapReduce</name>
   <description>This module provides utility code for MapReduce jobs that read from or write to a Fluo table.</description>
-
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -39,30 +35,24 @@
       <artifactId>commons-configuration</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-accumulo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-core</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-client</artifactId>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-accumulo</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-integration</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -74,8 +64,13 @@
       <artifactId>accumulo-minicluster</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-integration</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
-
   <profiles>
     <profile>
       <id>mini-accumulo</id>

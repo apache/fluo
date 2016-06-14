@@ -21,7 +21,7 @@ This file configures logging for MiniFluo (when using 'mini-fluo' command)
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
   <appender name="A2" class="org.apache.log4j.RollingFileAppender">
-    <param name="File" value="${io.fluo.log.dir}/${io.fluo.log.app}_${io.fluo.log.host}.log" />
+    <param name="File" value="${org.apache.fluo.log.dir}/${org.apache.fluo.log.app}_${org.apache.fluo.log.host}.log" />
     <param name="MaxFileSize" value="1000MB" />
     <param name="MaxBackupIndex" value="10" />
     <param name="Threshold" value="DEBUG" />

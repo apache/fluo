@@ -46,11 +46,11 @@
       <useTransitiveDependencies>true</useTransitiveDependencies>
       <useTransitiveFiltering>true</useTransitiveFiltering>
       <includes>
-        <include>io.fluo:fluo-api</include>
-        <include>io.fluo:fluo-accumulo</include>
-        <include>io.fluo:fluo-core</include>
-        <include>io.fluo:fluo-mini</include>
-        <include>io.fluo:fluo-mapreduce</include>
+        <include>org.apache.fluo:fluo-api</include>
+        <include>org.apache.fluo:fluo-accumulo</include>
+        <include>org.apache.fluo:fluo-core</include>
+        <include>org.apache.fluo:fluo-mini</include>
+        <include>org.apache.fluo:fluo-mapreduce</include>
         <include>org.slf4j:slf4j-api</include>
         <!--fluo-core has direct dependencies on following, but for some reason maven does not include -->
         <include>org.apache.curator:curator-framework</include>

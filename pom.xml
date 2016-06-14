@@ -6,6 +6,7 @@
     <artifactId>fluo-io-parent</artifactId>
     <version>2</version>
   </parent>
+  <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
   <version>1.0.0-beta-3-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -98,47 +99,6 @@
         <version>3.1.1</version>
       </dependency>
       <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-accumulo</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-cluster</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-integration</artifactId>
-        <version>${project.version}</version>
-        <type>test-jar</type>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-mapreduce</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-metrics</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.fluo</groupId>
-        <artifactId>fluo-mini</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.12</version>
@@ -172,6 +132,47 @@
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-recipes</artifactId>
         <version>${curator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-accumulo</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-cluster</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-integration</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-mapreduce</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-mini</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -266,7 +267,7 @@
           <artifactId>apache-rat-plugin</artifactId>
           <configuration>
             <excludes>
-              <exclude>**/services/io.fluo.core.metrics.ReporterStarter</exclude>
+              <exclude>**/services/org.apache.fluo.core.metrics.ReporterStarter</exclude>
               <exclude>README.md</exclude>
               <exclude>docs/**.md</exclude>
               <exclude>contrib/grafana/**.json</exclude>
@@ -279,8 +280,8 @@
           <artifactId>maven-failsafe-plugin</artifactId>
           <configuration>
             <systemPropertyVariables>
-              <io.fluo.it.instance.name>it-instance-maven</io.fluo.it.instance.name>
-              <io.fluo.it.instance.clear>false</io.fluo.it.instance.clear>
+              <org.apache.fluo.it.instance.name>it-instance-maven</org.apache.fluo.it.instance.name>
+              <org.apache.fluo.it.instance.clear>false</org.apache.fluo.it.instance.clear>
             </systemPropertyVariables>
           </configuration>
         </plugin>

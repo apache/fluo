@@ -16,6 +16,6 @@
 -->
 <FindBugsFilter>
     <Match>
-        <Class name="~io\.fluo\.core\.thrift\..*" />
+        <Class name="~org\.apache\.fluo\.core\.thrift\..*" />
     </Match>
 </FindBugsFilter>

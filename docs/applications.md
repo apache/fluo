@@ -11,12 +11,12 @@ For both clients and observers, you will need to include the following in your M
 
 ```xml
 <dependency>
-  <groupId>io.fluo</groupId>
+  <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-api</artifactId>
   <version>1.0.0-beta-2</version>
 </dependency>
 <dependency>
-  <groupId>io.fluo</groupId>
+  <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-core</artifactId>
   <version>1.0.0-beta-2</version>
   <scope>runtime</scope>
@@ -36,7 +36,7 @@ to connect to your Fluo instance.
 
 If you have access to the [fluo.properties] file that was used to configure your Fluo instance, you can use
 it to build a [FluoConfiguration] object with all necessary properties which are all properties with the 
-`io.fluo.client.*` prefix in [fluo.properties]:
+`org.apache.fluo.client.*` prefix in [fluo.properties]:
 
 ```java
 FluoConfiguration config = new FluoConfiguration(new File("fluo.properties"));
@@ -117,11 +117,11 @@ setting the following loggers to TRACE:
 
 | Logger                  | Level | Information                                                                                        |
 |-------------------------|-------|----------------------------------------------------------------------------------------------------|
-| `io.fluo.tx`            | TRACE | Provides detailed information about what transactions read and wrote                               |
-| `io.fluo.tx.summary`    | TRACE | Provides a one line summary about each transaction executed                                        |
-| `io.fluo.tx.collisions` | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
+| `org.apache.fluo.tx`            | TRACE | Provides detailed information about what transactions read and wrote                               |
+| `org.apache.fluo.tx.summary`    | TRACE | Provides a one line summary about each transaction executed                                        |
+| `org.apache.fluo.tx.collisions` | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
 
-Below is an example log after setting `io.fluo.tx` to TRACE.   The number
+Below is an example log after setting `org.apache.fluo.tx` to TRACE.   The number
 following `txid: ` is the transactions start timestamp from the Oracle.  
 
 ```
@@ -151,7 +151,7 @@ The log above traces the following sequence of events.
  * T2 sets row `4333` and `column `stat count` to `2`
  * T2 commits successfully with a commit timestamp of `6`
 
-Below is an example log after only setting `io.fluo.tx.collisions` to TRACE.
+Below is an example log after only setting `org.apache.fluo.tx.collisions` to TRACE.
 This setting will only log trace information when a collision occurs.  Unlike
 the previous example, what the transaction read and wrote is not logged.  This
 shows that a transaction with a start timestamp of `106` and a class name of
@@ -169,10 +169,10 @@ escaped using hex.  The convention used it `\xDD`  where D is a hex digit. Also
 the `\` character is escaped to make the output unambiguous.
 
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[FluoFactory]: ../modules/api/src/main/java/io/fluo/api/client/FluoFactory.java
-[FluoClient]: ../modules/api/src/main/java/io/fluo/api/client/FluoClient.java
-[FluoConfiguration]: ../modules/api/src/main/java/io/fluo/api/config/FluoConfiguration.java
-[AbstractObserver]: ../modules/api/src/main/java/io/fluo/api/observer/AbstractObserver.java
+[FluoFactory]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoFactory.java
+[FluoClient]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoClient.java
+[FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
+[AbstractObserver]: ../modules/api/src/main/java/org/apache/fluo/api/observer/AbstractObserver.java
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: http://fluo.io/apidocs/
 [metrics]: metrics.md

@@ -16,19 +16,15 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
-    <groupId>io.fluo</groupId>
+    <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-
   <artifactId>fluo-integration</artifactId>
-
   <name>Fluo Integration</name>
   <description>This module contains Fluo integration tests</description>
-
   <dependencies>
     <dependency>
       <groupId>commons-configuration</groupId>
@@ -38,26 +34,6 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-accumulo</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-mini</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -81,6 +57,26 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-accumulo</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-mini</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
       <scope>test</scope>
@@ -101,7 +97,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -117,7 +112,6 @@
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>mini-accumulo</id>
