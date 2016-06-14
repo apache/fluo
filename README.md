@@ -63,8 +63,8 @@ Below are helpful resources for Fluo application developers:
 [tl]: https://travis-ci.org/fluo-io/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
 [ll]: https://github.com/fluo-io/fluo/blob/master/LICENSE
-[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/fluo-api/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/fluo-api/
-[ji]: https://javadoc-emblem.rhcloud.com/doc/io.fluo/fluo-api/badge.svg
-[jl]: http://www.javadoc.io/doc/io.fluo/fluo-api
+[mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/
+[ji]: https://javadoc-emblem.rhcloud.com/doc/org.apache.fluo/fluo-api/badge.svg
+[jl]: http://www.javadoc.io/doc/org.apache.fluo/fluo-api
 [logo]: contrib/fluo-logo.png

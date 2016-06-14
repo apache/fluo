@@ -18,7 +18,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.fluo</groupId>
+    <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>

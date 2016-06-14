@@ -38,9 +38,9 @@ and Grafana on your own.
       batch-pending = 5
       batch-timeout = "1s"
       templates = [
-        "io.fluo.*.*.tx.*.*.* ..app.host.measurement.measurement.observer.field",
-        "io.fluo.*.*.*.*.* ..app.host.measurement.measurement.field",
-        "io.fluo.*.*.*.* ..app.host.measurement.measurement",
+        "org.apache.fluo.*.*.tx.*.*.* ..app.host.measurement.measurement.observer.field",
+        "org.apache.fluo.*.*.*.*.* ..app.host.measurement.measurement.field",
+        "org.apache.fluo.*.*.*.* ..app.host.measurement.measurement",
       ]
     ```
 
@@ -58,10 +58,10 @@ and Grafana on your own.
    `<INFLUXDB_HOST>` with the actual host.
 
     ```
-    io.fluo.metrics.reporter.graphite.enable=true
-    io.fluo.metrics.reporter.graphite.host=<INFLUXDB_HOST>
-    io.fluo.metrics.reporter.graphite.port=2003
-    io.fluo.metrics.reporter.graphite.frequency=30
+    org.apache.fluo.metrics.reporter.graphite.enable=true
+    org.apache.fluo.metrics.reporter.graphite.host=<INFLUXDB_HOST>
+    org.apache.fluo.metrics.reporter.graphite.port=2003
+    org.apache.fluo.metrics.reporter.graphite.frequency=30
     ```
 
     The reporting frequency of 30 sec is required if you are using the provided

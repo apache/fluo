@@ -57,7 +57,7 @@ not configure any application settings (like observers).
 As you are running a MiniFluo instance, most properties in [fluo.properties] do not need to be 
 set by you. For example, all "Client properties" can be left unset as MiniFluo will start up 
 its own Accumulo and Zookeeper.  If you would rather have MiniFluo connect to an existing 
-Accumulo instance, change `io.fluo.mini.start.accumulo` to `false` and set all "Client properties".
+Accumulo instance, change `org.apache.fluo.mini.start.accumulo` to `false` and set all "Client properties".
 If you have an existing Accumulo instance, you should also consider running a Fluo instance by 
 following the [production setup instructions][prod-fluo].
 

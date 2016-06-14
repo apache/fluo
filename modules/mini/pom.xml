@@ -17,7 +17,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.fluo</groupId>
+    <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
@@ -36,18 +36,6 @@
       <artifactId>commons-configuration</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-accumulo</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fluo</groupId>
-      <artifactId>fluo-core</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
@@ -61,6 +49,18 @@
           <artifactId>hadoop-minicluster</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-accumulo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.fluo</groupId>
+      <artifactId>fluo-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

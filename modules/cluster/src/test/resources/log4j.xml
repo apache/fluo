@@ -32,7 +32,7 @@
     <level value="ERROR" />
   </logger>
 
-  <logger name="io.fluo">
+  <logger name="org.apache.fluo">
     <level value="ERROR" />
   </logger>
 

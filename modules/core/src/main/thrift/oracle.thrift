@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-namespace java io.fluo.core.thrift
+namespace java org.apache.fluo.core.thrift
 
 struct Stamps {
   1: i64 txStampsStart,
