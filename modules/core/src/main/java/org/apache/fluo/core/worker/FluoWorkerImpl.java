@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -20,8 +20,10 @@ import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.service.FluoWorker;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.metrics.ReporterUtil;
@@ -42,12 +44,20 @@ public class FluoWorkerImpl implements FluoWorker {
 
   @Override
   public void start() {
-    workerService.startAndWait();
+    try {
+      workerService.startAndWait();
+    } catch (UncheckedExecutionException e) {
+      throw new FluoException(e);
+    }
   }
 
   @Override
   public void stop() {
-    workerService.stopAndWait();
+    try {
+      workerService.stopAndWait();
+    } catch (UncheckedExecutionException e) {
+      throw new FluoException(e);
+    }
   }
 
   private static class WorkerService extends AbstractIdleService {
