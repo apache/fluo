@@ -14,7 +14,6 @@ news and general information.
 There are several ways to run Fluo (listed in order of increasing difficulty):
 
 * [quickstart] - Starts a MiniFluo instance that is configured to run a word count application
-* [MiniFluo] - Sets up a minimal Fluo instance that writes its data to single directory
 * [fluo-dev] - Command-line tool for running Fluo and its dependencies on a single machine
 * [Zetten] - Command-line tool that launches an AWS cluster and sets up Fluo/Accumulo on it
 * [Production] - Sets up Fluo on a cluster where Accumulo, Hadoop & Zookeeper are running
@@ -51,7 +50,6 @@ Below are helpful resources for Fluo application developers:
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo-stress]: https://github.com/fluo-io/fluo-stress
 [webindex]: https://github.com/fluo-io/webindex
-[MiniFluo]: docs/mini-fluo-setup.md
 [Production]: docs/prod-fluo-setup.md
 [apps]: docs/applications.md
 [api]: https://fluo.apache.org/apidocs/

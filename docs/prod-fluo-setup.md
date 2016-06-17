@@ -3,7 +3,7 @@ Production Setup
 
 Below are instructions for running Fluo in a production environment where Accumulo,
 Hadoop & Zookeeper are installed and running.  If you want to avoid setting up
-these dependencies, consider using [fluo-dev] or [MiniFluo]. 
+these dependencies, consider using [fluo-dev]. 
 
 Requirements
 ------------
@@ -19,25 +19,14 @@ your local machine or cluster:
 Obtain a distribution
 ---------------------
 
-Before you can install Fluo, you will need to obtain a distribution tarball that
-works for your environment. Fluo distributions are built for specific releases
-of Hadoop and Accumulo. If you are using Accumulo 1.7.1 and Hadoop 2.6.3,
-you can download the [latest release][release].  If you need a release for a
-different environment or one built from the master branch, follow these steps:
-
-First, clone Fluo:
+Before you can install Fluo, you will need to obtain a distribution tarball.  It is
+recommended that you download the [latest release][release].  You can also build
+a distribution from the master branch by following these steps which create a tarball
+in `modules/distribution/target`:
 
     git clone https://github.com/apache/incubator-fluo.git
     cd fluo/
-
-Optionally, check out a stable tag (if you don't want to build a release from master):
-
-    git checkout 1.0.0-beta-2
-
-Next, build a distribution for your environment. The tarball will be created in 
-`modules/distribution/target`.
-
-    mvn package -Daccumulo.version=1.7.1 -Dhadoop.version=2.7.1
+    mvn package
 
 Install Fluo
 ------------
@@ -66,6 +55,11 @@ configure any application settings (like observers).
 NOTE - All properties that have a default are set with it.  Uncomment a property if you want 
 to use a value different than the default.  Properties that are unset and uncommented must be
 set by the user.
+
+To run, Fluo requires the Hadoop, Accumulo, and Zookeeper jars for the versions
+running on the cluster where Fluo will run.  In order to configure this a
+classpath must be constructed with these jars for Fluo.  This can be done by
+editing `conf/fluo-env.sh`, which also contains further documentation.  
 
 Fluo command script
 -------------------
@@ -208,7 +202,6 @@ Use the following commands to stop a local Fluo process:
 In a distributed environment, you will need to deploy and configure a Fluo 
 distribution on every node in your cluster.
 
-[MiniFluo]: mini-fluo-setup.md
 [fluo-dev]: https://github.com/fluo-io/fluo-dev
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/

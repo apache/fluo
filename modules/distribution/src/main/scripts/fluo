@@ -26,6 +26,8 @@ script=$( basename "$SOURCE" )
 
 . "$bin"/impl/config.sh
 
+export CLASSPATH
+
 # stop if any command fails
 set -e
 
@@ -57,7 +59,7 @@ function print_usage {
   echo "  status <app>  Prints status of Fluo application"
   echo "  info <app>    Prints information about containers of Fluo application"
   echo "  scan <app>    Prints snapshot of data in Fluo application"
-  echo "  classpath     Prints the classpath needed for fluo clients.  Run with -h to learn more."
+  echo "  classpath     Prints the classpath setup in fluo-env.sh"
   echo "  wait <app>    Waits until all notifications are processed"
   echo "  exec <app> <class>  {<argument>}";
   echo " "
@@ -76,7 +78,7 @@ function validate_app {
 
 function validate_app_full {
   validate_app
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.util.ValidateAppName $APP
+  java org.apache.fluo.cluster.util.ValidateAppName $APP
   if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
     echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'fluo new $APP' to create this configuration"
     exit 1
@@ -97,7 +99,7 @@ function check_hadoop {
 case "$1" in
 new)
   validate_app
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.util.ValidateAppName $APP
+  java org.apache.fluo.cluster.util.ValidateAppName $APP
   if [ -d $APP_DIR ]; then
     echo "The Fluo '$APP' application already has a directory in apps/"
     exit 1
@@ -120,27 +122,30 @@ init)
     echo "Copying `ls $FLUO_HOME/lib/fluo-accumulo-*.jar` to HDFS"
     $HADOOP_PREFIX/bin/hdfs dfs -copyFromLocal -f $FLUO_HOME/lib/fluo-accumulo-*.jar /fluo/lib/
   fi
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
+  export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+  java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 start)
   validate_app_full
   check_hadoop
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
+  export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+  java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 stop|kill|status|info|scan|wait)
   validate_app
   check_hadoop
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
+  java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 list)
   check_hadoop
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $1 app ${*:2}
+  java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX $1 app ${*:2}
   ;;
 classpath)
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME none $1 app ${*:2}
+  echo "$CLASSPATH"
   ;;
 exec)
-  java -cp "$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*:$APP_LIB_DIR/*" org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
+  export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+  java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
   ;;
 *)
   print_usage

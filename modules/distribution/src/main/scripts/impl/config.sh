@@ -25,10 +25,6 @@ bin="$( cd -P "$( dirname "$impl" )" && pwd )"
 script=$( basename "$SOURCE" )
 # Stop: Resolve Script Directory
 
-if [ -f "$bin"/../conf/fluo-env.sh ]; then
-    . "$bin"/../conf/fluo-env.sh
-fi
-
 # Determine FLUO_HOME - Use env variable set by user.  If none set, calculate using bin dir
 FLUO_HOME="${FLUO_HOME:-$( cd -P ${bin}/.. && pwd )}"
 export FLUO_HOME
@@ -54,6 +50,10 @@ if [ -z "$FLUO_CONF_DIR" -o ! -d "$FLUO_LIB_DIR" ]
 then
   echo "FLUO_LIB_DIR=$FLUO_LIB_DIR is not a valid directory.  Please make sure it exists"
   exit 1
+fi
+
+if [ -f "$bin"/../conf/fluo-env.sh ]; then
+    . "$bin"/../conf/fluo-env.sh
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then

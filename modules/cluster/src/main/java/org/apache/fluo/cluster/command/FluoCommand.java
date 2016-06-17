@@ -61,9 +61,6 @@ public class FluoCommand {
 
     try (YarnAppRunner runner = new YarnAppRunner(hadoopPrefix)) {
       switch (command.toLowerCase()) {
-        case "classpath":
-          runner.classpath(fluoHomeDir, remainArgs);
-          break;
         case "init":
           runner.init(fluoInstall.getAppConfiguration(appName),
               fluoInstall.getAppPropsPath(appName), remainArgs);
@@ -102,7 +99,7 @@ public class FluoCommand {
           runner.waitUntilFinished(fluoInstall.resolveFluoConfiguration(appName));
           break;
         case "exec":
-          runner.exec(fluoInstall.resolveFluoConfiguration(appName), remainArgs);
+          runner.exec(fluoInstall.resolveFluoConfiguration(appName, false), remainArgs);
           break;
         default:
           System.err.println("Unknown command: " + command);

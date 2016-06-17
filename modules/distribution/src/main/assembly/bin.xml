@@ -27,7 +27,23 @@
       <scope>runtime</scope>
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
       <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <includes>
+        <include>org.apache.fluo:fluo-api</include>
+        <include>org.apache.fluo:fluo-accumulo</include>
+        <include>org.apache.fluo:fluo-core</include>
+        <include>org.apache.fluo:fluo-mini</include>
+        <include>org.apache.fluo:fluo-mapreduce</include>
+        <include>org.apache.fluo:fluo-cluster</include>
+        <include>org.slf4j:slf4j-api</include>
+        <include>org.apache.curator:curator-framework</include>
+        <include>org.apache.curator:curator-recipes</include>
+      </includes>
       <excludes>
+        <exclude>org.apache.accumulo:*</exclude>
+        <exclude>org.apache.thrift:*</exclude>
+        <exclude>org.apache.hadoop:*</exclude>
+        <exclude>org.apache.zookeeper:zookeeper</exclude>
         <exclude>*:slf4j-log4j12</exclude>
         <exclude>*:log4j</exclude>
         <exclude>*:logback-classic</exclude>
@@ -36,73 +52,14 @@
       </excludes>
     </dependencySet>
     <dependencySet>
-      <outputDirectory>lib/fluo-client</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>true</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
-      <includes>
-        <include>org.apache.fluo:fluo-api</include>
-        <include>org.apache.fluo:fluo-accumulo</include>
-        <include>org.apache.fluo:fluo-core</include>
-        <include>org.apache.fluo:fluo-mini</include>
-        <include>org.apache.fluo:fluo-mapreduce</include>
-        <include>org.slf4j:slf4j-api</include>
-        <!--fluo-core has direct dependencies on following, but for some reason maven does not include -->
-        <include>org.apache.curator:curator-framework</include>
-        <include>org.apache.curator:curator-recipes</include>
-      </includes>
-      <excludes>
-        <exclude>org.apache.accumulo:*</exclude>
-        <exclude>org.apache.hadoop:*</exclude>
-        <exclude>org.apache.zookeeper:zookeeper</exclude>
-      </excludes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib/accumulo</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>false</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
-      <includes>
-        <include>org.apache.accumulo:accumulo-core</include>
-        <include>org.apache.accumulo:accumulo-minicluster</include>
-      </includes>
-      <excludes>
-        <exclude>org.apache.hadoop:hadoop-minicluster</exclude>
-      </excludes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib/hadoop-client</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>false</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
-      <includes>
-        <include>org.apache.hadoop:hadoop-client</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib/zookeeper</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>false</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
-      <includes>
-        <include>org.apache.zookeeper:zookeeper</include>
-      </includes>
+        <!-- this is in separate section because it was transitively filtered -->
+        <outputDirectory>lib</outputDirectory>
+        <directoryMode>0755</directoryMode>
+        <fileMode>0644</fileMode>
+        <!-- was having a problem with version 2.2.2 from Accumulo-->
+        <includes>
+          <include>com.google.code.gson:gson</include>
+        </includes>
     </dependencySet>
     <dependencySet>
       <outputDirectory>lib/log4j</outputDirectory>
@@ -155,6 +112,13 @@
     <fileSet>
       <directory>src/main/config</directory>
       <outputDirectory>conf/examples</outputDirectory>
+      <includes>
+        <include>*</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/deps</directory>
+      <outputDirectory>lib/deps</outputDirectory>
       <includes>
         <include>*</include>
       </includes>
