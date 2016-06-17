@@ -174,5 +174,5 @@ the `\` character is escaped to make the output unambiguous.
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
 [AbstractObserver]: ../modules/api/src/main/java/org/apache/fluo/api/observer/AbstractObserver.java
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
-[API]: http://fluo.io/apidocs/
+[API]: https://fluo.incubator.apache.org/apidocs/
 [metrics]: metrics.md

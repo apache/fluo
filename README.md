@@ -1,12 +1,13 @@
-[![Fluo][logo]][fluo.io]
+[![Fluo][logo]][fluo]
 ---
 [![Build Status][ti]][tl] [![Apache License][li]][ll] [![Maven Central][mi]][ml] [![Javadoc][ji]][jl]
 
-**Fluo is transaction layer that enables incremental processing on big data.**
+**Apache Fluo lets users make incremental updates to large data sets stored in Apache Accumulo.**
 
-Fluo is an implementation of [Percolator] built on [Accumulo] that runs in [YARN].
-It is not recommended for production use yet. Check out the Fluo [project website][fluo.io]
-for news and general information.
+[Apache Fluo][fluo] is an open source implementation of [Percolator][percolator] (which populates Google's
+search index) for [Apache Accumulo][accumulo]. Fluo makes it possible to update the results of a large-scale
+computation, index, or analytic as new data is discovered. Check out the Fluo [project website][fluo] for
+news and general information.
 
 ### Getting Started
 
@@ -19,7 +20,7 @@ There are several ways to run Fluo (listed in order of increasing difficulty):
 * [Production] - Sets up Fluo on a cluster where Accumulo, Hadoop & Zookeeper are running
 
 Except for [quickstart], all above will set up a Fluo application that will be idle unless you
-create client & observer code for your application.  You can either [create your own
+create client & observer code for your application. You can either [create your own
 application][apps] or configure Fluo to run an example application below:
 
 * [phrasecount] - Computes phrase counts for unique documents
@@ -41,10 +42,9 @@ Below are helpful resources for Fluo application developers:
 * [Contributing] - Documentation for developers who want to contribute to Fluo
 * [Metrics] - Fluo metrics are visible via JMX by default but can be configured to send to Graphite or Ganglia
 
-[fluo.io]: http://fluo.io/
-[Accumulo]: http://accumulo.apache.org
-[Percolator]: http://research.google.com/pubs/pub36726.html
-[YARN]: http://hadoop.apache.org/docs/r2.5.1/hadoop-yarn/hadoop-yarn-site/YARN.html
+[fluo]: https://fluo.incubator.apache.org/
+[accumulo]: https://accumulo.apache.org
+[percolator]: https://research.google.com/pubs/pub36726.html
 [quickstart]: https://github.com/fluo-io/fluo-quickstart
 [fluo-dev]: https://github.com/fluo-io/fluo-dev
 [Zetten]: https://github.com/fluo-io/zetten
@@ -54,15 +54,15 @@ Below are helpful resources for Fluo application developers:
 [MiniFluo]: docs/mini-fluo-setup.md
 [Production]: docs/prod-fluo-setup.md
 [apps]: docs/applications.md
-[api]: http://fluo.io/apidocs/
-[recipes]: https://github.com/fluo-io/fluo-recipes
+[api]: https://fluo.incubator.apache.org/apidocs/
+[recipes]: https://github.com/apache/incubator-fluo-recipes
 [Metrics]: docs/metrics.md
 [Contributing]: docs/contributing.md
 [Architecture]: docs/architecture.md
-[ti]: https://travis-ci.org/fluo-io/fluo.svg?branch=master
-[tl]: https://travis-ci.org/fluo-io/fluo
+[ti]: https://travis-ci.org/apache/fluo.svg?branch=master
+[tl]: https://travis-ci.org/apache/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/fluo-io/fluo/blob/master/LICENSE
+[ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/
 [ji]: https://javadoc-emblem.rhcloud.com/doc/org.apache.fluo/fluo-api/badge.svg

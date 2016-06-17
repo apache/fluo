@@ -7,7 +7,7 @@ Building Fluo
 If you have [Git], [Maven], and [Java](version 7+) installed, run these commands
 to build Fluo:
 
-    git clone https://github.com/fluo-io/fluo.git
+    git clone https://github.com/apache/incubator-fluo.git
     cd fluo
     mvn package
 

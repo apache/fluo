@@ -44,14 +44,14 @@
     <module>modules/mini</module>
   </modules>
   <scm>
-    <connection>scm:git:https://github.com/fluo-io/fluo.git</connection>
-    <developerConnection>scm:git:git@github.com:fluo-io/fluo.git</developerConnection>
+    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/fluo-io/fluo</url>
+    <url>https://git-wip-us.apache.org/repos/asf?p=incubator-fluo.git</url>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/fluo-io/fluo/issues</url>
+    <url>https://github.com/apache/incubator-fluo/issues</url>
   </issueManagement>
   <properties>
     <accumulo.version>1.7.1</accumulo.version>

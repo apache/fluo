@@ -27,7 +27,7 @@ different environment or one built from the master branch, follow these steps:
 
 First, clone Fluo:
 
-    git clone https://github.com/fluo-io/fluo.git
+    git clone https://github.com/apache/incubator-fluo.git
     cd fluo/
 
 Optionally, check out a stable tag (if you don't want to build a release from master):
@@ -214,6 +214,6 @@ distribution on every node in your cluster.
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/
 [Java]: https://www.oracle.com/java/index.html
-[release]: https://github.com/fluo-io/fluo/releases
+[release]: https://github.com/apache/incubator-fluo/releases
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
