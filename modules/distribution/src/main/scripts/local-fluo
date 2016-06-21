@@ -66,7 +66,7 @@ function check_dirs {
 }
 
 function kill_if_running {
-  validate_app
+  validate_app_full
   PID=`jps -m | grep $1 | grep $APP | cut -f 1 -d ' '`
   if [ -z "$PID" ]; then
     echo "ERROR - A $1 process for the Fluo application '$APP' is not running"
@@ -77,7 +77,7 @@ function kill_if_running {
 }
 
 LOGHOST=$(hostname)
-LOCAL_OPTS="-config-dir $APP_CONF_DIR -log-output $APP_LOG_DIR"
+LOCAL_OPTS="$APP_CONF_DIR/fluo.properties"
 LOCAL_LIB="$FLUO_LIB_DIR/*:$FLUO_LIB_DIR/logback/*"
 
 case "$1" in
@@ -85,21 +85,21 @@ start-oracle)
   validate_app_full
   check_dirs
   SERVICE="oracle"
-  java -Dfluo.app=$APP -cp "$LOCAL_LIB" org.apache.fluo.cluster.main.FluoOracleMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -Dfluo.app=$APP -cp "$LOCAL_LIB" org.apache.fluo.core.oracle.FluoOracleImpl $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
   echo "Started oracle for Fluo '$APP' application.  View its logs at $APP_LOG_DIR"
   ;;
 kill-oracle)
-  kill_if_running FluoOracleMain
+  kill_if_running FluoOracleImpl
   ;;
 start-worker)
   validate_app_full
   check_dirs
   SERVICE="worker"
-  java -Dfluo.app=$APP -cp "$LOCAL_LIB:$APP_LIB_DIR/*" org.apache.fluo.cluster.main.FluoWorkerMain $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
+  java -Dfluo.app=$APP -cp "$LOCAL_LIB:$APP_LIB_DIR/*" org.apache.fluo.core.worker.FluoWorkerImpl $LOCAL_OPTS >${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.out 2>${APP_LOG_DIR}/${SERVICE}_${LOGHOST}.err &
   echo "Started worker for Fluo '$APP' application.  View its logs at $APP_LOG_DIR"
   ;;
 kill-worker)
-  kill_if_running FluoWorkerMain
+  kill_if_running FluoWorkerImpl
   ;;
 *)
   print_usage

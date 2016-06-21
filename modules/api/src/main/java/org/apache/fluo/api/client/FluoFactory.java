@@ -21,6 +21,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.mini.MiniFluo;
+import org.apache.fluo.api.service.FluoOracle;
+import org.apache.fluo.api.service.FluoWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +72,22 @@ public class FluoFactory {
   public static MiniFluo newMiniFluo(Configuration configuration) {
     FluoConfiguration config = new FluoConfiguration(configuration);
     return buildClassWithConfig(config.getMiniClass(), config);
+  }
+
+  /**
+   * Creates a {@link FluoOracle} using the provided configuration.
+   */
+  public static FluoOracle newOracle(Configuration configuration) {
+    FluoConfiguration config = new FluoConfiguration(configuration);
+    return buildClassWithConfig(config.getOracleClass(), config);
+  }
+
+  /**
+   * Creates a {@link FluoWorker} using the provided configuration.
+   */
+  public static FluoWorker newWorker(Configuration configuration) {
+    FluoConfiguration config = new FluoConfiguration(configuration);
+    return buildClassWithConfig(config.getWorkerClass(), config);
   }
 
   @SuppressWarnings("unchecked")

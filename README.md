@@ -59,8 +59,8 @@ Below are helpful resources for Fluo application developers:
 [Metrics]: docs/metrics.md
 [Contributing]: docs/contributing.md
 [Architecture]: docs/architecture.md
-[ti]: https://travis-ci.org/apache/fluo.svg?branch=master
-[tl]: https://travis-ci.org/apache/fluo
+[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=master
+[tl]: https://travis-ci.org/apache/incubator-fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
 [ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/badge.svg

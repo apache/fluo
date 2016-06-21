@@ -15,14 +15,20 @@
 
 package org.apache.fluo.core.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.core.impl.Environment;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -130,6 +136,38 @@ public class CuratorUtil {
       }
     } catch (InterruptedException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * Start watching the fluo app uuid. If it changes or goes away then halt the process.
+   */
+  public static NodeCache startAppIdWatcher(Environment env) {
+    try {
+      CuratorFramework curator = env.getSharedResources().getCurator();
+
+      byte[] uuidBytes = curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID);
+      if (uuidBytes == null) {
+        Halt.halt("Fluo Application UUID not found");
+        throw new RuntimeException(); // make findbugs happy
+      }
+
+      final String uuid = new String(uuidBytes, StandardCharsets.UTF_8);
+
+      final NodeCache nodeCache = new NodeCache(curator, ZookeeperPath.CONFIG_FLUO_APPLICATION_ID);
+      nodeCache.getListenable().addListener(new NodeCacheListener() {
+        @Override
+        public void nodeChanged() throws Exception {
+          ChildData node = nodeCache.getCurrentData();
+          if (node == null || !uuid.equals(new String(node.getData(), StandardCharsets.UTF_8))) {
+            Halt.halt("Fluo Application UUID has changed or disappeared");
+          }
+        }
+      });
+      nodeCache.start();
+      return nodeCache;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }
