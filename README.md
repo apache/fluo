@@ -42,7 +42,7 @@ Below are helpful resources for Fluo application developers:
 * [Contributing] - Documentation for developers who want to contribute to Fluo
 * [Metrics] - Fluo metrics are visible via JMX by default but can be configured to send to Graphite or Ganglia
 
-[fluo]: https://fluo.incubator.apache.org/
+[fluo]: https://fluo.apache.org/
 [accumulo]: https://accumulo.apache.org
 [percolator]: https://research.google.com/pubs/pub36726.html
 [quickstart]: https://github.com/fluo-io/fluo-quickstart
@@ -54,7 +54,7 @@ Below are helpful resources for Fluo application developers:
 [MiniFluo]: docs/mini-fluo-setup.md
 [Production]: docs/prod-fluo-setup.md
 [apps]: docs/applications.md
-[api]: https://fluo.incubator.apache.org/apidocs/
+[api]: https://fluo.apache.org/apidocs/
 [recipes]: https://github.com/apache/incubator-fluo-recipes
 [Metrics]: docs/metrics.md
 [Contributing]: docs/contributing.md
