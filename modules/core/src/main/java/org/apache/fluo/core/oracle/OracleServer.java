@@ -161,11 +161,20 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
           }
         }
       };
+      TimerTask logTask = new TimerTask() {
+        @Override
+        public void run() {
+          log.info("Current timestamp: {}", currentTs);
+        }
+      };
+
       timer = new Timer("Oracle gc update timer", true);
       long updatePeriod =
           env.getConfiguration().getLong(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP,
               FluoConfigurationImpl.ZK_UPDATE_PERIOD_MS_DEFAULT);
+      long nextPeriod = 5 * 60 * 1000L;
       timer.schedule(tt, updatePeriod, updatePeriod);
+      timer.schedule(logTask, 0L, nextPeriod);
     }
 
     void stop() {
