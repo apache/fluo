@@ -24,6 +24,7 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.service.FluoOracle;
 import org.apache.fluo.cluster.util.LogbackUtil;
 import org.apache.fluo.core.metrics.MetricNames;
+import org.apache.fluo.core.oracle.FluoOracleImpl;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
@@ -76,7 +77,9 @@ public class OracleRunnable extends AbstractTwillRunnable {
         System.setProperty(MetricNames.METRICS_ID_PROP, "oracle-" + context.getInstanceId());
       }
 
-      FluoOracle oracle = FluoFactory.newOracle(config);
+      // FluoFactory cannot be used to create FluoOracle as Twill will not load its dependencies
+      // if it is loaded dynamically
+      FluoOracle oracle = new FluoOracleImpl(config);
       oracle.start();
       while (!shutdown.get()) {
         UtilWaitThread.sleep(10000);

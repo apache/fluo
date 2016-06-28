@@ -25,6 +25,7 @@ import org.apache.fluo.api.service.FluoWorker;
 import org.apache.fluo.cluster.util.LogbackUtil;
 import org.apache.fluo.core.metrics.MetricNames;
 import org.apache.fluo.core.util.UtilWaitThread;
+import org.apache.fluo.core.worker.FluoWorkerImpl;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
@@ -90,7 +91,9 @@ public class WorkerRunnable extends AbstractTwillRunnable {
         System.setProperty(MetricNames.METRICS_ID_PROP, "worker-" + context.getInstanceId());
       }
 
-      FluoWorker worker = FluoFactory.newWorker(config);
+      // FluoFactory cannot be used to create FluoWorker as Twill will not load its dependencies
+      // if it is loaded dynamically
+      FluoWorker worker = new FluoWorkerImpl(config);
       worker.start();
       while (!shutdown.get()) {
         UtilWaitThread.sleep(1000);
