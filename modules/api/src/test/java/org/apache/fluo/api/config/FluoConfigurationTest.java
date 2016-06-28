@@ -46,11 +46,8 @@ public class FluoConfigurationTest {
         base.getClientRetryTimeout());
     Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT,
         base.getAccumuloZookeepers());
-    Assert.assertEquals(FluoConfiguration.CLIENT_CLASS_DEFAULT, base.getClientClass());
-    Assert.assertEquals(FluoConfiguration.ADMIN_CLASS_DEFAULT, base.getAdminClass());
     Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT,
         base.getAccumuloClasspath());
-    Assert.assertEquals(FluoConfiguration.WORKER_CLASS_DEFAULT, base.getWorkerClass());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
     Assert.assertEquals(FluoConfiguration.WORKER_INSTANCES_DEFAULT, base.getWorkerInstances());
     Assert.assertEquals(FluoConfiguration.WORKER_MAX_MEMORY_MB_DEFAULT, base.getWorkerMaxMemory());
@@ -59,11 +56,9 @@ public class FluoConfigurationTest {
         base.getTransactionRollbackTime());
     Assert.assertEquals(FluoConfiguration.LOADER_NUM_THREADS_DEFAULT, base.getLoaderThreads());
     Assert.assertEquals(FluoConfiguration.LOADER_QUEUE_SIZE_DEFAULT, base.getLoaderQueueSize());
-    Assert.assertEquals(FluoConfiguration.ORACLE_CLASS_DEFAULT, base.getOracleClass());
     Assert.assertEquals(FluoConfiguration.ORACLE_INSTANCES_DEFAULT, base.getOracleInstances());
     Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
     Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
-    Assert.assertEquals(FluoConfiguration.MINI_CLASS_DEFAULT, base.getMiniClass());
     Assert.assertEquals(FluoConfiguration.MINI_START_ACCUMULO_DEFAULT, base.getMiniStartAccumulo());
     Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
   }
@@ -97,17 +92,12 @@ public class FluoConfigurationTest {
     Assert.assertEquals("pass", config.setAccumuloPassword("pass").getAccumuloPassword());
     Assert.assertEquals("table", config.setAccumuloTable("table").getAccumuloTable());
     Assert.assertEquals("user", config.setAccumuloUser("user").getAccumuloUser());
-    Assert.assertEquals("admin", config.setAdminClass("admin").getAdminClass());
-    Assert.assertEquals("client", config.setClientClass("client").getClientClass());
     Assert.assertEquals(4, config.setLoaderQueueSize(4).getLoaderQueueSize());
     Assert.assertEquals(0, config.setLoaderQueueSize(0).getLoaderQueueSize());
     Assert.assertEquals(7, config.setLoaderThreads(7).getLoaderThreads());
     Assert.assertEquals(0, config.setLoaderThreads(0).getLoaderThreads());
-    Assert.assertEquals("mini", config.setMiniClass("mini").getMiniClass());
-    Assert.assertEquals("oracle", config.setOracleClass("oracle").getOracleClass());
     Assert.assertEquals(8, config.setOracleMaxMemory(8).getOracleMaxMemory());
     Assert.assertEquals(10, config.setOracleInstances(10).getOracleInstances());
-    Assert.assertEquals("worker", config.setWorkerClass("worker").getWorkerClass());
     Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
     Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
@@ -379,8 +369,7 @@ public class FluoConfigurationTest {
     }
     String[] nonEmptyMethods =
         {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser", "setAccumuloZookeepers",
-            "setAdminClass", "setClientClass", "setMiniClass", "setMiniDataDir",
-            "setInstanceZookeepers", "setWorkerClass", "setOracleClass"};
+            "setMiniDataDir", "setInstanceZookeepers"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

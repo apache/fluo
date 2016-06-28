@@ -55,25 +55,19 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final String CLIENT_ZOOKEEPER_TIMEOUT_PROP = CLIENT_PREFIX + ".zookeeper.timeout";
   public static final String CLIENT_ZOOKEEPER_CONNECT_PROP = CLIENT_PREFIX + ".zookeeper.connect";
   public static final String CLIENT_RETRY_TIMEOUT_MS_PROP = CLIENT_PREFIX + ".retry.timeout.ms";
-  public static final String CLIENT_CLASS_PROP = CLIENT_PREFIX + ".class";
   public static final int CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT = 30000;
   public static final String CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT = "localhost";
   public static final String CLIENT_ZOOKEEPER_CONNECT_DEFAULT = "localhost/fluo";
   public static final int CLIENT_RETRY_TIMEOUT_MS_DEFAULT = -1;
-  public static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
 
   // Administration
   private static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
   public static final String ADMIN_ACCUMULO_CLASSPATH_DEFAULT = "";
-  public static final String ADMIN_CLASS_PROP = ADMIN_PREFIX + ".class";
-  public static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
 
   // Worker
   private static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
-  public static final String WORKER_CLASS_PROP = WORKER_PREFIX + ".class";
-  public static final String WORKER_CLASS_DEFAULT = FLUO_PREFIX + ".core.worker.FluoWorkerImpl";
   public static final String WORKER_NUM_THREADS_PROP = WORKER_PREFIX + ".num.threads";
   public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
   public static final String WORKER_MAX_MEMORY_MB_PROP = WORKER_PREFIX + ".max.memory.mb";
@@ -92,8 +86,6 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
-  public static final String ORACLE_CLASS_PROP = ORACLE_PREFIX + ".class";
-  public static final String ORACLE_CLASS_DEFAULT = FLUO_PREFIX + ".core.oracle.FluoOracleImpl";
   public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
   public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
   public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
@@ -103,10 +95,8 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // MiniFluo
   private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
-  public static final String MINI_CLASS_PROP = MINI_PREFIX + ".class";
   public static final String MINI_START_ACCUMULO_PROP = MINI_PREFIX + ".start.accumulo";
   public static final String MINI_DATA_DIR_PROP = MINI_PREFIX + ".data.dir";
-  public static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".mini.MiniFluoImpl";
   public static final boolean MINI_START_ACCUMULO_DEFAULT = true;
   public static final String MINI_DATA_DIR_DEFAULT = "${env:FLUO_HOME}/mini";
 
@@ -171,20 +161,16 @@ public class FluoConfiguration extends CompositeConfiguration {
     getAccumuloTable();
     getAccumuloUser();
     getAccumuloZookeepers();
-    getAdminClass();
     getApplicationName();
     getAppZookeepers();
-    getClientClass();
     getClientRetryTimeout();
     getLoaderQueueSize();
     getLoaderThreads();
     getObserverConfig();
-    getOracleClass();
     getOracleInstances();
     getOracleMaxMemory();
     getOracleNumCores();
     getTransactionRollbackTime();
-    getWorkerClass();
     getWorkerInstances();
     getWorkerMaxMemory();
     getWorkerNumCores();
@@ -306,14 +292,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getNonEmptyString(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
   }
 
-  public FluoConfiguration setClientClass(String clientClass) {
-    return setNonEmptyString(CLIENT_CLASS_PROP, clientClass);
-  }
-
-  public String getClientClass() {
-    return getNonEmptyString(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
-  }
-
   /**
    * Sets Accumulo table. This property only needs to be set for FluoAdmin as it will be stored in
    * retrieved from Zookeeper for clients.
@@ -333,22 +311,6 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public String getAccumuloClasspath() {
     return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
-  }
-
-  public FluoConfiguration setAdminClass(String adminClass) {
-    return setNonEmptyString(ADMIN_CLASS_PROP, adminClass);
-  }
-
-  public String getAdminClass() {
-    return getNonEmptyString(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
-  }
-
-  public FluoConfiguration setWorkerClass(String workerClass) {
-    return setNonEmptyString(WORKER_CLASS_PROP, workerClass);
-  }
-
-  public String getWorkerClass() {
-    return getNonEmptyString(WORKER_CLASS_PROP, WORKER_CLASS_DEFAULT);
   }
 
   public FluoConfiguration setWorkerThreads(int numThreads) {
@@ -516,14 +478,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getNonNegativeInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
   }
 
-  public FluoConfiguration setOracleClass(String oracleClass) {
-    return setNonEmptyString(ORACLE_CLASS_PROP, oracleClass);
-  }
-
-  public String getOracleClass() {
-    return getNonEmptyString(ORACLE_CLASS_PROP, ORACLE_CLASS_DEFAULT);
-  }
-
   public FluoConfiguration setOracleMaxMemory(int oracleMaxMemory) {
     return setPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
   }
@@ -546,14 +500,6 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public int getOracleNumCores() {
     return getPositiveInt(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
-  }
-
-  public FluoConfiguration setMiniClass(String miniClass) {
-    return setNonEmptyString(MINI_CLASS_PROP, miniClass);
-  }
-
-  public String getMiniClass() {
-    return getNonEmptyString(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 
   /**
@@ -723,8 +669,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
     config.setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
-    config.setProperty(CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
-    config.setProperty(ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
     config.setProperty(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
     config.setProperty(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
@@ -734,7 +678,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
     config.setProperty(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
     config.setProperty(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
-    config.setProperty(MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
     config.setProperty(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
     config.setProperty(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }

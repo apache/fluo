@@ -16,7 +16,9 @@
 package org.apache.fluo.api.client;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
@@ -26,6 +28,8 @@ import org.apache.fluo.api.service.FluoWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
+
 /**
  * Factory for creating {@link FluoClient}, {@link FluoAdmin}, and {@link MiniFluo}. All factory
  * methods take a configuration object which can be built using {@link FluoConfiguration}.
@@ -33,6 +37,18 @@ import org.slf4j.LoggerFactory;
 public class FluoFactory {
 
   private static final Logger log = LoggerFactory.getLogger(FluoFactory.class);
+
+  private static final String FLUO_IMPL_PREFIX = FLUO_PREFIX + ".impl";
+  private static final String CLIENT_CLASS_PROP = FLUO_IMPL_PREFIX + ".client.class";
+  private static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
+  private static final String ADMIN_CLASS_PROP = FLUO_IMPL_PREFIX + ".admin.class";
+  private static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
+  private static final String WORKER_CLASS_PROP = FLUO_IMPL_PREFIX + ".worker.class";
+  private static final String WORKER_CLASS_DEFAULT = FLUO_PREFIX + ".core.worker.FluoWorkerImpl";
+  private static final String ORACLE_CLASS_PROP = FLUO_IMPL_PREFIX + ".oracle.class";
+  private static final String ORACLE_CLASS_DEFAULT = FLUO_PREFIX + ".core.oracle.FluoOracleImpl";
+  private static final String MINI_CLASS_PROP = FLUO_IMPL_PREFIX + ".mini.class";
+  private static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".mini.MiniFluoImpl";
 
   /**
    * Creates a {@link FluoClient} for reading and writing data to Fluo. {@link FluoClient#close()}
@@ -43,8 +59,7 @@ public class FluoFactory {
    * org.apache.fluo.client.accumulo.instance
    */
   public static FluoClient newClient(Configuration configuration) {
-    FluoConfiguration config = new FluoConfiguration(configuration);
-    return buildClassWithConfig(config.getClientClass(), config);
+    return getAndBuildClassWithConfig(configuration, CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
   }
 
   /**
@@ -56,8 +71,7 @@ public class FluoFactory {
    * org.apache.fluo.admin.accumulo.table, org.apache.fluo.admin.accumulo.classpath
    */
   public static FluoAdmin newAdmin(Configuration configuration) {
-    FluoConfiguration config = new FluoConfiguration(configuration);
-    return buildClassWithConfig(config.getAdminClass(), config);
+    return getAndBuildClassWithConfig(configuration, ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
   }
 
   /**
@@ -70,24 +84,40 @@ public class FluoFactory {
    * org.apache.fluo.admin.accumulo.table
    */
   public static MiniFluo newMiniFluo(Configuration configuration) {
-    FluoConfiguration config = new FluoConfiguration(configuration);
-    return buildClassWithConfig(config.getMiniClass(), config);
+    return getAndBuildClassWithConfig(configuration, MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 
   /**
    * Creates a {@link FluoOracle} using the provided configuration.
    */
   public static FluoOracle newOracle(Configuration configuration) {
-    FluoConfiguration config = new FluoConfiguration(configuration);
-    return buildClassWithConfig(config.getOracleClass(), config);
+    return getAndBuildClassWithConfig(configuration, ORACLE_CLASS_PROP, ORACLE_CLASS_DEFAULT);
   }
 
   /**
    * Creates a {@link FluoWorker} using the provided configuration.
    */
   public static FluoWorker newWorker(Configuration configuration) {
+    return getAndBuildClassWithConfig(configuration, WORKER_CLASS_PROP, WORKER_CLASS_DEFAULT);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T getAndBuildClassWithConfig(Configuration configuration, String classProp,
+      String classDefault) {
     FluoConfiguration config = new FluoConfiguration(configuration);
-    return buildClassWithConfig(config.getWorkerClass(), config);
+    String clazz = config.getString(classProp, classDefault);
+    Objects.requireNonNull(clazz, classProp + " cannot be null");
+    Preconditions.checkArgument(!clazz.isEmpty(), classProp + " cannot be empty");
+    return buildClassWithConfig(clazz, config);
+  }
+
+  @SuppressWarnings({"unchecked", "unused"})
+  private static <T> T getAndBuildClass(Configuration configuration, String classProp,
+      String classDefault) {
+    String clazz = configuration.getString(classProp, classDefault);
+    Objects.requireNonNull(clazz, classProp + " cannot be null");
+    Preconditions.checkArgument(!clazz.isEmpty(), classProp + " cannot be empty");
+    return buildClass(clazz);
   }
 
   @SuppressWarnings("unchecked")
@@ -111,7 +141,7 @@ public class FluoFactory {
     }
   }
 
-  @SuppressWarnings({"unchecked", "unused"})
+  @SuppressWarnings({"unchecked"})
   private static <T> T buildClass(String clazz) {
     try {
       return (T) Class.forName(clazz).newInstance();
