@@ -29,15 +29,22 @@ import org.apache.fluo.api.data.Column;
  * thread and reused for the lifetime of a worker thread. Consider extending
  * {@link AbstractObserver} as it will let you optionally implement {@link #init(Context)} and
  * {@link #close()}. The abstract class will also shield you from the addition of interface methods.
+ *
+ * @since 1.0.0
  */
 public interface Observer {
 
+  /**
+   * @since 1.0.0
+   */
   enum NotificationType {
     WEAK, STRONG
   }
 
   /**
    * A {@link Column} and {@link NotificationType} pair
+   *
+   * @since 1.0.0
    */
   class ObservedColumn {
     private final Column col;
@@ -57,6 +64,9 @@ public interface Observer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   interface Context {
     /**
      * @return A configuration object with application configuration like that returned by

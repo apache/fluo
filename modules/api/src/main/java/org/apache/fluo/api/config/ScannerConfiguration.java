@@ -28,6 +28,8 @@ import org.apache.fluo.api.data.Span;
 /**
  * Contains configuration for a {@link org.apache.fluo.api.client.Snapshot} scanner. Passed to
  * {@link SnapshotBase#get(ScannerConfiguration)}.
+ *
+ * @since 1.0.0
  */
 public class ScannerConfiguration implements Cloneable {
 

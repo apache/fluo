@@ -23,6 +23,8 @@ import org.apache.fluo.api.data.Column;
 
 /**
  * Iterator for Fluo columns
+ *
+ * @since 1.0.0
  */
 public interface ColumnIterator extends Iterator<Entry<Column, Bytes>> {
 

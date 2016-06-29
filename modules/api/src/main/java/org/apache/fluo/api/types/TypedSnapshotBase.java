@@ -44,6 +44,8 @@ import org.apache.fluo.api.types.TypeLayer.RowMethods;
 
 /**
  * A {@link SnapshotBase} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public class TypedSnapshotBase implements SnapshotBase {
 
@@ -51,6 +53,9 @@ public class TypedSnapshotBase implements SnapshotBase {
   private Encoder encoder;
   private TypeLayer tl;
 
+  /**
+   * @since 1.0.0
+   */
   public class VisibilityMethods extends Value {
 
     public VisibilityMethods(Data data) {
@@ -78,6 +83,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class Value {
     private Bytes bytes;
     private boolean gotBytes = false;
@@ -246,6 +254,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class ValueQualifierBuilder extends QualifierMethods<VisibilityMethods> {
 
     ValueQualifierBuilder(Data data) {
@@ -258,6 +269,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class ValueFamilyMethods extends FamilyMethods<ValueQualifierBuilder, Value> {
 
     ValueFamilyMethods(Data data) {
@@ -291,6 +305,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class MapConverter {
     private Collection<Bytes> rows;
     private Set<Column> columns;
@@ -363,6 +380,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class ColumnsMethods {
     private Collection<Bytes> rows;
 
@@ -379,6 +399,9 @@ public class TypedSnapshotBase implements SnapshotBase {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class ValueRowMethods extends RowMethods<ValueFamilyMethods> {
 
     ValueRowMethods() {

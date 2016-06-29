@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Configuration helper class for Fluo. FluoConfiguration extends {@link CompositeConfiguration}.
+ *
+ * @since 1.0.0
  */
 public class FluoConfiguration extends CompositeConfiguration {
 

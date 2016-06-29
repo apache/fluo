@@ -17,6 +17,8 @@ package org.apache.fluo.api.exceptions;
 
 /**
  * Exception thrown when {@link org.apache.fluo.api.client.Transaction#commit()} fails
+ *
+ * @since 1.0.0
  */
 public class CommitException extends FluoException {
 

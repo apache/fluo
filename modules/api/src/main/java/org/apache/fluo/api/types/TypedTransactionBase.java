@@ -29,6 +29,8 @@ import org.apache.fluo.api.types.TypeLayer.RowMethods;
 
 /**
  * A {@link TransactionBase} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public class TypedTransactionBase extends TypedSnapshotBase implements TransactionBase {
 
@@ -36,6 +38,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   private final Encoder encoder;
   private final TypeLayer tl;
 
+  /**
+   * @since 1.0.0
+   */
   public class Mutator {
 
     private boolean set = false;
@@ -144,6 +149,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
 
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class VisibilityMutator extends Mutator {
 
     public VisibilityMutator(Data data) {
@@ -175,6 +183,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class MutatorQualifierMethods extends QualifierMethods<VisibilityMutator> {
 
     MutatorQualifierMethods(Data data) {
@@ -187,6 +198,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class MutatorFamilyMethods extends FamilyMethods<MutatorQualifierMethods, Mutator> {
 
     MutatorFamilyMethods(Data data) {
@@ -204,6 +218,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class MutatorRowMethods extends RowMethods<MutatorFamilyMethods> {
 
     MutatorRowMethods() {

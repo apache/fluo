@@ -19,6 +19,8 @@ package org.apache.fluo.api.client;
  * Allows users to read from a Fluo table at a certain point in time. Snapshot extends
  * {@link SnapshotBase} to include a {@link #close} method which must be called when you are
  * finished using it.
+ *
+ * @since 1.0.0
  */
 public interface Snapshot extends SnapshotBase, AutoCloseable {
 

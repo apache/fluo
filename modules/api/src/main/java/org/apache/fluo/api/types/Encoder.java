@@ -19,6 +19,8 @@ import org.apache.fluo.api.data.Bytes;
 
 /**
  * Transforms Java primitives to and from bytes using desired encoding
+ *
+ * @since 1.0.0
  */
 public interface Encoder {
 

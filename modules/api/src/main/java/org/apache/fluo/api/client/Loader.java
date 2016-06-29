@@ -20,9 +20,14 @@ import org.apache.commons.configuration.Configuration;
 /**
  * Interface that is implemented by users to load data into Fluo. Loader classes are executed by a
  * {@link LoaderExecutor}.
+ *
+ * @since 1.0.0
  */
 public interface Loader {
 
+  /**
+   * @since 1.0.0
+   */
   interface Context {
     /**
      * @return A configuration object with application configuration like that returned by

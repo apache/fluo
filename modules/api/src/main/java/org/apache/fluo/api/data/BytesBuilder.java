@@ -22,6 +22,8 @@ import com.google.common.base.Preconditions;
 
 /**
  * This class provides an easy, efficient, reusable mechanism for building immutable Bytes objects.
+ *
+ * @since 1.0.0
  */
 public class BytesBuilder {
 

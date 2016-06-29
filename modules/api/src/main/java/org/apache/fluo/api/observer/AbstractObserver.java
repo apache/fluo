@@ -24,6 +24,8 @@ import org.apache.fluo.api.client.TransactionBase;
  * method. AbstractObserver extends {@link Observer} but provides a default implementation for the
  * {@link #init(Context)} and {@link #close()} method so that they can be optionally implemented by
  * user.
+ *
+ * @since 1.0.0
  */
 public abstract class AbstractObserver implements Observer {
 

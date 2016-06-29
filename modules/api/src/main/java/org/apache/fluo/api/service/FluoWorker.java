@@ -17,6 +17,8 @@ package org.apache.fluo.api.service;
 
 /**
  * Fluo worker service
+ *
+ * @since 1.0.0
  */
 public interface FluoWorker extends FluoService {
 

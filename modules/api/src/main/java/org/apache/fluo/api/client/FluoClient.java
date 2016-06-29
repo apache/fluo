@@ -22,6 +22,8 @@ import org.apache.commons.configuration.SubsetConfiguration;
  * Client interface for Fluo. Fluo clients will have shared resources used by all objects created by
  * the client. Therefore, {@link FluoClient#close()} must called when you are finished using the
  * client.
+ * 
+ * @since 1.0.0
  */
 public interface FluoClient extends AutoCloseable {
 

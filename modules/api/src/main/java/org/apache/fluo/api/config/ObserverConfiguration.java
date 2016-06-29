@@ -25,6 +25,8 @@ import org.apache.fluo.api.observer.Observer;
 /**
  * Used to pass configuration to an {@link AbstractObserver}. Set using
  * {@link FluoConfiguration#addObserver(ObserverConfiguration)}
+ *
+ * @since 1.0.0
  */
 public class ObserverConfiguration {
   private final String className;

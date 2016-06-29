@@ -17,6 +17,8 @@ package org.apache.fluo.api.service;
 
 /**
  * Fluo Oracle service
+ *
+ * @since 1.0.0
  */
 public interface FluoOracle extends FluoService {
 

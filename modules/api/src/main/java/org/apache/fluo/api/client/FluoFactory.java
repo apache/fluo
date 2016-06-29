@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Factory for creating {@link FluoClient}, {@link FluoAdmin}, and {@link MiniFluo}. All factory
  * methods take a configuration object which can be built using {@link FluoConfiguration}.
+ *
+ * @since 1.0.0
  */
 public class FluoFactory {
 

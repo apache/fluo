@@ -17,6 +17,8 @@ package org.apache.fluo.api.exceptions;
 
 /**
  * Base exception class for Fluo. All other exceptions extend this class.
+ *
+ * @since 1.0.0
  */
 public class FluoException extends RuntimeException {
 

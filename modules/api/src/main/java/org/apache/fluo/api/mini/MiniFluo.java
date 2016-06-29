@@ -19,6 +19,8 @@ import org.apache.commons.configuration.Configuration;
 
 /**
  * A test and development instance of Fluo containing its own Oracle and Worker
+ *
+ * @since 1.0.0
  */
 public interface MiniFluo extends AutoCloseable {
 

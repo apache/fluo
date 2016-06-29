@@ -21,6 +21,8 @@ import org.apache.fluo.api.exceptions.CommitException;
  * Enables users to read and write to Fluo at a certain point in time. Transaction extends
  * {@link TransactionBase} to include the {@link #commit()} and {@link #close()} methods as users
  * are responsible for committing and closing resources when using Transaction.
+ *
+ * @since 1.0.0
  */
 public interface Transaction extends TransactionBase, AutoCloseable {
 

@@ -17,8 +17,9 @@ package org.apache.fluo.api.data;
 
 /**
  * An immutable object that can hold a row, column, and value.
+ *
+ * @since 1.0.0
  */
-
 public class RowColumnValue extends RowColumn {
   private static final long serialVersionUID = 1L;
 

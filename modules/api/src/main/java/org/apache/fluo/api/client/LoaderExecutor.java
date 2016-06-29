@@ -18,6 +18,8 @@ package org.apache.fluo.api.client;
 /**
  * Executes provided {@link Loader} objects to load data into Fluo. {@link LoaderExecutor#close()}
  * should be called when finished.
+ *
+ * @since 1.0.0
  */
 public interface LoaderExecutor extends AutoCloseable {
 

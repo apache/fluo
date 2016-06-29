@@ -21,6 +21,8 @@ import java.util.Objects;
 /**
  * Represents a range between two {@link RowColumn}s in a Fluo table. Similar to an Accumulo Range.
  * Span is immutable after it is created.
+ *
+ * @since 1.0.0
  */
 public class Span implements Serializable {
 
@@ -316,6 +318,9 @@ public class Span implements Serializable {
     return prefix(Bytes.of(row), colPrefix);
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class KeyBuilder {
     protected Bytes row = Bytes.EMPTY;
     protected Bytes cf = Bytes.EMPTY;
@@ -325,6 +330,9 @@ public class Span implements Serializable {
     protected boolean infinite = true;
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class Builder {
 
     private KeyBuilder start = new KeyBuilder();
@@ -367,6 +375,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class StartBuilder {
 
     protected Builder builder;
@@ -402,6 +413,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class EndBuilder {
 
     protected Builder builder;
@@ -426,6 +440,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class StartCVBuilder extends StartBuilder {
 
     private StartCVBuilder(Builder builder) {
@@ -448,6 +465,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class StartCQBuilder extends StartBuilder {
 
     private StartCQBuilder(Builder builder) {
@@ -470,6 +490,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class StartCFBuilder extends StartBuilder {
 
     private StartCFBuilder(Builder builder) {
@@ -492,6 +515,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class EndCVBuilder extends EndBuilder {
 
     private EndCVBuilder(Builder builder) {
@@ -514,6 +540,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class EndCQBuilder extends EndBuilder {
 
     private EndCQBuilder(Builder builder) {
@@ -536,6 +565,9 @@ public class Span implements Serializable {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class EndCFBuilder extends EndBuilder {
 
     private EndCFBuilder(Builder builder) {
