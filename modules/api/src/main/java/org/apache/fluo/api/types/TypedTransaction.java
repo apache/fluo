@@ -21,6 +21,8 @@ import org.apache.fluo.api.exceptions.CommitException;
 
 /**
  * A {@link Transaction} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public class TypedTransaction extends TypedTransactionBase implements Transaction {
 

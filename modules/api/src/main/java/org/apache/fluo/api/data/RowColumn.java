@@ -21,6 +21,8 @@ import java.util.Objects;
 /**
  * Represents all or subset of a Fluo row and {@link Column}. RowColumn is similar to an Accumulo
  * Key. RowColumn is immutable after it is created.
+ *
+ * @since 1.0.0
  */
 public class RowColumn implements Comparable<RowColumn>, Serializable {
 

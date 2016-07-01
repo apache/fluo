@@ -20,6 +20,8 @@ import org.apache.fluo.api.client.TransactionBase;
 
 /**
  * A {@link Loader} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public abstract class TypedLoader implements Loader {
 

@@ -19,11 +19,15 @@ import org.apache.fluo.api.config.FluoConfiguration;
 
 /**
  * Provides methods for initializing and administering a Fluo application.
+ * 
+ * @since 1.0.0
  */
 public interface FluoAdmin extends AutoCloseable {
 
   /**
    * Specifies Fluo initialization options such as clearing Zookeeper or existing Accumulo table.
+   *
+   * @since 1.0.0
    */
   class InitOpts {
 
@@ -62,6 +66,8 @@ public interface FluoAdmin extends AutoCloseable {
    * initialized if a directory with same name as application exists at the chroot directory set by
    * the property org.apache.fluo.client.zookeeper.connect. If this directory can be cleared, set
    * {@link InitOpts#setClearTable(boolean)} to true
+   *
+   * @since 1.0.0
    */
   class AlreadyInitializedException extends Exception {
 
@@ -80,6 +86,8 @@ public interface FluoAdmin extends AutoCloseable {
    * Exception that is thrown if Accumulo table (set by org.apache.fluo.admin.accumulo.table) exists
    * during initialization. If this table can be cleared, set
    * {@link InitOpts#setClearZookeeper(boolean)} to true
+   *
+   * @since 1.0.0
    */
   class TableExistsException extends Exception {
 

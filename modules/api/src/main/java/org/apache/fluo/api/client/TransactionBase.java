@@ -22,6 +22,8 @@ import org.apache.fluo.api.exceptions.AlreadySetException;
 /**
  * Enables users to read and write to a Fluo table at certain point in time. TransactionBase extends
  * {@link SnapshotBase} to include methods for writing to Fluo.
+ *
+ * @since 1.0.0
  */
 public interface TransactionBase extends SnapshotBase {
 

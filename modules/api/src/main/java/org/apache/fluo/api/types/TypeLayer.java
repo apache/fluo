@@ -245,8 +245,9 @@ import org.apache.fluo.api.data.Column;
  *     String val1 = rowCols.get("row1").get(c1).toString();
  * }
  * </pre>
+ *
+ * @since 1.0.0
  */
-
 public class TypeLayer {
 
   private Encoder encoder;
@@ -268,6 +269,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public abstract class RowMethods<R> {
 
     abstract R create(Data data);
@@ -300,6 +304,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public abstract class SimpleFamilyMethods<R1> {
 
     protected Data data;
@@ -336,6 +343,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public abstract class FamilyMethods<R1, R2> extends SimpleFamilyMethods<R1> {
 
     FamilyMethods(Data data) {
@@ -352,6 +362,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public abstract class QualifierMethods<R> {
 
     protected Data data;
@@ -388,6 +401,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public static class VisibilityMethods {
 
     private Data data;
@@ -417,6 +433,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class CQB extends QualifierMethods<VisibilityMethods> {
     CQB(Data data) {
       super(data);
@@ -428,6 +447,9 @@ public class TypeLayer {
     }
   }
 
+  /**
+   * @since 1.0.0
+   */
   public class CFB extends SimpleFamilyMethods<CQB> {
     CFB() {
       super(new Data());

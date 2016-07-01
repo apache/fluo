@@ -22,6 +22,8 @@ import java.util.Objects;
  * Represents all or a subset of the column family, column qualifier, and column visibility fields.
  * A column with no fields set is represented by Column.EMPTY. Column is immutable after it is
  * created.
+ *
+ * @since 1.0.0
  */
 public class Column implements Comparable<Column>, Serializable {
 

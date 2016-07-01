@@ -19,6 +19,8 @@ import org.apache.fluo.api.client.Snapshot;
 
 /**
  * A {@link Snapshot} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public class TypedSnapshot extends TypedSnapshotBase implements Snapshot {
 

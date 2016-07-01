@@ -27,6 +27,8 @@ import org.apache.fluo.api.iterator.RowIterator;
 
 /**
  * Allows users to read from a Fluo table at a certain point in time
+ *
+ * @since 1.0.0
  */
 public interface SnapshotBase {
 

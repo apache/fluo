@@ -17,6 +17,8 @@ package org.apache.fluo.api.service;
 
 /**
  * Shared interface for Fluo services
+ *
+ * @since 1.0.0
  */
 public interface FluoService {
 

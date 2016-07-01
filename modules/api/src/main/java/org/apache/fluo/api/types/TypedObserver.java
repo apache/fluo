@@ -22,6 +22,8 @@ import org.apache.fluo.api.observer.AbstractObserver;
 
 /**
  * An {@link AbstractObserver} that uses a {@link TypeLayer}
+ *
+ * @since 1.0.0
  */
 public abstract class TypedObserver extends AbstractObserver {
 

@@ -22,6 +22,8 @@ import org.apache.fluo.api.data.Bytes;
 
 /**
  * Iterator for Fluo rows
+ *
+ * @since 1.0.0
  */
 public interface RowIterator extends Iterator<Entry<Bytes, ColumnIterator>> {
 

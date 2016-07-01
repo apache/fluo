@@ -34,6 +34,8 @@ import java.util.Objects;
 /**
  * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
  * created. Bytes.EMPTY is used to represent a Bytes object with no data.
+ *
+ * @since 1.0.0
  */
 public abstract class Bytes implements Comparable<Bytes>, Serializable {
 
@@ -42,10 +44,16 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
       "org.apache.fluo.accumulo.data.MutableBytesFactory";
   private static final String WRITE_UTIL_CLASS = "org.apache.fluo.accumulo.data.WriteUtilImpl";
 
+  /**
+   * @since 1.0.0
+   */
   public interface BytesFactory {
     Bytes get(byte[] data);
   }
 
+  /**
+   * @since 1.0.0
+   */
   public interface WriteUtil {
     void writeVInt(DataOutput stream, int i) throws IOException;
 

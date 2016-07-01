@@ -21,6 +21,8 @@ import org.apache.fluo.api.data.Column;
 /**
  * Thrown if {@link org.apache.fluo.api.client.Transaction#set(Bytes, Column, Bytes)} is called
  * multiple times for the same row and column
+ *
+ * @since 1.0.0
  */
 public class AlreadySetException extends FluoException {
 
