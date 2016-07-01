@@ -43,6 +43,7 @@ import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.iterator.ColumnIterator;
 import org.apache.fluo.api.iterator.RowIterator;
+import org.apache.fluo.cluster.util.FluoYarnConfig;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.AccumuloUtil;
@@ -271,7 +272,7 @@ public abstract class AppRunner {
         }
 
         try {
-          long sleepSec = calculateSleep(ntfyCount, config.getWorkerInstances());
+          long sleepSec = calculateSleep(ntfyCount, FluoYarnConfig.getWorkerInstances(config));
           log.info("{} notifications are still outstanding.  Will try again in {} seconds...",
               ntfyCount, sleepSec);
           Thread.sleep(1000 * sleepSec);

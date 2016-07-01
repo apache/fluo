@@ -49,16 +49,10 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT,
         base.getAccumuloClasspath());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
-    Assert.assertEquals(FluoConfiguration.WORKER_INSTANCES_DEFAULT, base.getWorkerInstances());
-    Assert.assertEquals(FluoConfiguration.WORKER_MAX_MEMORY_MB_DEFAULT, base.getWorkerMaxMemory());
-    Assert.assertEquals(FluoConfiguration.WORKER_NUM_CORES_DEFAULT, base.getWorkerNumCores());
     Assert.assertEquals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_DEFAULT,
         base.getTransactionRollbackTime());
     Assert.assertEquals(FluoConfiguration.LOADER_NUM_THREADS_DEFAULT, base.getLoaderThreads());
     Assert.assertEquals(FluoConfiguration.LOADER_QUEUE_SIZE_DEFAULT, base.getLoaderQueueSize());
-    Assert.assertEquals(FluoConfiguration.ORACLE_INSTANCES_DEFAULT, base.getOracleInstances());
-    Assert.assertEquals(FluoConfiguration.ORACLE_MAX_MEMORY_MB_DEFAULT, base.getOracleMaxMemory());
-    Assert.assertEquals(FluoConfiguration.ORACLE_NUM_CORES_DEFAULT, base.getOracleNumCores());
     Assert.assertEquals(FluoConfiguration.MINI_START_ACCUMULO_DEFAULT, base.getMiniStartAccumulo());
     Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
   }
@@ -96,18 +90,12 @@ public class FluoConfigurationTest {
     Assert.assertEquals(0, config.setLoaderQueueSize(0).getLoaderQueueSize());
     Assert.assertEquals(7, config.setLoaderThreads(7).getLoaderThreads());
     Assert.assertEquals(0, config.setLoaderThreads(0).getLoaderThreads());
-    Assert.assertEquals(8, config.setOracleMaxMemory(8).getOracleMaxMemory());
-    Assert.assertEquals(10, config.setOracleInstances(10).getOracleInstances());
-    Assert.assertEquals(11, config.setWorkerInstances(11).getWorkerInstances());
-    Assert.assertEquals(12, config.setWorkerMaxMemory(12).getWorkerMaxMemory());
     Assert.assertEquals(13, config.setWorkerThreads(13).getWorkerThreads());
     Assert.assertEquals("zoos1", config.setInstanceZookeepers("zoos1").getInstanceZookeepers());
     Assert.assertEquals("zoos2", config.setAccumuloZookeepers("zoos2").getAccumuloZookeepers());
     Assert.assertEquals("app", config.setApplicationName("app").getApplicationName());
     Assert.assertEquals("zoos1/app", config.getAppZookeepers());
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
-    Assert.assertEquals(15, config.setWorkerNumCores(15).getWorkerNumCores());
-    Assert.assertEquals(16, config.setOracleNumCores(16).getOracleNumCores());
     Assert.assertFalse(config.setMiniStartAccumulo(false).getMiniStartAccumulo());
     Assert.assertEquals("mydata", config.setMiniDataDir("mydata").getMiniDataDir());
     Assert.assertEquals(17, config.setClientRetryTimeout(17).getClientRetryTimeout());
@@ -338,22 +326,20 @@ public class FluoConfigurationTest {
   @Test
   public void testCopyConfig() {
     FluoConfiguration c1 = new FluoConfiguration();
-    c1.setOracleNumCores(1);
-    Assert.assertEquals(1, c1.getOracleNumCores());
+    c1.setWorkerThreads(1);
+    Assert.assertEquals(1, c1.getWorkerThreads());
     FluoConfiguration c2 = new FluoConfiguration(c1);
-    Assert.assertEquals(1, c2.getOracleNumCores());
-    c2.setOracleNumCores(2);
-    Assert.assertEquals(2, c2.getOracleNumCores());
-    Assert.assertEquals(1, c1.getOracleNumCores());
+    Assert.assertEquals(1, c2.getWorkerThreads());
+    c2.setWorkerThreads(2);
+    Assert.assertEquals(2, c2.getWorkerThreads());
+    Assert.assertEquals(1, c1.getWorkerThreads());
   }
 
   @Test
   public void testIAE() {
     FluoConfiguration config = new FluoConfiguration();
     String[] positiveIntMethods =
-        {"setLoaderQueueSize", "setLoaderThreads", "setOracleInstances", "setOracleMaxMemory",
-            "setOracleNumCores", "setWorkerInstances", "setWorkerMaxMemory", "setWorkerNumCores",
-            "setWorkerThreads", "setZookeeperTimeout"};
+        {"setLoaderQueueSize", "setLoaderThreads", "setWorkerThreads", "setZookeeperTimeout"};
     for (String methodName : positiveIntMethods) {
       try {
         config.getClass().getMethod(methodName, int.class).invoke(config, -5);

@@ -21,6 +21,7 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.cluster.runnable.OracleRunnable;
 import org.apache.fluo.cluster.runnable.WorkerRunnable;
 import org.apache.fluo.cluster.runner.YarnAppRunner;
+import org.apache.fluo.cluster.util.FluoYarnConfig;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
@@ -69,14 +70,21 @@ public class FluoTwillApp implements TwillApplication {
   @Override
   public TwillSpecification configure() {
 
-    log.info("Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
-        + "with following properties:", config.getApplicationName(), config.getOracleInstances(),
-        config.getWorkerInstances());
+    final int oracleInstances = FluoYarnConfig.getOracleInstances(config);
+    final int oracleMaxMemory = FluoYarnConfig.getOracleMaxMemory(config);
+    final int oracleNumCores = FluoYarnConfig.getOracleNumCores(config);
+    final int workerInstances = FluoYarnConfig.getWorkerInstances(config);
+    final int workerMaxMemory = FluoYarnConfig.getWorkerMaxMemory(config);
+    final int workerNumCores = FluoYarnConfig.getWorkerNumCores(config);
 
-    log.info("{} = {}", FluoConfiguration.ORACLE_MAX_MEMORY_MB_PROP, config.getOracleMaxMemory());
-    log.info("{} = {}", FluoConfiguration.WORKER_MAX_MEMORY_MB_PROP, config.getWorkerMaxMemory());
-    log.info("{} = {}", FluoConfiguration.ORACLE_NUM_CORES_PROP, config.getOracleNumCores());
-    log.info("{} = {}", FluoConfiguration.WORKER_NUM_CORES_PROP, config.getWorkerNumCores());
+    log.info("Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
+        + "with following properties:", config.getApplicationName(), oracleInstances,
+        workerInstances);
+
+    log.info("{} = {}", FluoYarnConfig.ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
+    log.info("{} = {}", FluoYarnConfig.WORKER_MAX_MEMORY_MB_PROP, workerMaxMemory);
+    log.info("{} = {}", FluoYarnConfig.ORACLE_NUM_CORES_PROP, oracleNumCores);
+    log.info("{} = {}", FluoYarnConfig.WORKER_NUM_CORES_PROP, workerNumCores);
 
     // Start building Fluo Twill application
     MoreRunnable moreRunnable =
@@ -86,9 +94,8 @@ public class FluoTwillApp implements TwillApplication {
 
     // Configure Oracle(s)
     ResourceSpecification oracleResources =
-        ResourceSpecification.Builder.with().setVirtualCores(config.getOracleNumCores())
-            .setMemory(config.getOracleMaxMemory(), SizeUnit.MEGA)
-            .setInstances(config.getOracleInstances()).build();
+        ResourceSpecification.Builder.with().setVirtualCores(oracleNumCores)
+            .setMemory(oracleMaxMemory, SizeUnit.MEGA).setInstances(oracleInstances).build();
 
     LocalFileAdder fileAdder =
         moreRunnable.add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources)
@@ -97,9 +104,8 @@ public class FluoTwillApp implements TwillApplication {
 
     // Configure Worker(s)
     ResourceSpecification workerResources =
-        ResourceSpecification.Builder.with().setVirtualCores(config.getWorkerNumCores())
-            .setMemory(config.getWorkerMaxMemory(), SizeUnit.MEGA)
-            .setInstances(config.getWorkerInstances()).build();
+        ResourceSpecification.Builder.with().setVirtualCores(workerNumCores)
+            .setMemory(workerMaxMemory, SizeUnit.MEGA).setInstances(workerInstances).build();
 
     fileAdder =
         runnableSetter.add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources)

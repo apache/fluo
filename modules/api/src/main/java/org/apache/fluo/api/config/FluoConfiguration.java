@@ -71,13 +71,7 @@ public class FluoConfiguration extends CompositeConfiguration {
   // Worker
   private static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
   public static final String WORKER_NUM_THREADS_PROP = WORKER_PREFIX + ".num.threads";
-  public static final String WORKER_INSTANCES_PROP = WORKER_PREFIX + ".instances";
-  public static final String WORKER_MAX_MEMORY_MB_PROP = WORKER_PREFIX + ".max.memory.mb";
-  public static final String WORKER_NUM_CORES_PROP = WORKER_PREFIX + ".num.cores";
   public static final int WORKER_NUM_THREADS_DEFAULT = 10;
-  public static final int WORKER_INSTANCES_DEFAULT = 1;
-  public static final int WORKER_MAX_MEMORY_MB_DEFAULT = 1024;
-  public static final int WORKER_NUM_CORES_DEFAULT = 1;
 
   // Loader
   private static final String LOADER_PREFIX = FLUO_PREFIX + ".loader";
@@ -88,12 +82,6 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   // Oracle
   private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
-  public static final String ORACLE_INSTANCES_PROP = ORACLE_PREFIX + ".instances";
-  public static final String ORACLE_MAX_MEMORY_MB_PROP = ORACLE_PREFIX + ".max.memory.mb";
-  public static final String ORACLE_NUM_CORES_PROP = ORACLE_PREFIX + ".num.cores";
-  public static final int ORACLE_INSTANCES_DEFAULT = 1;
-  public static final int ORACLE_MAX_MEMORY_MB_DEFAULT = 512;
-  public static final int ORACLE_NUM_CORES_DEFAULT = 1;
 
   // MiniFluo
   private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
@@ -169,13 +157,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     getLoaderQueueSize();
     getLoaderThreads();
     getObserverConfig();
-    getOracleInstances();
-    getOracleMaxMemory();
-    getOracleNumCores();
     getTransactionRollbackTime();
-    getWorkerInstances();
-    getWorkerMaxMemory();
-    getWorkerNumCores();
     getWorkerThreads();
     getZookeeperTimeout();
   }
@@ -440,30 +422,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getPositiveLong(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
   }
 
-  public FluoConfiguration setWorkerInstances(int workerInstances) {
-    return setPositiveInt(WORKER_INSTANCES_PROP, workerInstances);
-  }
-
-  public int getWorkerInstances() {
-    return getPositiveInt(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
-  }
-
-  public FluoConfiguration setWorkerMaxMemory(int maxMemoryMB) {
-    return setPositiveInt(WORKER_MAX_MEMORY_MB_PROP, maxMemoryMB);
-  }
-
-  public int getWorkerMaxMemory() {
-    return getPositiveInt(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
-  }
-
-  public FluoConfiguration setWorkerNumCores(int numCores) {
-    return setPositiveInt(WORKER_NUM_CORES_PROP, numCores);
-  }
-
-  public int getWorkerNumCores() {
-    return getPositiveInt(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
-  }
-
   public FluoConfiguration setLoaderThreads(int numThreads) {
     return setNonNegativeInt(LOADER_NUM_THREADS_PROP, numThreads);
   }
@@ -478,30 +436,6 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public int getLoaderQueueSize() {
     return getNonNegativeInt(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
-  }
-
-  public FluoConfiguration setOracleMaxMemory(int oracleMaxMemory) {
-    return setPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
-  }
-
-  public int getOracleMaxMemory() {
-    return getPositiveInt(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
-  }
-
-  public FluoConfiguration setOracleInstances(int oracleInstances) {
-    return setPositiveInt(ORACLE_INSTANCES_PROP, oracleInstances);
-  }
-
-  public int getOracleInstances() {
-    return getPositiveInt(ORACLE_INSTANCES_PROP, ORACLE_INSTANCES_DEFAULT);
-  }
-
-  public FluoConfiguration setOracleNumCores(int numCores) {
-    return setPositiveInt(ORACLE_NUM_CORES_PROP, numCores);
-  }
-
-  public int getOracleNumCores() {
-    return getPositiveInt(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
   }
 
   /**
@@ -672,14 +606,9 @@ public class FluoConfiguration extends CompositeConfiguration {
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
     config.setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
-    config.setProperty(WORKER_INSTANCES_PROP, WORKER_INSTANCES_DEFAULT);
-    config.setProperty(WORKER_MAX_MEMORY_MB_PROP, WORKER_MAX_MEMORY_MB_DEFAULT);
-    config.setProperty(WORKER_NUM_CORES_PROP, WORKER_NUM_CORES_DEFAULT);
     config.setProperty(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
     config.setProperty(LOADER_NUM_THREADS_PROP, LOADER_NUM_THREADS_DEFAULT);
     config.setProperty(LOADER_QUEUE_SIZE_PROP, LOADER_QUEUE_SIZE_DEFAULT);
-    config.setProperty(ORACLE_MAX_MEMORY_MB_PROP, ORACLE_MAX_MEMORY_MB_DEFAULT);
-    config.setProperty(ORACLE_NUM_CORES_PROP, ORACLE_NUM_CORES_DEFAULT);
     config.setProperty(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
     config.setProperty(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }
