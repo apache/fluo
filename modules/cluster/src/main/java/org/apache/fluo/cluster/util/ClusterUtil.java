@@ -16,15 +16,6 @@
 package org.apache.fluo.cluster.util;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.NodeCache;
-import org.apache.curator.framework.recipes.cache.NodeCacheListener;
-import org.apache.fluo.accumulo.util.ZookeeperPath;
-import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.util.Halt;
 
 public class ClusterUtil {
 

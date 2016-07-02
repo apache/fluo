@@ -25,11 +25,9 @@ import java.util.Map.Entry;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ScannerConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
@@ -103,10 +101,8 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
           ByteArrayInputStream bais =
               new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
                   .getBytes(StandardCharsets.UTF_8));
-          PropertiesConfiguration props = new PropertiesConfiguration();
-          props.load(bais);
 
-          env = new Environment(new FluoConfiguration(props));
+          env = new Environment(new FluoConfiguration(bais));
 
           ti = new TransactionImpl(env, context.getConfiguration().getLong(TIMESTAMP_CONF_KEY, -1));
 
@@ -157,7 +153,7 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
    * @param config use {@link FluoConfiguration} to configure programmatically
    */
   @SuppressWarnings("deprecation")
-  public static void configure(Job conf, Configuration config) {
+  public static void configure(Job conf, SimpleConfiguration config) {
     try {
       FluoConfiguration fconfig = new FluoConfiguration(config);
       try (Environment env = new Environment(fconfig)) {
@@ -166,7 +162,7 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
         conf.getConfiguration().setLong(TIMESTAMP_CONF_KEY, ts);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ConfigurationConverter.getProperties(config).store(baos, "");
+        config.save(baos);
         conf.getConfiguration().set(PROPS_CONF_KEY,
             new String(baos.toByteArray(), StandardCharsets.UTF_8));
 

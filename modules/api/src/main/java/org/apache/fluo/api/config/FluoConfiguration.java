@@ -16,6 +16,7 @@
 package org.apache.fluo.api.config;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,22 +26,16 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.configuration.AbstractConfiguration;
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.SubsetConfiguration;
 import org.apache.fluo.api.client.FluoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Configuration helper class for Fluo. FluoConfiguration extends {@link CompositeConfiguration}.
+ * Configuration helper class for Fluo
  *
  * @since 1.0.0
  */
-public class FluoConfiguration extends CompositeConfiguration {
+public class FluoConfiguration extends SimpleConfiguration {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.class);
 
@@ -80,9 +75,6 @@ public class FluoConfiguration extends CompositeConfiguration {
   public static final int LOADER_NUM_THREADS_DEFAULT = 10;
   public static final int LOADER_QUEUE_SIZE_DEFAULT = 10;
 
-  // Oracle
-  private static final String ORACLE_PREFIX = FLUO_PREFIX + ".oracle";
-
   // MiniFluo
   private static final String MINI_PREFIX = FLUO_PREFIX + ".mini";
   public static final String MINI_START_ACCUMULO_PROP = MINI_PREFIX + ".start.accumulo";
@@ -107,40 +99,18 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   public FluoConfiguration() {
     super();
-    setThrowExceptionOnMissing(true);
-    setDelimiterParsingDisabled(true);
   }
 
-  public FluoConfiguration(FluoConfiguration other) {
-    this();
-    Iterator<String> iter = other.getKeys();
-    while (iter.hasNext()) {
-      String key = iter.next();
-      setProperty(key, other.getProperty(key));
-    }
+  public FluoConfiguration(SimpleConfiguration other) {
+    super(other);
   }
 
-  public FluoConfiguration(Configuration configuration) {
-    this();
-    if (configuration instanceof AbstractConfiguration) {
-      AbstractConfiguration aconf = (AbstractConfiguration) configuration;
-      aconf.setDelimiterParsingDisabled(true);
-    }
-
-    addConfiguration(configuration);
+  public FluoConfiguration(InputStream in) {
+    super(in);
   }
 
   public FluoConfiguration(File propertiesFile) {
-    this();
-    try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(propertiesFile);
-      addConfiguration(config);
-    } catch (ConfigurationException e) {
-      throw new IllegalArgumentException(e);
-    }
+    super(propertiesFile);
   }
 
   public void validate() {
@@ -440,22 +410,22 @@ public class FluoConfiguration extends CompositeConfiguration {
 
   /**
    * @param reporter The name of the reporter to get configuration for, i.e. console, jmx, graphite.
-   * @return A {@link SubsetConfiguration} using the prefix {@value #REPORTER_PREFIX} with the
+   * @return A subset of this configuration using the prefix {@value #REPORTER_PREFIX} with the
    *         reporter parameter appended. Any change made to subset will be reflected in this
    *         configuration, but with the prefix added.
    */
-  public Configuration getReporterConfiguration(String reporter) {
+  public SimpleConfiguration getReporterConfiguration(String reporter) {
     return subset(REPORTER_PREFIX + "." + reporter);
   }
 
   /**
-   * @return A {@link SubsetConfiguration} using the prefix {@value #APP_PREFIX}. Any change made to
-   *         subset will be reflected in this configuration, but with the prefix added. This method
-   *         is useful for setting application configuration before initialization. For reading
-   *         application configuration after initialization, see
+   * @return A subset of this configuration using the prefix {@value #APP_PREFIX}. Any change made
+   *         to subset will be reflected in this configuration, but with the prefix added. This
+   *         method is useful for setting application configuration before initialization. For
+   *         reading application configuration after initialization, see
    *         {@link FluoClient#getAppConfiguration()}
    */
-  public Configuration getAppConfiguration() {
+  public SimpleConfiguration getAppConfiguration() {
     return subset(APP_PREFIX);
   }
 
@@ -476,12 +446,6 @@ public class FluoConfiguration extends CompositeConfiguration {
     return getNonEmptyString(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
   }
 
-  protected void setDefault(String key, String val) {
-    if (getProperty(key) == null) {
-      setProperty(key, val);
-    }
-  }
-
   /**
    * Logs all properties
    */
@@ -489,7 +453,7 @@ public class FluoConfiguration extends CompositeConfiguration {
     Iterator<String> iter = getKeys();
     while (iter.hasNext()) {
       String key = iter.next();
-      log.info(key + " = " + getProperty(key));
+      log.info(key + " = " + getRawString(key));
     }
   }
 
@@ -575,13 +539,13 @@ public class FluoConfiguration extends CompositeConfiguration {
     return valid;
   }
 
-  public Configuration getClientConfiguration() {
-    Configuration clientConfig = new CompositeConfiguration();
+  public SimpleConfiguration getClientConfiguration() {
+    SimpleConfiguration clientConfig = new SimpleConfiguration();
     Iterator<String> iter = getKeys();
     while (iter.hasNext()) {
       String key = iter.next();
       if (key.startsWith(CLIENT_PREFIX)) {
-        clientConfig.setProperty(key, getProperty(key));
+        clientConfig.setProperty(key, getRawString(key));
       }
     }
     return clientConfig;
@@ -591,8 +555,8 @@ public class FluoConfiguration extends CompositeConfiguration {
    * Returns configuration with all Fluo properties set to their default. NOTE - some properties do
    * not have defaults and will not be set.
    */
-  public static Configuration getDefaultConfiguration() {
-    Configuration config = new CompositeConfiguration();
+  public static SimpleConfiguration getDefaultConfiguration() {
+    SimpleConfiguration config = new SimpleConfiguration();
     setDefaultConfiguration(config);
     return config;
   }
@@ -601,7 +565,7 @@ public class FluoConfiguration extends CompositeConfiguration {
    * Sets all Fluo properties to their default in the given configuration. NOTE - some properties do
    * not have defaults and will not be set.
    */
-  public static void setDefaultConfiguration(Configuration config) {
+  public static void setDefaultConfiguration(SimpleConfiguration config) {
     config.setProperty(CLIENT_ZOOKEEPER_CONNECT_PROP, CLIENT_ZOOKEEPER_CONNECT_DEFAULT);
     config.setProperty(CLIENT_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT);
     config.setProperty(CLIENT_ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT);

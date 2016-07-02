@@ -17,12 +17,12 @@ package org.apache.fluo.core.client;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.log.TracingTransaction;
@@ -100,7 +100,7 @@ public class FluoClientImpl implements FluoClient {
   }
 
   @Override
-  public Configuration getAppConfiguration() {
+  public SimpleConfiguration getAppConfiguration() {
     return env.getAppConfiguration();
   }
 

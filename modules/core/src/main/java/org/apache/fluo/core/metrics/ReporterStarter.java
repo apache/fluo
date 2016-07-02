@@ -18,19 +18,19 @@ package org.apache.fluo.core.metrics;
 import java.util.List;
 
 import com.codahale.metrics.MetricRegistry;
-import org.apache.commons.configuration.Configuration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 public interface ReporterStarter {
 
   interface Params {
     /**
-     * 
+     *
      * @return Fluo's configuration
      */
-    Configuration getConfiguration();
+    SimpleConfiguration getConfiguration();
 
     /**
-     * 
+     *
      * @return The metric registry used by Fluo
      */
     MetricRegistry getMetricRegistry();
@@ -41,7 +41,7 @@ public interface ReporterStarter {
   /**
    * A fluo extension point that allows configuration of metrics reporters. This method should
    * configure and start reporters.
-   * 
+   *
    * @param params Elements of Fluo environment needed to setup reporters.
    * @return A list of closeables which represent reporters.
    */

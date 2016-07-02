@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.core.metrics.ReporterStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class GraphiteReporterStarter implements ReporterStarter {
 
   @Override
   public List<AutoCloseable> start(Params params) {
-    Configuration config =
+    SimpleConfiguration config =
         new FluoConfiguration(params.getConfiguration()).getReporterConfiguration("graphite");
 
     if (!config.getBoolean("enable", false)) {

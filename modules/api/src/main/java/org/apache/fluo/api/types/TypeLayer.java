@@ -26,29 +26,29 @@ import org.apache.fluo.api.data.Column;
 /**
  * A simple convenience layer for Fluo. This layer attempts to make the following common operations
  * easier.
- * 
+ *
  * <UL>
  * <LI>Working with different types.
  * <LI>Supplying default values
  * <LI>Dealing with null return types.
  * <LI>Working with row/column and column maps
  * </UL>
- * 
+ *
  * <p>
  * This layer was intentionally loosely coupled with the basic API. This allows other convenience
  * layers for Fluo to build directly on the basic API w/o having to consider the particulars of this
  * layer. Also its expected that integration with other languages may only use the basic API.
  * </p>
- * 
+ *
  * <h3>Using</h3>
- * 
+ *
  * <p>
  * A TypeLayer is created with a certain encoder that is used for converting from bytes to
  * primitives and visa versa. In order to ensure that all of your code uses the same encoder, its
  * probably best to centralize the choice of an encoder within your project. There are many ways do
  * to this, below is an example of one way to centralize and use.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
@@ -57,34 +57,34 @@ import org.apache.fluo.api.data.Column;
  *       super(new MyEncoder());
  *     }
  *   }
- *   
+ * 
  *   public class MyObserver extends TypedObserver {
  *     MyObserver(){
  *       super(new MyTypeLayer());
  *     }
- *     
+ * 
  *     public abstract void process(TypedTransaction tx, Bytes row, Column col){
  *       //do something w/ typed transaction
  *     }
  *   }
- *   
+ * 
  *   public class MyUtil {
  *      //A little util to print out some stuff
  *      public void printStuff(Snapshot snap, byte[] row){
  *        TypedSnapshot tsnap = new MytTypeLayer().wrap(snap);
- *        
+ * 
  *        System.out.println(tsnap.get().row(row).fam("b90000").qual(137).toString("NP"));
- *      } 
+ *      }
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <h3>Working with different types</h3>
- * 
+ *
  * <p>
  * The following example code shows using the basic fluo API with different types.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
@@ -94,13 +94,13 @@ import org.apache.fluo.api.data.Column;
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <p>
  * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the
  * following way. Because row(), fam(), qual(), and set() each take many different types, this
  * enables many different permutations that would not be achievable with overloading.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
@@ -109,37 +109,37 @@ import org.apache.fluo.api.data.Column;
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <h3>Default values</h3>
- * 
+ *
  * <p>
  * The following example code shows using the basic fluo API to read a value and default to zero if
  * it does not exist.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
  *   void add(Transaction tx, byte[] row, Column col, long amount){
- *     
+ * 
  *     long balance = 0;
  *     Bytes bval = tx.get(Bytes.of(row), col);
  *     if(bval != null)
  *       balance = Long.parseLong(bval.toString());
- *     
+ * 
  *     balance += amount;
- *     
+ * 
  *     tx.set(Bytes.of(row), col, Bytes.of(Long.toString(amount)));
- *     
+ * 
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <p>
  * Alternatively, the same thing can be written using a {@link TypedTransactionBase} in the
  * following way. This code avoids the null check by supplying a default value of zero.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
@@ -150,11 +150,11 @@ import org.apache.fluo.api.data.Column;
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <p>
  * For this particular case, shorter code can be written by using the increment method.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
@@ -163,49 +163,49 @@ import org.apache.fluo.api.data.Column;
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <h3>Null return types</h3>
- * 
+ *
  * <p>
  * When using the basic API, you must ensure the return type is not null before converting a string
  * or long.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
  *   void process(Transaction tx, byte[] row, Column col, long amount) {
  *     Bytes val =  tx.get(Bytes.of(row), col);
  *     if(val == null)
- *       return;   
+ *       return;
  *     long balance = Long.parseLong(val.toString());
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <p>
  * With {@link TypedTransactionBase} if no default value is supplied, then the null is passed
  * through.
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * 
  *   void process(TypedTransaction tx, byte[] r, Column c, long amount){
  *     Long balance =  tx.get().row(r).col(c).toLong();
  *     if(balance == null)
- *       return;   
+ *       return;
  *   }
  * </code>
  * </pre>
- * 
+ *
  * <h3>Defaulted maps</h3>
- * 
+ *
  * <p>
  * The operations that return maps, return defaulted maps which make it easy to specify defaults and
  * avoid null.
  * </p>
- * 
+ *
  * <pre>
  * {@code
  *   // pretend this method has curly braces.  javadoc has issues with less than.
@@ -213,23 +213,23 @@ import org.apache.fluo.api.data.Column;
  *   void process(TypedTransaction tx, byte[] r, Column c1, Column c2, Column c3, long amount)
  * 
  *     Map<Column, Value> columns = tx.get().row(r).columns(c1,c2,c3);
- *     
+ * 
  *     // If c1 does not exist in map, a Value that wraps null will be returned.
  *     // When c1 does not exist val1 will be set to null and no NPE will be thrown.
  *     String val1 = columns.get(c1).toString();
- *     
+ * 
  *     // If c2 does not exist in map, then val2 will be set to empty string.
  *     String val2 = columns.get(c2).toString("");
- *     
+ * 
  *     // If c3 does not exist in map, then val9 will be set to 9.
  *     Long val3 = columns.get(c3).toLong(9);
  * }
  * </pre>
- * 
+ *
  * <p>
  * This also applies to getting sets of rows.
  * </p>
- * 
+ *
  * <pre>
  * {@code
  *   // pretend this method has curly braces.  javadoc has issues with less than.
@@ -239,7 +239,7 @@ import org.apache.fluo.api.data.Column;
  * 
  *     Map<String,Map<Column,Value>> rowCols =
  *        tx.get().rowsString(rows).columns(c1,c2,c3).toStringMap();
- *     
+ * 
  *     // this will set val1 to null if row does not exist in map and/or column does not
  *     // exist in child map
  *     String val1 = rowCols.get("row1").get(c1).toString();
@@ -309,7 +309,7 @@ public class TypeLayer {
    */
   public abstract class SimpleFamilyMethods<R1> {
 
-    protected Data data;
+    Data data;
 
     SimpleFamilyMethods(Data data) {
       this.data = data;
@@ -367,7 +367,7 @@ public class TypeLayer {
    */
   public abstract class QualifierMethods<R> {
 
-    protected Data data;
+    private Data data;
 
     QualifierMethods(Data data) {
       this.data = data;
@@ -408,7 +408,7 @@ public class TypeLayer {
 
     private Data data;
 
-    public VisibilityMethods(Data data) {
+    VisibilityMethods(Data data) {
       this.data = data;
     }
 
@@ -467,7 +467,7 @@ public class TypeLayer {
 
   /**
    * Initiates the chain of calls needed to build a column.
-   * 
+   *
    * @return a column builder
    */
   public CFB bc() {

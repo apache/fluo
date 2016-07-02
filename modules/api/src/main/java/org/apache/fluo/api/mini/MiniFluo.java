@@ -15,7 +15,7 @@
 
 package org.apache.fluo.api.mini;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 /**
  * A test and development instance of Fluo containing its own Oracle and Worker
@@ -27,7 +27,7 @@ public interface MiniFluo extends AutoCloseable {
   /**
    * Retrieves the configuration required to connect to MiniFluo instance.
    */
-  Configuration getClientConfiguration();
+  SimpleConfiguration getClientConfiguration();
 
   /**
    * Waits for all observers to finish. This method is usually called by test code before

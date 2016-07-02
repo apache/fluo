@@ -15,7 +15,7 @@
 
 package org.apache.fluo.api.client;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 /**
  * Interface that is implemented by users to load data into Fluo. Loader classes are executed by a
@@ -33,7 +33,7 @@ public interface Loader {
      * @return A configuration object with application configuration like that returned by
      *         {@link FluoClient#getAppConfiguration()}
      */
-    Configuration getAppConfiguration();
+    SimpleConfiguration getAppConfiguration();
   }
 
   /**

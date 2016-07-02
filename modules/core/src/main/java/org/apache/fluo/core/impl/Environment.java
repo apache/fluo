@@ -32,14 +32,11 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationConverter;
-import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.metrics.MetricNames;
 import org.apache.fluo.core.util.AccumuloUtil;
@@ -64,7 +61,7 @@ public class Environment implements AutoCloseable {
   private FluoConfiguration config;
   private SharedResources resources;
   private MetricNames metricNames;
-  private Configuration appConfig;
+  private SimpleConfiguration appConfig;
 
   /**
    * Constructs an environment from given FluoConfiguration
@@ -150,10 +147,15 @@ public class Environment implements AutoCloseable {
       bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
       Properties sharedProps = new Properties();
       sharedProps.load(bais);
-      Configuration sharedConfig = ConfigurationConverter.getConfiguration(sharedProps);
+
+      FluoConfiguration tmpConfig = new FluoConfiguration();
+      for (String prop : sharedProps.stringPropertyNames()) {
+        config.setProperty(prop, sharedProps.getProperty(prop));
+        tmpConfig.setProperty(prop, sharedProps.getProperty(prop));
+      }
+
       // make sure not to include config passed to env, only want config from zookeeper
-      appConfig = sharedConfig.subset(FluoConfiguration.APP_PREFIX);
-      config.addConfiguration(ConfigurationConverter.getConfiguration(sharedProps));
+      appConfig = tmpConfig.getAppConfiguration();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -260,11 +262,9 @@ public class Environment implements AutoCloseable {
     return metricNames;
   }
 
-  public Configuration getAppConfiguration() {
+  public SimpleConfiguration getAppConfiguration() {
     // TODO create immutable wrapper
-    BaseConfiguration config = new BaseConfiguration();
-    ConfigurationUtils.copy(appConfig, config);
-    return config;
+    return new SimpleConfiguration(appConfig);
   }
 
   @Override

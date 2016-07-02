@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.service.FluoWorker;
 import org.apache.fluo.cluster.util.LogbackUtil;

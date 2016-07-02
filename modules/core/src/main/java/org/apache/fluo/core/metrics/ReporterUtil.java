@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 import com.codahale.metrics.MetricRegistry;
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.metrics.ReporterStarter.Params;
@@ -46,7 +46,7 @@ public class ReporterUtil {
       List<AutoCloseable> reporters = rs.start(new Params() {
 
         @Override
-        public Configuration getConfiguration() {
+        public SimpleConfiguration getConfiguration() {
           return env.getConfiguration();
         }
 

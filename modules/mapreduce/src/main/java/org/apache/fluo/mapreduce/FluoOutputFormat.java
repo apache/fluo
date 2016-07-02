@@ -19,14 +19,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Properties;
 
-import org.apache.commons.configuration.ConfigurationConverter;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -81,11 +80,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
     ByteArrayInputStream bais =
         new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
             .getBytes(StandardCharsets.UTF_8));
-    Properties props = new Properties();
-    props.load(bais);
 
-    FluoConfiguration config =
-        new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
+    FluoConfiguration config = new FluoConfiguration(bais);
 
     try {
       final FluoClient client = FluoFactory.newClient(config);
@@ -120,11 +116,11 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
    * @param props Use {@link org.apache.fluo.api.config.FluoConfiguration} to set props
    *        programmatically
    */
-  public static void configure(Job conf, Properties props) {
+  public static void configure(Job conf, SimpleConfiguration props) {
     try {
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      props.store(baos, "");
+      props.save(baos);
 
       conf.getConfiguration().set(PROPS_CONF_KEY,
           new String(baos.toByteArray(), StandardCharsets.UTF_8));

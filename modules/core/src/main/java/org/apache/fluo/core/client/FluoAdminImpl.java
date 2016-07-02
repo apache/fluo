@@ -29,7 +29,6 @@ import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.iterators.IteratorUtil;
-import org.apache.commons.configuration.ConfigurationUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.iterators.GarbageCollectionIterator;
 import org.apache.fluo.accumulo.iterators.NotificationIterator;
@@ -208,8 +207,7 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void updateSharedConfig() {
 
-    logger.info("Setting up observers using app config: {}",
-        ConfigurationUtils.toString(config.subset(FluoConfiguration.APP_PREFIX)));
+    logger.info("Setting up observers using app config: {}", config.getAppConfiguration());
 
     Map<Column, ObserverConfiguration> colObservers = new HashMap<>();
     Map<Column, ObserverConfiguration> weakObservers = new HashMap<>();
@@ -253,7 +251,7 @@ public class FluoAdminImpl implements FluoAdmin {
       if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
         sharedProps.setProperty(key, Long.toString(config.getLong(key)));
       } else if (key.startsWith(FluoConfiguration.APP_PREFIX)) {
-        sharedProps.setProperty(key, config.getProperty(key).toString());
+        sharedProps.setProperty(key, config.getRawString(key));
       }
     }
 

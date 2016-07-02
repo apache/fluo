@@ -27,12 +27,11 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.InitOpts;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.mini.MiniFluo;
 import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.impl.Environment;
@@ -136,9 +135,7 @@ public class MiniFluoImpl implements MiniFluo {
       }
 
       File miniProps = new File(clientPropsPath(config));
-      PropertiesConfiguration connConfig = new PropertiesConfiguration();
-      connConfig.append(config.getClientConfiguration());
-      connConfig.save(miniProps);
+      config.getClientConfiguration().save(miniProps);
 
       log.debug("Wrote MiniFluo client properties to {}", miniProps.getAbsolutePath());
 
@@ -148,7 +145,7 @@ public class MiniFluoImpl implements MiniFluo {
   }
 
   @Override
-  public Configuration getClientConfiguration() {
+  public SimpleConfiguration getClientConfiguration() {
     return config.getClientConfiguration();
   }
 

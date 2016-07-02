@@ -17,11 +17,11 @@ package org.apache.fluo.integration;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.InitOpts;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.mini.MiniFluo;
 import org.junit.After;
 import org.junit.Before;
@@ -33,7 +33,7 @@ public class ITBaseMini extends ITBase {
 
   protected static MiniFluo miniFluo;
 
-  protected void setAppConfig(Configuration config) {}
+  protected void setAppConfig(SimpleConfiguration config) {}
 
   protected void setConfig(FluoConfiguration config) {}
 

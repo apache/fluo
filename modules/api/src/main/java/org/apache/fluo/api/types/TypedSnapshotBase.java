@@ -58,7 +58,7 @@ public class TypedSnapshotBase implements SnapshotBase {
    */
   public class VisibilityMethods extends Value {
 
-    public VisibilityMethods(Data data) {
+    VisibilityMethods(Data data) {
       super(data);
     }
 
@@ -89,7 +89,7 @@ public class TypedSnapshotBase implements SnapshotBase {
   public class Value {
     private Bytes bytes;
     private boolean gotBytes = false;
-    protected Data data;
+    Data data;
 
     public Bytes getBytes() {
       if (!gotBytes) {

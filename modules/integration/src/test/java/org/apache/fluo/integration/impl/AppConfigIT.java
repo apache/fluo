@@ -18,12 +18,12 @@ package org.apache.fluo.integration.impl;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.types.StringEncoder;
@@ -39,7 +39,7 @@ import org.junit.Test;
 public class AppConfigIT extends ITBaseMini {
 
   @Override
-  protected void setAppConfig(Configuration config) {
+  protected void setAppConfig(SimpleConfiguration config) {
     config.setProperty("myapp.sizeLimit", 50000);
   }
 
@@ -50,14 +50,14 @@ public class AppConfigIT extends ITBaseMini {
 
   @Test
   public void testBasic() {
-    Configuration uc = client.getAppConfiguration();
+    SimpleConfiguration uc = client.getAppConfiguration();
     Assert.assertEquals(50000, uc.getInt("myapp.sizeLimit"));
     uc.setProperty("myapp.sizeLimit", 3);
     uc = client.getAppConfiguration();
     Assert.assertEquals(50000, uc.getInt("myapp.sizeLimit"));
 
     // update shared config
-    Configuration appConfig = config.getAppConfiguration();
+    SimpleConfiguration appConfig = config.getAppConfiguration();
     appConfig.clear();
     appConfig.setProperty("myapp.sizeLimit", 40000);
     appConfig.setProperty("myapp.timeLimit", 30000);

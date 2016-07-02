@@ -19,8 +19,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.mini.MiniFluo;
 import org.apache.fluo.api.service.FluoOracle;
@@ -60,7 +60,7 @@ public class FluoFactory {
    * no default: org.apache.fluo.client.accumulo.user, org.apache.fluo.client.accumulo.password,
    * org.apache.fluo.client.accumulo.instance
    */
-  public static FluoClient newClient(Configuration configuration) {
+  public static FluoClient newClient(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
   }
 
@@ -72,7 +72,7 @@ public class FluoFactory {
    * org.apache.fluo.client.accumulo.password, org.apache.fluo.client.accumulo.instance,
    * org.apache.fluo.admin.accumulo.table, org.apache.fluo.admin.accumulo.classpath
    */
-  public static FluoAdmin newAdmin(Configuration configuration) {
+  public static FluoAdmin newAdmin(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
   }
 
@@ -85,27 +85,26 @@ public class FluoFactory {
    * org.apache.fluo.client.accumulo.password, org.apache.fluo.client.accumulo.instance,
    * org.apache.fluo.admin.accumulo.table
    */
-  public static MiniFluo newMiniFluo(Configuration configuration) {
+  public static MiniFluo newMiniFluo(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, MINI_CLASS_PROP, MINI_CLASS_DEFAULT);
   }
 
   /**
    * Creates a {@link FluoOracle} using the provided configuration.
    */
-  public static FluoOracle newOracle(Configuration configuration) {
+  public static FluoOracle newOracle(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, ORACLE_CLASS_PROP, ORACLE_CLASS_DEFAULT);
   }
 
   /**
    * Creates a {@link FluoWorker} using the provided configuration.
    */
-  public static FluoWorker newWorker(Configuration configuration) {
+  public static FluoWorker newWorker(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, WORKER_CLASS_PROP, WORKER_CLASS_DEFAULT);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> T getAndBuildClassWithConfig(Configuration configuration, String classProp,
-      String classDefault) {
+  private static <T> T getAndBuildClassWithConfig(SimpleConfiguration configuration,
+      String classProp, String classDefault) {
     FluoConfiguration config = new FluoConfiguration(configuration);
     String clazz = config.getString(classProp, classDefault);
     Objects.requireNonNull(clazz, classProp + " cannot be null");
@@ -113,17 +112,8 @@ public class FluoFactory {
     return buildClassWithConfig(clazz, config);
   }
 
-  @SuppressWarnings({"unchecked", "unused"})
-  private static <T> T getAndBuildClass(Configuration configuration, String classProp,
-      String classDefault) {
-    String clazz = configuration.getString(classProp, classDefault);
-    Objects.requireNonNull(clazz, classProp + " cannot be null");
-    Preconditions.checkArgument(!clazz.isEmpty(), classProp + " cannot be empty");
-    return buildClass(clazz);
-  }
-
   @SuppressWarnings("unchecked")
-  private static <T> T buildClassWithConfig(String clazz, Configuration config) {
+  private static <T> T buildClassWithConfig(String clazz, FluoConfiguration config) {
     try {
       return (T) Class.forName(clazz).getDeclaredConstructor(FluoConfiguration.class)
           .newInstance(config);
@@ -136,22 +126,6 @@ public class FluoFactory {
     } catch (InvocationTargetException e) {
       String msg = "Failed to construct " + clazz + " class due to exception";
       log.error(msg, e);
-      throw new FluoException(msg, e);
-    } catch (Exception e) {
-      log.error("Could not instantiate class - " + clazz);
-      throw new FluoException(e);
-    }
-  }
-
-  @SuppressWarnings({"unchecked"})
-  private static <T> T buildClass(String clazz) {
-    try {
-      return (T) Class.forName(clazz).newInstance();
-    } catch (ClassNotFoundException e) {
-      String msg =
-          "Could not find " + clazz
-              + " class which could be caused by fluo-core jar not being on the classpath.";
-      log.error(msg);
       throw new FluoException(msg, e);
     } catch (Exception e) {
       log.error("Could not instantiate class - " + clazz);

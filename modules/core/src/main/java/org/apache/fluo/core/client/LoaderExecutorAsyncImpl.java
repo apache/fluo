@@ -23,10 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.core.async.AsyncCommitObserver;
 import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.impl.Environment;
@@ -109,7 +109,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
       Loader.Context context = new Loader.Context() {
         @Override
-        public Configuration getAppConfiguration() {
+        public SimpleConfiguration getAppConfiguration() {
           return env.getAppConfiguration();
         }
       };

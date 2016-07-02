@@ -44,9 +44,9 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
   public class Mutator {
 
     private boolean set = false;
-    protected Data data;
+    Data data;
 
-    public Mutator(Data data) {
+    Mutator(Data data) {
       this.data = data;
     }
 
@@ -154,7 +154,7 @@ public class TypedTransactionBase extends TypedSnapshotBase implements Transacti
    */
   public class VisibilityMutator extends Mutator {
 
-    public VisibilityMutator(Data data) {
+    VisibilityMutator(Data data) {
       super(data);
     }
 

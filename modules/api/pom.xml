@@ -15,21 +15,17 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <parent>
     <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-parent</artifactId>
     <version>1.0.0-beta-3-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-
   <artifactId>fluo-api</artifactId>
-
   <name>Fluo API</name>
   <description>This module contains all API code.  External dependencies should be limited.  Any changes to
     public methods should be avoided.  While the API module does not have compile time dependency
     on fluo-core, you must include fluo-core as a run-time dependency.</description>
-
   <!-- Avoid (if possible) adding new dependencies to the API jar -->
   <dependencies>
     <dependency>
@@ -64,4 +60,28 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.revelc.code</groupId>
+        <artifactId>apilyzer-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <executions>
+          <execution>
+            <id>apilyzer</id>
+            <goals>
+              <goal>analyze</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>org[.]apache[.]fluo[.]api[.].*</include>
+              </includes>
+              <excludes />
+              <allows />
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

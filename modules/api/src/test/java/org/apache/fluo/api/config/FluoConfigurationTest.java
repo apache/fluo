@@ -21,11 +21,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.configuration.ConfigurationConverter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -204,20 +202,6 @@ public class FluoConfigurationTest {
     Assert.assertEquals("m1", config.getReporterConfiguration("slf4j").getString("logger"));
     Assert.assertEquals("77", config.getReporterConfiguration("slf4j").getString("frequency"));
     Assert.assertEquals("33", config.getReporterConfiguration("jmx").getString("frequency"));
-  }
-
-  @Test
-  public void testMultipleZookeepers() {
-    Properties props = new Properties();
-    props.setProperty(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_PROP, "zk1,zk2,zk3");
-    props.setProperty(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_PROP, "zk1,zk2,zk3/fluo");
-    props.setProperty(FluoConfiguration.CLIENT_APPLICATION_NAME_PROP, "myapp");
-
-    // ran into a bug where this particular constructor was truncating everything after zk1
-    FluoConfiguration config =
-        new FluoConfiguration(ConfigurationConverter.getConfiguration(props));
-    Assert.assertEquals("zk1,zk2,zk3", config.getAccumuloZookeepers());
-    Assert.assertEquals("zk1,zk2,zk3/fluo/myapp", config.getAppZookeepers());
   }
 
   private void assertIAE(String value) {

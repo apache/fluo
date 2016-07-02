@@ -17,9 +17,9 @@ package org.apache.fluo.api.observer;
 
 import java.util.Map;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 
@@ -72,7 +72,7 @@ public interface Observer {
      * @return A configuration object with application configuration like that returned by
      *         {@link FluoClient#getAppConfiguration()}
      */
-    Configuration getAppConfiguration();
+    SimpleConfiguration getAppConfiguration();
 
     /**
      * @return The parameters configured for this observer
@@ -83,7 +83,7 @@ public interface Observer {
 
   /**
    * Implemented by user to initialize Observer.
-   * 
+   *
    * @param context Observer context
    */
   void init(Context context) throws Exception;

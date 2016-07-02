@@ -15,14 +15,13 @@
 
 package org.apache.fluo.api.client;
 
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.SubsetConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 /**
  * Client interface for Fluo. Fluo clients will have shared resources used by all objects created by
  * the client. Therefore, {@link FluoClient#close()} must called when you are finished using the
  * client.
- * 
+ *
  * @since 1.0.0
  */
 public interface FluoClient extends AutoCloseable {
@@ -56,8 +55,8 @@ public interface FluoClient extends AutoCloseable {
   /**
    * @return All properties w/ the prefix
    *         {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX} that were set at
-   *         initialization time. The configuration returned is a {@link SubsetConfiguration} using
-   *         the prefix {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX} The reason
+   *         initialization time. The configuration returned is a subset of configuration using the
+   *         prefix {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX} The reason
    *         these properties are stored and read from zookeeper is to offer a consistent view of
    *         application config across all nodes in the cluster. So there is no need to worry w/
    *         keeping config files consistent across a cluster. To update this configuration, use
@@ -65,7 +64,7 @@ public interface FluoClient extends AutoCloseable {
    *         not update Zookeeper.
    */
 
-  Configuration getAppConfiguration();
+  SimpleConfiguration getAppConfiguration();
 
   /**
    * Closes client resources
