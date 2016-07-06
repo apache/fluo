@@ -25,6 +25,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ByteUtil;
@@ -36,7 +37,7 @@ import org.junit.Test;
 
 public class NotificationGcIT extends ITBaseMini {
 
-  public static void assertRawNotifications(int expected, Environment env) throws Exception {
+  private static void assertRawNotifications(int expected, Environment env) throws Exception {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     int size = Iterables.size(scanner);
@@ -48,7 +49,7 @@ public class NotificationGcIT extends ITBaseMini {
     Assert.assertEquals(expected, size);
   }
 
-  public static int countNotifications(Environment env) throws Exception {
+  private static int countNotifications(Environment env) throws Exception {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
     Notification.configureScanner(scanner);
     return Iterables.size(scanner);
@@ -61,31 +62,35 @@ public class NotificationGcIT extends ITBaseMini {
 
   @Test
   public void testNotificationGC() throws Exception {
+
+    final Column statCount = new Column("stat", "count");
+    final Column statCheck = new Column("stat", "check");
+
     Environment env = new Environment(config);
 
     TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("r1").fam("stat").qual("count").set(3);
+    tx1.set("r1", statCount, 3 + "");
     tx1.done();
 
     TestTransaction tx2 = new TestTransaction(env);
-    tx2.mutate().row("r2").fam("stat").qual("count").set(7);
+    tx2.set("r2", statCount, 7 + "");
     tx2.done();
 
     TestTransaction tx3 = new TestTransaction(env);
-    tx3.mutate().row("r1").fam("stats").qual("af89").set(5);
-    tx3.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    tx3.set("r1", new Column("stats", "af89"), 5 + "");
+    tx3.setWeakNotification("r1", statCheck);
     tx3.done();
 
     TestTransaction tx4 = new TestTransaction(env);
-    tx4.mutate().row("r2").fam("stats").qual("af99").set(7);
-    tx4.mutate().row("r2").fam("stat").qual("check").weaklyNotify();
+    tx4.set("r2", new Column("stats", "af99"), 7 + "");
+    tx4.setWeakNotification("r2", statCheck);
     tx4.done();
 
     miniFluo.waitForObservers();
 
     TestTransaction tx5 = new TestTransaction(env);
-    Assert.assertEquals(8, tx5.get().row("r1").fam("stat").qual("count").toInteger(0));
-    Assert.assertEquals(14, tx5.get().row("r2").fam("stat").qual("count").toInteger(0));
+    Assert.assertEquals("8", tx5.gets("r1", statCount));
+    Assert.assertEquals("14", tx5.gets("r2", statCount));
 
     assertRawNotifications(4, env);
     Assert.assertEquals(0, countNotifications(env));

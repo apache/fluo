@@ -20,23 +20,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransaction;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class ObserverConfigIT extends ITBaseMini {
-
-  private static TypeLayer tl = new TypeLayer(new StringEncoder());
 
   public static class ConfigurableObserver extends AbstractObserver {
 
@@ -48,7 +44,7 @@ public class ObserverConfigIT extends ITBaseMini {
     public void init(Context context) {
       String ocTokens[] = context.getParameters().get("observedCol").split(":");
       observedColumn =
-          new ObservedColumn(tl.bc().fam(ocTokens[0]).qual(ocTokens[1]).vis(),
+          new ObservedColumn(new Column(ocTokens[0], ocTokens[1]),
               NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.of(context.getParameters().get("outputCQ"));
       String swn = context.getParameters().get("setWeakNotification");
@@ -78,7 +74,7 @@ public class ObserverConfigIT extends ITBaseMini {
     }
   }
 
-  Map<String, String> newMap(String... args) {
+  private Map<String, String> newMap(String... args) {
     HashMap<String, String> ret = new HashMap<>();
     for (int i = 0; i < args.length; i += 2) {
       ret.put(args[i], args[i + 1]);
@@ -107,18 +103,18 @@ public class ObserverConfigIT extends ITBaseMini {
 
   @Test
   public void testObserverConfig() throws Exception {
-    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
-      tx1.mutate().row("r1").fam("fam1").qual("col1").set("abcdefg");
+    try (Transaction tx1 = client.newTransaction()) {
+      tx1.set("r1", new Column("fam1", "col1"), "abcdefg");
       tx1.commit();
     }
 
     miniFluo.waitForObservers();
 
-    try (TypedSnapshot tx2 = tl.wrap(client.newSnapshot())) {
-      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col1").toString());
-      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col2").toString());
-      Assert.assertNull(tx2.get().row("r1").fam("fam1").qual("col3").toString());
-      Assert.assertEquals("abcdefg", tx2.get().row("r1").fam("fam1").qual("col4").toString());
+    try (Snapshot tx2 = client.newSnapshot()) {
+      Assert.assertNull(tx2.gets("r1", new Column("fam1", "col1")));
+      Assert.assertNull(tx2.gets("r1", new Column("fam1", "col2")));
+      Assert.assertNull(tx2.gets("r1", new Column("fam1", "col3")));
+      Assert.assertEquals("abcdefg", tx2.gets("r1", new Column("fam1", "col4")));
     }
   }
 

@@ -90,14 +90,17 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   @Test(timeout = 60000)
   public void testDeletedDataIsDropped() throws Exception {
+
+    final Column docUri = new Column("doc", "uri");
+
     TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("001").fam("doc").qual("uri").set("file:///abc.txt");
+    tx1.set("001", docUri, "file:///abc.txt");
     tx1.done();
 
     TestTransaction tx2 = new TestTransaction(env);
 
     TestTransaction tx3 = new TestTransaction(env);
-    tx3.mutate().row("001").fam("doc").qual("uri").delete();
+    tx3.delete("001", docUri);
     tx3.done();
 
     TestTransaction tx4 = new TestTransaction(env);
@@ -107,16 +110,16 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     // Force a garbage collection
     conn.tableOperations().compact(table, null, null, true, true);
 
-    Assert.assertEquals("file:///abc.txt", tx2.get().row("001").fam("doc").qual("uri").toString());
+    Assert.assertEquals("file:///abc.txt", tx2.gets("001", docUri));
 
     tx2.done();
 
-    Assert.assertNull(tx4.get().row("001").fam("doc").qual("uri").toString());
+    Assert.assertNull(tx4.gets("001", docUri));
 
     waitForGcTime(tx4.getStartTimestamp());
     conn.tableOperations().compact(table, null, null, true, true);
 
-    Assert.assertNull(tx4.get().row("001").fam("doc").qual("uri").toString());
+    Assert.assertNull(tx4.gets("001", docUri));
 
     Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
     Assert.assertEquals(0, Iterables.size(scanner));
@@ -134,8 +137,8 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     TestTransaction tx2 = new TestTransaction(env, t2);
 
     for (int r = 0; r < 10; r++) {
-      tx2.mutate().row(r + "").col(col1).set("1" + r + "0");
-      tx2.mutate().row(r + "").col(col2).set("1" + r + "1");
+      tx2.set(r + "", col1, "1" + r + "0");
+      tx2.set(r + "", col2, "1" + r + "1");
     }
 
     CommitData cd = tx2.createCommitData();

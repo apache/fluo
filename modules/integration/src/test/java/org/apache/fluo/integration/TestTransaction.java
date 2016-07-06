@@ -15,7 +15,10 @@
 
 package org.apache.fluo.integration;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -28,14 +31,14 @@ import org.apache.fluo.accumulo.iterators.NotificationIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
+import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
@@ -48,7 +51,7 @@ import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.hadoop.io.Text;
 
-public class TestTransaction extends TypedTransactionBase implements TransactionBase {
+public class TestTransaction implements TransactionBase {
 
   private TransactionImpl tx;
   private Environment env;
@@ -78,18 +81,15 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
     throw new RuntimeException("No notification found");
   }
 
-  @SuppressWarnings("resource")
   public TestTransaction(Environment env, TransactorNode transactor) {
-    this(new TransactionImpl(env).setTransactor(transactor), new StringEncoder(), env);
+    this(new TransactionImpl(env).setTransactor(transactor), env);
   }
 
   public TestTransaction(Environment env) {
-    this(new TransactionImpl(env), new StringEncoder(), env);
+    this(new TransactionImpl(env), env);
   }
 
-  private TestTransaction(TransactionImpl transactionImpl, StringEncoder stringEncoder,
-      Environment env) {
-    super(transactionImpl, stringEncoder, new TypeLayer(stringEncoder));
+  private TestTransaction(TransactionImpl transactionImpl, Environment env) {
     this.tx = transactionImpl;
     this.env = env;
   }
@@ -99,8 +99,7 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
   }
 
   public TestTransaction(Environment env, String trow, Column tcol, long notificationTS) {
-    this(new TransactionImpl(env, new Notification(Bytes.of(trow), tcol, notificationTS)),
-        new StringEncoder(), env);
+    this(new TransactionImpl(env, new Notification(Bytes.of(trow), tcol, notificationTS)), env);
   }
 
   /**
@@ -153,5 +152,85 @@ public class TestTransaction extends TypedTransactionBase implements Transaction
 
   public TxStats getStats() {
     return tx.getStats();
+  }
+
+  @Override
+  public void delete(Bytes row, Column col) {
+    tx.delete(row, col);
+  }
+
+  @Override
+  public void delete(String row, Column col) {
+    tx.delete(row, col);
+  }
+
+  @Override
+  public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
+    tx.set(row, col, value);
+  }
+
+  @Override
+  public void set(String row, Column col, String value) throws AlreadySetException {
+    tx.set(row, col, value);
+  }
+
+  @Override
+  public void setWeakNotification(Bytes row, Column col) {
+    tx.setWeakNotification(row, col);
+  }
+
+  @Override
+  public void setWeakNotification(String row, Column col) {
+    tx.setWeakNotification(row, col);
+  }
+
+  @Override
+  public Bytes get(Bytes row, Column column) {
+    return tx.get(row, column);
+  }
+
+  @Override
+  public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
+    return tx.get(row, columns);
+  }
+
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
+    return tx.get(rows, columns);
+  }
+
+  @Override
+  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+    return tx.get(rowColumns);
+  }
+
+  @Override
+  public RowIterator get(ScannerConfiguration config) {
+    return tx.get(config);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+    return tx.gets(rowColumns);
+  }
+
+  @Override
+  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+    return tx.gets(rows, columns);
+  }
+
+  @Override
+  public String gets(String row, Column column) {
+    return tx.gets(row, column);
+  }
+
+  @Override
+  public Map<Column, String> gets(String row, Set<Column> columns) {
+    return tx.gets(row, columns);
+  }
+
+  @Override
+  public long getStartTimestamp() {
+    return tx.getStartTimestamp();
   }
 }

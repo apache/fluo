@@ -24,8 +24,6 @@ import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mapreduce.FluoKeyValue;
@@ -44,8 +42,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class FluoFileOutputFormatIT extends ITBaseImpl {
-
-  static final TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
   public static class TestMapper extends Mapper<LongWritable, Text, Key, Value> {
 
@@ -106,25 +102,25 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
     TestTransaction tx2 = new TestTransaction(env);
 
-    Assert.assertEquals(1, tx1.get().row("a").fam("b").qual("c").toInteger(0));
-    Assert.assertEquals(2, tx1.get().row("d").fam("b").qual("c").toInteger(0));
-    Assert.assertEquals(90, tx1.get().row("foo").fam("moo").qual("moo").toInteger(0));
+    Assert.assertEquals("1", tx1.gets("a", new Column("b", "c")));
+    Assert.assertEquals("2", tx1.gets("d", new Column("b", "c")));
+    Assert.assertEquals("90", tx1.gets("foo", new Column("moo", "moo")));
 
-    tx1.mutate().row("a").fam("b").qual("c").set("3");
-    tx1.mutate().row("d").fam("b").qual("c").delete();
+    tx1.set("a", new Column("b", "c"), "3");
+    tx1.delete("d", new Column("b", "c"));
 
     tx1.done();
 
     // should not see changes from tx1
-    Assert.assertEquals(1, tx2.get().row("a").fam("b").qual("c").toInteger(0));
-    Assert.assertEquals(2, tx2.get().row("d").fam("b").qual("c").toInteger(0));
-    Assert.assertEquals(90, tx2.get().row("foo").fam("moo").qual("moo").toInteger(0));
+    Assert.assertEquals("1", tx2.gets("a", new Column("b", "c")));
+    Assert.assertEquals("2", tx2.gets("d", new Column("b", "c")));
+    Assert.assertEquals("90", tx2.gets("foo", new Column("moo", "moo")));
 
     TestTransaction tx3 = new TestTransaction(env);
 
     // should see changes from tx1
-    Assert.assertEquals(3, tx3.get().row("a").fam("b").qual("c").toInteger(0));
-    Assert.assertNull(tx3.get().row("d").fam("b").qual("c").toInteger());
-    Assert.assertEquals(90, tx3.get().row("foo").fam("moo").qual("moo").toInteger(0));
+    Assert.assertEquals("3", tx3.gets("a", new Column("b", "c")));
+    Assert.assertNull(tx3.gets("d", new Column("b", "c")));
+    Assert.assertEquals("90", tx3.gets("foo", new Column("moo", "moo")));
   }
 }

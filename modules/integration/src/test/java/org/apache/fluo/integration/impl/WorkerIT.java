@@ -18,6 +18,8 @@ package org.apache.fluo.integration.impl;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.config.ScannerConfiguration;
@@ -28,11 +30,6 @@ import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.iterator.ColumnIterator;
 import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransaction;
-import org.apache.fluo.api.types.TypedTransactionBase;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.worker.NotificationFinder;
@@ -50,9 +47,10 @@ import org.junit.Test;
  */
 public class WorkerIT extends ITBaseMini {
 
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+  private static final Column LAST_UPDATE = new Column("attr", "lastupdate");
+  private static final Column DEGREE = new Column("attr", "degree");
 
-  private static Column observedColumn = typeLayer.bc().fam("attr").qual("lastupdate").vis();
+  private static Column observedColumn = LAST_UPDATE;
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
@@ -65,17 +63,17 @@ public class WorkerIT extends ITBaseMini {
     public void init(Context context) {}
 
     @Override
-    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+    public void process(TransactionBase tx, Bytes rowBytes, Column col) throws Exception {
 
-      TypedTransactionBase ttx = typeLayer.wrap(tx);
+      String row = rowBytes.toString();
 
       // get previously calculated degree
-      String degree = ttx.get().row(row).fam("attr").qual("degree").toString();
+      String degree = tx.gets(row, DEGREE);
 
       // calculate new degree
       int count = 0;
       RowIterator riter =
-          ttx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
+          tx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
       while (riter.hasNext()) {
         ColumnIterator citer = riter.next().getValue();
         while (citer.hasNext()) {
@@ -86,15 +84,15 @@ public class WorkerIT extends ITBaseMini {
       String degree2 = "" + count;
 
       if (degree == null || !degree.equals(degree2)) {
-        ttx.mutate().row(row).fam("attr").qual("degree").set(degree2);
+        tx.set(row, DEGREE, degree2);
 
         // put new entry in degree index
-        ttx.mutate().row("IDEG" + degree2).fam("node").qual(row).set("");
+        tx.set("IDEG" + degree2, new Column("node", row), "");
       }
 
       if (degree != null) {
         // delete old degree in index
-        ttx.mutate().row("IDEG" + degree).fam("node").qual(row).delete();
+        tx.delete("IDEG" + degree, new Column("node", row));
       }
     }
 
@@ -119,12 +117,12 @@ public class WorkerIT extends ITBaseMini {
 
     // verify observer updated degree index
     TestTransaction tx3 = new TestTransaction(env);
-    Assert.assertEquals(2, tx3.get().row("N0003").fam("attr").qual("degree").toInteger(0));
-    Assert.assertEquals("", tx3.get().row("IDEG2").fam("node").qual("N0003").toString());
+    Assert.assertEquals("2", tx3.gets("N0003", DEGREE));
+    Assert.assertEquals("", tx3.gets("IDEG2", new Column("node", "N0003")));
 
     // add a link between two nodes in a graph
-    tx3.mutate().row("N0003").fam("link").qual("N0010").set("");
-    tx3.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
+    tx3.set("N0003", new Column("link", "N0010"), "");
+    tx3.set("N0003", LAST_UPDATE, System.currentTimeMillis() + "");
     tx3.done();
 
     miniFluo.waitForObservers();
@@ -132,28 +130,28 @@ public class WorkerIT extends ITBaseMini {
     // verify observer updated degree index. Should have deleted old index entry
     // and added a new one
     TestTransaction tx4 = new TestTransaction(env);
-    Assert.assertEquals(3, tx4.get().row("N0003").fam("attr").qual("degree").toInteger(0));
-    Assert.assertNull("", tx4.get().row("IDEG2").fam("node").qual("N0003").toString());
-    Assert.assertEquals("", tx4.get().row("IDEG3").fam("node").qual("N0003").toString());
+    Assert.assertEquals("3", tx4.gets("N0003", DEGREE));
+    Assert.assertNull("", tx4.gets("IDEG2", new Column("node", "N0003")));
+    Assert.assertEquals("", tx4.gets("IDEG3", new Column("node", "N0003")));
 
     // test rollback
     TestTransaction tx5 = new TestTransaction(env);
-    tx5.mutate().row("N0003").fam("link").qual("N0030").set("");
-    tx5.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
+    tx5.set("N0003", new Column("link", "N0030"), "");
+    tx5.set("N0003", LAST_UPDATE, System.currentTimeMillis() + "");
     tx5.done();
 
     TestTransaction tx6 = new TestTransaction(env);
-    tx6.mutate().row("N0003").fam("link").qual("N0050").set("");
-    tx6.mutate().row("N0003").fam("attr").qual("lastupdate").set(System.currentTimeMillis());
+    tx6.set("N0003", new Column("link", "N0050"), "");
+    tx6.set("N0003", LAST_UPDATE, System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
-    tx6.preCommit(cd, new RowColumn("N0003", new Column("attr", "lastupdate")));
+    tx6.preCommit(cd, new RowColumn("N0003", LAST_UPDATE));
 
     miniFluo.waitForObservers();
 
     TestTransaction tx7 = new TestTransaction(env);
-    Assert.assertEquals(4, tx7.get().row("N0003").fam("attr").qual("degree").toInteger(0));
-    Assert.assertNull("", tx7.get().row("IDEG3").fam("node").qual("N0003").toString());
-    Assert.assertEquals("", tx7.get().row("IDEG4").fam("node").qual("N0003").toString());
+    Assert.assertEquals("4", tx7.gets("N0003", DEGREE));
+    Assert.assertNull("", tx7.gets("IDEG3", new Column("node", "N0003")));
+    Assert.assertEquals("", tx7.gets("IDEG4", new Column("node", "N0003")));
 
     env.close();
   }
@@ -163,11 +161,10 @@ public class WorkerIT extends ITBaseMini {
    */
   @Test
   public void testDiffObserverConfig() throws Exception {
-    Column old = observedColumn;
-    observedColumn = typeLayer.bc().fam("attr2").qual("lastupdate").vis();
+    observedColumn = new Column("attr2", "lastupdate");
     try {
       try (Environment env = new Environment(config); Observers observers = new Observers(env)) {
-        observers.getObserver(typeLayer.bc().fam("attr").qual("lastupdate").vis());
+        observers.getObserver(LAST_UPDATE);
       }
 
       Assert.fail();
@@ -176,14 +173,14 @@ public class WorkerIT extends ITBaseMini {
       Assert.assertTrue(ise.getMessage().contains(
           "Mismatch between configured column and class column"));
     } finally {
-      observedColumn = old;
+      observedColumn = LAST_UPDATE;
     }
   }
 
   private void addLink(String from, String to) {
-    try (TypedTransaction tx = typeLayer.wrap(client.newTransaction())) {
-      tx.mutate().row(from).fam("link").qual(to).set("");
-      tx.mutate().row(from).fam("attr").qual("lastupdate").set(System.currentTimeMillis());
+    try (Transaction tx = client.newTransaction()) {
+      tx.set(from, new Column("link", to), "");
+      tx.set(from, LAST_UPDATE, System.currentTimeMillis() + "");
       tx.commit();
     }
   }
@@ -207,9 +204,9 @@ public class WorkerIT extends ITBaseMini {
 
       miniFluo.waitForObservers();
 
-      try (TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())) {
-        Assert.assertEquals(10, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
-        Assert.assertEquals("", snap.get().row("IDEG10").fam("node").qual("N0003").toString());
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertEquals("10", snap.gets("N0003", DEGREE));
+        Assert.assertEquals("", snap.gets("IDEG10", new Column("node", "N0003")));
       }
 
       nf2.stop();
@@ -220,10 +217,10 @@ public class WorkerIT extends ITBaseMini {
 
       miniFluo.waitForObservers();
 
-      try (TypedSnapshot snap = typeLayer.wrap(client.newSnapshot())) {
-        Assert.assertEquals(19, snap.get().row("N0003").fam("attr").qual("degree").toInteger(0));
-        Assert.assertEquals("", snap.get().row("IDEG19").fam("node").qual("N0003").toString());
-        Assert.assertNull(snap.get().row("IDEG10").fam("node").qual("N0003").toString());
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertEquals("19", snap.gets("N0003", DEGREE));
+        Assert.assertEquals("", snap.gets("IDEG19", new Column("node", "N0003")));
+        Assert.assertNull(snap.gets("IDEG10", new Column("node", "N0003")));
       }
 
       nf1.stop();

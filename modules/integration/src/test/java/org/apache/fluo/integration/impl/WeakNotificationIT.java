@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.config.ScannerConfiguration;
@@ -28,31 +29,28 @@ import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.iterator.ColumnIterator;
 import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.api.observer.AbstractObserver;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedTransaction;
-import org.apache.fluo.api.types.TypedTransactionBase;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
+import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class WeakNotificationIT extends ITBaseMini {
 
-  private static TypeLayer tl = new TypeLayer(new StringEncoder());
+  private static final Column STAT_COUNT = new Column("stat", "count");
+  private static final Column STAT_CHECK = new Column("stat", "check");
 
   public static class SimpleObserver extends AbstractObserver {
 
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
-      TypedTransactionBase ttx = tl.wrap(tx);
 
       ScannerConfiguration sc = new ScannerConfiguration();
       sc.setSpan(Span.exact(row, new Column(Bytes.of("stats"))));
-      RowIterator rowIter = ttx.get(sc);
+      RowIterator rowIter = tx.get(sc);
 
       int sum = 0;
 
@@ -61,19 +59,19 @@ public class WeakNotificationIT extends ITBaseMini {
         while (colIter.hasNext()) {
           Entry<Column, Bytes> colVal = colIter.next();
           sum += Integer.parseInt(colVal.getValue().toString());
-          ttx.delete(row, colVal.getKey());
+          tx.delete(row, colVal.getKey());
         }
       }
 
       if (sum != 0) {
-        sum += ttx.get().row(row).fam("stat").qual("count").toInteger(0);
-        ttx.mutate().row(row).fam("stat").qual("count").set(sum);
+        sum += TestUtil.getOrDefault(tx, row.toString(), STAT_COUNT, 0);
+        tx.set(row.toString(), STAT_COUNT, sum + "");
       }
     }
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(tl.bc().fam("stat").qual("check").vis(), NotificationType.WEAK);
+      return new ObservedColumn(STAT_CHECK, NotificationType.WEAK);
     }
   }
 
@@ -87,34 +85,34 @@ public class WeakNotificationIT extends ITBaseMini {
     Environment env = new Environment(config);
 
     TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("r1").fam("stat").qual("count").set(3);
+    tx1.set("r1", STAT_COUNT, "3");
     tx1.done();
 
     TestTransaction tx2 = new TestTransaction(env);
-    tx2.mutate().row("r1").fam("stats").qual("af89").set(5);
-    tx2.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    tx2.set("r1", new Column("stats", "af89"), "5");
+    tx2.setWeakNotification("r1", STAT_CHECK);
     tx2.done();
 
     TestTransaction tx3 = new TestTransaction(env);
-    tx3.mutate().row("r1").fam("stats").qual("af99").set(7);
-    tx3.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    tx3.set("r1", new Column("stats", "af99"), "7");
+    tx3.setWeakNotification("r1", STAT_CHECK);
     tx3.done();
 
     miniFluo.waitForObservers();
 
     TestTransaction tx4 = new TestTransaction(env);
-    Assert.assertEquals(15, tx4.get().row("r1").fam("stat").qual("count").toInteger(0));
+    Assert.assertEquals("15", tx4.gets("r1", STAT_COUNT));
 
     // overlapping transactions that set a weak notification should commit w/ no problem
     TestTransaction tx5 = new TestTransaction(env);
-    tx5.mutate().row("r1").fam("stats").qual("bff7").set(11);
-    tx5.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    tx5.set("r1", new Column("stats", "bff7"), "11");
+    tx5.setWeakNotification("r1", STAT_CHECK);
     CommitData cd5 = tx5.createCommitData();
     Assert.assertTrue(tx5.preCommit(cd5));
 
     TestTransaction tx6 = new TestTransaction(env);
-    tx6.mutate().row("r1").fam("stats").qual("bff0").set(13);
-    tx6.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    tx6.set("r1", new Column("stats", "bff0"), "13");
+    tx6.setWeakNotification("r1", STAT_CHECK);
     CommitData cd6 = tx6.createCommitData();
     Assert.assertTrue(tx6.preCommit(cd6));
 
@@ -130,7 +128,7 @@ public class WeakNotificationIT extends ITBaseMini {
     miniFluo.waitForObservers();
 
     TestTransaction tx7 = new TestTransaction(env);
-    Assert.assertEquals(39, tx7.get().row("r1").fam("stat").qual("count").toInteger(0));
+    Assert.assertEquals("39", tx7.gets("r1", STAT_COUNT));
 
     env.close();
   }
@@ -139,9 +137,9 @@ public class WeakNotificationIT extends ITBaseMini {
   public void testNOOP() throws Exception {
     // if an observer makes not updates in a transaction, it should still delete the weak
     // notification
-    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
-      tx1.mutate().row("r1").fam("stat").qual("count").set(3);
-      tx1.mutate().row("r1").fam("stat").qual("check").weaklyNotify();
+    try (Transaction tx1 = client.newTransaction()) {
+      tx1.set("r1", STAT_COUNT, "3");
+      tx1.setWeakNotification("r1", STAT_CHECK);
       tx1.commit();
     }
 
@@ -151,9 +149,9 @@ public class WeakNotificationIT extends ITBaseMini {
 
   @Test(expected = IllegalArgumentException.class)
   public void testBadColumn() throws Exception {
-    try (TypedTransaction tx1 = tl.wrap(client.newTransaction())) {
-      tx1.mutate().row("r1").fam("stat").qual("count").set(3);
-      tx1.mutate().row("r1").fam("stat").qual("foo").weaklyNotify();
+    try (Transaction tx1 = client.newTransaction()) {
+      tx1.set("r1", STAT_COUNT, "3");
+      tx1.setWeakNotification("r1", new Column("stat", "foo"));
       tx1.commit();
     }
   }

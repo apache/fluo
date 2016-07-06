@@ -40,8 +40,6 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.iterator.ColumnIterator;
 import org.apache.fluo.api.iterator.RowIterator;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
@@ -55,7 +53,6 @@ import org.junit.Test;
  */
 public class StochasticBankIT extends ITBaseImpl {
 
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
   private static AtomicInteger txCount = new AtomicInteger();
 
   @Test
@@ -100,13 +97,13 @@ public class StochasticBankIT extends ITBaseImpl {
     runVerifier(env, numAccounts, 1);
   }
 
-  private static Column balanceCol = typeLayer.bc().fam("data").qual("balance").vis();
+  private static Column balanceCol = new Column("data", "balance");
 
   private static void populate(Environment env, int numAccounts) throws Exception {
     TestTransaction tx = new TestTransaction(env);
 
     for (int i = 0; i < numAccounts; i++) {
-      tx.mutate().row(fmtAcct(i)).col(balanceCol).set(1000);
+      tx.set(fmtAcct(i), balanceCol, "1000");
     }
 
     tx.done();
@@ -155,12 +152,12 @@ public class StochasticBankIT extends ITBaseImpl {
       while (true) {
         try {
           TestTransaction tx = new TestTransaction(env);
-          int bal1 = tx.get().row(from).col(balanceCol).toInteger();
-          int bal2 = tx.get().row(to).col(balanceCol).toInteger();
+          int bal1 = Integer.parseInt(tx.gets(from, balanceCol));
+          int bal2 = Integer.parseInt(tx.gets(to, balanceCol));
 
           if (bal1 - amt >= 0) {
-            tx.mutate().row(from).col(balanceCol).set(bal1 - amt);
-            tx.mutate().row(to).col(balanceCol).set(bal2 + amt);
+            tx.set(from, balanceCol, (bal1 - amt) + "");
+            tx.set(to, balanceCol, (bal2 + amt) + "");
           } else {
             break;
           }

@@ -20,20 +20,18 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedLoader;
-import org.apache.fluo.api.types.TypedObserver;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.integration.ITBaseMini;
+import org.apache.fluo.integration.TestUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -43,16 +41,16 @@ import org.junit.Test;
 
 public class LogIT extends ITBaseMini {
 
-  private static TypeLayer tl = new TypeLayer(new StringEncoder());
+  private static final Column STAT_COUNT = new Column("stat", "count");
 
-  static class SimpleLoader extends TypedLoader {
-    @Override
-    public void load(TypedTransactionBase tx, Context context) throws Exception {
-      tx.mutate().row("r1").fam("a").qual("b").increment(1);
+  static class SimpleLoader implements Loader {
+
+    public void load(TransactionBase tx, Context context) throws Exception {
+      TestUtil.increment(tx, "r1", new Column("a", "b"), 1);
     }
   }
 
-  static class TriggerLoader extends TypedLoader {
+  static class TriggerLoader implements Loader {
 
     int r;
 
@@ -61,9 +59,9 @@ public class LogIT extends ITBaseMini {
     }
 
     @Override
-    public void load(TypedTransactionBase tx, Context context) throws Exception {
-      tx.mutate().row(r).fam("stat").qual("count").set(1);
-      tx.mutate().row(r).fam("stat").qual("count").weaklyNotify();
+    public void load(TransactionBase tx, Context context) throws Exception {
+      tx.set(r + "", STAT_COUNT, "1");
+      tx.setWeakNotification(r + "", STAT_COUNT);
     }
   }
 
@@ -75,10 +73,10 @@ public class LogIT extends ITBaseMini {
   private static Column bCol2 = new Column(Bytes.of(new byte[] {'c', 0x09, '2'}),
       Bytes.of(new byte[] {'c', (byte) 0xe5, '2'}));
 
-  static class BinaryLoader1 extends TypedLoader {
+  static class BinaryLoader1 implements Loader {
 
     @Override
-    public void load(TypedTransactionBase tx, Context context) throws Exception {
+    public void load(TransactionBase tx, Context context) throws Exception {
       tx.delete(bRow1, bCol1);
       tx.get(bRow2, bCol1);
 
@@ -92,7 +90,7 @@ public class LogIT extends ITBaseMini {
     }
   }
 
-  public static class BinaryObserver extends TypedObserver {
+  public static class BinaryObserver extends AbstractObserver {
 
     @Override
     public ObservedColumn getObservedColumn() {
@@ -100,23 +98,23 @@ public class LogIT extends ITBaseMini {
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
+    public void process(TransactionBase tx, Bytes row, Column col) {
       tx.get(bRow1, bCol2);
       tx.get(bRow2, ImmutableSet.of(bCol1, bCol2));
       tx.get(ImmutableSet.of(bRow1, bRow2), ImmutableSet.of(bCol1, bCol2));
     }
   }
 
-  public static class TestObserver extends TypedObserver {
+  public static class TestObserver extends AbstractObserver {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(tl.bc().fam("stat").qual("count").vis(), NotificationType.WEAK);
+      return new ObservedColumn(STAT_COUNT, NotificationType.WEAK);
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
-      tx.mutate().row("all").col(col).increment(tx.get().row(row).col(col).toInteger());
+    public void process(TransactionBase tx, Bytes row, Column col) {
+      TestUtil.increment(tx, "all", col, Integer.parseInt(tx.gets(row.toString(), col)));
     }
   }
 
@@ -245,9 +243,9 @@ public class LogIT extends ITBaseMini {
       }
       miniFluo.waitForObservers();
 
-      try (TypedSnapshot snap = tl.wrap(client.newSnapshot())) {
-        Assert.assertTrue(snap.get().row("all").fam("stat").qual("count").toInteger(-1) >= 1);
-        Assert.assertEquals(1, snap.get().row("r1").fam("a").qual("b").toInteger(-1));
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertTrue(Integer.parseInt(snap.gets("all", STAT_COUNT)) >= 1);
+        Assert.assertEquals("1", snap.gets("r1", new Column("a", "b")));
       }
     } finally {
       logger.removeAppender(appender);

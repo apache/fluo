@@ -15,7 +15,7 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -27,20 +27,20 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
+import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedLoader;
-import org.apache.fluo.api.types.TypedObserver;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.fluo.integration.ITBaseMini;
+import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,9 +56,12 @@ import org.junit.Test;
  *
  */
 public class CollisionIT extends ITBaseMini {
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
-  static class NumLoader extends TypedLoader {
+  private static final Column STAT_TOTAL = new Column("stat", "total");
+  private static final Column STAT_CHANGED = new Column("stat", "changed");
+  private static final Column STAT_PROCESSED = new Column("stat", "processed");
+
+  private static class NumLoader implements Loader {
 
     int num;
 
@@ -67,33 +70,33 @@ public class CollisionIT extends ITBaseMini {
     }
 
     @Override
-    public void load(TypedTransactionBase tx, Context context) throws Exception {
-      tx.mutate().row(num).fam("stat").qual("total").increment(1);
-      tx.mutate().row(num).fam("stat").qual("changed").weaklyNotify();
+    public void load(TransactionBase tx, Context context) throws Exception {
+      TestUtil.increment(tx, num + "", STAT_TOTAL, 1);
+      tx.setWeakNotification(num + "", STAT_CHANGED);
     }
   }
 
-  public static class TotalObserver extends TypedObserver {
+  public static class TotalObserver extends AbstractObserver {
 
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(),
-          NotificationType.WEAK);
+    public Observer.ObservedColumn getObservedColumn() {
+      return new Observer.ObservedColumn(STAT_CHANGED, NotificationType.WEAK);
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
-      int total = tx.get().row(row).fam("stat").qual("total").toInteger();
-      int processed = tx.get().row(row).fam("stat").qual("processed").toInteger(0);
+    public void process(TransactionBase tx, Bytes rowBytes, Column col) throws Exception {
+      String row = rowBytes.toString();
+      int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
+      int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
 
-      tx.mutate().row(row).fam("stat").qual("processed").set(total);
-      tx.mutate().row("all").fam("stat").qual("total").increment(total - processed);
+      tx.set(row, STAT_PROCESSED, total + "");
+      TestUtil.increment(tx, "all", STAT_TOTAL, total - processed);
     }
   }
 
   @Override
   protected List<ObserverConfiguration> getObservers() {
-    return Arrays.asList(new ObserverConfiguration(TotalObserver.class.getName()));
+    return Collections.singletonList(new ObserverConfiguration(TotalObserver.class.getName()));
   }
 
   @Override
@@ -127,16 +130,20 @@ public class CollisionIT extends ITBaseMini {
 
     miniFluo.waitForObservers();
 
-    try (TypedSnapshot snapshot = typeLayer.wrap(client.newSnapshot())) {
+    try (Snapshot snapshot = client.newSnapshot()) {
 
       for (int i = 0; i < expectedCounts.length; i++) {
-        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("total")
-            .toInteger(-1));
-        Assert.assertEquals(expectedCounts[i], snapshot.get().row(i).fam("stat").qual("processed")
-            .toInteger(-1));
+        String total = snapshot.gets(i + "", STAT_TOTAL);
+        Assert.assertNotNull(total);
+        Assert.assertEquals(expectedCounts[i], Integer.parseInt(total));
+        String processed = snapshot.gets(i + "", STAT_PROCESSED);
+        Assert.assertNotNull(processed);
+        Assert.assertEquals(expectedCounts[i], Integer.parseInt(processed));
       }
 
-      Assert.assertEquals(1000, snapshot.get().row("all").fam("stat").qual("total").toInteger(-1));
+      String allTotal = snapshot.gets("all", STAT_TOTAL);
+      Assert.assertNotNull(allTotal);
+      Assert.assertEquals(1000, Integer.parseInt(allTotal));
     }
 
     long oldestTS = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());

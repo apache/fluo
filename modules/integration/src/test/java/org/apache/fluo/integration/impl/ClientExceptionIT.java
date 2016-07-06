@@ -19,9 +19,6 @@ import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.AlreadySetException;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedTransaction;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,8 +27,6 @@ import org.junit.Test;
  * Integration test to verify exceptions thrown by Fluo client
  */
 public class ClientExceptionIT extends ITBaseMini {
-
-  static TypeLayer tl = new TypeLayer(new StringEncoder());
 
   @Test
   public void testAlreadySetException() {
@@ -42,6 +37,15 @@ public class ClientExceptionIT extends ITBaseMini {
       tx.set(Bytes.of("row"), new Column("c1"), Bytes.of("val2"));
       Assert.fail("exception not thrown");
     } catch (AlreadySetException e) {
+      // do nothing
+    }
+
+    try (Transaction tx = client.newTransaction()) {
+      tx.set("row", new Column("c2"), "a");
+      tx.set("row", new Column("c2"), "b");
+      Assert.fail("exception not thrown");
+    } catch (AlreadySetException e) {
+      // do nothing
     }
 
     try (Transaction tx = client.newTransaction()) {
@@ -49,47 +53,7 @@ public class ClientExceptionIT extends ITBaseMini {
       tx.delete(Bytes.of("row"), new Column("c1"));
       Assert.fail("exception not thrown");
     } catch (AlreadySetException e) {
-    }
-
-    // test typed transactions
-    // setting integer
-    try (TypedTransaction tx = tl.wrap(client.newTransaction())) {
-      tx.mutate().row("r1").col(new Column("c1")).set("a");
-      tx.mutate().row("r1").col(new Column("c1")).set(6);
-      Assert.fail("exception not thrown");
-    } catch (AlreadySetException e) {
-    }
-
-    // test set setting empty twice
-    try (TypedTransaction tx = tl.wrap(client.newTransaction())) {
-      tx.mutate().row("r1").col(new Column("c1")).set();
-      tx.mutate().row("r1").col(new Column("c1")).set();
-      Assert.fail("exception not thrown");
-    } catch (AlreadySetException e) {
-    }
-
-    // test boolean and same value
-    try (TypedTransaction tx = tl.wrap(client.newTransaction())) {
-      tx.mutate().row("r1").col(new Column("c1")).set(true);
-      tx.mutate().row("r1").col(new Column("c1")).set(true);
-      Assert.fail("exception not thrown");
-    } catch (AlreadySetException e) {
-    }
-
-    // test string
-    try (TypedTransaction tx = tl.wrap(client.newTransaction())) {
-      tx.mutate().row("r1").col(new Column("c1")).set("a");
-      tx.mutate().row("r1").col(new Column("c1")).set("b");
-      Assert.fail("exception not thrown");
-    } catch (AlreadySetException e) {
-    }
-
-    // test two deletes
-    try (TypedTransaction tx = tl.wrap(client.newTransaction())) {
-      tx.mutate().row("r1").col(new Column("c1")).delete();
-      tx.mutate().row("r1").col(new Column("c1")).delete();
-      Assert.fail("exception not thrown");
-    } catch (AlreadySetException e) {
+      // do nothing
     }
   }
 }

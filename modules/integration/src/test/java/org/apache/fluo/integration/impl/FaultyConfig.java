@@ -43,13 +43,11 @@ public class FaultyConfig extends Environment {
     private Random rand;
     private double wp;
 
-    public FaultyConditionalWriter(ConditionalWriter cw, double unknownProbability,
-        double writeProbability) {
+    FaultyConditionalWriter(ConditionalWriter cw, double unknownProbability, double writeProbability) {
       this.cw = cw;
       this.up = unknownProbability;
       this.wp = writeProbability;
       this.rand = new Random();
-
     }
 
     @Override
@@ -93,7 +91,7 @@ public class FaultyConfig extends Environment {
   private double up;
   private double wp;
 
-  public FaultyConfig(Environment env, double up, double wp) throws Exception {
+  FaultyConfig(Environment env, double up, double wp) throws Exception {
     super(env);
     this.up = up;
     this.wp = wp;

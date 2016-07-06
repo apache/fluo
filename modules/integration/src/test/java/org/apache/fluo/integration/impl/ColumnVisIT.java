@@ -17,6 +17,7 @@ package org.apache.fluo.integration.impl;
 
 import java.util.Arrays;
 
+import com.google.common.collect.Sets;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
@@ -29,7 +30,7 @@ public class ColumnVisIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
 
     // expect set w/ bad col vis to fail fast
-    tx1.mutate().row("r").fam("f").qual("q").vis("A&").set("v");
+    tx1.set("r", new Column("f", "q", "A&"), "v");
   }
 
   @Test(expected = Exception.class)
@@ -37,7 +38,7 @@ public class ColumnVisIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
 
     // expect delete w/ bad col vis to fail fast
-    tx1.mutate().row("r").fam("f").qual("q").vis("A&").delete();
+    tx1.delete("r", new Column("f", "q", "A&"));
   }
 
   @Test(expected = Exception.class)
@@ -45,7 +46,7 @@ public class ColumnVisIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
 
     // expect weaknotify w/ bad col vis to fail fast
-    tx1.mutate().row("r").fam("f").qual("q").vis("A&").weaklyNotify();
+    tx1.setWeakNotification("r", new Column("f", "q", "A&"));
   }
 
   @Test(expected = Exception.class)
@@ -53,7 +54,7 @@ public class ColumnVisIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
 
     // expect get w/ bad col vis to fail fast
-    tx1.get().row("r").fam("f").qual("q").vis("A&").toString();
+    tx1.gets("r", new Column("f", "q", "A&"));
   }
 
   @Test(expected = Exception.class)
@@ -64,7 +65,7 @@ public class ColumnVisIT extends ITBaseImpl {
     Column col2 = new Column("f", "q", "C|");
 
     // expect get cols w/ bad col vis to fail fast
-    tx1.get().row("r").columns(col1, col2).size();
+    tx1.gets("r", Sets.newHashSet(col1, col2)).size();
   }
 
   @Test(expected = Exception.class)
@@ -75,6 +76,6 @@ public class ColumnVisIT extends ITBaseImpl {
     Column col2 = new Column("f", "q", "C|");
 
     // expect get rows cols w/ bad col vis to fail fast
-    tx1.get().rowsString(Arrays.asList("r1", "r2")).columns(col1, col2).toStringMap().size();
+    tx1.gets(Arrays.asList("r1", "r2"), Sets.newHashSet(col1, col2)).size();
   }
 }

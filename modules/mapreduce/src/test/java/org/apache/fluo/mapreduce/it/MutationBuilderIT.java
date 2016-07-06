@@ -18,8 +18,7 @@ package org.apache.fluo.mapreduce.it;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
+import org.apache.fluo.api.data.Column;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mapreduce.FluoMutationGenerator;
@@ -27,8 +26,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class MutationBuilderIT extends ITBaseImpl {
-
-  static final TypeLayer tl = new TypeLayer(new StringEncoder());
 
   @Test
   public void testBatchWrite() throws Exception {
@@ -39,15 +36,15 @@ public class MutationBuilderIT extends ITBaseImpl {
     try {
 
       FluoMutationGenerator mb1 = new FluoMutationGenerator(Bytes.of("row1"));
-      mb1.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.of("v1"));
-      mb1.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.of("v2"));
-      mb1.put(tl.bc().fam("cf1").qual("cq3").vis(), Bytes.of("v3"));
+      mb1.put(new Column("cf1", "cq1"), Bytes.of("v1"));
+      mb1.put(new Column("cf1", "cq2"), Bytes.of("v2"));
+      mb1.put(new Column("cf1", "cq3"), Bytes.of("v3"));
 
       bw.addMutation(mb1.build());
 
       FluoMutationGenerator mb2 = new FluoMutationGenerator(Bytes.of("row2"));
-      mb2.put(tl.bc().fam("cf1").qual("cq1").vis(), Bytes.of("v4"));
-      mb2.put(tl.bc().fam("cf1").qual("cq2").vis(), Bytes.of("v5"));
+      mb2.put(new Column("cf1", "cq1"), Bytes.of("v4"));
+      mb2.put(new Column("cf1", "cq2"), Bytes.of("v5"));
 
       bw.addMutation(mb2.build());
 
@@ -58,32 +55,32 @@ public class MutationBuilderIT extends ITBaseImpl {
     TestTransaction tx1 = new TestTransaction(env);
     TestTransaction tx2 = new TestTransaction(env);
 
-    Assert.assertEquals("v1", tx1.get().row("row1").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v2", tx1.get().row("row1").fam("cf1").qual("cq2").toString());
-    Assert.assertEquals("v3", tx1.get().row("row1").fam("cf1").qual("cq3").toString());
-    Assert.assertEquals("v4", tx1.get().row("row2").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v5", tx1.get().row("row2").fam("cf1").qual("cq2").toString());
+    Assert.assertEquals("v1", tx1.gets("row1", new Column("cf1", "cq1")));
+    Assert.assertEquals("v2", tx1.gets("row1", new Column("cf1", "cq2")));
+    Assert.assertEquals("v3", tx1.gets("row1", new Column("cf1", "cq3")));
+    Assert.assertEquals("v4", tx1.gets("row2", new Column("cf1", "cq1")));
+    Assert.assertEquals("v5", tx1.gets("row2", new Column("cf1", "cq2")));
 
-    tx1.mutate().row("row1").fam("cf1").qual("cq2").set("v6");
-    tx1.mutate().row("row1").fam("cf1").qual("cq3").delete();
-    tx1.mutate().row("row2").fam("cf1").qual("cq2").set("v7");
+    tx1.set("row1", new Column("cf1", "cq2"), "v6");
+    tx1.delete("row1", new Column("cf1", "cq3"));
+    tx1.set("row2", new Column("cf1", "cq2"), "v7");
 
     tx1.done();
 
     // tx2 should see not changes from tx1
-    Assert.assertEquals("v1", tx2.get().row("row1").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v2", tx2.get().row("row1").fam("cf1").qual("cq2").toString());
-    Assert.assertEquals("v3", tx2.get().row("row1").fam("cf1").qual("cq3").toString());
-    Assert.assertEquals("v4", tx2.get().row("row2").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v5", tx2.get().row("row2").fam("cf1").qual("cq2").toString());
+    Assert.assertEquals("v1", tx2.gets("row1", new Column("cf1", "cq1")));
+    Assert.assertEquals("v2", tx2.gets("row1", new Column("cf1", "cq2")));
+    Assert.assertEquals("v3", tx2.gets("row1", new Column("cf1", "cq3")));
+    Assert.assertEquals("v4", tx2.gets("row2", new Column("cf1", "cq1")));
+    Assert.assertEquals("v5", tx2.gets("row2", new Column("cf1", "cq2")));
 
     TestTransaction tx3 = new TestTransaction(env);
 
     // should see changes from tx1
-    Assert.assertEquals("v1", tx3.get().row("row1").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v6", tx3.get().row("row1").fam("cf1").qual("cq2").toString());
-    Assert.assertNull(tx3.get().row("row1").fam("cf1").qual("cq3").toString());
-    Assert.assertEquals("v4", tx3.get().row("row2").fam("cf1").qual("cq1").toString());
-    Assert.assertEquals("v7", tx3.get().row("row2").fam("cf1").qual("cq2").toString());
+    Assert.assertEquals("v1", tx3.gets("row1", new Column("cf1", "cq1")));
+    Assert.assertEquals("v6", tx3.gets("row1", new Column("cf1", "cq2")));
+    Assert.assertNull(tx3.gets("row1", new Column("cf1", "cq3")));
+    Assert.assertEquals("v4", tx3.gets("row2", new Column("cf1", "cq1")));
+    Assert.assertEquals("v7", tx3.gets("row2", new Column("cf1", "cq2")));
   }
 }

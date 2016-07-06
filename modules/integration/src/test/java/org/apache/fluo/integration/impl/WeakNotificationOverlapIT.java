@@ -15,59 +15,63 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import com.google.common.primitives.Ints;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedObserver;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
+import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class WeakNotificationOverlapIT extends ITBaseImpl {
 
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
+  private static final Column STAT_TOTAL = new Column("stat", "total");
+  private static final Column STAT_PROCESSED = new Column("stat", "processed");
+  private static final Column STAT_CHANGED = new Column("stat", "changed");
 
-  public static class TotalObserver extends TypedObserver {
+  public static class TotalObserver extends AbstractObserver {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.bc().fam("stat").qual("changed").vis(),
-          NotificationType.WEAK);
+      return new ObservedColumn(STAT_CHANGED, NotificationType.WEAK);
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
-      Integer total = tx.get().row(row).fam("stat").qual("total").toInteger();
-      if (total == null) {
+    public void process(TransactionBase tx, Bytes row, Column col) {
+      String r = row.toString();
+      String totalStr = tx.gets(r, STAT_TOTAL);
+      if (totalStr == null) {
         return;
       }
-      int processed = tx.get().row(row).fam("stat").qual("processed").toInteger(0);
-
-      tx.mutate().row(row).fam("stat").qual("processed").set(total);
-      tx.mutate().row("all").fam("stat").qual("total").increment(total - processed);
+      Integer total = Integer.parseInt(totalStr);
+      int processed = TestUtil.getOrDefault(tx, r, STAT_PROCESSED, 0);
+      tx.set(r, new Column("stat", "processed"), total + "");
+      TestUtil.increment(tx, "all", new Column("stat", "total"), total - processed);
     }
   }
 
+
+
   @Override
   protected List<ObserverConfiguration> getObservers() {
-    return Arrays.asList(new ObserverConfiguration(TotalObserver.class.getName()));
+    return Collections.singletonList(new ObserverConfiguration(TotalObserver.class.getName()));
   }
 
   @Test
@@ -75,80 +79,78 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // this test ensures that processing of weak notification deletes based on startTs and not
     // commitTs
 
-    Column ntfyCol = typeLayer.bc().fam("stat").qual("changed").vis();
-
     TestTransaction ttx1 = new TestTransaction(env);
-    ttx1.mutate().row(1).fam("stat").qual("total").increment(1);
-    ttx1.mutate().row(1).col(ntfyCol).weaklyNotify();
+    TestUtil.increment(ttx1, "1", STAT_TOTAL, 1);
+    ttx1.setWeakNotification("1", STAT_CHANGED);
     ttx1.done();
 
-    TestTransaction ttx2 = new TestTransaction(env, "1", ntfyCol);
+    TestTransaction ttx2 = new TestTransaction(env, "1", STAT_CHANGED);
 
     TestTransaction ttx3 = new TestTransaction(env);
-    ttx3.mutate().row(1).fam("stat").qual("total").increment(1);
-    ttx3.mutate().row(1).col(ntfyCol).weaklyNotify();
+    TestUtil.increment(ttx3, "1", STAT_TOTAL, 1);
+    ttx3.setWeakNotification("1", STAT_CHANGED);
     ttx3.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx2, Bytes.of("1"), ntfyCol);
+    new TotalObserver().process(ttx2, Bytes.of("1"), STAT_CHANGED);
     // should not delete notification created by ttx3
     ttx2.done();
 
     TestTransaction snap1 = new TestTransaction(env);
-    Assert.assertEquals(1, snap1.get().row("all").fam("stat").qual("total").toInteger(-1));
+    Assert.assertEquals("1", snap1.gets("all", STAT_TOTAL));
     snap1.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction ttx4 = new TestTransaction(env, "1", ntfyCol);
-    new TotalObserver().process(ttx4, Bytes.of("1"), ntfyCol);
+    TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
+    new TotalObserver().process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 
     Assert.assertEquals(0, countNotifications());
 
     TestTransaction snap2 = new TestTransaction(env);
-    Assert.assertEquals(2, snap2.get().row("all").fam("stat").qual("total").toInteger(-1));
+    Assert.assertEquals("2", snap2.gets("all", STAT_TOTAL));
     snap2.done();
 
     // the following code is a repeat of the above with a slight diff. The following tx creates a
     // notification, but deletes the data so there is no work for the
     // observer. This test the case where a observer deletes a notification w/o making any updates.
     TestTransaction ttx5 = new TestTransaction(env);
-    ttx5.mutate().row(1).fam("stat").qual("total").delete();
-    ttx5.mutate().row(1).fam("stat").qual("processed").delete();
-    ttx5.mutate().row(1).col(ntfyCol).weaklyNotify();
+    ttx5.delete("1", STAT_TOTAL);
+    ttx5.delete("1", STAT_PROCESSED);
+    ttx5.setWeakNotification("1", STAT_CHANGED);
     ttx5.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction ttx6 = new TestTransaction(env, "1", ntfyCol);
+    TestTransaction ttx6 = new TestTransaction(env, "1", STAT_CHANGED);
 
     TestTransaction ttx7 = new TestTransaction(env);
-    ttx7.mutate().row(1).fam("stat").qual("total").increment(1);
-    ttx7.mutate().row(1).col(ntfyCol).weaklyNotify();
+    TestUtil.increment(ttx7, "1", STAT_TOTAL, 1);
+    ttx7.setWeakNotification("1", STAT_CHANGED);
     ttx7.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx6, Bytes.of("1"), ntfyCol);
+    new TotalObserver().process(ttx6, Bytes.of("1"), STAT_CHANGED);
     // should not delete notification created by ttx7
     ttx6.done();
 
     Assert.assertEquals(1, countNotifications());
 
     TestTransaction snap3 = new TestTransaction(env);
-    Assert.assertEquals(2, snap3.get().row("all").fam("stat").qual("total").toInteger(-1));
+    Assert.assertEquals("2", snap3.gets("all", STAT_TOTAL));
     snap3.done();
 
-    TestTransaction ttx8 = new TestTransaction(env, "1", ntfyCol);
-    new TotalObserver().process(ttx8, Bytes.of("1"), ntfyCol);
+    TestTransaction ttx8 = new TestTransaction(env, "1", STAT_CHANGED);
+    new TotalObserver().process(ttx8, Bytes.of("1"), STAT_CHANGED);
     ttx8.done();
 
     Assert.assertEquals(0, countNotifications());
 
     TestTransaction snap4 = new TestTransaction(env);
-    Assert.assertEquals(3, snap4.get().row("all").fam("stat").qual("total").toInteger(-1));
+    Assert.assertEquals("3", snap4.gets("all", STAT_TOTAL));
     snap4.done();
   }
 
@@ -156,25 +158,23 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
   public void testOverlap2() throws Exception {
     // this test ensures that setting weak notification is based on commitTs and not startTs
 
-    Column ntfyCol = typeLayer.bc().fam("stat").qual("changed").vis();
-
     TestTransaction ttx1 = new TestTransaction(env);
-    ttx1.mutate().row(1).fam("stat").qual("total").increment(1);
-    ttx1.mutate().row(1).col(ntfyCol).weaklyNotify();
+    TestUtil.increment(ttx1, "1", STAT_TOTAL, 1);
+    ttx1.setWeakNotification("1", STAT_CHANGED);
     ttx1.done();
 
     Assert.assertEquals(1, countNotifications());
 
     TestTransaction ttx2 = new TestTransaction(env);
-    ttx2.mutate().row(1).fam("stat").qual("total").increment(1);
-    ttx2.mutate().row(1).col(ntfyCol).weaklyNotify();
+    TestUtil.increment(ttx2, "1", STAT_TOTAL, 1);
+    ttx2.setWeakNotification("1", STAT_CHANGED);
     CommitData cd2 = ttx2.createCommitData();
     Assert.assertTrue(ttx2.preCommit(cd2));
 
     // simulate an observer processing the notification created by ttx1 while ttx2 is in the middle
     // of committing. Processing this observer should not delete
     // the notification for ttx2. It should delete the notification for ttx1.
-    TestTransaction ttx3 = new TestTransaction(env, "1", ntfyCol);
+    TestTransaction ttx3 = new TestTransaction(env, "1", STAT_CHANGED);
 
     Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(ttx2.commitPrimaryColumn(cd2, commitTs));
@@ -183,21 +183,21 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx3, Bytes.of("1"), ntfyCol);
+    new TotalObserver().process(ttx3, Bytes.of("1"), STAT_CHANGED);
     ttx3.done();
 
     Assert.assertEquals(1, countNotifications());
-    try (TypedSnapshot snapshot = typeLayer.wrap(client.newSnapshot())) {
-      Assert.assertEquals(1, snapshot.get().row("all").fam("stat").qual("total").toInteger(-1));
+    try (Snapshot snapshot = client.newSnapshot()) {
+      Assert.assertEquals("1", snapshot.gets("all", STAT_TOTAL));
     }
 
-    TestTransaction ttx4 = new TestTransaction(env, "1", ntfyCol);
-    new TotalObserver().process(ttx4, Bytes.of("1"), ntfyCol);
+    TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
+    new TotalObserver().process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 
     Assert.assertEquals(0, countNotifications());
-    try (TypedSnapshot snapshot = typeLayer.wrap(client.newSnapshot())) {
-      Assert.assertEquals(2, snapshot.get().row("all").fam("stat").qual("total").toInteger(-1));
+    try (Snapshot snapshot = client.newSnapshot()) {
+      Assert.assertEquals("2", snapshot.gets("all", STAT_TOTAL));
     }
   }
 

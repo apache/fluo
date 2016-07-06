@@ -16,14 +16,13 @@
 package org.apache.fluo.integration.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedSnapshotBase.Value;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.impl.TransactorNode;
 import org.apache.fluo.core.oracle.Stamp;
@@ -33,7 +32,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ParallelScannerIT extends ITBaseImpl {
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
 
   @Test
   public void testRowColumn() {
@@ -76,21 +74,21 @@ public class ParallelScannerIT extends ITBaseImpl {
     // parallel scan
     TestTransaction tx1 = new TestTransaction(env);
 
-    tx1.mutate().row("bob9").fam("vote").qual("election1").set("N");
-    tx1.mutate().row("bob9").fam("vote").qual("election2").set("Y");
+    tx1.set("bob9", new Column("vote", "election1"), "N");
+    tx1.set("bob9", new Column("vote", "election2"), "Y");
 
-    tx1.mutate().row("joe3").fam("vote").qual("election1").set("nay");
-    tx1.mutate().row("joe3").fam("vote").qual("election2").set("nay");
+    tx1.set("joe3", new Column("vote", "election1"), "nay");
+    tx1.set("joe3", new Column("vote", "election2"), "nay");
 
     tx1.done();
 
     final TestTransaction tx2 = new TestTransaction(env);
 
-    tx2.mutate().row("sue4").fam("vote").qual("election1").set("+1");
-    tx2.mutate().row("sue4").fam("vote").qual("election2").set("-1");
+    tx2.set("sue4", new Column("vote", "election1"), "+1");
+    tx2.set("sue4", new Column("vote", "election2"), "-1");
 
-    tx2.mutate().row("eve2").fam("vote").qual("election1").set("no");
-    tx2.mutate().row("eve2").fam("vote").qual("election2").set("no");
+    tx2.set("eve2", new Column("vote", "election1"), "no");
+    tx2.set("eve2", new Column("vote", "election2"), "no");
 
     final CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
@@ -116,17 +114,17 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     TestTransaction tx3 = new TestTransaction(env);
 
-    Column e1Col = typeLayer.bc().fam("vote").qual("election1").vis();
+    Column e1Col = new Column("vote", "election1");
 
     // normally when this test runs, some of the row/columns being read below will be locked for a
     // bit
-    Map<String, Map<Column, Value>> votes =
-        tx3.get().rowsString("bob9", "joe3", "sue4", "eve2").columns(e1Col).toStringMap();
+    Map<String, Map<Column, String>> votes =
+        tx3.gets(Arrays.asList("bob9", "joe3", "sue4", "eve2"), Sets.newHashSet(e1Col));
 
-    Assert.assertEquals("N", votes.get("bob9").get(e1Col).toString(""));
-    Assert.assertEquals("nay", votes.get("joe3").get(e1Col).toString(""));
-    Assert.assertEquals("+1", votes.get("sue4").get(e1Col).toString(""));
-    Assert.assertEquals("no", votes.get("eve2").get(e1Col).toString(""));
+    Assert.assertEquals("N", votes.get("bob9").get(e1Col));
+    Assert.assertEquals("nay", votes.get("joe3").get(e1Col));
+    Assert.assertEquals("+1", votes.get("sue4").get(e1Col));
+    Assert.assertEquals("no", votes.get("eve2").get(e1Col));
     Assert.assertEquals(4, votes.size());
   }
 
@@ -140,16 +138,18 @@ public class ParallelScannerIT extends ITBaseImpl {
     runParallelRecoveryTest(false);
   }
 
-  void runParallelRecoveryTest(boolean closeTransID) throws Exception {
+  private static final Column COL = new Column("7", "7");
+
+  private void runParallelRecoveryTest(boolean closeTransID) throws Exception {
     TestTransaction tx1 = new TestTransaction(env);
 
-    tx1.mutate().row(5).fam(7).qual(7).set(3);
-    tx1.mutate().row(12).fam(7).qual(7).set(10);
-    tx1.mutate().row(19).fam(7).qual(7).set(17);
-    tx1.mutate().row(26).fam(7).qual(7).set(24);
-    tx1.mutate().row(33).fam(7).qual(7).set(31);
-    tx1.mutate().row(40).fam(7).qual(7).set(38);
-    tx1.mutate().row(47).fam(7).qual(7).set(45);
+    tx1.set("5", COL, "3");
+    tx1.set("12", COL, "10");
+    tx1.set("19", COL, "17");
+    tx1.set("26", COL, "24");
+    tx1.set("33", COL, "31");
+    tx1.set("40", COL, "38");
+    tx1.set("47", COL, "45");
 
     tx1.done();
 
@@ -157,18 +157,18 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     TestTransaction tx2 = new TestTransaction(env, tNode1);
 
-    tx2.mutate().row(5).fam(7).qual(7).set(7);
-    tx2.mutate().row(12).fam(7).qual(7).set(14);
-    tx2.mutate().row(19).fam(7).qual(7).set(21);
+    tx2.set("5", COL, "7");
+    tx2.set("12", COL, "14");
+    tx2.set("19", COL, "21");
 
     CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
 
     TestTransaction tx3 = new TestTransaction(env, tNode1);
 
-    tx3.mutate().row(26).fam(7).qual(7).set(28);
-    tx3.mutate().row(33).fam(7).qual(7).set(35);
-    tx3.mutate().row(40).fam(7).qual(7).set(42);
+    tx3.set("26", COL, "28");
+    tx3.set("33", COL, "35");
+    tx3.set("40", COL, "42");
 
     CommitData cd3 = tx3.createCommitData();
     Assert.assertTrue(tx3.preCommit(cd3));
@@ -187,24 +187,23 @@ public class ParallelScannerIT extends ITBaseImpl {
     }
   }
 
-  void check() throws Exception {
+  private void check() throws Exception {
     TestTransaction tx = new TestTransaction(env);
-    Column scol = typeLayer.bc().fam(7).qual(7).vis();
-    Map<String, Map<Column, Value>> votes =
-        tx.get().rowsString("5", "12", "19", "26", "33", "40", "47").columns(scol).toStringMap();
+    Map<String, Map<Column, String>> votes =
+        tx.gets(Arrays.asList("5", "12", "19", "26", "33", "40", "47"), Sets.newHashSet(COL));
 
     // following should be rolled back
-    Assert.assertEquals(3, votes.get("5").get(scol).toInteger(0));
-    Assert.assertEquals(10, votes.get("12").get(scol).toInteger(0));
-    Assert.assertEquals(17, votes.get("19").get(scol).toInteger(0));
+    Assert.assertEquals("3", votes.get("5").get(COL));
+    Assert.assertEquals("10", votes.get("12").get(COL));
+    Assert.assertEquals("17", votes.get("19").get(COL));
 
     // following should be rolled forward
-    Assert.assertEquals(28, votes.get("26").get(scol).toInteger(0));
-    Assert.assertEquals(35, votes.get("33").get(scol).toInteger(0));
-    Assert.assertEquals(42, votes.get("40").get(scol).toInteger(0));
+    Assert.assertEquals("28", votes.get("26").get(COL));
+    Assert.assertEquals("35", votes.get("33").get(COL));
+    Assert.assertEquals("42", votes.get("40").get(COL));
 
     // unchanged and not locked
-    Assert.assertEquals(45, votes.get("47").get(scol).toInteger(0));
+    Assert.assertEquals("45", votes.get("47").get(COL));
   }
 
 }

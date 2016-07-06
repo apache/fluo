@@ -15,35 +15,28 @@
 
 package org.apache.fluo.integration;
 
+import org.apache.fluo.api.client.SnapshotBase;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.core.impl.Environment;
 
-/**
- * Utility test methods to mimic banking and transfers
- */
-public class BankUtil {
+public class TestUtil {
 
-  public static final Column BALANCE = new Column("account", "balance");
+  private TestUtil() {}
 
-  private BankUtil() {}
-
-  public static void transfer(Environment env, String from, String to, int amount) throws Exception {
-    TestTransaction tx = new TestTransaction(env);
-
-    int bal1 = Integer.parseInt(tx.gets(from, BALANCE));
-    int bal2 = Integer.parseInt(tx.gets(to, BALANCE));
-
-    tx.set(from, BALANCE, (bal1 - amount) + "");
-    tx.set(to, BALANCE, (bal2 + amount) + "");
-
-    tx.done();
+  public static void increment(TransactionBase tx, String row, Column col, int val) {
+    int prev = 0;
+    String prevStr = tx.gets(row, col);
+    if (prevStr != null) {
+      prev = Integer.parseInt(prevStr);
+    }
+    tx.set(row, col, prev + val + "");
   }
 
-  public static void setBalance(TestTransaction tx, String user, int amount) {
-    tx.set(user, BALANCE, amount + "");
-  }
-
-  public static int getBalance(TestTransaction tx, String user) {
-    return Integer.parseInt(tx.gets(user, BALANCE));
+  public static int getOrDefault(SnapshotBase snap, String row, Column col, int defaultVal) {
+    String val = snap.gets(row, col);
+    if (val == null) {
+      return defaultVal;
+    }
+    return Integer.parseInt(val);
   }
 }

@@ -28,6 +28,7 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.config.ScannerConfiguration;
@@ -37,33 +38,30 @@ import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.iterator.ColumnIterator;
 import org.apache.fluo.api.iterator.RowIterator;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedObserver;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
+import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.fluo.integration.BankUtil.BALANCE;
+
 public class FluoIT extends ITBaseImpl {
 
-  static TypeLayer typeLayer = new TypeLayer(new StringEncoder());
-
-  public static class BalanceObserver extends TypedObserver {
+  public static class BalanceObserver extends AbstractObserver {
 
     @Override
     public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(typeLayer.bc().fam("account").qual("balance").vis(),
-          NotificationType.STRONG);
+      return new ObservedColumn(BALANCE, NotificationType.STRONG);
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
+    public void process(TransactionBase tx, Bytes row, Column col) {
       Assert.fail();
     }
   }
@@ -102,42 +100,36 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
 
     tx.done();
 
     tx = new TestTransaction(env);
 
-    int bal1 = tx.get().row("bob").col(balanceCol).toInteger(0);
-    int bal2 = tx.get().row("joe").col(balanceCol).toInteger(0);
-    Assert.assertEquals(10, bal1);
-    Assert.assertEquals(20, bal2);
+    Assert.assertEquals("10", tx.gets("bob", BALANCE));
+    Assert.assertEquals("20", tx.gets("joe", BALANCE));
 
-    tx.mutate().row("bob").col(balanceCol).set(bal1 - 5);
-    tx.mutate().row("joe").col(balanceCol).set(bal2 + 5);
+    TestUtil.increment(tx, "bob", BALANCE, -5);
+    TestUtil.increment(tx, "joe", BALANCE, 5);
 
     TestTransaction tx2 = new TestTransaction(env);
 
-    int bal3 = tx2.get().row("bob").col(balanceCol).toInteger(0);
-    int bal4 = tx2.get().row("jill").col(balanceCol).toInteger(0);
-    Assert.assertEquals(10, bal3);
-    Assert.assertEquals(60, bal4);
+    Assert.assertEquals("10", tx2.gets("bob", BALANCE));
+    Assert.assertEquals("60", tx2.gets("jill", BALANCE));
 
-    tx2.mutate().row("bob").col(balanceCol).set(bal3 - 5);
-    tx2.mutate().row("jill").col(balanceCol).set(bal4 + 5);
+    TestUtil.increment(tx2, "bob", BALANCE, -5);
+    TestUtil.increment(tx2, "jill", BALANCE, 5);
 
     tx2.done();
     assertCommitFails(tx);
 
     TestTransaction tx3 = new TestTransaction(env);
 
-    Assert.assertEquals(5, tx3.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(20, tx3.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(65, tx3.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("5", tx3.gets("bob", BALANCE));
+    Assert.assertEquals("20", tx3.gets("joe", BALANCE));
+    Assert.assertEquals("65", tx3.gets("jill", BALANCE));
     tx3.done();
   }
 
@@ -168,12 +160,10 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
-    tx.mutate().row("jane").col(balanceCol).set(0);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
+    tx.set("jane", BALANCE, "0");
 
     tx.done();
 
@@ -181,51 +171,45 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx2 = new TestTransaction(env);
 
-    tx2.mutate().row("bob").col(balanceCol).set(tx2.get().row("bob").col(balanceCol).toLong() - 5);
-    tx2.mutate().row("joe").col(balanceCol).set(tx2.get().row("joe").col(balanceCol).toLong() - 5);
-    tx2.mutate().row("jill").col(balanceCol)
-        .set(tx2.get().row("jill").col(balanceCol).toLong() + 10);
+    TestUtil.increment(tx2, "bob", BALANCE, -5);
+    TestUtil.increment(tx2, "joe", BALANCE, -5);
+    TestUtil.increment(tx2, "jill", BALANCE, 10);
 
-    long bal1 = tx1.get().row("bob").col(balanceCol).toLong();
+    Assert.assertEquals("10", tx1.gets("bob", BALANCE));
 
     tx2.done();
 
     TestTransaction txd = new TestTransaction(env);
-    txd.mutate().row("jane").col(balanceCol).delete();
+    txd.delete("jane", BALANCE);
     txd.done();
 
-    long bal2 = tx1.get().row("joe").col(balanceCol).toLong();
-    long bal3 = tx1.get().row("jill").col(balanceCol).toLong();
-    long bal4 = tx1.get().row("jane").col(balanceCol).toLong();
+    Assert.assertEquals("20", tx1.gets("joe", BALANCE));
+    Assert.assertEquals("60", tx1.gets("jill", BALANCE));
+    Assert.assertEquals("0", tx1.gets("jane", BALANCE));
 
-    Assert.assertEquals(10l, bal1);
-    Assert.assertEquals(20l, bal2);
-    Assert.assertEquals(60l, bal3);
-    Assert.assertEquals(0l, bal4);
-
-    tx1.mutate().row("bob").col(balanceCol).set(bal1 - 5);
-    tx1.mutate().row("joe").col(balanceCol).set(bal2 + 5);
+    tx1.set("bob", BALANCE, "5");
+    tx1.set("joe", BALANCE, "25");
 
     assertCommitFails(tx1);
 
     TestTransaction tx3 = new TestTransaction(env);
 
     TestTransaction tx4 = new TestTransaction(env);
-    tx4.mutate().row("jane").col(balanceCol).set(3);
+    tx4.set("jane", BALANCE, "3");
     tx4.done();
 
-    Assert.assertEquals(5l, tx3.get().row("bob").col(balanceCol).toLong(0));
-    Assert.assertEquals(15l, tx3.get().row("joe").col(balanceCol).toLong(0));
-    Assert.assertEquals(70l, tx3.get().row("jill").col(balanceCol).toLong(0));
-    Assert.assertNull(tx3.get().row("jane").col(balanceCol).toLong());
+    Assert.assertEquals("5", tx3.gets("bob", BALANCE));
+    Assert.assertEquals("15", tx3.gets("joe", BALANCE));
+    Assert.assertEquals("70", tx3.gets("jill", BALANCE));
+    Assert.assertNull(tx3.gets("jane", BALANCE));
     tx3.done();
 
     TestTransaction tx5 = new TestTransaction(env);
 
-    Assert.assertEquals(5l, tx5.get().row("bob").col(balanceCol).toLong(0));
-    Assert.assertEquals(15l, tx5.get().row("joe").col(balanceCol).toLong(0));
-    Assert.assertEquals(70l, tx5.get().row("jill").col(balanceCol).toLong(0));
-    Assert.assertEquals(3l, tx5.get().row("jane").col(balanceCol).toLong(0));
+    Assert.assertEquals("5", tx5.gets("bob", BALANCE));
+    Assert.assertEquals("15", tx5.gets("joe", BALANCE));
+    Assert.assertEquals("70", tx5.gets("jill", BALANCE));
+    Assert.assertEquals("3", tx5.gets("jane", BALANCE));
     tx5.done();
   }
 
@@ -235,45 +219,43 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
 
     tx.done();
 
-    TestTransaction tx1 = new TestTransaction(env, "joe", balanceCol);
-    tx1.get().row("joe").col(balanceCol);
-    tx1.mutate().row("jill").col(balanceCol).set(61);
+    TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
+    tx1.gets("joe", BALANCE);
+    tx1.set("jill", BALANCE, "61");
 
-    TestTransaction tx2 = new TestTransaction(env, "joe", balanceCol);
-    tx2.get().row("joe").col(balanceCol);
-    tx2.mutate().row("bob").col(balanceCol).set(11);
+    TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
+    tx2.gets("joe", BALANCE);
+    tx2.set("bob", BALANCE, "11");
 
     tx1.done();
     assertAAck(tx2);
 
     TestTransaction tx3 = new TestTransaction(env);
 
-    Assert.assertEquals(10, tx3.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(20, tx3.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(61, tx3.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("10", tx3.gets("bob", BALANCE));
+    Assert.assertEquals("20", tx3.gets("joe", BALANCE));
+    Assert.assertEquals("61", tx3.gets("jill", BALANCE));
 
     // update joe, so it can be acknowledged again
-    tx3.mutate().row("joe").col(balanceCol).set(21);
+    tx3.set("joe", BALANCE, "21");
 
     tx3.done();
 
-    TestTransaction tx4 = new TestTransaction(env, "joe", balanceCol);
-    tx4.get().row("joe").col(balanceCol);
-    tx4.mutate().row("jill").col(balanceCol).set(62);
+    TestTransaction tx4 = new TestTransaction(env, "joe", BALANCE);
+    tx4.gets("joe", BALANCE);
+    tx4.set("jill", BALANCE, "62");
 
-    TestTransaction tx5 = new TestTransaction(env, "joe", balanceCol);
-    tx5.get().row("joe").col(balanceCol);
-    tx5.mutate().row("bob").col(balanceCol).set(11);
+    TestTransaction tx5 = new TestTransaction(env, "joe", BALANCE);
+    tx5.gets("joe", BALANCE);
+    tx5.set("bob", BALANCE, "11");
 
-    TestTransaction tx7 = new TestTransaction(env, "joe", balanceCol);
+    TestTransaction tx7 = new TestTransaction(env, "joe", BALANCE);
 
     // make the 2nd transaction to start commit 1st
     tx5.done();
@@ -281,22 +263,22 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx6 = new TestTransaction(env);
 
-    Assert.assertEquals(11, tx6.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(21, tx6.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(61, tx6.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("11", tx6.gets("bob", BALANCE));
+    Assert.assertEquals("21", tx6.gets("joe", BALANCE));
+    Assert.assertEquals("61", tx6.gets("jill", BALANCE));
     tx6.done();
 
-    tx7.get().row("joe").col(balanceCol);
-    tx7.mutate().row("bob").col(balanceCol).set(15);
-    tx7.mutate().row("jill").col(balanceCol).set(60);
+    tx7.gets("joe", BALANCE);
+    tx7.set("bob", BALANCE, "15");
+    tx7.set("jill", BALANCE, "60");
 
     assertAAck(tx7);
 
     TestTransaction tx8 = new TestTransaction(env);
 
-    Assert.assertEquals(11, tx8.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(21, tx8.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(61, tx8.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("11", tx8.gets("bob", BALANCE));
+    Assert.assertEquals("21", tx8.gets("joe", BALANCE));
+    Assert.assertEquals("61", tx8.gets("jill", BALANCE));
     tx8.done();
   }
 
@@ -304,27 +286,26 @@ public class FluoIT extends ITBaseImpl {
   public void testAck2() throws Exception {
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-    Column addrCol = typeLayer.bc().fam("account").qual("addr").vis();
+    Column addrCol = new Column("account", "addr");
 
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
 
     tx.done();
 
-    TestTransaction tx1 = new TestTransaction(env, "bob", balanceCol);
-    TestTransaction tx2 = new TestTransaction(env, "bob", balanceCol);
-    TestTransaction tx3 = new TestTransaction(env, "bob", balanceCol);
+    TestTransaction tx1 = new TestTransaction(env, "bob", BALANCE);
+    TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE);
+    TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE);
 
-    tx1.get().row("bob").col(balanceCol).toInteger();
-    tx2.get().row("bob").col(balanceCol).toInteger();
+    tx1.gets("bob", BALANCE);
+    tx2.gets("bob", BALANCE);
 
-    tx1.get().row("bob").col(addrCol).toInteger();
-    tx2.get().row("bob").col(addrCol).toInteger();
+    tx1.gets("bob", addrCol);
+    tx2.gets("bob", addrCol);
 
-    tx1.mutate().row("bob").col(addrCol).set("1 loop pl");
-    tx2.mutate().row("bob").col(addrCol).set("1 loop pl");
+    tx1.set("bob", addrCol, "1 loop pl");
+    tx2.set("bob", addrCol, "1 loop pl");
 
     // this test overlaps the commits of two transactions w/ the same trigger
 
@@ -338,7 +319,7 @@ public class FluoIT extends ITBaseImpl {
     tx1.finishCommit(cd, commitTs);
     tx1.close();
 
-    tx3.mutate().row("bob").col(addrCol).set("2 loop pl");
+    tx3.set("bob", addrCol, "2 loop pl");
     assertAAck(tx3);
   }
 
@@ -346,22 +327,20 @@ public class FluoIT extends ITBaseImpl {
   public void testAck3() throws Exception {
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
 
     tx.done();
 
-    long notTS1 = TestTransaction.getNotificationTS(env, "bob", balanceCol);
+    long notTS1 = TestTransaction.getNotificationTS(env, "bob", BALANCE);
 
     // this transaction should create a second notification
     TestTransaction tx1 = new TestTransaction(env);
-    tx1.mutate().row("bob").col(balanceCol).set(11);
+    tx1.set("bob", BALANCE, "11");
     tx1.done();
 
-    long notTS2 = TestTransaction.getNotificationTS(env, "bob", balanceCol);
+    long notTS2 = TestTransaction.getNotificationTS(env, "bob", BALANCE);
 
     Assert.assertTrue(notTS1 < notTS2);
 
@@ -369,17 +348,17 @@ public class FluoIT extends ITBaseImpl {
     // should execute
     // google paper calls this message collapsing
 
-    TestTransaction tx3 = new TestTransaction(env, "bob", balanceCol, notTS1);
+    TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE, notTS1);
 
-    TestTransaction tx2 = new TestTransaction(env, "bob", balanceCol, notTS1);
-    Assert.assertEquals(11, tx2.get().row("bob").col(balanceCol).toInteger(0));
+    TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE, notTS1);
+    Assert.assertEquals("11", tx2.gets("bob", BALANCE));
     tx2.done();
 
-    Assert.assertEquals(11, tx3.get().row("bob").col(balanceCol).toInteger(0));
+    Assert.assertEquals("11", tx3.gets("bob", BALANCE));
     assertAAck(tx3);
 
-    TestTransaction tx4 = new TestTransaction(env, "bob", balanceCol, notTS2);
-    Assert.assertEquals(11, tx4.get().row("bob").col(balanceCol).toInteger(0));
+    TestTransaction tx4 = new TestTransaction(env, "bob", BALANCE, notTS2);
+    Assert.assertEquals("11", tx4.gets("bob", BALANCE));
     assertAAck(tx4);
   }
 
@@ -390,31 +369,29 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx = new TestTransaction(env);
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis();
-
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", BALANCE, "10");
+    tx.set("joe", BALANCE, "20");
+    tx.set("jill", BALANCE, "60");
 
     tx.done();
 
-    TestTransaction tx2 = new TestTransaction(env, "joe", balanceCol);
-    tx2.get().row("joe").col(balanceCol);
-    tx2.mutate().row("joe").col(balanceCol).set(21);
-    tx2.mutate().row("bob").col(balanceCol).set(11);
+    TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
+    tx2.gets("joe", BALANCE);
+    tx2.set("joe", BALANCE, "21");
+    tx2.set("bob", BALANCE, "11");
 
-    TestTransaction tx1 = new TestTransaction(env, "joe", balanceCol);
-    tx1.get().row("joe").col(balanceCol);
-    tx1.mutate().row("jill").col(balanceCol).set(61);
+    TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
+    tx1.gets("joe", BALANCE);
+    tx1.set("jill", BALANCE, "61");
 
     tx1.done();
     assertAAck(tx2);
 
     TestTransaction tx3 = new TestTransaction(env);
 
-    Assert.assertEquals(10, tx3.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(20, tx3.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(61, tx3.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("10", tx3.gets("bob", BALANCE));
+    Assert.assertEquals("20", tx3.gets("joe", BALANCE));
+    Assert.assertEquals("61", tx3.gets("jill", BALANCE));
 
     tx3.done();
   }
@@ -426,13 +403,13 @@ public class FluoIT extends ITBaseImpl {
 
     env.setAuthorizations(new Authorizations("A", "B", "C"));
 
-    Column balanceCol = typeLayer.bc().fam("account").qual("balance").vis("A|B");
+    Column balanceCol = new Column("account", "balance", "A|B");
 
     TestTransaction tx = new TestTransaction(env);
 
-    tx.mutate().row("bob").col(balanceCol).set(10);
-    tx.mutate().row("joe").col(balanceCol).set(20);
-    tx.mutate().row("jill").col(balanceCol).set(60);
+    tx.set("bob", balanceCol, "10");
+    tx.set("joe", balanceCol, "20");
+    tx.set("jill", balanceCol, "60");
 
     tx.done();
 
@@ -441,9 +418,9 @@ public class FluoIT extends ITBaseImpl {
     env2.setAuthorizations(new Authorizations("B"));
 
     TestTransaction tx2 = new TestTransaction(env2);
-    Assert.assertEquals(10, tx2.get().row("bob").col(balanceCol).toInteger(0));
-    Assert.assertEquals(20, tx2.get().row("joe").col(balanceCol).toInteger(0));
-    Assert.assertEquals(60, tx2.get().row("jill").col(balanceCol).toInteger(0));
+    Assert.assertEquals("10", tx2.gets("bob", balanceCol));
+    Assert.assertEquals("20", tx2.gets("joe", balanceCol));
+    Assert.assertEquals("60", tx2.gets("jill", balanceCol));
     tx2.done();
     env2.close();
 
@@ -451,9 +428,9 @@ public class FluoIT extends ITBaseImpl {
     env3.setAuthorizations(new Authorizations("C"));
 
     TestTransaction tx3 = new TestTransaction(env3);
-    Assert.assertNull(tx3.get().row("bob").col(balanceCol).toInteger());
-    Assert.assertNull(tx3.get().row("joe").col(balanceCol).toInteger());
-    Assert.assertNull(tx3.get().row("jill").col(balanceCol).toInteger());
+    Assert.assertNull(tx3.gets("bob", balanceCol));
+    Assert.assertNull(tx3.gets("joe", balanceCol));
+    Assert.assertNull(tx3.gets("jill", balanceCol));
     tx3.done();
     env3.close();
   }
@@ -464,17 +441,17 @@ public class FluoIT extends ITBaseImpl {
     // status
 
     TestTransaction tx = new TestTransaction(env);
-    tx.mutate().row("d00001").fam("data").qual("content")
-        .set("blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
-    tx.mutate().row("d00001").fam("outlink").qual("http://a.com").set("");
-    tx.mutate().row("d00001").fam("outlink").qual("http://b.com").set("");
-    tx.mutate().row("d00001").fam("outlink").qual("http://c.com").set("");
+    tx.set("d00001", new Column("data", "content"),
+        "blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
+    tx.set("d00001", new Column("outlink", "http://a.com"), "");
+    tx.set("d00001", new Column("outlink", "http://b.com"), "");
+    tx.set("d00001", new Column("outlink", "http://c.com"), "");
 
-    tx.mutate().row("d00002").fam("data").qual("content")
-        .set("blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
-    tx.mutate().row("d00002").fam("outlink").qual("http://d.com").set("");
-    tx.mutate().row("d00002").fam("outlink").qual("http://e.com").set("");
-    tx.mutate().row("d00002").fam("outlink").qual("http://c.com").set("");
+    tx.set("d00002", new Column("data", "content"),
+        "blah blah, blah http://d.com. Blah blah http://e.com.  Blah http://c.com");
+    tx.set("d00002", new Column("outlink", "http://d.com"), "");
+    tx.set("d00002", new Column("outlink", "http://e.com"), "");
+    tx.set("d00002", new Column("outlink", "http://c.com"), "");
 
     tx.done();
 
@@ -482,12 +459,12 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx3 = new TestTransaction(env);
 
-    tx3.mutate().row("d00001").fam("data").qual("content")
-        .set("blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
-    tx3.mutate().row("d00001").fam("outlink").qual("http://a.com").set("");
-    tx3.mutate().row("d00001").fam("outlink").qual("http://b.com").delete();
-    tx3.mutate().row("d00001").fam("outlink").qual("http://c.com").set("");
-    tx3.mutate().row("d00001").fam("outlink").qual("http://z.com").set("");
+    tx3.set("d00001", new Column("data", "content"),
+        "blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
+    tx3.set("d00001", new Column("outlink", "http://a.com"), "");
+    tx3.delete("d00001", new Column("outlink", "http://b.com"));
+    tx3.set("d00001", new Column("outlink", "http://c.com"), "");
+    tx3.set("d00001", new Column("outlink", "http://z.com"), "");
 
     tx3.done();
 
@@ -505,9 +482,9 @@ public class FluoIT extends ITBaseImpl {
     tx2.done();
 
     HashSet<Column> expected = new HashSet<>();
-    expected.add(typeLayer.bc().fam("outlink").qual("http://a.com").vis());
-    expected.add(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
-    expected.add(typeLayer.bc().fam("outlink").qual("http://c.com").vis());
+    expected.add(new Column("outlink", "http://a.com"));
+    expected.add(new Column("outlink", "http://b.com"));
+    expected.add(new Column("outlink", "http://c.com"));
 
     Assert.assertEquals(expected, columns);
 
@@ -522,8 +499,8 @@ public class FluoIT extends ITBaseImpl {
         columns.add(citer.next().getKey());
       }
     }
-    expected.add(typeLayer.bc().fam("outlink").qual("http://z.com").vis());
-    expected.remove(typeLayer.bc().fam("outlink").qual("http://b.com").vis());
+    expected.add(new Column("outlink", "http://z.com"));
+    expected.remove(new Column("outlink", "http://b.com"));
     Assert.assertEquals(expected, columns);
     tx4.done();
   }

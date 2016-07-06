@@ -21,17 +21,15 @@ import java.util.List;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
+import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.types.StringEncoder;
-import org.apache.fluo.api.types.TypeLayer;
-import org.apache.fluo.api.types.TypedLoader;
-import org.apache.fluo.api.types.TypedObserver;
-import org.apache.fluo.api.types.TypedSnapshot;
-import org.apache.fluo.api.types.TypedTransactionBase;
+import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,7 +75,7 @@ public class AppConfigIT extends ITBaseMini {
 
   }
 
-  public static class TestLoader extends TypedLoader {
+  private static class TestLoader implements Loader {
 
     private String row;
     private int data;
@@ -88,16 +86,15 @@ public class AppConfigIT extends ITBaseMini {
     }
 
     @Override
-    public void load(TypedTransactionBase tx, Context context) throws Exception {
+    public void load(TransactionBase tx, Context context) throws Exception {
       int limit = context.getAppConfiguration().getInt("myapp.sizeLimit");
       if (data < limit) {
-        tx.mutate().row(row).fam("data").qual("foo").set(data);
+        tx.set(row, new Column("data", "foo"), Integer.toString(data));
       }
     }
-
   }
 
-  public static class TestObserver extends TypedObserver {
+  public static class TestObserver extends AbstractObserver {
 
     private int limit;
 
@@ -112,13 +109,12 @@ public class AppConfigIT extends ITBaseMini {
     }
 
     @Override
-    public void process(TypedTransactionBase tx, Bytes row, Column col) {
-      int d = tx.get().row(row).col(col).toInteger();
+    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+      int d = Integer.parseInt(tx.gets(row.toString(), col));
       if (2 * d < limit) {
-        tx.mutate().row(row).fam("data").qual("bar").set(2 * d);
+        tx.set(row.toString(), new Column("data", "bar"), Integer.toString(2 * d));
       }
     }
-
   }
 
   @Test
@@ -130,21 +126,18 @@ public class AppConfigIT extends ITBaseMini {
       le.execute(new TestLoader("r3", 60000));
     }
 
-    TypeLayer tl = new TypeLayer(new StringEncoder());
-
-    try (TypedSnapshot snapshot = tl.wrap(client.newSnapshot())) {
-      Assert.assertEquals(3, snapshot.get().row("r1").fam("data").qual("foo").toInteger(0));
-      Assert.assertEquals(30000, snapshot.get().row("r2").fam("data").qual("foo").toInteger(0));
-      Assert.assertEquals(0, snapshot.get().row("r3").fam("data").qual("foo").toInteger(0));
+    try (Snapshot snapshot = client.newSnapshot()) {
+      Assert.assertEquals("3", snapshot.gets("r1", new Column("data", "foo")));
+      Assert.assertEquals("30000", snapshot.gets("r2", new Column("data", "foo")));
+      Assert.assertNull(snapshot.gets("r3", new Column("data", "foo")));
     }
 
     miniFluo.waitForObservers();
 
-    try (TypedSnapshot snapshot = tl.wrap(client.newSnapshot())) {
-      Assert.assertEquals(6, snapshot.get().row("r1").fam("data").qual("bar").toInteger(0));
-      Assert.assertEquals(0, snapshot.get().row("r2").fam("data").qual("bar").toInteger(0));
-      Assert.assertEquals(0, snapshot.get().row("r3").fam("data").qual("bar").toInteger(0));
+    try (Snapshot snapshot = client.newSnapshot()) {
+      Assert.assertEquals("6", snapshot.gets("r1", new Column("data", "bar")));
+      Assert.assertNull(snapshot.gets("r2", new Column("data", "bar")));
+      Assert.assertNull(snapshot.gets("r3", new Column("data", "bar")));
     }
-
   }
 }
