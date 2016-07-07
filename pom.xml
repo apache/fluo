@@ -6,62 +6,50 @@
     <artifactId>apache</artifactId>
     <version>18</version>
   </parent>
-  <groupId>io.fluo</groupId>
+  <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
-  <version>1</version>
+  <version>1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Fluo.io Parent POM</name>
+  <name>Apache Fluo Parent POM</name>
   <description>Parent pom to configure common project build resources for fluo.io projects</description>
-  <url>https://github.com/fluo-io/fluo-io-parent</url>
+  <url>https://github.com/apache/incubator-fluo/tree/fluo-parent</url>
   <organization>
-    <name>Fluo.io</name>
-    <url>http://fluo.io</url>
+    <name>The Apache Software Foundation</name>
+    <url>https://www.apache.org</url>
   </organization>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-      <distribution>repo</distribution>
     </license>
   </licenses>
-  <developers>
-    <developer>
-      <name>Fluo.io contributors</name>
-      <organization>Fluo.io</organization>
-    </developer>
-  </developers>
   <mailingLists>
     <mailingList>
       <name>Dev</name>
       <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
       <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
-      <post>fluo-dev@googlegroups.com</post>
+      <post>dev@fluo.incubator.apache.org</post>
       <archive>https://groups.google.com/forum/#!forum/fluo-dev</archive>
     </mailingList>
+    <mailingList>
+      <name>Commits</name>
+      <post>commits@fluo.incubator.apache.org</post>
+    </mailingList>
+    <mailingList>
+      <name>Notifications</name>
+      <post>notifications@fluo.incubator.apache.org</post>
+    </mailingList>
   </mailingLists>
-  <prerequisites />
   <scm>
-    <connection>scm:git:https://github.com/fluo-io/fluo-io-parent.git</connection>
-    <developerConnection>scm:git:git@github.com:fluo-io/fluo-io-parent.git</developerConnection>
+    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/fluo-io/fluo-io-parent</url>
+    <url>https://git-wip-us.apache.org/repos/asf?p=incubator-fluo.git</url>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/fluo-io/fluo-io-parent/issues</url>
+    <url>https://github.com/apache/incubator-fluo/issues</url>
   </issueManagement>
-  <distributionManagement>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>${sonatypeOssDistMgmtSnapshotsUrl}</url>
-    </snapshotRepository>
-  </distributionManagement>
   <properties>
     <checkstyle.config>io/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
@@ -77,22 +65,9 @@
     <maven.min-version>3.0.5</maven.min-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
+    <assembly.tarLongFileMode>posix</assembly.tarLongFileMode>
     <sourceReleaseAssemblyDescriptor>source-release-tar</sourceReleaseAssemblyDescriptor>
   </properties>
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-  </repositories>
   <build>
     <pluginManagement>
       <plugins>
@@ -166,30 +141,19 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.4.1</version>
-          <configuration>
-            <rules combine.children="append">
-              <requireMavenVersion>
-                <version>[${maven.min-version},)</version>
-                <message>This project requires Maven ${maven.min-version} or later</message>
-              </requireMavenVersion>
-            </rules>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.3</version>
-          <configuration>
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-            <arguments>-Pfluo-io-release ${extraReleaseArguments}</arguments>
-            <goals>clean deploy</goals>
-            <localCheckout>true</localCheckout>
-            <mavenExecutorId>forked-path</mavenExecutorId>
-            <pushChanges>false</pushChanges>
-            <useReleaseProfile>false</useReleaseProfile>
-          </configuration>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.6</version>
+            <configuration>
+              <archive>
+                <manifest>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                </manifest>
+                <manifestEntries>
+                  <Sealed>true</Sealed>
+                </manifestEntries>
+              </archive>
+            </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -199,20 +163,11 @@
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.11</version>
           <configuration>
             <excludes combine.children="append">
               <exclude>/.travis.yml</exclude>
             </excludes>
           </configuration>
-          <dependencies>
-            <!-- workaround for RAT-158 -->
-            <dependency>
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-core</artifactId>
-              <version>1.7</version>
-            </dependency>
-          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -255,18 +210,6 @@
             <configuration>
               <configLocation>${checkstyle.config}</configLocation>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-maven</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
@@ -322,37 +265,6 @@
     </plugins>
   </build>
   <profiles>
-    <profile>
-      <id>fluo-io-release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
     <profile>
       <!-- on by default, but disable with '-P !autoformat' or '-Dfluo-io.skipFormat' -->
       <id>autoformat</id>
