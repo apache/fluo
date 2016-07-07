@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -11,8 +27,10 @@
   <version>1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache Fluo Parent POM</name>
-  <description>Parent pom to configure common project build resources for fluo.io projects</description>
-  <url>https://github.com/apache/incubator-fluo/tree/fluo-parent</url>
+  <description>Parent pom to configure common project build resources for Apache Fluo projects</description>
+  <url>https://fluo.apache.org</url>
+  <!-- this is the year of inception at ASF -->
+  <inceptionYear>2016</inceptionYear>
   <organization>
     <name>The Apache Software Foundation</name>
     <url>https://www.apache.org</url>
@@ -20,28 +38,35 @@
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
     </license>
   </licenses>
   <mailingLists>
     <mailingList>
       <name>Dev</name>
-      <subscribe>fluo-dev+subscribe@googlegroups.com</subscribe>
-      <unsubscribe>fluo-dev+unsubscribe@googlegroups.com</unsubscribe>
+      <subscribe>dev-subscribe@fluo.incubator.apache.org</subscribe>
+      <unsubscribe>dev-unsubscribe@fluo.incubator.apache.org</unsubscribe>
       <post>dev@fluo.incubator.apache.org</post>
-      <archive>https://groups.google.com/forum/#!forum/fluo-dev</archive>
+      <archive>https://lists.apache.org/list.html?dev@fluo.apache.org</archive>
     </mailingList>
     <mailingList>
       <name>Commits</name>
-      <post>commits@fluo.incubator.apache.org</post>
+      <subscribe>commits-subscribe@fluo.incubator.apache.org</subscribe>
+      <unsubscribe>commits-unsubscribe@fluo.incubator.apache.org</unsubscribe>
+      <archive>https://lists.apache.org/list.html?commits@fluo.apache.org</archive>
     </mailingList>
     <mailingList>
       <name>Notifications</name>
-      <post>notifications@fluo.incubator.apache.org</post>
+      <subscribe>notifications-subscribe@fluo.incubator.apache.org</subscribe>
+      <unsubscribe>notifications-unsubscribe@fluo.incubator.apache.org</unsubscribe>
+      <archive>https://lists.apache.org/list.html?notifications@fluo.apache.org</archive>
     </mailingList>
   </mailingLists>
+  <prerequisites>
+    <maven>${maven.min-version}</maven>
+  </prerequisites>
   <scm>
-    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</connection>
+    <connection>scm:git:git://git.apache.org/incubator-fluo.git</connection>
     <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</developerConnection>
     <tag>HEAD</tag>
     <url>https://git-wip-us.apache.org/repos/asf?p=incubator-fluo.git</url>
@@ -51,6 +76,7 @@
     <url>https://github.com/apache/incubator-fluo/issues</url>
   </issueManagement>
   <properties>
+    <assembly.tarLongFileMode>posix</assembly.tarLongFileMode>
     <checkstyle.config>io/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
     <findbugs.effort>Max</findbugs.effort>
@@ -58,14 +84,10 @@
     <findbugs.maxRank>16</findbugs.maxRank>
     <findbugs.xmlOutput>true</findbugs.xmlOutput>
     <formatter.config>io/fluo/resources/eclipse-formatter.xml</formatter.config>
-    <gpg.useagent>true</gpg.useagent>
     <io.fluo.resources.version>1.0.1</io.fluo.resources.version>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
     <maven.min-version>3.0.5</maven.min-version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <assembly.tarLongFileMode>posix</assembly.tarLongFileMode>
     <sourceReleaseAssemblyDescriptor>source-release-tar</sourceReleaseAssemblyDescriptor>
   </properties>
   <build>
@@ -74,7 +96,7 @@
         <plugin>
           <groupId>com.github.ekryd.sortpom</groupId>
           <artifactId>sortpom-maven-plugin</artifactId>
-          <version>2.4.0</version>
+          <version>2.5.0</version>
           <configuration>
             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
             <createBackupFile>false</createBackupFile>
@@ -84,6 +106,14 @@
             <sortDependencies>scope,groupId,artifactId</sortDependencies>
             <sortProperties>true</sortProperties>
             <verifyFail>Stop</verifyFail>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.github.koraktor</groupId>
+          <artifactId>mavanagaiata</artifactId>
+          <version>0.7.2</version>
+          <configuration>
+            <skipNoGit>true</skipNoGit>
           </configuration>
         </plugin>
         <plugin>
@@ -115,7 +145,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>6.15</version>
+              <version>7.0</version>
             </dependency>
             <dependency>
               <groupId>io.fluo</groupId>
@@ -141,19 +171,52 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <version>2.6</version>
-            <configuration>
-              <archive>
-                <manifest>
-                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                </manifest>
-                <manifestEntries>
-                  <Sealed>true</Sealed>
-                </manifestEntries>
-              </archive>
-            </configuration>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <configuration>
+            <rules combine.children="append">
+              <requireJavaVersion>
+                <version>[${maven.compiler.target},)</version>
+              </requireJavaVersion>
+              <requireMavenVersion>
+                <version>[${maven.min-version},)</version>
+              </requireMavenVersion>
+            </rules>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <configuration>
+            <archive>
+              <manifestEntries>
+                <Sealed>true</Sealed>
+                <Implementation-Build>${mvngit.commit.id}</Implementation-Build>
+              </manifestEntries>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <quiet>true</quiet>
+            <javadocVersion>${maven.compiler.target}</javadocVersion>
+            <additionalparam>-Xdoclint:all,-Xdoclint:-missing</additionalparam>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <configuration>
+            <arguments>-P !autoformat,apache-release ${extraReleaseArguments}</arguments>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <goals>clean deploy</goals>
+            <localCheckout>true</localCheckout>
+            <mavenExecutorId>forked-path</mavenExecutorId>
+            <pushChanges>false</pushChanges>
+            <tagNameFormat>rel/@{project.artifactId}-@{project.version}</tagNameFormat>
+            <useReleaseProfile>false</useReleaseProfile>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -173,6 +236,12 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>3.0.3</version>
+        </plugin>
+        <!-- check for version updates with 'mvn versions:display-plugin-updates' -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.2</version>
         </plugin>
         <plugin>
           <groupId>org.gaul</groupId>
@@ -199,6 +268,19 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>com.github.koraktor</groupId>
+        <artifactId>mavanagaiata</artifactId>
+        <executions>
+          <execution>
+            <id>git-commit</id>
+            <goals>
+              <goal>commit</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <executions>
@@ -210,6 +292,18 @@
             <configuration>
               <configLocation>${checkstyle.config}</configLocation>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-rules</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
@@ -266,12 +360,13 @@
   </build>
   <profiles>
     <profile>
-      <!-- on by default, but disable with '-P !autoformat' or '-Dfluo-io.skipFormat' -->
+      <!-- on by default, but disable with '-P !autoformat' -->
       <id>autoformat</id>
       <activation>
-        <property>
-          <name>!fluo-io.skipFormat</name>
-        </property>
+        <file>
+          <!-- always active unless explicitly deactivated -->
+          <exists>pom.xml</exists>
+        </file>
       </activation>
       <build>
         <plugins>
@@ -425,6 +520,19 @@
                         <ignore />
                       </action>
                     </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>com.github.koraktor</groupId>
+                        <artifactId>mavanagaiata</artifactId>
+                        <versionRange>[0,)</versionRange>
+                        <goals>
+                          <goal>commit</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore />
+                      </action>
+                    </pluginExecution>
                   </pluginExecutions>
                 </lifecycleMappingMetadata>
               </configuration>
@@ -432,12 +540,6 @@
           </plugins>
         </pluginManagement>
       </build>
-    </profile>
-    <profile>
-      <id>jdk8</id>
-      <activation>
-        <jdk>[1.8,1.9)</jdk>
-      </activation>
     </profile>
   </profiles>
 </project>
