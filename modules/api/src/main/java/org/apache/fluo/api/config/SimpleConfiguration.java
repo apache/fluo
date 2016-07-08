@@ -161,6 +161,7 @@ public class SimpleConfiguration {
 
   public void save(File file) {
     PropertiesConfiguration pconf = new PropertiesConfiguration();
+    pconf.setDelimiterParsingDisabled(true);
     pconf.append(internalConfig);
     try {
       pconf.save(file);
@@ -172,6 +173,7 @@ public class SimpleConfiguration {
 
   public void save(OutputStream out) {
     PropertiesConfiguration pconf = new PropertiesConfiguration();
+    pconf.setDelimiterParsingDisabled(true);
     pconf.append(internalConfig);
     try {
       pconf.save(out);
