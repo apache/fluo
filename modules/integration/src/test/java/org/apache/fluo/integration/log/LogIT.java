@@ -126,7 +126,7 @@ public class LogIT extends ITBaseMini {
 
   @Test
   public void testCollisionLogging() throws Exception {
-    Logger logger = Logger.getLogger("org.apache.fluo.tx.collisions");
+    Logger logger = Logger.getLogger("fluo.tx.collisions");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender = new WriterAppender(new PatternLayout("%p, %m%n"), writer);
@@ -171,7 +171,7 @@ public class LogIT extends ITBaseMini {
 
   @Test
   public void testSummaryLogging() throws Exception {
-    Logger logger = Logger.getLogger("org.apache.fluo.tx.summary");
+    Logger logger = Logger.getLogger("fluo.tx.summary");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender = new WriterAppender(new PatternLayout("%p, %m%n"), writer);
@@ -220,7 +220,7 @@ public class LogIT extends ITBaseMini {
 
   @Test
   public void testAllLogging() throws Exception {
-    Logger logger = Logger.getLogger("org.apache.fluo.tx");
+    Logger logger = Logger.getLogger("fluo.tx");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender =
@@ -310,7 +310,7 @@ public class LogIT extends ITBaseMini {
     }
 
 
-    Logger logger = Logger.getLogger("org.apache.fluo.tx");
+    Logger logger = Logger.getLogger("fluo.tx");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender =
@@ -352,7 +352,7 @@ public class LogIT extends ITBaseMini {
 
   @Test
   public void testBinaryLogging() throws Exception {
-    Logger logger = Logger.getLogger("org.apache.fluo.tx");
+    Logger logger = Logger.getLogger("fluo.tx");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender =

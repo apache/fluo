@@ -22,15 +22,15 @@ Inorder to configure metrics reporters, look at the metrics section in an
 applications `fluo.properties` file.  This sections has a lot of commented out
 options for configuring reporters.  
 
-    org.apache.fluo.metrics.reporter.console.enable=false
-    org.apache.fluo.metrics.reporter.console.frequency=30
+    fluo.metrics.reporter.console.enable=false
+    fluo.metrics.reporter.console.frequency=30
 
 The frequency is in seconds for all reporters.
   
 Metrics reported by Fluo
 ------------------------
 
-All metrics reported by Fluo have the prefix `org.apache.fluo.<APP>.<PID>.` which is denoted by `<prefix>` in
+All metrics reported by Fluo have the prefix `fluo.<APP>.<PID>.` which is denoted by `<prefix>` in
 the table below.  In the prefix, `<APP>` represents the Fluo application name and `<PID>` is the 
 process ID of the Fluo oracle or worker that is reporting the metric.  When running in yarn, this 
 id is of the format `worker-<instance id>` or `oracle-<instance id>`.  When not running from yarn, 
