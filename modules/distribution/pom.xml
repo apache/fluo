@@ -52,14 +52,6 @@
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-mini</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>log4j-over-slf4j</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-    </dependency>
   </dependencies>
   <build>
     <plugins>

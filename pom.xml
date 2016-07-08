@@ -330,6 +330,29 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <executions>
+          <execution>
+            <id>analyze</id>
+            <goals>
+              <goal>analyze-only</goal>
+            </goals>
+            <configuration>
+              <failOnWarning>true</failOnWarning>
+              <ignoredDependencies>
+                <ignoredDependency>org.apache.hadoop:hadoop-common:jar:2.6.3</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-client:jar:2.6.3</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-mapreduce-client-core:jar:2.6.3</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-yarn-api:jar:2.6.3</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-yarn-client:jar:2.6.3</ignoredDependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <profiles>

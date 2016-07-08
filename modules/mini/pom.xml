@@ -31,10 +31,6 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-configuration</groupId>
-      <artifactId>commons-configuration</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.accumulo</groupId>
       <artifactId>accumulo-core</artifactId>
     </dependency>
@@ -48,10 +44,6 @@
           <artifactId>hadoop-minicluster</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.fluo</groupId>
-      <artifactId>fluo-accumulo</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
