@@ -42,23 +42,23 @@ public class FluoFactory {
 
   private static final String FLUO_IMPL_PREFIX = FLUO_PREFIX + ".impl";
   private static final String CLIENT_CLASS_PROP = FLUO_IMPL_PREFIX + ".client.class";
-  private static final String CLIENT_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoClientImpl";
+  private static final String CLIENT_CLASS_DEFAULT = "org.apache.fluo.core.client.FluoClientImpl";
   private static final String ADMIN_CLASS_PROP = FLUO_IMPL_PREFIX + ".admin.class";
-  private static final String ADMIN_CLASS_DEFAULT = FLUO_PREFIX + ".core.client.FluoAdminImpl";
+  private static final String ADMIN_CLASS_DEFAULT = "org.apache.fluo.core.client.FluoAdminImpl";
   private static final String WORKER_CLASS_PROP = FLUO_IMPL_PREFIX + ".worker.class";
-  private static final String WORKER_CLASS_DEFAULT = FLUO_PREFIX + ".core.worker.FluoWorkerImpl";
+  private static final String WORKER_CLASS_DEFAULT = "org.apache.fluo.core.worker.FluoWorkerImpl";
   private static final String ORACLE_CLASS_PROP = FLUO_IMPL_PREFIX + ".oracle.class";
-  private static final String ORACLE_CLASS_DEFAULT = FLUO_PREFIX + ".core.oracle.FluoOracleImpl";
+  private static final String ORACLE_CLASS_DEFAULT = "org.apache.fluo.core.oracle.FluoOracleImpl";
   private static final String MINI_CLASS_PROP = FLUO_IMPL_PREFIX + ".mini.class";
-  private static final String MINI_CLASS_DEFAULT = FLUO_PREFIX + ".mini.MiniFluoImpl";
+  private static final String MINI_CLASS_DEFAULT = "org.apache.fluo.mini.MiniFluoImpl";
 
   /**
    * Creates a {@link FluoClient} for reading and writing data to Fluo. {@link FluoClient#close()}
    * should be called when you are finished using it. Configuration (see {@link FluoConfiguration})
    * should contain properties with client.* prefix. Please review all client.* properties but many
    * have a default. At a minimum, configuration should contain the following properties that have
-   * no default: org.apache.fluo.client.accumulo.user, org.apache.fluo.client.accumulo.password,
-   * org.apache.fluo.client.accumulo.instance
+   * no default: fluo.client.accumulo.user, fluo.client.accumulo.password,
+   * fluo.client.accumulo.instance
    */
   public static FluoClient newClient(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, CLIENT_CLASS_PROP, CLIENT_CLASS_DEFAULT);
@@ -68,9 +68,9 @@ public class FluoFactory {
    * Creates a {@link FluoAdmin} client for administering Fluo. Configuration (see
    * {@link FluoConfiguration}) should contain properties with client.* and admin.* prefix. Please
    * review all properties but many have a default. At a minimum, configuration should contain the
-   * following properties that have no default: org.apache.fluo.client.accumulo.user,
-   * org.apache.fluo.client.accumulo.password, org.apache.fluo.client.accumulo.instance,
-   * org.apache.fluo.admin.accumulo.table, org.apache.fluo.admin.accumulo.classpath
+   * following properties that have no default: fluo.client.accumulo.user,
+   * fluo.client.accumulo.password, fluo.client.accumulo.instance, fluo.admin.accumulo.table,
+   * fluo.admin.accumulo.classpath
    */
   public static FluoAdmin newAdmin(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, ADMIN_CLASS_PROP, ADMIN_CLASS_DEFAULT);
@@ -78,12 +78,10 @@ public class FluoFactory {
 
   /**
    * Creates a {@link MiniFluo} using the provided configuration. Configuration (see
-   * {@link FluoConfiguration}) should either contain the property
-   * org.apache.fluo.mini.start.accumulo (set to true) to indicate that MiniFluo should start its
-   * own Accumulo instance or it should contain the following properties if it is connecting to an
-   * existing instance: org.apache.fluo.client.accumulo.user,
-   * org.apache.fluo.client.accumulo.password, org.apache.fluo.client.accumulo.instance,
-   * org.apache.fluo.admin.accumulo.table
+   * {@link FluoConfiguration}) should either contain the property fluo.mini.start.accumulo (set to
+   * true) to indicate that MiniFluo should start its own Accumulo instance or it should contain the
+   * following properties if it is connecting to an existing instance: fluo.client.accumulo.user,
+   * fluo.client.accumulo.password, fluo.client.accumulo.instance, fluo.admin.accumulo.table
    */
   public static MiniFluo newMiniFluo(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, MINI_CLASS_PROP, MINI_CLASS_DEFAULT);

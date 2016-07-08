@@ -108,7 +108,7 @@ new)
   mkdir -p $APP_CONF_DIR
   mkdir -p $APP_LIB_DIR
   copy_config fluo.properties
-  $SED "s/org.apache.fluo.client.application.name=/org.apache.fluo.client.application.name=$APP/g" $APP_CONF_DIR/fluo.properties
+  $SED "s/fluo.client.application.name=/fluo.client.application.name=$APP/g" $APP_CONF_DIR/fluo.properties
   copy_config logback.xml
   ;;
 init)

@@ -64,7 +64,7 @@ public interface FluoAdmin extends AutoCloseable {
   /**
    * Exception that is thrown if Fluo application was already initialized. An application is already
    * initialized if a directory with same name as application exists at the chroot directory set by
-   * the property org.apache.fluo.client.zookeeper.connect. If this directory can be cleared, set
+   * the property fluo.client.zookeeper.connect. If this directory can be cleared, set
    * {@link InitOpts#setClearTable(boolean)} to true
    *
    * @since 1.0.0
@@ -83,9 +83,9 @@ public interface FluoAdmin extends AutoCloseable {
   }
 
   /**
-   * Exception that is thrown if Accumulo table (set by org.apache.fluo.admin.accumulo.table) exists
-   * during initialization. If this table can be cleared, set
-   * {@link InitOpts#setClearZookeeper(boolean)} to true
+   * Exception that is thrown if Accumulo table (set by fluo.admin.accumulo.table) exists during
+   * initialization. If this table can be cleared, set {@link InitOpts#setClearZookeeper(boolean)}
+   * to true
    *
    * @since 1.0.0
    */

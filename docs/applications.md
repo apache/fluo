@@ -36,7 +36,7 @@ to connect to your Fluo instance.
 
 If you have access to the [fluo.properties] file that was used to configure your Fluo instance, you can use
 it to build a [FluoConfiguration] object with all necessary properties which are all properties with the 
-`org.apache.fluo.client.*` prefix in [fluo.properties]:
+`fluo.client.*` prefix in [fluo.properties]:
 
 ```java
 FluoConfiguration config = new FluoConfiguration(new File("fluo.properties"));
@@ -115,13 +115,13 @@ debug Fluo applications, low-level logging of transactions can be turned on by
 setting the following loggers to TRACE:
 
 
-| Logger                  | Level | Information                                                                                        |
-|-------------------------|-------|----------------------------------------------------------------------------------------------------|
-| `org.apache.fluo.tx`            | TRACE | Provides detailed information about what transactions read and wrote                               |
-| `org.apache.fluo.tx.summary`    | TRACE | Provides a one line summary about each transaction executed                                        |
-| `org.apache.fluo.tx.collisions` | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
+| Logger               | Level | Information                                                                                        |
+|----------------------|-------|----------------------------------------------------------------------------------------------------|
+| `fluo.tx`            | TRACE | Provides detailed information about what transactions read and wrote                               |
+| `fluo.tx.summary`    | TRACE | Provides a one line summary about each transaction executed                                        |
+| `fluo.tx.collisions` | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
 
-Below is an example log after setting `org.apache.fluo.tx` to TRACE.   The number
+Below is an example log after setting `fluo.tx` to TRACE.   The number
 following `txid: ` is the transactions start timestamp from the Oracle.  
 
 ```
@@ -151,7 +151,7 @@ The log above traces the following sequence of events.
  * T2 sets row `4333` and `column `stat count` to `2`
  * T2 commits successfully with a commit timestamp of `6`
 
-Below is an example log after only setting `org.apache.fluo.tx.collisions` to TRACE.
+Below is an example log after only setting `fluo.tx.collisions` to TRACE.
 This setting will only log trace information when a collision occurs.  Unlike
 the previous example, what the transaction read and wrote is not logged.  This
 shows that a transaction with a start timestamp of `106` and a class name of
