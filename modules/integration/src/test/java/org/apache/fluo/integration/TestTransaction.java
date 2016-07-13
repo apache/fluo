@@ -31,14 +31,13 @@ import org.apache.fluo.accumulo.iterators.NotificationIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ScannerConfiguration;
+import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
@@ -205,8 +204,8 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public RowIterator get(ScannerConfiguration config) {
-    return tx.get(config);
+  public ScannerBuilder scanner() {
+    return tx.scanner();
   }
 
   @Override

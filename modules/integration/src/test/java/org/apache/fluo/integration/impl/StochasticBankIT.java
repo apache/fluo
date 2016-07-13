@@ -34,12 +34,9 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.conf.Property;
 import org.apache.accumulo.core.util.Stat;
 import org.apache.fluo.accumulo.format.FluoFormatter;
-import org.apache.fluo.api.config.ScannerConfiguration;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
@@ -191,18 +188,11 @@ public class StochasticBankIT extends ITBaseImpl {
         long t1 = System.currentTimeMillis();
 
         TestTransaction tx = new TestTransaction(env);
-        RowIterator iter = tx.get(new ScannerConfiguration());
-
         Stat stat = new Stat();
 
-        while (iter.hasNext()) {
-          Entry<Bytes, ColumnIterator> colIter = iter.next();
-          Entry<Column, Bytes> column = colIter.getValue().next();
-
-          int amt = Integer.parseInt(column.getValue().toString());
-
+        for (RowColumnValue rcv : tx.scanner().build()) {
+          int amt = Integer.parseInt(rcv.getValue().toString());
           stat.addStat(amt);
-
         }
 
         long t2 = System.currentTimeMillis();
@@ -273,12 +263,8 @@ public class StochasticBankIT extends ITBaseImpl {
   private static HashMap<String, String> toMap(TestTransaction tx) throws Exception {
     HashMap<String, String> map = new HashMap<>();
 
-    RowIterator iter = tx.get(new ScannerConfiguration());
-    while (iter.hasNext()) {
-      Entry<Bytes, ColumnIterator> colIter = iter.next();
-      Entry<Column, Bytes> column = colIter.getValue().next();
-
-      map.put(colIter.getKey().toString(), column.getValue().toString());
+    for (RowColumnValue rcv : tx.scanner().build()) {
+      map.put(rcv.getRow().toString(), rcv.getValue().toString());
     }
 
     return map;

@@ -17,7 +17,8 @@ package org.apache.fluo.cluster.runner;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Collection;
+import java.util.HashSet;
 
 import javax.inject.Provider;
 
@@ -35,14 +36,13 @@ import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.cluster.util.FluoYarnConfig;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
@@ -68,9 +68,8 @@ public abstract class AppRunner {
     this.scriptName = scriptName;
   }
 
-  public static ScannerConfiguration buildScanConfig(ScanOptions options) {
-    ScannerConfiguration scanConfig = new ScannerConfiguration();
-
+  public static Span getSpan(ScanOptions options) {
+    Span span = new Span();
     if ((options.getExactRow() != null)
         && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
             .getRowPrefix() != null))) {
@@ -87,34 +86,42 @@ public abstract class AppRunner {
 
     // configure span of scanner
     if (options.getExactRow() != null) {
-      scanConfig.setSpan(Span.exact(options.getExactRow()));
+      span = Span.exact(options.getExactRow());
     } else if (options.getRowPrefix() != null) {
-      scanConfig.setSpan(Span.prefix(options.getRowPrefix()));
+      span = Span.prefix(options.getRowPrefix());
     } else {
       if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
-        scanConfig.setSpan(new Span(options.getStartRow(), true, options.getEndRow(), true));
+        span = new Span(options.getStartRow(), true, options.getEndRow(), true);
       } else if (options.getStartRow() != null) {
-        scanConfig.setSpan(new Span(Bytes.of(options.getStartRow()), true, Bytes.EMPTY, true));
+        span = new Span(Bytes.of(options.getStartRow()), true, Bytes.EMPTY, true);
       } else if (options.getEndRow() != null) {
-        scanConfig.setSpan(new Span(Bytes.EMPTY, true, Bytes.of(options.getEndRow()), true));
+        span = new Span(Bytes.EMPTY, true, Bytes.of(options.getEndRow()), true);
       }
     }
+
+    return span;
+  }
+
+  public static Collection<Column> getColumns(ScanOptions options) {
+    Collection<Column> columns = new HashSet<>();
 
     // configure columns of scanner
     for (String column : options.getColumns()) {
       String[] colFields = column.split(":");
       if (colFields.length == 1) {
-        scanConfig.fetchColumnFamily(Bytes.of(colFields[0]));
+        columns.add(new Column(colFields[0]));
       } else if (colFields.length == 2) {
-        scanConfig.fetchColumn(Bytes.of(colFields[0]), Bytes.of(colFields[1]));
+        columns.add(new Column(colFields[0], colFields[1]));
       } else {
         throw new IllegalArgumentException("Failed to scan!  Column '" + column
             + "' has too many fields (indicated by ':')");
       }
     }
 
-    return scanConfig;
+    return columns;
   }
+
+
 
   public long scan(FluoConfiguration config, String[] args) {
     ScanOptions options = new ScanOptions();
@@ -148,45 +155,45 @@ public abstract class AppRunner {
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
 
-        ScannerConfiguration scanConfig = null;
+        Span span = null;
+        Collection<Column> columns = null;
         try {
-          scanConfig = buildScanConfig(options);
+          span = getSpan(options);
+          columns = getColumns(options);
         } catch (IllegalArgumentException e) {
           System.err.println(e.getMessage());
           System.exit(-1);
         }
 
-        RowIterator iter = s.get(scanConfig);
-
-        if (!iter.hasNext()) {
-          System.out.println("\nNo data found\n");
-        }
+        CellScanner cellScanner = s.scanner().over(span).fetch(columns).build();
 
         StringBuilder sb = new StringBuilder();
-        while (iter.hasNext() && !System.out.checkError()) {
-          Map.Entry<Bytes, ColumnIterator> rowEntry = iter.next();
-          ColumnIterator citer = rowEntry.getValue();
-          while (citer.hasNext() && !System.out.checkError()) {
-            Map.Entry<Column, Bytes> colEntry = citer.next();
-            if (options.hexEncNonAscii) {
-              sb.setLength(0);
-              Hex.encNonAscii(sb, rowEntry.getKey());
-              sb.append(" ");
-              Hex.encNonAscii(sb, colEntry.getKey(), " ");
-              sb.append("\t");
-              Hex.encNonAscii(sb, colEntry.getValue());
-              System.out.println(sb.toString());
-            } else {
-              sb.setLength(0);
-              sb.append(rowEntry.getKey());
-              sb.append(" ");
-              sb.append(colEntry.getKey());
-              sb.append("\t");
-              sb.append(colEntry.getValue());
-              System.out.println(sb.toString());
-            }
-            entriesFound++;
+        for (RowColumnValue rcv : cellScanner) {
+          if (options.hexEncNonAscii) {
+            sb.setLength(0);
+            Hex.encNonAscii(sb, rcv.getRow());
+            sb.append(" ");
+            Hex.encNonAscii(sb, rcv.getColumn(), " ");
+            sb.append("\t");
+            Hex.encNonAscii(sb, rcv.getValue());
+            System.out.println(sb.toString());
+          } else {
+            sb.setLength(0);
+            sb.append(rcv.getsRow());
+            sb.append(" ");
+            sb.append(rcv.getColumn());
+            sb.append("\t");
+            sb.append(rcv.getsValue());
+            System.out.println(sb.toString());
           }
+          entriesFound++;
+          if (System.out.checkError()) {
+            break;
+          }
+        }
+
+        if (entriesFound == 0) {
+          System.out.println("\nNo data found\n");
         }
       } catch (FluoException e) {
         System.out.println("Scan failed - " + e.getMessage());
@@ -201,9 +208,11 @@ public abstract class AppRunner {
 
     Connector conn = AccumuloUtil.getConnector(sConfig);
 
-    ScannerConfiguration scanConfig = null;
+    Span span = null;
+    Collection<Column> columns = null;
     try {
-      scanConfig = buildScanConfig(options);
+      span = getSpan(options);
+      columns = getColumns(options);
     } catch (IllegalArgumentException e) {
       System.err.println(e.getMessage());
       System.exit(-1);
@@ -213,8 +222,8 @@ public abstract class AppRunner {
 
     try {
       Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
-      scanner.setRange(SpanUtil.toRange(scanConfig.getSpan()));
-      for (Column col : scanConfig.getColumns()) {
+      scanner.setRange(SpanUtil.toRange(span));
+      for (Column col : columns) {
         if (col.isQualifierSet()) {
           scanner
               .fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));

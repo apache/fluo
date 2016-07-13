@@ -19,11 +19,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.fluo.api.config.ScannerConfiguration;
+import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
-import org.apache.fluo.api.iterator.RowIterator;
+import org.apache.fluo.api.data.Span;
 
 /**
  * Allows users to read from a Fluo table at a certain point in time
@@ -57,9 +57,44 @@ public interface SnapshotBase {
   Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns);
 
   /**
-   * Retrieves a {@link RowIterator} with the given {@link ScannerConfiguration}
+   * This method is the starting point for constructing a scanner. Scanners can be constructed over
+   * a {@link Span} and/or with a subset of columns. Below is simple example of building a scanner.
+   * 
+   * <pre>
+   * {@code
+   *   Transaction tx = ...;
+   *   Span span = Span.exact("row4");
+   *   Column col1 = new Column("fam1","qual1");
+   *   Column col2 = new Column("fam1","qual2");
+   * 
+   *   //create a scanner over row4 fetching columns fam1:qual1 and fam1:qual2
+   *   CellScanner cs = tx.scanner().over(span).fetch(col1,col2).build();
+   *   for(RowColumnValue rcv : cs) {
+   *     //do stuff with rcv
+   *   }
+   * }
+   * </pre>
+   *
+   * <p>
+   * The following example shows how to build a row scanner.
+   *
+   * <pre>
+   * {
+   *   &#064;code
+   *   RowScanner rs = tx.scanner().over(span).fetch(col1, col2).byRow().build();
+   *   for (ColumnScanner colScanner : rs) {
+   *     Bytes row = colScanner.getRow();
+   *     for (ColumnValue cv : colScanner) {
+   *       // do stuff with the columns and values in the row
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   * @return A scanner builder.
    */
-  RowIterator get(ScannerConfiguration config);
+
+  ScannerBuilder scanner();
 
   /**
    * Wrapper for {@link #get(Collection)} that uses Strings. All strings are encoded and decoded

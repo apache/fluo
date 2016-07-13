@@ -18,17 +18,15 @@ package org.apache.fluo.integration.impl;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.Iterables;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.ObserverConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -71,17 +69,8 @@ public class WorkerIT extends ITBaseMini {
       String degree = tx.gets(row, DEGREE);
 
       // calculate new degree
-      int count = 0;
-      RowIterator riter =
-          tx.get(new ScannerConfiguration().setSpan(Span.exact(row, new Column("link"))));
-      while (riter.hasNext()) {
-        ColumnIterator citer = riter.next().getValue();
-        while (citer.hasNext()) {
-          citer.next();
-          count++;
-        }
-      }
-      String degree2 = "" + count;
+      String degree2 =
+          "" + Iterables.size(tx.scanner().over(Span.exact(row, new Column("link"))).build());
 
       if (degree == null || !degree.equals(degree2)) {
         tx.set(row, DEGREE, degree2);
