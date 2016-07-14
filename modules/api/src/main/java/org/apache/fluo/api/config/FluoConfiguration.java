@@ -39,7 +39,7 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.class);
 
-  public static final String FLUO_PREFIX = "org.apache.fluo";
+  public static final String FLUO_PREFIX = "fluo";
 
   // Client properties
   private static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
@@ -527,8 +527,8 @@ public class FluoConfiguration extends SimpleConfiguration {
       valid &= verifyStringPropNotSet(CLIENT_ZOOKEEPER_CONNECT_PROP);
       if (valid == false) {
         log.error("Client properties should not be set in your configuration if MiniFluo is "
-            + "configured to start its own accumulo (indicated by "
-            + "org.apache.fluo.mini.start.accumulo being set to true)");
+            + "configured to start its own accumulo (indicated by fluo.mini.start.accumulo being "
+            + "set to true)");
       }
     } else {
       valid &= hasRequiredClientProps();

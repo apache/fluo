@@ -88,9 +88,8 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void initialize(InitOpts opts) throws AlreadyInitializedException, TableExistsException {
     Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers())
-        .equals("/"),
-        "The Zookeeper connection string (set by 'org.apache.fluo.client.zookeeper.connect') "
-            + " must have a chroot suffix.");
+        .equals("/"), "The Zookeeper connection string (set by 'fluo.client.zookeeper.connect') "
+        + " must have a chroot suffix.");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException("Fluo application already initialized at "

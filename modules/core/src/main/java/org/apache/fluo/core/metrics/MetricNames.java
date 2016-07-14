@@ -44,10 +44,10 @@ public class MetricNames {
         + appName);
     Preconditions.checkArgument(!hostId.contains("."), "Host ID should not contain '.': " + hostId);
 
-    // All metrics start with prefix "org.apache.fluo.APP.HOST."
+    // All metrics start with prefix "fluo.APP.HOST."
     final String metricsPrefix = FluoConfiguration.FLUO_PREFIX + "." + appName + "." + hostId + ".";
 
-    // Transaction metrics: org.apache.fluo.APP.HOST.tx.METRIC.OBSERVER
+    // Transaction metrics: fluo.APP.HOST.tx.METRIC.OBSERVER
     final String txPrefix = metricsPrefix + "tx.";
     txLockWaitTime = txPrefix + "lock_wait_time.";
     txExecTime = txPrefix + "execution_time.";
@@ -61,10 +61,10 @@ public class MetricNames {
 
     txCommitting = metricsPrefix + "transactor.committing";
 
-    // Worker metrics: org.apache.fluo.APP.HOST.worker.METRIC
+    // Worker metrics: fluo.APP.HOST.worker.METRIC
     notificationsQueued = metricsPrefix + "worker.notifications_queued";
 
-    // Oracle metrics: org.apache.fluo.APP.HOST.oracle.METRIC
+    // Oracle metrics: fluo.APP.HOST.oracle.METRIC
     final String oraclePrefix = metricsPrefix + "oracle.";
     oracleResponseTime = oraclePrefix + "response_time";
     oracleClientStamps = oraclePrefix + "client_stamps";

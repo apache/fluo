@@ -31,35 +31,44 @@ in `modules/distribution/target`:
 Install Fluo
 ------------
 
-When you have a distribution tarball built for your environment, follow these steps
-to install Fluo.
+After you obtain a Fluo distribution tarball, follow these steps to install Fluo.
 
-First, choose a directory with plenty of space and untar the distribution:
+1. Choose a directory with plenty of space and untar the distribution:
 
-    tar -xvzf fluo-1.0.0-beta-2-bin.tar.gz
+        tar -xvzf fluo-1.0.0-beta-2-bin.tar.gz
 
-Verify that your distribution has the same versions of Hadoop & Accumulo as your environment:
-
-    cd fluo-1.0.0-beta-2
-    ls lib/hadoop-* lib/accumulo-*
-
-Next, copy the example configuration to the base of your configuration directory to create
+2. Copy the example configuration to the base of your configuration directory to create
 the default configuration for your Fluo install:
 
-    cp conf/examples/* conf/
+        cp conf/examples/* conf/
 
-The default configuration will be used as the base configuration for each new application.
-Therefore, you should modify [fluo.properties] for your environment.  However, you should not
-configure any application settings (like observers). 
+    The default configuration will be used as the base configuration for each new application.
 
-NOTE - All properties that have a default are set with it.  Uncomment a property if you want 
+3. Modify [fluo.properties] for your environment.  However, you should not configure any 
+application settings (like observers). 
+
+    NOTE - All properties that have a default are set with it.  Uncomment a property if you want 
 to use a value different than the default.  Properties that are unset and uncommented must be
 set by the user.
 
-To run, Fluo requires the Hadoop, Accumulo, and Zookeeper jars for the versions
-running on the cluster where Fluo will run.  In order to configure this a
-classpath must be constructed with these jars for Fluo.  This can be done by
-editing `conf/fluo-env.sh`, which also contains further documentation.  
+4. Fluo needs build its classpath using jars from the version of Hadoop, Accumulo, and Zookeeper
+that you are using. Choose one of the two ways below to make these jars available to Fluo:
+
+    * Set `HADOOP_PREFIX`, `ACCUMULO_HOME`, and `ZOOKEEPER_HOME` in your environment or configure
+    these variables in [fluo-env.sh].  Fluo will look in these locations for jars.
+    * Run `./lib/fetch.sh ahz` to download Hadoop, Accumulo, and Zookeeper jars to `lib/ahz` and
+    configure [fluo-env.sh] to look in this directory. By default, this command will download the
+    default versions set in [lib/ahz/pom.xml]. If you are not using the default versions, you can
+    override them:
+    
+            ./lib/fetch.sh ahz -Daccumulo.version=1.7.1 -Dhadoop.version=2.6.3 -Dzookeeper.version=3.4.8
+
+5. Fluo needs more dependencies than what is available from Hadoop, Accumulo, and Zookeeper.
+These extra dependencies need to be downloaded to `lib/` using the command below:
+
+        ./lib/fetch.sh extra
+
+You are now ready to use the Fluo command script.
 
 Fluo command script
 -------------------
@@ -210,3 +219,5 @@ distribution on every node in your cluster.
 [release]: https://github.com/apache/incubator-fluo/releases
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
+[fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh
+[lib/ahz/pom.xml]: ../modules/distribution/src/main/lib/ahz/pom.xml

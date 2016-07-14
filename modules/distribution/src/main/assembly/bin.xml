@@ -26,8 +26,7 @@
       <useProjectArtifact>true</useProjectArtifact>
       <scope>runtime</scope>
       <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <useTransitiveFiltering>true</useTransitiveFiltering>
+      <useTransitiveDependencies>false</useTransitiveDependencies>
       <includes>
         <include>org.apache.fluo:fluo-api</include>
         <include>org.apache.fluo:fluo-accumulo</include>
@@ -35,57 +34,6 @@
         <include>org.apache.fluo:fluo-mini</include>
         <include>org.apache.fluo:fluo-mapreduce</include>
         <include>org.apache.fluo:fluo-cluster</include>
-        <include>org.slf4j:slf4j-api</include>
-        <include>org.apache.curator:curator-framework</include>
-        <include>org.apache.curator:curator-recipes</include>
-      </includes>
-      <excludes>
-        <exclude>org.apache.accumulo:*</exclude>
-        <exclude>org.apache.thrift:*</exclude>
-        <exclude>org.apache.hadoop:*</exclude>
-        <exclude>org.apache.zookeeper:zookeeper</exclude>
-        <exclude>*:slf4j-log4j12</exclude>
-        <exclude>*:log4j</exclude>
-        <exclude>*:logback-classic</exclude>
-        <exclude>*:logback-core</exclude>
-        <exclude>*:log4j-over-slf4j</exclude>
-      </excludes>
-    </dependencySet>
-    <dependencySet>
-        <!-- this is in separate section because it was transitively filtered -->
-        <outputDirectory>lib</outputDirectory>
-        <directoryMode>0755</directoryMode>
-        <fileMode>0644</fileMode>
-        <!-- was having a problem with version 2.2.2 from Accumulo-->
-        <includes>
-          <include>com.google.code.gson:gson</include>
-        </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib/log4j</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>true</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <includes>
-        <include>*:slf4j-log4j12</include>
-        <include>*:log4j</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>lib/logback</outputDirectory>
-      <directoryMode>0755</directoryMode>
-      <fileMode>0644</fileMode>
-      <useProjectArtifact>true</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-      <includes>
-        <include>*:logback-classic</include>
-        <include>*:logback-core</include>
-        <include>*:log4j-over-slf4j</include>
       </includes>
     </dependencySet>
   </dependencySets>
@@ -95,9 +43,9 @@
       <directory>${project.basedir}/../../</directory>
       <outputDirectory>/</outputDirectory>
       <includes>
+        <include>DISCLAIMER</include>
         <include>LICENSE</include>
-        <include>AUTHORS</include>
-        <include>CHANGES</include>
+        <include>NOTICE</include>
         <include>README.md</include>
       </includes>
     </fileSet>
@@ -117,10 +65,18 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>src/main/deps</directory>
-      <outputDirectory>lib/deps</outputDirectory>
+      <directory>src/main/lib</directory>
+      <outputDirectory>lib</outputDirectory>
+      <fileMode>755</fileMode>
       <includes>
-        <include>*</include>
+        <include>fetch.sh</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/lib/ahz</directory>
+      <outputDirectory>lib/ahz</outputDirectory>
+      <includes>
+        <include>pom.xml</include>
       </includes>
     </fileSet>
     <fileSet>
