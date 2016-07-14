@@ -215,8 +215,8 @@ distribution on every node in your cluster.
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/
-[Java]: https://www.oracle.com/java/index.html
-[release]: https://github.com/apache/incubator-fluo/releases
+[Java]: http://openjdk.java.net/
+[release]: https://fluo.apache.org/download/
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh

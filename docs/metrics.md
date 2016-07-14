@@ -11,8 +11,8 @@ different tools, below are some tools that have been used with Fluo.
    these tools for you and configure Fluo to send to them.
 
 2. JMX - Fluo can be configured to reports metrics via JMX which can be viewed
-   in jconsole or jvisualvm.  
-   
+   in jconsole or jvisualvm.
+ 
 3. CSV - Fluo can be configured to output metrics as CSV to a specified directory.
 
 Configuring Reporters
@@ -20,13 +20,13 @@ Configuring Reporters
 
 Inorder to configure metrics reporters, look at the metrics section in an
 applications `fluo.properties` file.  This sections has a lot of commented out
-options for configuring reporters.  
+options for configuring reporters.
 
     fluo.metrics.reporter.console.enable=false
     fluo.metrics.reporter.console.frequency=30
 
 The frequency is in seconds for all reporters.
-  
+
 Metrics reported by Fluo
 ------------------------
 
@@ -39,7 +39,7 @@ this id consist of a hostname and a base36 long that is unique across all fluo p
 Some of the metrics reported have the class name as the suffix.  This classname
 is the observer or load task that executed the transactions.   This should
 allow things like transaction collisions to be tracked per class.  In the
-table below this is denoted with `<cn>`.  
+table below this is denoted with `<cn>`.
 
 |Metric                                 | Type           | Description                         |
 |---------------------------------------|----------------|-------------------------------------|
