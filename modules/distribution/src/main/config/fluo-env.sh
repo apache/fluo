@@ -15,7 +15,6 @@
 # export statement to use the correct directory.  Remove the test
 # statement to override any previously set environment.
 
-
 test -z "$HADOOP_PREFIX" && export HADOOP_PREFIX=/path/to/hadoop
 
 # The classpath for Fluo must be defined.  The Fluo tarball does not include
@@ -66,14 +65,15 @@ setupClasspathFromSystem()
 
 
 # This function obtains Accumulo, Hadoop, and Zookeeper jars from
-# $FLUO_HOME/lib/deps/. Before using this function, go to that directoy and
-# follow the readme to download the dependencies.
+# $FLUO_HOME/lib/ahz/. Before using this function, make sure you run
+# `./lib/fetch.sh ahz` to download dependencies to this directory.
 setupClasspathFromLib(){
-  CLASSPATH="$FLUO_HOME/lib/*:$FLUO_HOME/lib/logback/*:$FLUO_HOME/lib/deps/*"
+  CLASSPATH="$FLUO_HOME/lib/*:$FLUO_HOME/lib/logback/*:$FLUO_HOME/lib/ahz/*"
 }
 
 # Call one of the following functions to setup the classpath or write your own
-# bash code to setup the classpath for Fluo.
+# bash code to setup the classpath for Fluo. You must also run the command
+# `./lib/fetch.sh extra` to download extra Fluo dependencies before using Fluo.
 
 setupClasspathFromSystem
 #setupClasspathFromLib
