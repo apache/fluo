@@ -22,7 +22,7 @@
   </parent>
   <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
-  <version>1.0.0-beta-3-SNAPSHOT</version>
+  <version>1.0.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Fluo Parent</name>
   <description>An implementation of Percolator for Apache Accumulo</description>
