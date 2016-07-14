@@ -12,9 +12,9 @@ Before you install Fluo, you will need the following installed and running on
 your local machine or cluster:
 
 * [Accumulo][Accumulo] (version 1.6+)
-* [Hadoop][Hadoop] (version 2.2+)
+* [Hadoop][Hadoop] (version 2.6+)
 * [Zookeeper]
-* [Java][Java] (version 7+)
+* [Java][Java] (version 8+)
 
 Obtain a distribution
 ---------------------

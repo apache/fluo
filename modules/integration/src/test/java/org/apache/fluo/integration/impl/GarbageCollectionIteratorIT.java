@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.admin.CompactionConfig;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Value;
@@ -166,7 +165,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(0, countInTable("-DATA"));
 
     // compact should drop all del locks except for primary
-    conn.tableOperations().compact(table, new CompactionConfig().setWait(true));
+    conn.tableOperations().compact(table, null, null, true, true);
 
     Assert.assertEquals(0, countInTable("-LOCK"));
     Assert.assertEquals(1, countInTable("-DEL_LOCK"));
