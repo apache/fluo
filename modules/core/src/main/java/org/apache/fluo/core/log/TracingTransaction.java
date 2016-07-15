@@ -23,14 +23,13 @@ import java.util.Set;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.async.AsyncCommitObserver;
 import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.impl.Notification;
@@ -179,10 +178,10 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public RowIterator get(ScannerConfiguration config) {
+  public ScannerBuilder scanner() {
     // TODO log something better (see fluo-425)
-    log.trace("txid: {} get(ScannerConfiguration)", txid);
-    return tx.get(config);
+    log.trace("txid: {} newScanner()", txid);
+    return tx.scanner();
   }
 
   @Override

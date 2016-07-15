@@ -13,19 +13,13 @@
  * the License.
  */
 
-package org.apache.fluo.api.iterator;
+package org.apache.fluo.api.client.scanner;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
-
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 
 /**
- * Iterator for Fluo columns
- *
  * @since 1.0.0
  */
-public interface ColumnIterator extends Iterator<Entry<Column, Bytes>> {
+public interface CellScanner extends Iterable<RowColumnValue> {
 
 }

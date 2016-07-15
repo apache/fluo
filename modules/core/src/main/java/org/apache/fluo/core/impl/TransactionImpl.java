@@ -29,6 +29,7 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -53,22 +54,23 @@ import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.LockValue;
 import org.apache.fluo.api.client.Snapshot;
-import org.apache.fluo.api.config.ScannerConfiguration;
+import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.async.AsyncCommitObserver;
 import org.apache.fluo.core.async.AsyncConditionalWriter;
 import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.async.SyncCommitObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
+import org.apache.fluo.core.impl.scanner.ColumnScannerImpl;
+import org.apache.fluo.core.impl.scanner.ScannerBuilderImpl;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.ConditionalFlutation;
@@ -207,36 +209,46 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     return ret;
   }
 
-  @Override
-  public RowIterator get(ScannerConfiguration config) {
-    checkIfOpen();
-    return getImpl(config);
-  }
-
   private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
 
     // TODO push visibility filtering to server side?
 
     env.getSharedResources().getVisCache().validate(columns);
 
-    ScannerConfiguration config = new ScannerConfiguration();
-    config.setSpan(Span.exact(row));
+    boolean shouldCopy = false;
+
     for (Column column : columns) {
-      config.fetchColumn(column.getFamily(), column.getQualifier());
+      if (column.isVisibilitySet()) {
+        shouldCopy = true;
+      }
     }
 
-    RowIterator iter = getImpl(config);
+    SnapshotScanner.Opts opts;
+    if (shouldCopy) {
+      HashSet<Column> cols = new HashSet<Column>();
+      for (Column column : columns) {
+        if (column.isVisibilitySet()) {
+          cols.add(new Column(column.getFamily(), column.getQualifier()));
+        } else {
+          cols.add(column);
+        }
+      }
+      opts = new SnapshotScanner.Opts(Span.exact(row), columns);
+    } else {
+      opts = new SnapshotScanner.Opts(Span.exact(row), columns);
+    }
 
     Map<Column, Bytes> ret = new HashMap<>();
 
-    while (iter.hasNext()) {
-      Entry<Bytes, ColumnIterator> entry = iter.next();
-      ColumnIterator citer = entry.getValue();
-      while (citer.hasNext()) {
-        Entry<Column, Bytes> centry = citer.next();
-        if (columns.contains(centry.getKey())) {
-          ret.put(centry.getKey(), centry.getValue());
+    Iterable<ColumnValue> scanner =
+        Iterables.transform(new SnapshotScanner(env, opts, startTs, stats), ColumnScannerImpl.E2CV);
+    for (ColumnValue cv : scanner) {
+      if (shouldCopy) {
+        if (columns.contains(cv.getColumn())) {
+          ret.put(cv.getColumn(), cv.getValue());
         }
+      } else {
+        ret.put(cv.getColumn(), cv.getValue());
       }
     }
 
@@ -246,8 +258,10 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     return ret;
   }
 
-  private RowIterator getImpl(ScannerConfiguration config) {
-    return new RowIteratorImpl(new SnapshotScanner(this.env, config, startTs, stats));
+  @Override
+  public ScannerBuilder scanner() {
+    checkIfOpen();
+    return new ScannerBuilderImpl(this);
   }
 
   private void updateColumnsRead(Bytes row, Set<Column> columns) {
@@ -1193,4 +1207,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     cd.commitObserver.committed();
   }
 
+  public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
+    return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns), startTs, stats);
+  }
 }

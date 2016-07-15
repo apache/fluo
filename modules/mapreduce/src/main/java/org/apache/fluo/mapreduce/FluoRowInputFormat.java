@@ -19,19 +19,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.util.SpanUtil;
@@ -45,20 +46,20 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 /**
  * This input format reads a consistent snapshot of Fluo rows from a Fluo table.
  */
-public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
+public class FluoRowInputFormat extends InputFormat<Bytes, Iterator<ColumnValue>> {
 
   private static String TIMESTAMP_CONF_KEY = FluoRowInputFormat.class.getName() + ".timestamp";
   private static String PROPS_CONF_KEY = FluoRowInputFormat.class.getName() + ".props";
   private static String FAMS_CONF_KEY = FluoRowInputFormat.class.getName() + ".families";
 
   @Override
-  public RecordReader<Bytes, ColumnIterator> createRecordReader(InputSplit split,
+  public RecordReader<Bytes, Iterator<ColumnValue>> createRecordReader(InputSplit split,
       TaskAttemptContext context) throws IOException, InterruptedException {
 
-    return new RecordReader<Bytes, ColumnIterator>() {
+    return new RecordReader<Bytes, Iterator<ColumnValue>>() {
 
-      private Entry<Bytes, ColumnIterator> entry;
-      private RowIterator rowIter;
+      private ColumnScanner colScanner;
+      private Iterator<ColumnScanner> rowIterator;
       private Environment env = null;
       private TransactionImpl ti = null;
 
@@ -75,12 +76,12 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
       @Override
       public Bytes getCurrentKey() throws IOException, InterruptedException {
-        return entry.getKey();
+        return colScanner.getRow();
       }
 
       @Override
-      public ColumnIterator getCurrentValue() throws IOException, InterruptedException {
-        return entry.getValue();
+      public Iterator<ColumnValue> getCurrentValue() throws IOException, InterruptedException {
+        return colScanner.iterator();
       }
 
       @Override
@@ -104,13 +105,15 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
           // TODO this uses non public Accumulo API!
           RangeInputSplit ris = (RangeInputSplit) split;
           Span span = SpanUtil.toSpan(ris.getRange());
-          ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
+
+          HashSet<Column> columns = new HashSet<>();
 
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0])) {
-            sc.fetchColumnFamily(Bytes.of(fam));
+            columns.add(new Column(fam));
           }
 
-          rowIter = ti.get(sc);
+          rowIterator = ti.scanner().over(span).fetch(columns).byRow().build().iterator();
+
         } catch (Exception e) {
           throw new IOException(e);
         }
@@ -118,8 +121,8 @@ public class FluoRowInputFormat extends InputFormat<Bytes, ColumnIterator> {
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (rowIter.hasNext()) {
-          entry = rowIter.next();
+        if (rowIterator.hasNext()) {
+          colScanner = rowIterator.next();
           return true;
         }
         return false;

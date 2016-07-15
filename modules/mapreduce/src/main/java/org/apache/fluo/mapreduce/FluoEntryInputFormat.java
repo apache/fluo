@@ -19,21 +19,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.util.SpanUtil;
@@ -59,13 +58,10 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
 
     return new RecordReader<RowColumn, Bytes>() {
 
-      private RowColumn rowCol;
-      private Bytes val;
-      private RowIterator rowIter;
-      private Bytes row;
-      private ColumnIterator colIter = null;
+      private RowColumnValue rowColVal;
       private Environment env = null;
       private TransactionImpl ti = null;
+      private Iterator<RowColumnValue> cellIterator;
 
       @Override
       public void close() throws IOException {
@@ -80,12 +76,12 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
 
       @Override
       public RowColumn getCurrentKey() throws IOException, InterruptedException {
-        return rowCol;
+        return rowColVal;
       }
 
       @Override
       public Bytes getCurrentValue() throws IOException, InterruptedException {
-        return val;
+        return rowColVal.getValue();
       }
 
       @Override
@@ -109,13 +105,14 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
           // TODO this uses non public Accumulo API!
           RangeInputSplit ris = (RangeInputSplit) split;
           Span span = SpanUtil.toSpan(ris.getRange());
-          ScannerConfiguration sc = new ScannerConfiguration().setSpan(span);
+
+          HashSet<Column> columns = new HashSet<>();
 
           for (String fam : context.getConfiguration().getStrings(FAMS_CONF_KEY, new String[0])) {
-            sc.fetchColumnFamily(Bytes.of(fam));
+            columns.add(new Column(fam));
           }
 
-          rowIter = ti.get(sc);
+          cellIterator = ti.scanner().over(span).fetch(columns).build().iterator();
         } catch (Exception e) {
           throw new IOException(e);
         }
@@ -123,19 +120,12 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
-        while (true) {
-          if ((colIter != null) && (colIter.hasNext())) {
-            Entry<Column, Bytes> colEntry = colIter.next();
-            rowCol = new RowColumn(row, colEntry.getKey());
-            val = colEntry.getValue();
-            return true;
-          } else if (rowIter.hasNext()) {
-            Entry<Bytes, ColumnIterator> rowEntry = rowIter.next();
-            row = rowEntry.getKey();
-            colIter = rowEntry.getValue();
-          } else {
-            return false;
-          }
+        if (cellIterator.hasNext()) {
+          rowColVal = cellIterator.next();
+          return true;
+        } else {
+          rowColVal = null;
+          return false;
         }
       }
     };
@@ -178,7 +168,6 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
     }
   }
 
-  // TODO support text
   public static void fetchFamilies(Job job, String... fams) {
     job.getConfiguration().setStrings(FAMS_CONF_KEY, fams);
   }

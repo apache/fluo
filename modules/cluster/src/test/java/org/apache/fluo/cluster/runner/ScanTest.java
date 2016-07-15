@@ -16,10 +16,10 @@
 package org.apache.fluo.cluster.runner;
 
 import com.beust.jcommander.JCommander;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
+import org.apache.fluo.core.impl.SnapshotScanner;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,16 +28,16 @@ import org.junit.Test;
  */
 public class ScanTest {
 
-  private ScannerConfiguration parseArgs(String args) {
+  private SnapshotScanner.Opts parseArgs(String args) {
     ScanOptions options = new ScanOptions();
     JCommander jcommand = new JCommander(options);
     jcommand.parse(args.split(" "));
-    return AppRunner.buildScanConfig(options);
+    return new SnapshotScanner.Opts(AppRunner.getSpan(options), AppRunner.getColumns(options));
   }
 
   @Test
   public void testValidInput() {
-    ScannerConfiguration config;
+    SnapshotScanner.Opts config;
 
     config = parseArgs("");
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());

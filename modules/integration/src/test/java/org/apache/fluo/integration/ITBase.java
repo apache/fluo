@@ -18,7 +18,6 @@ package org.apache.fluo.integration;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.core.client.Connector;
@@ -32,11 +31,7 @@ import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -99,18 +94,12 @@ public class ITBase {
 
   protected void printSnapshot() throws Exception {
     try (Snapshot s = client.newSnapshot()) {
-      RowIterator iter = s.get(new ScannerConfiguration());
-
       System.out.println("== snapshot start ==");
-      while (iter.hasNext()) {
-        Entry<Bytes, ColumnIterator> rowEntry = iter.next();
-        ColumnIterator citer = rowEntry.getValue();
-        while (citer.hasNext()) {
-          Entry<Column, Bytes> colEntry = citer.next();
-          System.out.println(rowEntry.getKey() + " " + colEntry.getKey() + "\t"
-              + colEntry.getValue());
-        }
+
+      for (RowColumnValue rcv : s.scanner().build()) {
+        System.out.println(rcv.getRow() + " " + rcv.getColumn() + "\t" + rcv.getValue());
       }
+
       System.out.println("=== snapshot end ===");
     }
   }

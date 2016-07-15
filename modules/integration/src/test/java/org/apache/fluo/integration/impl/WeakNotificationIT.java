@@ -17,17 +17,15 @@ package org.apache.fluo.integration.impl;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.ObserverConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -48,19 +46,14 @@ public class WeakNotificationIT extends ITBaseMini {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
-      ScannerConfiguration sc = new ScannerConfiguration();
-      sc.setSpan(Span.exact(row, new Column(Bytes.of("stats"))));
-      RowIterator rowIter = tx.get(sc);
+      CellScanner cellScanner =
+          tx.scanner().over(Span.exact(row, new Column(Bytes.of("stats")))).build();
 
       int sum = 0;
 
-      if (rowIter.hasNext()) {
-        ColumnIterator colIter = rowIter.next().getValue();
-        while (colIter.hasNext()) {
-          Entry<Column, Bytes> colVal = colIter.next();
-          sum += Integer.parseInt(colVal.getValue().toString());
-          tx.delete(row, colVal.getKey());
-        }
+      for (RowColumnValue rcv : cellScanner) {
+        sum += Integer.parseInt(rcv.getValue().toString());
+        tx.delete(row, rcv.getColumn());
       }
 
       if (sum != 0) {

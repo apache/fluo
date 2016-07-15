@@ -29,15 +29,14 @@ import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverConfiguration;
-import org.apache.fluo.api.config.ScannerConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.iterator.ColumnIterator;
-import org.apache.fluo.api.iterator.RowIterator;
 import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
@@ -469,14 +468,11 @@ public class FluoIT extends ITBaseImpl {
     tx3.done();
 
     HashSet<Column> columns = new HashSet<>();
-    RowIterator riter =
-        tx2.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.of("d00001"),
-            new Column(Bytes.of("outlink")))));
-    while (riter.hasNext()) {
-      ColumnIterator citer = riter.next().getValue();
-      while (citer.hasNext()) {
-        columns.add(citer.next().getKey());
-      }
+
+    CellScanner cellScanner =
+        tx2.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+    for (RowColumnValue rcv : cellScanner) {
+      columns.add(rcv.getColumn());
     }
 
     tx2.done();
@@ -490,15 +486,12 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx4 = new TestTransaction(env);
     columns.clear();
-    riter =
-        tx4.get(new ScannerConfiguration().setSpan(Span.exact(Bytes.of("d00001"),
-            new Column(Bytes.of("outlink")))));
-    while (riter.hasNext()) {
-      ColumnIterator citer = riter.next().getValue();
-      while (citer.hasNext()) {
-        columns.add(citer.next().getKey());
-      }
+    cellScanner =
+        tx4.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+    for (RowColumnValue rcv : cellScanner) {
+      columns.add(rcv.getColumn());
     }
+
     expected.add(new Column("outlink", "http://z.com"));
     expected.remove(new Column("outlink", "http://b.com"));
     Assert.assertEquals(expected, columns);
