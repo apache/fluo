@@ -45,6 +45,13 @@ public class ColumnValue implements Serializable, Comparable<ColumnValue> {
     return val;
   }
 
+  /**
+   * @return value as UTF-8 decoded string
+   */
+  public String getsValue() {
+    return val.toString();
+  }
+
   @Override
   public int compareTo(ColumnValue o) {
     int comp = column.compareTo(o.column);
