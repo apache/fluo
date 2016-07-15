@@ -68,4 +68,9 @@ public class ColumnScannerImpl implements ColumnScanner {
   public Bytes getRow() {
     return row;
   }
+
+  @Override
+  public String getsRow() {
+    return getRow().toString();
+  }
 }

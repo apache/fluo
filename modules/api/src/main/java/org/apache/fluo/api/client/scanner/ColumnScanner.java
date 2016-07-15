@@ -27,4 +27,9 @@ public interface ColumnScanner extends Iterable<ColumnValue> {
    * @return the row for all column values
    */
   Bytes getRow();
+
+  /**
+   * @return the row for all column values decoded as UTF-8
+   */
+  String getsRow();
 }
