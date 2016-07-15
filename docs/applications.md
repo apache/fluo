@@ -4,7 +4,7 @@ Creating Fluo applications
 Once you have Fluo installed and running on your cluster, you can now run Fluo applications which consist of 
 clients and observers.
 
-If you are new to Fluo, consider first running the [phrasecount] application on your Fluo instance.  Otherwise,
+If you are new to Fluo, consider first running the [phrasecount] application on your Fluo instance. Otherwise,
 you can create your own Fluo client or observer by the following the steps below.
  
 For both clients and observers, you will need to include the following in your Maven pom:
@@ -93,7 +93,7 @@ To create an observer, follow these steps:
 
 1. Create a class that extends [AbstractObserver].
 2. Build a jar containing this class and include this jar in the `lib/` directory of your Fluo application.
-3. Configure your Fluo instance to use this observer by modifying the Observer section of [fluo.properties].  
+3. Configure your Fluo instance to use this observer by modifying the Observer section of [fluo.properties].
 4. Restart your Fluo instance so that your Fluo workers load the new observer.
 
 Application Configuration
@@ -113,7 +113,6 @@ transaction collisions) in a Fluo application, [metrics][metrics] may not
 provide enough information to debug the root cause of the problem.  To help
 debug Fluo applications, low-level logging of transactions can be turned on by
 setting the following loggers to TRACE:
-
 
 | Logger               | Level | Information                                                                                        |
 |----------------------|-------|----------------------------------------------------------------------------------------------------|

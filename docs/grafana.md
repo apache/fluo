@@ -2,7 +2,7 @@
 # Fluo metrics in Grafana/InfluxDB
 
 Fluo is instrumented using [dropwizard metrics][1] which allows Fluo to be configured
-to send metrics to multiple metrics tools (such as Graphite, Ganglia, etc).  
+to send metrics to multiple metrics tools (such as Graphite, Ganglia, etc).
 
 This document describes how to send Fluo metrics to [InfluxDB], a time series database, and make 
 them viewable in [Grafana], a visualization tool.  If you want general information on metrics, see the 
