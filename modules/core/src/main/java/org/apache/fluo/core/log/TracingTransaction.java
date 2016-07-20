@@ -17,10 +17,8 @@ package org.apache.fluo.core.log;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
@@ -70,53 +68,25 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   private String encB(Collection<Bytes> columns) {
-    return Iterators.toString(Iterators.transform(columns.iterator(),
-        new Function<Bytes, String>() {
-          @Override
-          public String apply(Bytes b) {
-            return Hex.encNonAscii(b);
-          }
-        }));
+    return Iterators.toString(Iterators.transform(columns.iterator(), Hex::encNonAscii));
   }
 
   private String encRC(Collection<RowColumn> ret) {
-    return Iterators.toString(Iterators.transform(ret.iterator(),
-        new Function<RowColumn, String>() {
-          @Override
-          public String apply(RowColumn rc) {
-            return Hex.encNonAscii(rc);
-          }
-        }));
+    return Iterators.toString(Iterators.transform(ret.iterator(), Hex::encNonAscii));
   }
 
   private String encRC(Map<Bytes, Map<Column, Bytes>> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
-        new Function<Entry<Bytes, Map<Column, Bytes>>, String>() {
-          @Override
-          public String apply(Entry<Bytes, Map<Column, Bytes>> e) {
-            return enc(e.getKey()) + "=" + encC(e.getValue());
-          }
-        }));
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
+        + "=" + encC(e.getValue())));
   }
 
   private String encC(Collection<Column> columns) {
-    return Iterators.toString(Iterators.transform(columns.iterator(),
-        new Function<Column, String>() {
-          @Override
-          public String apply(Column col) {
-            return Hex.encNonAscii(col);
-          }
-        }));
+    return Iterators.toString(Iterators.transform(columns.iterator(), Hex::encNonAscii));
   }
 
   private String encC(Map<Column, Bytes> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
-        new Function<Entry<Column, Bytes>, String>() {
-          @Override
-          public String apply(Entry<Column, Bytes> e) {
-            return enc(e.getKey()) + "=" + enc(e.getValue());
-          }
-        }));
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
+        + "=" + enc(e.getValue())));
   }
 
   public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz) {

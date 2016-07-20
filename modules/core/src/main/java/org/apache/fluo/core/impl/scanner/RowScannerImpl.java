@@ -18,7 +18,6 @@ package org.apache.fluo.core.impl.scanner;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.accumulo.core.client.RowIterator;
 import org.apache.accumulo.core.data.Key;
@@ -30,14 +29,6 @@ public class RowScannerImpl implements RowScanner {
 
   private Iterable<Entry<Key, Value>> snapshot;
 
-  private static final Function<Iterator<Entry<Key, Value>>, ColumnScanner> RI2CS =
-      new Function<Iterator<Entry<Key, Value>>, ColumnScanner>() {
-        @Override
-        public ColumnScanner apply(Iterator<Entry<Key, Value>> input) {
-          return new ColumnScannerImpl(input);
-        }
-      };
-
   RowScannerImpl(Iterable<Entry<Key, Value>> snapshot) {
     this.snapshot = snapshot;
   }
@@ -45,6 +36,6 @@ public class RowScannerImpl implements RowScanner {
   @Override
   public Iterator<ColumnScanner> iterator() {
     RowIterator rowiter = new RowIterator(snapshot.iterator());
-    return Iterators.transform(rowiter, RI2CS);
+    return Iterators.transform(rowiter, e -> new ColumnScannerImpl(e));
   }
 }

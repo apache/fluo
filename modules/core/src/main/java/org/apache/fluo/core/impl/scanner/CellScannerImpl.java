@@ -18,7 +18,6 @@ package org.apache.fluo.core.impl.scanner;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -32,19 +31,15 @@ public class CellScannerImpl implements CellScanner {
 
   private Iterable<Entry<Key, Value>> snapshot;
 
-  private static final Function<Entry<Key, Value>, RowColumnValue> E2RCV =
-      new Function<Entry<Key, Value>, RowColumnValue>() {
-        @Override
-        public RowColumnValue apply(Entry<Key, Value> entry) {
-          Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
-          Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
-          Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-          Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
-          Column col = new Column(cf, cq, cv);
-          Bytes val = Bytes.of(entry.getValue().get());
-          return new RowColumnValue(row, col, val);
-        }
-      };
+  private static RowColumnValue entry2rcv(Entry<Key, Value> entry) {
+    Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
+    Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
+    Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
+    Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
+    Column col = new Column(cf, cq, cv);
+    Bytes val = Bytes.of(entry.getValue().get());
+    return new RowColumnValue(row, col, val);
+  }
 
   CellScannerImpl(Iterable<Entry<Key, Value>> snapshot) {
     this.snapshot = snapshot;
@@ -52,6 +47,6 @@ public class CellScannerImpl implements CellScanner {
 
   @Override
   public Iterator<RowColumnValue> iterator() {
-    return Iterators.transform(snapshot.iterator(), E2RCV);
+    return Iterators.transform(snapshot.iterator(), CellScannerImpl::entry2rcv);
   }
 }

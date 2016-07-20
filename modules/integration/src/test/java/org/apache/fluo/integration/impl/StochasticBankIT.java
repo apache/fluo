@@ -249,7 +249,7 @@ public class StochasticBankIT extends ITBaseImpl {
 
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
 
-    for (String cell : Iterables.transform(scanner, new FluoFormatter())) {
+    for (String cell : Iterables.transform(scanner, FluoFormatter::toString)) {
       fw.append(cell);
       fw.append("\n");
     }

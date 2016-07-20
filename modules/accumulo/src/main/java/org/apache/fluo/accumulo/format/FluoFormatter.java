@@ -17,7 +17,6 @@ package org.apache.fluo.accumulo.format;
 
 import java.util.Map.Entry;
 
-import com.google.common.base.Function;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -32,7 +31,7 @@ import org.apache.fluo.api.data.Column;
 /**
  * Converts Accumulo table data to a human-readable Fluo format
  */
-public class FluoFormatter implements Function<Entry<Key, Value>, String> {
+public class FluoFormatter {
 
   private static void appendByte(StringBuilder sb, byte b) {
     if (b >= 32 && b <= 126 && b != '\\') {
@@ -138,10 +137,5 @@ public class FluoFormatter implements Function<Entry<Key, Value>, String> {
 
       return sb.toString();
     }
-  }
-
-  @Override
-  public String apply(Entry<Key, Value> input) {
-    return toString(input);
   }
 }

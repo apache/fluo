@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import org.apache.fluo.api.client.SnapshotBase;
@@ -30,30 +29,11 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 
 public class TxStringUtil {
-
-
-  private static final Function<Bytes, String> B2S = new Function<Bytes, String>() {
-
-    @Override
-    public String apply(Bytes input) {
-      return input.toString();
-    }
-  };
-
-  private static final Function<String, Bytes> S2B = new Function<String, Bytes>() {
-
-    @Override
-    public Bytes apply(String input) {
-      return Bytes.of(input);
-    }
-  };
-
-
   private static Map<String, Map<Column, String>> transform(Map<Bytes, Map<Column, Bytes>> rcvs) {
     Map<String, Map<Column, String>> ret = new HashMap<>(rcvs.size());
 
     for (Entry<Bytes, Map<Column, Bytes>> entry : rcvs.entrySet()) {
-      ret.put(entry.getKey().toString(), Maps.transformValues(entry.getValue(), B2S));
+      ret.put(entry.getKey().toString(), Maps.transformValues(entry.getValue(), b -> b.toString()));
     }
     return ret;
   }
@@ -68,12 +48,12 @@ public class TxStringUtil {
 
   public static Map<Column, String> gets(SnapshotBase snapshot, String row, Set<Column> columns) {
     Map<Column, Bytes> values = snapshot.get(Bytes.of(row), columns);
-    return Maps.transformValues(values, B2S);
+    return Maps.transformValues(values, b -> b.toString());
   }
 
   public static Map<String, Map<Column, String>> gets(SnapshotBase snapshot,
       Collection<String> rows, Set<Column> columns) {
-    return transform(snapshot.get(Collections2.transform(rows, S2B), columns));
+    return transform(snapshot.get(Collections2.transform(rows, s -> Bytes.of(s)), columns));
   }
 
   public static Map<String, Map<Column, String>> gets(SnapshotBase snapshot,

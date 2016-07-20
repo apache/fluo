@@ -241,7 +241,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     Map<Column, Bytes> ret = new HashMap<>();
 
     Iterable<ColumnValue> scanner =
-        Iterables.transform(new SnapshotScanner(env, opts, startTs, stats), ColumnScannerImpl.E2CV);
+        Iterables.transform(new SnapshotScanner(env, opts, startTs, stats),
+            ColumnScannerImpl::entry2cv);
     for (ColumnValue cv : scanner) {
       if (shouldCopy) {
         if (columns.contains(cv.getColumn())) {

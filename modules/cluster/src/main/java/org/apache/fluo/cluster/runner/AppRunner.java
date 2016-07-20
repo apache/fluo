@@ -232,7 +232,7 @@ public abstract class AppRunner {
         }
       }
 
-      for (String entry : Iterables.transform(scanner, new FluoFormatter())) {
+      for (String entry : Iterables.transform(scanner, FluoFormatter::toString)) {
         System.out.println(entry);
       }
     } catch (Exception e) {

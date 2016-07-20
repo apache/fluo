@@ -174,9 +174,8 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   private int countInTable(String str) throws TableNotFoundException {
     int count = 0;
-    FluoFormatter ff = new FluoFormatter();
     Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
-    for (String e : Iterables.transform(scanner, ff)) {
+    for (String e : Iterables.transform(scanner, FluoFormatter::toString)) {
       if (e.contains(str)) {
         count++;
       }

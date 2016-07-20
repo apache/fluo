@@ -19,15 +19,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.client.scanner.RowScanner;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -38,73 +35,36 @@ import org.junit.Test;
 
 public class ScannerIT extends ITBaseImpl {
 
-  static class ColumnPredicate implements Predicate<RowColumnValue> {
-    Column c;
-
-    ColumnPredicate(Column c) {
-      this.c = c;
-    }
-
-    @Override
-    public boolean apply(RowColumnValue input) {
-      return input.getColumn().equals(c);
-    }
-  }
-
-  static class FamilyPredicate implements Predicate<RowColumnValue> {
-    Bytes fam;
-
-    FamilyPredicate(String family) {
-      this.fam = Bytes.of(family);
-    }
-
-    @Override
-    public boolean apply(RowColumnValue input) {
-      return input.getColumn().getFamily().equals(fam);
-    }
-  }
-
-  static class RowPredicate implements Predicate<RowColumnValue> {
-    Bytes row;
-
-    RowPredicate(String row) {
-      this.row = Bytes.of(row);
-    }
-
-    @Override
-    public boolean apply(RowColumnValue input) {
-      return input.getRow().equals(row);
-    }
-  }
-
   @Test
   public void testFiltering() {
     Set<RowColumnValue> expected = genData();
 
     HashSet<RowColumnValue> expectedR2 = new HashSet<>();
-    Iterables.addAll(expectedR2, Iterables.filter(expected, new RowPredicate("r2")));
+    Iterables.addAll(expectedR2, Iterables.filter(expected, rcv -> rcv.getsRow().equals("r2")));
     Assert.assertEquals(2, expectedR2.size());
-
 
     HashSet<RowColumnValue> expectedR2c = new HashSet<>();
     Iterables.addAll(
         expectedR2c,
         Iterables.filter(expected,
-            Predicates.and(new RowPredicate("r2"), new ColumnPredicate(new Column("f1", "q2")))));
+            rcv -> rcv.getsRow().equals("r2") && rcv.getColumn().equals(new Column("f1", "q2"))));
     Assert.assertEquals(1, expectedR2c.size());
 
     HashSet<RowColumnValue> expectedC = new HashSet<>();
     Iterables.addAll(expectedC,
-        Iterables.filter(expected, new ColumnPredicate(new Column("f1", "q1"))));
+        Iterables.filter(expected, rcv -> rcv.getColumn().equals(new Column("f1", "q1"))));
     Assert.assertEquals(2, expectedC.size());
 
     HashSet<RowColumnValue> expectedCF = new HashSet<>();
-    Iterables.addAll(expectedCF, Iterables.filter(expected, new FamilyPredicate("f2")));
+    Iterables.addAll(expectedCF,
+        Iterables.filter(expected, rcv -> rcv.getColumn().getsFamily().equals("f2")));
     Assert.assertEquals(2, expectedCF.size());
 
     HashSet<RowColumnValue> expectedCols = new HashSet<>();
-    Iterables.addAll(expectedCols, Iterables.filter(expected, Predicates.or(new ColumnPredicate(
-        new Column("f2", "q5")), new ColumnPredicate(new Column("f1", "q1")))));
+    Iterables.addAll(
+        expectedCols,
+        Iterables.filter(expected, rcv -> rcv.getColumn().equals(new Column("f2", "q5"))
+            || rcv.getColumn().equals(new Column("f1", "q1"))));
     Assert.assertEquals(3, expectedCols.size());
 
     try (Snapshot snap = client.newSnapshot()) {
