@@ -12,27 +12,20 @@
   limitations under the License.
 -->
 
-[![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Issues][ii]][il]
-[![Forks][fi]][fl] [![Stars][si]][sl] [![Apache License][li]][ll]
+[![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Apache License][li]][ll]
 
-# Fluo.io Parent POM
+# Apache Fluo Parent POM
 
 View documentation at:
-http://fluo.io
+https://fluo.apache.org
 
-Parent pom for fluo-io projects
+Parent pom for Apache Fluo projects
 
 This project uses a 1-up counter for its versioning.
 
-[ti]: https://travis-ci.org/fluo-io/fluo-io-parent.svg?branch=master
-[tl]: https://travis-ci.org/fluo-io/fluo-io-parent
-[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/fluo-io-parent/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/fluo-io-parent
-[ii]: https://img.shields.io/github/issues/fluo-io/fluo-io-parent.svg
-[il]: https://github.com/fluo-io/fluo-io-parent/issues
-[fi]: https://img.shields.io/github/forks/fluo-io/fluo-io-parent.svg
-[fl]: https://github.com/fluo-io/fluo-io-parent/network
-[si]: https://img.shields.io/github/stars/fluo-io/fluo-io-parent.svg
-[sl]: https://github.com/fluo-io/fluo-io-parent/stargazers
-[li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/fluo-io/fluo-io-parent/blob/master/LICENSE
+[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=fluo-parent
+[tl]: https://travis-ci.org/apache/incubator-fluo/branches
+[mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent
+[li]: https://img.shields.io/badge/license-ASL-blue.svg
+[ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
