@@ -19,8 +19,6 @@ import java.io.File;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
@@ -36,55 +34,28 @@ public class FluoOracleImpl implements FluoOracle {
 
   private static final Logger log = LoggerFactory.getLogger(FluoOracleImpl.class);
 
-  private OracleService oracleService;
+  private FluoConfiguration config;
+  private Environment env;
+  private AutoCloseable reporters;
+  private OracleServer oracleServer;
+  private NodeCache appIdCache;
 
   public FluoOracleImpl(FluoConfiguration config) {
-    this.oracleService = new OracleService(config);
+    Objects.requireNonNull(config);
+    Preconditions.checkArgument(config.hasRequiredOracleProps());
+    // any client in oracle should retry forever
+    config.setClientRetryTimeout(-1);
+    try {
+      config.validate();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid FluoConfiguration", e);
+    }
+    this.config = config;
   }
 
   @Override
   public void start() {
     try {
-      oracleService.startAndWait();
-    } catch (UncheckedExecutionException e) {
-      throw new FluoException(e);
-    }
-  }
-
-  @Override
-  public void stop() {
-    try {
-      oracleService.stopAndWait();
-    } catch (UncheckedExecutionException e) {
-      throw new FluoException(e);
-    }
-  }
-
-  private static class OracleService extends AbstractIdleService {
-
-    private static final Logger log = LoggerFactory.getLogger(OracleService.class);
-
-    private FluoConfiguration config;
-    private Environment env;
-    private AutoCloseable reporters;
-    private OracleServer oracleServer;
-    private NodeCache appIdCache;
-
-    OracleService(FluoConfiguration config) {
-      Objects.requireNonNull(config);
-      Preconditions.checkArgument(config.hasRequiredOracleProps());
-      // any client in oracle should retry forever
-      config.setClientRetryTimeout(-1);
-      try {
-        config.validate();
-      } catch (Exception e) {
-        throw new IllegalArgumentException("Invalid FluoConfiguration", e);
-      }
-      this.config = config;
-    }
-
-    @Override
-    protected void startUp() throws Exception {
       env = new Environment(config);
       reporters = ReporterUtil.setupReporters(env);
       appIdCache = CuratorUtil.startAppIdWatcher(env);
@@ -95,14 +66,20 @@ public class FluoOracleImpl implements FluoOracle {
 
       oracleServer = new OracleServer(env);
       oracleServer.start();
+    } catch (Exception e) {
+      throw new FluoException(e);
     }
+  }
 
-    @Override
-    protected void shutDown() throws Exception {
+  @Override
+  public void stop() {
+    try {
       oracleServer.stop();
       appIdCache.close();
       reporters.close();
       env.close();
+    } catch (Exception e) {
+      throw new FluoException(e);
     }
   }
 

@@ -1,20 +1,22 @@
-Production Setup
-================
+Fluo Install Instructions
+=========================
 
-Below are instructions for running Fluo in a production environment where Accumulo,
-Hadoop & Zookeeper are installed and running.  If you want to avoid setting up
-these dependencies, consider using [fluo-dev]. 
+Install instructions for running Fluo on machine or cluster where Accumulo, Hadoop,
+and Zookeeper are installed and running.  If you want to avoid setting up these
+dependencies, consider using [fluo-dev] or [Zetten].
 
 Requirements
 ------------
 
-Before you install Fluo, you will need the following installed and running on
+Before you install Fluo, the following software must be installed and running on
 your local machine or cluster:
 
-* [Accumulo][Accumulo] (version 1.6+)
-* [Hadoop][Hadoop] (version 2.6+)
-* [Zookeeper]
-* [Java][Java] (version 8+)
+| Software    | Recommended Version | Minimum Version |
+|-------------|---------------------|-----------------|
+| [Accumulo]  | 1.7.2               | 1.6.1           |
+| [Hadoop]    | 2.7.2               | 2.6.0           |
+| [Zookeeper] | 3.4.8               |                 |
+| [Java]      | JDK 8               | JDK 8           |
 
 Obtain a distribution
 ---------------------
@@ -51,8 +53,9 @@ application settings (like observers).
 to use a value different than the default.  Properties that are unset and uncommented must be
 set by the user.
 
-4. Fluo needs build its classpath using jars from the version of Hadoop, Accumulo, and Zookeeper
-that you are using. Choose one of the two ways below to make these jars available to Fluo:
+4. Fluo needs to build its classpath using jars from the versions of Hadoop, Accumulo, and
+Zookeeper that you are using. Choose one of the two ways below to make these jars available
+to Fluo:
 
     * Set `HADOOP_PREFIX`, `ACCUMULO_HOME`, and `ZOOKEEPER_HOME` in your environment or configure
     these variables in [fluo-env.sh].  Fluo will look in these locations for jars.
@@ -61,7 +64,7 @@ that you are using. Choose one of the two ways below to make these jars availabl
     default versions set in [lib/ahz/pom.xml]. If you are not using the default versions, you can
     override them:
     
-            ./lib/fetch.sh ahz -Daccumulo.version=1.7.1 -Dhadoop.version=2.6.3 -Dzookeeper.version=3.4.8
+            ./lib/fetch.sh ahz -Daccumulo.version=1.7.2 -Dhadoop.version=2.7.2 -Dzookeeper.version=3.4.8
 
 5. Fluo needs more dependencies than what is available from Hadoop, Accumulo, and Zookeeper.
 These extra dependencies need to be downloaded to `lib/` using the command below:
@@ -212,6 +215,7 @@ In a distributed environment, you will need to deploy and configure a Fluo
 distribution on every node in your cluster.
 
 [fluo-dev]: https://github.com/fluo-io/fluo-dev
+[Zetten]: https://github.com/fluo-io/zetten
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/
