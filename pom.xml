@@ -343,11 +343,11 @@
             <configuration>
               <failOnWarning>true</failOnWarning>
               <ignoredDependencies>
-                <ignoredDependency>org.apache.hadoop:hadoop-common:jar:2.6.3</ignoredDependency>
-                <ignoredDependency>org.apache.hadoop:hadoop-client:jar:2.6.3</ignoredDependency>
-                <ignoredDependency>org.apache.hadoop:hadoop-mapreduce-client-core:jar:2.6.3</ignoredDependency>
-                <ignoredDependency>org.apache.hadoop:hadoop-yarn-api:jar:2.6.3</ignoredDependency>
-                <ignoredDependency>org.apache.hadoop:hadoop-yarn-client:jar:2.6.3</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-common:jar:${hadoop.version}</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-client:jar:${hadoop.version}</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-mapreduce-client-core:jar:${hadoop.version}</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-yarn-api:jar:${hadoop.version}</ignoredDependency>
+                <ignoredDependency>org.apache.hadoop:hadoop-yarn-client:jar:${hadoop.version}</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
