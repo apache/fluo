@@ -28,7 +28,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.fluo.api.client.FluoAdmin;
-import org.apache.fluo.api.client.FluoAdmin.InitOpts;
+import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
@@ -129,7 +129,7 @@ public class MiniFluoImpl implements MiniFluo {
         config.setAccumuloTable("fluo");
       }
 
-      InitOpts opts = new InitOpts();
+      InitializationOptions opts = new InitializationOptions();
       try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
         admin.initialize(opts);
       }

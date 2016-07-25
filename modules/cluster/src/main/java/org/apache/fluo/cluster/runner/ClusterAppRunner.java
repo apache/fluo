@@ -133,7 +133,7 @@ public abstract class ClusterAppRunner extends AppRunner {
         System.exit(-1);
       }
 
-      FluoAdmin.InitOpts initOpts = new FluoAdmin.InitOpts();
+      FluoAdmin.InitializationOptions initOpts = new FluoAdmin.InitializationOptions();
 
       if (commandOpts.getUpdate()) {
         System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
