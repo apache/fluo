@@ -83,6 +83,7 @@
         <version>1.32</version>
       </dependency>
       <dependency>
+        <!-- Guava 13.0.1 is required by Twill (due to beta method usage) -->
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>13.0.1</version>

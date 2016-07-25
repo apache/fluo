@@ -108,6 +108,6 @@ extra)
   echo -e "   extra     Download extra Fluo dependencies\n"
   echo "For 'ahz', the versions of Hadoop, Accumulo, & Zookeeper are specifed in ahz/pom.xml."
   echo -e "However, you can override them using the command below:\n"
-  echo "./fetch.sh ahz -Daccumulo.version=1.7.1 -Dhadoop.version=2.6.3 -Dzookeeper.version=3.4.8"
+  echo "./fetch.sh ahz -Daccumulo.version=1.7.2 -Dhadoop.version=2.7.2 -Dzookeeper.version=3.4.8"
 esac
 
