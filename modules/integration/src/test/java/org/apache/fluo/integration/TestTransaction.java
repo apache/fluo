@@ -80,6 +80,7 @@ public class TestTransaction implements TransactionBase {
     throw new RuntimeException("No notification found");
   }
 
+  @SuppressWarnings("resource")
   public TestTransaction(Environment env, TransactorNode transactor) {
     this(new TransactionImpl(env).setTransactor(transactor), env);
   }

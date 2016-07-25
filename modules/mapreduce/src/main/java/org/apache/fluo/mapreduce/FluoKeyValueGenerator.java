@@ -39,8 +39,6 @@ import org.apache.hadoop.io.Text;
  * <p>
  * This class is designed to be reused inorder to avoid object creation in a map reduce job.
  *
- * <p>
- *
  * <pre>
  * <code>
  *   // this could be shared between calls to map or reduce, to avoid creating for each call.
@@ -63,7 +61,6 @@ import org.apache.hadoop.io.Text;
  * </code>
  * </pre>
  *
- * <p>
  */
 
 public class FluoKeyValueGenerator {

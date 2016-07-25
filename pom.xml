@@ -20,7 +20,6 @@
     <artifactId>fluo-parent</artifactId>
     <version>1-SNAPSHOT</version>
   </parent>
-  <groupId>org.apache.fluo</groupId>
   <artifactId>fluo</artifactId>
   <version>1.0.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -334,7 +333,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.10</version>
         <executions>
           <execution>
             <id>analyze</id>

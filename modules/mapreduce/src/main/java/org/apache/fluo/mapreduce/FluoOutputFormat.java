@@ -110,7 +110,7 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   }
 
   /**
-   * Call this method to initialize the Fluo connection props and {@link LoaderExecutorImpl} props
+   * Call this method to initialize the Fluo connection props
    *
    * @param conf Job configuration
    * @param props Use {@link org.apache.fluo.api.config.FluoConfiguration} to set props

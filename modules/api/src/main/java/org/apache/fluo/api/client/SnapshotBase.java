@@ -61,7 +61,7 @@ public interface SnapshotBase {
    * a {@link Span} and/or with a subset of columns. Below is simple example of building a scanner.
    * 
    * <pre>
-   * {@code
+   * <code>
    *   Transaction tx = ...;
    *   Span span = Span.exact("row4");
    *   Column col1 = new Column("fam1","qual1");
@@ -72,7 +72,7 @@ public interface SnapshotBase {
    *   for(RowColumnValue rcv : cs) {
    *     //do stuff with rcv
    *   }
-   * }
+   * </code>
    * </pre>
    *
    * <p>
