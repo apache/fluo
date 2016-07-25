@@ -18,7 +18,7 @@ package org.apache.fluo.integration;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.fluo.api.client.FluoAdmin;
-import org.apache.fluo.api.client.FluoAdmin.InitOpts;
+import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.impl.Environment;
@@ -80,7 +80,8 @@ public class ITBaseImpl extends ITBase {
     config.setMiniStartAccumulo(false);
 
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
-      InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+      InitializationOptions opts =
+          new InitializationOptions().setClearZookeeper(true).setClearTable(true);
       admin.initialize(opts);
     }
 

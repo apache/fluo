@@ -19,7 +19,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
-import org.apache.fluo.api.client.FluoAdmin.InitOpts;
+import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoAdmin.TableExistsException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -40,7 +40,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
 
-      InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+      InitializationOptions opts =
+          new InitializationOptions().setClearZookeeper(true).setClearTable(true);
 
       admin.initialize(opts);
       admin.initialize(opts);
@@ -76,7 +77,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
     // stop oracle to avoid spurious exceptions when initializing
     oserver.stop();
 
-    InitOpts opts = new InitOpts().setClearZookeeper(true).setClearTable(true);
+    InitializationOptions opts =
+        new InitializationOptions().setClearZookeeper(true).setClearTable(true);
 
     for (String host : new String[] {"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
       config.setInstanceZookeepers(host);
@@ -98,7 +100,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     String longPath = "/very/long/path";
     config.setInstanceZookeepers(zk + longPath);
 
-    InitOpts opts = new InitOpts();
+    InitializationOptions opts = new InitializationOptions();
     opts.setClearZookeeper(true).setClearTable(true);
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
