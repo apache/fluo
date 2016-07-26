@@ -16,12 +16,10 @@
 package org.apache.fluo.mini;
 
 import java.io.File;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.accumulo.core.client.Scanner;
@@ -38,7 +36,6 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.oracle.OracleServer;
-import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.fluo.core.worker.NotificationFinder;
 import org.apache.fluo.core.worker.NotificationFinderFactory;
 import org.apache.fluo.core.worker.NotificationProcessor;
@@ -191,39 +188,4 @@ public class MiniFluoImpl implements MiniFluo {
     }
   }
 
-  public static void main(String[] args) {
-
-    try {
-      if (args.length != 1) {
-        System.err.println("Usage: MiniFluoImpl <fluoPropsPath>");
-        System.exit(-1);
-      }
-      String propsPath = args[0];
-      Objects.requireNonNull(propsPath);
-      File propsFile = new File(propsPath);
-      if (!propsFile.exists()) {
-        System.err.println("ERROR - Fluo properties file does not exist: " + propsPath);
-        System.exit(-1);
-      }
-      Preconditions.checkArgument(propsFile.exists());
-
-      FluoConfiguration config = new FluoConfiguration(propsFile);
-      if (!config.hasRequiredMiniFluoProps()) {
-        log.error("Failed to start MiniFluo - fluo.properties is missing required properties for "
-            + "MiniFluo");
-        System.exit(-1);
-      }
-      try (MiniFluo mini = new MiniFluoImpl(config)) {
-        log.info("MiniFluo is running");
-
-        while (true) {
-          UtilWaitThread.sleep(1000);
-        }
-      }
-    } catch (Exception e) {
-      log.error("Exception running MiniFluo: ", e);
-    }
-
-    log.info("MiniFluo is exiting.");
-  }
 }

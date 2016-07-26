@@ -42,7 +42,7 @@ public class FluoClientTest {
     }
 
     try (FluoClientImpl impl = new FluoClientImpl(config)) {
-      Assert.fail();
+      Assert.fail("FluoClientImpl was " + impl);
     } catch (IllegalArgumentException e) {
     }
 
@@ -53,7 +53,7 @@ public class FluoClientTest {
     config.setZookeeperTimeout(5);
 
     try (FluoClientImpl impl = new FluoClientImpl(config)) {
-      Assert.fail();
+      Assert.fail("FluoClientImpl was " + impl);
     } catch (IllegalStateException e) {
     }
 
