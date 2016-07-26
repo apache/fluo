@@ -56,7 +56,7 @@ public class ITBaseImpl extends ITBase {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
       env.close();
     }
   }

@@ -434,7 +434,7 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     for (TwillRunnerService twillRunner : twillRunners.values()) {
       twillRunner.stop();
     }
