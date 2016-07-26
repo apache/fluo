@@ -71,6 +71,20 @@ public class BytesBuilderTest {
   }
 
   @Test
+  public void testArraySection() {
+    BytesBuilder bb = Bytes.newBuilder();
+
+    byte[] testing = new byte[] {'a', 'b', 'c', 'd', 'e'};
+
+    bb.append(testing, 0, 3);
+    bb.append(testing, 1, 3);
+    bb.append(testing, 2, 2);
+
+    Bytes bytes = bb.toBytes();
+    Assert.assertEquals(Bytes.of("abcbcdcd"), bytes);
+  }
+
+  @Test
   public void testIncreaseCapacity() {
 
     // test appending 3 chars at a time

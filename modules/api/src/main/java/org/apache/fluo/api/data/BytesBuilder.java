@@ -90,6 +90,23 @@ public class BytesBuilder {
   }
 
   /**
+   * Append a section of bytes from array
+   * 
+   * @param bytes - bytes to be appended
+   * @param offset - start of bytes to be appended
+   * @param length - how many bytes from 'offset' to be appended
+   * @return self
+   */
+  public BytesBuilder append(byte[] bytes, int offset, int length) {
+    ensureCapacity(len + length);
+    System.arraycopy(bytes, offset, ba, len, length);
+    len += length;
+
+    return this;
+  }
+
+
+  /**
    * Sets the point at which appending will start. This method can shrink or grow the ByteBuilder
    * from its current state. If it grows it will zero pad.
    */
