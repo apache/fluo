@@ -194,6 +194,11 @@ public class Span implements Serializable {
         + ((endInclusive && !end.equals(RowColumn.EMPTY)) ? "]" : ")");
   }
 
+  @Override
+  public int hashCode() {
+    return Objects.hash(start, end, startInclusive, endInclusive);
+  }
+
   /**
    * Creates a span that covers an exact row
    */

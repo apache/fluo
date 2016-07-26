@@ -18,6 +18,7 @@ package org.apache.fluo.accumulo.iterators;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -157,5 +158,10 @@ public class TestData {
 
     sb.append("}");
     return sb.toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(data);
   }
 }
