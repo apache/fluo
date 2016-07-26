@@ -20,10 +20,10 @@
     <artifactId>fluo-parent</artifactId>
     <version>1-SNAPSHOT</version>
   </parent>
-  <artifactId>fluo</artifactId>
+  <artifactId>fluo-project</artifactId>
   <version>1.0.0-incubating-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Fluo Parent</name>
+  <name>Fluo Project</name>
   <description>An implementation of Percolator for Apache Accumulo</description>
   <licenses>
     <license>
@@ -354,4 +354,26 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <!-- set proper source assembly name with apache-release and don't attach here -->
+      <id>apache-release</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-assembly-plugin</artifactId>
+              <inherited>false</inherited>
+              <configuration>
+                <!-- source assembly gets attached in the assemble module -->
+                <attach>false</attach>
+                <finalName>fluo-${project.version}</finalName>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
 </project>

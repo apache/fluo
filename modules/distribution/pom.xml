@@ -17,11 +17,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.fluo</groupId>
-    <artifactId>fluo</artifactId>
+    <artifactId>fluo-project</artifactId>
     <version>1.0.0-incubating-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-  <artifactId>fluo-distribution</artifactId>
+  <artifactId>fluo</artifactId>
   <packaging>pom</packaging>
   <name>Fluo Distribution</name>
   <description>This module produces a tarball distribution of Fluo.  It contains all of the default configuration
@@ -31,26 +31,32 @@
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-accumulo</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-api</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-cluster</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-core</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-mapreduce</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.fluo</groupId>
       <artifactId>fluo-mini</artifactId>
+      <optional>true</optional>
     </dependency>
   </dependencies>
   <build>
@@ -65,7 +71,6 @@
             </goals>
             <phase>package</phase>
             <configuration>
-              <finalName>fluo-${project.version}</finalName>
               <descriptors>
                 <descriptor>src/main/assembly/bin.xml</descriptor>
               </descriptors>
@@ -77,7 +82,8 @@
   </build>
   <profiles>
     <profile>
-      <id>full</id>
+      <!-- attach source release when it is created by the apache-release profile -->
+      <id>apache-release</id>
       <build>
         <plugins>
           <plugin>
@@ -92,9 +98,9 @@
                 <configuration>
                   <artifacts>
                     <artifact>
-                      <file>${project.parent.build.directory}/fluo-${project.version}-source-release.tar.gz</file>
+                      <file>${project.parent.build.directory}/${project.artifactId}-${project.version}-source-release.tar.gz</file>
                       <type>tar.gz</type>
-                      <classifier>src</classifier>
+                      <classifier>source-release</classifier>
                     </artifact>
                   </artifacts>
                 </configuration>

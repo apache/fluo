@@ -23,25 +23,18 @@
       <outputDirectory>lib</outputDirectory>
       <directoryMode>0755</directoryMode>
       <fileMode>0644</fileMode>
-      <useProjectArtifact>true</useProjectArtifact>
-      <scope>runtime</scope>
-      <outputFileNameMapping>${artifact.artifactId}${dashClassifier?}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+      <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <includes>
-        <include>org.apache.fluo:fluo-api</include>
-        <include>org.apache.fluo:fluo-accumulo</include>
-        <include>org.apache.fluo:fluo-core</include>
-        <include>org.apache.fluo:fluo-mini</include>
-        <include>org.apache.fluo:fluo-mapreduce</include>
-        <include>org.apache.fluo:fluo-cluster</include>
+        <include>${groupId}:fluo-*</include>
       </includes>
     </dependencySet>
   </dependencySets>
 
   <fileSets>
     <fileSet>
-      <directory>${project.basedir}/../../</directory>
-      <outputDirectory>/</outputDirectory>
+      <directory>../../</directory>
+      <outputDirectory>.</outputDirectory>
       <includes>
         <include>DISCLAIMER</include>
         <include>LICENSE</include>
@@ -80,21 +73,21 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.basedir}/../../docs</directory>
+      <directory>../../docs</directory>
       <outputDirectory>docs</outputDirectory>
       <includes>
         <include>*</include>
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.basedir}/../../contrib/grafana</directory>
+      <directory>../../contrib/grafana</directory>
       <outputDirectory>contrib/grafana</outputDirectory>
       <includes>
         <include>*</include>
       </includes>
     </fileSet>
     <fileSet>
-      <directory>${project.basedir}/../../contrib/influxdb</directory>
+      <directory>../../contrib/influxdb</directory>
       <outputDirectory>contrib/influxdb</outputDirectory>
       <includes>
         <include>*</include>
