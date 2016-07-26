@@ -59,6 +59,7 @@
     <findbugs.maxRank>9</findbugs.maxRank>
     <hadoop.version>2.6.3</hadoop.version>
     <logback.version>1.1.3</logback.version>
+    <releaseProfiles>fluo-release</releaseProfiles>
     <slf4j.version>1.7.12</slf4j.version>
     <thrift.version>0.9.1</thrift.version>
     <twill.version>0.6.0-incubating</twill.version>
@@ -355,6 +356,17 @@
     </plugins>
   </build>
   <profiles>
+    <profile>
+      <id>fluo-release</id>
+      <!-- some properties to make the release build a bit faster -->
+      <properties>
+        <checkstyle.skip>true</checkstyle.skip>
+        <findbugs.skip>true</findbugs.skip>
+        <modernizer.skip>true</modernizer.skip>
+        <skipITs>true</skipITs>
+        <skipTests>true</skipTests>
+      </properties>
+    </profile>
     <profile>
       <!-- set proper source assembly name with apache-release and don't attach here -->
       <id>apache-release</id>
