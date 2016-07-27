@@ -43,6 +43,8 @@ import org.apache.fluo.integration.TestTransaction;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This test starts multiple thread that randomly transfer between accounts. At any given time the
@@ -50,6 +52,7 @@ import org.junit.Test;
  */
 public class StochasticBankIT extends ITBaseImpl {
 
+  private static final Logger log = LoggerFactory.getLogger(StochasticBankIT.class);
   private static AtomicInteger txCount = new AtomicInteger();
 
   @Test
@@ -88,7 +91,7 @@ public class StochasticBankIT extends ITBaseImpl {
       thread.join();
     }
 
-    System.out.println("txCount : " + txCount.get());
+    log.debug("txCount : " + txCount.get());
     Assert.assertTrue("txCount : " + txCount.get(), txCount.get() > 0);
 
     runVerifier(env, numAccounts, 1);
@@ -197,7 +200,7 @@ public class StochasticBankIT extends ITBaseImpl {
 
         long t2 = System.currentTimeMillis();
 
-        System.out.printf("avg : %,9.2f  min : %,6d  max : %,6d  stddev : %1.2f  rate : %,6.2f\n",
+        log.debug("avg : %,9.2f  min : %,6d  max : %,6d  stddev : %1.2f  rate : %,6.2f\n",
             stat.getAverage(), stat.getMin(), stat.getMax(), stat.getStdDev(), numAccounts
                 / ((t2 - t1) / 1000.0));
 
@@ -222,7 +225,7 @@ public class StochasticBankIT extends ITBaseImpl {
     Map<String, String> bals2 = toMap(tx);
 
     if (!bals1.keySet().equals(bals2.keySet())) {
-      System.out.print("KS NOT EQ");
+      log.debug("KS NOT EQ");
     }
 
     int sum1 = 0;
@@ -237,12 +240,12 @@ public class StochasticBankIT extends ITBaseImpl {
         sum1 += v1;
         sum2 += v2;
 
-        System.out.println(entry.getKey() + " " + entry.getValue() + " " + val2 + " " + (v2 - v1));
+        log.debug(entry.getKey() + " " + entry.getValue() + " " + val2 + " " + (v2 - v1));
       }
     }
 
-    System.out.println("start times : " + lastTx.getStartTs() + " " + tx.getStartTs());
-    System.out.printf("sum1 : %,d  sum2 : %,d  diff : %,d\n", sum1, sum2, sum2 - sum1);
+    log.debug("start times : " + lastTx.getStartTs() + " " + tx.getStartTs());
+    log.debug("sum1 : %,d  sum2 : %,d  diff : %,d\n", sum1, sum2, sum2 - sum1);
 
     File tmpFile = File.createTempFile("sb_dump", ".txt");
     Writer fw = new BufferedWriter(new FileWriter(tmpFile));
@@ -256,8 +259,7 @@ public class StochasticBankIT extends ITBaseImpl {
 
     fw.close();
 
-    System.out.println("Dumped table : " + tmpFile);
-
+    log.debug("Dumped table : " + tmpFile);
   }
 
   private static HashMap<String, String> toMap(TestTransaction tx) throws Exception {

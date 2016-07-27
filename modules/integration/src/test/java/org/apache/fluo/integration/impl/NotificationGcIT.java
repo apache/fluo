@@ -34,8 +34,12 @@ import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.integration.impl.WeakNotificationIT.SimpleObserver;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NotificationGcIT extends ITBaseMini {
+
+  private static final Logger log = LoggerFactory.getLogger(NotificationGcIT.class);
 
   private static void assertRawNotifications(int expected, Environment env) throws Exception {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
@@ -43,7 +47,7 @@ public class NotificationGcIT extends ITBaseMini {
     int size = Iterables.size(scanner);
     if (size != expected) {
       for (Entry<Key, Value> entry : scanner) {
-        System.out.println(entry);
+        log.error(entry.toString());
       }
     }
     Assert.assertEquals(expected, size);
