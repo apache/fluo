@@ -21,7 +21,7 @@ import java.io.Serializable;
  * @since 1.0.0
  */
 
-public class ColumnValue implements Serializable, Comparable<ColumnValue> {
+public final class ColumnValue implements Serializable, Comparable<ColumnValue> {
   private static final long serialVersionUID = 1L;
 
   private Column column;

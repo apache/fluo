@@ -37,19 +37,14 @@ import java.util.Objects;
  *
  * @since 1.0.0
  */
-public abstract class Bytes implements Comparable<Bytes>, Serializable {
+public final class Bytes implements Comparable<Bytes>, Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final String BYTES_FACTORY_CLASS =
-      "org.apache.fluo.accumulo.data.MutableBytesFactory";
   private static final String WRITE_UTIL_CLASS = "org.apache.fluo.accumulo.data.WriteUtilImpl";
 
-  /**
-   * @since 1.0.0
-   */
-  public interface BytesFactory {
-    Bytes get(byte[] data);
-  }
+  private final byte[] data;
+  private final int offset;
+  private final int length;
 
   /**
    * @since 1.0.0
@@ -60,13 +55,10 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     int readVInt(DataInput stream) throws IOException;
   }
 
-  private static BytesFactory bytesFactory;
   private static WriteUtil writeUtil;
 
   static {
     try {
-      bytesFactory =
-          (BytesFactory) Class.forName(BYTES_FACTORY_CLASS).getDeclaredConstructor().newInstance();
       writeUtil =
           (WriteUtil) Class.forName(WRITE_UTIL_CLASS).getDeclaredConstructor().newInstance();
     } catch (Exception e) {
@@ -74,11 +66,25 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     }
   }
 
-  public static final Bytes EMPTY = bytesFactory.get(new byte[0]);
+  public static final Bytes EMPTY = new Bytes(new byte[0]);
 
   private Integer hashCode = null;
 
-  public Bytes() {}
+  private Bytes(byte[] data) {
+    this.data = data;
+    this.offset = 0;
+    this.length = data.length;
+  }
+
+  private Bytes(byte[] data, int offset, int length) {
+    if (offset < 0 || offset > data.length || length < 0 || (offset + length) > data.length) {
+      throw new IndexOutOfBoundsException(" Bad offset and/or length data.length = " + data.length
+          + " offset = " + offset + " length = " + length);
+    }
+    this.data = data;
+    this.offset = offset;
+    this.length = length;
+  }
 
   /**
    * Gets a byte within this sequence of bytes
@@ -87,12 +93,25 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * @return byte
    * @throws IllegalArgumentException if i is out of range
    */
-  public abstract byte byteAt(int i);
+  public byte byteAt(int i) {
+
+    if (i < 0) {
+      throw new IndexOutOfBoundsException("i < 0, " + i);
+    }
+
+    if (i >= length) {
+      throw new IndexOutOfBoundsException("i >= length, " + i + " >= " + length);
+    }
+
+    return data[offset + i];
+  }
 
   /**
    * Gets the length of bytes
    */
-  public abstract int length();
+  public int length() {
+    return length;
+  }
 
   /**
    * Returns a portion of the Bytes object
@@ -100,17 +119,35 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
    */
-  public abstract Bytes subSequence(int start, int end);
+  public Bytes subSequence(int start, int end) {
+    if (start > end || start < 0 || end > length) {
+      throw new IllegalArgumentException("Bad start and/end start = " + start + " end=" + end
+          + " offset=" + offset + " length=" + length);
+    }
+    return new Bytes(data, offset + start, end - start);
+  }
 
   /**
    * Returns a byte array containing a copy of the bytes
    */
-  public abstract byte[] toArray();
+  public byte[] toArray() {
+    byte[] copy = new byte[length];
+    System.arraycopy(data, offset, copy, 0, length);
+    return copy;
+  }
 
   /**
-   * Compares the two given byte sequences, byte by byte, returning a negative, zero, or positive
-   * result if the first sequence is less than, equal to, or greater than the second. The comparison
-   * is performed starting with the first byte of each sequence, and proceeds until a pair of bytes
+   * Creates UTF-8 String using Bytes data
+   */
+  @Override
+  public String toString() {
+    return new String(data, offset, length, StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Compares this to the given bytes, byte by byte, returning a negative, zero, or positive result
+   * if the first sequence is less than, equal to, or greater than the second. The comparison is
+   * performed starting with the first byte of each sequence, and proceeds until a pair of bytes
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
    *
@@ -118,27 +155,19 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
    * @param b2 second byte sequence to compare
    * @return comparison result
    */
-  public static final int compareBytes(Bytes b1, Bytes b2) {
-
-    int minLen = Math.min(b1.length(), b2.length());
+  @Override
+  public final int compareTo(Bytes other) {
+    int minLen = Math.min(this.length(), other.length());
 
     for (int i = 0; i < minLen; i++) {
-      int a = (b1.byteAt(i) & 0xff);
-      int b = (b2.byteAt(i) & 0xff);
+      int a = (this.byteAt(i) & 0xff);
+      int b = (other.byteAt(i) & 0xff);
 
       if (a != b) {
         return a - b;
       }
     }
-    return b1.length() - b2.length();
-  }
-
-  /**
-   * Compares this Bytes object to another.
-   */
-  @Override
-  public final int compareTo(Bytes other) {
-    return compareBytes(this, other);
+    return this.length() - other.length();
   }
 
   /**
@@ -184,7 +213,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] copy = new byte[array.length];
     System.arraycopy(array, 0, copy, 0, array.length);
-    return bytesFactory.get(copy);
+    return new Bytes(copy);
   }
 
   /**
@@ -201,7 +230,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] copy = new byte[length];
     System.arraycopy(data, offset, copy, 0, length);
-    return bytesFactory.get(copy);
+    return new Bytes(copy);
   }
 
   /**
@@ -215,7 +244,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
     byte[] data = new byte[bb.remaining()];
     // duplicate so that it does not change position
     bb.duplicate().get(data);
-    return bytesFactory.get(data);
+    return new Bytes(data);
   }
 
   /**
@@ -227,7 +256,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
       return EMPTY;
     }
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
-    return bytesFactory.get(data);
+    return new Bytes(data);
   }
 
   /**
@@ -240,7 +269,7 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
       return EMPTY;
     }
     byte[] data = s.getBytes(c);
-    return bytesFactory.get(data);
+    return new Bytes(data);
   }
 
   /**

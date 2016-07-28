@@ -15,18 +15,24 @@
 
 package org.apache.fluo.api.data;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 /**
  * An immutable object that can hold a row, column, and value.
  *
  * @since 1.0.0
  */
-public class RowColumnValue extends RowColumn {
+public final class RowColumnValue implements Comparable<RowColumnValue>, Serializable {
   private static final long serialVersionUID = 1L;
 
+  private Bytes row = Bytes.EMPTY;
+  private Column col = Column.EMPTY;
   private Bytes val = Bytes.EMPTY;
 
   public RowColumnValue(Bytes row, Column col, Bytes val) {
-    super(row, col);
+    this.row = row;
+    this.col = col;
     this.val = val;
   }
 
@@ -35,8 +41,36 @@ public class RowColumnValue extends RowColumn {
    * @param val (will be UTF-8 encoded)
    */
   public RowColumnValue(String row, Column col, String val) {
-    super(Bytes.of(row), col);
+    this.row = Bytes.of(row);
+    this.col = col;
     this.val = Bytes.of(val);
+  }
+
+  /**
+   * Retrieves Row in RowColumn
+   *
+   * @return Row
+   */
+  public Bytes getRow() {
+    return row;
+  }
+
+  /**
+   * Retrieves Row in RowColumn as a String using UTF-8 encoding.
+   *
+   * @return Row
+   */
+  public String getsRow() {
+    return row.toString();
+  }
+
+  /**
+   * Retrieves Column in RowColumn
+   *
+   * @return Column
+   */
+  public Column getColumn() {
+    return col;
   }
 
   public Bytes getValue() {
@@ -47,9 +81,13 @@ public class RowColumnValue extends RowColumn {
     return val.toString();
   }
 
+  public RowColumn getRowColumn() {
+    return new RowColumn(row, col);
+  }
+
   @Override
   public int hashCode() {
-    return super.hashCode() + 31 * val.hashCode();
+    return Objects.hash(row, col, val);
   }
 
   @Override
@@ -60,34 +98,25 @@ public class RowColumnValue extends RowColumn {
 
     if (o instanceof RowColumnValue) {
       RowColumnValue orcv = (RowColumnValue) o;
-
-      if (super.equals(orcv)) {
-        return val.equals(orcv.val);
-      }
+      return row.equals(orcv.row) && col.equals(orcv.col) && val.equals(orcv.val);
     }
     return false;
   }
 
   @Override
-  public int compareTo(RowColumn orc) {
-    if (orc == this) {
-      return 0;
-    }
-
-    if (!(orc instanceof RowColumnValue)) {
-      throw new IllegalArgumentException("Can only compare to same type");
-    }
-
-    int result = super.compareTo(orc);
-    if (result == 0) {
-      RowColumnValue orcv = (RowColumnValue) orc;
-      result = val.compareTo(orcv.val);
-    }
-    return result;
+  public String toString() {
+    return getRowColumn() + " " + val;
   }
 
   @Override
-  public String toString() {
-    return super.toString() + " " + val;
+  public int compareTo(RowColumnValue o) {
+    int result = row.compareTo(o.row);
+    if (result == 0) {
+      result = col.compareTo(o.col);
+      if (result == 0) {
+        result = val.compareTo(o.val);
+      }
+    }
+    return result;
   }
 }

@@ -39,13 +39,13 @@ import static org.apache.fluo.accumulo.util.NotificationUtil.isDelete;
  * See {@link NotificationIterator} for explanation of notification timestamp serialization.
  *
  */
-public class Notification extends RowColumn {
-  private static final long serialVersionUID = 1L;
+public class Notification {
 
-  private long timestamp;
+  private final RowColumn rowCol;
+  private final long timestamp;
 
   public Notification(Bytes row, Column col, long ts) {
-    super(row, col);
+    rowCol = new RowColumn(row, col);
     this.timestamp = ts;
   }
 
@@ -53,15 +53,27 @@ public class Notification extends RowColumn {
     return timestamp;
   }
 
+  public Bytes getRow() {
+    return rowCol.getRow();
+  }
+
+  public Column getColumn() {
+    return rowCol.getColumn();
+  }
+
+  public RowColumn getRowColumn() {
+    return rowCol;
+  }
+
   public Flutation newDelete(Environment env) {
     return newDelete(env, getTimestamp());
   }
 
   public Flutation newDelete(Environment env, long ts) {
-    Flutation m = new Flutation(env, getRow());
-    ColumnVisibility cv = env.getSharedResources().getVisCache().getCV(getColumn());
-    m.put(ColumnConstants.NOTIFY_CF.toArray(), encodeCol(getColumn()), cv, encodeTs(ts, true),
-        TransactionImpl.EMPTY);
+    Flutation m = new Flutation(env, rowCol.getRow());
+    ColumnVisibility cv = env.getSharedResources().getVisCache().getCV(rowCol.getColumn());
+    m.put(ColumnConstants.NOTIFY_CF.toArray(), encodeCol(rowCol.getColumn()), cv,
+        encodeTs(ts, true), TransactionImpl.EMPTY);
     return m;
   }
 

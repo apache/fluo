@@ -76,7 +76,7 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
 
       @Override
       public RowColumn getCurrentKey() throws IOException, InterruptedException {
-        return rowColVal;
+        return rowColVal.getRowColumn();
       }
 
       @Override
