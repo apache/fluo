@@ -50,7 +50,7 @@ public class RowColumnTest {
     Assert.assertEquals(new Column("cf2"), rc.getColumn());
     Assert.assertEquals(new RowColumn(Bytes.of("r2"), new Column("cf2")), rc);
     Assert.assertEquals("r2 cf2  ", rc.toString());
-    Assert.assertEquals(4007699, rc.hashCode());
+    Assert.assertEquals(123316141, rc.hashCode());
   }
 
   @Test
