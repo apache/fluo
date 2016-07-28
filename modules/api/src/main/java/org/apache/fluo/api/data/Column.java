@@ -172,7 +172,7 @@ public class Column implements Comparable<Column>, Serializable {
 
   @Override
   public int hashCode() {
-    return family.hashCode() + 31 * (31 * qualifier.hashCode() + visibility.hashCode());
+    return Objects.hash(family, qualifier, visibility);
   }
 
   @Override

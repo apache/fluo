@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -75,8 +76,6 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   public static final Bytes EMPTY = bytesFactory.get(new byte[0]);
-
-  private Integer hashCode = null;
 
   public Bytes() {}
 
@@ -160,18 +159,6 @@ public abstract class Bytes implements Comparable<Bytes>, Serializable {
       return compareTo(ob) == 0;
     }
     return false;
-  }
-
-  @Override
-  public final int hashCode() {
-    if (hashCode == null) {
-      int hash = 1;
-      for (int i = 0; i < length(); i++) {
-        hash = (31 * hash) + byteAt(i);
-      }
-      hashCode = hash;
-    }
-    return hashCode;
   }
 
   /**

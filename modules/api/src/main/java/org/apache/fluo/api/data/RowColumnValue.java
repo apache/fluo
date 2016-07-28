@@ -15,6 +15,8 @@
 
 package org.apache.fluo.api.data;
 
+import java.util.Objects;
+
 /**
  * An immutable object that can hold a row, column, and value.
  *
@@ -49,7 +51,7 @@ public class RowColumnValue extends RowColumn {
 
   @Override
   public int hashCode() {
-    return super.hashCode() + 31 * val.hashCode();
+    return Objects.hash(super.hashCode(), val);
   }
 
   @Override
