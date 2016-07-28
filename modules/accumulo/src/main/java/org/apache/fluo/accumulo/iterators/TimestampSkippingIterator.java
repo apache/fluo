@@ -140,7 +140,6 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
       } else if (iter instanceof SortedMapIterator) {
         return null;
       } else {
-        // System.out.println("unknown type " + iter.getClass().getName());
         return null;
       }
     } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
