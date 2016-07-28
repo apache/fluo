@@ -181,11 +181,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.fluo</groupId>
-        <artifactId>fluo-metrics</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.fluo</groupId>
         <artifactId>fluo-mini</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -238,11 +233,6 @@
         <groupId>org.mpierce.metrics.reservoir</groupId>
         <artifactId>hdrhistogram-metrics-reservoir</artifactId>
         <version>1.1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>log4j-over-slf4j</artifactId>
-        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -343,11 +333,13 @@
             <configuration>
               <failOnWarning>true</failOnWarning>
               <ignoredDependencies>
+                <ignoredDependency>log4j:log4j:jar:*</ignoredDependency>
                 <ignoredDependency>org.apache.hadoop:hadoop-common:jar:${hadoop.version}</ignoredDependency>
                 <ignoredDependency>org.apache.hadoop:hadoop-client:jar:${hadoop.version}</ignoredDependency>
                 <ignoredDependency>org.apache.hadoop:hadoop-mapreduce-client-core:jar:${hadoop.version}</ignoredDependency>
                 <ignoredDependency>org.apache.hadoop:hadoop-yarn-api:jar:${hadoop.version}</ignoredDependency>
                 <ignoredDependency>org.apache.hadoop:hadoop-yarn-client:jar:${hadoop.version}</ignoredDependency>
+                <ignoredDependency>org.slf4j:slf4j-log4j12:jar:${slf4j.version}</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
