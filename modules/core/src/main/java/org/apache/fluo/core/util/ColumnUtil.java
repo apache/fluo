@@ -15,8 +15,8 @@
 
 package org.apache.fluo.core.util;
 
-import java.io.DataInput;
-import java.io.DataOutput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -33,6 +33,7 @@ import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.core.impl.Environment;
@@ -101,16 +102,17 @@ public class ColumnUtil {
     return null;
   }
 
-  public static void writeColumn(Column col, DataOutput out) throws IOException {
-    Bytes.write(out, col.getFamily());
-    Bytes.write(out, col.getQualifier());
-    Bytes.write(out, col.getVisibility());
+  public static void writeColumn(Column col, DataOutputStream out) throws IOException {
+    ByteUtil.write(out, col.getFamily());
+    ByteUtil.write(out, col.getQualifier());
+    ByteUtil.write(out, col.getVisibility());
   }
 
-  public static Column readColumn(DataInput in) throws IOException {
-    Bytes family = Bytes.read(in);
-    Bytes qualifier = Bytes.read(in);
-    Bytes visibility = Bytes.read(in);
+  public static Column readColumn(DataInputStream in) throws IOException {
+    BytesBuilder bb = Bytes.newBuilder();
+    Bytes family = ByteUtil.read(bb, in);
+    Bytes qualifier = ByteUtil.read(bb, in);
+    Bytes visibility = ByteUtil.read(bb, in);
     return new Column(family, qualifier, visibility);
   }
 }

@@ -15,10 +15,16 @@
 
 package org.apache.fluo.core.util;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableUtils;
 
 /**
  * Utilities for modifying byte arrays and converting Bytes objects to external formats
@@ -73,4 +79,17 @@ public class ByteUtil {
     }
     return bytes;
   }
+
+  public static void write(DataOutputStream out, Bytes b) throws IOException {
+    WritableUtils.writeVInt(out, b.length());
+    b.writeTo(out);
+  }
+
+  public static Bytes read(BytesBuilder bb, DataInputStream in) throws IOException {
+    bb.setLength(0);
+    int len = WritableUtils.readVInt(in);
+    bb.append(in, len);
+    return bb.toBytes();
+  }
+
 }
