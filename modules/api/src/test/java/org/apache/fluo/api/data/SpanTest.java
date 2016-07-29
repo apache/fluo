@@ -13,7 +13,7 @@
  * the License.
  */
 
-package org.apache.fluo.core.data;
+package org.apache.fluo.api.data;
 
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;

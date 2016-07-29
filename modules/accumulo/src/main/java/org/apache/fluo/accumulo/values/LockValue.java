@@ -37,7 +37,7 @@ public class LockValue {
   private final Long transactor;
 
   public LockValue(byte[] enc) {
-    List<Bytes> fields = Bytes.split(Bytes.of(enc));
+    List<Bytes> fields = ByteArrayUtil.split(enc);
 
     if (fields.size() != 6) {
       throw new IllegalArgumentException("more fields than expected");
@@ -88,8 +88,8 @@ public class LockValue {
     if (isTrigger) {
       bools[0] |= 0x4;
     }
-    return Bytes.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(),
-        Bytes.of(bools), Bytes.of(ByteArrayUtil.encode(transactor))).toArray();
+    return ByteArrayUtil.concat(prow, pcol.getFamily(), pcol.getQualifier(), pcol.getVisibility(),
+        Bytes.of(bools), Bytes.of(ByteArrayUtil.encode(transactor)));
   }
 
   @Override

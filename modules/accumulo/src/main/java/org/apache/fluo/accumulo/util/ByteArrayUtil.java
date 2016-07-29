@@ -15,7 +15,19 @@
 
 package org.apache.fluo.accumulo.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Bytes.BytesBuilder;
+import org.apache.hadoop.io.WritableUtils;
 
 /**
  * Utilities for manipulating byte arrays
@@ -81,16 +93,51 @@ public class ByteArrayUtil {
   }
 
   /**
-   * Concatenate several byte arrays into one
-   * 
-   * @param byteArrays List of byte arrays
-   * @return concatenated byte array
+   * Concatenates of list of Bytes objects to create a byte array
+   *
+   * @param listOfBytes Bytes objects to concatenate
+   * @return Bytes
    */
-  public static byte[] concat(byte[]... byteArrays) {
-    Bytes[] bs = new Bytes[byteArrays.length];
-    for (int i = 0; i < byteArrays.length; i++) {
-      bs[i] = Bytes.of(byteArrays[i]);
+  public static final byte[] concat(Bytes... listOfBytes) {
+    try {
+      // TODO calculate exact array size needed
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      DataOutputStream dos = new DataOutputStream(baos);
+
+      for (Bytes b : listOfBytes) {
+        WritableUtils.writeVInt(dos, b.length());
+        b.writeTo(dos);
+      }
+
+      dos.close();
+      return baos.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    return Bytes.concat(bs).toArray();
   }
+
+  public static final List<Bytes> split(byte[] b) {
+
+    ArrayList<Bytes> ret = new ArrayList<>();
+
+    try (InputStream in = new ByteArrayInputStream(b)) {
+      DataInputStream dis = new DataInputStream(in);
+
+      BytesBuilder builder = Bytes.newBuilder(b.length);
+
+      while (true) {
+        int len = WritableUtils.readVInt(dis);
+        builder.append(dis, len);
+        ret.add(builder.toBytes());
+        builder.setLength(0);
+      }
+    } catch (EOFException ee) {
+      // at end of file
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return ret;
+  }
+
 }

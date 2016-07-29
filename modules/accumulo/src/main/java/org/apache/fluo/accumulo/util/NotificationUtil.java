@@ -51,7 +51,7 @@ public class NotificationUtil {
   }
 
   public static byte[] encodeCol(Column c) {
-    return Bytes.concat(c.getFamily(), c.getQualifier()).toArray();
+    return ByteArrayUtil.concat(c.getFamily(), c.getQualifier());
   }
 
   public static Column decodeCol(Key k) {
@@ -59,7 +59,7 @@ public class NotificationUtil {
   }
 
   public static Column decodeCol(byte[] cq) {
-    List<Bytes> ca = Bytes.split(Bytes.of(cq));
+    List<Bytes> ca = ByteArrayUtil.split(cq);
     Column col = new Column(ca.get(0), ca.get(1));
     return col;
   }
