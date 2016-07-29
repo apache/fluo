@@ -59,6 +59,12 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   private Integer hashCode = null;
 
+  public Bytes() {
+    data = EMPTY.data;
+    offset = 0;
+    length = 0;
+  }
+
   private Bytes(byte[] data) {
     this.data = data;
     this.offset = 0;
