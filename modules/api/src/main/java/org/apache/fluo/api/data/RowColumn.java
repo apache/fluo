@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * @since 1.0.0
  */
-public class RowColumn implements Comparable<RowColumn>, Serializable {
+public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   private static final long serialVersionUID = 1L;
   public static RowColumn EMPTY = new RowColumn();

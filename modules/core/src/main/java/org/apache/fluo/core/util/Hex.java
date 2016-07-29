@@ -73,7 +73,7 @@ public class Hex {
 
   public static String encNonAscii(Notification n) {
     StringBuilder sb = new StringBuilder();
-    encNonAscii(sb, n, " ");
+    encNonAscii(sb, n.getRowColumn(), " ");
     sb.append(" ");
     sb.append(n.getTimestamp());
     return sb.toString();

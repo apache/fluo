@@ -182,14 +182,14 @@ public class NotificationProcessor implements AutoCloseable {
         new WorkTaskAsync(this, notificationFinder, env, notification, observers);
     FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
 
-    if (!tracker.add(notification, ft)) {
+    if (!tracker.add(notification.getRowColumn(), ft)) {
       return false;
     }
 
     try {
       executor.execute(ft);
     } catch (RejectedExecutionException rje) {
-      tracker.remove(notification);
+      tracker.remove(notification.getRowColumn());
       throw rje;
     }
 
@@ -203,18 +203,18 @@ public class NotificationProcessor implements AutoCloseable {
         new WorkTaskAsync(this, notificationFinder, env, notification, observers);
     FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
 
-    if (tracker.requeue(notification, ft)) {
+    if (tracker.requeue(notification.getRowColumn(), ft)) {
       try {
         executor.execute(ft);
       } catch (RejectedExecutionException rje) {
-        tracker.remove(notification);
+        tracker.remove(notification.getRowColumn());
         throw rje;
       }
     }
   }
 
   public void notificationProcessed(final Notification notification) {
-    tracker.remove(notification);
+    tracker.remove(notification.getRowColumn());
   }
 
   public int size() {

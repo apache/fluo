@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,10 +84,4 @@ public class RowColumnValueTest {
   public void testToString() {
     Assert.assertEquals("row1 fam1 qual1  a", rcv1.toString());
   }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCompareRowColumn() {
-    rcv1.compareTo(new RowColumn("foo"));
-  }
-
 }

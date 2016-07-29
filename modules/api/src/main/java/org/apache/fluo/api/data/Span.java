@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * @since 1.0.0
  */
-public class Span implements Serializable {
+public final class Span implements Serializable {
 
   private static final long serialVersionUID = 1L;
   private RowColumn start = RowColumn.EMPTY;

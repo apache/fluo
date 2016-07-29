@@ -34,7 +34,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
 import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
 import org.apache.curator.utils.ZKPaths;
-import org.apache.fluo.accumulo.data.MutableBytes;
 import org.apache.fluo.accumulo.iterators.NotificationHashFilter;
 import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
@@ -193,9 +192,8 @@ public class HashNotificationFinder implements NotificationFinder {
   @VisibleForTesting
   static boolean shouldProcess(Notification notification, int divisor, int remainder) {
     byte[] cfcq = NotificationUtil.encodeCol(notification.getColumn());
-    return NotificationHashFilter.accept(
-        ByteUtil.toByteSequence((MutableBytes) notification.getRow()), new ArrayByteSequence(cfcq),
-        divisor, remainder);
+    return NotificationHashFilter.accept(ByteUtil.toByteSequence(notification.getRow()),
+        new ArrayByteSequence(cfcq), divisor, remainder);
   }
 
   @Override

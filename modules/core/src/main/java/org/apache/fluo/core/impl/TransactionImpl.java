@@ -510,11 +510,11 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
         if (notification.getColumn().equals(col)) {
           // check to see if ACK exist after notification
-          Key startKey = SpanUtil.toKey(notification);
+          Key startKey = SpanUtil.toKey(notification.getRowColumn());
           startKey.setTimestamp(ColumnConstants.ACK_PREFIX
               | (Long.MAX_VALUE & ColumnConstants.TIMESTAMP_MASK));
 
-          Key endKey = SpanUtil.toKey(notification);
+          Key endKey = SpanUtil.toKey(notification.getRowColumn());
           endKey.setTimestamp(ColumnConstants.ACK_PREFIX | (notification.getTimestamp() + 1));
 
           Range range = new Range(startKey, endKey);
@@ -786,7 +786,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     if (primary != null) {
       primRow = primary.getRow();
       primCol = primary.getColumn();
-      if (notification != null && !primary.equals(notification)) {
+      if (notification != null && !primary.equals(notification.getRowColumn())) {
         throw new IllegalArgumentException("Primary must be notification");
       }
     } else if (notification != null) {
