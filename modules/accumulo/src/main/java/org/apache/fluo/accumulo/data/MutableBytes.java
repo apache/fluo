@@ -18,7 +18,6 @@ package org.apache.fluo.accumulo.data;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import org.apache.fluo.api.data.Bytes;
 
@@ -89,11 +88,6 @@ public class MutableBytes extends Bytes implements Serializable {
    */
   public MutableBytes(String s, Charset cs) {
     this(s.getBytes(cs));
-  }
-
-  @Override
-  public final int hashCode() {
-    return Arrays.hashCode(data);
   }
 
   @Override

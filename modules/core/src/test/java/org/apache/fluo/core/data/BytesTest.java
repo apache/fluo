@@ -82,6 +82,14 @@ public class BytesTest {
   }
 
   @Test
+  public void testHashSubsequence() {
+    Bytes b1 = Bytes.of("abcde");
+    Bytes b2 = Bytes.of("cde");
+
+    Assert.assertEquals(b2.hashCode(), b1.subSequence(2, 5).hashCode());
+  }
+
+  @Test
   public void testCompare() {
     Bytes b1 = Bytes.of("a");
     Bytes b2 = Bytes.of("b");
