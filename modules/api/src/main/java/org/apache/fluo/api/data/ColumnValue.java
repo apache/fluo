@@ -16,6 +16,7 @@
 package org.apache.fluo.api.data;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @since 1.0.0
@@ -73,7 +74,7 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
 
   @Override
   public int hashCode() {
-    return column.hashCode() + 31 * val.hashCode();
+    return Objects.hash(column, val);
   }
 
   @Override

@@ -122,7 +122,7 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   @Override
   public int hashCode() {
-    return row.hashCode() + 31 * col.hashCode();
+    return Objects.hash(row, col);
   }
 
   /**
