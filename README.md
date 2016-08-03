@@ -12,32 +12,20 @@
   limitations under the License.
 -->
 
-[![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Issues][ii]][il]
-[![Forks][fi]][fl] [![Stars][si]][sl] [![Apache License][li]][ll]
+[![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Apache License][li]][ll]
 
-# Resources
+# Apache Fluo Build Resources (incubating)
 
 View documentation at:
-http://fluo.io
+https://fluo.apache.org
 
-Build resources for fluo-io projects
+Build Resources for Apache Fluo projects
 
-This project uses [Semantic Versioning 2.0.0][semver], with its API being the
-resources it contains. Breaking changes, such as the removal of a resource,
-will increment the major version, new resources and other non-breaking changes
-will increment the minor version, and bugfixes to existing resources will
-increment the patch version.
+This project uses semantic versioning.
 
-[semver]: http://semver.org/spec/v2.0.0.html
-[ti]: https://travis-ci.org/fluo-io/resources.svg?branch=master
-[tl]: https://travis-ci.org/fluo-io/resources
-[mi]: https://maven-badges.herokuapp.com/maven-central/io.fluo/resources/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/io.fluo/resources
-[ii]: https://img.shields.io/github/issues/fluo-io/resources.svg
-[il]: https://github.com/fluo-io/resources/issues
-[fi]: https://img.shields.io/github/forks/fluo-io/resources.svg
-[fl]: https://github.com/fluo-io/resources/network
-[si]: https://img.shields.io/github/stars/fluo-io/resources.svg
-[sl]: https://github.com/fluo-io/resources/stargazers
-[li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/fluo-io/resources/blob/master/LICENSE
+[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=fluo-parent
+[tl]: https://travis-ci.org/apache/incubator-fluo/branches
+[mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent
+[li]: https://img.shields.io/badge/license-ASL-blue.svg
+[ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
