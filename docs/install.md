@@ -1,8 +1,8 @@
 # Fluo Install Instructions
 
 Install instructions for running Fluo on machine or cluster where Accumulo, Hadoop, and Zookeeper
-are installed and running. If you want to avoid setting up these dependencies, consider using
-[fluo-dev] or [Zetten].
+are installed and running.  The Fluo distribution uses YARN to run workers (which run your Observers)
+and the Oracle across a cluster.
 
 ## Requirements
 
@@ -194,8 +194,6 @@ Use the following commands to stop a local Fluo process:
 In a distributed environment, you will need to deploy and configure a Fluo distribution on every
 node in your cluster.
 
-[fluo-dev]: https://github.com/fluo-io/fluo-dev
-[Zetten]: https://github.com/fluo-io/zetten
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/

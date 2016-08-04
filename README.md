@@ -11,21 +11,11 @@ of a large-scale computation, index, or analytic as new data is discovered. Chec
 
 ## Getting Started
 
-There are several ways to run Fluo (listed in order of increasing difficulty):
-
-*  [quickstart] - Starts a MiniFluo instance that is configured to run a word count application
-*  [fluo-dev] - Automated tool that sets up Fluo and its dependencies on a single machine
-*  [Zetten] - Automated tool that launches an AWS cluster and sets up Fluo/Accumulo on it
-*  [Install instructions][install] - Manually set up Fluo on a cluster where Accumulo, Hadoop &
-   Zookeeper are running
-
-Except for [quickstart], all above will set up a Fluo application that will be idle unless you
-create client & observer code for your application. You can either [create your own
-application][apps] or configure Fluo to run an example application below:
-
-*  [phrasecount] - Computes phrase counts for unique documents
-*  [fluo-stress] - Computes the number of unique integers by building bitwise trie
-*  [webindex] - Creates a web index using Common Crawl data
+If you are completely new to Fluo, then check out the [Fluo Tour][tour]. To
+learn how to setup Fluo on a cluster, check out the [install
+instructions][install].  There are also external open source projects listed on
+the [related projects page][related] that may be useful for setting
+up Fluo.
 
 ## Applications
 
@@ -44,14 +34,10 @@ Below are helpful resources for Fluo application developers:
    or Ganglia
 
 [fluo]: https://fluo.apache.org/
+[related]: https://fluo.apache.org/related-projects/
+[tour]: https://fluo.apache.org/tour/
 [accumulo]: https://accumulo.apache.org
 [percolator]: https://research.google.com/pubs/pub36726.html
-[quickstart]: https://github.com/fluo-io/fluo-quickstart
-[fluo-dev]: https://github.com/fluo-io/fluo-dev
-[Zetten]: https://github.com/fluo-io/zetten
-[phrasecount]: https://github.com/fluo-io/phrasecount
-[fluo-stress]: https://github.com/fluo-io/fluo-stress
-[webindex]: https://github.com/fluo-io/webindex
 [install]: docs/install.md
 [apps]: docs/applications.md
 [api]: https://fluo.apache.org/apidocs/

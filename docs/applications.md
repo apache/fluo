@@ -3,9 +3,6 @@
 Once you have Fluo installed and running on your cluster, you can now run Fluo applications which
 consist of clients and observers.
 
-If you are new to Fluo, consider first running the [phrasecount] application on your Fluo instance.
-Otherwise, you can create your own Fluo client or observer by the following the steps below.
-
 For both clients and observers, you will need to include the following in your Maven pom:
 
 ```xml
@@ -157,7 +154,6 @@ When applications read and write arbitrary binary data, this does not log so wel
 the trace logs human readable, non ASCII chars are escaped using hex. The convention used it `\xDD`
 where D is a hex digit. Also the `\` character is escaped to make the output unambiguous.
 
-[phrasecount]: https://github.com/fluo-io/phrasecount
 [FluoFactory]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoFactory.java
 [FluoClient]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoClient.java
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
