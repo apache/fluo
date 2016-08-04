@@ -23,9 +23,9 @@ Build Resources for Apache Fluo projects
 
 This project uses semantic versioning.
 
-[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=fluo-parent
+[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=build-resources
 [tl]: https://travis-ci.org/apache/incubator-fluo/branches
-[mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent/badge.svg
-[ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent
+[mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/build-resources/badge.svg
+[ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/build-resources
 [li]: https://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
+[ll]: https://github.com/apache/incubator-fluo/blob/build-resources/LICENSE
