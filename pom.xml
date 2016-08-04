@@ -24,7 +24,7 @@
   </parent>
   <groupId>org.apache.fluo</groupId>
   <artifactId>build-resources</artifactId>
-  <version>1.0.0-incubating</version>
+  <version>1.0.1-incubating-SNAPSHOT</version>
   <name>Apache Fluo Build Resources (incubating)</name>
   <description>Resources for building Apache Fluo projects</description>
   <url>https://fluo.apache.org</url>
@@ -67,7 +67,7 @@
   <scm>
     <connection>scm:git:git://git.apache.org/incubator-fluo.git</connection>
     <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</developerConnection>
-    <tag>rel/build-resources-1.0.0-incubating</tag>
+    <tag>HEAD</tag>
     <url>https://git-wip-us.apache.org/repos/asf?p=incubator-fluo.git</url>
   </scm>
   <issueManagement>
