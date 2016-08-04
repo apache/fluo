@@ -1,7 +1,10 @@
 <!--
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
 
       http://www.apache.org/licenses/LICENSE-2.0
 
@@ -14,7 +17,7 @@
 
 [![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Apache License][li]][ll]
 
-# Apache Fluo Parent POM
+# Apache Fluo Parent POM (incubating)
 
 View documentation at:
 https://fluo.apache.org
@@ -28,4 +31,4 @@ This project uses a 1-up counter for its versioning.
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent
 [li]: https://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/apache/incubator-fluo/blob/master/LICENSE
+[ll]: https://github.com/apache/incubator-fluo/blob/fluo-parent/LICENSE

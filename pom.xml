@@ -26,8 +26,8 @@
   <artifactId>fluo-parent</artifactId>
   <version>1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Apache Fluo Parent POM</name>
-  <description>Parent pom to configure common project build resources for Apache Fluo projects</description>
+  <name>Apache Fluo Parent POM (incubating)</name>
+  <description>Parent pom for common configuration across Apache Fluo projects</description>
   <url>https://fluo.apache.org</url>
   <!-- this is the year of inception at ASF -->
   <inceptionYear>2016</inceptionYear>
@@ -77,14 +77,14 @@
   </issueManagement>
   <properties>
     <assembly.tarLongFileMode>posix</assembly.tarLongFileMode>
-    <checkstyle.config>io/fluo/resources/java-checkstyle.xml</checkstyle.config>
+    <build-resources.version>1.0.0-incubating</build-resources.version>
+    <checkstyle.config>org/apache/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
     <findbugs.effort>Max</findbugs.effort>
     <findbugs.includeTests>true</findbugs.includeTests>
     <findbugs.maxRank>16</findbugs.maxRank>
     <findbugs.xmlOutput>true</findbugs.xmlOutput>
-    <formatter.config>io/fluo/resources/eclipse-formatter.xml</formatter.config>
-    <io.fluo.resources.version>1.0.1</io.fluo.resources.version>
+    <formatter.config>org/apache/fluo/resources/eclipse-formatter.xml</formatter.config>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.min-version>3.0.5</maven.min-version>
@@ -120,6 +120,13 @@
           <configuration>
             <skipNoGit>true</skipNoGit>
           </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-simple</artifactId>
+              <version>1.7.2</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>net.revelc.code</groupId>
@@ -132,9 +139,9 @@
           </configuration>
           <dependencies>
             <dependency>
-              <groupId>io.fluo</groupId>
-              <artifactId>resources</artifactId>
-              <version>${io.fluo.resources.version}</version>
+              <groupId>org.apache.fluo</groupId>
+              <artifactId>build-resources</artifactId>
+              <version>${build-resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -153,9 +160,9 @@
               <version>7.0</version>
             </dependency>
             <dependency>
-              <groupId>io.fluo</groupId>
-              <artifactId>resources</artifactId>
-              <version>${io.fluo.resources.version}</version>
+              <groupId>org.apache.fluo</groupId>
+              <artifactId>build-resources</artifactId>
+              <version>${build-resources.version}</version>
             </dependency>
           </dependencies>
         </plugin>
