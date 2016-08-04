@@ -13,10 +13,15 @@
  * the License.
  */
 
-package org.apache.fluo.core.data;
+package org.apache.fluo.api.data;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.BytesBuilder;
+import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,6 +36,34 @@ public class BytesBuilderTest {
     bb = Bytes.newBuilder();
     Bytes bytes2 = bb.append(Bytes.of("ab")).append("cd").append(new byte[] {'e', 'f'}).toBytes();
     Assert.assertEquals(Bytes.of("abcdef"), bytes2);
+  }
+
+  @Test
+  public void testInputStream() throws IOException {
+
+    ByteArrayInputStream bais =
+        new ByteArrayInputStream("abcdefg".getBytes(StandardCharsets.UTF_8));
+    BytesBuilder bb = Bytes.newBuilder();
+
+    bb.append(bais, 2);
+    bb.append(bais, 3);
+
+    Assert.assertEquals(Bytes.of("abcde"), bb.toBytes());
+  }
+
+  @Test
+  public void testByteBuffer() {
+    ByteBuffer buffer = ByteBuffer.wrap("abcdefg".getBytes(StandardCharsets.UTF_8));
+
+    BytesBuilder bb = Bytes.newBuilder();
+
+    bb.append(buffer);
+    bb.append(buffer);
+
+    Assert.assertEquals(0, buffer.position());
+    Assert.assertEquals(7, buffer.remaining());
+
+    Assert.assertEquals(Bytes.of("abcdefg" + "abcdefg"), bb.toBytes());
   }
 
   @Test

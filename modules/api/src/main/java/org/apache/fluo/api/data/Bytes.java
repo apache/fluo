@@ -16,59 +16,54 @@
 package org.apache.fluo.api.data;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
 import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 
+import com.google.common.base.Preconditions;
+
 /**
- * Represents bytes in Fluo. Similar to an Accumulo ByteSequence. Bytes is immutable after it is
- * created. Bytes.EMPTY is used to represent a Bytes object with no data.
+ * Represents bytes in Fluo. Bytes is an immutable wrapper around a byte array. Bytes always copies
+ * on creation and never lets its internal byte array escape. Its modeled after Java's String which
+ * is an immutable wrapper around a char array. It was created because there is nothing in Java like
+ * it at the moment. Its very nice having this immutable type, it avoids having to do defensive
+ * copies to ensure correctness. Maybe one day Java will have equivalents of String, StringBuilder,
+ * and Charsequence for bytes.
+ * 
+ * <p>
+ * The reason Fluo did not use ByteBuffer is because its not immutable, even a read only ByteBuffer
+ * has a mutable position. This makes ByteBuffer unsuitable for place where an immutable data type
+ * is desirable, like a key for a map.
+ * 
+ * <p>
+ * Bytes.EMPTY is used to represent a Bytes object with no data.
  *
  * @since 1.0.0
  */
 public final class Bytes implements Comparable<Bytes>, Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final String WRITE_UTIL_CLASS = "org.apache.fluo.accumulo.data.WriteUtilImpl";
 
   private final byte[] data;
   private final int offset;
   private final int length;
 
-  /**
-   * @since 1.0.0
-   */
-  public interface WriteUtil {
-    void writeVInt(DataOutput stream, int i) throws IOException;
-
-    int readVInt(DataInput stream) throws IOException;
-  }
-
-  private static WriteUtil writeUtil;
-
-  static {
-    try {
-      writeUtil =
-          (WriteUtil) Class.forName(WRITE_UTIL_CLASS).getDeclaredConstructor().newInstance();
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   public static final Bytes EMPTY = new Bytes(new byte[0]);
 
   private Integer hashCode = null;
+
+  public Bytes() {
+    data = EMPTY.data;
+    offset = 0;
+    length = 0;
+  }
 
   private Bytes(byte[] data) {
     this.data = data;
@@ -121,7 +116,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   public Bytes subSequence(int start, int end) {
     if (start > end || start < 0 || end > length) {
-      throw new IllegalArgumentException("Bad start and/end start = " + start + " end=" + end
+      throw new IndexOutOfBoundsException("Bad start and/end start = " + start + " end=" + end
           + " offset=" + offset + " length=" + length);
     }
     return new Bytes(data, offset + start, end - start);
@@ -145,14 +140,38 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * Compares this to the given bytes, byte by byte, returning a negative, zero, or positive result
+   * @return A read only byte buffer thats backed by the internal byte array.
+   */
+  public ByteBuffer toByteBuffer() {
+    return ByteBuffer.wrap(data, offset, length).asReadOnlyBuffer();
+  }
+
+  /**
+   * @return An input stream thats backed by the internal byte array
+   */
+  public InputStream toInputStream() {
+    return new ByteArrayInputStream(data, offset, length);
+  }
+
+  public void writeTo(OutputStream out) throws IOException {
+    // since Bytes is immutable, its important the we do not let the internal byte array escape
+    if (length <= 32) {
+      int end = offset + length;
+      for (int i = offset; i < end; i++) {
+        out.write(data[i]);
+      }
+    } else {
+      out.write(toArray());
+    }
+  }
+
+  /**
+   * Compares this to the passed bytes, byte by byte, returning a negative, zero, or positive result
    * if the first sequence is less than, equal to, or greater than the second. The comparison is
    * performed starting with the first byte of each sequence, and proceeds until a pair of bytes
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
    *
-   * @param b1 first byte sequence to compare
-   * @param b2 second byte sequence to compare
    * @return comparison result
    */
   @Override
@@ -234,16 +253,26 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * Creates a Bytes object by copying the data of the given ByteBuffer
+   * Creates a Bytes object by copying the data of the given ByteBuffer.
+   * 
+   * @param bb Data will be read from this ByteBuffer in such a way that its position is not
+   *        changed.
    */
   public static final Bytes of(ByteBuffer bb) {
     Objects.requireNonNull(bb);
     if (bb.remaining() == 0) {
       return EMPTY;
     }
-    byte[] data = new byte[bb.remaining()];
-    // duplicate so that it does not change position
-    bb.duplicate().get(data);
+    byte[] data;
+    if (bb.hasArray()) {
+      data =
+          Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
+              bb.limit() + bb.arrayOffset());
+    } else {
+      data = new byte[bb.remaining()];
+      // duplicate so that it does not change position
+      bb.duplicate().get(data);
+    }
     return new Bytes(data);
   }
 
@@ -273,29 +302,139 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * Writes Bytes to DataOutput
+   * This class provides an easy, efficient, reusable mechanism for building immutable Bytes
+   * objects.
    *
-   * @param out DataOutput
-   * @param b Bytes
+   * @since 1.0.0
    */
-  public static final void write(DataOutput out, Bytes b) throws IOException {
-    writeUtil.writeVInt(out, b.length());
-    for (int i = 0; i < b.length(); i++) {
-      out.write(b.byteAt(i) & 0xff);
-    }
-  }
+  public static class BytesBuilder {
 
-  /**
-   * Wraps data input as Bytes
-   *
-   * @param in DataInput
-   * @return Bytes
-   */
-  public static final Bytes read(DataInput in) throws IOException {
-    int len = writeUtil.readVInt(in);
-    byte[] b = new byte[len];
-    in.readFully(b);
-    return of(b);
+    private byte[] ba;
+    private int len;
+
+    BytesBuilder(int initialCapacity) {
+      ba = new byte[initialCapacity];
+      len = 0;
+    }
+
+    BytesBuilder() {
+      this(32);
+    }
+
+    private void ensureCapacity(int min) {
+      if (ba.length < min) {
+        int newLen = ba.length * 2;
+        if (newLen < min) {
+          newLen = min;
+        }
+
+        ba = Arrays.copyOf(ba, newLen);
+      }
+    }
+
+    /**
+     * Converts string to bytes using UTF-8 encoding and appends bytes.
+     *
+     * @return self
+     */
+    public BytesBuilder append(String s) {
+      return append(s.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public BytesBuilder append(Bytes b) {
+      ensureCapacity(len + b.length());
+      System.arraycopy(b.data, b.offset, ba, len, b.length);
+      len += b.length();
+      return this;
+    }
+
+    public BytesBuilder append(byte[] bytes) {
+      ensureCapacity(len + bytes.length);
+      System.arraycopy(bytes, 0, ba, len, bytes.length);
+      len += bytes.length;
+      return this;
+    }
+
+    /**
+     * Append a single byte.
+     *
+     * @param b take the lower 8 bits and appends it.
+     * @return self
+     */
+    public BytesBuilder append(int b) {
+      ensureCapacity(len + 1);
+      ba[len] = (byte) b;
+      len += 1;
+      return this;
+    }
+
+    /**
+     * Append a section of bytes from array
+     * 
+     * @param bytes - bytes to be appended
+     * @param offset - start of bytes to be appended
+     * @param length - how many bytes from 'offset' to be appended
+     * @return self
+     */
+    public BytesBuilder append(byte[] bytes, int offset, int length) {
+      ensureCapacity(len + length);
+      System.arraycopy(bytes, offset, ba, len, length);
+      len += length;
+      return this;
+    }
+
+    /**
+     * Append a sequence of bytes from an InputStream
+     * 
+     * @param in data source to append from
+     * @param length number of bytes to read from data source
+     * @return self
+     */
+    public BytesBuilder append(InputStream in, int length) throws IOException {
+      ensureCapacity(len + length);
+      new DataInputStream(in).readFully(ba, len, length);
+      len += length;
+      return this;
+    }
+
+    /**
+     * Append data from a ByteBuffer
+     * 
+     * @param bb data is read from the ByteBuffer in such a way that its position is not changed.
+     * @return self
+     */
+    public BytesBuilder append(ByteBuffer bb) {
+      int length = bb.remaining();
+      ensureCapacity(len + length);
+      bb.duplicate().get(ba, len, length);
+      len += length;
+      return this;
+    }
+
+    /**
+     * Sets the point at which appending will start. This method can shrink or grow the ByteBuilder
+     * from its current state. If it grows it will zero pad.
+     */
+    public void setLength(int newLen) {
+      Preconditions.checkArgument(newLen >= 0, "Negative length passed : " + newLen);
+      if (newLen > ba.length) {
+        ba = Arrays.copyOf(ba, newLen);
+      }
+
+      if (newLen > len) {
+        Arrays.fill(ba, len, newLen, (byte) 0);
+      }
+
+      len = newLen;
+    }
+
+    public int getLength() {
+      return len;
+    }
+
+    public Bytes toBytes() {
+      return Bytes.of(ba, 0, len);
+    }
   }
 
   /**
@@ -310,59 +449,5 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static BytesBuilder newBuilder(int initialCapacity) {
     return new BytesBuilder(initialCapacity);
-  }
-
-  /**
-   * Concatenates of list of Bytes objects to create a byte array
-   *
-   * @param listOfBytes Bytes objects to concatenate
-   * @return Bytes
-   */
-  public static final Bytes concat(Bytes... listOfBytes) {
-    try {
-      // TODO calculate exact array size needed
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      DataOutputStream dos = new DataOutputStream(baos);
-
-      for (Bytes b : listOfBytes) {
-        writeUtil.writeVInt(dos, b.length());
-        dos.write(b.toArray());
-      }
-
-      dos.close();
-      return of(baos.toByteArray());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Splits a bytes object into several bytes objects
-   *
-   * @param b Original bytes object
-   * @return List of bytes objects
-   */
-  public static final List<Bytes> split(Bytes b) {
-    ByteArrayInputStream bais;
-    bais = new ByteArrayInputStream(b.toArray());
-
-    DataInputStream dis = new DataInputStream(bais);
-
-    ArrayList<Bytes> ret = new ArrayList<>();
-
-    try {
-      while (true) {
-        int len = writeUtil.readVInt(dis);
-        // TODO could get pointers into original byte seq
-        byte[] field = new byte[len];
-        dis.readFully(field);
-        ret.add(of(field));
-      }
-    } catch (EOFException ee) {
-      // at end of file
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return ret;
   }
 }
