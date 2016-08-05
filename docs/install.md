@@ -1,8 +1,8 @@
 # Fluo Install Instructions
 
-Install instructions for running Fluo on machine or cluster where Accumulo, Hadoop, and Zookeeper
-are installed and running.  The Fluo distribution uses YARN to run workers (which run your Observers)
-and the Oracle across a cluster.
+Instructions for installing Apache Fluo and starting a Fluo application in YARN on a cluster where
+Accumulo, Hadoop & Zookeeper are running.  If you need help setting up these dependencies, see the
+[related projects page][related] for external projects that may help.  
 
 ## Requirements
 
@@ -198,6 +198,7 @@ node in your cluster.
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/
 [Java]: http://openjdk.java.net/
+[related]: https://fluo.apache.org/related-projects/
 [release]: https://fluo.apache.org/download/
 [phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties

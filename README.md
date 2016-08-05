@@ -11,11 +11,10 @@ of a large-scale computation, index, or analytic as new data is discovered. Chec
 
 ## Getting Started
 
-If you are completely new to Fluo, then check out the [Fluo Tour][tour]. To
-learn how to setup Fluo on a cluster, check out the [install
-instructions][install].  There are also external open source projects listed on
-the [related projects page][related] that may be useful for setting
-up Fluo.
+* Take the [Fluo Tour][tour] if you are completely new to Fluo. 
+* Read the [install instructions][install] to install Fluo and start a Fluo application in YARN on a
+  cluster where Accumulo, Hadoop & Zookeeper are running. If you need help setting up these
+  dependencies, see the [related projects page][related] for external projects that may help.
 
 ## Applications
 
