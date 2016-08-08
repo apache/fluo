@@ -30,9 +30,9 @@ Follow the instructions below to setup InfluxDB and Grafana.
       batch-pending = 5
       batch-timeout = "1s"
       templates = [
-        "fluo.*.*.tx.*.*.* ..app.host.measurement.measurement.observer.field",
-        "fluo.*.*.*.*.* ..app.host.measurement.measurement.field",
-        "fluo.*.*.*.* ..app.host.measurement.measurement",
+        "fluo.*.*.tx.*.*.* .app.host.measurement.measurement.observer.field",
+        "fluo.*.*.*.*.* .app.host.measurement.measurement.field",
+        "fluo.*.*.*.* .app.host.measurement.measurement",
       ]
     ```
 
