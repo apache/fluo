@@ -42,7 +42,7 @@ public final class Span implements Serializable {
    *
    * @param builder Builder object
    */
-  public Span(Builder builder) {
+  private Span(Builder builder) {
     this.startInclusive = builder.start.inclusive;
     if (!builder.start.infinite) {
       start = buildRowColumn(builder.start);
@@ -323,16 +323,17 @@ public final class Span implements Serializable {
     return prefix(Bytes.of(row), colPrefix);
   }
 
-  /**
-   * @since 1.0.0
-   */
-  public static class KeyBuilder {
+  private static class KeyBuilder {
     protected Bytes row = Bytes.EMPTY;
     protected Bytes cf = Bytes.EMPTY;
     protected Bytes cq = Bytes.EMPTY;
     protected Bytes cv = Bytes.EMPTY;
     protected boolean inclusive = true;
     protected boolean infinite = true;
+  }
+
+  public static Builder newBuilder() {
+    return new Builder();
   }
 
   /**
@@ -342,6 +343,8 @@ public final class Span implements Serializable {
 
     private KeyBuilder start = new KeyBuilder();
     private KeyBuilder end = new KeyBuilder();
+
+    private Builder() {}
 
     /**
      * Build start of Span starting with row

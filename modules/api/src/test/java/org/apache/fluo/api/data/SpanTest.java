@@ -49,23 +49,23 @@ public class SpanTest {
   @Test
   public void testRowRange() {
     // Test with Bytes input
-    Assert.assertEquals(new Span(rw1b, true, rw2b, false), new Span.Builder().startRow(rw1b)
-        .endRow(rw2b).exclusive().build());
-    Assert.assertEquals(new Span(rw1b, false, rw2b, false), new Span.Builder().startRow(rw1b)
+    Assert.assertEquals(new Span(rw1b, true, rw2b, false),
+        Span.newBuilder().startRow(rw1b).endRow(rw2b).exclusive().build());
+    Assert.assertEquals(new Span(rw1b, false, rw2b, false), Span.newBuilder().startRow(rw1b)
         .exclusive().endRow(rw2b).exclusive().build());
     Assert.assertEquals(new Span(rw1b, true, rw2b, true),
-        new Span.Builder().startRow(rw1b).endRow(rw2b).build());
-    Assert.assertEquals(new Span(rw1b, false, rw2b, true), new Span.Builder().startRow(rw1b)
+        Span.newBuilder().startRow(rw1b).endRow(rw2b).build());
+    Assert.assertEquals(new Span(rw1b, false, rw2b, true), Span.newBuilder().startRow(rw1b)
         .exclusive().endRow(rw2b).build());
 
     // Test with String input
-    Assert.assertEquals(new Span(rw1b, true, rw2b, false), new Span.Builder().startRow(rw1s)
-        .endRow(rw2s).exclusive().build());
-    Assert.assertEquals(new Span(rw1b, false, rw2b, false), new Span.Builder().startRow(rw1s)
+    Assert.assertEquals(new Span(rw1b, true, rw2b, false),
+        Span.newBuilder().startRow(rw1s).endRow(rw2s).exclusive().build());
+    Assert.assertEquals(new Span(rw1b, false, rw2b, false), Span.newBuilder().startRow(rw1s)
         .exclusive().endRow(rw2s).exclusive().build());
     Assert.assertEquals(new Span(rw1b, true, rw2b, true),
-        new Span.Builder().startRow(rw1s).endRow(rw2s).build());
-    Assert.assertEquals(new Span(rw1b, false, rw2b, true), new Span.Builder().startRow(rw1s)
+        Span.newBuilder().startRow(rw1s).endRow(rw2s).build());
+    Assert.assertEquals(new Span(rw1b, false, rw2b, true), Span.newBuilder().startRow(rw1s)
         .exclusive().endRow(rw2s).build());
   }
 
@@ -76,14 +76,14 @@ public class SpanTest {
     RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b));
     RowColumn frc2 = rc2.following();
 
-    Assert.assertEquals(new Span(RowColumn.EMPTY, true, frc2, false),
-        new Span.Builder().endRow(rw2b).fam(cf2b).build());
-    Assert.assertEquals(new Span(RowColumn.EMPTY, true, rc2, false), new Span.Builder()
-        .endRow(rw2b).fam(cf2b).exclusive().build());
-    Assert.assertEquals(new Span(rc1, true, RowColumn.EMPTY, true),
-        new Span.Builder().startRow(rw1b).fam(cf1b).build());
+    Assert.assertEquals(new Span(RowColumn.EMPTY, true, frc2, false), Span.newBuilder()
+        .endRow(rw2b).fam(cf2b).build());
+    Assert.assertEquals(new Span(RowColumn.EMPTY, true, rc2, false), Span.newBuilder().endRow(rw2b)
+        .fam(cf2b).exclusive().build());
+    Assert.assertEquals(new Span(rc1, true, RowColumn.EMPTY, true), Span.newBuilder()
+        .startRow(rw1b).fam(cf1b).build());
     Assert.assertEquals(new Span(frc1, true, RowColumn.EMPTY, true),
-        new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().build());
+        Span.newBuilder().startRow(rw1b).fam(cf1b).exclusive().build());
   }
 
   @Test
@@ -93,15 +93,14 @@ public class SpanTest {
     RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b));
     RowColumn frc2 = rc2.following();
 
-    Assert.assertEquals(new Span(rc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).endRow(rw2b).fam(cf2b).build());
-    Assert.assertEquals(new Span(rc1, true, rc2, false), new Span.Builder().startRow(rw1b)
-        .fam(cf1b).endRow(rw2b).fam(cf2b).exclusive().build());
+    Assert.assertEquals(new Span(rc1, true, frc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).endRow(rw2b).fam(cf2b).build());
+    Assert.assertEquals(new Span(rc1, true, rc2, false), Span.newBuilder().startRow(rw1b).fam(cf1b)
+        .endRow(rw2b).fam(cf2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).build());
-    Assert.assertEquals(new Span(frc1, true, rc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).exclusive()
-            .build());
+        Span.newBuilder().startRow(rw1b).fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).build());
+    Assert.assertEquals(new Span(frc1, true, rc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).exclusive().endRow(rw2b).fam(cf2b).exclusive().build());
   }
 
   @Test
@@ -111,17 +110,15 @@ public class SpanTest {
     RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b));
     RowColumn frc2 = rc2.following();
 
-    Assert.assertEquals(new Span(rc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b)
-            .build());
-    Assert.assertEquals(new Span(rc1, true, rc2, false), new Span.Builder().startRow(rw1b)
-        .fam(cf1b).qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b).exclusive().build());
+    Assert.assertEquals(new Span(rc1, true, frc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b).build());
+    Assert.assertEquals(new Span(rc1, true, rc2, false), Span.newBuilder().startRow(rw1b).fam(cf1b)
+        .qual(cq1b).endRow(rw2b).fam(cf2b).qual(cq2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b)
+        Span.newBuilder().startRow(rw1b).fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b)
             .qual(cq2b).build());
-    Assert.assertEquals(new Span(frc1, true, rc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b)
-            .qual(cq2b).exclusive().build());
+    Assert.assertEquals(new Span(frc1, true, rc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).qual(cq1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).exclusive().build());
   }
 
   @Test
@@ -131,18 +128,16 @@ public class SpanTest {
     RowColumn rc2 = new RowColumn(rw2b, new Column(cf2b, cq2b, Bytes.of(cv2s)));
     RowColumn frc2 = rc2.following();
 
-    Assert.assertEquals(new Span(rc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b)
-            .qual(cq2b).vis(cv2b).build());
-    Assert.assertEquals(new Span(rc1, true, rc2, false), new Span.Builder().startRow(rw1b)
-        .fam(cf1b).qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).exclusive()
-        .build());
+    Assert.assertEquals(new Span(rc1, true, frc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).build());
+    Assert.assertEquals(new Span(rc1, true, rc2, false), Span.newBuilder().startRow(rw1b).fam(cf1b)
+        .qual(cq1b).vis(cv1b).endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b).exclusive().build());
     Assert.assertEquals(new Span(frc1, true, frc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b)
+        Span.newBuilder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b)
             .fam(cf2b).qual(cq2b).vis(cv2b).build());
-    Assert.assertEquals(new Span(frc1, true, rc2, false),
-        new Span.Builder().startRow(rw1b).fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b)
-            .fam(cf2b).qual(cq2b).vis(cv2b).exclusive().build());
+    Assert.assertEquals(new Span(frc1, true, rc2, false), Span.newBuilder().startRow(rw1b)
+        .fam(cf1b).qual(cq1b).vis(cv1b).exclusive().endRow(rw2b).fam(cf2b).qual(cq2b).vis(cv2b)
+        .exclusive().build());
   }
 
   @Test

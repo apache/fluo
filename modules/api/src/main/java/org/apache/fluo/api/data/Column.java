@@ -28,7 +28,7 @@ import java.util.Objects;
 public final class Column implements Comparable<Column>, Serializable {
 
   private static final long serialVersionUID = 1L;
-  public static final Bytes UNSET = Bytes.of(new byte[0]);
+  private static final Bytes UNSET = Bytes.of(new byte[0]);
 
   private Bytes family = UNSET;
   private Bytes qualifier = UNSET;
