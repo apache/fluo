@@ -79,8 +79,7 @@ public interface SnapshotBase {
    * The following example shows how to build a row scanner.
    *
    * <pre>
-   * {
-   *   &#064;code
+   * <code>
    *   RowScanner rs = tx.scanner().over(span).fetch(col1, col2).byRow().build();
    *   for (ColumnScanner colScanner : rs) {
    *     Bytes row = colScanner.getRow();
@@ -88,7 +87,7 @@ public interface SnapshotBase {
    *       // do stuff with the columns and values in the row
    *     }
    *   }
-   * }
+   * </code>
    * </pre>
    *
    * @return A scanner builder.
