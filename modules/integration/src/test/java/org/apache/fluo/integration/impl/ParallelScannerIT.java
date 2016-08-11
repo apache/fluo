@@ -17,9 +17,9 @@ package org.apache.fluo.integration.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
@@ -57,15 +57,16 @@ public class ParallelScannerIT extends ITBaseImpl {
     newEdges.add(new RowColumn("node8", new Column("edge", "node3")));
     newEdges.add(new RowColumn("node5", new Column("edge", "node7")));
 
-    Map<String, Map<Column, String>> existing = tx2.gets(newEdges);
+    Map<RowColumn, String> existing = tx2.gets(newEdges);
 
     tx2.done();
 
-    Assert.assertEquals(ImmutableSet.of("node1", "node5"), existing.keySet());
-    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node3")), existing.get("node1")
-        .keySet());
-    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node2"), new Column("edge", "node7")),
-        existing.get("node5").keySet());
+    HashSet<RowColumn> expected = new HashSet<>();
+    expected.add(new RowColumn("node1", new Column("edge", "node3")));
+    expected.add(new RowColumn("node5", new Column("edge", "node2")));
+    expected.add(new RowColumn("node5", new Column("edge", "node7")));
+
+    Assert.assertEquals(expected, existing.keySet());
   }
 
   @Test

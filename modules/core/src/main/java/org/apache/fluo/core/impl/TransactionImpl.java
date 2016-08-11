@@ -191,7 +191,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     checkIfOpen();
 
     if (rowColumns.size() == 0) {
@@ -200,10 +200,14 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rowColumns, env, startTs, stats);
 
-    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
+    Map<Bytes, Map<Column, Bytes>> scan = pss.scan();
+    Map<RowColumn, Bytes> ret = new HashMap<>();
 
-    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
+    for (Entry<Bytes, Map<Column, Bytes>> entry : scan.entrySet()) {
       updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+      for (Entry<Column, Bytes> colVal : entry.getValue().entrySet()) {
+        ret.put(new RowColumn(entry.getKey(), colVal.getKey()), colVal.getValue());
+      }
     }
 
     return ret;
@@ -670,7 +674,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);
   }
 
@@ -1064,7 +1068,6 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
         commmitPrimary(cd, commitTs);
       }
     }, env.getSharedResources().getAsyncCommitExecutor());
-
   }
 
   private void commmitPrimary(CommitData cd, final long commitTs) {

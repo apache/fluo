@@ -200,7 +200,7 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     return tx.get(rowColumns);
   }
 
@@ -210,7 +210,7 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     return tx.gets(rowColumns);
   }
 
