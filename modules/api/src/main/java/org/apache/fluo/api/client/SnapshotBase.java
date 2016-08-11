@@ -51,10 +51,10 @@ public interface SnapshotBase {
   Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns);
 
   /**
-   * Given a collection of {@link RowColumn}s, retrieves a map contains the values at those rows and
-   * {@link Column}s. Only rows and columns that exists will be returned in map.
+   * Given a collection of {@link RowColumn}s, retrieves a map contains the values at
+   * {@link RowColumn}. Only rows and columns that exists will be returned in map.
    */
-  Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns);
+  Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns);
 
   /**
    * This method is the starting point for constructing a scanner. Scanners can be constructed over
