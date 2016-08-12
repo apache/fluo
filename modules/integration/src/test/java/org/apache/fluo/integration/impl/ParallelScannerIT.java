@@ -57,15 +57,14 @@ public class ParallelScannerIT extends ITBaseImpl {
     newEdges.add(new RowColumn("node8", new Column("edge", "node3")));
     newEdges.add(new RowColumn("node5", new Column("edge", "node7")));
 
-    Map<String, Map<Column, String>> existing = tx2.gets(newEdges);
+    Map<RowColumn, String> existing = tx2.gets(newEdges);
 
     tx2.done();
 
     Assert.assertEquals(ImmutableSet.of("node1", "node5"), existing.keySet());
-    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node3")), existing.get("node1")
-        .keySet());
+    Assert.assertEquals(ImmutableSet.of(new Column("edge", "node3")), existing.get("node1"));
     Assert.assertEquals(ImmutableSet.of(new Column("edge", "node2"), new Column("edge", "node7")),
-        existing.get("node5").keySet());
+        existing.get("node5"));
   }
 
   @Test

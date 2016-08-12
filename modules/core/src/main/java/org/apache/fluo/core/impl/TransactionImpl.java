@@ -85,10 +85,10 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);
-  private static final Bytes DELETE =
-      Bytes.of("special delete object f804266bf94935edd45ae3e6c287b93c1814295c");
-  private static final Bytes NTFY_VAL =
-      Bytes.of("special ntfy value ce0c523e6e4dc093be8a2736b82eca1b95f97ed4");
+  private static final Bytes DELETE = Bytes
+      .of("special delete object f804266bf94935edd45ae3e6c287b93c1814295c");
+  private static final Bytes NTFY_VAL = Bytes
+      .of("special ntfy value ce0c523e6e4dc093be8a2736b82eca1b95f97ed4");
 
   private static boolean isWrite(Bytes val) {
     return val != NTFY_VAL;
@@ -193,7 +193,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   // TODO: Fix override to return Map<RowColumn, Bytes>
   // TODO: Fix span() as this will move to unsupported type.
   @Override
-  public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     checkIfOpen();
 
     if (rowColumns.size() == 0) {
@@ -203,12 +203,17 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rowColumns, env, startTs, stats);
 
     Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
+    Map<RowColumn, Bytes> bet = new HashMap<>();
 
     for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
       updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+      for (Entry<Column, Bytes> cols : entry.getValue().entrySet()) {
+        // create RowColumn and add to new map
+        bet.put(new RowColumn(cols.getValue()), cols.getValue());
+      }
     }
 
-    return ret;
+    return bet;
   }
 
   private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
@@ -242,8 +247,9 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
     Map<Column, Bytes> ret = new HashMap<>();
 
-    Iterable<ColumnValue> scanner = Iterables
-        .transform(new SnapshotScanner(env, opts, startTs, stats), ColumnScannerImpl::entry2cv);
+    Iterable<ColumnValue> scanner =
+        Iterables.transform(new SnapshotScanner(env, opts, startTs, stats),
+            ColumnScannerImpl::entry2cv);
     for (ColumnValue cv : scanner) {
       if (shouldCopy) {
         if (columns.contains(cv.getColumn())) {
@@ -505,14 +511,15 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
       for (ColumnUpdate cu : updates) {
         // TODO avoid create col vis object
-        Column col = new Column(Bytes.of(cu.getColumnFamily()), Bytes.of(cu.getColumnQualifier()),
-            Bytes.of(cu.getColumnVisibility()));
+        Column col =
+            new Column(Bytes.of(cu.getColumnFamily()), Bytes.of(cu.getColumnQualifier()),
+                Bytes.of(cu.getColumnVisibility()));
 
         if (notification.getColumn().equals(col)) {
           // check to see if ACK exist after notification
           Key startKey = SpanUtil.toKey(notification.getRowColumn());
-          startKey.setTimestamp(
-              ColumnConstants.ACK_PREFIX | (Long.MAX_VALUE & ColumnConstants.TIMESTAMP_MASK));
+          startKey.setTimestamp(ColumnConstants.ACK_PREFIX
+              | (Long.MAX_VALUE & ColumnConstants.TIMESTAMP_MASK));
 
           Key endKey = SpanUtil.toKey(notification.getRowColumn());
           endKey.setTimestamp(ColumnConstants.ACK_PREFIX | (notification.getTimestamp() + 1));
@@ -669,10 +676,10 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     return TxStringUtil.gets(this, rows, columns);
   }
 
-  // TODO: Fix override to return Map<RowColumn, Bytes>
+  // TODO: Fix override to return Map<RowColumn, String>
   // TODO: Add gets() method in TxStringUtil to support return type of Map<RowColumn, Bytes>
   @Override
-  public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
+  public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);
   }
 
@@ -769,8 +776,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     }
   }
 
-  private void beginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback,
-      RowColumn primary) {
+  private void beginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback, RowColumn primary) {
 
     if (updates.size() == 0) {
       // TODO do async
@@ -862,8 +868,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
           break;
         case COMMITTED:
         default:
-          throw new IllegalStateException(
-              "unexpected tx state " + txInfo.status + " " + cd.prow + " " + cd.pcol);
+          throw new IllegalStateException("unexpected tx state " + txInfo.status + " " + cd.prow
+              + " " + cd.pcol);
 
       }
     }
@@ -892,8 +898,9 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
       for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
         if (cm == null) {
-          cm = prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
-              cd.pcol, false);
+          cm =
+              prewrite(rowUpdates.getKey(), colUpdates.getKey(), colUpdates.getValue(), cd.prow,
+                  cd.pcol, false);
         } else {
           prewrite(cm, colUpdates.getKey(), colUpdates.getValue(), cd.prow, cd.pcol, false);
         }
@@ -1076,8 +1083,9 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     boolean isTrigger = isTriggerRow(cd.prow) && cd.pcol.equals(notification.getColumn());
 
     Condition lockCheck =
-        new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(LockValue.encode(cd.prow,
-            cd.pcol, isWrite(cd.pval), isDelete(cd.pval), isTrigger, getTransactorID()));
+        new FluoCondition(env, cd.pcol).setIterators(iterConf).setValue(
+            LockValue.encode(cd.prow, cd.pcol, isWrite(cd.pval), isDelete(cd.pval), isTrigger,
+                getTransactorID()));
     final ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
 
     ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
@@ -1115,8 +1123,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
             switch (txInfo.status) {
               case COMMITTED:
                 if (txInfo.commitTs != commitTs) {
-                  throw new IllegalStateException(
-                      cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + commitTs);
+                  throw new IllegalStateException(cd.prow + " " + cd.pcol + " " + txInfo.commitTs
+                      + "!=" + commitTs);
                 }
                 ms = Status.ACCEPTED;
                 break;
@@ -1182,8 +1190,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   }
 
   @VisibleForTesting
-  public boolean finishCommit(CommitData cd, Stamp commitStamp)
-      throws TableNotFoundException, MutationsRejectedException {
+  public boolean finishCommit(CommitData cd, Stamp commitStamp) throws TableNotFoundException,
+      MutationsRejectedException {
     deleteLocks(cd, commitStamp.getTxTimestamp());
     return true;
   }

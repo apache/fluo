@@ -99,7 +99,7 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Collection)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<RowColumn, Bytes> gets(Collection<RowColumn> rowColumns);
+  Map<RowColumn, String> gets(Collection<RowColumn> rowColumns);
 
   /**
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and

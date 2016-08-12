@@ -56,9 +56,10 @@ public class TxStringUtil {
     return transform(snapshot.get(Collections2.transform(rows, s -> Bytes.of(s)), columns));
   }
 
-  // TODO: Fix incompatable return type.
-  public static Map<String, Map<Column, String>> gets(SnapshotBase snapshot,
-      Collection<RowColumn> rowColumns) {
-    return transform(snapshot.get(rowColumns));
+  // TODO: Fix incompatible return type.
+  public static Map<RowColumn, String> gets(SnapshotBase snapshot, Collection<RowColumn> rowColumns) {
+    Map<RowColumn, Bytes> bytesMap = snapshot.get(rowColumns);
+    return Maps.transformValues(bytesMap, b -> b.toString());
   }
+
 }
