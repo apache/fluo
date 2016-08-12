@@ -922,11 +922,11 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
         cd.acceptedRows.add(row);
       } else {
         cd.addToRejected(row, updates.get(row).keySet());
-        getStats().setRejected(cd.getRejected());
       }
     }
 
     if (cd.getRejected().size() > 0) {
+      getStats().setRejected(cd.getRejected());
       env.getSharedResources().getSyncCommitExecutor().execute(new SynchronousCommitTask(cd) {
         @Override
         protected void runCommitStep(CommitData cd) throws Exception {

@@ -38,6 +38,7 @@ public class FluoThreadFactory implements ThreadFactory {
     String name =
         String.format("Fluo-%04d-%03d-%s", poolId, threadCount.incrementAndGet(), poolName);
     t.setName(name);
+    t.setDaemon(true);
     return t;
   }
 }

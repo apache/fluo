@@ -192,6 +192,13 @@ public class SharedResources implements AutoCloseable {
       throw new RuntimeException(e1);
     }
 
+    syncCommitExecutor.shutdownNow();
+    try {
+      syncCommitExecutor.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e1) {
+      throw new RuntimeException(e1);
+    }
+
     if (tnode != null) {
       tnode.close();
     }
@@ -206,6 +213,7 @@ public class SharedResources implements AutoCloseable {
     }
     acw.close();
     cw.close();
+    bulkAcw.close();
     bulkCw.close();
     sbw.close();
     try {
