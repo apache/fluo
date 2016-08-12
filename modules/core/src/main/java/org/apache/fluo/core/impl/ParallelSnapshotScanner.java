@@ -151,6 +151,8 @@ public class ParallelSnapshotScanner {
     }
   }
 
+
+
   private void scan(Map<Bytes, Map<Column, Bytes>> ret, List<Entry<Key, Value>> locks) {
 
     BatchScanner bs = setupBatchScanner();

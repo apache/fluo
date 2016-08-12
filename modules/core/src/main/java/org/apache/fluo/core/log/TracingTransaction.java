@@ -40,10 +40,10 @@ import org.slf4j.LoggerFactory;
 public class TracingTransaction implements AsyncTransaction, Snapshot {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX);
-  private static final Logger collisionLog = LoggerFactory
-      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".collisions");
-  private static final Logger summaryLog = LoggerFactory
-      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
+  private static final Logger collisionLog =
+      LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".collisions");
+  private static final Logger summaryLog =
+      LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
 
   private final AsyncTransaction tx;
   private final long txid;
@@ -76,8 +76,8 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   private String encRC(Map<Bytes, Map<Column, Bytes>> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
-        + "=" + encC(e.getValue())));
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        e -> enc(e.getKey()) + "=" + encC(e.getValue())));
   }
 
   private String encC(Collection<Column> columns) {
@@ -85,8 +85,8 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   private String encC(Map<Column, Bytes> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
-        + "=" + enc(e.getValue())));
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        e -> enc(e.getKey()) + "=" + enc(e.getValue())));
   }
 
   public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz) {
@@ -138,6 +138,8 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
     return ret;
   }
 
+  // TODO: Fix override to return Map<RowColumn, Bytes>
+  // TODO: Fix ret type and fix encRC(ret) to support new type
   @Override
   public Map<Bytes, Map<Column, Bytes>> get(Collection<RowColumn> rowColumns) {
     Map<Bytes, Map<Column, Bytes>> ret = tx.get(rowColumns);
@@ -230,11 +232,12 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
         className = clazz.getSimpleName();
       }
       // TODO log total # read, see fluo-426
-      summaryLog.trace("txid: {} thread : {} time: {} ({} {}) #ret: {} #set: {} #collisions: {} "
-          + "waitTime: {} committed: {} class: {}", txid, Thread.currentThread().getId(),
-          stats.getTime(), stats.getReadTime(), stats.getCommitTime(), stats.getEntriesReturned(),
-          stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
-          className);
+      summaryLog.trace(
+          "txid: {} thread : {} time: {} ({} {}) #ret: {} #set: {} #collisions: {} "
+              + "waitTime: {} committed: {} class: {}",
+          txid, Thread.currentThread().getId(), stats.getTime(), stats.getReadTime(),
+          stats.getCommitTime(), stats.getEntriesReturned(), stats.getEntriesSet(),
+          stats.getCollisions(), stats.getLockWaitTime(), committed, className);
     }
     tx.close();
   }
@@ -263,6 +266,7 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
     return TxStringUtil.gets(this, rows, columns);
   }
 
+  // TODO: Fix override to return Map<RowColumn, Bytes>
   @Override
   public Map<String, Map<Column, String>> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);
