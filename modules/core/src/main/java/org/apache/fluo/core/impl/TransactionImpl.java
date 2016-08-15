@@ -202,18 +202,17 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
     ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rowColumns, env, startTs, stats);
 
-    Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
-    Map<RowColumn, Bytes> bet = new HashMap<>();
+    Map<Bytes, Map<Column, Bytes>> scan = pss.scan();
+    Map<RowColumn, Bytes> ret = new HashMap<>();
 
-    for (Entry<Bytes, Map<Column, Bytes>> entry : ret.entrySet()) {
+    for (Entry<Bytes, Map<Column, Bytes>> entry : scan.entrySet()) {
       updateColumnsRead(entry.getKey(), entry.getValue().keySet());
-      for (Entry<Column, Bytes> cols : entry.getValue().entrySet()) {
-        // create RowColumn and add to new map
-        bet.put(new RowColumn(cols.getValue()), cols.getValue());
+      for (Entry<Column, Bytes> colVal : entry.getValue().entrySet()) {
+        ret.put(new RowColumn(entry.getKey(), colVal.getKey()), colVal.getValue());
       }
     }
 
-    return bet;
+    return ret;
   }
 
   private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {

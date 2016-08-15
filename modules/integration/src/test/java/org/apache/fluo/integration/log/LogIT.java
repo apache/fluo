@@ -342,7 +342,7 @@ public class LogIT extends ITBaseMini {
     String logMsgs = origLogMsgs.replace('\n', ' ');
 
     String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
-    pattern += ".*txid: \\1 \\Qget([r1 f1 q1 , r2 f1 q2 ]) -> [r1=[f1 q1 =v1], r2=[f1 q2 =v4]]\\E";
+    pattern += ".*txid: \\1 \\Qget([r1 f1 q1 , r2 f1 q2 ]) -> [r2 f1 q2 =v4, r1 f1 q1 =v1]\\E";
     pattern += ".*txid: \\1 \\Qget([r1, r2], [f1 q1 ]) -> [r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
     pattern += ".*txid: \\1 \\Qget(r1, [f1 q1 , f1 q2 ]) -> [f1 q1 =v1, f1 q2 =v2]\\E";
     pattern += ".*txid: \\1 \\Qget(r1, f1 q1 ) -> v1\\E";

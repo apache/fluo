@@ -59,10 +59,6 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
     return Hex.encNonAscii(c);
   }
 
-  private static String enc(RowColumn rc) {
-    return Hex.encNonAscii(rc);
-  }
-
   public TracingTransaction(AsyncTransaction tx) {
     this(tx, null, null);
   }
@@ -84,10 +80,11 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
         + "=" + encC(e.getValue())));
   }
 
-  private String encRCB(Map<RowColumn, Bytes> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
-        + "=" + enc(e.getValue())));
+  private String encRCM(Map<RowColumn, Bytes> ret) {
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        e -> Hex.encNonAscii(e.getKey()) + "=" + enc(e.getValue())));
   }
+
 
   private String encC(Collection<Column> columns) {
     return Iterators.toString(Iterators.transform(columns.iterator(), Hex::encNonAscii));
@@ -147,13 +144,11 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
     return ret;
   }
 
-  // TODO: Fix override to return Map<RowColumn, Bytes>
-  // TODO: Fix ret type and fix encRC(ret) to support new type
   @Override
   public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     Map<RowColumn, Bytes> ret = tx.get(rowColumns);
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} get({}) -> {}", txid, encRC(rowColumns), encRCB(ret));
+      log.trace("txid: {} get({}) -> {}", txid, encRC(rowColumns), encRCM(ret));
     }
     return ret;
   }
