@@ -269,6 +269,7 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
     return TxStringUtil.gets(this, rows, columns);
   }
 
+  // TODO: Fix override to return Map<RowColumn, Bytes>
   @Override
   public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);

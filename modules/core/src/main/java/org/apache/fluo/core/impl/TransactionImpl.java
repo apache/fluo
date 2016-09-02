@@ -190,6 +190,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     return ret;
   }
 
+  // TODO: Fix override to return Map<RowColumn, Bytes>
+  // TODO: Fix span() as this will move to unsupported type.
   @Override
   public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     checkIfOpen();
@@ -673,6 +675,8 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
     return TxStringUtil.gets(this, rows, columns);
   }
 
+  // TODO: Fix override to return Map<RowColumn, String>
+  // TODO: Add gets() method in TxStringUtil to support return type of Map<RowColumn, Bytes>
   @Override
   public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     return TxStringUtil.gets(this, rowColumns);

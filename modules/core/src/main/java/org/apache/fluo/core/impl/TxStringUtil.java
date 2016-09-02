@@ -60,4 +60,5 @@ public class TxStringUtil {
     Map<RowColumn, Bytes> bytesMap = snapshot.get(rowColumns);
     return Maps.transformValues(bytesMap, b -> b.toString());
   }
+
 }
