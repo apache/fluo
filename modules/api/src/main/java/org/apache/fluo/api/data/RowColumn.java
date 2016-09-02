@@ -52,7 +52,7 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
    *
    * @param row (will be UTF-8 encoded)
    */
-  public RowColumn(String row) {
+  public RowColumn(CharSequence row) {
     this(Bytes.of(row));
   }
 
@@ -75,7 +75,7 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
    * @param row Row String (will be UTF-8 encoded)
    * @param col Column
    */
-  public RowColumn(String row, Column col) {
+  public RowColumn(CharSequence row, Column col) {
     this(Bytes.of(row), col);
   }
 

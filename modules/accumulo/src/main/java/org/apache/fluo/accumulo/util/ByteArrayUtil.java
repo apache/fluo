@@ -123,7 +123,7 @@ public class ByteArrayUtil {
     try (InputStream in = new ByteArrayInputStream(b)) {
       DataInputStream dis = new DataInputStream(in);
 
-      BytesBuilder builder = Bytes.newBuilder(b.length);
+      BytesBuilder builder = Bytes.builder(b.length);
 
       while (true) {
         int len = WritableUtils.readVInt(dis);

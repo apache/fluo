@@ -38,7 +38,7 @@ public class TxStringUtil {
     return ret;
   }
 
-  public static String gets(SnapshotBase snapshot, String row, Column column) {
+  public static String gets(SnapshotBase snapshot, CharSequence row, Column column) {
     Bytes val = snapshot.get(Bytes.of(row), column);
     if (val == null) {
       return null;
@@ -46,13 +46,14 @@ public class TxStringUtil {
     return val.toString();
   }
 
-  public static Map<Column, String> gets(SnapshotBase snapshot, String row, Set<Column> columns) {
+  public static Map<Column, String> gets(SnapshotBase snapshot, CharSequence row,
+      Set<Column> columns) {
     Map<Column, Bytes> values = snapshot.get(Bytes.of(row), columns);
     return Maps.transformValues(values, b -> b.toString());
   }
 
   public static Map<String, Map<Column, String>> gets(SnapshotBase snapshot,
-      Collection<String> rows, Set<Column> columns) {
+      Collection<? extends CharSequence> rows, Set<Column> columns) {
     return transform(snapshot.get(Collections2.transform(rows, s -> Bytes.of(s)), columns));
   }
 

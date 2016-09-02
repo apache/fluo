@@ -160,7 +160,7 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public void delete(String row, Column col) {
+  public void delete(CharSequence row, Column col) {
     tx.delete(row, col);
   }
 
@@ -170,7 +170,7 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public void set(String row, Column col, String value) throws AlreadySetException {
+  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
     tx.set(row, col, value);
   }
 
@@ -180,7 +180,7 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public void setWeakNotification(String row, Column col) {
+  public void setWeakNotification(CharSequence row, Column col) {
     tx.setWeakNotification(row, col);
   }
 
@@ -215,17 +215,18 @@ public class TestTransaction implements TransactionBase {
   }
 
   @Override
-  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+  public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Set<Column> columns) {
     return tx.gets(rows, columns);
   }
 
   @Override
-  public String gets(String row, Column column) {
+  public String gets(CharSequence row, Column column) {
     return tx.gets(row, column);
   }
 
   @Override
-  public Map<Column, String> gets(String row, Set<Column> columns) {
+  public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
     return tx.gets(row, columns);
   }
 

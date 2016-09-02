@@ -109,7 +109,7 @@ public class ColumnUtil {
   }
 
   public static Column readColumn(DataInputStream in) throws IOException {
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
     Bytes family = ByteUtil.read(bb, in);
     Bytes qualifier = ByteUtil.read(bb, in);
     Bytes visibility = ByteUtil.read(bb, in);

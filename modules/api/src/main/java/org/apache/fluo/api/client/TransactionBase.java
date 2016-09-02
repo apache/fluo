@@ -36,7 +36,7 @@ public interface TransactionBase extends SnapshotBase {
    * Wrapper for {@link #delete(Bytes, Column)} that uses Strings. All String are encoded using
    * UTF-8.
    */
-  void delete(String row, Column col);
+  void delete(CharSequence row, Column col);
 
   /**
    * Sets a value (in {@link Bytes}) at the given row and {@link Column}
@@ -47,7 +47,7 @@ public interface TransactionBase extends SnapshotBase {
    * Wrapper for {@link #set(Bytes, Column, Bytes)} that uses Strings. All String are encoded using
    * UTF-8.
    */
-  void set(String row, Column col, String value) throws AlreadySetException;
+  void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException;
 
   /**
    * Sets a weak notification at the given row and {@link Column}
@@ -58,5 +58,5 @@ public interface TransactionBase extends SnapshotBase {
    * Wrapper for {@link #setWeakNotification(Bytes, Column)} that uses Strings. All String are
    * encoded using UTF-8.
    */
-  void setWeakNotification(String row, Column col);
+  void setWeakNotification(CharSequence row, Column col);
 }

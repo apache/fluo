@@ -40,7 +40,7 @@ public final class RowColumnValue implements Comparable<RowColumnValue>, Seriali
    * @param row (will be UTF-8 encoded)
    * @param val (will be UTF-8 encoded)
    */
-  public RowColumnValue(String row, Column col, String val) {
+  public RowColumnValue(CharSequence row, Column col, CharSequence val) {
     this.row = Bytes.of(row);
     this.col = col;
     this.val = Bytes.of(val);

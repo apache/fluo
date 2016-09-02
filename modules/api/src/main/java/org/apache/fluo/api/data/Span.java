@@ -130,7 +130,8 @@ public final class Span implements Serializable {
    * @param endRow End row
    * @param endRowInclusive End row inclusive
    */
-  public Span(String startRow, boolean startRowInclusive, String endRow, boolean endRowInclusive) {
+  public Span(CharSequence startRow, boolean startRowInclusive, CharSequence endRow,
+      boolean endRowInclusive) {
     this(Bytes.of(startRow), startRowInclusive, Bytes.of(endRow), endRowInclusive);
   }
 
@@ -210,7 +211,7 @@ public final class Span implements Serializable {
   /**
    * Creates a Span that covers an exact row. String parameters will be encoded as UTF-8
    */
-  public static Span exact(String row) {
+  public static Span exact(CharSequence row) {
     Objects.requireNonNull(row);
     return exact(Bytes.of(row));
   }
@@ -232,7 +233,7 @@ public final class Span implements Serializable {
    * method can be constructed without a qualifier or visibility to create a Span at the family or
    * qualifier level. String parameters will be encoded as UTF-8
    */
-  public static Span exact(String row, Column col) {
+  public static Span exact(CharSequence row, Column col) {
     Objects.requireNonNull(row);
     Objects.requireNonNull(col);
     return exact(Bytes.of(row), col);
@@ -272,7 +273,7 @@ public final class Span implements Serializable {
    * Returns a Span that covers all rows beginning with a prefix String parameters will be encoded
    * as UTF-8
    */
-  public static Span prefix(String rowPrefix) {
+  public static Span prefix(CharSequence rowPrefix) {
     Objects.requireNonNull(rowPrefix);
     return prefix(Bytes.of(rowPrefix));
   }
@@ -317,7 +318,7 @@ public final class Span implements Serializable {
    * create a prefix Span at the family or qualifier level. String parameters will be encoded as
    * UTF-8
    */
-  public static Span prefix(String row, Column colPrefix) {
+  public static Span prefix(CharSequence row, Column colPrefix) {
     Objects.requireNonNull(row);
     Objects.requireNonNull(colPrefix);
     return prefix(Bytes.of(row), colPrefix);
@@ -358,7 +359,7 @@ public final class Span implements Serializable {
     /**
      * Build start of Span starting with row (will be encoded UTF-8)
      */
-    public StartCFBuilder startRow(String row) {
+    public StartCFBuilder startRow(CharSequence row) {
       return startRow(Bytes.of(row));
     }
 
@@ -374,7 +375,7 @@ public final class Span implements Serializable {
     /**
      * Build end of Span starting with row (will be encoded UTF-8)
      */
-    public EndCFBuilder endRow(String row) {
+    public EndCFBuilder endRow(CharSequence row) {
       return endRow(Bytes.of(row));
     }
 
@@ -404,7 +405,7 @@ public final class Span implements Serializable {
     /**
      * Build Span end starting with row (will be encoded UTF-8)
      */
-    public EndCFBuilder endRow(String row) {
+    public EndCFBuilder endRow(CharSequence row) {
       return endRow(Bytes.of(row));
     }
 
@@ -468,7 +469,7 @@ public final class Span implements Serializable {
     /**
      * Add column visibility (will be encoded UTF-8) to Span start
      */
-    public StartBuilder vis(String cv) {
+    public StartBuilder vis(CharSequence cv) {
       return vis(Bytes.of(cv));
     }
   }
@@ -493,7 +494,7 @@ public final class Span implements Serializable {
     /**
      * Add column qualifier (will be encoded UTF-8) to Span start
      */
-    public StartCVBuilder qual(String cq) {
+    public StartCVBuilder qual(CharSequence cq) {
       return qual(Bytes.of(cq));
     }
   }
@@ -518,7 +519,7 @@ public final class Span implements Serializable {
     /**
      * Add column family (will be encoded UTF-8) to Span start
      */
-    public StartCQBuilder fam(String cf) {
+    public StartCQBuilder fam(CharSequence cf) {
       return fam(Bytes.of(cf));
     }
   }
@@ -543,7 +544,7 @@ public final class Span implements Serializable {
     /**
      * Add column visibility (will be encoded UTF-8) to Span end
      */
-    public EndBuilder vis(String cv) {
+    public EndBuilder vis(CharSequence cv) {
       return vis(Bytes.of(cv));
     }
   }
@@ -568,7 +569,7 @@ public final class Span implements Serializable {
     /**
      * Add column qualifier (will be encoded UTF-8) to Span end
      */
-    public EndCVBuilder qual(String cq) {
+    public EndCVBuilder qual(CharSequence cq) {
       return qual(Bytes.of(cq));
     }
   }
@@ -593,7 +594,7 @@ public final class Span implements Serializable {
     /**
      * Add column family (will be encoded UTF-8) to an Span end
      */
-    public EndCQBuilder fam(String cf) {
+    public EndCQBuilder fam(CharSequence cf) {
       return fam(Bytes.of(cf));
     }
   }

@@ -28,12 +28,12 @@ import org.junit.Test;
 public class BytesBuilderTest {
   @Test
   public void testBasic() {
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     Bytes bytes1 = bb.append(new byte[] {'a', 'b'}).append("cd").append(Bytes.of("ef")).toBytes();
     Assert.assertEquals(Bytes.of("abcdef"), bytes1);
 
-    bb = Bytes.newBuilder();
+    bb = Bytes.builder();
     Bytes bytes2 = bb.append(Bytes.of("ab")).append("cd").append(new byte[] {'e', 'f'}).toBytes();
     Assert.assertEquals(Bytes.of("abcdef"), bytes2);
   }
@@ -43,7 +43,7 @@ public class BytesBuilderTest {
 
     ByteArrayInputStream bais =
         new ByteArrayInputStream("abcdefg".getBytes(StandardCharsets.UTF_8));
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     bb.append(bais, 2);
     bb.append(bais, 3);
@@ -55,7 +55,7 @@ public class BytesBuilderTest {
   public void testByteBuffer() {
     ByteBuffer buffer = ByteBuffer.wrap("abcdefg".getBytes(StandardCharsets.UTF_8));
 
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     bb.append(buffer);
     bb.append(buffer);
@@ -68,7 +68,7 @@ public class BytesBuilderTest {
 
   @Test
   public void testSetLength() {
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     Bytes bytes1 = bb.append(new byte[] {'a', 'b'}).append("cd").append(Bytes.of("ef")).toBytes();
     Assert.assertEquals(Bytes.of("abcdef"), bytes1);
@@ -91,7 +91,7 @@ public class BytesBuilderTest {
 
   @Test
   public void testSingleByte() {
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     bb.append('c');
     bb.append(0);
@@ -105,7 +105,7 @@ public class BytesBuilderTest {
 
   @Test
   public void testArraySection() {
-    BytesBuilder bb = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
 
     byte[] testing = new byte[] {'a', 'b', 'c', 'd', 'e'};
 
@@ -122,9 +122,9 @@ public class BytesBuilderTest {
 
     // test appending 3 chars at a time
     StringBuilder sb = new StringBuilder();
-    BytesBuilder bb = Bytes.newBuilder();
-    BytesBuilder bb2 = Bytes.newBuilder();
-    BytesBuilder bb3 = Bytes.newBuilder();
+    BytesBuilder bb = Bytes.builder();
+    BytesBuilder bb2 = Bytes.builder();
+    BytesBuilder bb3 = Bytes.builder();
     int m = 19;
     for (int i = 0; i < 100; i++) {
       // produce a deterministic non repeating pattern
@@ -143,8 +143,8 @@ public class BytesBuilderTest {
 
     // test appending one char at a time
     sb.setLength(0);
-    bb = Bytes.newBuilder();
-    bb2 = Bytes.newBuilder();
+    bb = Bytes.builder();
+    bb2 = Bytes.builder();
     bb3.setLength(0);
     for (int i = 0; i < 500; i++) {
       // produce a deterministic non repeating pattern
@@ -160,5 +160,22 @@ public class BytesBuilderTest {
     Assert.assertEquals(Bytes.of(sb.toString()), bb.toBytes());
     Assert.assertEquals(Bytes.of(sb.toString()), bb2.toBytes());
     Assert.assertEquals(Bytes.of(sb.toString()), bb3.toBytes());
+  }
+
+  @Test
+  public void testCharSequence() {
+    AsciiSequence cs1 = new AsciiSequence("abc123");
+    AsciiSequence cs2 = new AsciiSequence("xyz789");
+
+
+    Bytes b3 = Bytes.builder().append(cs1).append(":").append(cs2).toBytes();
+
+    Assert.assertEquals("abc123:xyz789", b3.toString());
+
+    Bytes b4 =
+        Bytes.builder().append((CharSequence) "abc123").append(":").append((CharSequence) "xyz789")
+            .toBytes();
+
+    Assert.assertEquals("abc123:xyz789", b4.toString());
   }
 }

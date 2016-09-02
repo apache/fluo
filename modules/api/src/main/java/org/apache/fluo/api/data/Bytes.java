@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -277,6 +278,31 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
+   * Creates a Bytes object by copying the data of the CharSequence and encoding it using UTF-8.
+   */
+  public static final Bytes of(CharSequence cs) {
+    if (cs instanceof String) {
+      return of((String) cs);
+    }
+
+    Objects.requireNonNull(cs);
+    if (cs.length() == 0) {
+      return EMPTY;
+    }
+
+    ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(cs));
+
+    if (bb.hasArray()) {
+      // this byte buffer has never escaped so can use its byte array directly
+      return new Bytes(bb.array(), bb.position() + bb.arrayOffset(), bb.limit());
+    } else {
+      byte[] data = new byte[bb.remaining()];
+      bb.get(data);
+      return new Bytes(data);
+    }
+  }
+
+  /**
    * Creates a Bytes object by copying the value of the given String
    */
   public static final Bytes of(String s) {
@@ -330,6 +356,21 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
         ba = Arrays.copyOf(ba, newLen);
       }
+    }
+
+    public BytesBuilder append(CharSequence cs) {
+      if (cs instanceof String) {
+        return append((String) cs);
+      }
+
+
+      ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(cs));
+
+      int length = bb.remaining();
+      ensureCapacity(len + length);
+      bb.get(ba, len, length);
+      len += length;
+      return this;
     }
 
     /**
@@ -440,14 +481,14 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   /**
    * Provides an efficient and reusable way to build immutable Bytes objects.
    */
-  public static BytesBuilder newBuilder() {
+  public static BytesBuilder builder() {
     return new BytesBuilder();
   }
 
   /**
    * @param initialCapacity The initial size of the byte builders internal array.
    */
-  public static BytesBuilder newBuilder(int initialCapacity) {
+  public static BytesBuilder builder(int initialCapacity) {
     return new BytesBuilder(initialCapacity);
   }
 }

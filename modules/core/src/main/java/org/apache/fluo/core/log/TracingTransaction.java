@@ -169,7 +169,7 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void setWeakNotification(String row, Column col) {
+  public void setWeakNotification(CharSequence row, Column col) {
     setWeakNotification(Bytes.of(row), col);
   }
 
@@ -182,7 +182,7 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void set(String row, Column col, String value) throws AlreadySetException {
+  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
     set(Bytes.of(row), col, Bytes.of(value));
   }
 
@@ -195,7 +195,7 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void delete(String row, Column col) {
+  public void delete(CharSequence row, Column col) {
     delete(Bytes.of(row), col);
   }
 
@@ -255,17 +255,18 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public String gets(String row, Column column) {
+  public String gets(CharSequence row, Column column) {
     return TxStringUtil.gets(this, row, column);
   }
 
   @Override
-  public Map<Column, String> gets(String row, Set<Column> columns) {
+  public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
     return TxStringUtil.gets(this, row, columns);
   }
 
   @Override
-  public Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns) {
+  public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Set<Column> columns) {
     return TxStringUtil.gets(this, rows, columns);
   }
 

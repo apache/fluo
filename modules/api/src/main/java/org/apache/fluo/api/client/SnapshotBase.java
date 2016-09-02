@@ -105,19 +105,19 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
    * decoded using UTF-8.
    */
-  Map<String, Map<Column, String>> gets(Collection<String> rows, Set<Column> columns);
+  Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows, Set<Column> columns);
 
   /**
    * Wrapper for {@link #get(Bytes, Column)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  String gets(String row, Column column);
+  String gets(CharSequence row, Column column);
 
   /**
    * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<Column, String> gets(String row, Set<Column> columns);
+  Map<Column, String> gets(CharSequence row, Set<Column> columns);
 
   /**
    * @return transactions start timestamp allocated from Oracle.

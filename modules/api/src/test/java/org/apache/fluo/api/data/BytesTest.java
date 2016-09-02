@@ -26,6 +26,43 @@ import org.apache.fluo.api.data.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
+class AsciiSequence implements CharSequence {
+
+
+  private final int len;
+  private final int offset;
+  private final byte[] chars;
+
+  public AsciiSequence(byte[] chars, int offset, int len) {
+    this.len = len;
+    this.offset = offset;
+    this.chars = chars;
+  }
+
+  public AsciiSequence(String s) {
+    chars = s.getBytes(StandardCharsets.US_ASCII);
+    len = chars.length;
+    offset = 0;
+  }
+
+  @Override
+  public int length() {
+    return len;
+  }
+
+  @Override
+  public char charAt(int index) {
+    return (char) chars[index];
+  }
+
+  @Override
+  public CharSequence subSequence(int start, int end) {
+    return new AsciiSequence(chars, offset + start, end - start);
+  }
+
+}
+
+
 /**
  * Unit test for {@link Bytes}
  */
@@ -167,5 +204,21 @@ public class BytesTest {
       Assert.fail();
     } catch (IndexOutOfBoundsException e) {
     }
+  }
+
+  @Test
+  public void testCharSequence() {
+    AsciiSequence cs1 = new AsciiSequence("abc123");
+
+    Bytes b1 = Bytes.of(cs1);
+
+    Assert.assertEquals("abc123", b1.toString());
+
+    Bytes b3 = Bytes.of((CharSequence) "abc123");
+
+    Assert.assertEquals("abc123", b3.toString());
+
+    AsciiSequence cs2 = new AsciiSequence("");
+    Assert.assertSame(Bytes.EMPTY, Bytes.of(cs2));
   }
 }

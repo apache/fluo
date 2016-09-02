@@ -52,7 +52,7 @@ public final class Column implements Comparable<Column>, Serializable {
   /**
    * Creates Column with only a family. String parameter will be encoded as UTF-8.
    */
-  public Column(String family) {
+  public Column(CharSequence family) {
     this(Bytes.of(family));
   }
 
@@ -69,7 +69,7 @@ public final class Column implements Comparable<Column>, Serializable {
   /**
    * Creates Column with a family and qualifier. String parameters will be encoded as UTF-8.
    */
-  public Column(String family, String qualifier) {
+  public Column(CharSequence family, CharSequence qualifier) {
     this(Bytes.of(family), Bytes.of(qualifier));
   }
 
@@ -89,7 +89,7 @@ public final class Column implements Comparable<Column>, Serializable {
    * Creates Column with family, qualifier, and visibility. String parameters will be encoded as
    * UTF-8.
    */
-  public Column(String family, String qualifier, String visibility) {
+  public Column(CharSequence family, CharSequence qualifier, CharSequence visibility) {
     this(Bytes.of(family), Bytes.of(qualifier), Bytes.of(visibility));
   }
 

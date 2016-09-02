@@ -33,7 +33,7 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
     this.val = val;
   }
 
-  public ColumnValue(Column col, String val) {
+  public ColumnValue(Column col, CharSequence val) {
     this.column = col;
     this.val = Bytes.of(val);
   }
