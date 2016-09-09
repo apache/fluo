@@ -48,17 +48,23 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
   private final Counter commiting = new Counter();
 
+  private void setException(Throwable t) {
+    if (!exceptionRef.compareAndSet(null, t)) {
+      LoggerFactory.getLogger(LoaderExecutorAsyncImpl.class).debug(
+          "Multiple exceptions occured, not reporting subsequent ones", t);
+    }
+  }
+
   class LoaderCommitObserver implements AsyncCommitObserver, Runnable {
 
     AsyncTransaction txi;
     Loader loader;
-    private boolean done = false;
+    private AtomicBoolean done = new AtomicBoolean(false);
 
     private void close() {
       txi = null;
-      if (!done) {
+      if (done.compareAndSet(false, true)) {
         commiting.decrement();
-        done = true;
       } else {
         // its only expected that this should be called once.. if its called multiple times in
         // indicates an error in asyn code
@@ -81,7 +87,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     @Override
     public void failed(Throwable t) {
       close();
-      exceptionRef.compareAndSet(null, t);
+      setException(t);
     }
 
     @Override
@@ -113,12 +119,14 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
           return env.getAppConfiguration();
         }
       };
+
       try {
         loader.load(txi, context);
         env.getSharedResources().getCommitManager().beginCommit(txi, loader.getClass(), this);
       } catch (Exception e) {
+        setException(e);
+        close();
         LoggerFactory.getLogger(LoaderCommitObserver.class).debug(e.getMessage(), e);
-        exceptionRef.compareAndSet(null, e);
       }
     }
   }
