@@ -21,6 +21,7 @@ import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 
+@SuppressWarnings({"rawtypes", "unused", "serial", "unchecked"})
 public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     java.io.Serializable, Cloneable, Comparable<Stamps> {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =

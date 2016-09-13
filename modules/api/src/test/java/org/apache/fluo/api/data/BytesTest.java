@@ -26,43 +26,6 @@ import org.apache.fluo.api.data.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
-class AsciiSequence implements CharSequence {
-
-
-  private final int len;
-  private final int offset;
-  private final byte[] chars;
-
-  public AsciiSequence(byte[] chars, int offset, int len) {
-    this.len = len;
-    this.offset = offset;
-    this.chars = chars;
-  }
-
-  public AsciiSequence(String s) {
-    chars = s.getBytes(StandardCharsets.US_ASCII);
-    len = chars.length;
-    offset = 0;
-  }
-
-  @Override
-  public int length() {
-    return len;
-  }
-
-  @Override
-  public char charAt(int index) {
-    return (char) chars[index];
-  }
-
-  @Override
-  public CharSequence subSequence(int start, int end) {
-    return new AsciiSequence(chars, offset + start, end - start);
-  }
-
-}
-
-
 /**
  * Unit test for {@link Bytes}
  */

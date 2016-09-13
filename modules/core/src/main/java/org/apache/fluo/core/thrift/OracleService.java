@@ -26,6 +26,7 @@ import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"rawtypes", "unused", "serial", "unchecked"})
 public class OracleService {
 
   public interface Iface {

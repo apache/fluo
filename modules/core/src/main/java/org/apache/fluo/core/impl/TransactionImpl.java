@@ -229,7 +229,7 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
 
     SnapshotScanner.Opts opts;
     if (shouldCopy) {
-      HashSet<Column> cols = new HashSet<Column>();
+      HashSet<Column> cols = new HashSet<>();
       for (Column column : columns) {
         if (column.isVisibilitySet()) {
           cols.add(new Column(column.getFamily(), column.getQualifier()));

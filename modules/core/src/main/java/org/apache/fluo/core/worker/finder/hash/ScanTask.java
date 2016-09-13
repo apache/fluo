@@ -57,13 +57,12 @@ public class ScanTask implements Runnable {
 
   ScanTask(HashNotificationFinder hashWorkFinder, Environment env, AtomicBoolean stopped) {
     this.hwf = hashWorkFinder;
-    this.tabletInfoCache =
-        new TabletInfoCache<TabletData, Supplier<TabletData>>(env, new Supplier<TabletData>() {
-          @Override
-          public TabletData get() {
-            return new TabletData();
-          }
-        });
+    this.tabletInfoCache = new TabletInfoCache<>(env, new Supplier<TabletData>() {
+      @Override
+      public TabletData get() {
+        return new TabletData();
+      }
+    });
     this.env = env;
     this.stopped = stopped;
 
