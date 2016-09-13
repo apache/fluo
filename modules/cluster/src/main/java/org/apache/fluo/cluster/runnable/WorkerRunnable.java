@@ -86,8 +86,9 @@ public class WorkerRunnable extends AbstractTwillRunnable {
       }
 
       TwillContext context = getContext();
-      if (context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null) {
-        System.setProperty(MetricNames.METRICS_ID_PROP, "worker-" + context.getInstanceId());
+      if (context != null && System.getProperty(MetricNames.METRICS_REPORTER_ID_PROP) == null) {
+        System.setProperty(MetricNames.METRICS_REPORTER_ID_PROP,
+            "worker-" + context.getInstanceId());
       }
 
       // FluoFactory cannot be used to create FluoWorker as Twill will not load its dependencies

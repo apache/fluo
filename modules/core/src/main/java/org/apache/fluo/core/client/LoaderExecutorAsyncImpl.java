@@ -27,6 +27,7 @@ import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.async.AsyncCommitObserver;
 import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.impl.Environment;
@@ -117,6 +118,11 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
         @Override
         public SimpleConfiguration getAppConfiguration() {
           return env.getAppConfiguration();
+        }
+
+        @Override
+        public MetricsReporter getMetricsReporter() {
+          return env.getMetricsReporter();
         }
       };
 

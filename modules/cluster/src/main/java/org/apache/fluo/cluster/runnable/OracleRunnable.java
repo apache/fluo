@@ -72,8 +72,9 @@ public class OracleRunnable extends AbstractTwillRunnable {
       FluoConfiguration config = new FluoConfiguration(propsFile);
 
       TwillContext context = getContext();
-      if (context != null && System.getProperty(MetricNames.METRICS_ID_PROP) == null) {
-        System.setProperty(MetricNames.METRICS_ID_PROP, "oracle-" + context.getInstanceId());
+      if (context != null && System.getProperty(MetricNames.METRICS_REPORTER_ID_PROP) == null) {
+        System.setProperty(MetricNames.METRICS_REPORTER_ID_PROP,
+            "oracle-" + context.getInstanceId());
       }
 
       // FluoFactory cannot be used to create FluoOracle as Twill will not load its dependencies

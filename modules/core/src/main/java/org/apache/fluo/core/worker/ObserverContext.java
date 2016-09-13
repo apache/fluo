@@ -16,8 +16,11 @@
 package org.apache.fluo.core.worker;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
+import org.apache.fluo.core.metrics.DummyMetricsReporter;
+import org.apache.fluo.core.metrics.MetricsReporterImpl;
 
 public class ObserverContext implements Observer.Context {
 
@@ -50,4 +53,11 @@ public class ObserverContext implements Observer.Context {
     return observerConfig;
   }
 
+  @Override
+  public MetricsReporter getMetricsReporter() {
+    if (env == null) {
+      return new DummyMetricsReporter();
+    }
+    return env.getMetricsReporter();
+  }
 }

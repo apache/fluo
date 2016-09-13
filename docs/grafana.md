@@ -1,8 +1,5 @@
 # Fluo metrics in Grafana/InfluxDB
 
-Fluo is instrumented using [dropwizard metrics][1] which allows Fluo to be configured to send
-metrics to multiple metrics tools (such as Graphite, Ganglia, etc).
-
 This document describes how to send Fluo metrics to [InfluxDB], a time series database, and make
 them viewable in [Grafana], a visualization tool. If you want general information on metrics, see
 the [Fluo metrics][2] documentation.
@@ -30,9 +27,12 @@ Follow the instructions below to setup InfluxDB and Grafana.
       batch-pending = 5
       batch-timeout = "1s"
       templates = [
-        "fluo.*.*.tx.*.*.* .app.host.measurement.measurement.observer.field",
-        "fluo.*.*.*.*.* .app.host.measurement.measurement.field",
-        "fluo.*.*.*.* .app.host.measurement.measurement",
+        "fluo.class.*.*.*.*.* ..app.host.measurement.observer.field",
+        "fluo.class.*.*.*.* ..app.host.measurement.observer",
+        "fluo.system.*.*.*.* ..app.host.measurement.field",
+        "fluo.system.*.*.* ..app.host.measurement",
+        "fluo.app.*.*.* ..host.measurement.field",
+        "fluo.app.*.* ..host.measurement",
       ]
     ```
 

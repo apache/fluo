@@ -20,6 +20,16 @@ import org.apache.fluo.api.config.FluoConfiguration;
 
 public class MetricNames {
 
+  public static final String METRICS_REPORTER_ID_PROP = FluoConfiguration.FLUO_PREFIX
+      + ".metrics.reporter.id";
+
+  // Metrics prefixes for 'default' metrics
+  public static final String CLASS_PREFIX = FluoConfiguration.FLUO_PREFIX + ".class";
+  public static final String SYSTEM_PREFIX = FluoConfiguration.FLUO_PREFIX + ".system";
+
+  // Metrics prefix for 'application' metrics
+  public static final String APPLICATION_PREFIX = FluoConfiguration.FLUO_PREFIX + ".app";
+
   private final String txLockWaitTime;
   private final String txExecTime;
   private final String txWithCollision;
@@ -28,7 +38,7 @@ public class MetricNames {
   private final String txEntriesRead;
   private final String txLocksTimedOut;
   private final String txLocksDead;
-  private final String txStatus;
+  private final String txStatusPrefix;
   private final String txCommitting;
 
   private final String notificationsQueued;
@@ -37,74 +47,69 @@ public class MetricNames {
   private final String oracleClientStamps;
   private final String oracleServerStamps;
 
-  public static final String METRICS_ID_PROP = FluoConfiguration.FLUO_PREFIX + ".metrics.id";
-
-  public MetricNames(String hostId, String appName) {
+  public MetricNames(String metricsReporterId, String appName) {
     Preconditions.checkArgument(!appName.contains("."), "Fluo App name should not contain '.': "
         + appName);
-    Preconditions.checkArgument(!hostId.contains("."), "Host ID should not contain '.': " + hostId);
+    Preconditions.checkArgument(!metricsReporterId.contains("."),
+        "Metrics Reporter ID should not contain '.': " + metricsReporterId);
 
-    // All metrics start with prefix "fluo.APP.HOST."
-    final String metricsPrefix = FluoConfiguration.FLUO_PREFIX + "." + appName + "." + hostId + ".";
+    // Metrics reported for a specific class
+    // FORMAT: fluo.class.APPLICATION.REPORTER_ID.METRIC.CLASS
+    final String classMetric = CLASS_PREFIX + "." + appName + "." + metricsReporterId + ".";
+    txLockWaitTime = classMetric + "tx_lock_wait_time";
+    txExecTime = classMetric + "tx_execution_time";
+    txWithCollision = classMetric + "tx_with_collision";
+    txCollisions = classMetric + "tx_collisions";
+    txEntriesSet = classMetric + "tx_entries_set";
+    txEntriesRead = classMetric + "tx_entries_read";
+    txLocksTimedOut = classMetric + "tx_locks_timedout";
+    txLocksDead = classMetric + "tx_locks_dead";
+    txStatusPrefix = classMetric + "tx_status_"; // status appended to metric name
 
-    // Transaction metrics: fluo.APP.HOST.tx.METRIC.OBSERVER
-    final String txPrefix = metricsPrefix + "tx.";
-    txLockWaitTime = txPrefix + "lock_wait_time.";
-    txExecTime = txPrefix + "execution_time.";
-    txWithCollision = txPrefix + "with_collision.";
-    txCollisions = txPrefix + "collisions.";
-    txEntriesSet = txPrefix + "entries_set.";
-    txEntriesRead = txPrefix + "entries_read.";
-    txLocksTimedOut = txPrefix + "locks_timedout.";
-    txLocksDead = txPrefix + "locks_dead.";
-    txStatus = txPrefix + "status_";
-
-    txCommitting = metricsPrefix + "transactor.committing";
-
-    // Worker metrics: fluo.APP.HOST.worker.METRIC
-    notificationsQueued = metricsPrefix + "worker.notifications_queued";
-
-    // Oracle metrics: fluo.APP.HOST.oracle.METRIC
-    final String oraclePrefix = metricsPrefix + "oracle.";
-    oracleResponseTime = oraclePrefix + "response_time";
-    oracleClientStamps = oraclePrefix + "client_stamps";
-    oracleServerStamps = oraclePrefix + "server_stamps";
+    // System-wide metrics
+    // FORMAT: fluo.system.APPLICATION.REPORTER_ID.METRIC
+    final String systemMetric = SYSTEM_PREFIX + "." + appName + "." + metricsReporterId + ".";
+    txCommitting = systemMetric + "transactor_committing";
+    notificationsQueued = systemMetric + "worker_notifications_queued";
+    oracleResponseTime = systemMetric + "oracle_response_time";
+    oracleClientStamps = systemMetric + "oracle_client_stamps";
+    oracleServerStamps = systemMetric + "oracle_server_stamps";
   }
 
-  public String getTxLockWaitTime() {
-    return txLockWaitTime;
+  public String getTxLockWaitTime(String className) {
+    return txLockWaitTime + "." + className;
   }
 
-  public String getTxExecTime() {
-    return txExecTime;
+  public String getTxExecTime(String className) {
+    return txExecTime + "." + className;
   }
 
-  public String getTxWithCollision() {
-    return txWithCollision;
+  public String getTxWithCollision(String className) {
+    return txWithCollision + "." + className;
   }
 
-  public String getTxCollisions() {
-    return txCollisions;
+  public String getTxCollisions(String className) {
+    return txCollisions + "." + className;
   }
 
-  public String getTxEntriesSet() {
-    return txEntriesSet;
+  public String getTxEntriesSet(String className) {
+    return txEntriesSet + "." + className;
   }
 
-  public String getTxEntriesRead() {
-    return txEntriesRead;
+  public String getTxEntriesRead(String className) {
+    return txEntriesRead + "." + className;
   }
 
-  public String getTxLocksTimedout() {
-    return txLocksTimedOut;
+  public String getTxLocksTimedout(String className) {
+    return txLocksTimedOut + "." + className;
   }
 
-  public String getTxLocksDead() {
-    return txLocksDead;
+  public String getTxLocksDead(String className) {
+    return txLocksDead + "." + className;
   }
 
-  public String getTxStatus() {
-    return txStatus;
+  public String getTxStatus(String status, String className) {
+    return txStatusPrefix + status + "." + className;
   }
 
   public String getNotificationQueued() {

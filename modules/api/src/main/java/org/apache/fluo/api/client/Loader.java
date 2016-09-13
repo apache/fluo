@@ -16,6 +16,7 @@
 package org.apache.fluo.api.client;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.metrics.MetricsReporter;
 
 /**
  * Interface that is implemented by users to load data into Fluo. Loader classes are executed by a
@@ -34,6 +35,11 @@ public interface Loader {
      *         {@link FluoClient#getAppConfiguration()}
      */
     SimpleConfiguration getAppConfiguration();
+
+    /**
+     * @return A {@link MetricsReporter} to report application metrics from this observer
+     */
+    MetricsReporter getMetricsReporter();
   }
 
   /**

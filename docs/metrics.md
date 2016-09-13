@@ -1,69 +1,113 @@
 # Fluo Metrics
 
-Fluo core is instrumented using [dropwizard metrics][1]. This allows fluo users to easily gather
-information about Fluo by configuring different reporters. While dropwizard can be configured to
-report Fluo metrics to many different tools, below are some tools that have been used with Fluo.
+A Fluo application can be configured (in [fluo.properties]) to report metrics. When metrics are 
+configured, Fluo will report some 'default' metrics about an application that help users monitor its
+performance. Users can also write code to report 'application-specific' metrics from their 
+applications. Both 'application-specific' and 'default' metrics share the same reporter configured
+by [fluo.properties] and are described in detail below.
 
-1.  [Grafana/InfluxDB][3] - Fluo has [documentation][3] for sending metrics to InfluxDB and viewing
-    them in Grafana.
+## Configuring reporters
 
-2.  JMX - Fluo can be configured to reports metrics via JMX which can be viewed in jconsole or
-    jvisualvm.
+Fluo metrics are not published by default. To publish metrics, configure a reporter in the 'metrics'
+section of [fluo.properties]. There are several different reporter types (i.e Console, CSV, 
+Graphite, JMX, SLF4J) that are implemented using [Dropwizard]. The choice of which reporter to use
+depends on the visualization tool used. If you are not currently using a visualization tool, there
+is [documentation][grafana] for reporting Fluo metrics to Grafana/InfluxDB.
 
-3.  CSV - Fluo can be configured to output metrics as CSV to a specified directory.
+## Metrics names
 
-## Configuring Reporters
+When Fluo metrics are reported, they are published using a naming scheme that encodes additional
+information. This additional information is represented using all caps variables (i.e `METRIC`)
+below.
 
-In order to configure metrics reporters, look at the metrics section in an applications
-`fluo.properties` file. This sections has a lot of commented out options for configuring reporters.
+Default metrics start with `fluo.class` or `fluo.system` and have following naming schemes:
 
-    fluo.metrics.reporter.console.enable=false
-    fluo.metrics.reporter.console.frequency=30
+        fluo.class.APPLICATION.REPORTER_ID.METRIC.CLASS
+        fluo.system.APPLICATION.REPORTER_ID.METRIC
+        
+Application metrics start with `fluo.app` and have following scheme:
+        
+        fluo.app.REPORTER_ID.METRIC
+ 
+The variables below describe the additional information that is encoded in metrics names.
 
-The frequency is in seconds for all reporters.
+1. `APPLICATION` - Fluo application name
+2. `REPORTER_ID` - Unique ID of the Fluo oracle, worker, or client that is reporting the metric. 
+    When running in YARN, this ID is of the format `worker-INSTANCE_ID` or `oracle-INSTANCE_ID`
+    where `INSTANCE_ID` corresponds to instance number. When not running in YARN, this ID consists
+    of a hostname and a base36 long that is unique across all fluo processes.
+3. `METRIC` - Name of the metric. For 'default' metrics, this is set by Fluo. For 'application'
+    metrics, this is set by user. Name should be unique and avoid using period '.' in name.
+4. `CLASS` - Name of Fluo observer or loader class that produced metric. This allows things like
+    transaction collisions to be tracked per class.
+    
+## Application-specific metrics
 
-## Metrics reported by Fluo
+Application metrics are implemented by retrieving a [MetricsReporter] from an [Observer], [Loader],
+or [FluoClient].  These metrics are named using the format `fluo.app.REPORTER_ID.METRIC`.
 
-All metrics reported by Fluo have the prefix `fluo.<APP>.<PID>.` which is denoted by `<prefix>` in
-the table below. In the prefix, `<APP>` represents the Fluo application name and `<PID>` is the
-process ID of the Fluo oracle or worker that is reporting the metric. When running in yarn, this id
-is of the format `worker-<instance id>` or `oracle-<instance id>`. When not running from yarn, this
-id consist of a hostname and a base36 long that is unique across all fluo processes.
+## Default metrics
 
-Some of the metrics reported have the class name as the suffix. This classname is the observer or
-load task that executed the transactions. This should allow things like transaction collisions to
-be tracked per class. In the table below this is denoted with `<cn>`.
+Default metrics report for a particular Observer/Loader class or system-wide.
 
-|Metric                                 | Type           | Description                         |
-|---------------------------------------|----------------|-------------------------------------|
-|\<prefix\>.tx.lock_wait_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *COND:* &gt; 0 *WHAT:* Time transaction spent waiting on locks held by other transactions.  |
-|\<prefix\>.tx.execution_time.\<cn\>    | [Timer][T]     | *WHEN:* After each transaction. *WHAT:* Time transaction took to execute. Updated for failed and successful transactions. This does not include commit time, only the time from start until commit is called. |
-|\<prefix\>.tx.with_collision.\<cn\>    | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of transactions with collisions. |
-|\<prefix\>.tx.collisions.\<cn\>        | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of collisions. |
-|\<prefix\>.tx.entries_set.\<cn\>       | [Meter][H]     | *WHEN:* After each transaction. *WHAT:* Rate of row/columns set by transaction |
-|\<prefix\>.tx.entries_read.\<cn\>      | [Meter][H]     | *WHEN:* After each transaction. *WHAT:* Rate of row/columns read by transaction that existed. There is currently no count of all reads (including non-existent data) |
-|\<prefix\>.tx.locks_timedout.\<cn\>    | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of timedout locks rolled back by transaction. These are locks that are held for very long periods by another transaction that appears to be alive based on zookeeper. |
-|\<prefix\>.tx.locks_dead.\<cn\>        | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of dead locks rolled by a transaction. These are locks held by a process that appears to be dead according to zookeeper. |
-|\<prefix\>.tx.status_\<status\>.\<cn\> | [Meter][M]     | *WHEN:* After each transaction. *WHAT:* Rate of different ways a transaction can terminate |
-|\<prefix\>.oracle.response_time        | [Timer][T]     | *WHEN:* For each request for stamps to the server. *WHAT:* Time RPC call to oracle took |
-|\<prefix\>.oracle.client_stamps        | [Histogram][H] | *WHEN:* For each request for stamps to the server. *WHAT:* The number of stamps requested. |
-|\<prefix\>.oracle.server_stamps        | [Histogram][H] | *WHEN:* For each request for stamps from a client. *WHAT:* The number of stamps requested. |
-|\<prefix\>.worker.notifications_queued | [Gauge][G]     | *WHAT:* The current number of notifications queued for processing. |
-|\<prefix\>.transactor.committing       | [Gauge][G]     | *WHAT:* The current number of transactions that are working their way through the commit steps. |
+Below are metrics that are reported from each Observer/Loader class that is configured in a Fluo
+application. These metrics are reported after each transaction and named using the format 
+`fluo.class.APPLICATION.REPORTER_ID.METRIC.CLASS`.
 
-The table above outlines when a particular metric is updated and whats updated. The use of *COND*
-indicates that the metric is not always updated. For example `i.f.<pid>.tx.lockWait.<cn>` is only
-updated for transactions that had a non zero lock wait time.
+* tx_lock_wait_time - [Timer] 
+    - Time transaction spent waiting on locks held by other transactions.
+    - Only updated for transactions that have non-zero lock time.
+* tx_execution_time - [Timer]
+    - Time transaction took to execute. 
+    - Updated for failed and successful transactions.
+    - This does not include commit time, only the time from start until commit is called.
+* tx_with_collision - [Meter]  
+    - Rate of transactions with collisions.
+* tx_collisions - [Meter]
+    - Rate of collisions.
+* tx_entries_set - [Meter]
+    - Rate of row/columns set by transaction
+* tx_entries_read - [Meter]
+    - Rate of row/columns read by transaction that existed.
+    - There is currently no count of all reads (including non-existent data)        
+* tx_locks_timedout - [Meter] 
+    - Rate of timedout locks rolled back by transaction.
+    - These are locks that are held for very long periods by another transaction that appears to be
+      alive based on zookeeper.
+* tx_locks_dead - [Meter]  
+    - Rate of dead locks rolled by a transaction. 
+    - These are locks held by a process that appears to be dead according to zookeeper.
+* tx_status_`<STATUS>` - [Meter] 
+    - Rate of different ways (i.e `<STATUS>`) a transaction can terminate
+
+Below are system-wide metrics that are reported for the entire Fluo application. These metrics are
+named using the format `fluo.system.APPLICATION.REPORTER_ID.METRIC`.
+
+* oracle_response_time - [Timer]
+    - Time each RPC call to oracle for stamps took
+* oracle_client_stamps - [Histogram]
+    - Number of stamps requested for each request for stamps to the server
+* oracle_server_stamps - [Histogram]
+    - Number of stamps requested for each request for stamps from a client
+* worker_notifications_queued - [Gauge]
+    - The current number of notifications queued for processing.
+* transactor_committing - [Gauge] 
+    - The current number of transactions that are working their way through the commit steps.
 
 Histograms and Timers have a counter. In the case of a histogram, the counter is the number of times
 the metric was updated and not a sum of the updates. For example if a request for 5 timestamps was
-made to the oracle followed by a request for 3 timestamps, then the count for
-`i.f.<pid>.oracle.server.stamps` would be 2 and the mean would be (5+3)/2.
+made to the oracle followed by a request for 3 timestamps, then the count for `oracle_server_stamps`
+would be 2 and the mean would be (5+3)/2.
 
-[1]: https://dropwizard.github.io/metrics/3.1.0/
-[3]: grafana.md
-[T]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#timers
-[C]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#counters
-[H]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#histograms
-[G]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#gauges
-[M]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#meters
+[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
+[Dropwizard]: https://dropwizard.github.io/metrics/3.1.0/
+[grafana]: grafana.md
+[MetricsReporter]: ../modules/api/src/main/java/org/apache/fluo/api/metrics/MetricsReporter.java
+[Observer]: ../modules/api/src/main/java/org/apache/fluo/api/observer/Observer.java
+[Loader]: ../modules/api/src/main/java/org/apache/fluo/api/client/Loader.java
+[FluoClient]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoClient.java
+[Timer]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#timers
+[Counter]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#counters
+[Histogram]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#histograms
+[Gauge]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#gauges
+[Meter]: https://dropwizard.github.io/metrics/3.1.0/getting-started/#meters

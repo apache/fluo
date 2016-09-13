@@ -147,24 +147,24 @@ public class TxStats {
     MetricRegistry registry = env.getSharedResources().getMetricRegistry();
     String sn = execClass.getSimpleName();
     if (getLockWaitTime() > 0) {
-      MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime() + sn)
-          .update(getLockWaitTime(), TimeUnit.MILLISECONDS);
+      MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime(sn)).update(
+          getLockWaitTime(), TimeUnit.MILLISECONDS);
     }
-    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime() + sn).update(
+    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime(sn)).update(
         getReadTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0) {
-      registry.meter(names.getTxWithCollision() + sn).mark();
-      registry.meter(names.getTxCollisions() + sn).mark(getCollisions());
+      registry.meter(names.getTxWithCollision(sn)).mark();
+      registry.meter(names.getTxCollisions(sn)).mark(getCollisions());
     }
-    registry.meter(names.getTxEntriesSet() + sn).mark(getEntriesSet());
-    registry.meter(names.getTxEntriesRead() + sn).mark(getEntriesReturned());
+    registry.meter(names.getTxEntriesSet(sn)).mark(getEntriesSet());
+    registry.meter(names.getTxEntriesRead(sn)).mark(getEntriesReturned());
     if (getTimedOutLocks() > 0) {
-      registry.meter(names.getTxLocksTimedout() + sn).mark(getTimedOutLocks());
+      registry.meter(names.getTxLocksTimedout(sn)).mark(getTimedOutLocks());
     }
     if (getDeadLocks() > 0) {
-      registry.meter(names.getTxLocksDead() + sn).mark(getDeadLocks());
+      registry.meter(names.getTxLocksDead(sn)).mark(getDeadLocks());
     }
-    registry.meter(names.getTxStatus() + status.toLowerCase() + "." + sn).mark();
+    registry.meter(names.getTxStatus(status.toLowerCase(), sn)).mark();
   }
 
   public void setCommitBeginTime(long t) {

@@ -20,6 +20,7 @@ import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.metrics.MetricsReporter;
 
 /**
  * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the
@@ -77,6 +78,10 @@ public interface Observer {
      */
     SimpleConfiguration getObserverConfiguration();
 
+    /**
+     * @return A {@link MetricsReporter} to report application metrics from this observer
+     */
+    MetricsReporter getMetricsReporter();
   }
 
   /**

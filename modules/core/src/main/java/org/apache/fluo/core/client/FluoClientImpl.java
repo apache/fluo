@@ -23,6 +23,7 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.log.TracingTransaction;
@@ -102,6 +103,11 @@ public class FluoClientImpl implements FluoClient {
   @Override
   public SimpleConfiguration getAppConfiguration() {
     return env.getAppConfiguration();
+  }
+
+  @Override
+  public MetricsReporter getMetricsReporter() {
+    return env.getMetricsReporter();
   }
 
   @Override

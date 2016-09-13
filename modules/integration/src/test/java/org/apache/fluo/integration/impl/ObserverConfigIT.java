@@ -27,7 +27,10 @@ import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.metrics.Counter;
+import org.apache.fluo.api.metrics.Meter;
 import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
@@ -40,6 +43,8 @@ public class ObserverConfigIT extends ITBaseMini {
     private ObservedColumn observedColumn;
     private Bytes outputCQ;
     private boolean setWeakNotification = false;
+    private Meter meter;
+    private Counter counter;
 
     @Override
     public void init(Context context) {
@@ -54,10 +59,15 @@ public class ObserverConfigIT extends ITBaseMini {
       if (swn.equals("true")) {
         setWeakNotification = true;
       }
+      meter = context.getMetricsReporter().meter("test_meter");
+      counter = context.getMetricsReporter().counter("test_counter");
     }
 
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+
+      Assert.assertNotNull(meter);
+      Assert.assertNotNull(counter);
 
       Bytes in = tx.get(row, col);
       tx.delete(row, col);

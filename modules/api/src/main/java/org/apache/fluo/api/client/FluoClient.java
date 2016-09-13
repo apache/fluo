@@ -16,6 +16,7 @@
 package org.apache.fluo.api.client;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.metrics.MetricsReporter;
 
 /**
  * Client interface for Fluo. Fluo clients will have shared resources used by all objects created by
@@ -63,8 +64,12 @@ public interface FluoClient extends AutoCloseable {
    *         {@link FluoAdmin#updateSharedConfig()}. Changes made to the returned Configuration will
    *         not update Zookeeper.
    */
-
   SimpleConfiguration getAppConfiguration();
+
+  /**
+   * @return A {@link MetricsReporter} that is used to report application metrics
+   */
+  MetricsReporter getMetricsReporter();
 
   /**
    * Closes client resources

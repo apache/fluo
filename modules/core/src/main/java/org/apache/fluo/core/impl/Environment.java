@@ -38,7 +38,9 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.metrics.MetricNames;
+import org.apache.fluo.core.metrics.MetricsReporterImpl;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -62,6 +64,7 @@ public class Environment implements AutoCloseable {
   private SharedResources resources;
   private MetricNames metricNames;
   private SimpleConfiguration appConfig;
+  private String metricsReporterID;
 
   /**
    * Constructs an environment from given FluoConfiguration
@@ -237,9 +240,9 @@ public class Environment implements AutoCloseable {
     return config;
   }
 
-  public synchronized MetricNames getMetricNames() {
-    if (metricNames == null) {
-      String mid = System.getProperty(MetricNames.METRICS_ID_PROP);
+  public synchronized String getMetricsReporterID() {
+    if (metricsReporterID == null) {
+      String mid = System.getProperty(MetricNames.METRICS_REPORTER_ID_PROP);
       if (mid == null) {
         try {
           String hostname = InetAddress.getLocalHost().getHostName();
@@ -252,12 +255,25 @@ public class Environment implements AutoCloseable {
           throw new RuntimeException(e);
         }
       }
+      metricsReporterID = mid.replace('.', '_');
+    }
+    return metricsReporterID;
+  }
 
-      mid = mid.replace('.', '_');
-      String appName = config.getApplicationName().replace('.', '_');
-      metricNames = new MetricNames(mid, appName);
+  public String getMetricsAppName() {
+    return config.getApplicationName().replace('.', '_');
+  }
+
+  public synchronized MetricNames getMetricNames() {
+    if (metricNames == null) {
+      metricNames = new MetricNames(getMetricsReporterID(), getMetricsAppName());
     }
     return metricNames;
+  }
+
+  public MetricsReporter getMetricsReporter() {
+    return new MetricsReporterImpl(getConfiguration(), getSharedResources().getMetricRegistry(),
+        getMetricsReporterID());
   }
 
   public SimpleConfiguration getAppConfiguration() {
