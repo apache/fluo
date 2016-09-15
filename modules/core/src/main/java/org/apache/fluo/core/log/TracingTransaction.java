@@ -32,7 +32,6 @@ import org.apache.fluo.core.async.AsyncCommitObserver;
 import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TxStats;
-import org.apache.fluo.core.impl.TxStringUtil;
 import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,11 +168,6 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void setWeakNotification(CharSequence row, Column col) {
-    setWeakNotification(Bytes.of(row), col);
-  }
-
-  @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     if (log.isTraceEnabled()) {
       log.trace("txid: {} set({}, {}, {})", txid, enc(row), enc(col), enc(value));
@@ -182,21 +176,11 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
-    set(Bytes.of(row), col, Bytes.of(value));
-  }
-
-  @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     if (log.isTraceEnabled()) {
       log.trace("txid: {} delete({}, {})", txid, enc(row), enc(col));
     }
     tx.delete(row, col);
-  }
-
-  @Override
-  public void delete(CharSequence row, Column col) {
-    delete(Bytes.of(row), col);
   }
 
   @Override
@@ -252,27 +236,6 @@ public class TracingTransaction implements AsyncTransaction, Snapshot {
   @Override
   public long getStartTimestamp() {
     return tx.getStartTimestamp();
-  }
-
-  @Override
-  public String gets(CharSequence row, Column column) {
-    return TxStringUtil.gets(this, row, column);
-  }
-
-  @Override
-  public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
-    return TxStringUtil.gets(this, row, columns);
-  }
-
-  @Override
-  public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
-      Set<Column> columns) {
-    return TxStringUtil.gets(this, rows, columns);
-  }
-
-  @Override
-  public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
-    return TxStringUtil.gets(this, rowColumns);
   }
 
   public class LoggingCommitObserver implements AsyncCommitObserver {

@@ -16,10 +16,14 @@
 package org.apache.fluo.api.client;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -118,13 +122,26 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Collection)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<RowColumn, String> gets(Collection<RowColumn> rowColumns);
+  default Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
+    Map<RowColumn, Bytes> bytesMap = get(rowColumns);
+    return Maps.transformValues(bytesMap, b -> b.toString());
+  }
 
   /**
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
    * decoded using UTF-8.
    */
-  Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows, Set<Column> columns);
+  default Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Set<Column> columns) {
+    Map<Bytes, Map<Column, Bytes>> rcvs =
+        get(Collections2.transform(rows, s -> Bytes.of(s)), columns);
+    Map<String, Map<Column, String>> ret = new HashMap<>(rcvs.size());
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : rcvs.entrySet()) {
+      ret.put(entry.getKey().toString(), Maps.transformValues(entry.getValue(), b -> b.toString()));
+    }
+    return ret;
+  }
 
   /**
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
@@ -139,13 +156,22 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Bytes, Column)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  String gets(CharSequence row, Column column);
+  default String gets(CharSequence row, Column column) {
+    Bytes val = get(Bytes.of(row), column);
+    if (val == null) {
+      return null;
+    }
+    return val.toString();
+  }
 
   /**
    * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<Column, String> gets(CharSequence row, Set<Column> columns);
+  default Map<Column, String> gets(CharSequence row, Set<Column> columns) {
+    Map<Column, Bytes> values = get(Bytes.of(row), columns);
+    return Maps.transformValues(values, b -> b.toString());
+  }
 
   /**
    * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
