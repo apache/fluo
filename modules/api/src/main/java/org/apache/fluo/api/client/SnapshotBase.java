@@ -44,6 +44,21 @@ public interface SnapshotBase {
   Bytes get(Bytes row, Column column);
 
   /**
+   * Retrieves the value (in {@link Bytes}) stored at a given row and {@link Column}. Returns the
+   * passed in defaultValue if does not exist.
+   * 
+   * @param defaultValue this will be returned if row+columns does not exists
+   */
+  default Bytes get(Bytes row, Column column, Bytes defaultValue) {
+    Bytes ret = get(row, column);
+    if (ret == null) {
+      return defaultValue;
+    }
+
+    return ret;
+  }
+
+  /**
    * Given a row and set of {@link Column}s, retrieves a map that contains the values at those
    * {@link Column}s. Only columns that exist will be returned in map.
    */
@@ -161,6 +176,19 @@ public interface SnapshotBase {
     if (val == null) {
       return null;
     }
+    return val.toString();
+  }
+
+  /**
+   * Wrapper for {@link #get(Bytes, Column, Bytes)} that uses Strings. All strings are encoded and
+   * decoded using UTF-8.
+   */
+  default String gets(CharSequence row, Column column, String defaultValue) {
+    Bytes val = get(Bytes.of(row), column);
+    if (val == null) {
+      return defaultValue;
+    }
+
     return val.toString();
   }
 
