@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -39,16 +40,34 @@ public interface SnapshotBase {
   Bytes get(Bytes row, Column column);
 
   /**
-   * Given a row and set of {@link Column}s, retrieves a map contains the values at those
+   * Given a row and set of {@link Column}s, retrieves a map that contains the values at those
    * {@link Column}s. Only columns that exist will be returned in map.
    */
   Map<Column, Bytes> get(Bytes row, Set<Column> columns);
 
   /**
-   * Given a collection of rows and set of {@link Column}s, retrieves a map contains the values at
-   * those rows and {@link Column}s. Only rows and columns that exists will be returned in map.
+   * Given a row and list of {@link Column}s, retrieves a map that contains the values at those
+   * {@link Column}s. Only columns that exist will be returned in map.
+   */
+  default Map<Column, Bytes> get(Bytes row, Column... columns) {
+    return get(row, ImmutableSet.copyOf(columns));
+  }
+
+  /**
+   * Given a collection of rows and set of {@link Column}s, retrieves a map that contains the values
+   * at those rows and {@link Column}s. Only rows and columns that exists will be returned in map.
    */
   Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns);
+
+  /**
+   * Given a collection of rows and list of {@link Column}s, retrieves a map that contains the
+   * values at those rows and {@link Column}s. Only rows and columns that exists will be returned in
+   * map.
+   */
+  default Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Column... columns) {
+    return get(rows, ImmutableSet.copyOf(columns));
+  }
+
 
   /**
    * Given a collection of {@link RowColumn}s, retrieves a map contains the values at
@@ -108,6 +127,15 @@ public interface SnapshotBase {
   Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows, Set<Column> columns);
 
   /**
+   * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
+   * decoded using UTF-8.
+   */
+  default Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Column... columns) {
+    return gets(rows, ImmutableSet.copyOf(columns));
+  }
+
+  /**
    * Wrapper for {@link #get(Bytes, Column)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
@@ -118,6 +146,14 @@ public interface SnapshotBase {
    * using UTF-8.
    */
   Map<Column, String> gets(CharSequence row, Set<Column> columns);
+
+  /**
+   * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
+   * using UTF-8.
+   */
+  default Map<Column, String> gets(CharSequence row, Column... columns) {
+    return gets(row, ImmutableSet.copyOf(columns));
+  }
 
   /**
    * @return transactions start timestamp allocated from Oracle.
