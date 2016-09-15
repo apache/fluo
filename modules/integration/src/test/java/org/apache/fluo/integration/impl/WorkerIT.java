@@ -22,7 +22,7 @@ import com.google.common.collect.Iterables;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
@@ -51,8 +51,8 @@ public class WorkerIT extends ITBaseMini {
   private static Column observedColumn = LAST_UPDATE;
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Collections.singletonList(new ObserverConfiguration(DegreeIndexer.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Collections.singletonList(new ObserverSpecification(DegreeIndexer.class.getName()));
   }
 
   public static class DegreeIndexer implements Observer {

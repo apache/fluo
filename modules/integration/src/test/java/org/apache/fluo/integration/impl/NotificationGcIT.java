@@ -24,7 +24,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.util.ColumnConstants;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
@@ -60,8 +60,8 @@ public class NotificationGcIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Collections.singletonList(new ObserverConfiguration(SimpleObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Collections.singletonList(new ObserverSpecification(SimpleObserver.class.getName()));
   }
 
   @Test

@@ -21,7 +21,7 @@ import java.util.List;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.CellScanner;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -69,8 +69,8 @@ public class WeakNotificationIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Collections.singletonList(new ObserverConfiguration(SimpleObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Collections.singletonList(new ObserverSpecification(SimpleObserver.class.getName()));
   }
 
   @Test

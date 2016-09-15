@@ -25,7 +25,7 @@ import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
@@ -119,9 +119,9 @@ public class LogIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Arrays.asList(new ObserverConfiguration(TestObserver.class.getName()),
-        new ObserverConfiguration(BinaryObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Arrays.asList(new ObserverSpecification(TestObserver.class.getName()),
+        new ObserverSpecification(BinaryObserver.class.getName()));
   }
 
   @Test

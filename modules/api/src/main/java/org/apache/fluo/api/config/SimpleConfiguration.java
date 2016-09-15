@@ -18,8 +18,14 @@ package org.apache.fluo.api.config;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -93,6 +99,13 @@ public class SimpleConfiguration {
     while (iter.hasNext()) {
       String key = iter.next();
       internalConfig.setProperty(key, other.internalConfig.getProperty(key));
+    }
+  }
+
+  public SimpleConfiguration(Map<String, String> map) {
+    this();
+    for (Entry<String, String> entry : map.entrySet()) {
+      internalConfig.setProperty(entry.getKey(), entry.getValue());
     }
   }
 
@@ -210,5 +223,20 @@ public class SimpleConfiguration {
   @Override
   public String toString() {
     return ConfigurationUtils.toString(internalConfig);
+  }
+
+  /**
+   * @return An immutable copy of this configurations as a map. Changes to this after toMap() is
+   *         called will not be reflected in the map.
+   */
+  public Map<String, String> toMap() {
+    Builder<String, String> builder = ImmutableMap.builder();
+    Iterator<String> ki = getKeys();
+    while (ki.hasNext()) {
+      String k = (String) ki.next();
+      builder.put(k, getRawString(k));
+    }
+
+    return builder.build();
   }
 }

@@ -113,6 +113,10 @@ public class FluoConfiguration extends SimpleConfiguration {
     super(propertiesFile);
   }
 
+  public FluoConfiguration(Map<String, String> map) {
+    super(map);
+  }
+
   public void validate() {
     // keep in alphabetical order
     getAccumuloClasspath();
@@ -126,7 +130,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     getClientRetryTimeout();
     getLoaderQueueSize();
     getLoaderThreads();
-    getObserverConfig();
+    getObserverSpecifications();
     getTransactionRollbackTime();
     getWorkerThreads();
     getZookeeperTimeout();
@@ -275,9 +279,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getPositiveInt(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
   }
 
-  public List<ObserverConfiguration> getObserverConfig() {
+  public List<ObserverSpecification> getObserverSpecifications() {
 
-    List<ObserverConfiguration> configList = new ArrayList<>();
+    List<ObserverSpecification> configList = new ArrayList<>();
     Iterator<String> iter = getKeys();
 
     while (iter.hasNext()) {
@@ -298,7 +302,6 @@ public class FluoConfiguration extends SimpleConfiguration {
         if (className.isEmpty()) {
           throw new IllegalArgumentException(key + " has empty class name: " + className);
         }
-        ObserverConfiguration observerConfig = new ObserverConfiguration(className);
 
         Map<String, String> params = new HashMap<>();
         for (int i = 1; i < fields.length; i++) {
@@ -313,8 +316,9 @@ public class FluoConfiguration extends SimpleConfiguration {
           }
           params.put(kv[0], kv[1]);
         }
-        observerConfig.setParameters(params);
-        configList.add(observerConfig);
+
+        ObserverSpecification observerSpecification = new ObserverSpecification(className, params);
+        configList.add(observerSpecification);
       }
     }
     return configList;
@@ -338,8 +342,8 @@ public class FluoConfiguration extends SimpleConfiguration {
     return max + 1;
   }
 
-  private void addObserver(ObserverConfiguration oconf, int next) {
-    Map<String, String> params = oconf.getParameters();
+  private void addObserver(ObserverSpecification oconf, int next) {
+    Map<String, String> params = oconf.getConfiguration().toMap();
     StringBuilder paramString = new StringBuilder();
     for (java.util.Map.Entry<String, String> pentry : params.entrySet()) {
       paramString.append(',');
@@ -351,10 +355,10 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Adds an {@link ObserverConfiguration} to the configuration using a unique integer prefix thats
+   * Adds an {@link ObserverSpecification} to the configuration using a unique integer prefix thats
    * not currently in use.
    */
-  public FluoConfiguration addObserver(ObserverConfiguration oconf) {
+  public FluoConfiguration addObserver(ObserverSpecification oconf) {
     int next = getNextObserverId();
     addObserver(oconf, next);
     return this;
@@ -363,9 +367,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Adds multiple observers using unique integer prefixes for each.
    */
-  public FluoConfiguration addObservers(Iterable<ObserverConfiguration> observers) {
+  public FluoConfiguration addObservers(Iterable<ObserverSpecification> observers) {
     int next = getNextObserverId();
-    for (ObserverConfiguration oconf : observers) {
+    for (ObserverSpecification oconf : observers) {
       addObserver(oconf, next++);
     }
     return this;

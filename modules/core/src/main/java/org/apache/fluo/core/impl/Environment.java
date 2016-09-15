@@ -35,7 +35,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.metrics.MetricNames;
@@ -52,8 +52,8 @@ public class Environment implements AutoCloseable {
   private String table;
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;
-  private Map<Column, ObserverConfiguration> observers;
-  private Map<Column, ObserverConfiguration> weakObservers;
+  private Map<Column, ObserverSpecification> observers;
+  private Map<Column, ObserverSpecification> weakObservers;
   private Set<Column> allObserversColumns;
   private Connector conn;
   private String accumuloInstanceID;
@@ -161,10 +161,10 @@ public class Environment implements AutoCloseable {
     }
   }
 
-  private static Map<Column, ObserverConfiguration> readObservers(DataInputStream dis)
+  private static Map<Column, ObserverSpecification> readObservers(DataInputStream dis)
       throws IOException {
 
-    HashMap<Column, ObserverConfiguration> omap = new HashMap<>();
+    HashMap<Column, ObserverSpecification> omap = new HashMap<>();
 
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
@@ -178,10 +178,8 @@ public class Environment implements AutoCloseable {
         params.put(k, v);
       }
 
-      ObserverConfiguration observerConfig = new ObserverConfiguration(clazz);
-      observerConfig.setParameters(params);
-
-      omap.put(col, observerConfig);
+      ObserverSpecification ospec = new ObserverSpecification(clazz, params);
+      omap.put(col, ospec);
     }
 
     return omap;
@@ -215,11 +213,11 @@ public class Environment implements AutoCloseable {
     return fluoApplicationID;
   }
 
-  public Map<Column, ObserverConfiguration> getObservers() {
+  public Map<Column, ObserverSpecification> getObservers() {
     return observers;
   }
 
-  public Map<Column, ObserverConfiguration> getWeakObservers() {
+  public Map<Column, ObserverSpecification> getWeakObservers() {
     return weakObservers;
   }
 

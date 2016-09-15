@@ -32,7 +32,7 @@ import org.apache.fluo.accumulo.util.LongUtil;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.CommitException;
@@ -73,9 +73,9 @@ public class FailureIT extends ITBaseImpl {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    List<ObserverConfiguration> observed = new ArrayList<>();
-    observed.add(new ObserverConfiguration(NullObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    List<ObserverSpecification> observed = new ArrayList<>();
+    observed.add(new ObserverSpecification(NullObserver.class.getName()));
     return observed;
   }
 

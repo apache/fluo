@@ -38,7 +38,8 @@ import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
@@ -209,38 +210,37 @@ public class FluoAdminImpl implements FluoAdmin {
 
     logger.info("Setting up observers using app config: {}", config.getAppConfiguration());
 
-    Map<Column, ObserverConfiguration> colObservers = new HashMap<>();
-    Map<Column, ObserverConfiguration> weakObservers = new HashMap<>();
-    for (ObserverConfiguration observerConfig : config.getObserverConfig()) {
+    Map<Column, ObserverSpecification> colObservers = new HashMap<>();
+    Map<Column, ObserverSpecification> weakObservers = new HashMap<>();
+    for (ObserverSpecification ospec : config.getObserverSpecifications()) {
 
       Observer observer;
       try {
-        observer =
-            Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+        observer = Class.forName(ospec.getClassName()).asSubclass(Observer.class).newInstance();
       } catch (ClassNotFoundException e1) {
-        throw new FluoException("Observer class '" + observerConfig.getClassName() + "' was not "
+        throw new FluoException("Observer class '" + ospec.getClassName() + "' was not "
             + "found.  Check for class name misspellings or failure to include "
             + "the observer jar.", e1);
       } catch (InstantiationException | IllegalAccessException e2) {
-        throw new FluoException("Observer class '" + observerConfig.getClassName()
+        throw new FluoException("Observer class '" + ospec.getClassName()
             + "' could not be created.", e2);
       }
 
+      SimpleConfiguration oc = ospec.getConfiguration();
       logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(),
-          observerConfig.getParameters());
+          oc.toMap());
       try {
-        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX),
-            observerConfig.getParameters()));
+        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), oc));
       } catch (Exception e) {
-        throw new FluoException("Observer '" + observerConfig.getClassName()
-            + "' could not be initialized", e);
+        throw new FluoException("Observer '" + ospec.getClassName() + "' could not be initialized",
+            e);
       }
 
       ObservedColumn observedCol = observer.getObservedColumn();
       if (observedCol.getType() == NotificationType.STRONG) {
-        colObservers.put(observedCol.getColumn(), observerConfig);
+        colObservers.put(observedCol.getColumn(), ospec);
       } else {
-        weakObservers.put(observedCol.getColumn(), observerConfig);
+        weakObservers.put(observedCol.getColumn(), ospec);
       }
     }
 

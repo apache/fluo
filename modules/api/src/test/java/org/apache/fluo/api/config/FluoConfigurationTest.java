@@ -208,7 +208,7 @@ public class FluoConfigurationTest {
     FluoConfiguration config = new FluoConfiguration();
     try {
       config.setProperty(FluoConfiguration.OBSERVER_PREFIX + "1", value);
-      config.getObserverConfig();
+      config.getObserverSpecifications();
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
@@ -219,12 +219,12 @@ public class FluoConfigurationTest {
     FluoConfiguration config = new FluoConfiguration();
     config.setProperty(FluoConfiguration.OBSERVER_PREFIX + "1",
         "com.foo.Observer2,configKey1=configVal1,configKey2=configVal2");
-    List<ObserverConfiguration> ocList = config.getObserverConfig();
+    List<ObserverSpecification> ocList = config.getObserverSpecifications();
     Assert.assertEquals(1, ocList.size());
     Assert.assertEquals("com.foo.Observer2", ocList.get(0).getClassName());
-    Assert.assertEquals("configVal1", ocList.get(0).getParameters().get("configKey1"));
-    Assert.assertEquals("configVal2", ocList.get(0).getParameters().get("configKey2"));
-    Assert.assertEquals(2, ocList.get(0).getParameters().size());
+    Assert.assertEquals("configVal1", ocList.get(0).getConfiguration().getString("configKey1"));
+    Assert.assertEquals("configVal2", ocList.get(0).getConfiguration().getString("configKey2"));
+    Assert.assertEquals(2, ocList.get(0).getConfiguration().toMap().size());
     assertIAE("class,bad,input");
     assertIAE("index,check,,phrasecount.PhraseCounter");
     assertIAE("");
@@ -236,43 +236,46 @@ public class FluoConfigurationTest {
 
     config = new FluoConfiguration();
     config.setProperty(FluoConfiguration.OBSERVER_PREFIX + "1", "Class,");
-    ocList = config.getObserverConfig();
+    ocList = config.getObserverSpecifications();
     Assert.assertEquals(1, ocList.size());
     Assert.assertEquals("Class", ocList.get(0).getClassName());
-    Assert.assertEquals(0, ocList.get(0).getParameters().size());
+    Assert.assertEquals(0, ocList.get(0).getConfiguration().toMap().size());
   }
 
   @Test
   public void testObserverConfig2() {
     FluoConfiguration config = new FluoConfiguration();
 
-    ObserverConfiguration oc1 =
-        new ObserverConfiguration("foo.class1").setParameters(ImmutableMap.of("param1", "a"));
-    ObserverConfiguration oc2 =
-        new ObserverConfiguration("foo.class2").setParameters(ImmutableMap.of("param1", "b"));
-    ObserverConfiguration oc3 = new ObserverConfiguration("foo.class3");
+    ObserverSpecification oc1 =
+        new ObserverSpecification("foo.class1", ImmutableMap.of("param1", "a"));
+    ObserverSpecification oc2 =
+        new ObserverSpecification("foo.class2", ImmutableMap.of("param1", "b"));
+    ObserverSpecification oc3 = new ObserverSpecification("foo.class3");
 
     config.addObserver(oc1);
     config.addObserver(oc2);
     config.addObserver(oc3);
 
-    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3), new HashSet<>(config.getObserverConfig()));
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3),
+        new HashSet<>(config.getObserverSpecifications()));
 
     config.clearObservers();
 
-    Assert.assertEquals(0, config.getObserverConfig().size());
+    Assert.assertEquals(0, config.getObserverSpecifications().size());
 
     config.addObservers(Arrays.asList(oc1, oc2));
 
-    Assert.assertEquals(ImmutableSet.of(oc1, oc2), new HashSet<>(config.getObserverConfig()));
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2),
+        new HashSet<>(config.getObserverSpecifications()));
 
     config.addObserver(oc3);
 
-    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3), new HashSet<>(config.getObserverConfig()));
+    Assert.assertEquals(ImmutableSet.of(oc1, oc2, oc3),
+        new HashSet<>(config.getObserverSpecifications()));
 
     config.clearObservers();
 
-    Assert.assertEquals(0, config.getObserverConfig().size());
+    Assert.assertEquals(0, config.getObserverSpecifications().size());
   }
 
   private void assertSetNameIAE(String name) {

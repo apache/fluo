@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
@@ -63,7 +63,7 @@ public class Observers implements AutoCloseable {
 
     Observer observer = null;
 
-    ObserverConfiguration observerConfig = env.getObservers().get(col);
+    ObserverSpecification observerConfig = env.getObservers().get(col);
     if (observerConfig == null) {
       observerConfig = env.getWeakObservers().get(col);
     }
@@ -72,7 +72,7 @@ public class Observers implements AutoCloseable {
       try {
         observer =
             Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
-        observer.init(new ObserverContext(env, observerConfig.getParameters()));
+        observer.init(new ObserverContext(env, observerConfig.getConfiguration()));
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {

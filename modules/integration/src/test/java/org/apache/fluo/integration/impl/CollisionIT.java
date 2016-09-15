@@ -32,7 +32,7 @@ import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.AbstractObserver;
@@ -95,8 +95,8 @@ public class CollisionIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Collections.singletonList(new ObserverConfiguration(TotalObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Collections.singletonList(new ObserverSpecification(TotalObserver.class.getName()));
   }
 
   @Override

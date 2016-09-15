@@ -15,28 +15,26 @@
 
 package org.apache.fluo.core.worker;
 
-import java.util.Map;
-
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
 
 public class ObserverContext implements Observer.Context {
 
-  private final Map<String, String> params;
+  private final SimpleConfiguration observerConfig;
   private final SimpleConfiguration appConfig;
   private final Environment env;
 
-  public ObserverContext(SimpleConfiguration appConfig, Map<String, String> params) {
+  public ObserverContext(SimpleConfiguration appConfig, SimpleConfiguration observerConfig) {
     this.appConfig = appConfig;
-    this.params = params;
+    this.observerConfig = observerConfig;
     this.env = null;
   }
 
-  public ObserverContext(Environment env, Map<String, String> parameters) {
+  public ObserverContext(Environment env, SimpleConfiguration observerConfig) {
     this.env = env;
     this.appConfig = null;
-    this.params = parameters;
+    this.observerConfig = observerConfig;
   }
 
   @Override
@@ -48,8 +46,8 @@ public class ObserverContext implements Observer.Context {
   }
 
   @Override
-  public Map<String, String> getParameters() {
-    return params;
+  public SimpleConfiguration getObserverConfiguration() {
+    return observerConfig;
   }
 
 }

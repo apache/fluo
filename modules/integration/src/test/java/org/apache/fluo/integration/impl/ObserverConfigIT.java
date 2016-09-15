@@ -23,7 +23,8 @@ import java.util.Map;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.AbstractObserver;
@@ -42,13 +43,15 @@ public class ObserverConfigIT extends ITBaseMini {
 
     @Override
     public void init(Context context) {
-      String ocTokens[] = context.getParameters().get("observedCol").split(":");
+      SimpleConfiguration myConfig = context.getObserverConfiguration();
+
+      String ocTokens[] = myConfig.getString("observedCol").split(":");
       observedColumn =
           new ObservedColumn(new Column(ocTokens[0], ocTokens[1]),
               NotificationType.valueOf(ocTokens[2]));
-      outputCQ = Bytes.of(context.getParameters().get("outputCQ"));
-      String swn = context.getParameters().get("setWeakNotification");
-      if (swn != null && swn.equals("true")) {
+      outputCQ = Bytes.of(myConfig.getString("outputCQ"));
+      String swn = myConfig.getString("setWeakNotification", "false");
+      if (swn.equals("true")) {
         setWeakNotification = true;
       }
     }
@@ -83,20 +86,18 @@ public class ObserverConfigIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    List<ObserverConfiguration> observers = new ArrayList<>();
+  protected List<ObserverSpecification> getObservers() {
+    List<ObserverSpecification> observers = new ArrayList<>();
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
-        .setParameters(newMap("observedCol", "fam1:col1:" + NotificationType.STRONG, "outputCQ",
-            "col2")));
+    observers.add(new ObserverSpecification(ConfigurableObserver.class.getName(), newMap(
+        "observedCol", "fam1:col1:" + NotificationType.STRONG, "outputCQ", "col2")));
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
-        .setParameters(newMap("observedCol", "fam1:col2:" + NotificationType.STRONG, "outputCQ",
-            "col3", "setWeakNotification", "true")));
+    observers.add(new ObserverSpecification(ConfigurableObserver.class.getName(), newMap(
+        "observedCol", "fam1:col2:" + NotificationType.STRONG, "outputCQ", "col3",
+        "setWeakNotification", "true")));
 
-    observers.add(new ObserverConfiguration(ConfigurableObserver.class.getName())
-        .setParameters(newMap("observedCol", "fam1:col3:" + NotificationType.WEAK, "outputCQ",
-            "col4")));
+    observers.add(new ObserverSpecification(ConfigurableObserver.class.getName(), newMap(
+        "observedCol", "fam1:col3:" + NotificationType.WEAK, "outputCQ", "col4")));
 
     return observers;
   }

@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -56,8 +56,8 @@ public class Operations {
   }
 
   public static void updateObservers(CuratorFramework curator,
-      Map<Column, ObserverConfiguration> colObservers,
-      Map<Column, ObserverConfiguration> weakObservers) throws Exception {
+      Map<Column, ObserverSpecification> colObservers,
+      Map<Column, ObserverSpecification> weakObservers) throws Exception {
 
     // TODO check that no workers are running... or make workers watch this znode
 
@@ -78,27 +78,27 @@ public class Operations {
   }
 
   private static void serializeObservers(DataOutputStream dos,
-      Map<Column, ObserverConfiguration> colObservers) throws IOException {
+      Map<Column, ObserverSpecification> colObservers) throws IOException {
     // TODO use a human readable serialized format like json
 
-    Set<Entry<Column, ObserverConfiguration>> es = colObservers.entrySet();
+    Set<Entry<Column, ObserverSpecification>> es = colObservers.entrySet();
 
     WritableUtils.writeVInt(dos, colObservers.size());
 
-    for (Entry<Column, ObserverConfiguration> entry : es) {
+    for (Entry<Column, ObserverSpecification> entry : es) {
       ColumnUtil.writeColumn(entry.getKey(), dos);
       dos.writeUTF(entry.getValue().getClassName());
-      Map<String, String> params = entry.getValue().getParameters();
+      Map<String, String> params = entry.getValue().getConfiguration().toMap();
       WritableUtils.writeVInt(dos, params.size());
-      for (Entry<String, String> pentry : entry.getValue().getParameters().entrySet()) {
+      for (Entry<String, String> pentry : params.entrySet()) {
         dos.writeUTF(pentry.getKey());
         dos.writeUTF(pentry.getValue());
       }
     }
   }
 
-  private static byte[] serializeObservers(Map<Column, ObserverConfiguration> colObservers,
-      Map<Column, ObserverConfiguration> weakObservers) throws IOException {
+  private static byte[] serializeObservers(Map<Column, ObserverSpecification> colObservers,
+      Map<Column, ObserverSpecification> weakObservers) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(baos)) {
       serializeObservers(dos, colObservers);

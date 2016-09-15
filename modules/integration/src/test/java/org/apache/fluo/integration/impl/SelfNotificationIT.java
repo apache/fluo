@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.AbstractObserver;
@@ -40,8 +40,8 @@ public class SelfNotificationIT extends ITBaseMini {
   private static final Column EXPORT_COUNT_COL = new Column("export", "count");
 
   @Override
-  protected List<ObserverConfiguration> getObservers() {
-    return Collections.singletonList(new ObserverConfiguration(ExportingObserver.class.getName()));
+  protected List<ObserverSpecification> getObservers() {
+    return Collections.singletonList(new ObserverSpecification(ExportingObserver.class.getName()));
   }
 
   private static List<String> exports = new ArrayList<>();

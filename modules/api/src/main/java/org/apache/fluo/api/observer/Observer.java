@@ -15,8 +15,6 @@
 
 package org.apache.fluo.api.observer;
 
-import java.util.Map;
-
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.SimpleConfiguration;
@@ -75,9 +73,9 @@ public interface Observer {
     SimpleConfiguration getAppConfiguration();
 
     /**
-     * @return The parameters configured for this observer
+     * @return The per observer configuration that's specific to this observer.
      */
-    Map<String, String> getParameters();
+    SimpleConfiguration getObserverConfiguration();
 
   }
 

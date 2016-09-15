@@ -30,7 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -80,7 +80,7 @@ public class ITBase {
     conn = miniAccumulo.getConnector(USER, new PasswordToken(PASSWORD));
   }
 
-  protected List<ObserverConfiguration> getObservers() {
+  protected List<ObserverSpecification> getObservers() {
     return Collections.emptyList();
   }
 

@@ -31,7 +31,7 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverConfiguration;
+import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -66,8 +66,8 @@ public class FluoIT extends ITBaseImpl {
   }
 
   @Override
-  protected List<org.apache.fluo.api.config.ObserverConfiguration> getObservers() {
-    return Arrays.asList(new ObserverConfiguration(BalanceObserver.class.getName()));
+  protected List<org.apache.fluo.api.config.ObserverSpecification> getObservers() {
+    return Arrays.asList(new ObserverSpecification(BalanceObserver.class.getName()));
   };
 
   @Test
