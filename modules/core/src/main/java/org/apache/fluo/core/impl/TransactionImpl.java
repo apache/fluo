@@ -307,11 +307,6 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
-    set(Bytes.of(row), col, Bytes.of(value));
-  }
-
-  @Override
   public void setWeakNotification(Bytes row, Column col) {
     checkIfOpen();
     Objects.requireNonNull(row);
@@ -333,21 +328,11 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   }
 
   @Override
-  public void setWeakNotification(CharSequence row, Column col) {
-    setWeakNotification(Bytes.of(row), col);
-  }
-
-  @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     checkIfOpen();
     Objects.requireNonNull(row);
     Objects.requireNonNull(col);
     set(row, col, DELETE);
-  }
-
-  @Override
-  public void delete(CharSequence row, Column col) {
-    delete(Bytes.of(row), col);
   }
 
   private ConditionalFlutation prewrite(ConditionalFlutation cm, Bytes row, Column col, Bytes val,
@@ -656,27 +641,6 @@ public class TransactionImpl implements AsyncTransaction, Snapshot {
   @Override
   public long getStartTimestamp() {
     return startTs;
-  }
-
-  @Override
-  public String gets(CharSequence row, Column column) {
-    return TxStringUtil.gets(this, row, column);
-  }
-
-  @Override
-  public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
-    return TxStringUtil.gets(this, row, columns);
-  }
-
-  @Override
-  public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
-      Set<Column> columns) {
-    return TxStringUtil.gets(this, rows, columns);
-  }
-
-  @Override
-  public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
-    return TxStringUtil.gets(this, rowColumns);
   }
 
   // async experiment

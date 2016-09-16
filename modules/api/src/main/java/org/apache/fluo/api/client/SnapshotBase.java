@@ -16,9 +16,14 @@
 package org.apache.fluo.api.client;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -39,16 +44,49 @@ public interface SnapshotBase {
   Bytes get(Bytes row, Column column);
 
   /**
-   * Given a row and set of {@link Column}s, retrieves a map contains the values at those
+   * Retrieves the value (in {@link Bytes}) stored at a given row and {@link Column}. Returns the
+   * passed in defaultValue if does not exist.
+   * 
+   * @param defaultValue this will be returned if row+columns does not exists
+   */
+  default Bytes get(Bytes row, Column column, Bytes defaultValue) {
+    Bytes ret = get(row, column);
+    if (ret == null) {
+      return defaultValue;
+    }
+
+    return ret;
+  }
+
+  /**
+   * Given a row and set of {@link Column}s, retrieves a map that contains the values at those
    * {@link Column}s. Only columns that exist will be returned in map.
    */
   Map<Column, Bytes> get(Bytes row, Set<Column> columns);
 
   /**
-   * Given a collection of rows and set of {@link Column}s, retrieves a map contains the values at
-   * those rows and {@link Column}s. Only rows and columns that exists will be returned in map.
+   * Given a row and list of {@link Column}s, retrieves a map that contains the values at those
+   * {@link Column}s. Only columns that exist will be returned in map.
+   */
+  default Map<Column, Bytes> get(Bytes row, Column... columns) {
+    return get(row, ImmutableSet.copyOf(columns));
+  }
+
+  /**
+   * Given a collection of rows and set of {@link Column}s, retrieves a map that contains the values
+   * at those rows and {@link Column}s. Only rows and columns that exists will be returned in map.
    */
   Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns);
+
+  /**
+   * Given a collection of rows and list of {@link Column}s, retrieves a map that contains the
+   * values at those rows and {@link Column}s. Only rows and columns that exists will be returned in
+   * map.
+   */
+  default Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Column... columns) {
+    return get(rows, ImmutableSet.copyOf(columns));
+  }
+
 
   /**
    * Given a collection of {@link RowColumn}s, retrieves a map contains the values at
@@ -99,25 +137,77 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Collection)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<RowColumn, String> gets(Collection<RowColumn> rowColumns);
+  default Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
+    Map<RowColumn, Bytes> bytesMap = get(rowColumns);
+    return Maps.transformValues(bytesMap, b -> b.toString());
+  }
 
   /**
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
    * decoded using UTF-8.
    */
-  Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows, Set<Column> columns);
+  default Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Set<Column> columns) {
+    Map<Bytes, Map<Column, Bytes>> rcvs =
+        get(Collections2.transform(rows, s -> Bytes.of(s)), columns);
+    Map<String, Map<Column, String>> ret = new HashMap<>(rcvs.size());
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : rcvs.entrySet()) {
+      ret.put(entry.getKey().toString(), Maps.transformValues(entry.getValue(), b -> b.toString()));
+    }
+    return ret;
+  }
+
+  /**
+   * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
+   * decoded using UTF-8.
+   */
+  default Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Column... columns) {
+    return gets(rows, ImmutableSet.copyOf(columns));
+  }
 
   /**
    * Wrapper for {@link #get(Bytes, Column)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  String gets(CharSequence row, Column column);
+  default String gets(CharSequence row, Column column) {
+    Bytes val = get(Bytes.of(row), column);
+    if (val == null) {
+      return null;
+    }
+    return val.toString();
+  }
+
+  /**
+   * Wrapper for {@link #get(Bytes, Column, Bytes)} that uses Strings. All strings are encoded and
+   * decoded using UTF-8.
+   */
+  default String gets(CharSequence row, Column column, String defaultValue) {
+    Bytes val = get(Bytes.of(row), column);
+    if (val == null) {
+      return defaultValue;
+    }
+
+    return val.toString();
+  }
 
   /**
    * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
    * using UTF-8.
    */
-  Map<Column, String> gets(CharSequence row, Set<Column> columns);
+  default Map<Column, String> gets(CharSequence row, Set<Column> columns) {
+    Map<Column, Bytes> values = get(Bytes.of(row), columns);
+    return Maps.transformValues(values, b -> b.toString());
+  }
+
+  /**
+   * Wrapper for {@link #get(Bytes, Set)} that uses Strings. All strings are encoded and decoded
+   * using UTF-8.
+   */
+  default Map<Column, String> gets(CharSequence row, Column... columns) {
+    return gets(row, ImmutableSet.copyOf(columns));
+  }
 
   /**
    * @return transactions start timestamp allocated from Oracle.
