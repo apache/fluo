@@ -30,6 +30,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.fluo.accumulo.iterators.NotificationIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.NotificationUtil;
+import org.apache.fluo.api.client.AbstractTransactionBase;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
@@ -50,7 +51,7 @@ import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.hadoop.io.Text;
 
-public class TestTransaction implements TransactionBase {
+public class TestTransaction extends AbstractTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
   private Environment env;

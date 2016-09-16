@@ -53,6 +53,7 @@ import org.apache.fluo.accumulo.iterators.PrewriteIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.LockValue;
+import org.apache.fluo.api.client.AbstractTransactionBase;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
@@ -81,7 +82,7 @@ import org.apache.fluo.core.util.SpanUtil;
 /**
  * Transaction implementation
  */
-public class TransactionImpl implements AsyncTransaction, Snapshot {
+public class TransactionImpl extends AbstractTransactionBase implements AsyncTransaction, Snapshot {
 
   public static final byte[] EMPTY = new byte[0];
   public static final Bytes EMPTY_BS = Bytes.of(EMPTY);

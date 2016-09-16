@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Iterators;
+import org.apache.fluo.api.client.AbstractTransactionBase;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -36,7 +37,8 @@ import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TracingTransaction implements AsyncTransaction, Snapshot {
+public class TracingTransaction extends AbstractTransactionBase implements AsyncTransaction,
+    Snapshot {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX);
   private static final Logger collisionLog = LoggerFactory

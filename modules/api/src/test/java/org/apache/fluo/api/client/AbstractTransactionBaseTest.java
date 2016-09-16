@@ -34,9 +34,9 @@ import org.apache.fluo.api.exceptions.CommitException;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestDefaultTransactionMethods {
+public class AbstractTransactionBaseTest {
 
-  private static class MockTransaction implements Transaction {
+  private static class MockTransaction extends AbstractTransactionBase implements Transaction {
 
     public Set<RowColumnValue> sets = new HashSet<>();
     public Set<RowColumn> deletes = new HashSet<>();
