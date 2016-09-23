@@ -71,6 +71,7 @@
             </goals>
             <phase>package</phase>
             <configuration>
+              <escapeString>\</escapeString>
               <descriptors>
                 <descriptor>src/main/assembly/bin.xml</descriptor>
               </descriptors>

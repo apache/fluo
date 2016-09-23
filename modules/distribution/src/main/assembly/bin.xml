@@ -53,9 +53,9 @@
     <fileSet>
       <directory>src/main/config</directory>
       <outputDirectory>conf/examples</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
+      <excludes>
+        <exclude>src/main/config/fluo.properties</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>src/main/lib</directory>
@@ -75,23 +75,21 @@
     <fileSet>
       <directory>../../docs</directory>
       <outputDirectory>docs</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
     </fileSet>
     <fileSet>
       <directory>../../contrib/grafana</directory>
       <outputDirectory>contrib/grafana</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
     </fileSet>
     <fileSet>
       <directory>../../contrib/influxdb</directory>
       <outputDirectory>contrib/influxdb</outputDirectory>
-      <includes>
-        <include>*</include>
-      </includes>
     </fileSet>
   </fileSets>
+  <files>
+    <file>
+      <source>src/main/config/fluo.properties</source>
+      <outputDirectory>conf/examples</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+  </files>
 </assembly>
