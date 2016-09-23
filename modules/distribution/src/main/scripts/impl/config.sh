@@ -64,3 +64,4 @@ else
   export SED="sed -i"
 fi
 
+. $impl/fluo-version.sh

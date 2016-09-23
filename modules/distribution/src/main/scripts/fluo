@@ -61,6 +61,7 @@ function print_usage {
   echo "  scan <app>    Prints snapshot of data in Fluo application"
   echo "  classpath     Prints the classpath setup in fluo-env.sh"
   echo "  wait <app>    Waits until all notifications are processed"
+  echo "  version       Prints the version of Fluo"
   echo "  exec <app> <class>  {<argument>}";
   echo " "
   exit 1
@@ -146,6 +147,9 @@ classpath)
 exec)
   export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
   java org.apache.fluo.cluster.command.FluoCommand $FLUO_HOME $HADOOP_PREFIX "$@"
+  ;;
+version)
+  echo "$FLUO_VERSION"
   ;;
 *)
   print_usage

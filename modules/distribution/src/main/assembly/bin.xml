@@ -49,6 +49,9 @@
       <includes>
         <include>*/**</include>
       </includes>
+      <excludes>
+        <exclude>src/main/scripts/impl/fluo-version.sh</exclude>
+      </excludes>
     </fileSet>
     <fileSet>
       <directory>src/main/config</directory>
@@ -89,6 +92,11 @@
     <file>
       <source>src/main/config/fluo.properties</source>
       <outputDirectory>conf/examples</outputDirectory>
+      <filtered>true</filtered>
+    </file>
+    <file>
+      <source>src/main/scripts/impl/fluo-version.sh</source>
+      <outputDirectory>bin/impl</outputDirectory>
       <filtered>true</filtered>
     </file>
   </files>
