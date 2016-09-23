@@ -273,8 +273,6 @@
           <configuration>
             <excludes>
               <exclude>**/services/org.apache.fluo.core.metrics.ReporterStarter</exclude>
-              <exclude>README.md</exclude>
-              <exclude>docs/**.md</exclude>
               <exclude>contrib/grafana/**.json</exclude>
             </excludes>
           </configuration>
