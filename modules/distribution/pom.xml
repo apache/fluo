@@ -23,9 +23,9 @@
   </parent>
   <artifactId>fluo</artifactId>
   <packaging>pom</packaging>
-  <name>Fluo Distribution</name>
-  <description>This module produces a tarball distribution of Fluo.  It contains all of the default configuration
-    and scripts required for the distribution.</description>
+  <name>Apache Fluo (incubating) Distribution</name>
+  <description>This module produces a tarball distribution of Apache Fluo. It contains all of the
+    default configuration and scripts required for the distribution.</description>
   <!-- NOTE: These dependencies are bundled in this assembly -->
   <dependencies>
     <dependency>

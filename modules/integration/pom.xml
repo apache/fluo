@@ -22,8 +22,8 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-integration</artifactId>
-  <name>Fluo Integration</name>
-  <description>This module contains Fluo integration tests</description>
+  <name>Apache Fluo (incubating) Integration</name>
+  <description>This module contains Apache Fluo integration tests</description>
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>

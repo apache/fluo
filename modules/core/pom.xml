@@ -22,8 +22,8 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-core</artifactId>
-  <name>Fluo Core</name>
-  <description>The modules contains the core implementation code of Fluo.</description>
+  <name>Apache Fluo (incubating) Core</name>
+  <description>The modules contains the core implementation code of Apache Fluo.</description>
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>

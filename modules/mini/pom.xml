@@ -22,9 +22,9 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-mini</artifactId>
-  <name>Fluo Mini</name>
-  <description>This module contains the implementation code of MiniFluo.  It was separated from fluo-core
-    to remove the dependency on accumulo-minicluster from core.</description>
+  <name>Apache Fluo (incubating) Mini</name>
+  <description>This module contains the implementation code of MiniFluo. It was separated from
+    fluo-core to remove the dependency on accumulo-minicluster from core.</description>
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>

@@ -22,11 +22,11 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-cluster</artifactId>
-  <name>Fluo Cluster</name>
-  <description>This module contains all code necessary to run Fluo on a YARN cluster using Apache Twill.
-    It was separated from fluo-core to keep dependencies (like Twill) out of Fluo clients which
-    depend on the fluo-core jar.  It was also done to limit conflicts.  For example, Twill
-    requires logback to be used but fluo-core requires log4j (due to zookeeper requiring it in
+  <name>Apache Fluo (incubating) Cluster</name>
+  <description>This module contains all code necessary to run Apache Fluo on a YARN cluster using
+    Apache Twill. It was separated from fluo-core to keep dependencies (like Twill) out of Fluo
+    clients which depend on the fluo-core jar.  It was also done to limit conflicts. For example,
+    Twill requires logback to be used but fluo-core requires log4j (due to zookeeper requiring it in
     accumulo-minicluster).</description>
   <dependencies>
     <dependency>

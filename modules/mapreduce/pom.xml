@@ -22,8 +22,9 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-mapreduce</artifactId>
-  <name>Fluo MapReduce</name>
-  <description>This module provides utility code for MapReduce jobs that read from or write to a Fluo table.</description>
+  <name>Apache Fluo (incubating) MapReduce Utilities</name>
+  <description>This module provides utility code for MapReduce jobs that read from or write to a
+    Apache Fluo table.</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
