@@ -36,13 +36,18 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.server.THsHaServer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class OracleIT extends ITBaseImpl {
+
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
 
   @Test
   public void testRestart() throws Exception {
@@ -225,10 +230,8 @@ public class OracleIT extends ITBaseImpl {
     oserver.stop();
     sleepWhileConnected(oserver);
 
-    int count = 0;
-    while (count < 5 && client.getOracle() != null) {
-      Thread.sleep(1000);
-      count++;
+    while (client.getOracle() != null) {
+      Thread.sleep(100);
     }
 
     assertNull(client.getOracle());
