@@ -42,7 +42,9 @@ import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Run end to end test with lots of collisions and verify the following :
@@ -60,6 +62,9 @@ public class CollisionIT extends ITBaseMini {
   private static final Column STAT_TOTAL = new Column("stat", "total");
   private static final Column STAT_CHANGED = new Column("stat", "changed");
   private static final Column STAT_PROCESSED = new Column("stat", "processed");
+
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
 
   private static class NumLoader implements Loader {
 
@@ -130,6 +135,8 @@ public class CollisionIT extends ITBaseMini {
 
     miniFluo.waitForObservers();
 
+    long recentTS;
+
     try (Snapshot snapshot = client.newSnapshot()) {
 
       for (int i = 0; i < expectedCounts.length; i++) {
@@ -144,16 +151,15 @@ public class CollisionIT extends ITBaseMini {
       String allTotal = snapshot.gets("all", STAT_TOTAL);
       Assert.assertNotNull(allTotal);
       Assert.assertEquals(1000, Integer.parseInt(allTotal));
+
+      recentTS = snapshot.getStartTimestamp();
     }
 
     long oldestTS = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
-    while (true) {
+
+    while (oldestTS < recentTS) {
       UtilWaitThread.sleep(300);
-      long tmp = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
-      if (oldestTS == tmp) {
-        break;
-      }
-      oldestTS = tmp;
+      oldestTS = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
     }
 
     conn.tableOperations().compact(getCurTableName(), null, null, true, true);
