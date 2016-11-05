@@ -156,9 +156,7 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
 
   @Override
   public ScannerBuilder scanner() {
-    // TODO log something better (see fluo-425)
-    log.trace("txid: {} newScanner()", txid);
-    return tx.scanner();
+    return new TracingScannerBuilder(tx.scanner(), txid);
   }
 
   @Override

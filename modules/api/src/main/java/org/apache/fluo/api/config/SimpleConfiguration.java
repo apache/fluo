@@ -18,8 +18,6 @@ package org.apache.fluo.api.config;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;

@@ -123,9 +123,10 @@ by setting the following loggers to TRACE:
 
 | Logger               | Level | Information                                                                                        |
 |----------------------|-------|----------------------------------------------------------------------------------------------------|
-| `fluo.tx`            | TRACE | Provides detailed information about what transactions read and wrote                               |
-| `fluo.tx.summary`    | TRACE | Provides a one line summary about each transaction executed                                        |
-| `fluo.tx.collisions` | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
+| fluo.tx            | TRACE | Provides detailed information about what transactions read and wrote                               |
+| fluo.tx.summary    | TRACE | Provides a one line summary about each transaction executed                                        |
+| fluo.tx.collisions | TRACE | Provides details about what data was involved When a transaction collides with another transaction |
+| fluo.tx.scan       | TRACE | Provides logging for each cell read by a scan.  Scan summary logged at `fluo.tx` level.  This allows suppression of `fluo.tx.scan` while still seeing summary. |
 
 Below is an example log after setting `fluo.tx` to TRACE. The number following `txid: ` is the
 transactions start timestamp from the Oracle.

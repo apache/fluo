@@ -16,19 +16,29 @@
 package org.apache.fluo.integration.log;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.client.scanner.CellScanner;
+import org.apache.fluo.api.client.scanner.ColumnScanner;
+import org.apache.fluo.api.client.scanner.RowScanner;
 import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumn;
+import org.apache.fluo.api.data.RowColumnValue;
+import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestUtil;
@@ -325,10 +335,19 @@ public class LogIT extends ITBaseMini {
       logger.addAppender(appender);
 
       try (Snapshot snap = client.newSnapshot()) {
-        snap.gets(Arrays.asList(new RowColumn("r1", c1), new RowColumn("r2", c2)));
-        snap.gets(Arrays.asList("r1", "r2"), ImmutableSet.of(c1));
-        snap.gets("r1", ImmutableSet.of(c1, c2));
-        snap.gets("r1", c1);
+        Map<RowColumn, String> ret1 =
+            snap.gets(Arrays.asList(new RowColumn("r1", c1), new RowColumn("r2", c2)));
+        Assert.assertEquals(
+            ImmutableMap.of(new RowColumn("r1", c1), "v1", new RowColumn("r2", c2), "v4"), ret1);
+        Map<String, Map<Column, String>> ret2 =
+            snap.gets(Arrays.asList("r1", "r2"), ImmutableSet.of(c1));
+        Assert
+            .assertEquals(
+                ImmutableMap.of("r1", ImmutableMap.of(c1, "v1"), "r2", ImmutableMap.of(c1, "v3")),
+                ret2);
+        Map<Column, String> ret3 = snap.gets("r1", ImmutableSet.of(c1, c2));
+        Assert.assertEquals(ImmutableMap.of(c1, "v1", c2, "v2"), ret3);
+        Assert.assertEquals("v1", snap.gets("r1", c1));
       }
 
       miniFluo.waitForObservers();
@@ -411,5 +430,138 @@ public class LogIT extends ITBaseMini {
     pattern += ".*txid: \\1 \\Qclose()\\E";
     pattern += ".*";
     Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
+  }
+
+  private void assertEqual(CellScanner cs, RowColumnValue... rcvs) {
+    ArrayList<RowColumnValue> actual = new ArrayList<>();
+    Iterables.addAll(actual, cs);
+    Assert.assertEquals(Arrays.asList(rcvs), actual);
+  }
+
+  private void assertEqual(RowScanner rs, Object... stuff) {
+    int i = 0;
+    for (ColumnScanner cs : rs) {
+      Assert.assertEquals(stuff[i++], cs.getsRow());
+      for (ColumnValue cv : cs) {
+        Assert.assertEquals(stuff[i++], cv.getColumn());
+        Assert.assertEquals(stuff[i++], cv.getsValue());
+      }
+    }
+
+    Assert.assertEquals(stuff.length, i);
+  }
+
+  @Test
+  public void testScanLogging() {
+    Column c1 = new Column("f1", "q1");
+    Column c2 = new Column("f1", "q2");
+
+    try (Transaction tx = client.newTransaction()) {
+      tx.set("r1", c1, "v1");
+      tx.set("r1", c2, "v2");
+      tx.set("r2", c1, "v3");
+      tx.set("r2", c2, "v4");
+      tx.commit();
+    }
+
+    Logger logger = Logger.getLogger("fluo.tx");
+
+    StringWriter writer = new StringWriter();
+    WriterAppender appender =
+        new WriterAppender(new PatternLayout("%d{ISO8601} [%-8c{2}] %-5p: %m%n"), writer);
+
+    Level level = logger.getLevel();
+    boolean additivity = logger.getAdditivity();
+
+    try {
+      logger.setLevel(Level.TRACE);
+      logger.setAdditivity(false);
+      logger.addAppender(appender);
+
+      try (Snapshot snap = client.newSnapshot()) {
+        RowColumnValue rcv1 = new RowColumnValue("r1", c1, "v1");
+        RowColumnValue rcv2 = new RowColumnValue("r1", c2, "v2");
+        RowColumnValue rcv3 = new RowColumnValue("r2", c1, "v3");
+        RowColumnValue rcv4 = new RowColumnValue("r2", c2, "v4");
+
+        CellScanner scanner1 = snap.scanner().build();
+        assertEqual(scanner1, rcv1, rcv2, rcv3, rcv4);
+
+        CellScanner scanner2 = snap.scanner().over(Span.exact("r1")).build();
+        assertEqual(scanner2, rcv1, rcv2);
+
+        CellScanner scanner3 = snap.scanner().over(Span.exact("r1")).fetch(c1).build();
+        assertEqual(scanner3, rcv1);
+
+        CellScanner scanner4 = snap.scanner().fetch(c1).build();
+        assertEqual(scanner4, rcv1, rcv3);
+      }
+
+      try (Snapshot snap = client.newSnapshot()) {
+        RowScanner rowScanner1 = snap.scanner().byRow().build();
+        assertEqual(rowScanner1, "r1", c1, "v1", c2, "v2", "r2", c1, "v3", c2, "v4");
+
+        RowScanner rowScanner2 = snap.scanner().over(Span.exact("r1")).byRow().build();
+        assertEqual(rowScanner2, "r1", c1, "v1", c2, "v2");
+
+        RowScanner rowScanner3 = snap.scanner().over(Span.exact("r1")).fetch(c1).byRow().build();
+        assertEqual(rowScanner3, "r1", c1, "v1");
+
+        RowScanner rowScanner4 = snap.scanner().fetch(c1).byRow().build();
+        assertEqual(rowScanner4, "r1", c1, "v1", "r2", c1, "v3");
+      }
+
+    } finally {
+      logger.removeAppender(appender);
+      logger.setAdditivity(additivity);
+      logger.setLevel(level);
+    }
+
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
+
+    String pattern = "";
+
+    pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern +=
+        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([]).build()\\E";
+    pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r1 f1 q2  v2\\E";
+    pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r2 f1 q1  v3\\E";
+    pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r2 f1 q2  v4\\E";
+    pattern +=
+        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([]).build()\\E";
+    pattern += ".*txid: \\1 scanId: \\3 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\1 scanId: \\3 \\Qnext()-> r1 f1 q2  v2\\E";
+    pattern +=
+        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([f1 q1 ]).build()\\E";
+    pattern += ".*txid: \\1 scanId: \\4 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern +=
+        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([f1 q1 ]).build()\\E";
+    pattern += ".*txid: \\1 scanId: \\5 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\1 scanId: \\5 \\Qnext()-> r2 f1 q1  v3\\E";
+    pattern += ".*txid: \\1 \\Qclose()\\E";
+    pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern +=
+        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r1 f1 q2  v2\\E";
+    pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r2 f1 q1  v3\\E";
+    pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r2 f1 q2  v4\\E";
+    pattern +=
+        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: \\8 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\6 scanId: \\8 \\Qnext()-> r1 f1 q2  v2\\E";
+    pattern +=
+        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([f1 q1 ]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: \\9 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern +=
+        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([f1 q1 ]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: \\10 \\Qnext()-> r1 f1 q1  v1\\E";
+    pattern += ".*txid: \\6 scanId: \\10 \\Qnext()-> r2 f1 q1  v3\\E";
+    pattern += ".*txid: \\6 \\Qclose()\\E.*";
+
+    Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
+
   }
 }

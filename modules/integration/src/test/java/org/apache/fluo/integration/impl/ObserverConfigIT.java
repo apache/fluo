@@ -30,7 +30,6 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.metrics.Counter;
 import org.apache.fluo.api.metrics.Meter;
 import org.apache.fluo.api.observer.AbstractObserver;
-import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
