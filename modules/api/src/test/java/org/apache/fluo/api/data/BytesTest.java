@@ -86,7 +86,34 @@ public class BytesTest {
     Assert.assertEquals(-1, b1.compareTo(b2));
     Assert.assertEquals(1, b2.compareTo(b1));
     Assert.assertEquals(0, b1.compareTo(b3));
+    Assert.assertEquals(0, b1.compareTo(b1));
     Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+  }
+
+  @Test
+  public void testCompareSubsequence() {
+    Bytes b1 = Bytes.of("abcd");
+    Bytes b2 = b1.subSequence(0, 3);
+    Bytes b3 = Bytes.of("abc");
+    Bytes b4 = Bytes.of("~abcde");
+    Bytes b5 = b4.subSequence(1, 4);
+    Bytes b6 = b4.subSequence(1, 5);
+
+    for (Bytes ba : Arrays.asList(b2, b3, b5, b1.subSequence(0, 3))) {
+      for (Bytes bb : Arrays.asList(b2, b3, b5)) {
+        Assert.assertEquals(0, ba.compareTo(bb));
+      }
+    }
+
+    Assert.assertEquals(1, b1.compareTo(b2));
+    Assert.assertEquals(-1, b2.compareTo(b1));
+
+    for (Bytes less : Arrays.asList(b2, b3, b5)) {
+      for (Bytes greater : Arrays.asList(b1, b4, b6)) {
+        Assert.assertTrue(less.compareTo(greater) < 0);
+        Assert.assertTrue(greater.compareTo(less) > 0);
+      }
+    }
   }
 
   @Test

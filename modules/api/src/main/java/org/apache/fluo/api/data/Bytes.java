@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedBytes;
 
 /**
  * Represents bytes in Fluo. Bytes is an immutable wrapper around a byte array. Bytes always copies
@@ -155,7 +156,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   public void writeTo(OutputStream out) throws IOException {
-    // since Bytes is immutable, its important the we do not let the internal byte array escape
+    // since Bytes is immutable, its important that we do not let the internal byte array escape
     if (length <= 32) {
       int end = offset + length;
       for (int i = offset; i < end; i++) {
@@ -177,17 +178,23 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   @Override
   public final int compareTo(Bytes other) {
-    int minLen = Math.min(this.length(), other.length());
+    if (this == other) {
+      return 0;
+    } else if (this.length == this.data.length && other.length == other.data.length) {
+      return UnsignedBytes.lexicographicalComparator().compare(this.data, other.data);
+    } else {
+      int minLen = Math.min(this.length(), other.length());
 
-    for (int i = 0; i < minLen; i++) {
-      int a = (this.byteAt(i) & 0xff);
-      int b = (other.byteAt(i) & 0xff);
+      for (int i = 0; i < minLen; i++) {
+        int a = (this.byteAt(i) & 0xff);
+        int b = (other.byteAt(i) & 0xff);
 
-      if (a != b) {
-        return a - b;
+        if (a != b) {
+          return a - b;
+        }
       }
+      return this.length() - other.length();
     }
-    return this.length() - other.length();
   }
 
   /**
