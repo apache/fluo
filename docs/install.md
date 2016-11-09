@@ -157,10 +157,37 @@ For more detailed information on the YARN containers running Fluo:
 
     fluo info myapp
 
-You can also use `yarn application -list` to check the status of your Fluo instance in YARN. Logs
-are viewable within YARN.
+You can also use `yarn application -list` to check the status of your Fluo instance in YARN. 
 
-When you have data in your fluo instance, you can view it using the command `fluo scan`. Pipe the
+## View Fluo application logs
+
+Fluo application logs are viewable within YARN using the methods below:
+
+1. View logs using the web interface of the the YARN resource manager
+(`http://<resource manager>:8088/cluster`). First, click on the application ID (i.e `application_*`)
+of your Fluo application and then click on the latest attempt ID (i.e `appattempt_*`). You should
+see a list of containers. There should be a container for the application master (typically
+container 1), a Fluo oracle (typically container 2), and Fluo workers (containers 3+). You can view
+the log files produced by a container by clicking on its 'logs' link. Logs from Fluo observers will
+be in the `worker_*.log` file for each of your worker containers. 
+
+2. View logs on disk in the directory specified by the YARN property `yarn.nodemanager.log-dirs` in
+your YARN configuration `yarn-site.xml` (see [yarn-default.xml] for more info about this property).
+If you are running Fluo on single machine, this method works well. If you are running Fluo on a
+cluster, your containers and their logs will be spread across the cluster.
+
+When running Fluo in YARN, Fluo must use [logback] for logging (due to a hard requirement by Twill).
+Logback is configured using `/path/to/fluo/apps/<app_name>/conf/logback.xml`. You should review this
+configuration but the root logger is configured by default to print any message that is debug level
+or higher.
+
+In addition the `*.log` files, Fluo oracle and worker containers will have `stdout` and `stderr`
+files. These files may have helpful error messages. Especially, if a process failed to start
+or calls were made to `System.out` or `System.err` in your application.
+
+## View Fluo application data
+
+When you have data in your Fluo application, you can view it using the command `fluo scan`. Pipe the
 output to `less` using the command `fluo scan | less` if you want to page through the data.
 
 ## Stop your Fluo application
@@ -221,3 +248,5 @@ node in your cluster.
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh
 [lib/ahz/pom.xml]: ../modules/distribution/src/main/lib/ahz/pom.xml
+[yarn-default.xml]: https://hadoop.apache.org/docs/r2.7.0/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
+[logback]: http://logback.qos.ch/

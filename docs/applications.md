@@ -100,7 +100,27 @@ public class AppCommand {
 
 To create an observer, follow these steps:
 
-1.  Create a class that extends [AbstractObserver].
+1. Create a class that extends [AbstractObserver] like the example below. Please use [slf4j] for
+   any logging in observers as [slf4j] supports multiple logging implementations. This is
+   necessary as Fluo applications have a hard requirement on [logback] when running in YARN.
+
+    ```java
+    public class InvertObserver extends AbstractObserver {
+
+      @Override
+      public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+        // read value
+        Bytes value = tx.get(row, col);
+        // invert row and value
+        tx.set(value, new Column("inv", "data"), row);
+      }
+
+      @Override
+      public ObservedColumn getObservedColumn() {
+        return new ObservedColumn(new Column("obs", "data"), NotificationType.STRONG);
+      }
+    }
+    ```
 2.  Build a jar containing this class and include this jar in the `lib/` directory of your Fluo
     application.
 3.  Configure your Fluo instance to use this observer by modifying the Observer section of
@@ -178,3 +198,5 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: https://fluo.apache.org/apidocs/
 [metrics]: metrics.md
+[slf4j]: http://www.slf4j.org/
+[logback]: http://logback.qos.ch/
