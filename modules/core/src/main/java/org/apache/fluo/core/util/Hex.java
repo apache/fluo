@@ -16,10 +16,12 @@
 package org.apache.fluo.core.util;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collection;
 
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
+import org.apache.fluo.api.data.Span;
 import org.apache.fluo.core.impl.Notification;
 
 public class Hex {
@@ -59,6 +61,19 @@ public class Hex {
     return sb.toString();
   }
 
+  public static Object encNonAscii(Collection<Column> columns) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("[");
+    String sep = "";
+    for (Column column : columns) {
+      sb.append(sep);
+      encNonAscii(sb, column, " ");
+      sep = ",";
+    }
+    sb.append("]");
+    return sb.toString();
+  }
+
   public static String encNonAscii(RowColumn rc) {
     StringBuilder sb = new StringBuilder();
     encNonAscii(sb, rc, " ");
@@ -77,6 +92,13 @@ public class Hex {
     sb.append(" ");
     sb.append(n.getTimestamp());
     return sb.toString();
+  }
+
+  public static String encNonAscii(Span span) {
+    return ((span.isStartInclusive() && !span.getStart().equals(RowColumn.EMPTY)) ? "[" : "(")
+        + (span.getStart().equals(RowColumn.EMPTY) ? "-inf" : encNonAscii(span.getStart())) + ","
+        + (span.getEnd().equals(RowColumn.EMPTY) ? "+inf" : encNonAscii(span.getEnd()))
+        + ((span.isEndInclusive() && !span.getEnd().equals(RowColumn.EMPTY)) ? "]" : ")");
   }
 
   static byte[] decode(String s) {
