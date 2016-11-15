@@ -77,6 +77,7 @@ import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.ConditionalFlutation;
 import org.apache.fluo.core.util.FluoCondition;
 import org.apache.fluo.core.util.Flutation;
+import org.apache.fluo.core.util.Hex;
 import org.apache.fluo.core.util.SpanUtil;
 
 /**
@@ -406,6 +407,38 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     @Override
     public String toString() {
       return prow + " " + pcol + " " + pval + " " + rejected.size();
+    }
+
+    public String getShortCollisionMessage() {
+      StringBuilder sb = new StringBuilder();
+      if (rejected.size() > 0) {
+        int numCollisions = 0;
+        for (Set<Column> cols : rejected.values()) {
+          numCollisions += cols.size();
+        }
+
+        sb.append("Collsions(");
+        sb.append(numCollisions);
+        sb.append("):");
+
+        String sep = "";
+        outer: for (Entry<Bytes, Set<Column>> entry : rejected.entrySet()) {
+          Bytes row = entry.getKey();
+          for (Column col : entry.getValue()) {
+            sb.append(sep);
+            sep = ", ";
+            Hex.encNonAscii(sb, row);
+            sb.append(" ");
+            Hex.encNonAscii(sb, col, " ");
+            if (sb.length() > 100) {
+              sb.append(" ...");
+              break outer;
+            }
+          }
+        }
+      }
+
+      return sb.toString();
     }
 
     // async stuff
@@ -843,7 +876,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       if (checkForAckCollision(pcm)) {
         cd.commitObserver.alreadyAcknowledged();
       } else {
-        cd.commitObserver.commitFailed();
+        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
       }
       return;
     }
@@ -959,7 +992,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     Futures.addCallback(future, new CommitCallback<Void>(cd) {
       @Override
       protected void onSuccess(CommitData cd, Void v) throws Exception {
-        cd.commitObserver.commitFailed();
+        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
       }
     }, env.getSharedResources().getAsyncCommitExecutor());
   }
@@ -1111,7 +1144,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private void postCommitPrimary(CommitData cd, long commitTs, Status mutationStatus)
       throws Exception {
     if (mutationStatus != Status.ACCEPTED) {
-      cd.commitObserver.commitFailed();
+      cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
     } else {
       if (stopAfterPrimaryCommit) {
         cd.commitObserver.committed();

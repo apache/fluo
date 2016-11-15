@@ -112,9 +112,9 @@ public class CommitManager {
     }
 
     @Override
-    public void commitFailed() {
+    public void commitFailed(String msg) {
       try {
-        aco.commitFailed();
+        aco.commitFailed(msg);
       } finally {
         finish(TxResult.COMMIT_EXCEPTION);
       }

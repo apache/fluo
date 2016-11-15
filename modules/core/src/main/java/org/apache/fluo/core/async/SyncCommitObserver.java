@@ -27,6 +27,7 @@ public class SyncCommitObserver implements AsyncCommitObserver {
   private volatile boolean committed = false;
   private volatile boolean aacked = false;
   private volatile Exception error = null;
+  private volatile String commitFailMsg = "";
 
   @Override
   public void committed() {
@@ -47,8 +48,9 @@ public class SyncCommitObserver implements AsyncCommitObserver {
   }
 
   @Override
-  public void commitFailed() {
+  public void commitFailed(String msg) {
     committed = false;
+    commitFailMsg = msg;
     cdl.countDown();
   }
 
@@ -65,7 +67,7 @@ public class SyncCommitObserver implements AsyncCommitObserver {
     } else if (aacked) {
       throw new AlreadyAcknowledgedException();
     } else if (!committed) {
-      throw new CommitException();
+      throw new CommitException(commitFailMsg);
     }
   }
 }

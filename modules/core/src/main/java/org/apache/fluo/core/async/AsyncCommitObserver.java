@@ -41,6 +41,6 @@ public interface AsyncCommitObserver {
   /**
    * Called when async commit of a transaction fails because it overlapped with another transaction
    */
-  void commitFailed();
+  void commitFailed(String msg);
 
 }

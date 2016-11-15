@@ -266,8 +266,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
     }
 
     @Override
-    public void commitFailed() {
-      aco.commitFailed();
+    public void commitFailed(String msg) {
+      aco.commitFailed(msg);
       logUnsuccessfulCommit();
     }
 

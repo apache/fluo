@@ -59,7 +59,7 @@ public class WorkTaskAsync implements Runnable {
     }
 
     @Override
-    public void commitFailed() {
+    public void commitFailed(String msg) {
       notificationProcessor.requeueNotification(notificationFinder, notification);
     }
   }

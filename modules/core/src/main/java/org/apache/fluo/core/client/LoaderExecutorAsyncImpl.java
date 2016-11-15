@@ -100,7 +100,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
 
     @Override
-    public void commitFailed() {
+    public void commitFailed(String msg) {
       txi = null;
       // retry transaction
       executor.submit(this);
