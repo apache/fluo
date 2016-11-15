@@ -381,14 +381,16 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     private Bytes pval;
 
     private HashSet<Bytes> acceptedRows;
-    private Map<Bytes, Set<Column>> rejected = new HashMap<>();
+    private Map<Bytes, Set<Column>> rejected = null;
 
     private void addPrimaryToRejected() {
       rejected = Collections.singletonMap(prow, Collections.singleton(pcol));
     }
 
     private void addToRejected(Bytes row, Set<Column> columns) {
-      rejected = new HashMap<>();
+      if (rejected == null) {
+        rejected = new HashMap<>();
+      }
 
       Set<Column> ret = rejected.put(row, columns);
       if (ret != null) {
@@ -406,14 +408,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public String toString() {
-      return prow + " " + pcol + " " + pval + " " + rejected.size();
+      return prow + " " + pcol + " " + pval + " " + getRejected().size();
     }
 
     public String getShortCollisionMessage() {
       StringBuilder sb = new StringBuilder();
-      if (rejected.size() > 0) {
+      if (getRejected().size() > 0) {
         int numCollisions = 0;
-        for (Set<Column> cols : rejected.values()) {
+        for (Set<Column> cols : getRejected().values()) {
           numCollisions += cols.size();
         }
 
@@ -422,7 +424,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         sb.append("):");
 
         String sep = "";
-        outer: for (Entry<Bytes, Set<Column>> entry : rejected.entrySet()) {
+        outer: for (Entry<Bytes, Set<Column>> entry : getRejected().entrySet()) {
           Bytes row = entry.getKey();
           for (Column col : entry.getValue()) {
             sb.append(sep);
