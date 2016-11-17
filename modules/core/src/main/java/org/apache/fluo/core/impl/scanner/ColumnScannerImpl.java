@@ -17,6 +17,7 @@ package org.apache.fluo.core.impl.scanner;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
@@ -31,11 +32,8 @@ import org.apache.fluo.core.util.ByteUtil;
 
 public class ColumnScannerImpl implements ColumnScanner {
 
-  public static ColumnValue entry2cv(Entry<Key, Value> entry) {
-    Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
-    Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-    Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
-    Column col = new Column(cf, cq, cv);
+  public ColumnValue entry2cv(Entry<Key, Value> entry) {
+    Column col = columnConverter.apply(entry.getKey());
     Bytes val = Bytes.of(entry.getValue().get());
     return new ColumnValue(col, val);
   }
@@ -44,11 +42,13 @@ public class ColumnScannerImpl implements ColumnScanner {
   private Bytes row;
   private Iterator<ColumnValue> iter;
   private boolean gotIter = false;
+  private Function<Key, Column> columnConverter;
 
-  ColumnScannerImpl(Iterator<Entry<Key, Value>> e) {
+  ColumnScannerImpl(Iterator<Entry<Key, Value>> e, Function<Key, Column> columnConverter) {
     peekingIter = Iterators.peekingIterator(e);
+    this.columnConverter = columnConverter;
     row = ByteUtil.toBytes(peekingIter.peek().getKey().getRowData());
-    iter = Iterators.transform(peekingIter, ColumnScannerImpl::entry2cv);
+    iter = Iterators.transform(peekingIter, this::entry2cv);
   }
 
   @Override

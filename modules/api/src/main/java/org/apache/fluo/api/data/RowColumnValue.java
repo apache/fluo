@@ -29,6 +29,7 @@ public final class RowColumnValue implements Comparable<RowColumnValue>, Seriali
   private Bytes row = Bytes.EMPTY;
   private Column col = Column.EMPTY;
   private Bytes val = Bytes.EMPTY;
+  private int hashCode = 0;
 
   public RowColumnValue(Bytes row, Column col, Bytes val) {
     this.row = row;
@@ -87,11 +88,15 @@ public final class RowColumnValue implements Comparable<RowColumnValue>, Seriali
 
   @Override
   public int hashCode() {
-    return Objects.hash(row, col, val);
+    if (hashCode == 0) {
+      hashCode = Objects.hash(row, col, val);
+    }
+    return hashCode;
   }
 
   @Override
   public boolean equals(Object o) {
+
     if (o == this) {
       return true;
     }
@@ -110,6 +115,11 @@ public final class RowColumnValue implements Comparable<RowColumnValue>, Seriali
 
   @Override
   public int compareTo(RowColumnValue o) {
+
+    if (this == o) {
+      return 0;
+    }
+
     int result = row.compareTo(o.row);
     if (result == 0) {
       result = col.compareTo(o.col);

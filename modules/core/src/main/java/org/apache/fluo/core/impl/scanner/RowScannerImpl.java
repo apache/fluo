@@ -15,8 +15,10 @@
 
 package org.apache.fluo.core.impl.scanner;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import com.google.common.collect.Iterators;
 import org.apache.accumulo.core.client.RowIterator;
@@ -24,18 +26,27 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.client.scanner.RowScanner;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.core.util.CachedColumnConverter;
+import org.apache.fluo.core.util.ColumnUtil;
 
 public class RowScannerImpl implements RowScanner {
 
   private Iterable<Entry<Key, Value>> snapshot;
+  private Function<Key, Column> columnConverter;
 
-  RowScannerImpl(Iterable<Entry<Key, Value>> snapshot) {
+  RowScannerImpl(Iterable<Entry<Key, Value>> snapshot, Collection<Column> columns) {
     this.snapshot = snapshot;
+    if (columns.size() == 0) {
+      columnConverter = ColumnUtil::convert;
+    } else {
+      columnConverter = new CachedColumnConverter(columns);
+    }
   }
 
   @Override
   public Iterator<ColumnScanner> iterator() {
     RowIterator rowiter = new RowIterator(snapshot.iterator());
-    return Iterators.transform(rowiter, e -> new ColumnScannerImpl(e));
+    return Iterators.transform(rowiter, e -> new ColumnScannerImpl(e, columnConverter));
   }
 }

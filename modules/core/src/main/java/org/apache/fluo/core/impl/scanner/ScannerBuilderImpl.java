@@ -74,7 +74,7 @@ public class ScannerBuilderImpl implements ScannerBuilder {
   @Override
   public CellScanner build() {
     SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns);
-    return new CellScannerImpl(snapScanner);
+    return new CellScannerImpl(snapScanner, columns);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class ScannerBuilderImpl implements ScannerBuilder {
       @Override
       public RowScanner build() {
         SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns);
-        return new RowScannerImpl(snapScanner);
+        return new RowScannerImpl(snapScanner, columns);
       }
     };
   }

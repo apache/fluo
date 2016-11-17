@@ -15,10 +15,14 @@
 
 package org.apache.fluo.core.impl.scanner;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import com.google.common.collect.Iterators;
+import org.apache.accumulo.core.data.ArrayByteSequence;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.api.client.scanner.CellScanner;
@@ -26,27 +30,45 @@ import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.core.util.ByteUtil;
+import org.apache.fluo.core.util.CachedColumnConverter;
+import org.apache.fluo.core.util.ColumnUtil;
 
 public class CellScannerImpl implements CellScanner {
 
   private Iterable<Entry<Key, Value>> snapshot;
+  private Function<Key, Column> columnConverter;
 
-  private static RowColumnValue entry2rcv(Entry<Key, Value> entry) {
-    Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
-    Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
-    Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-    Bytes cv = ByteUtil.toBytes(entry.getKey().getColumnVisibilityData());
-    Column col = new Column(cf, cq, cv);
+  private static final ByteSequence EMPTY_BS = new ArrayByteSequence(new byte[0]);
+  private ByteSequence prevRowBs = EMPTY_BS;
+  private Bytes prevRowBytes = Bytes.EMPTY;
+
+  private RowColumnValue entry2rcv(Entry<Key, Value> entry) {
+
+    ByteSequence rowBS = entry.getKey().getRowData();
+    Bytes row;
+    if (prevRowBs.equals(rowBS)) {
+      row = prevRowBytes;
+    } else {
+      prevRowBs = rowBS;
+      prevRowBytes = row = ByteUtil.toBytes(rowBS);
+    }
+
+    Column col = columnConverter.apply(entry.getKey());
     Bytes val = Bytes.of(entry.getValue().get());
     return new RowColumnValue(row, col, val);
   }
 
-  CellScannerImpl(Iterable<Entry<Key, Value>> snapshot) {
+  CellScannerImpl(Iterable<Entry<Key, Value>> snapshot, Collection<Column> columns) {
     this.snapshot = snapshot;
+    if (columns.size() == 0) {
+      columnConverter = ColumnUtil::convert;
+    } else {
+      columnConverter = new CachedColumnConverter(columns);
+    }
   }
 
   @Override
   public Iterator<RowColumnValue> iterator() {
-    return Iterators.transform(snapshot.iterator(), CellScannerImpl::entry2rcv);
+    return Iterators.transform(snapshot.iterator(), this::entry2rcv);
   }
 }

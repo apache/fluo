@@ -31,6 +31,7 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   private Bytes row = Bytes.EMPTY;
   private Column col = Column.EMPTY;
+  private int hashCode = 0;
 
   /**
    * Constructs a RowColumn with row set to Bytes.EMPTY and column set to Column.EMPTY
@@ -113,6 +114,11 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   @Override
   public boolean equals(Object o) {
+
+    if (this == o) {
+      return true;
+    }
+
     if (o instanceof RowColumn) {
       RowColumn other = (RowColumn) o;
       return row.equals(other.row) && col.equals(other.col);
@@ -122,7 +128,11 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(row, col);
+    if (hashCode == 0) {
+      hashCode = Objects.hash(row, col);
+    }
+
+    return hashCode;
   }
 
   /**
@@ -158,6 +168,11 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
 
   @Override
   public int compareTo(RowColumn other) {
+
+    if (this == other) {
+      return 0;
+    }
+
     int result = row.compareTo(other.row);
     if (result == 0) {
       result = col.compareTo(other.col);

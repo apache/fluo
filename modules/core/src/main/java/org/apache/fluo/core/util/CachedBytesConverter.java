@@ -13,29 +13,36 @@
  * the License.
  */
 
-package org.apache.fluo.api.client;
+package org.apache.fluo.core.util;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.exceptions.AlreadySetException;
 
-/**
- * This class provides default implementations for many of the methods in TransactionBase. It exists
- * to make implementing TransactionBase easier.
- */
+public class CachedBytesConverter implements Function<ByteSequence, Bytes> {
 
-public abstract class AbstractTransactionBase extends AbstractSnapshotBase implements
-    TransactionBase {
+  private Map<ByteSequence, Bytes> bs2bCache = new HashMap<>();
 
-  public void delete(CharSequence row, Column col) {
-    delete(s2bConv(row), col);
+  public CachedBytesConverter(Collection<Bytes> bytesCollection) {
+    for (Bytes bytes : bytesCollection) {
+      bs2bCache.put(ByteUtil.toByteSequence(bytes), bytes);
+    }
   }
 
-  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
-    set(s2bConv(row), col, Bytes.of(value));
-  }
+  @Override
+  public Bytes apply(ByteSequence bs) {
+    if (bs.length() == 0) {
+      return Bytes.EMPTY;
+    }
 
-  public void setWeakNotification(CharSequence row, Column col) {
-    setWeakNotification(s2bConv(row), col);
+    Bytes b = bs2bCache.get(bs);
+    if (b == null) {
+      return ByteUtil.toBytes(bs);
+    }
+    return b;
   }
 }

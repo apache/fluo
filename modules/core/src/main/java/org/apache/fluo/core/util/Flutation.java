@@ -16,7 +16,6 @@
 package org.apache.fluo.core.util;
 
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -50,7 +49,6 @@ public class Flutation extends Mutation {
       cv = new ColumnVisibility(ByteUtil.toText(col.getVisibility()));
     }
 
-    m.put(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()), cv, ts, new Value(
-        val));
+    m.put(col.getFamily().toArray(), col.getQualifier().toArray(), cv, ts, val);
   }
 }

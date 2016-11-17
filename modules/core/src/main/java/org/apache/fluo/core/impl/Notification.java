@@ -43,6 +43,7 @@ public class Notification {
 
   private final RowColumn rowCol;
   private final long timestamp;
+  private static final byte[] NOTIFY_CF_ARRAY = ColumnConstants.NOTIFY_CF.toArray();
 
   public Notification(Bytes row, Column col, long ts) {
     rowCol = new RowColumn(row, col);
@@ -72,15 +73,14 @@ public class Notification {
   public Flutation newDelete(Environment env, long ts) {
     Flutation m = new Flutation(env, rowCol.getRow());
     ColumnVisibility cv = env.getSharedResources().getVisCache().getCV(rowCol.getColumn());
-    m.put(ColumnConstants.NOTIFY_CF.toArray(), encodeCol(rowCol.getColumn()), cv,
-        encodeTs(ts, true), TransactionImpl.EMPTY);
+    m.put(NOTIFY_CF_ARRAY, encodeCol(rowCol.getColumn()), cv, encodeTs(ts, true),
+        TransactionImpl.EMPTY);
     return m;
   }
 
   public static void put(Environment env, Mutation m, Column col, long ts) {
     ColumnVisibility cv = env.getSharedResources().getVisCache().getCV(col);
-    m.put(ColumnConstants.NOTIFY_CF.toArray(), encodeCol(col), cv, encodeTs(ts, false),
-        TransactionImpl.EMPTY);
+    m.put(NOTIFY_CF_ARRAY, encodeCol(col), cv, encodeTs(ts, false), TransactionImpl.EMPTY);
   }
 
   public static Notification from(Key k) {

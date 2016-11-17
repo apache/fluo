@@ -115,4 +115,11 @@ public class ColumnUtil {
     Bytes visibility = ByteUtil.read(bb, in);
     return new Column(family, qualifier, visibility);
   }
+
+  public static Column convert(Key k) {
+    Bytes f = ByteUtil.toBytes(k.getColumnFamilyData());
+    Bytes q = ByteUtil.toBytes(k.getColumnQualifierData());
+    Bytes v = ByteUtil.toBytes(k.getColumnVisibilityData());
+    return new Column(f, q, v);
+  }
 }

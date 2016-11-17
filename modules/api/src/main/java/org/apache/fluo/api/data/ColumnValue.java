@@ -27,6 +27,7 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
 
   private Column column;
   private Bytes val;
+  private int hashCode = 0;
 
   public ColumnValue(Column col, Bytes val) {
     this.column = col;
@@ -55,6 +56,11 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
 
   @Override
   public int compareTo(ColumnValue o) {
+
+    if (this == o) {
+      return 0;
+    }
+
     int comp = column.compareTo(o.column);
     if (comp == 0) {
       comp = val.compareTo(o.val);
@@ -64,6 +70,11 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
 
   @Override
   public boolean equals(Object o) {
+
+    if (this == o) {
+      return true;
+    }
+
     if (o instanceof ColumnValue) {
       ColumnValue ocv = (ColumnValue) o;
       return column.equals(ocv.column) && val.equals(ocv.val);
@@ -74,7 +85,10 @@ public final class ColumnValue implements Serializable, Comparable<ColumnValue> 
 
   @Override
   public int hashCode() {
-    return Objects.hash(column, val);
+    if (hashCode == 0) {
+      hashCode = Objects.hash(column, val);
+    }
+    return hashCode;
   }
 
   @Override

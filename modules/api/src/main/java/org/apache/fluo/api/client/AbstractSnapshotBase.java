@@ -19,7 +19,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
@@ -34,6 +36,33 @@ import org.apache.fluo.api.data.RowColumn;
  */
 
 public abstract class AbstractSnapshotBase implements SnapshotBase {
+
+  /*
+   * This map of String to Bytes is really only useful when user code is executing a transactions.
+   * Once a transaction is queued for commit, do not want this map to eat up memory. Thats why a
+   * weak map is used.
+   * 
+   * There is intentionally no reverse map from Bytes to String. Relying on two things for this.
+   * First, Bytes maintains a weak pointer to the string it was created with and returns this for
+   * toString(). Second, the actual Transaction implementation will under some circumstances return
+   * the Bytes object that was passed in.
+   */
+  private Map<String, Bytes> s2bCache = new WeakHashMap<String, Bytes>();
+
+  Bytes s2bConv(CharSequence cs) {
+    Objects.requireNonNull(cs);
+    if (cs instanceof String) {
+      String s = (String) cs;
+      Bytes b = s2bCache.get(s);
+      if (b == null) {
+        b = Bytes.of(s);
+        s2bCache.put(s, b);
+      }
+      return b;
+    } else {
+      return Bytes.of(cs);
+    }
+  }
 
   public Bytes get(Bytes row, Column column, Bytes defaultValue) {
     Bytes ret = get(row, column);
@@ -59,8 +88,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
 
   public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
       Set<Column> columns) {
-    Map<Bytes, Map<Column, Bytes>> rcvs =
-        get(Collections2.transform(rows, s -> Bytes.of(s)), columns);
+    Map<Bytes, Map<Column, Bytes>> rcvs = get(Collections2.transform(rows, this::s2bConv), columns);
     Map<String, Map<Column, String>> ret = new HashMap<>(rcvs.size());
 
     for (Entry<Bytes, Map<Column, Bytes>> entry : rcvs.entrySet()) {
@@ -75,7 +103,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
   }
 
   public String gets(CharSequence row, Column column) {
-    Bytes val = get(Bytes.of(row), column);
+    Bytes val = get(s2bConv(row), column);
     if (val == null) {
       return null;
     }
@@ -83,7 +111,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
   }
 
   public String gets(CharSequence row, Column column, String defaultValue) {
-    Bytes val = get(Bytes.of(row), column);
+    Bytes val = get(s2bConv(row), column);
     if (val == null) {
       return defaultValue;
     }
@@ -92,7 +120,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
   }
 
   public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
-    Map<Column, Bytes> values = get(Bytes.of(row), columns);
+    Map<Column, Bytes> values = get(s2bConv(row), columns);
     return Maps.transformValues(values, b -> b.toString());
   }
 

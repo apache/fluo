@@ -29,7 +29,6 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -49,6 +48,7 @@ import org.apache.accumulo.core.data.ConditionalMutation;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.iterators.PrewriteIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.values.DelLockValue;
@@ -58,7 +58,6 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.AlreadySetException;
@@ -70,7 +69,6 @@ import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.async.SyncCommitObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
-import org.apache.fluo.core.impl.scanner.ColumnScannerImpl;
 import org.apache.fluo.core.impl.scanner.ScannerBuilderImpl;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.core.util.ColumnUtil;
@@ -246,16 +244,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     Map<Column, Bytes> ret = new HashMap<>();
 
-    Iterable<ColumnValue> scanner =
-        Iterables.transform(new SnapshotScanner(env, opts, startTs, stats),
-            ColumnScannerImpl::entry2cv);
-    for (ColumnValue cv : scanner) {
+    for (Entry<Key, Value> kve : new SnapshotScanner(env, opts, startTs, stats)) {
+      Column col = ColumnUtil.convert(kve.getKey());
       if (shouldCopy) {
-        if (columns.contains(cv.getColumn())) {
-          ret.put(cv.getColumn(), cv.getValue());
+        if (columns.contains(col)) {
+          ret.put(col, Bytes.of(kve.getValue().get()));
         }
       } else {
-        ret.put(cv.getColumn(), cv.getValue());
+        ret.put(col, Bytes.of(kve.getValue().get()));
       }
     }
 

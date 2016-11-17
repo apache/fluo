@@ -25,6 +25,7 @@ import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.client.scanner.RowScanner;
+import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -91,6 +92,44 @@ public class ScannerIT extends ITBaseImpl {
       Assert.assertEquals(expectedCols, actual);
     }
 
+  }
+
+  @Test
+  public void testSame() {
+    Set<RowColumnValue> expected = genData();
+
+    Column col1 = new Column("f1", "q1");
+    Column col2 = new Column("f2", "q3");
+
+    HashSet<RowColumnValue> expectedC = new HashSet<>();
+    Iterables.addAll(
+        expectedC,
+        Iterables.filter(expected,
+            rcv -> rcv.getColumn().equals(col1) || rcv.getColumn().equals(col2)));
+    Assert.assertEquals(3, expectedC.size());
+
+    try (Snapshot snap = client.newSnapshot()) {
+      CellScanner scanner = snap.scanner().fetch(col1, col2).build();
+
+      HashSet<RowColumnValue> actual = new HashSet<>();
+      Bytes prevRow = null;
+      for (RowColumnValue rcv : scanner) {
+        actual.add(rcv);
+
+        Column c = rcv.getColumn();
+
+        Assert.assertTrue((col1.equals(c) && col1 == c) || (col2.equals(c) && col2 == c));
+
+        if (col2.equals(c)) {
+          Assert.assertEquals(Bytes.of("r1"), rcv.getRow());
+          Assert.assertSame(rcv.getRow(), prevRow);
+        }
+
+        prevRow = rcv.getRow();
+      }
+
+      Assert.assertEquals(expectedC, actual);
+    }
   }
 
   @Test

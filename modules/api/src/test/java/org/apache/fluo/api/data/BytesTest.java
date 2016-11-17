@@ -211,4 +211,16 @@ public class BytesTest {
     AsciiSequence cs2 = new AsciiSequence("");
     Assert.assertSame(Bytes.EMPTY, Bytes.of(cs2));
   }
+
+  @Test
+  public void testSameString() {
+    String s1 = "abc";
+    String s2 = "xyZ";
+
+    Bytes b1 = Bytes.of(s1);
+    Bytes b2 = Bytes.of(s2);
+
+    Assert.assertSame(s1, b1.toString());
+    Assert.assertSame(s2, b2.toString());
+  }
 }

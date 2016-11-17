@@ -57,6 +57,10 @@ public class ByteUtil {
    * @return Bytes object
    */
   public static Bytes toBytes(ByteSequence bs) {
+    if (bs.length() == 0) {
+      return Bytes.EMPTY;
+    }
+
     if (bs.isBackedByArray()) {
       return Bytes.of(bs.getBackingArray(), bs.offset(), bs.length());
     } else {

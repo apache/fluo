@@ -23,9 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -34,6 +36,9 @@ import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.core.util.ByteUtil;
+import org.apache.fluo.core.util.CachedBytesConverter;
+import org.apache.fluo.core.util.CachedColumnConverter;
+import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.UtilWaitThread;
 
 public class ParallelSnapshotScanner {
@@ -44,6 +49,8 @@ public class ParallelSnapshotScanner {
   private Set<Column> columns;
   private TxStats stats;
   private List<Range> rangesToScan = new ArrayList<>();
+  private Function<ByteSequence, Bytes> rowConverter;
+  private Function<Key, Column> columnConverter;
 
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
       long startTs, TxStats stats) {
@@ -52,6 +59,8 @@ public class ParallelSnapshotScanner {
     this.env = env;
     this.startTs = startTs;
     this.stats = stats;
+    this.rowConverter = new CachedBytesConverter(rows);
+    this.columnConverter = new CachedColumnConverter(columns);
   }
 
   ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats) {
@@ -71,6 +80,8 @@ public class ParallelSnapshotScanner {
     this.env = env;
     this.startTs = startTs;
     this.stats = stats;
+    this.rowConverter = ByteUtil::toBytes;
+    this.columnConverter = ColumnUtil::convert;
   }
 
   private BatchScanner setupBatchScanner() {
@@ -156,11 +167,8 @@ public class ParallelSnapshotScanner {
     BatchScanner bs = setupBatchScanner();
     try {
       for (Entry<Key, Value> entry : bs) {
-        Bytes row = ByteUtil.toBytes(entry.getKey().getRowData());
-        Bytes cf = ByteUtil.toBytes(entry.getKey().getColumnFamilyData());
-        Bytes cq = ByteUtil.toBytes(entry.getKey().getColumnQualifierData());
-
-        Column col = new Column(cf, cq, ByteUtil.toBytes(entry.getKey().getColumnVisibilityData()));
+        Bytes row = rowConverter.apply(entry.getKey().getRowData());
+        Column col = columnConverter.apply(entry.getKey());
 
         long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
 

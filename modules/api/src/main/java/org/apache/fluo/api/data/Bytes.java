@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -57,9 +58,11 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   private final int offset;
   private final int length;
 
+  private WeakReference<String> utf8String;
+
   public static final Bytes EMPTY = new Bytes(new byte[0]);
 
-  private Integer hashCode = null;
+  private int hashCode = 0;
 
   public Bytes() {
     data = EMPTY.data;
@@ -71,6 +74,13 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     this.data = data;
     this.offset = 0;
     this.length = data.length;
+  }
+
+  private Bytes(byte[] data, String utf8String) {
+    this.data = data;
+    this.offset = 0;
+    this.length = data.length;
+    this.utf8String = new WeakReference<>(utf8String);
   }
 
   private Bytes(byte[] data, int offset, int length) {
@@ -138,7 +148,16 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   @Override
   public String toString() {
-    return new String(data, offset, length, StandardCharsets.UTF_8);
+    if (utf8String != null) {
+      String s = utf8String.get();
+      if (s != null) {
+        return s;
+      }
+    }
+
+    String s = new String(data, offset, length, StandardCharsets.UTF_8);
+    utf8String = new WeakReference<>(s);
+    return s;
   }
 
   /**
@@ -202,12 +221,13 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   @Override
   public final boolean equals(Object other) {
+
+    if (this == other) {
+      return true;
+    }
+
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
-
-      if (this == other) {
-        return true;
-      }
 
       if (length() != ob.length()) {
         return false;
@@ -220,7 +240,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   @Override
   public final int hashCode() {
-    if (hashCode == null) {
+    if (hashCode == 0) {
       int hash = 1;
       for (int i = 0; i < length(); i++) {
         hash = (31 * hash) + byteAt(i);
@@ -318,7 +338,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
       return EMPTY;
     }
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
-    return new Bytes(data);
+    return new Bytes(data, s);
   }
 
   /**

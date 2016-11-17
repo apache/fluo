@@ -33,6 +33,7 @@ public final class Column implements Comparable<Column>, Serializable {
   private Bytes family = UNSET;
   private Bytes qualifier = UNSET;
   private Bytes visibility = UNSET;
+  private int hashCode = 0;
 
   public static final Column EMPTY = new Column();
 
@@ -172,11 +173,20 @@ public final class Column implements Comparable<Column>, Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(family, qualifier, visibility);
+    if (hashCode == 0) {
+      hashCode = Objects.hash(family, qualifier, visibility);
+    }
+
+    return hashCode;
   }
 
   @Override
   public int compareTo(Column other) {
+
+    if (this == other) {
+      return 0;
+    }
+
     int result = family.compareTo(other.family);
     if (result == 0) {
       result = qualifier.compareTo(other.qualifier);
@@ -189,8 +199,14 @@ public final class Column implements Comparable<Column>, Serializable {
 
   @Override
   public boolean equals(Object o) {
+
+    if (this == o) {
+      return true;
+    }
+
     if (o instanceof Column) {
       Column oc = (Column) o;
+
       return family.equals(oc.getFamily()) && qualifier.equals(oc.getQualifier())
           && visibility.equals(oc.getVisibility());
     }
