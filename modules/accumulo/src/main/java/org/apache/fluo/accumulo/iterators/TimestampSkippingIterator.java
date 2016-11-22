@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -50,9 +51,12 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
   private boolean inclusive;
   private boolean hasSeeked = false;
 
+  private boolean removedDeletingIterator = false;
+  private int removalFailures = 0;
+
   private static final Logger log = LoggerFactory.getLogger(TimestampSkippingIterator.class);
 
-  TimestampSkippingIterator(SortedKeyValueIterator<Key, Value> source) {
+  public TimestampSkippingIterator(SortedKeyValueIterator<Key, Value> source) {
     this.source = source;
   }
 
@@ -78,7 +82,7 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
     while (source.hasTop()
         && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)
         && timestamp < source.getTopKey().getTimestamp()) {
-      if (count == 10) {
+      if (count == 10 && shouldSeek()) {
         // seek to prefix
         Key seekKey = new Key(curCol);
         seekKey.setTimestamp(timestamp);
@@ -148,20 +152,23 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
     }
   }
 
-  private static void setParent(SortedKeyValueIterator<Key, Value> iter,
+  private static boolean setParent(SortedKeyValueIterator<Key, Value> iter,
       SortedKeyValueIterator<Key, Value> newParent) {
     try {
       if (iter instanceof WrappingIterator) {
         Field field = WrappingIterator.class.getDeclaredField("source");
         field.setAccessible(true);
         field.set(iter, newParent);
+        return true;
       }
     } catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
       log.debug(e.getMessage(), e);
     }
+
+    return false;
   }
 
-  private static void removeDeletingIterator(SortedKeyValueIterator<Key, Value> source) {
+  private static boolean removeDeletingIterator(SortedKeyValueIterator<Key, Value> source) {
 
     SortedKeyValueIterator<Key, Value> prev = source;
     SortedKeyValueIterator<Key, Value> parent = getParent(source);
@@ -174,9 +181,21 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
     if (parent != null && parent instanceof DeletingIterator) {
       SortedKeyValueIterator<Key, Value> delParent = getParent(parent);
       if (delParent != null) {
-        setParent(prev, delParent);
+        return setParent(prev, delParent);
       }
     }
+
+    return false;
+  }
+
+  @VisibleForTesting
+  public final boolean shouldSeek() {
+    /*
+     * This method is a saftey check to ensure the deleting iterator was removed. If this iterator
+     * was not removed for some reason, then the performance of seeking will be O(N^2). In the case
+     * where its not removed, it would be better to just scan forward.
+     */
+    return !hasSeeked || removedDeletingIterator || removalFailures < 3;
   }
 
   private void seek(Range range) throws IOException {
@@ -185,7 +204,10 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
       // up iterators until the 1st seek. Therefore can only remove the deleting iter after the 1st
       // seek. Also, Accumulo may switch data sources and re-setup the deleting iterator, thats why
       // this iterator keeps trying to remove it.
-      removeDeletingIterator(source);
+      removedDeletingIterator |= removeDeletingIterator(source);
+      if (!removedDeletingIterator) {
+        removalFailures++;
+      }
     }
     source.seek(range, fams, inclusive);
     hasSeeked = true;
