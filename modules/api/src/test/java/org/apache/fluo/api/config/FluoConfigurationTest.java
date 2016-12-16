@@ -15,11 +15,16 @@
 
 package org.apache.fluo.api.config;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.google.common.collect.ImmutableMap;
@@ -356,5 +361,38 @@ public class FluoConfigurationTest {
         Assert.fail();
       }
     }
+  }
+
+  @Test
+  public void testSerialization() throws Exception {
+    FluoConfiguration c1 = new FluoConfiguration();
+    c1.setAccumuloUser("fluo");
+    c1.setAccumuloPassword("fc683cd9");
+    c1.setAccumuloTable("fd1");
+    c1.setApplicationName("testS");
+    c1.setAccumuloInstance("I9");
+    c1.setAccumuloZookeepers("localhost:7171");
+    c1.setInstanceZookeepers("localhost:7171/testS");
+    c1.setWorkerThreads(100);
+    c1.addObserver(new ObserverSpecification("com.foo.Observer1"));
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oo = new ObjectOutputStream(baos);
+    oo.writeObject(c1);
+    // want to ensure data written after the config is not read by custom deserialization
+    oo.writeObject("testdata");
+    oo.close();
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+    ObjectInputStream in = new ObjectInputStream(bais);
+
+    FluoConfiguration c2 = (FluoConfiguration) in.readObject();
+    Map<String, String> m2 = c2.toMap();
+    Assert.assertEquals(c1.toMap(), c2.toMap());
+    Assert.assertEquals(9, m2.size());
+
+    Assert.assertEquals("testdata", in.readObject());
+
+    in.close();
   }
 }

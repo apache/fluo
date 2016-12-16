@@ -15,9 +15,15 @@
 
 package org.apache.fluo.api.config;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,15 +47,33 @@ import org.apache.fluo.api.exceptions.FluoException;
  * @since 1.0.0
  */
 
-public class SimpleConfiguration {
+public class SimpleConfiguration implements Serializable {
 
-  private Configuration internalConfig;
+  private static final long serialVersionUID = 1L;
 
-  public SimpleConfiguration() {
+  private transient Configuration internalConfig;
+
+  private void init() {
     CompositeConfiguration compositeConfig = new CompositeConfiguration();
     compositeConfig.setThrowExceptionOnMissing(true);
     compositeConfig.setDelimiterParsingDisabled(true);
     internalConfig = compositeConfig;
+  }
+
+  private void load(InputStream in) {
+    try {
+      PropertiesConfiguration config = new PropertiesConfiguration();
+      // disabled to prevent accumulo classpath value from being shortened
+      config.setDelimiterParsingDisabled(true);
+      config.load(in);
+      ((CompositeConfiguration) internalConfig).addConfiguration(config);
+    } catch (ConfigurationException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  public SimpleConfiguration() {
+    init();
   }
 
   private SimpleConfiguration(Configuration subset) {
@@ -77,15 +101,7 @@ public class SimpleConfiguration {
    */
   public SimpleConfiguration(InputStream in) {
     this();
-    try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(in);
-      ((CompositeConfiguration) internalConfig).addConfiguration(config);
-    } catch (ConfigurationException e) {
-      throw new IllegalArgumentException(e);
-    }
+    load(in);
   }
 
   /**
@@ -236,5 +252,33 @@ public class SimpleConfiguration {
     }
 
     return builder.build();
+  }
+
+  /*
+   * These custom serialization methods were added because commons config does not support
+   * serialization.
+   */
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.defaultWriteObject();
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    save(baos);
+
+    byte[] data = baos.toByteArray();
+
+    out.writeInt(data.length);
+    out.write(data);
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    init();
+
+    int len = in.readInt();
+    byte[] data = new byte[len];
+    in.readFully(data);
+
+    ByteArrayInputStream bais = new ByteArrayInputStream(data);
+    load(bais);
   }
 }
