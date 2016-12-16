@@ -54,6 +54,36 @@
   <build>
     <plugins>
       <plugin>
+        <!-- This configuration is merged with the checkstyle config in the parent pom.  The
+	     reason its here is because these logging checks are only needed for a subset of
+             child modules.  Could not figure out a way to put the config in the parent pom
+             and only have some children use it.  So this config is duplicated in the api and
+             core poms.  If making changes, make them in both places. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>logging-impl-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <checkstyleRules>
+                <module name="Checker">
+                  <module name="TreeWalker">
+                    <module name="IllegalImport">
+                      <!-- make sure no code imports logging implementations.  Should only use slf4j -->
+                      <property name="illegalPkgs" value="org.apache.log4j,ch.qos.logback" />
+                    </module>
+                  </module>
+                </module>
+              </checkstyleRules>
+              <failOnViolation>true</failOnViolation>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>net.revelc.code</groupId>
         <artifactId>apilyzer-maven-plugin</artifactId>
         <version>1.0.1</version>
