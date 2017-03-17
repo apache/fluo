@@ -16,8 +16,6 @@
 package org.apache.fluo.integration;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.accumulo.core.client.Connector;
@@ -30,8 +28,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.RowColumnValue;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -80,8 +78,15 @@ public class ITBase {
     conn = miniAccumulo.getConnector(USER, new PasswordToken(PASSWORD));
   }
 
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.emptyList();
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return null;
+  }
+
+  protected void setupObservers(FluoConfiguration fc) {
+    Class<? extends ObserversFactory> ofc = getObserversFactoryClass();
+    if (ofc != null) {
+      fc.setObserversFactory(ofc);
+    }
   }
 
   public String getCurTableName() {

@@ -15,8 +15,10 @@
 
 package org.apache.fluo.api.client;
 
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
+import org.apache.fluo.api.observer.ObserversFactory.Context;
 
 /**
  * Client interface for Fluo. Fluo clients will have shared resources used by all objects created by
@@ -63,6 +65,8 @@ public interface FluoClient extends AutoCloseable {
    *         keeping config files consistent across a cluster. To update this configuration, use
    *         {@link FluoAdmin#updateSharedConfig()}. Changes made to the returned Configuration will
    *         not update Zookeeper.
+   * @see FluoConfiguration#getAppConfiguration()
+   * @see Context#getAppConfiguration()
    */
   SimpleConfiguration getAppConfiguration();
 

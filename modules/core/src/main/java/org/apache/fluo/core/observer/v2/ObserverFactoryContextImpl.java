@@ -13,30 +13,27 @@
  * the License.
  */
 
-package org.apache.fluo.core.worker;
+package org.apache.fluo.core.observer.v2;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
-import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserversFactory.Context;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.metrics.DummyMetricsReporter;
 
-public class ObserverContext implements Observer.Context {
+public class ObserverFactoryContextImpl implements Context {
 
-  private final SimpleConfiguration observerConfig;
-  private final SimpleConfiguration appConfig;
+  private SimpleConfiguration appConfig;
   private final Environment env;
 
-  public ObserverContext(SimpleConfiguration appConfig, SimpleConfiguration observerConfig) {
+  public ObserverFactoryContextImpl(SimpleConfiguration appConfig) {
     this.appConfig = appConfig;
-    this.observerConfig = observerConfig;
     this.env = null;
   }
 
-  public ObserverContext(Environment env, SimpleConfiguration observerConfig) {
+  public ObserverFactoryContextImpl(Environment env) {
     this.env = env;
     this.appConfig = null;
-    this.observerConfig = observerConfig;
   }
 
   @Override
@@ -48,15 +45,11 @@ public class ObserverContext implements Observer.Context {
   }
 
   @Override
-  public SimpleConfiguration getObserverConfiguration() {
-    return observerConfig;
-  }
-
-  @Override
   public MetricsReporter getMetricsReporter() {
     if (env == null) {
       return new DummyMetricsReporter();
     }
     return env.getMetricsReporter();
   }
+
 }

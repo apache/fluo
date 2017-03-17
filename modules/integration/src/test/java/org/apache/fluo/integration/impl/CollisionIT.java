@@ -15,9 +15,7 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
@@ -32,11 +30,9 @@ import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverSpecification;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.AbstractObserver;
-import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.Observer.NotificationType;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.fluo.integration.ITBaseMini;
@@ -81,27 +77,22 @@ public class CollisionIT extends ITBaseMini {
     }
   }
 
-  public static class TotalObserver extends AbstractObserver {
-
+  public static class CollisionObserverFactory implements ObserversFactory {
     @Override
-    public Observer.ObservedColumn getObservedColumn() {
-      return new Observer.ObservedColumn(STAT_CHANGED, NotificationType.WEAK);
-    }
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accepts(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
+        int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
+        int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
 
-    @Override
-    public void process(TransactionBase tx, Bytes rowBytes, Column col) throws Exception {
-      String row = rowBytes.toString();
-      int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
-      int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
-
-      tx.set(row, STAT_PROCESSED, total + "");
-      TestUtil.increment(tx, "all", STAT_TOTAL, total - processed);
+        tx.set(row, STAT_PROCESSED, total + "");
+        TestUtil.increment(tx, "all", STAT_TOTAL, total - processed);
+      });
     }
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(TotalObserver.class.getName()));
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return CollisionObserverFactory.class;
   }
 
   @Override

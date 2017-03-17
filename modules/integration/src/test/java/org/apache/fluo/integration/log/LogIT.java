@@ -18,7 +18,6 @@ package org.apache.fluo.integration.log;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,14 +31,15 @@ import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.client.scanner.RowScanner;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestUtil;
 import org.apache.log4j.Level;
@@ -48,6 +48,8 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
 public class LogIT extends ITBaseMini {
 
@@ -100,13 +102,7 @@ public class LogIT extends ITBaseMini {
     }
   }
 
-  public static class BinaryObserver extends AbstractObserver {
-
-    @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(bCol2, NotificationType.WEAK);
-    }
-
+  public static class BinaryObserver implements Observer {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) {
       tx.get(bRow1, bCol2);
@@ -115,23 +111,24 @@ public class LogIT extends ITBaseMini {
     }
   }
 
-  public static class TestObserver extends AbstractObserver {
-
+  public static class TestObserver implements StringObserver {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(STAT_COUNT, NotificationType.WEAK);
+    public void process(TransactionBase tx, String row, Column col) {
+      TestUtil.increment(tx, "all", col, Integer.parseInt(tx.gets(row, col)));
     }
+  }
 
+  public static class LogItObserversFactory implements ObserversFactory {
     @Override
-    public void process(TransactionBase tx, Bytes row, Column col) {
-      TestUtil.increment(tx, "all", col, Integer.parseInt(tx.gets(row.toString(), col)));
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accepts(STAT_COUNT, WEAK, new TestObserver());
+      consumer.accept(bCol2, WEAK, new BinaryObserver());
     }
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Arrays.asList(new ObserverSpecification(TestObserver.class.getName()),
-        new ObserverSpecification(BinaryObserver.class.getName()));
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return LogItObserversFactory.class;
   }
 
   @Test

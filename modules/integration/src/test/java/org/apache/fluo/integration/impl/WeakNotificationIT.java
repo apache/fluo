@@ -15,18 +15,15 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.CellScanner;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
@@ -36,13 +33,14 @@ import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
+
 public class WeakNotificationIT extends ITBaseMini {
 
   private static final Column STAT_COUNT = new Column("stat", "count");
   private static final Column STAT_CHECK = new Column("stat", "check");
 
-  public static class SimpleObserver extends AbstractObserver {
-
+  public static class SimpleObserver implements Observer {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
@@ -61,16 +59,18 @@ public class WeakNotificationIT extends ITBaseMini {
         tx.set(row.toString(), STAT_COUNT, sum + "");
       }
     }
+  }
 
+  public static class WeakNotificationITObserversFactory implements ObserversFactory {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(STAT_CHECK, NotificationType.WEAK);
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accept(STAT_CHECK, WEAK, new SimpleObserver());
     }
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(SimpleObserver.class.getName()));
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return WeakNotificationITObserversFactory.class;
   }
 
   @Test

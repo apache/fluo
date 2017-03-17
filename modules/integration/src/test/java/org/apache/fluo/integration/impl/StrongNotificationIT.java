@@ -15,15 +15,10 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.fluo.api.client.Snapshot;
-import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.impl.TransactorNode;
@@ -32,30 +27,26 @@ import org.apache.fluo.integration.TestTransaction;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
+
 public class StrongNotificationIT extends ITBaseMini {
 
   private static final Column OC = new Column("f", "q");
   private static final Column RC = new Column("f", "r");
 
-  public static class SimpleObserver extends AbstractObserver {
-
+  public static class StrongNtfyObserversFactory implements ObserversFactory {
     @Override
-    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
-      String r = row.toString();
-
-      String v = tx.gets(r, col);
-      tx.set(v, RC, r);
-    }
-
-    @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(OC, NotificationType.STRONG);
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accept(OC, STRONG, (tx, row, col) -> {
+        Bytes v = tx.get(row, col);
+        tx.set(v, RC, row);
+      });
     }
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(SimpleObserver.class.getName()));
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return StrongNtfyObserversFactory.class;
   }
 
   @Test

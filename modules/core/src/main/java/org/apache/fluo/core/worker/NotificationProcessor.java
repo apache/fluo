@@ -29,6 +29,7 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
+import org.apache.fluo.core.observer.ObserverProvider;
 import org.apache.fluo.core.util.FluoExecutors;
 import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class NotificationProcessor implements AutoCloseable {
   private NotificationTracker tracker;
   private ThreadPoolExecutor executor;
   private Environment env;
-  private Observers observers;
+  private ObserverProvider observers;
   private PriorityBlockingQueue<Runnable> queue;
 
   public NotificationProcessor(Environment env) {
@@ -50,7 +51,7 @@ public class NotificationProcessor implements AutoCloseable {
     this.queue = new PriorityBlockingQueue<>();
     this.executor = FluoExecutors.newFixedThreadPool(numThreads, queue, "ntfyProc");
     this.tracker = new NotificationTracker();
-    this.observers = new Observers(env);
+    this.observers = env.getConfiguredObservers().getProvider(env);
     env.getSharedResources().getMetricRegistry()
         .register(env.getMetricNames().getNotificationQueued(), new Gauge<Integer>() {
           @Override

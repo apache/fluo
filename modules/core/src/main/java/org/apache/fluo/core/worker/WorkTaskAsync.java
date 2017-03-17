@@ -23,6 +23,7 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.log.TracingTransaction;
+import org.apache.fluo.core.observer.ObserverProvider;
 import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ public class WorkTaskAsync implements Runnable {
 
   private Environment env;
   private Notification notification;
-  private Observers observers;
+  private ObserverProvider observers;
   private NotificationFinder notificationFinder;
 
   private NotificationProcessor notificationProcessor;
@@ -65,7 +66,7 @@ public class WorkTaskAsync implements Runnable {
   }
 
   WorkTaskAsync(NotificationProcessor notificationProcessor, NotificationFinder notificationFinder,
-      Environment env, Notification notification, Observers observers) {
+      Environment env, Notification notification, ObserverProvider observers) {
     this.notificationProcessor = notificationProcessor;
     this.notificationFinder = notificationFinder;
     this.env = env;

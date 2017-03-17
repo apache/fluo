@@ -15,9 +15,6 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
@@ -25,16 +22,19 @@ import org.apache.fluo.api.client.Loader;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
+
 public class AppConfigIT extends ITBaseMini {
+
+  public static final Column DF_COL = new Column("data", "foo");
+  public static final Column DB_COL = new Column("data", "bar");
 
   @Override
   protected void setAppConfig(SimpleConfiguration config) {
@@ -42,8 +42,8 @@ public class AppConfigIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(TestObserver.class.getName()));
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return TestObserversFactory.class;
   }
 
   @Test
@@ -89,32 +89,24 @@ public class AppConfigIT extends ITBaseMini {
     public void load(TransactionBase tx, Context context) throws Exception {
       int limit = context.getAppConfiguration().getInt("myapp.sizeLimit");
       if (data < limit) {
-        tx.set(row, new Column("data", "foo"), Integer.toString(data));
+        tx.set(row, DF_COL, Integer.toString(data));
       }
     }
   }
 
-  public static class TestObserver extends AbstractObserver {
-
-    private int limit;
-
+  public static class TestObserversFactory implements ObserversFactory {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(new Column("data", "foo"), NotificationType.STRONG);
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      int limit = ctx.getAppConfiguration().getInt("myapp.sizeLimit");
+
+      consumer.accepts(DF_COL, STRONG, (tx, row, col) -> {
+        int d = Integer.parseInt(tx.gets(row, col));
+        if (2 * d < limit) {
+          tx.set(row.toString(), DB_COL, Integer.toString(2 * d));
+        }
+      });
     }
 
-    @Override
-    public void init(Context context) {
-      limit = context.getAppConfiguration().getInt("myapp.sizeLimit");
-    }
-
-    @Override
-    public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
-      int d = Integer.parseInt(tx.gets(row.toString(), col));
-      if (2 * d < limit) {
-        tx.set(row.toString(), new Column("data", "bar"), Integer.toString(2 * d));
-      }
-    }
   }
 
   @Test

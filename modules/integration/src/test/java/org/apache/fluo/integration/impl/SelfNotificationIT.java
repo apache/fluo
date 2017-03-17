@@ -22,13 +22,15 @@ import java.util.List;
 
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserversFactory;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 /**
  * Test an observer notifying the column its observing. This is a useful pattern for exporting data.
@@ -39,15 +41,9 @@ public class SelfNotificationIT extends ITBaseMini {
   private static final Column EXPORT_CHECK_COL = new Column("export", "check");
   private static final Column EXPORT_COUNT_COL = new Column("export", "count");
 
-  @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(ExportingObserver.class.getName()));
-  }
-
   private static List<String> exports = new ArrayList<>();
 
-  public static class ExportingObserver extends AbstractObserver {
-
+  public static class ExportingObserver implements Observer {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
       String r = row.toString();
@@ -69,11 +65,18 @@ public class SelfNotificationIT extends ITBaseMini {
     private void export(Bytes row, String exportCount) {
       exports.add(exportCount);
     }
+  }
 
+  public static class SelfNtfyObserversFactory implements ObserversFactory {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(EXPORT_COUNT_COL, NotificationType.STRONG);
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accept(EXPORT_COUNT_COL, STRONG, new ExportingObserver());
     }
+  }
+
+  @Override
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return SelfNtfyObserversFactory.class;
   }
 
   @Test

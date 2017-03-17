@@ -15,29 +15,27 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.google.common.collect.Iterables;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
+import org.apache.fluo.core.observer.ObserverProvider;
 import org.apache.fluo.core.worker.NotificationFinder;
-import org.apache.fluo.core.worker.Observers;
 import org.apache.fluo.core.worker.finder.hash.HashNotificationFinder;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mini.MiniFluoImpl;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 /**
  * A simple test that added links between nodes in a graph. There is an observer that updates an
@@ -50,21 +48,10 @@ public class WorkerIT extends ITBaseMini {
 
   private static Column observedColumn = LAST_UPDATE;
 
-  @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(DegreeIndexer.class.getName()));
-  }
-
-  public static class DegreeIndexer implements Observer {
+  public static class DegreeIndexer implements StringObserver {
 
     @Override
-    public void init(Context context) {}
-
-    @Override
-    public void process(TransactionBase tx, Bytes rowBytes, Column col) throws Exception {
-
-      String row = rowBytes.toString();
-
+    public void process(TransactionBase tx, String row, Column col) throws Exception {
       // get previously calculated degree
       String degree = tx.gets(row, DEGREE);
 
@@ -84,14 +71,18 @@ public class WorkerIT extends ITBaseMini {
         tx.delete("IDEG" + degree, new Column("node", row));
       }
     }
+  }
 
+  public static class WorkerITObserversFactory implements ObserversFactory {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(observedColumn, NotificationType.STRONG);
+    public void createObservers(ObserverConsumer consumer, Context ctx) {
+      consumer.accept(observedColumn, STRONG, new DegreeIndexer());
     }
+  }
 
-    @Override
-    public void close() {}
+  @Override
+  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+    return WorkerITObserversFactory.class;
   }
 
   @Test
@@ -152,15 +143,16 @@ public class WorkerIT extends ITBaseMini {
   public void testDiffObserverConfig() throws Exception {
     observedColumn = new Column("attr2", "lastupdate");
     try {
-      try (Environment env = new Environment(config); Observers observers = new Observers(env)) {
-        observers.getObserver(LAST_UPDATE);
+      try (Environment env = new Environment(config);
+          ObserverProvider op = env.getConfiguredObservers().getProvider(env)) {
+        op.getObserver(LAST_UPDATE);
       }
 
       Assert.fail();
 
-    } catch (IllegalStateException ise) {
+    } catch (IllegalArgumentException ise) {
       Assert.assertTrue(ise.getMessage().contains(
-          "Mismatch between configured column and class column"));
+          "Column attr2 lastupdate  not previously configured for strong notifications"));
     } finally {
       observedColumn = LAST_UPDATE;
     }
