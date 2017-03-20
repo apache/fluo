@@ -18,7 +18,7 @@ package org.apache.fluo.api.client;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
-import org.apache.fluo.api.observer.ObserversFactory.Context;
+import org.apache.fluo.api.observer.ObserverFactory.Context;
 
 /**
  * Client interface for Fluo. Fluo clients will have shared resources used by all objects created by

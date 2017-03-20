@@ -23,7 +23,7 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
@@ -61,7 +61,7 @@ public class WeakNotificationIT extends ITBaseMini {
     }
   }
 
-  public static class WeakNotificationITObserversFactory implements ObserversFactory {
+  public static class WeakNotificationITObserversFactory implements ObserverFactory {
     @Override
     public void createObservers(ObserverConsumer consumer, Context ctx) {
       consumer.accept(STAT_CHECK, WEAK, new SimpleObserver());
@@ -69,7 +69,7 @@ public class WeakNotificationIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return WeakNotificationITObserversFactory.class;
   }
 

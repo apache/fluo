@@ -30,7 +30,7 @@ import org.apache.fluo.api.observer.Observer.NotificationType;
  * of this class should emit zero or more {@link Observer}s.
  *
  * <p>
- * When Fluo is initialized {@link #getObservedColumns(Context, BiConsumer)} is called. The columns
+ * When Fluo is initialized {@link #getObservedColumns(BiConsumer, Context)} is called. The columns
  * it emits are stored in Zookeeper. Transactions will use the columns stored in Zookeeper to
  * determine when to set notifications. When Workers call
  * {@link #createObservers(ObserverConsumer, Context)}, the columns emitted must be the same as
@@ -39,7 +39,7 @@ import org.apache.fluo.api.observer.Observer.NotificationType;
  * @see FluoConfiguration#setObserversFactory(String)
  * @since 1.1.0
  */
-public interface ObserversFactory {
+public interface ObserverFactory {
 
   /**
    * @since 1.1.0
@@ -101,7 +101,7 @@ public interface ObserversFactory {
    *
    * @param obsColConsumer pass all observed columns to this consumer
    */
-  default void getObservedColumns(Context ctx, BiConsumer<Column, NotificationType> obsColConsumer) {
+  default void getObservedColumns(BiConsumer<Column, NotificationType> obsColConsumer, Context ctx) {
     ObserverConsumer obsConsumer = new ObserverConsumer() {
       @Override
       public void accepts(Column oc, NotificationType nt, StringObserver obs) {

@@ -30,7 +30,7 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.observer.ConfiguredObservers;
 import org.apache.fluo.core.observer.ObserverProvider;
@@ -55,7 +55,7 @@ public class ObserversV2 implements Observers {
   public void update(CuratorFramework curator, FluoConfiguration config) throws Exception {
     String obsFactoryClass = config.getObserversFactory();
 
-    ObserversFactory observerFactory = newObserversFactory(obsFactoryClass);
+    ObserverFactory observerFactory = newObserversFactory(obsFactoryClass);
 
     Map<Column, NotificationType> obsCols = new HashMap<>();
     BiConsumer<Column, NotificationType> obsColConsumer = (col, nt) -> {
@@ -65,8 +65,8 @@ public class ObserversV2 implements Observers {
       obsCols.put(col, nt);
     };
 
-    observerFactory.getObservedColumns(
-        new ObserverFactoryContextImpl(config.getAppConfiguration()), obsColConsumer);
+    observerFactory.getObservedColumns(obsColConsumer,
+        new ObserverFactoryContextImpl(config.getAppConfiguration()));
 
     Gson gson = new Gson();
     String json = gson.toJson(new JsonObservers(obsFactoryClass, obsCols));
@@ -75,11 +75,11 @@ public class ObserversV2 implements Observers {
 
   }
 
-  static ObserversFactory newObserversFactory(String obsFactoryClass) {
-    ObserversFactory observerFactory;
+  static ObserverFactory newObserversFactory(String obsFactoryClass) {
+    ObserverFactory observerFactory;
     try {
       observerFactory =
-          Class.forName(obsFactoryClass).asSubclass(ObserversFactory.class).newInstance();
+          Class.forName(obsFactoryClass).asSubclass(ObserverFactory.class).newInstance();
     } catch (ClassNotFoundException e1) {
       throw new FluoException("ObserverFactory class '" + obsFactoryClass + "' was not "
           + "found.  Check for class name misspellings or failure to include "

@@ -23,7 +23,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ByteUtil;
@@ -58,7 +58,7 @@ public class NotificationGcIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return WeakNotificationITObserversFactory.class;
   }
 

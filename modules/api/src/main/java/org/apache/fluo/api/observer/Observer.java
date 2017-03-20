@@ -29,7 +29,7 @@ import org.apache.fluo.api.metrics.MetricsReporter;
  * 
  * <p>
  * In Fluo version 1.1.0 this was converted to a functional interface. This change along with the
- * introduction of {@link ObserversFactory} allows Observers to be written as lambdas.
+ * introduction of {@link ObserverFactory} allows Observers to be written as lambdas.
  *
  * @since 1.0.0
  */

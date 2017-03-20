@@ -26,8 +26,8 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserversFactory;
-import org.apache.fluo.api.observer.ObserversFactory.ObserverConsumer;
+import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverFactory.ObserverConsumer;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.observer.ObserverProvider;
@@ -44,7 +44,7 @@ class ObserversProviderV2 implements ObserverProvider {
       Set<Column> weakColumns) {
     observers = new HashMap<>();
 
-    ObserversFactory obsFact = ObserversV2.newObserversFactory(jco.getObserversFactoryClass());
+    ObserverFactory obsFact = ObserversV2.newObserversFactory(jco.getObserversFactoryClass());
 
     ObserverFactoryContextImpl ctx = new ObserverFactoryContextImpl(env);
 

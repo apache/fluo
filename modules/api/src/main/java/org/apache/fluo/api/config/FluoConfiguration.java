@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoClient;
-import org.apache.fluo.api.observer.ObserversFactory;
-import org.apache.fluo.api.observer.ObserversFactory.Context;
+import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverFactory.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -367,7 +367,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    *
    * @since 1.1.0
    *
-   * @param className Name of a class that implements {@link ObserversFactory}. Must be non-null and
+   * @param className Name of a class that implements {@link ObserverFactory}. Must be non-null and
    *        non-empty.
    */
   public void setObserversFactory(String className) {
@@ -379,12 +379,12 @@ public class FluoConfiguration extends SimpleConfiguration {
    *
    * @since 1.1.0
    */
-  public void setObserversFactory(Class<? extends ObserversFactory> clazz) {
+  public void setObserversFactory(Class<? extends ObserverFactory> clazz) {
     setObserversFactory(clazz.getName());
   }
 
   /**
-   * @return The configured {@link ObserversFactory} class name. If one was not configured, returns
+   * @return The configured {@link ObserverFactory} class name. If one was not configured, returns
    *         {@value #OBSERVERS_FACTORY_DEFAULT}
    * @since 1.1.0
    */

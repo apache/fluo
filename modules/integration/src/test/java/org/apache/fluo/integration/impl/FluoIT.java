@@ -35,7 +35,7 @@ import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -50,7 +50,7 @@ import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FluoIT extends ITBaseImpl {
 
-  public static class FluoITObserversFactory implements ObserversFactory {
+  public static class FluoITObserversFactory implements ObserverFactory {
     @Override
     public void createObservers(ObserverConsumer consumer, Context ctx) {
       consumer.accept(BALANCE, NotificationType.STRONG, (tx, row, col) -> {
@@ -60,7 +60,7 @@ public class FluoIT extends ITBaseImpl {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return FluoITObserversFactory.class;
   }
 

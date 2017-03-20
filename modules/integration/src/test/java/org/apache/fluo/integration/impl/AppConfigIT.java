@@ -24,7 +24,7 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class AppConfigIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return TestObserversFactory.class;
   }
 
@@ -94,7 +94,7 @@ public class AppConfigIT extends ITBaseMini {
     }
   }
 
-  public static class TestObserversFactory implements ObserversFactory {
+  public static class TestObserversFactory implements ObserverFactory {
     @Override
     public void createObservers(ObserverConsumer consumer, Context ctx) {
       int limit = ctx.getAppConfiguration().getInt("myapp.sizeLimit");

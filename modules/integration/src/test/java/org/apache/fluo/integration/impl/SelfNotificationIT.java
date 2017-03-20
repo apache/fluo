@@ -25,7 +25,7 @@ import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class SelfNotificationIT extends ITBaseMini {
     }
   }
 
-  public static class SelfNtfyObserversFactory implements ObserversFactory {
+  public static class SelfNtfyObserversFactory implements ObserverFactory {
     @Override
     public void createObservers(ObserverConsumer consumer, Context ctx) {
       consumer.accept(EXPORT_COUNT_COL, STRONG, new ExportingObserver());
@@ -75,7 +75,7 @@ public class SelfNotificationIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return SelfNtfyObserversFactory.class;
   }
 

@@ -38,7 +38,7 @@ import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.ObserversFactory;
+import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestUtil;
@@ -118,7 +118,7 @@ public class LogIT extends ITBaseMini {
     }
   }
 
-  public static class LogItObserversFactory implements ObserversFactory {
+  public static class LogItObserversFactory implements ObserverFactory {
     @Override
     public void createObservers(ObserverConsumer consumer, Context ctx) {
       consumer.accepts(STAT_COUNT, WEAK, new TestObserver());
@@ -127,7 +127,7 @@ public class LogIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserversFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
     return LogItObserversFactory.class;
   }
 

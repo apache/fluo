@@ -17,7 +17,7 @@ package org.apache.fluo.core.observer.v2;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
-import org.apache.fluo.api.observer.ObserversFactory.Context;
+import org.apache.fluo.api.observer.ObserverFactory.Context;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.metrics.DummyMetricsReporter;
 
