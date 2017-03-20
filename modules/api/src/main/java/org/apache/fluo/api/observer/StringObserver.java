@@ -22,6 +22,7 @@ import org.apache.fluo.api.data.Column;
 /**
  * @since 1.1.0
  */
+@FunctionalInterface
 public interface StringObserver extends Observer {
 
   @Override

@@ -19,7 +19,9 @@ import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 
-// this class created for json serialization
+/**
+ * this class created for json serialization
+ */
 class JsonObservedColumn {
   private byte[] fam;
   private byte[] qual;

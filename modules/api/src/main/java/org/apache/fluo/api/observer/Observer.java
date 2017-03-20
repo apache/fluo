@@ -33,6 +33,7 @@ import org.apache.fluo.api.metrics.MetricsReporter;
  *
  * @since 1.0.0
  */
+@FunctionalInterface
 public interface Observer {
 
   /**

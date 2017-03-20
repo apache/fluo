@@ -24,7 +24,9 @@ import org.apache.fluo.api.observer.Observer.NotificationType;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
-// this class created for json serialization
+/**
+ * this class created for json serialization
+ */
 class JsonObservers {
   String obsFactoryClass;
   List<JsonObservedColumn> observedColumns;

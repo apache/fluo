@@ -68,7 +68,6 @@ public class ObserversV2 implements Observers {
     observerFactory.getObservedColumns(
         new ObserverFactoryContextImpl(config.getAppConfiguration()), obsColConsumer);
 
-    // TODO does core depend on GSon? If not, do we want to add dep?
     Gson gson = new Gson();
     String json = gson.toJson(new JsonObservers(obsFactoryClass, obsCols));
     CuratorUtil.putData(curator, CONFIG_FLUO_OBSERVERS2, json.getBytes(UTF_8),

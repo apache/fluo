@@ -109,7 +109,7 @@ public class ObserversV1 implements Observers {
 
     // TODO check that no workers are running... or make workers watch this znode
 
-    String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS;
+    String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS1;
     try {
       curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
     } catch (NoNodeException nne) {
@@ -191,7 +191,7 @@ public class ObserversV1 implements Observers {
     ByteArrayInputStream bais;
     try {
       bais =
-          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS1));
     } catch (NoNodeException nne) {
       return null;
     }
@@ -225,7 +225,7 @@ public class ObserversV1 implements Observers {
   @Override
   public void clear(CuratorFramework curator) throws Exception {
     try {
-      curator.delete().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS);
+      curator.delete().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS1);
     } catch (NoNodeException nne) {
       // nothing to delete
     }
