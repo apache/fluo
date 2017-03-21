@@ -17,21 +17,21 @@ package org.apache.fluo.core.observer.v2;
 
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
-import org.apache.fluo.api.observer.ObserverFactory.Context;
+import org.apache.fluo.api.observer.ObserverProvider.Context;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.metrics.DummyMetricsReporter;
 
-public class ObserverFactoryContextImpl implements Context {
+public class ObserverProviderContextImpl implements Context {
 
   private SimpleConfiguration appConfig;
   private final Environment env;
 
-  public ObserverFactoryContextImpl(SimpleConfiguration appConfig) {
+  public ObserverProviderContextImpl(SimpleConfiguration appConfig) {
     this.appConfig = appConfig;
     this.env = null;
   }
 
-  public ObserverFactoryContextImpl(Environment env) {
+  public ObserverProviderContextImpl(Environment env) {
     this.env = env;
     this.appConfig = null;
   }

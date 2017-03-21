@@ -32,14 +32,14 @@ import org.apache.fluo.api.observer.Observer.NotificationType;
  * <p>
  * When Fluo is initialized {@link #getObservedColumns(BiConsumer, Context)} is called. The columns
  * it emits are stored in Zookeeper. Transactions will use the columns stored in Zookeeper to
- * determine when to set notifications. When Workers call
- * {@link #createObservers(ObserverConsumer, Context)}, the columns emitted must be the same as
- * those emitted during initialization. If this is not the case, then the worker will fail to start.
+ * determine when to set notifications. When Workers call {@link #provide(Registry, Context)}, the
+ * columns emitted must be the same as those emitted during initialization. If this is not the case,
+ * then the worker will fail to start.
  *
- * @see FluoConfiguration#setObserversFactory(String)
+ * @see FluoConfiguration#setObserverProvider(String)
  * @since 1.1.0
  */
-public interface ObserverFactory {
+public interface ObserverProvider {
 
   /**
    * @since 1.1.0
@@ -63,8 +63,8 @@ public interface ObserverFactory {
    *
    * @since 1.1.0
    */
-  interface ObserverConsumer {
-    void accept(Column observedColumn, NotificationType ntfyType, Observer observer);
+  interface Registry {
+    void register(Column observedColumn, NotificationType ntfyType, Observer observer);
 
     /**
      * This method was created to allow Observers written as lambda to be passed {@link String}
@@ -72,48 +72,48 @@ public interface ObserverFactory {
      * 
      * <pre>
      * <code>
-     *   void createObservers(ObserverConsumer obsConsumer, Context ctx) {
-     *     obsConsumer.accepts(someColumn, WEAK, (tx,row,col) -> {
+     *   void provide(ObserverRegistry or, Context ctx) {
+     *     or.registers(someColumn, WEAK, (tx,row,col) -> {
      *      //row is of type String
      *     };
      *   }
      * </code>
      * </pre>
      */
-    void accepts(Column observedColumn, NotificationType ntfyType, StringObserver observer);
+    void registers(Column observedColumn, NotificationType ntfyType, StringObserver observer);
   }
 
   /**
    * This is method is called by Fluo Workers to create observers to process notifications.
    *
    * <p>
-   * Observers emitted may be called concurrently by multiple threads to process different
+   * Observers registered may be called concurrently by multiple threads to process different
    * notifications. Observers should be tolerant of this.
    *
-   * @param obsConsumer Emit an applications observers to this consumer.
+   * @param or Register observers with this.
    */
-  void createObservers(ObserverConsumer obsConsumer, Context ctx);
+  void provide(Registry or, Context ctx);
 
   /**
    * Called during Fluo initialization to determine what columns are being observed. The default
-   * implementation of this method calls {@link #createObservers(ObserverConsumer, Context)} and
-   * ignores the Observers.
+   * implementation of this method calls {@link #provide(Registry, Context)} and ignores the
+   * Observers.
    *
-   * @param obsColConsumer pass all observed columns to this consumer
+   * @param colRegistry pass all observed columns to this consumer
    */
-  default void getObservedColumns(BiConsumer<Column, NotificationType> obsColConsumer, Context ctx) {
-    ObserverConsumer obsConsumer = new ObserverConsumer() {
+  default void getObservedColumns(BiConsumer<Column, NotificationType> colRegistry, Context ctx) {
+    Registry or = new Registry() {
       @Override
-      public void accepts(Column oc, NotificationType nt, StringObserver obs) {
-        obsColConsumer.accept(oc, nt);
+      public void registers(Column oc, NotificationType nt, StringObserver obs) {
+        colRegistry.accept(oc, nt);
       }
 
       @Override
-      public void accept(Column oc, NotificationType nt, Observer obs) {
-        obsColConsumer.accept(oc, nt);
+      public void register(Column oc, NotificationType nt, Observer obs) {
+        colRegistry.accept(oc, nt);
       }
     };
 
-    createObservers(obsConsumer, ctx);
+    provide(or, ctx);
   }
 }

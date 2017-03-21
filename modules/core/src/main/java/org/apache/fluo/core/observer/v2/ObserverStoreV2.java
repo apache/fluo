@@ -30,7 +30,7 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.observer.ConfiguredObservers;
 import org.apache.fluo.core.observer.Observers;
@@ -48,14 +48,14 @@ public class ObserverStoreV2 implements ObserverStore {
 
   @Override
   public boolean handles(FluoConfiguration config) {
-    return !config.getObserversFactory().isEmpty();
+    return !config.getObserverProvider().isEmpty();
   }
 
   @Override
   public void update(CuratorFramework curator, FluoConfiguration config) throws Exception {
-    String obsFactoryClass = config.getObserversFactory();
+    String obsFactoryClass = config.getObserverProvider();
 
-    ObserverFactory observerFactory = newObserversFactory(obsFactoryClass);
+    ObserverProvider observerProvider = newObserverProvider(obsFactoryClass);
 
     Map<Column, NotificationType> obsCols = new HashMap<>();
     BiConsumer<Column, NotificationType> obsColConsumer = (col, nt) -> {
@@ -65,8 +65,8 @@ public class ObserverStoreV2 implements ObserverStore {
       obsCols.put(col, nt);
     };
 
-    observerFactory.getObservedColumns(obsColConsumer,
-        new ObserverFactoryContextImpl(config.getAppConfiguration()));
+    observerProvider.getObservedColumns(obsColConsumer,
+        new ObserverProviderContextImpl(config.getAppConfiguration()));
 
     Gson gson = new Gson();
     String json = gson.toJson(new JsonObservers(obsFactoryClass, obsCols));
@@ -75,11 +75,11 @@ public class ObserverStoreV2 implements ObserverStore {
 
   }
 
-  static ObserverFactory newObserversFactory(String obsFactoryClass) {
-    ObserverFactory observerFactory;
+  static ObserverProvider newObserverProvider(String obsFactoryClass) {
+    ObserverProvider observerProvider;
     try {
-      observerFactory =
-          Class.forName(obsFactoryClass).asSubclass(ObserverFactory.class).newInstance();
+      observerProvider =
+          Class.forName(obsFactoryClass).asSubclass(ObserverProvider.class).newInstance();
     } catch (ClassNotFoundException e1) {
       throw new FluoException("ObserverFactory class '" + obsFactoryClass + "' was not "
           + "found.  Check for class name misspellings or failure to include "
@@ -88,7 +88,7 @@ public class ObserverStoreV2 implements ObserverStore {
       throw new FluoException("ObserverFactory class '" + obsFactoryClass
           + "' could not be created.", e2);
     }
-    return observerFactory;
+    return observerProvider;
   }
 
   @Override

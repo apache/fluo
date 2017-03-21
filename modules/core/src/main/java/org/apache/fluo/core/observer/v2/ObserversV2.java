@@ -26,8 +26,8 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserverFactory;
-import org.apache.fluo.api.observer.ObserverFactory.ObserverConsumer;
+import org.apache.fluo.api.observer.ObserverProvider;
+import org.apache.fluo.api.observer.ObserverProvider.Registry;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.observer.Observers;
@@ -44,19 +44,20 @@ class ObserversV2 implements Observers {
       Set<Column> weakColumns) {
     observers = new HashMap<>();
 
-    ObserverFactory obsFact = ObserverStoreV2.newObserversFactory(jco.getObserversFactoryClass());
+    ObserverProvider obsProvider =
+        ObserverStoreV2.newObserverProvider(jco.getObserverProviderClass());
 
-    ObserverFactoryContextImpl ctx = new ObserverFactoryContextImpl(env);
+    ObserverProviderContextImpl ctx = new ObserverProviderContextImpl(env);
 
-    ObserverConsumer consumer = new ObserverConsumer() {
+    Registry consumer = new Registry() {
 
       @Override
-      public void accept(Column col, NotificationType nt, Observer obs) {
+      public void register(Column col, NotificationType nt, Observer obs) {
         try {
           Method closeMethod = obs.getClass().getMethod("close");
           if (!closeMethod.getDeclaringClass().equals(Observer.class)) {
             log.warn(
-                "Observer {} implements close().  Close is not called on Observers created using ObserversFactory."
+                "Observer {} implements close().  Close is not called on Observers created using ObserverProvider."
                     + " Close is only called on Observers configured the old way.", obs.getClass()
                     .getName());
           }
@@ -82,19 +83,19 @@ class ObserversV2 implements Observers {
       }
 
       @Override
-      public void accepts(Column col, NotificationType nt, StringObserver obs) {
-        accept(col, nt, obs);
+      public void registers(Column col, NotificationType nt, StringObserver obs) {
+        register(col, nt, obs);
       }
     };
 
-    obsFact.createObservers(consumer, ctx);
+    obsProvider.provide(consumer, ctx);
 
     // the following check ensures the observers factory provides observers for all previously
     // configured columns
     SetView<Column> diff =
         Sets.difference(observers.keySet(), Sets.union(strongColumns, weakColumns));
     if (diff.size() > 0) {
-      throw new FluoException("ObserversFactory " + jco.getObserversFactoryClass()
+      throw new FluoException("ObserverProvider " + jco.getObserverProviderClass()
           + " did not provide observers for columns " + diff);
     }
   }

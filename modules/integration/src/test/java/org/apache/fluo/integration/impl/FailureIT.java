@@ -35,7 +35,7 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
 import org.apache.fluo.core.impl.Notification;
@@ -65,16 +65,16 @@ public class FailureIT extends ITBaseImpl {
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {}
   }
 
-  public static class FailuresObserversFactory implements ObserverFactory {
+  public static class FailuresObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
-      consumer.accept(new Column("attr", "lastupdate"), STRONG, new NullObserver());
+    public void provide(Registry consumer, Context ctx) {
+      consumer.register(new Column("attr", "lastupdate"), STRONG, new NullObserver());
     }
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return FailuresObserversFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return FailuresObserverProvider.class;
   }
 
   @Test

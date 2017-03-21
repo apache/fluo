@@ -29,7 +29,7 @@ import org.apache.fluo.api.metrics.MetricsReporter;
  * 
  * <p>
  * In Fluo version 1.1.0 this was converted to a functional interface. This change along with the
- * introduction of {@link ObserverFactory} allows Observers to be written as lambdas.
+ * introduction of {@link ObserverProvider} allows Observers to be written as lambdas.
  *
  * @since 1.0.0
  */
@@ -106,7 +106,7 @@ public interface Observer {
    * @param context Observer context
    *
    * @deprecated since 1.1.0. Fluo will no longer call this method when observers are configured by
-   *             {@link FluoConfiguration#setObserversFactory(String)}. Its only called when
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
    *             observers are configured the old way by
    *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */
@@ -131,7 +131,7 @@ public interface Observer {
    * {@link #init(Context)}, then the derivation process should be deterministic.
    *
    * @deprecated since 1.1.0 Fluo will no longer call this method when observers are configured by
-   *             {@link FluoConfiguration#setObserversFactory(String)}. Its only called when
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
    *             observers are configured the old way by
    *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */
@@ -144,7 +144,7 @@ public interface Observer {
    * Implemented by user to close resources used by Observer
    *
    * @deprecated since 1.1.0. Fluo will no longer call this method when observers are configured by
-   *             {@link FluoConfiguration#setObserversFactory(String)}. Its only called when
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
    *             observers are configured the old way by
    *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */

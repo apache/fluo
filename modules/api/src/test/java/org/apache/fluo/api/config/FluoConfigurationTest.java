@@ -377,7 +377,7 @@ public class FluoConfigurationTest {
     c1.setAccumuloZookeepers("localhost:7171");
     c1.setInstanceZookeepers("localhost:7171/testS");
     c1.setWorkerThreads(100);
-    c1.setObserversFactory("com.foo.MyObserversFactory");
+    c1.setObserverProvider("com.foo.MyObserverProvider");
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oo = new ObjectOutputStream(baos);
@@ -400,20 +400,20 @@ public class FluoConfigurationTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void testNullObserversFactory() {
+  public void testNullObserverProvider() {
     FluoConfiguration fc = new FluoConfiguration();
-    fc.setObserversFactory((String) null);
+    fc.setObserverProvider((String) null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testEmptyObserversFactory() {
+  public void testEmptyObserverProvider() {
     FluoConfiguration fc = new FluoConfiguration();
-    fc.setObserversFactory("");
+    fc.setObserverProvider("");
   }
 
   @Test
-  public void testNoObserversFactory() {
+  public void testNoObserverProvider() {
     FluoConfiguration fc = new FluoConfiguration();
-    Assert.assertEquals("", fc.getObserversFactory());
+    Assert.assertEquals("", fc.getObserverProvider());
   }
 }

@@ -25,7 +25,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -55,16 +55,16 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     TestUtil.increment(tx, "all", new Column("stat", "total"), total - processed);
   };
 
-  public static class WeakNtfyObserversFactory implements ObserverFactory {
+  public static class WeakNtfyObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
-      consumer.accepts(STAT_CHANGED, WEAK, TOTAL_OBSERVER);
+    public void provide(Registry consumer, Context ctx) {
+      consumer.registers(STAT_CHANGED, WEAK, TOTAL_OBSERVER);
     }
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return WeakNtfyObserversFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return WeakNtfyObserverProvider.class;
   }
 
   @Test

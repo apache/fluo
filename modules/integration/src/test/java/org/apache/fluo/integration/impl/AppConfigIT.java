@@ -24,7 +24,7 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,8 +42,8 @@ public class AppConfigIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return TestObserversFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return TestObserverProvider.class;
   }
 
   @Test
@@ -94,12 +94,12 @@ public class AppConfigIT extends ITBaseMini {
     }
   }
 
-  public static class TestObserversFactory implements ObserverFactory {
+  public static class TestObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
+    public void provide(Registry consumer, Context ctx) {
       int limit = ctx.getAppConfiguration().getInt("myapp.sizeLimit");
 
-      consumer.accepts(DF_COL, STRONG, (tx, row, col) -> {
+      consumer.registers(DF_COL, STRONG, (tx, row, col) -> {
         int d = Integer.parseInt(tx.gets(row, col));
         if (2 * d < limit) {
           tx.set(row.toString(), DB_COL, Integer.toString(2 * d));

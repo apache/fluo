@@ -18,7 +18,7 @@ package org.apache.fluo.integration.impl;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.impl.TransactorNode;
@@ -34,10 +34,10 @@ public class StrongNotificationIT extends ITBaseMini {
   private static final Column OC = new Column("f", "q");
   private static final Column RC = new Column("f", "r");
 
-  public static class StrongNtfyObserversFactory implements ObserverFactory {
+  public static class StrongNtfyObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
-      consumer.accept(OC, STRONG, (tx, row, col) -> {
+    public void provide(Registry consumer, Context ctx) {
+      consumer.register(OC, STRONG, (tx, row, col) -> {
         Bytes v = tx.get(row, col);
         tx.set(v, RC, row);
       });
@@ -45,8 +45,8 @@ public class StrongNotificationIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return StrongNtfyObserversFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return StrongNtfyObserverProvider.class;
   }
 
   @Test

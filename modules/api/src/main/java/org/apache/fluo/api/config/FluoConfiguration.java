@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoClient;
-import org.apache.fluo.api.observer.ObserverFactory;
-import org.apache.fluo.api.observer.ObserverFactory.Context;
+import org.apache.fluo.api.observer.ObserverProvider;
+import org.apache.fluo.api.observer.ObserverProvider.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,8 +295,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * @deprecated since 1.1.0. Replaced by {@link #setObserversFactory(String)} and
-   *             {@link #getObserversFactory()}
+   * @deprecated since 1.1.0. Replaced by {@link #setObserverProvider(String)} and
+   *             {@link #getObserverProvider()}
    */
   @Deprecated
   public List<ObserverSpecification> getObserverSpecifications() {
@@ -367,28 +367,28 @@ public class FluoConfiguration extends SimpleConfiguration {
    *
    * @since 1.1.0
    *
-   * @param className Name of a class that implements {@link ObserverFactory}. Must be non-null and
+   * @param className Name of a class that implements {@link ObserverProvider}. Must be non-null and
    *        non-empty.
    */
-  public void setObserversFactory(String className) {
+  public void setObserverProvider(String className) {
     setNonEmptyString(OBSERVERS_FACTORY, className);
   }
 
   /**
-   * Calls {@link #setObserversFactory(String)} with the class name.
+   * Calls {@link #setObserverProvider(String)} with the class name.
    *
    * @since 1.1.0
    */
-  public void setObserversFactory(Class<? extends ObserverFactory> clazz) {
-    setObserversFactory(clazz.getName());
+  public void setObserverProvider(Class<? extends ObserverProvider> clazz) {
+    setObserverProvider(clazz.getName());
   }
 
   /**
-   * @return The configured {@link ObserverFactory} class name. If one was not configured, returns
+   * @return The configured {@link ObserverProvider} class name. If one was not configured, returns
    *         {@value #OBSERVERS_FACTORY_DEFAULT}
    * @since 1.1.0
    */
-  public String getObserversFactory() {
+  public String getObserverProvider() {
     return getString(OBSERVERS_FACTORY, OBSERVERS_FACTORY_DEFAULT);
   }
 
@@ -409,8 +409,8 @@ public class FluoConfiguration extends SimpleConfiguration {
    * Adds an {@link ObserverSpecification} to the configuration using a unique integer prefix thats
    * not currently in use.
    *
-   * @deprecated since 1.1.0. Replaced by {@link #setObserversFactory(String)} and
-   *             {@link #getObserversFactory()}
+   * @deprecated since 1.1.0. Replaced by {@link #setObserverProvider(String)} and
+   *             {@link #getObserverProvider()}
    */
   @Deprecated
   public FluoConfiguration addObserver(ObserverSpecification oconf) {
@@ -422,8 +422,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Adds multiple observers using unique integer prefixes for each.
    *
-   * @deprecated since 1.1.0. Replaced by {@link #setObserversFactory(String)} and
-   *             {@link #getObserversFactory()}
+   * @deprecated since 1.1.0. Replaced by {@link #setObserverProvider(String)} and
+   *             {@link #getObserverProvider()}
    */
   @Deprecated
   public FluoConfiguration addObservers(Iterable<ObserverSpecification> observers) {
@@ -437,8 +437,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Removes any configured observers.
    *
-   * @deprecated since 1.1.0. Replaced by {@link #setObserversFactory(String)} and
-   *             {@link #getObserversFactory()}
+   * @deprecated since 1.1.0. Replaced by {@link #setObserverProvider(String)} and
+   *             {@link #getObserverProvider()}
    */
   @Deprecated
   public FluoConfiguration clearObservers() {

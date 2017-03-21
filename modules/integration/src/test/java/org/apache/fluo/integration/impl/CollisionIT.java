@@ -32,7 +32,7 @@ import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.fluo.integration.ITBaseMini;
@@ -77,10 +77,10 @@ public class CollisionIT extends ITBaseMini {
     }
   }
 
-  public static class CollisionObserverFactory implements ObserverFactory {
+  public static class CollisionObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
-      consumer.accepts(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
+    public void provide(Registry consumer, Context ctx) {
+      consumer.registers(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
         int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
         int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
 
@@ -91,8 +91,8 @@ public class CollisionIT extends ITBaseMini {
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return CollisionObserverFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return CollisionObserverProvider.class;
   }
 
   @Override

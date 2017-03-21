@@ -22,7 +22,7 @@ import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -73,16 +73,16 @@ public class WorkerIT extends ITBaseMini {
     }
   }
 
-  public static class WorkerITObserversFactory implements ObserverFactory {
+  public static class WorkerITObserverProvider implements ObserverProvider {
     @Override
-    public void createObservers(ObserverConsumer consumer, Context ctx) {
-      consumer.accept(observedColumn, STRONG, new DegreeIndexer());
+    public void provide(Registry consumer, Context ctx) {
+      consumer.register(observedColumn, STRONG, new DegreeIndexer());
     }
   }
 
   @Override
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
-    return WorkerITObserversFactory.class;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return WorkerITObserverProvider.class;
   }
 
   @Test

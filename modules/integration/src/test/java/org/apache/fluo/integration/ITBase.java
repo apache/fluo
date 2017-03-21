@@ -29,7 +29,7 @@ import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.RowColumnValue;
-import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -78,14 +78,14 @@ public class ITBase {
     conn = miniAccumulo.getConnector(USER, new PasswordToken(PASSWORD));
   }
 
-  protected Class<? extends ObserverFactory> getObserversFactoryClass() {
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
     return null;
   }
 
   protected void setupObservers(FluoConfiguration fc) {
-    Class<? extends ObserverFactory> ofc = getObserversFactoryClass();
+    Class<? extends ObserverProvider> ofc = getObserverProviderClass();
     if (ofc != null) {
-      fc.setObserversFactory(ofc);
+      fc.setObserverProvider(ofc);
     }
   }
 

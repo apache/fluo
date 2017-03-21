@@ -28,19 +28,19 @@ import static java.util.stream.Collectors.toMap;
  * this class created for json serialization
  */
 class JsonObservers {
-  String obsFactoryClass;
+  String obsProviderClass;
   List<JsonObservedColumn> observedColumns;
 
   JsonObservers(String obsFactoryClass, Map<Column, NotificationType> columns) {
-    this.obsFactoryClass = obsFactoryClass;
+    this.obsProviderClass = obsFactoryClass;
     this.observedColumns =
         columns.entrySet().stream()
             .map(entry -> new JsonObservedColumn(entry.getKey(), entry.getValue()))
             .collect(toList());
   }
 
-  public String getObserversFactoryClass() {
-    return obsFactoryClass;
+  public String getObserverProviderClass() {
+    return obsProviderClass;
   }
 
   public Map<Column, NotificationType> getObservedColumns() {
@@ -50,6 +50,6 @@ class JsonObservers {
 
   @Override
   public String toString() {
-    return obsFactoryClass + " " + getObservedColumns();
+    return obsProviderClass + " " + getObservedColumns();
   }
 }

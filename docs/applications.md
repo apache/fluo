@@ -116,21 +116,21 @@ To create an observer, follow these steps:
       }
     }
     ```
-2.  Create a class that implements [ObserverFactory] like the example below.  The purpose of this
+2.  Create a class that implements [ObserverProvider] like the example below.  The purpose of this
     class is associate a set Observers with columns that trigger the observers.  The class can
     create multiple observers.
 
     ```java
-    class AppObserverFactory implements ObserverFactory {
+    class AppObserverProvider implements ObserverProvider {
       @Override
-      public void createObservers(ObserverConsumer obsConsumer, Context ctx) {
+      public void provide(Registry or, Context ctx) {
         //setup InvertObserver to be triggered when the column obs:data is modified
-        obsConsumer.accept(new Column("obs", "data"), 
+        or.register(new Column("obs", "data"),
                            NotificationType.STRONG,
                            new InvertObserver());
         
         //Observer is a Functional interface.  So Obsevers can be written as lambdas.
-        obsConcumer.accept(new Column("new","data"),
+        or.register(new Column("new","data"),
                            NotificationType.WEAK,
                            (tx,row,col) -> { 
                              Bytes combined = combineNewAndOld(tx,row);
@@ -145,7 +145,7 @@ To create an observer, follow these steps:
 4.  Configure your Fluo instance to use this observer factory by modifying the Observer section of
     [fluo.properties].
 5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
-    ObserverFactory and persist the columns in Zookeeper.  These columns persisted in Zookeeper
+    ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
     are used by transactions to know when to trigger observers.
 6.  Start your Fluo instance so that your Fluo workers load the new observer.
 
@@ -216,7 +216,7 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [FluoClient]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoClient.java
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
 [Observer]: ../modules/api/src/main/java/org/apache/fluo/api/observer/Observer.java
-[ObserverFactory]: ../modules/api/src/main/java/org/apache/fluo/api/observer/ObserverFactory.java
+[ObserverProvider]: ../modules/api/src/main/java/org/apache/fluo/api/observer/ObserverProvider.java
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: https://fluo.apache.org/apidocs/
 [metrics]: metrics.md
