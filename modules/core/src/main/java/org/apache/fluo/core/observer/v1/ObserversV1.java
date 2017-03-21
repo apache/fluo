@@ -15,219 +15,116 @@
 
 package org.apache.fluo.core.observer.v1;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.accumulo.util.ZookeeperPath;
-import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverSpecification;
-import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.apache.fluo.api.observer.Observer.ObservedColumn;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.ConfiguredObservers;
-import org.apache.fluo.core.observer.ObserverProvider;
 import org.apache.fluo.core.observer.Observers;
-import org.apache.fluo.core.util.ColumnUtil;
-import org.apache.fluo.core.util.CuratorUtil;
-import org.apache.hadoop.io.WritableUtils;
-import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/*
- * Support for observers configured the old way.
- */
 @SuppressWarnings("deprecation")
-public class ObserversV1 implements Observers {
+class ObserversV1 implements Observers {
 
-  private static final Logger logger = LoggerFactory.getLogger(ObserversV1.class);
+  private static final Logger log = LoggerFactory.getLogger(ObserversV1.class);
 
-  @Override
-  public boolean handles(FluoConfiguration config) {
-    Collection<ObserverSpecification> obsSpecs = config.getObserverSpecifications();
-    return !obsSpecs.isEmpty();
+  private Environment env;
+  Map<Column, List<Observer>> observers = new HashMap<>();
+  Map<Column, ObserverSpecification> strongObservers;
+  Map<Column, ObserverSpecification> weakObservers;
+
+  private List<Observer> getObserverList(Column col) {
+    List<Observer> observerList;
+    synchronized (observers) {
+      observerList = observers.get(col);
+      if (observerList == null) {
+        observerList = new ArrayList<>();
+        observers.put(col, observerList);
+      }
+    }
+    return observerList;
   }
 
-  @Override
-  public void update(CuratorFramework curator, FluoConfiguration config) throws Exception {
-    Collection<ObserverSpecification> obsSpecs = config.getObserverSpecifications();
+  public ObserversV1(Environment env, Map<Column, ObserverSpecification> strongObservers,
+      Map<Column, ObserverSpecification> weakObservers) {
+    this.env = env;
+    this.strongObservers = strongObservers;
+    this.weakObservers = weakObservers;
+  }
 
-    Map<Column, ObserverSpecification> colObservers = new HashMap<>();
-    Map<Column, ObserverSpecification> weakObservers = new HashMap<>();
+  public Observer getObserver(Column col) {
 
-    for (ObserverSpecification ospec : obsSpecs) {
-      Observer observer;
-      try {
-        observer = Class.forName(ospec.getClassName()).asSubclass(Observer.class).newInstance();
-      } catch (ClassNotFoundException e1) {
-        throw new FluoException("Observer class '" + ospec.getClassName() + "' was not "
-            + "found.  Check for class name misspellings or failure to include "
-            + "the observer jar.", e1);
-      } catch (InstantiationException | IllegalAccessException e2) {
-        throw new FluoException("Observer class '" + ospec.getClassName()
-            + "' could not be created.", e2);
+    List<Observer> observerList;
+    observerList = getObserverList(col);
+
+    synchronized (observerList) {
+      if (observerList.size() > 0) {
+        return observerList.remove(observerList.size() - 1);
       }
+    }
 
-      SimpleConfiguration oc = ospec.getConfiguration();
-      logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(),
-          oc.toMap());
+    Observer observer = null;
+
+    ObserverSpecification observerConfig = strongObservers.get(col);
+    if (observerConfig == null) {
+      observerConfig = weakObservers.get(col);
+    }
+
+    if (observerConfig != null) {
       try {
-        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), oc));
+        observer =
+            Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).newInstance();
+        observer.init(new ObserverContext(env, observerConfig.getConfiguration()));
+      } catch (RuntimeException e) {
+        throw e;
       } catch (Exception e) {
-        throw new FluoException("Observer '" + ospec.getClassName() + "' could not be initialized",
-            e);
+        throw new RuntimeException(e);
       }
 
-      ObservedColumn observedCol = observer.getObservedColumn();
-      if (observedCol.getType() == NotificationType.STRONG) {
-        colObservers.put(observedCol.getColumn(), ospec);
-      } else {
-        weakObservers.put(observedCol.getColumn(), ospec);
+      if (!observer.getObservedColumn().getColumn().equals(col)) {
+        throw new IllegalStateException("Mismatch between configured column and class column "
+            + observerConfig.getClassName() + " " + col + " "
+            + observer.getObservedColumn().getColumn());
       }
     }
 
-    updateObservers(curator, colObservers, weakObservers);
+    return observer;
   }
 
-  private static void updateObservers(CuratorFramework curator,
-      Map<Column, ObserverSpecification> colObservers,
-      Map<Column, ObserverSpecification> weakObservers) throws Exception {
-
-    // TODO check that no workers are running... or make workers watch this znode
-
-    String observerPath = ZookeeperPath.CONFIG_FLUO_OBSERVERS1;
-    try {
-      curator.delete().deletingChildrenIfNeeded().forPath(observerPath);
-    } catch (NoNodeException nne) {
-      // it's ok if node doesn't exist
-    } catch (Exception e) {
-      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath
-          + "], error=[" + e.getMessage() + "]");
-      throw new RuntimeException(e);
+  public void returnObserver(Observer observer) {
+    List<Observer> olist = getObserverList(observer.getObservedColumn().getColumn());
+    synchronized (olist) {
+      olist.add(observer);
     }
-
-    byte[] serializedObservers = serializeObservers(colObservers, weakObservers);
-    CuratorUtil.putData(curator, observerPath, serializedObservers,
-        CuratorUtil.NodeExistsPolicy.OVERWRITE);
-  }
-
-  private static void serializeObservers(DataOutputStream dos,
-      Map<Column, ObserverSpecification> colObservers) throws IOException {
-    // TODO use a human readable serialized format like json
-
-    Set<Entry<Column, ObserverSpecification>> es = colObservers.entrySet();
-
-    WritableUtils.writeVInt(dos, colObservers.size());
-
-    for (Entry<Column, ObserverSpecification> entry : es) {
-      ColumnUtil.writeColumn(entry.getKey(), dos);
-      dos.writeUTF(entry.getValue().getClassName());
-      Map<String, String> params = entry.getValue().getConfiguration().toMap();
-      WritableUtils.writeVInt(dos, params.size());
-      for (Entry<String, String> pentry : params.entrySet()) {
-        dos.writeUTF(pentry.getKey());
-        dos.writeUTF(pentry.getValue());
-      }
-    }
-  }
-
-  private static byte[] serializeObservers(Map<Column, ObserverSpecification> colObservers,
-      Map<Column, ObserverSpecification> weakObservers) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try (DataOutputStream dos = new DataOutputStream(baos)) {
-      serializeObservers(dos, colObservers);
-      serializeObservers(dos, weakObservers);
-    }
-
-    byte[] serializedObservers = baos.toByteArray();
-    return serializedObservers;
-  }
-
-
-  private static Map<Column, ObserverSpecification> readObservers(DataInputStream dis)
-      throws IOException {
-
-    HashMap<Column, ObserverSpecification> omap = new HashMap<>();
-
-    int num = WritableUtils.readVInt(dis);
-    for (int i = 0; i < num; i++) {
-      Column col = ColumnUtil.readColumn(dis);
-      String clazz = dis.readUTF();
-      Map<String, String> params = new HashMap<>();
-      int numParams = WritableUtils.readVInt(dis);
-      for (int j = 0; j < numParams; j++) {
-        String k = dis.readUTF();
-        String v = dis.readUTF();
-        params.put(k, v);
-      }
-
-      ObserverSpecification ospec = new ObserverSpecification(clazz, params);
-      omap.put(col, ospec);
-    }
-
-    return omap;
   }
 
   @Override
-  public ConfiguredObservers load(CuratorFramework curator) throws Exception {
-
-    Map<Column, ObserverSpecification> observers;
-    Map<Column, ObserverSpecification> weakObservers;
-
-    ByteArrayInputStream bais;
-    try {
-      bais =
-          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS1));
-    } catch (NoNodeException nne) {
-      return null;
+  public void close() {
+    if (observers == null) {
+      return;
     }
-    DataInputStream dis = new DataInputStream(bais);
 
-    observers = Collections.unmodifiableMap(readObservers(dis));
-    weakObservers = Collections.unmodifiableMap(readObservers(dis));
-
-
-    return new ConfiguredObservers() {
-
-      @Override
-      public ObserverProvider getProvider(Environment env) {
-        return new ObserversProviderV1(env, observers, weakObservers);
-      }
-
-      @Override
-      public Set<Column> getObservedColumns(NotificationType nt) {
-        switch (nt) {
-          case STRONG:
-            return observers.keySet();
-          case WEAK:
-            return weakObservers.keySet();
-          default:
-            throw new IllegalArgumentException("Unknown notification type " + nt);
+    synchronized (observers) {
+      for (List<Observer> olist : observers.values()) {
+        synchronized (olist) {
+          for (Observer observer : olist) {
+            try {
+              observer.close();
+            } catch (Exception e) {
+              log.error("Failed to close observer", e);
+            }
+          }
+          olist.clear();
         }
       }
-    };
+    }
+
+    observers = null;
   }
 
-  @Override
-  public void clear(CuratorFramework curator) throws Exception {
-    try {
-      curator.delete().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS1);
-    } catch (NoNodeException nne) {
-      // nothing to delete
-    }
-  }
 }

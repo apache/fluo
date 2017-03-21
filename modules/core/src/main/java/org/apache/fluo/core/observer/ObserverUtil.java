@@ -25,8 +25,8 @@ import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.v1.ObserversV1;
-import org.apache.fluo.core.observer.v2.ObserversV2;
+import org.apache.fluo.core.observer.v1.ObserverStoreV1;
+import org.apache.fluo.core.observer.v2.ObserverStoreV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +38,8 @@ public class ObserverUtil {
 
     logger.info("Setting up observers using app config: {}", config.getAppConfiguration());
 
-    Observers ov1 = new ObserversV1();
-    Observers ov2 = new ObserversV2();
+    ObserverStore ov1 = new ObserverStoreV1();
+    ObserverStore ov2 = new ObserverStoreV2();
 
     if (ov1.handles(config) && ov2.handles(config)) {
       throw new IllegalArgumentException(
@@ -60,8 +60,8 @@ public class ObserverUtil {
   }
 
   public static ConfiguredObservers load(CuratorFramework curator) throws Exception {
-    Observers ov1 = new ObserversV1();
-    Observers ov2 = new ObserversV2();
+    ObserverStore ov1 = new ObserverStoreV1();
+    ObserverStore ov2 = new ObserverStoreV2();
 
     // try to load observers using old and new config
     ConfiguredObservers co = ov1.load(curator);
@@ -73,8 +73,8 @@ public class ObserverUtil {
       // no observers configured, so return an empty provider
       co = new ConfiguredObservers() {
         @Override
-        public ObserverProvider getProvider(Environment env) {
-          return new ObserverProvider() {
+        public Observers getProvider(Environment env) {
+          return new Observers() {
 
             @Override
             public void close() {

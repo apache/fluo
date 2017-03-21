@@ -24,5 +24,5 @@ import org.apache.fluo.core.impl.Environment;
 public interface ConfiguredObservers {
   Set<Column> getObservedColumns(Observer.NotificationType nt);
 
-  ObserverProvider getProvider(Environment env);
+  Observers getProvider(Environment env);
 }

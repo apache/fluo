@@ -15,137 +15,98 @@
 
 package org.apache.fluo.core.observer.v2;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
-import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.api.config.FluoConfiguration;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
+import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.ObserverFactory;
+import org.apache.fluo.api.observer.ObserverFactory.ObserverConsumer;
+import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.ConfiguredObservers;
-import org.apache.fluo.core.observer.ObserverProvider;
 import org.apache.fluo.core.observer.Observers;
-import org.apache.fluo.core.util.CuratorUtil;
-import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.fluo.accumulo.util.ZookeeperPath.CONFIG_FLUO_OBSERVERS2;
+class ObserversV2 implements Observers {
 
-/*
- * Support for observers configured the new way.
- */
-public class ObserversV2 implements Observers {
+  private static final Logger log = LoggerFactory.getLogger(ObserversV2.class);
 
-  @Override
-  public boolean handles(FluoConfiguration config) {
-    return !config.getObserversFactory().isEmpty();
-  }
+  Map<Column, Observer> observers;
 
-  @Override
-  public void update(CuratorFramework curator, FluoConfiguration config) throws Exception {
-    String obsFactoryClass = config.getObserversFactory();
+  public ObserversV2(Environment env, JsonObservers jco, Set<Column> strongColumns,
+      Set<Column> weakColumns) {
+    observers = new HashMap<>();
 
-    ObserverFactory observerFactory = newObserversFactory(obsFactoryClass);
+    ObserverFactory obsFact = ObserverStoreV2.newObserversFactory(jco.getObserversFactoryClass());
 
-    Map<Column, NotificationType> obsCols = new HashMap<>();
-    BiConsumer<Column, NotificationType> obsColConsumer = (col, nt) -> {
-      Objects.requireNonNull(col, "Observed column must be non-null");
-      Objects.requireNonNull(nt, "Notification type must be non-null");
-      Preconditions.checkArgument(!obsCols.containsKey(col), "Duplicate observed column %s", col);
-      obsCols.put(col, nt);
-    };
+    ObserverFactoryContextImpl ctx = new ObserverFactoryContextImpl(env);
 
-    observerFactory.getObservedColumns(obsColConsumer,
-        new ObserverFactoryContextImpl(config.getAppConfiguration()));
-
-    Gson gson = new Gson();
-    String json = gson.toJson(new JsonObservers(obsFactoryClass, obsCols));
-    CuratorUtil.putData(curator, CONFIG_FLUO_OBSERVERS2, json.getBytes(UTF_8),
-        CuratorUtil.NodeExistsPolicy.OVERWRITE);
-
-  }
-
-  static ObserverFactory newObserversFactory(String obsFactoryClass) {
-    ObserverFactory observerFactory;
-    try {
-      observerFactory =
-          Class.forName(obsFactoryClass).asSubclass(ObserverFactory.class).newInstance();
-    } catch (ClassNotFoundException e1) {
-      throw new FluoException("ObserverFactory class '" + obsFactoryClass + "' was not "
-          + "found.  Check for class name misspellings or failure to include "
-          + "the observer factory jar.", e1);
-    } catch (InstantiationException | IllegalAccessException e2) {
-      throw new FluoException("ObserverFactory class '" + obsFactoryClass
-          + "' could not be created.", e2);
-    }
-    return observerFactory;
-  }
-
-  @Override
-  public ConfiguredObservers load(CuratorFramework curator) throws Exception {
-    byte[] data;
-    try {
-      data = curator.getData().forPath(CONFIG_FLUO_OBSERVERS2);
-    } catch (NoNodeException nne) {
-      return null;
-    }
-    String json = new String(data, UTF_8);
-    JsonObservers jco = new Gson().fromJson(json, JsonObservers.class);
-
-    Set<Column> weakColumns = new HashSet<>();
-    Set<Column> strongColumns = new HashSet<>();
-
-    for (Entry<Column, NotificationType> entry : jco.getObservedColumns().entrySet()) {
-      switch (entry.getValue()) {
-        case STRONG:
-          strongColumns.add(entry.getKey());
-          break;
-        case WEAK:
-          weakColumns.add(entry.getKey());
-          break;
-        default:
-          throw new IllegalStateException("Unknown notification type " + entry.getValue());
-      }
-    }
-
-    return new ConfiguredObservers() {
+    ObserverConsumer consumer = new ObserverConsumer() {
 
       @Override
-      public ObserverProvider getProvider(Environment env) {
-        return new ObserversProviderV2(env, jco, strongColumns, weakColumns);
-      }
-
-      @Override
-      public Set<Column> getObservedColumns(NotificationType nt) {
-        switch (nt) {
-          case STRONG:
-            return strongColumns;
-          case WEAK:
-            return weakColumns;
-          default:
-            throw new IllegalArgumentException("Unknown notification type " + nt);
+      public void accept(Column col, NotificationType nt, Observer obs) {
+        try {
+          Method closeMethod = obs.getClass().getMethod("close");
+          if (!closeMethod.getDeclaringClass().equals(Observer.class)) {
+            log.warn(
+                "Observer {} implements close().  Close is not called on Observers created using ObserversFactory."
+                    + " Close is only called on Observers configured the old way.", obs.getClass()
+                    .getName());
+          }
+        } catch (NoSuchMethodException | SecurityException e) {
+          throw new RuntimeException("Failed to check if close() is implemented", e);
         }
+
+        if (nt == NotificationType.STRONG && !strongColumns.contains(col)) {
+          throw new IllegalArgumentException("Column " + col
+              + " not previously configured for strong notifications");
+        }
+
+        if (nt == NotificationType.WEAK && !weakColumns.contains(col)) {
+          throw new IllegalArgumentException("Column " + col
+              + " not previously configured for weak notifications");
+        }
+
+        if (observers.containsKey(col)) {
+          throw new IllegalArgumentException("Duplicate observed column " + col);
+        }
+
+        observers.put(col, obs);
+      }
+
+      @Override
+      public void accepts(Column col, NotificationType nt, StringObserver obs) {
+        accept(col, nt, obs);
       }
     };
-  }
 
-  @Override
-  public void clear(CuratorFramework curator) throws Exception {
-    try {
-      curator.delete().forPath(CONFIG_FLUO_OBSERVERS2);
-    } catch (NoNodeException nne) {
-      // nothing to delete
+    obsFact.createObservers(consumer, ctx);
+
+    // the following check ensures the observers factory provides observers for all previously
+    // configured columns
+    SetView<Column> diff =
+        Sets.difference(observers.keySet(), Sets.union(strongColumns, weakColumns));
+    if (diff.size() > 0) {
+      throw new FluoException("ObserversFactory " + jco.getObserversFactoryClass()
+          + " did not provide observers for columns " + diff);
     }
   }
 
+  @Override
+  public Observer getObserver(Column col) {
+    return observers.get(col);
+  }
+
+  @Override
+  public void returnObserver(Observer o) {}
+
+  @Override
+  public void close() {}
 }

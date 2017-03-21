@@ -15,18 +15,14 @@
 
 package org.apache.fluo.core.observer;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.observer.Observer;
 
-/*
- * This interface enables abstracting the new and old way on configuring observers.
- */
-public interface Observers {
-  boolean handles(FluoConfiguration config);
+public interface Observers extends AutoCloseable {
+  Observer getObserver(Column col);
 
-  void clear(CuratorFramework curator) throws Exception;
+  void returnObserver(Observer o);
 
-  void update(CuratorFramework curator, FluoConfiguration config) throws Exception;
-
-  ConfiguredObservers load(CuratorFramework curator) throws Exception;
+  @Override
+  void close();
 }

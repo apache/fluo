@@ -26,7 +26,7 @@ import org.apache.fluo.api.observer.ObserverFactory;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
-import org.apache.fluo.core.observer.ObserverProvider;
+import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.worker.NotificationFinder;
 import org.apache.fluo.core.worker.finder.hash.HashNotificationFinder;
 import org.apache.fluo.integration.ITBaseMini;
@@ -144,7 +144,7 @@ public class WorkerIT extends ITBaseMini {
     observedColumn = new Column("attr2", "lastupdate");
     try {
       try (Environment env = new Environment(config);
-          ObserverProvider op = env.getConfiguredObservers().getProvider(env)) {
+          Observers op = env.getConfiguredObservers().getProvider(env)) {
         op.getObserver(LAST_UPDATE);
       }
 

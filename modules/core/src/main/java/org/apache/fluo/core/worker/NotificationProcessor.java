@@ -29,7 +29,7 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
-import org.apache.fluo.core.observer.ObserverProvider;
+import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.util.FluoExecutors;
 import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class NotificationProcessor implements AutoCloseable {
   private NotificationTracker tracker;
   private ThreadPoolExecutor executor;
   private Environment env;
-  private ObserverProvider observers;
+  private Observers observers;
   private PriorityBlockingQueue<Runnable> queue;
 
   public NotificationProcessor(Environment env) {
