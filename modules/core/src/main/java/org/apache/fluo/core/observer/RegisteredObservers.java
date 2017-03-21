@@ -21,8 +21,8 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
 
-public interface ConfiguredObservers {
+public interface RegisteredObservers {
   Set<Column> getObservedColumns(Observer.NotificationType nt);
 
-  Observers getProvider(Environment env);
+  Observers getObservers(Environment env);
 }

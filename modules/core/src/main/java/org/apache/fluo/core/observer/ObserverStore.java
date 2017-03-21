@@ -28,5 +28,5 @@ public interface ObserverStore {
 
   void update(CuratorFramework curator, FluoConfiguration config) throws Exception;
 
-  ConfiguredObservers load(CuratorFramework curator) throws Exception;
+  RegisteredObservers load(CuratorFramework curator) throws Exception;
 }

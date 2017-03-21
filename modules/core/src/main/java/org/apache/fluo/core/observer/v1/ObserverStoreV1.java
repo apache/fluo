@@ -38,7 +38,7 @@ import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.Observer.ObservedColumn;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.ConfiguredObservers;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.observer.ObserverStore;
 import org.apache.fluo.core.util.ColumnUtil;
@@ -183,7 +183,7 @@ public class ObserverStoreV1 implements ObserverStore {
   }
 
   @Override
-  public ConfiguredObservers load(CuratorFramework curator) throws Exception {
+  public RegisteredObservers load(CuratorFramework curator) throws Exception {
 
     Map<Column, ObserverSpecification> observers;
     Map<Column, ObserverSpecification> weakObservers;
@@ -201,10 +201,10 @@ public class ObserverStoreV1 implements ObserverStore {
     weakObservers = Collections.unmodifiableMap(readObservers(dis));
 
 
-    return new ConfiguredObservers() {
+    return new RegisteredObservers() {
 
       @Override
-      public Observers getProvider(Environment env) {
+      public Observers getObservers(Environment env) {
         return new ObserversV1(env, observers, weakObservers);
       }
 

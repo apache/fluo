@@ -32,7 +32,7 @@ import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.metrics.MetricNames;
 import org.apache.fluo.core.metrics.MetricsReporterImpl;
-import org.apache.fluo.core.observer.ConfiguredObservers;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -45,7 +45,7 @@ public class Environment implements AutoCloseable {
   private String table;
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;
-  private ConfiguredObservers observers;
+  private RegisteredObservers observers;
   private Connector conn;
   private String accumuloInstanceID;
   private String fluoApplicationID;
@@ -172,7 +172,7 @@ public class Environment implements AutoCloseable {
     return fluoApplicationID;
   }
 
-  public ConfiguredObservers getConfiguredObservers() {
+  public RegisteredObservers getConfiguredObservers() {
     return observers;
   }
 

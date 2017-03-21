@@ -51,7 +51,7 @@ public class NotificationProcessor implements AutoCloseable {
     this.queue = new PriorityBlockingQueue<>();
     this.executor = FluoExecutors.newFixedThreadPool(numThreads, queue, "ntfyProc");
     this.tracker = new NotificationTracker();
-    this.observers = env.getConfiguredObservers().getProvider(env);
+    this.observers = env.getConfiguredObservers().getObservers(env);
     env.getSharedResources().getMetricRegistry()
         .register(env.getMetricNames().getNotificationQueued(), new Gauge<Integer>() {
           @Override

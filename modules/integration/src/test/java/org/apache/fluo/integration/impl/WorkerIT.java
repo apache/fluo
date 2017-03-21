@@ -144,7 +144,7 @@ public class WorkerIT extends ITBaseMini {
     observedColumn = new Column("attr2", "lastupdate");
     try {
       try (Environment env = new Environment(config);
-          Observers op = env.getConfiguredObservers().getProvider(env)) {
+          Observers op = env.getConfiguredObservers().getObservers(env)) {
         op.getObserver(LAST_UPDATE);
       }
 

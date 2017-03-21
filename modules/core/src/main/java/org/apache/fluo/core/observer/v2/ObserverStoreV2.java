@@ -32,7 +32,7 @@ import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.ConfiguredObservers;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.observer.ObserverStore;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -92,7 +92,7 @@ public class ObserverStoreV2 implements ObserverStore {
   }
 
   @Override
-  public ConfiguredObservers load(CuratorFramework curator) throws Exception {
+  public RegisteredObservers load(CuratorFramework curator) throws Exception {
     byte[] data;
     try {
       data = curator.getData().forPath(CONFIG_FLUO_OBSERVERS2);
@@ -118,10 +118,10 @@ public class ObserverStoreV2 implements ObserverStore {
       }
     }
 
-    return new ConfiguredObservers() {
+    return new RegisteredObservers() {
 
       @Override
-      public Observers getProvider(Environment env) {
+      public Observers getObservers(Environment env) {
         return new ObserversV2(env, jco, strongColumns, weakColumns);
       }
 

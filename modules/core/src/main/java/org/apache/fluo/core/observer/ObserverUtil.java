@@ -59,21 +59,21 @@ public class ObserverUtil {
     }
   }
 
-  public static ConfiguredObservers load(CuratorFramework curator) throws Exception {
+  public static RegisteredObservers load(CuratorFramework curator) throws Exception {
     ObserverStore ov1 = new ObserverStoreV1();
     ObserverStore ov2 = new ObserverStoreV2();
 
     // try to load observers using old and new config
-    ConfiguredObservers co = ov1.load(curator);
+    RegisteredObservers co = ov1.load(curator);
     if (co == null) {
       co = ov2.load(curator);
     }
 
     if (co == null) {
       // no observers configured, so return an empty provider
-      co = new ConfiguredObservers() {
+      co = new RegisteredObservers() {
         @Override
-        public Observers getProvider(Environment env) {
+        public Observers getObservers(Environment env) {
           return new Observers() {
 
             @Override
