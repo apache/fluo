@@ -81,11 +81,11 @@ public class ObserverStoreV2 implements ObserverStore {
       observerProvider =
           Class.forName(obsProviderClass).asSubclass(ObserverProvider.class).newInstance();
     } catch (ClassNotFoundException e1) {
-      throw new FluoException("ObserverFactory class '" + obsProviderClass + "' was not "
+      throw new FluoException("ObserverProvider class '" + obsProviderClass + "' was not "
           + "found.  Check for class name misspellings or failure to include "
           + "the observer factory jar.", e1);
     } catch (InstantiationException | IllegalAccessException e2) {
-      throw new FluoException("ObserverFactory class '" + obsProviderClass
+      throw new FluoException("ObserverProvider class '" + obsProviderClass
           + "' could not be created.", e2);
     }
     return observerProvider;
