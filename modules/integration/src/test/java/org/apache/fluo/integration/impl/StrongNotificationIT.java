@@ -36,8 +36,8 @@ public class StrongNotificationIT extends ITBaseMini {
 
   public static class StrongNtfyObserverProvider implements ObserverProvider {
     @Override
-    public void provide(Registry consumer, Context ctx) {
-      consumer.register(OC, STRONG, (tx, row, col) -> {
+    public void provide(Registry or, Context ctx) {
+      or.register(OC, STRONG, (tx, row, col) -> {
         Bytes v = tx.get(row, col);
         tx.set(v, RC, row);
       });

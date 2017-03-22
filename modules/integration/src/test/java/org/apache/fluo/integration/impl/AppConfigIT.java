@@ -96,10 +96,10 @@ public class AppConfigIT extends ITBaseMini {
 
   public static class TestObserverProvider implements ObserverProvider {
     @Override
-    public void provide(Registry consumer, Context ctx) {
+    public void provide(Registry or, Context ctx) {
       int limit = ctx.getAppConfiguration().getInt("myapp.sizeLimit");
 
-      consumer.registers(DF_COL, STRONG, (tx, row, col) -> {
+      or.registers(DF_COL, STRONG, (tx, row, col) -> {
         int d = Integer.parseInt(tx.gets(row, col));
         if (2 * d < limit) {
           tx.set(row.toString(), DB_COL, Integer.toString(2 * d));

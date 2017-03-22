@@ -63,8 +63,8 @@ public class WeakNotificationIT extends ITBaseMini {
 
   public static class WeakNotificationITObserverProvider implements ObserverProvider {
     @Override
-    public void provide(Registry consumer, Context ctx) {
-      consumer.register(STAT_CHECK, WEAK, new SimpleObserver());
+    public void provide(Registry or, Context ctx) {
+      or.register(STAT_CHECK, WEAK, new SimpleObserver());
     }
   }
 

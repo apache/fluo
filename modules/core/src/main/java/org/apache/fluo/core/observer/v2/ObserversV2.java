@@ -49,7 +49,7 @@ class ObserversV2 implements Observers {
 
     ObserverProviderContextImpl ctx = new ObserverProviderContextImpl(env);
 
-    Registry consumer = new Registry() {
+    Registry or = new Registry() {
 
       @Override
       public void register(Column col, NotificationType nt, Observer obs) {
@@ -88,7 +88,7 @@ class ObserversV2 implements Observers {
       }
     };
 
-    obsProvider.provide(consumer, ctx);
+    obsProvider.provide(or, ctx);
 
     // the following check ensures the observers factory provides observers for all previously
     // configured columns

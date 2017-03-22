@@ -142,7 +142,7 @@ To create an observer, follow these steps:
 
 3.  Build a jar containing thses classes and include this jar in the `lib/` directory of your Fluo
     application.
-4.  Configure your Fluo instance to use this observer factory by modifying the Observer section of
+4.  Configure your Fluo instance to use this observer provider by modifying the Observer section of
     [fluo.properties].
 5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
     ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper

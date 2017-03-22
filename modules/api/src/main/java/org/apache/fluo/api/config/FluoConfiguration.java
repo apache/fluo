@@ -94,7 +94,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * @since 1.1.0
    */
-  public static final String OBSERVERS_FACTORY = FLUO_PREFIX + ".observers.factory";
+  public static final String OBSERVER_PROVIDER = FLUO_PREFIX + ".observer.provider";
 
   /**
    * @since 1.1.0
@@ -371,7 +371,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    *        non-empty.
    */
   public void setObserverProvider(String className) {
-    setNonEmptyString(OBSERVERS_FACTORY, className);
+    setNonEmptyString(OBSERVER_PROVIDER, className);
   }
 
   /**
@@ -389,7 +389,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    * @since 1.1.0
    */
   public String getObserverProvider() {
-    return getString(OBSERVERS_FACTORY, OBSERVERS_FACTORY_DEFAULT);
+    return getString(OBSERVER_PROVIDER, OBSERVERS_FACTORY_DEFAULT);
   }
 
   @Deprecated

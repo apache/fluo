@@ -79,8 +79,8 @@ public class CollisionIT extends ITBaseMini {
 
   public static class CollisionObserverProvider implements ObserverProvider {
     @Override
-    public void provide(Registry consumer, Context ctx) {
-      consumer.registers(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
+    public void provide(Registry or, Context ctx) {
+      or.registers(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
         int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
         int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
 

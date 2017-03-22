@@ -69,8 +69,8 @@ public class SelfNotificationIT extends ITBaseMini {
 
   public static class SelfNtfyObserverProvider implements ObserverProvider {
     @Override
-    public void provide(Registry consumer, Context ctx) {
-      consumer.register(EXPORT_COUNT_COL, STRONG, new ExportingObserver());
+    public void provide(Registry or, Context ctx) {
+      or.register(EXPORT_COUNT_COL, STRONG, new ExportingObserver());
     }
   }
 
