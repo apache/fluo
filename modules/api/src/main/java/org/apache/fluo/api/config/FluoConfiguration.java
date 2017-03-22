@@ -99,7 +99,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * @since 1.1.0
    */
-  public static final String OBSERVERS_FACTORY_DEFAULT = "";
+  public static final String OBSERVER_PROVIDER_DEFAULT = "";
 
   // Transaction
   public static final String TRANSACTION_PREFIX = FLUO_PREFIX + ".tx";
@@ -363,7 +363,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Configure the observer factory that Fluo workers will use.
+   * Configure the observer provider that Fluo workers will use.
    *
    * @since 1.1.0
    *
@@ -385,11 +385,11 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * @return The configured {@link ObserverProvider} class name. If one was not configured, returns
-   *         {@value #OBSERVERS_FACTORY_DEFAULT}
+   *         {@value #OBSERVER_PROVIDER_DEFAULT}
    * @since 1.1.0
    */
   public String getObserverProvider() {
-    return getString(OBSERVER_PROVIDER, OBSERVERS_FACTORY_DEFAULT);
+    return getString(OBSERVER_PROVIDER, OBSERVER_PROVIDER_DEFAULT);
   }
 
   @Deprecated
