@@ -26,15 +26,15 @@ import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 
 /**
- * Fluo Workers use this class to create {@link Observer}s to process notifications. Implementations
- * of this class should emit zero or more {@link Observer}s.
+ * Fluo Workers use this class to register {@link Observer}s to process notifications.
+ * Implementations of this class should register zero or more {@link Observer}s.
  *
  * <p>
- * When Fluo is initialized {@link #getObservedColumns(BiConsumer, Context)} is called. The columns
- * it emits are stored in Zookeeper. Transactions will use the columns stored in Zookeeper to
+ * When Fluo is initialized {@link #provideColumns(BiConsumer, Context)} is called. The columns it
+ * registers are stored in Zookeeper. Transactions will use the columns stored in Zookeeper to
  * determine when to set notifications. When Workers call {@link #provide(Registry, Context)}, the
- * columns emitted must be the same as those emitted during initialization. If this is not the case,
- * then the worker will fail to start.
+ * columns registered must be the same as those registered during initialization. If this is not the
+ * case, then the worker will fail to start.
  *
  * @see FluoConfiguration#setObserverProvider(String)
  * @since 1.1.0
@@ -58,8 +58,8 @@ public interface ObserverProvider {
   }
 
   /**
-   * Observers are emitted to the worker using this interface. This interface also allows
-   * {@link Observer}s to be related to the columns that trigger them.
+   * Observers are registered with the worker using this interface. Registering an {@link Observer}s
+   * relates it to the columns that trigger it.
    *
    * @since 1.1.0
    */
@@ -68,7 +68,7 @@ public interface ObserverProvider {
 
     /**
      * This method was created to allow Observers written as lambda to be passed {@link String}
-     * instead of {@link Bytes}.
+     * instead of {@link Bytes} for the row.
      * 
      * <pre>
      * <code>
@@ -84,7 +84,7 @@ public interface ObserverProvider {
   }
 
   /**
-   * This is method is called by Fluo Workers to create observers to process notifications.
+   * This is method is called by Fluo Workers to register observers to process notifications.
    *
    * <p>
    * Observers registered may be called concurrently by multiple threads to process different
@@ -96,12 +96,11 @@ public interface ObserverProvider {
 
   /**
    * Called during Fluo initialization to determine what columns are being observed. The default
-   * implementation of this method calls {@link #provide(Registry, Context)} and ignores the
-   * Observers.
+   * implementation of this method calls {@link #provide(Registry, Context)} and ignores Observers.
    *
-   * @param colRegistry pass all observed columns to this consumer
+   * @param colRegistry register all observed columns with this consumer
    */
-  default void getObservedColumns(BiConsumer<Column, NotificationType> colRegistry, Context ctx) {
+  default void provideColumns(BiConsumer<Column, NotificationType> colRegistry, Context ctx) {
     Registry or = new Registry() {
       @Override
       public void registers(Column oc, NotificationType nt, StringObserver obs) {

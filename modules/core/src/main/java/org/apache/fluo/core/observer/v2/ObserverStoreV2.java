@@ -65,7 +65,7 @@ public class ObserverStoreV2 implements ObserverStore {
       obsCols.put(col, nt);
     };
 
-    observerProvider.getObservedColumns(obsColConsumer,
+    observerProvider.provideColumns(obsColConsumer,
         new ObserverProviderContextImpl(config.getAppConfiguration()));
 
     Gson gson = new Gson();
