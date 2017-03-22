@@ -90,8 +90,7 @@ class ObserversV2 implements Observers {
 
     obsProvider.provide(or, ctx);
 
-    // the following check ensures the observers factory provides observers for all previously
-    // configured columns
+    // the following check ensures observers are provided for all previously configured columns
     SetView<Column> diff =
         Sets.difference(observers.keySet(), Sets.union(strongColumns, weakColumns));
     if (diff.size() > 0) {

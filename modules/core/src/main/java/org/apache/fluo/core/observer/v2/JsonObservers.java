@@ -31,8 +31,8 @@ class JsonObservers {
   String obsProviderClass;
   List<JsonObservedColumn> observedColumns;
 
-  JsonObservers(String obsFactoryClass, Map<Column, NotificationType> columns) {
-    this.obsProviderClass = obsFactoryClass;
+  JsonObservers(String obsProviderClass, Map<Column, NotificationType> columns) {
+    this.obsProviderClass = obsProviderClass;
     this.observedColumns =
         columns.entrySet().stream()
             .map(entry -> new JsonObservedColumn(entry.getKey(), entry.getValue()))

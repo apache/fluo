@@ -53,9 +53,9 @@ public class ObserverStoreV2 implements ObserverStore {
 
   @Override
   public void update(CuratorFramework curator, FluoConfiguration config) throws Exception {
-    String obsFactoryClass = config.getObserverProvider();
+    String obsProviderClass = config.getObserverProvider();
 
-    ObserverProvider observerProvider = newObserverProvider(obsFactoryClass);
+    ObserverProvider observerProvider = newObserverProvider(obsProviderClass);
 
     Map<Column, NotificationType> obsCols = new HashMap<>();
     BiConsumer<Column, NotificationType> obsColConsumer = (col, nt) -> {
@@ -69,23 +69,23 @@ public class ObserverStoreV2 implements ObserverStore {
         new ObserverProviderContextImpl(config.getAppConfiguration()));
 
     Gson gson = new Gson();
-    String json = gson.toJson(new JsonObservers(obsFactoryClass, obsCols));
+    String json = gson.toJson(new JsonObservers(obsProviderClass, obsCols));
     CuratorUtil.putData(curator, CONFIG_FLUO_OBSERVERS2, json.getBytes(UTF_8),
         CuratorUtil.NodeExistsPolicy.OVERWRITE);
 
   }
 
-  static ObserverProvider newObserverProvider(String obsFactoryClass) {
+  static ObserverProvider newObserverProvider(String obsProviderClass) {
     ObserverProvider observerProvider;
     try {
       observerProvider =
-          Class.forName(obsFactoryClass).asSubclass(ObserverProvider.class).newInstance();
+          Class.forName(obsProviderClass).asSubclass(ObserverProvider.class).newInstance();
     } catch (ClassNotFoundException e1) {
-      throw new FluoException("ObserverFactory class '" + obsFactoryClass + "' was not "
+      throw new FluoException("ObserverFactory class '" + obsProviderClass + "' was not "
           + "found.  Check for class name misspellings or failure to include "
           + "the observer factory jar.", e1);
     } catch (InstantiationException | IllegalAccessException e2) {
-      throw new FluoException("ObserverFactory class '" + obsFactoryClass
+      throw new FluoException("ObserverFactory class '" + obsProviderClass
           + "' could not be created.", e2);
     }
     return observerProvider;
