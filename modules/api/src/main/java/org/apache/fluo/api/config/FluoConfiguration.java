@@ -306,7 +306,7 @@ public class FluoConfiguration extends SimpleConfiguration {
 
     while (iter.hasNext()) {
       String key = iter.next();
-      if (key.startsWith(FluoConfiguration.OBSERVER_PREFIX)) {
+      if (key.startsWith(FluoConfiguration.OBSERVER_PREFIX) && !key.equals(OBSERVER_PROVIDER)) {
         String value = getString(key).trim();
 
         if (value.isEmpty()) {
