@@ -25,7 +25,9 @@ public class ZookeeperPath {
   public static final String CONFIG_ACCUMULO_INSTANCE_NAME = CONFIG + "/accumulo.instance.name";
   public static final String CONFIG_ACCUMULO_INSTANCE_ID = CONFIG + "/accumulo.instance.id";
   public static final String CONFIG_FLUO_APPLICATION_ID = CONFIG + "/fluo.application.id";
-  public static final String CONFIG_FLUO_OBSERVERS = CONFIG + "/fluo.observers";
+  @Deprecated
+  public static final String CONFIG_FLUO_OBSERVERS1 = CONFIG + "/fluo.observers";
+  public static final String CONFIG_FLUO_OBSERVERS2 = CONFIG + "/fluo.observers2";
   public static final String CONFIG_SHARED = CONFIG + "/shared.config";
 
   public static final String ORACLE = "/oracle";

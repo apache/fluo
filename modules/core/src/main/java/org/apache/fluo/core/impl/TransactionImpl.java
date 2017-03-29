@@ -78,6 +78,9 @@ import org.apache.fluo.core.util.Flutation;
 import org.apache.fluo.core.util.Hex;
 import org.apache.fluo.core.util.SpanUtil;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
+import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
+
 /**
  * Transaction implementation
  */
@@ -125,9 +128,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     this.env = env;
     this.stats = new TxStats(env);
     this.startTs = startTs;
-    this.observedColumns = env.getObservers().keySet();
+    this.observedColumns = env.getConfiguredObservers().getObservedColumns(STRONG);
 
-    if (trigger != null && env.getWeakObservers().containsKey(trigger.getColumn())) {
+    if (trigger != null
+        && env.getConfiguredObservers().getObservedColumns(WEAK).contains(trigger.getColumn())) {
       this.weakNotification = trigger;
     } else {
       this.notification = trigger;
@@ -310,7 +314,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     Objects.requireNonNull(row);
     Objects.requireNonNull(col);
 
-    if (!env.getWeakObservers().containsKey(col)) {
+    if (!env.getConfiguredObservers().getObservedColumns(WEAK).contains(col)) {
       throw new IllegalArgumentException("Column not configured for weak notifications " + col);
     }
 
@@ -1022,7 +1026,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     HashMap<Bytes, Mutation> mutations = new HashMap<>();
 
-    if (env.getObservers().containsKey(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
+    if (observedColumns.contains(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
       Flutation m = new Flutation(env, cd.prow);
       Notification.put(env, m, cd.pcol, commitTs);
       mutations.put(cd.prow, m);
@@ -1031,7 +1035,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
 
       for (Entry<Column, Bytes> colUpdates : rowUpdates.getValue().entrySet()) {
-        if (env.getObservers().containsKey(colUpdates.getKey())) {
+        if (observedColumns.contains(colUpdates.getKey())) {
           Bytes val = colUpdates.getValue();
           if (isWrite(val) && !isDelete(val)) {
             Mutation m = mutations.get(rowUpdates.getKey());

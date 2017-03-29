@@ -75,7 +75,7 @@ public class ITBaseImpl extends ITBase {
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
     config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
-    config.addObservers(getObservers());
+    setupObservers(config);
     config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "1000");
     config.setMiniStartAccumulo(false);
 

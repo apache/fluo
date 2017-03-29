@@ -100,12 +100,12 @@ public class AppCommand {
 
 To create an observer, follow these steps:
 
-1. Create a class that extends [AbstractObserver] like the example below. Please use [slf4j] for
+1. Create one or more classes that extend [Observer] like the example below. Please use [slf4j] for
    any logging in observers as [slf4j] supports multiple logging implementations. This is
    necessary as Fluo applications have a hard requirement on [logback] when running in YARN.
 
     ```java
-    public class InvertObserver extends AbstractObserver {
+    public class InvertObserver implements Observer {
 
       @Override
       public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
@@ -114,25 +114,45 @@ To create an observer, follow these steps:
         // invert row and value
         tx.set(value, new Column("inv", "data"), row);
       }
+    }
+    ```
+2.  Create a class that implements [ObserverProvider] like the example below.  The purpose of this
+    class is associate a set Observers with columns that trigger the observers.  The class can
+    create multiple observers.
 
+    ```java
+    class AppObserverProvider implements ObserverProvider {
       @Override
-      public ObservedColumn getObservedColumn() {
-        return new ObservedColumn(new Column("obs", "data"), NotificationType.STRONG);
+      public void provide(Registry or, Context ctx) {
+        //setup InvertObserver to be triggered when the column obs:data is modified
+        or.register(new Column("obs", "data"),
+                           NotificationType.STRONG,
+                           new InvertObserver());
+        
+        //Observer is a Functional interface.  So Obsevers can be written as lambdas.
+        or.register(new Column("new","data"),
+                           NotificationType.WEAK,
+                           (tx,row,col) -> { 
+                             Bytes combined = combineNewAndOld(tx,row);
+                             tx.set(row, new Column("current","data"), combined);
+                           });
       }
     }
     ```
-2.  Build a jar containing this class and include this jar in the `lib/` directory of your Fluo
+
+3.  Build a jar containing thses classes and include this jar in the `lib/` directory of your Fluo
     application.
-3.  Configure your Fluo instance to use this observer by modifying the Observer section of
+4.  Configure your Fluo instance to use this observer provider by modifying the Observer section of
     [fluo.properties].
-4.  Restart your Fluo instance so that your Fluo workers load the new observer.
+5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
+    ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
+    are used by transactions to know when to trigger observers.
+6.  Start your Fluo instance so that your Fluo workers load the new observer.
 
 ## Application Configuration
 
-Each observer can have its own configuration. This is useful for the case of using the same
-observer code w/ different parameters. However for the case of sharing the same configuration
-across observers, fluo provides a simple mechanism to set and access application specific
-configuration. See the javadoc on [FluoClient].getAppConfiguration() for more details.
+For configuring observers, fluo provides a simple mechanism to set and access application specific
+configuration.  See the javadoc on [FluoClient].getAppConfiguration() for more details.
 
 ## Debugging Applications
 
@@ -195,7 +215,8 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [FluoFactory]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoFactory.java
 [FluoClient]: ../modules/api/src/main/java/org/apache/fluo/api/client/FluoClient.java
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
-[AbstractObserver]: ../modules/api/src/main/java/org/apache/fluo/api/observer/AbstractObserver.java
+[Observer]: ../modules/api/src/main/java/org/apache/fluo/api/observer/Observer.java
+[ObserverProvider]: ../modules/api/src/main/java/org/apache/fluo/api/observer/ObserverProvider.java
 [fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
 [API]: https://fluo.apache.org/apidocs/
 [metrics]: metrics.md

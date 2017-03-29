@@ -13,7 +13,7 @@
  * the License.
  */
 
-package org.apache.fluo.core.worker;
+package org.apache.fluo.core.observer.v1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,15 +24,19 @@ import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
+import org.apache.fluo.core.observer.Observers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Observers implements AutoCloseable {
+@SuppressWarnings("deprecation")
+class ObserversV1 implements Observers {
 
-  private static final Logger log = LoggerFactory.getLogger(Observers.class);
+  private static final Logger log = LoggerFactory.getLogger(ObserversV1.class);
 
   private Environment env;
   Map<Column, List<Observer>> observers = new HashMap<>();
+  Map<Column, ObserverSpecification> strongObservers;
+  Map<Column, ObserverSpecification> weakObservers;
 
   private List<Observer> getObserverList(Column col) {
     List<Observer> observerList;
@@ -46,8 +50,11 @@ public class Observers implements AutoCloseable {
     return observerList;
   }
 
-  public Observers(Environment env) {
+  public ObserversV1(Environment env, Map<Column, ObserverSpecification> strongObservers,
+      Map<Column, ObserverSpecification> weakObservers) {
     this.env = env;
+    this.strongObservers = strongObservers;
+    this.weakObservers = weakObservers;
   }
 
   public Observer getObserver(Column col) {
@@ -63,9 +70,9 @@ public class Observers implements AutoCloseable {
 
     Observer observer = null;
 
-    ObserverSpecification observerConfig = env.getObservers().get(col);
+    ObserverSpecification observerConfig = strongObservers.get(col);
     if (observerConfig == null) {
-      observerConfig = env.getWeakObservers().get(col);
+      observerConfig = weakObservers.get(col);
     }
 
     if (observerConfig != null) {
@@ -119,4 +126,5 @@ public class Observers implements AutoCloseable {
 
     observers = null;
   }
+
 }

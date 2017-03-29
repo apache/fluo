@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
@@ -35,6 +36,7 @@ import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
 import org.junit.Test;
 
+@Deprecated
 public class ObserverConfigIT extends ITBaseMini {
 
   public static class ConfigurableObserver extends AbstractObserver {
@@ -95,7 +97,7 @@ public class ObserverConfigIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
+  protected void setupObservers(FluoConfiguration fc) {
     List<ObserverSpecification> observers = new ArrayList<>();
 
     observers.add(new ObserverSpecification(ConfigurableObserver.class.getName(), newMap(
@@ -108,7 +110,7 @@ public class ObserverConfigIT extends ITBaseMini {
     observers.add(new ObserverSpecification(ConfigurableObserver.class.getName(), newMap(
         "observedCol", "fam1:col3:" + NotificationType.WEAK, "outputCQ", "col4")));
 
-    return observers;
+    fc.addObservers(observers);
   }
 
   @Test

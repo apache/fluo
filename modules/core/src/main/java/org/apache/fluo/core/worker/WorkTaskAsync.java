@@ -23,6 +23,7 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TransactionImpl;
 import org.apache.fluo.core.log.TracingTransaction;
+import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

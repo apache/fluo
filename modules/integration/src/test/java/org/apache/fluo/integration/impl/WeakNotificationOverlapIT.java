@@ -15,9 +15,7 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.Scanner;
@@ -25,11 +23,10 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.Snapshot;
-import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.ObserverProvider;
+import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.oracle.Stamp;
@@ -39,38 +36,35 @@ import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
+
 public class WeakNotificationOverlapIT extends ITBaseImpl {
 
   private static final Column STAT_TOTAL = new Column("stat", "total");
   private static final Column STAT_PROCESSED = new Column("stat", "processed");
   private static final Column STAT_CHANGED = new Column("stat", "changed");
 
-  public static class TotalObserver extends AbstractObserver {
-
-    @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(STAT_CHANGED, NotificationType.WEAK);
+  private static final StringObserver TOTAL_OBSERVER = (tx, row, col) -> {
+    String totalStr = tx.gets(row, STAT_TOTAL);
+    if (totalStr == null) {
+      return;
     }
+    Integer total = Integer.parseInt(totalStr);
+    int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
+    tx.set(row, new Column("stat", "processed"), total + "");
+    TestUtil.increment(tx, "all", new Column("stat", "total"), total - processed);
+  };
 
+  public static class WeakNtfyObserverProvider implements ObserverProvider {
     @Override
-    public void process(TransactionBase tx, Bytes row, Column col) {
-      String r = row.toString();
-      String totalStr = tx.gets(r, STAT_TOTAL);
-      if (totalStr == null) {
-        return;
-      }
-      Integer total = Integer.parseInt(totalStr);
-      int processed = TestUtil.getOrDefault(tx, r, STAT_PROCESSED, 0);
-      tx.set(r, new Column("stat", "processed"), total + "");
-      TestUtil.increment(tx, "all", new Column("stat", "total"), total - processed);
+    public void provide(Registry or, Context ctx) {
+      or.registers(STAT_CHANGED, WEAK, TOTAL_OBSERVER);
     }
   }
 
-
-
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(TotalObserver.class.getName()));
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return WeakNtfyObserverProvider.class;
   }
 
   @Test
@@ -92,7 +86,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx2, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx2, Bytes.of("1"), STAT_CHANGED);
     // should not delete notification created by ttx3
     ttx2.done();
 
@@ -103,7 +97,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     Assert.assertEquals(1, countNotifications());
 
     TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
-    new TotalObserver().process(ttx4, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 
     Assert.assertEquals(0, countNotifications());
@@ -132,7 +126,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx6, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx6, Bytes.of("1"), STAT_CHANGED);
     // should not delete notification created by ttx7
     ttx6.done();
 
@@ -143,7 +137,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     snap3.done();
 
     TestTransaction ttx8 = new TestTransaction(env, "1", STAT_CHANGED);
-    new TotalObserver().process(ttx8, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx8, Bytes.of("1"), STAT_CHANGED);
     ttx8.done();
 
     Assert.assertEquals(0, countNotifications());
@@ -182,7 +176,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    new TotalObserver().process(ttx3, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx3, Bytes.of("1"), STAT_CHANGED);
     ttx3.done();
 
     Assert.assertEquals(1, countNotifications());
@@ -191,7 +185,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     }
 
     TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
-    new TotalObserver().process(ttx4, Bytes.of("1"), STAT_CHANGED);
+    TOTAL_OBSERVER.process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 
     Assert.assertEquals(0, countNotifications());

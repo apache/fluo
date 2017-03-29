@@ -15,8 +15,6 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Iterables;
@@ -24,14 +22,14 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.util.ColumnConstants;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
-import org.apache.fluo.integration.impl.WeakNotificationIT.SimpleObserver;
+import org.apache.fluo.integration.impl.WeakNotificationIT.WeakNotificationITObserverProvider;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -60,8 +58,8 @@ public class NotificationGcIT extends ITBaseMini {
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    return Collections.singletonList(new ObserverSpecification(SimpleObserver.class.getName()));
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return WeakNotificationITObserverProvider.class;
   }
 
   @Test

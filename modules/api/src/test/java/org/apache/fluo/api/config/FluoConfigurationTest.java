@@ -209,6 +209,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals("33", config.getReporterConfiguration("jmx").getString("frequency"));
   }
 
+  @SuppressWarnings("deprecation")
   private void assertIAE(String value) {
     FluoConfiguration config = new FluoConfiguration();
     try {
@@ -219,6 +220,7 @@ public class FluoConfigurationTest {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testObserverConfig() {
     FluoConfiguration config = new FluoConfiguration();
@@ -247,6 +249,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(0, ocList.get(0).getConfiguration().toMap().size());
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testObserverConfig2() {
     FluoConfiguration config = new FluoConfiguration();
@@ -374,7 +377,7 @@ public class FluoConfigurationTest {
     c1.setAccumuloZookeepers("localhost:7171");
     c1.setInstanceZookeepers("localhost:7171/testS");
     c1.setWorkerThreads(100);
-    c1.addObserver(new ObserverSpecification("com.foo.Observer1"));
+    c1.setObserverProvider("com.foo.MyObserverProvider");
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oo = new ObjectOutputStream(baos);
@@ -394,5 +397,23 @@ public class FluoConfigurationTest {
     Assert.assertEquals("testdata", in.readObject());
 
     in.close();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullObserverProvider() {
+    FluoConfiguration fc = new FluoConfiguration();
+    fc.setObserverProvider((String) null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyObserverProvider() {
+    FluoConfiguration fc = new FluoConfiguration();
+    fc.setObserverProvider("");
+  }
+
+  @Test
+  public void testNoObserverProvider() {
+    FluoConfiguration fc = new FluoConfiguration();
+    Assert.assertEquals("", fc.getObserverProvider());
   }
 }

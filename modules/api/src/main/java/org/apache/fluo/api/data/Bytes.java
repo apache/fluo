@@ -58,7 +58,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   private final int offset;
   private final int length;
 
-  private WeakReference<String> utf8String;
+  private transient WeakReference<String> utf8String;
 
   public static final Bytes EMPTY = new Bytes(new byte[0]);
 

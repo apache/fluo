@@ -16,26 +16,19 @@
 package org.apache.fluo.api.observer;
 
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Column;
 
 /**
- * Implemented by users to a watch a {@link org.apache.fluo.api.data.Column} and be notified of
- * changes to the Column via the
- * {@link #process(TransactionBase, org.apache.fluo.api.data.Bytes, org.apache.fluo.api.data.Column)}
- * method. AbstractObserver extends {@link Observer} but provides a default implementation for the
- * {@link #init(Context)} and {@link #close()} method so that they can be optionally implemented by
- * user.
- *
- * @since 1.0.0
- * @deprecated since 1.1.0. This class was deprecated for two reasons. First the methods its
- *             overrides were deprecated. Second, the methods it overrides were made into Java 8
- *             default methods.
+ * @since 1.1.0
  */
-@Deprecated
-public abstract class AbstractObserver implements Observer {
+@FunctionalInterface
+public interface StringObserver extends Observer {
 
   @Override
-  public void init(Context context) throws Exception {}
+  default void process(TransactionBase tx, Bytes row, Column col) throws Exception {
+    process(tx, row.toString(), col);
+  }
 
-  @Override
-  public void close() {}
+  abstract void process(TransactionBase tx, String row, Column col) throws Exception;
 }

@@ -18,7 +18,6 @@ package org.apache.fluo.integration.impl;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -28,16 +27,15 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
-import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.CommitException;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer.NotificationType;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
@@ -52,23 +50,19 @@ import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FluoIT extends ITBaseImpl {
 
-  public static class BalanceObserver extends AbstractObserver {
-
+  public static class FluoITObserverProvider implements ObserverProvider {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(BALANCE, NotificationType.STRONG);
-    }
-
-    @Override
-    public void process(TransactionBase tx, Bytes row, Column col) {
-      Assert.fail();
+    public void provide(Registry or, Context ctx) {
+      or.register(BALANCE, NotificationType.STRONG, (tx, row, col) -> {
+        Assert.fail();
+      });
     }
   }
 
   @Override
-  protected List<org.apache.fluo.api.config.ObserverSpecification> getObservers() {
-    return Arrays.asList(new ObserverSpecification(BalanceObserver.class.getName()));
-  };
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return FluoITObserverProvider.class;
+  }
 
   @Test
   public void testFluoFactory() throws Exception {

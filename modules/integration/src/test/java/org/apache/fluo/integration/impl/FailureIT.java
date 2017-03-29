@@ -15,9 +15,7 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
@@ -32,12 +30,12 @@ import org.apache.fluo.accumulo.util.LongUtil;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.api.client.TransactionBase;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.api.observer.AbstractObserver;
+import org.apache.fluo.api.observer.Observer;
+import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
 import org.apache.fluo.core.impl.Notification;
@@ -54,6 +52,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FailureIT extends ITBaseImpl {
@@ -61,22 +60,21 @@ public class FailureIT extends ITBaseImpl {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
-  public static class NullObserver extends AbstractObserver {
-
+  public static class NullObserver implements Observer {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {}
+  }
 
+  public static class FailuresObserverProvider implements ObserverProvider {
     @Override
-    public ObservedColumn getObservedColumn() {
-      return new ObservedColumn(new Column("attr", "lastupdate"), NotificationType.STRONG);
+    public void provide(Registry or, Context ctx) {
+      or.register(new Column("attr", "lastupdate"), STRONG, new NullObserver());
     }
   }
 
   @Override
-  protected List<ObserverSpecification> getObservers() {
-    List<ObserverSpecification> observed = new ArrayList<>();
-    observed.add(new ObserverSpecification(NullObserver.class.getName()));
-    return observed;
+  protected Class<? extends ObserverProvider> getObserverProviderClass() {
+    return FailuresObserverProvider.class;
   }
 
   @Test

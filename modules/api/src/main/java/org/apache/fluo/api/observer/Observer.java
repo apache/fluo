@@ -17,6 +17,7 @@ package org.apache.fluo.api.observer;
 
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.TransactionBase;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -24,13 +25,15 @@ import org.apache.fluo.api.metrics.MetricsReporter;
 
 /**
  * Implemented by users to a watch a {@link Column} and be notified of changes to the Column via the
- * {@link #process(TransactionBase, Bytes, Column)} method. An observer is created for each worker
- * thread and reused for the lifetime of a worker thread. Consider extending
- * {@link AbstractObserver} as it will let you optionally implement {@link #init(Context)} and
- * {@link #close()}. The abstract class will also shield you from the addition of interface methods.
+ * {@link #process(TransactionBase, Bytes, Column)} method.
+ * 
+ * <p>
+ * In Fluo version 1.1.0 this was converted to a functional interface. This change along with the
+ * introduction of {@link ObserverProvider} allows Observers to be written as lambdas.
  *
  * @since 1.0.0
  */
+@FunctionalInterface
 public interface Observer {
 
   /**
@@ -44,7 +47,9 @@ public interface Observer {
    * A {@link Column} and {@link NotificationType} pair
    *
    * @since 1.0.0
+   * @deprecated since 1.1.0. The method that used this class was deprecated.
    */
+  @Deprecated
   class ObservedColumn {
     private final Column col;
     private final NotificationType notificationType;
@@ -61,11 +66,22 @@ public interface Observer {
     public NotificationType getType() {
       return notificationType;
     }
+
+    /**
+     * @since 1.1.0
+     */
+    @Override
+    public String toString() {
+      return col + " " + notificationType;
+    }
   }
 
   /**
    * @since 1.0.0
+   *
+   * @deprecated since 1.1.0. The method that used this interface was deprecated.
    */
+  @Deprecated
   interface Context {
     /**
      * @return A configuration object with application configuration like that returned by
@@ -88,8 +104,14 @@ public interface Observer {
    * Implemented by user to initialize Observer.
    *
    * @param context Observer context
+   *
+   * @deprecated since 1.1.0. Fluo will no longer call this method when observers are configured by
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
+   *             observers are configured the old way by
+   *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */
-  void init(Context context) throws Exception;
+  @Deprecated
+  default void init(Context context) throws Exception {}
 
   /**
    * Implemented by users to process notifications on a {@link ObservedColumn}. If a notification
@@ -107,11 +129,25 @@ public interface Observer {
    * then an exception will be thrown. It is safe to assume that {@link #init(Context)} will be
    * called before this method. If the return value of the method is derived from what is passed to
    * {@link #init(Context)}, then the derivation process should be deterministic.
+   *
+   * @deprecated since 1.1.0 Fluo will no longer call this method when observers are configured by
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
+   *             observers are configured the old way by
+   *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */
-  ObservedColumn getObservedColumn();
+  @Deprecated
+  default ObservedColumn getObservedColumn() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Implemented by user to close resources used by Observer
+   *
+   * @deprecated since 1.1.0. Fluo will no longer call this method when observers are configured by
+   *             {@link FluoConfiguration#setObserverProvider(String)}. Its only called when
+   *             observers are configured the old way by
+   *             {@link FluoConfiguration#addObserver(org.apache.fluo.api.config.ObserverSpecification)}
    */
-  void close();
+  @Deprecated
+  default void close() {}
 }

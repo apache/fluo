@@ -42,6 +42,8 @@ import org.apache.fluo.core.util.ConditionalFlutation;
 import org.apache.fluo.core.util.FluoCondition;
 import org.apache.fluo.core.util.SpanUtil;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
+
 /**
  * This is utility code for either rolling forward or back failed transactions. A transaction is
  * deemed to have failed if the reading transaction waited too long or the transactor id does not
@@ -242,7 +244,7 @@ public class LockResolver {
 
       LockValue lv = new LockValue(entry.getValue().get());
       ColumnUtil.commitColumn(env, lv.isTrigger(), false, col, lv.isWrite(), lv.isDelete(), lockTs,
-          commitTs, env.getObservers().keySet(), mut);
+          commitTs, env.getConfiguredObservers().getObservedColumns(STRONG), mut);
     }
 
   }

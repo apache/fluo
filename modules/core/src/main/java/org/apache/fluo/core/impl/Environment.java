@@ -16,17 +16,10 @@
 package org.apache.fluo.core.impl;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.client.Connector;
@@ -35,16 +28,14 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.config.SimpleConfiguration;
-import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.metrics.MetricNames;
 import org.apache.fluo.core.metrics.MetricsReporterImpl;
+import org.apache.fluo.core.observer.RegisteredObservers;
+import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
-import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.CuratorUtil;
-import org.apache.hadoop.io.WritableUtils;
 
 /**
  * Holds common environment configuration and shared resources
@@ -54,9 +45,7 @@ public class Environment implements AutoCloseable {
   private String table;
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;
-  private Map<Column, ObserverSpecification> observers;
-  private Map<Column, ObserverSpecification> weakObservers;
-  private Set<Column> allObserversColumns;
+  private RegisteredObservers observers;
   private Connector conn;
   private String accumuloInstanceID;
   private String fluoApplicationID;
@@ -105,8 +94,6 @@ public class Environment implements AutoCloseable {
     this.auths = env.auths;
     this.accumuloInstance = env.accumuloInstance;
     this.observers = env.observers;
-    this.weakObservers = env.weakObservers;
-    this.allObserversColumns = env.allObserversColumns;
     this.conn = env.conn;
     this.accumuloInstanceID = env.accumuloInstanceID;
     this.fluoApplicationID = env.fluoApplicationID;
@@ -136,18 +123,10 @@ public class Environment implements AutoCloseable {
           new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE),
               StandardCharsets.UTF_8);
 
+      observers = ObserverUtil.load(curator);
+
       ByteArrayInputStream bais =
-          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_OBSERVERS));
-      DataInputStream dis = new DataInputStream(bais);
-
-      observers = Collections.unmodifiableMap(readObservers(dis));
-      weakObservers = Collections.unmodifiableMap(readObservers(dis));
-      allObserversColumns = new HashSet<>();
-      allObserversColumns.addAll(observers.keySet());
-      allObserversColumns.addAll(weakObservers.keySet());
-      allObserversColumns = Collections.unmodifiableSet(allObserversColumns);
-
-      bais = new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
       Properties sharedProps = new Properties();
       sharedProps.load(bais);
 
@@ -164,29 +143,6 @@ public class Environment implements AutoCloseable {
     }
   }
 
-  private static Map<Column, ObserverSpecification> readObservers(DataInputStream dis)
-      throws IOException {
-
-    HashMap<Column, ObserverSpecification> omap = new HashMap<>();
-
-    int num = WritableUtils.readVInt(dis);
-    for (int i = 0; i < num; i++) {
-      Column col = ColumnUtil.readColumn(dis);
-      String clazz = dis.readUTF();
-      Map<String, String> params = new HashMap<>();
-      int numParams = WritableUtils.readVInt(dis);
-      for (int j = 0; j < numParams; j++) {
-        String k = dis.readUTF();
-        String v = dis.readUTF();
-        params.put(k, v);
-      }
-
-      ObserverSpecification ospec = new ObserverSpecification(clazz, params);
-      omap.put(col, ospec);
-    }
-
-    return omap;
-  }
 
   public void setAuthorizations(Authorizations auths) {
     this.auths = auths;
@@ -216,12 +172,8 @@ public class Environment implements AutoCloseable {
     return fluoApplicationID;
   }
 
-  public Map<Column, ObserverSpecification> getObservers() {
+  public RegisteredObservers getConfiguredObservers() {
     return observers;
-  }
-
-  public Map<Column, ObserverSpecification> getWeakObservers() {
-    return weakObservers;
   }
 
   public String getTable() {
