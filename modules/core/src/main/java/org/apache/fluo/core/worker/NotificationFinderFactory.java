@@ -17,13 +17,13 @@ package org.apache.fluo.core.worker;
 
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
-import org.apache.fluo.core.worker.finder.hash.HashNotificationFinder;
+import org.apache.fluo.core.worker.finder.hash.PartitionNotificationFinder;
 
 public class NotificationFinderFactory {
   public static NotificationFinder newNotificationFinder(FluoConfiguration conf) {
     String clazz =
         conf.getString(FluoConfigurationImpl.WORKER_FINDER_PROP,
-            HashNotificationFinder.class.getName());
+            PartitionNotificationFinder.class.getName());
     try {
       return Class.forName(clazz).asSubclass(NotificationFinder.class).newInstance();
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {

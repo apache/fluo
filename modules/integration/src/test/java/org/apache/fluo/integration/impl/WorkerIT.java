@@ -28,7 +28,7 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.worker.NotificationFinder;
-import org.apache.fluo.core.worker.finder.hash.HashNotificationFinder;
+import org.apache.fluo.core.worker.finder.hash.PartitionNotificationFinder;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mini.MiniFluoImpl;
@@ -171,11 +171,11 @@ public class WorkerIT extends ITBaseMini {
 
     try (Environment env = new Environment(config)) {
 
-      NotificationFinder nf1 = new HashNotificationFinder();
+      NotificationFinder nf1 = new PartitionNotificationFinder();
       nf1.init(env, ((MiniFluoImpl) miniFluo).getNotificationProcessor());
       nf1.start();
 
-      NotificationFinder nf2 = new HashNotificationFinder();
+      NotificationFinder nf2 = new PartitionNotificationFinder();
       nf2.init(env, ((MiniFluoImpl) miniFluo).getNotificationProcessor());
       nf2.start();
 

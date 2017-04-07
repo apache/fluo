@@ -15,14 +15,6 @@
 
 package org.apache.fluo.core.worker.finder.hash;
 
-class ModulusParams {
-  int remainder;
-  int divisor;
-  int update;
-
-  ModulusParams(int r, int d, int u) {
-    this.remainder = r;
-    this.divisor = d;
-    this.update = u;
-  }
+public class PartitionInfoChangedException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 }

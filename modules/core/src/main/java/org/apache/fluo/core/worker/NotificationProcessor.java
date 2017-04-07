@@ -16,13 +16,17 @@
 package org.apache.fluo.core.worker;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import com.codahale.metrics.Gauge;
 import org.apache.fluo.api.data.Column;
@@ -64,8 +68,12 @@ public class NotificationProcessor implements AutoCloseable {
   // little utility class that tracks all notifications in queue
   private class NotificationTracker {
     private Map<RowColumn, Future<?>> queuedWork = new HashMap<>();
+    private Set<RowColumn> recentlyDeleted = new HashSet<>();
     private long sizeInBytes = 0;
+    private Map<Long, Predicate<RowColumn>> memoryPredicates = new HashMap<>();
+    private Predicate<RowColumn> memoryPredicate = rc -> false;
     private static final long MAX_SIZE = 1 << 24;
+    private long nextSessionId = 0;
 
     private long size(RowColumn rowCol) {
       Column col = rowCol.getColumn();
@@ -75,7 +83,7 @@ public class NotificationProcessor implements AutoCloseable {
 
     public synchronized boolean add(RowColumn rowCol, Future<?> task) {
 
-      if (queuedWork.containsKey(rowCol)) {
+      if (queuedWork.containsKey(rowCol) || recentlyDeleted.contains(rowCol)) {
         return false;
       }
 
@@ -98,6 +106,9 @@ public class NotificationProcessor implements AutoCloseable {
 
     public synchronized void remove(RowColumn rowCol) {
       if (queuedWork.remove(rowCol) != null) {
+        if (memoryPredicate.test(rowCol)) {
+          recentlyDeleted.add(rowCol);
+        }
         sizeInBytes -= size(rowCol);
         notify();
       }
@@ -121,6 +132,34 @@ public class NotificationProcessor implements AutoCloseable {
       queuedWork.put(rowCol, ft);
 
       return true;
+    }
+
+    private void resetMemoryPredicate() {
+      memoryPredicate = null;
+      for (Predicate<RowColumn> p : this.memoryPredicates.values()) {
+        if (memoryPredicate == null) {
+          memoryPredicate = p;
+        } else {
+          memoryPredicate = p.or(memoryPredicate);
+        }
+      }
+    }
+
+    public synchronized long beginAddingNotifications(Predicate<RowColumn> memoryPredicate) {
+      long sessionId = nextSessionId++;
+      this.memoryPredicates.put(sessionId, Objects.requireNonNull(memoryPredicate));
+      resetMemoryPredicate();
+      return sessionId;
+    }
+
+    public synchronized void finishAddingNotifications(long sessionId) {
+      this.memoryPredicates.remove(sessionId);
+      if (memoryPredicates.size() == 0) {
+        recentlyDeleted.clear();
+        memoryPredicate = rc -> false;
+      } else {
+        resetMemoryPredicate();
+      }
     }
 
   }
@@ -176,25 +215,47 @@ public class NotificationProcessor implements AutoCloseable {
     }
   }
 
-  public boolean addNotification(final NotificationFinder notificationFinder,
-      final Notification notification) {
+  public class Session implements AutoCloseable {
+    private long id;
 
-    WorkTaskAsync workTask =
-        new WorkTaskAsync(this, notificationFinder, env, notification, observers);
-    FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
-
-    if (!tracker.add(notification.getRowColumn(), ft)) {
-      return false;
+    public Session(Predicate<RowColumn> memoryPredicate) {
+      this.id = tracker.beginAddingNotifications(memoryPredicate);
     }
 
-    try {
-      executor.execute(ft);
-    } catch (RejectedExecutionException rje) {
-      tracker.remove(notification.getRowColumn());
-      throw rje;
+    public boolean addNotification(final NotificationFinder notificationFinder,
+        final Notification notification) {
+
+      WorkTaskAsync workTask =
+          new WorkTaskAsync(NotificationProcessor.this, notificationFinder, env, notification,
+              observers);
+      FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
+
+      if (!tracker.add(notification.getRowColumn(), ft)) {
+        return false;
+      }
+
+      try {
+        executor.execute(ft);
+      } catch (RejectedExecutionException rje) {
+        tracker.remove(notification.getRowColumn());
+        throw rje;
+      }
+
+      return true;
     }
 
-    return true;
+    public void close() {
+      tracker.finishAddingNotifications(id);
+    }
+  }
+
+  /**
+   * Starts a session for adding notifications. During this session, any notifications that are
+   * deleted and match the predicate will be remembered. These remembered notifications can not be
+   * added again while the session is active.
+   */
+  public Session beginAddingNotifications(Predicate<RowColumn> memoryPredicate) {
+    return new Session(memoryPredicate);
   }
 
   public void requeueNotification(final NotificationFinder notificationFinder,

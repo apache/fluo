@@ -16,7 +16,6 @@
 package org.apache.fluo.core.impl;
 
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.core.worker.finder.hash.ScanTask;
 
 /**
  * Contains implementation-related Fluo properties that should not be exposed in the API in
@@ -28,13 +27,16 @@ public class FluoConfigurationImpl {
 
   public static final String ORACLE_PORT_PROP = FLUO_IMPL_PREFIX + ".oracle.port";
   public static final String WORKER_FINDER_PROP = FLUO_IMPL_PREFIX + ".worker.finder";
+  public static final String WORKER_PARTITION_GROUP_SIZE = FLUO_IMPL_PREFIX
+      + ".worker.finder.partition.groupSize";
+  public static final int WORKER_PARTITION_GROUP_SIZE_DEFAULT = 7;
   public static final String METRICS_RESERVOIR_PROP = FLUO_IMPL_PREFIX + ".metrics.reservoir";
-  public static final String MIN_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
-      + ScanTask.class.getSimpleName() + ".minSleep";
-  public static final int MIN_SLEEP_TIME_DEFAULT = 5000;
-  public static final String MAX_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
-      + ScanTask.class.getSimpleName() + ".maxSleep";
-  public static final int MAX_SLEEP_TIME_DEFAULT = 5 * 60 * 1000;
+  public static final String NTFY_FINDER_MIN_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
+      + ".worker.finder.minSleep";
+  public static final int NTFY_FINDER_MIN_SLEEP_TIME_DEFAULT = 5000;
+  public static final String NTFY_FINDER_MAX_SLEEP_TIME_PROP = FLUO_IMPL_PREFIX
+      + ".worker.finder.maxSleep";
+  public static final int NTFY_FINDER_MAX_SLEEP_TIME_DEFAULT = 5 * 60 * 1000;
 
   // Time period that each client will update ZK with their oldest active timestamp
   // If period is too short, Zookeeper may be overloaded. If too long, garbage collection

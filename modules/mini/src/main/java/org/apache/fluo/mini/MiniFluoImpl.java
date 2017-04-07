@@ -84,8 +84,8 @@ public class MiniFluoImpl implements MiniFluo {
         startMiniAccumulo();
       }
 
-      config.setProperty(FluoConfigurationImpl.MIN_SLEEP_TIME_PROP, 50);
-      config.setProperty(FluoConfigurationImpl.MAX_SLEEP_TIME_PROP, 100);
+      config.setProperty(FluoConfigurationImpl.NTFY_FINDER_MIN_SLEEP_TIME_PROP, 50);
+      config.setProperty(FluoConfigurationImpl.NTFY_FINDER_MAX_SLEEP_TIME_PROP, 100);
 
       env = new Environment(config);
 
