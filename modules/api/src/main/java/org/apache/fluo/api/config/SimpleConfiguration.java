@@ -247,7 +247,7 @@ public class SimpleConfiguration implements Serializable {
     Builder<String, String> builder = ImmutableMap.builder();
     Iterator<String> ki = getKeys();
     while (ki.hasNext()) {
-      String k = (String) ki.next();
+      String k = ki.next();
       builder.put(k, getRawString(k));
     }
 

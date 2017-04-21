@@ -22,6 +22,7 @@ import org.apache.fluo.core.observer.v2.ObserverStoreV2;
 import org.junit.Assert;
 import org.junit.Test;
 
+@SuppressWarnings("deprecation")
 public class ObserverStoreTest {
 
   @Test
