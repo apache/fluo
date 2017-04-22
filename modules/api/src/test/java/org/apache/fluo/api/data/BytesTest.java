@@ -79,6 +79,19 @@ public class BytesTest {
   }
 
   @Test
+  public void testPrefixSuffix() {
+    Bytes b1 = Bytes.of("abcde");
+    Bytes prefix = Bytes.of("ab");
+    Bytes suffix = Bytes.of("de");
+    Bytes mid = Bytes.of("cd");
+
+    Assert.assertEquals(true, b1.startsWith(prefix));
+    Assert.assertEquals(true, b1.endsWith(suffix));
+    Assert.assertEquals(false, b1.startsWith(mid));
+    Assert.assertEquals(false, b1.endsWith(mid));
+  }
+
+  @Test
   public void testCompare() {
     Bytes b1 = Bytes.of("a");
     Bytes b2 = Bytes.of("b");

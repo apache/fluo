@@ -293,9 +293,8 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] data;
     if (bb.hasArray()) {
-      data =
-          Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
-              bb.limit() + bb.arrayOffset());
+      data = Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
+          bb.limit() + bb.arrayOffset());
     } else {
       data = new byte[bb.remaining()];
       // duplicate so that it does not change position
@@ -352,6 +351,36 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] data = s.getBytes(c);
     return new Bytes(data);
+  }
+
+  /**
+   * Checks if this has the passed prefix
+   * 
+   * @param prefix
+   * @return true or false
+   */
+  public boolean startsWith(Bytes prefix) {
+    for (int i = 0; i < prefix.length; i++) {
+      if (this.byteAt(i) != prefix.byteAt(i))
+        return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks if this has the passed suffix
+   * 
+   * @param suffix
+   * @return true or false
+   */
+  public boolean endsWith(Bytes suffix) {
+    int startOffset = this.length - suffix.length;
+    for (int i = startOffset; i < this.length; i++) {
+
+      if (this.byteAt(i) != suffix.byteAt(i - startOffset))
+        return false;
+    }
+    return true;
   }
 
   /**
