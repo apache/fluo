@@ -355,6 +355,53 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
+   * Checks if this has the passed prefix
+   * 
+   * @param prefix is a Bytes object to compare to this
+   * @return true or false
+   * @since 1.1.0
+   */
+  public boolean startsWith(Bytes prefix) {
+    Objects.requireNonNull(prefix, "startWith(Bytes prefix) cannot have null parameter");
+
+    if (prefix.length > this.length) {
+      return false;
+    } else {
+      int end = this.offset + prefix.length;
+      for (int i = this.offset, j = prefix.offset; i < end; i++, j++) {
+        if (this.data[i] != prefix.data[j]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks if this has the passed suffix
+   * 
+   * @param suffix is a Bytes object to compare to this
+   * @return true or false
+   * @since 1.1.0
+   */
+  public boolean endsWith(Bytes suffix) {
+    Objects.requireNonNull(suffix, "endsWith(Bytes suffix) cannot have null parameter");
+    int startOffset = this.length - suffix.length;
+
+    if (startOffset < 0) {
+      return false;
+    } else {
+      int end = startOffset + this.offset + suffix.length;
+      for (int i = startOffset + this.offset, j = suffix.offset; i < end; i++, j++) {
+        if (this.data[i] != suffix.data[j]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
    * This class provides an easy, efficient, reusable mechanism for building immutable Bytes
    * objects.
    *
