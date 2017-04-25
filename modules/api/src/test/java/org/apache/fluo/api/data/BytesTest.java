@@ -83,12 +83,28 @@ public class BytesTest {
     Bytes b1 = Bytes.of("abcde");
     Bytes prefix = Bytes.of("ab");
     Bytes suffix = Bytes.of("de");
+    Bytes empty = new Bytes();
     Bytes mid = Bytes.of("cd");
 
-    Assert.assertEquals(true, b1.startsWith(prefix));
-    Assert.assertEquals(true, b1.endsWith(suffix));
-    Assert.assertEquals(false, b1.startsWith(mid));
-    Assert.assertEquals(false, b1.endsWith(mid));
+    Assert.assertTrue(b1.startsWith(prefix));
+    Assert.assertTrue(b1.endsWith(suffix));
+    Assert.assertFalse(b1.startsWith(mid));
+    Assert.assertFalse(b1.endsWith(mid));
+    Assert.assertTrue(empty.startsWith(empty));
+    Assert.assertTrue(empty.endsWith(empty));
+    Assert.assertTrue(b1.startsWith(b1));
+    Assert.assertTrue(b1.endsWith(b1));
+    Assert.assertTrue(b1.startsWith(empty));
+    Assert.assertTrue(b1.endsWith(empty));
+    Assert.assertFalse(empty.startsWith(b1));
+    Assert.assertFalse(empty.endsWith(b1));
+    Assert.assertFalse(prefix.startsWith(b1));
+    Assert.assertFalse(prefix.endsWith(b1));
+    Assert.assertTrue(b1.startsWith(b1.subSequence(0, 2)));
+    Assert.assertFalse(b1.subSequence(0, 2).startsWith(b1));
+    Assert.assertTrue(b1.endsWith(b1.subSequence(3, 5)));
+    Assert.assertFalse(b1.endsWith(b1.subSequence(0, 2)));
+    Assert.assertFalse(b1.subSequence(0, 2).endsWith(b1));
   }
 
   @Test

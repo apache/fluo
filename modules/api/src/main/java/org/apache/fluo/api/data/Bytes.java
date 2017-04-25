@@ -293,8 +293,9 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] data;
     if (bb.hasArray()) {
-      data = Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
-          bb.limit() + bb.arrayOffset());
+      data =
+          Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
+              bb.limit() + bb.arrayOffset());
     } else {
       data = new byte[bb.remaining()];
       // duplicate so that it does not change position
@@ -356,13 +357,21 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   /**
    * Checks if this has the passed prefix
    * 
-   * @param prefix
+   * @param prefix is a Bytes object to compare to this
    * @return true or false
+   * @since 1.1.0
    */
   public boolean startsWith(Bytes prefix) {
-    for (int i = 0; i < prefix.length; i++) {
-      if (this.byteAt(i) != prefix.byteAt(i))
-        return false;
+    Objects.requireNonNull(prefix, "startWith(Bytes prefix) cannot have null parameter");
+
+    if (prefix.length > this.length) {
+      return false;
+    } else {
+      for (int i = 0; i < prefix.length; i++) {
+        if (this.data[i + this.offset] != prefix.data[i + prefix.offset]) {
+          return false;
+        }
+      }
     }
     return true;
   }
@@ -370,15 +379,22 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   /**
    * Checks if this has the passed suffix
    * 
-   * @param suffix
+   * @param suffix is a Bytes object to compare to this
    * @return true or false
+   * @since 1.1.0
    */
   public boolean endsWith(Bytes suffix) {
+    Objects.requireNonNull(suffix, "endsWith(Bytes suffix) cannot have null parameter");
     int startOffset = this.length - suffix.length;
-    for (int i = startOffset; i < this.length; i++) {
 
-      if (this.byteAt(i) != suffix.byteAt(i - startOffset))
-        return false;
+    if (startOffset < 0) {
+      return false;
+    } else {
+      for (int i = startOffset; i < this.length; i++) {
+        if (this.data[i + this.offset] != suffix.data[i - startOffset + suffix.offset]) {
+          return false;
+        }
+      }
     }
     return true;
   }
