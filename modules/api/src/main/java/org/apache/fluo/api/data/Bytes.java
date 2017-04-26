@@ -367,8 +367,9 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     if (prefix.length > this.length) {
       return false;
     } else {
-      for (int i = 0; i < prefix.length; i++) {
-        if (this.data[i + this.offset] != prefix.data[i + prefix.offset]) {
+      int end = this.offset + prefix.length;
+      for (int i = this.offset, j = prefix.offset; i < end; i++, j++) {
+        if (this.data[i] != prefix.data[j]) {
           return false;
         }
       }
@@ -390,8 +391,9 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     if (startOffset < 0) {
       return false;
     } else {
-      for (int i = startOffset; i < this.length; i++) {
-        if (this.data[i + this.offset] != suffix.data[i - startOffset + suffix.offset]) {
+      int end = startOffset + this.offset + suffix.length;
+      for (int i = startOffset + this.offset, j = suffix.offset; i < end; i++, j++) {
+        if (this.data[i] != suffix.data[j]) {
           return false;
         }
       }
