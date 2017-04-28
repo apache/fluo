@@ -202,17 +202,16 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     } else if (this.length == this.data.length && other.length == other.data.length) {
       return UnsignedBytes.lexicographicalComparator().compare(this.data, other.data);
     } else {
-      int minLen = Math.min(this.length(), other.length());
-
-      for (int i = 0; i < minLen; i++) {
-        int a = (this.byteAt(i) & 0xff);
-        int b = (other.byteAt(i) & 0xff);
+      int minLen = Math.min(this.length, other.length);
+      for (int i = this.offset, j = other.offset; i < minLen; i++, j++) {
+        int a = (this.data[i] & 0xff);
+        int b = (other.data[j] & 0xff);
 
         if (a != b) {
           return a - b;
         }
       }
-      return this.length() - other.length();
+      return this.length - other.length;
     }
   }
 
@@ -229,7 +228,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
-      if (length() != ob.length()) {
+      if (length != ob.length) {
         return false;
       }
 
@@ -242,8 +241,9 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   public final int hashCode() {
     if (hashCode == 0) {
       int hash = 1;
-      for (int i = 0; i < length(); i++) {
-        hash = (31 * hash) + byteAt(i);
+      int end = offset + length;
+      for (int i = offset; i < end; i++) {
+        hash = (31 * hash) + data[i];
       }
       hashCode = hash;
     }
@@ -457,7 +457,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     }
 
     public BytesBuilder append(Bytes b) {
-      ensureCapacity(len + b.length());
+      ensureCapacity(len + b.length);
       System.arraycopy(b.data, b.offset, ba, len, b.length);
       len += b.length();
       return this;
