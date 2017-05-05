@@ -64,23 +64,59 @@ public interface ObserverProvider {
    * @since 1.1.0
    */
   interface Registry {
-    void register(Column observedColumn, NotificationType ntfyType, Observer observer);
 
     /**
-     * This method was created to allow Observers written as lambda to be passed {@link String}
-     * instead of {@link Bytes} for the row.
+     * The terminal part of a Fluent API for registering observers.
      * 
-     * <pre>
-     * <code>
-     *   void provide(ObserverRegistry or, Context ctx) {
-     *     or.registers(someColumn, WEAK, (tx,row,col) -> {
-     *      //row is of type String
-     *     };
-     *   }
-     * </code>
-     * </pre>
+     * @since 1.1.0
      */
-    void registers(Column observedColumn, NotificationType ntfyType, StringObserver observer);
+    interface ObserverArgument {
+
+      /**
+       * Calling this method registers the given observer using the parameters previously passed to
+       * the Fluent API.
+       * 
+       */
+      void useObserver(Observer observer);
+
+      /**
+       * Calling this method registers the given observer using the parameters previously passed to
+       * the Fluent API.
+       * 
+       * <p>
+       * This method was created to allow Observers written as lambda to be passed {@link String}
+       * instead of {@link Bytes} for the row.
+       * 
+       * <pre>
+       * <code>
+       *   void provide(ObserverRegistry or, Context ctx) {
+       *     or.forColumn(someColumn, WEAK).useStrObserver((tx,row,col) -> {
+       *      //row is of type String
+       *     };
+       *   }
+       * </code>
+       * </pre>
+       */
+      void useStrObserver(StringObserver observer);
+    }
+
+    /**
+     * One part of a Fluent API for registering observers.
+     * 
+     * @since 1.1.0
+     */
+    interface IdentityOption extends ObserverArgument {
+      /**
+       * Optionally set the name used to identify the observer in logging and metrics. If not set,
+       * the column name is used.
+       */
+      ObserverArgument withId(String identity);
+    }
+
+    /**
+     * A fluent entry point for registering an observer.
+     */
+    IdentityOption forColumn(Column observedColumn, NotificationType ntfyType);
   }
 
   /**
@@ -103,13 +139,8 @@ public interface ObserverProvider {
   default void provideColumns(BiConsumer<Column, NotificationType> colRegistry, Context ctx) {
     Registry or = new Registry() {
       @Override
-      public void registers(Column oc, NotificationType nt, StringObserver obs) {
-        colRegistry.accept(oc, nt);
-      }
-
-      @Override
-      public void register(Column oc, NotificationType nt, Observer obs) {
-        colRegistry.accept(oc, nt);
+      public IdentityOption forColumn(Column observedColumn, NotificationType ntfyType) {
+        return new ColumnProviderRegistry(observedColumn, ntfyType, colRegistry);
       }
     };
 

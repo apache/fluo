@@ -53,7 +53,7 @@ public class FluoIT extends ITBaseImpl {
   public static class FluoITObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.register(BALANCE, NotificationType.STRONG, (tx, row, col) -> {
+      or.forColumn(BALANCE, NotificationType.STRONG).useObserver((tx, row, col) -> {
         Assert.fail();
       });
     }

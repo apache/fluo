@@ -24,6 +24,7 @@ import org.apache.fluo.api.metrics.MetricsReporter;
  *
  * @since 1.0.0
  */
+@FunctionalInterface
 public interface Loader {
 
   /**
@@ -37,7 +38,7 @@ public interface Loader {
     SimpleConfiguration getAppConfiguration();
 
     /**
-     * @return A {@link MetricsReporter} to report application metrics from this observer
+     * @return A {@link MetricsReporter} to report application metrics from this loader
      */
     MetricsReporter getMetricsReporter();
   }

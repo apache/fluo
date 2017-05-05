@@ -142,29 +142,28 @@ public class TxStats {
     timedOutLocks += amt;
   }
 
-  public void report(String status, Class<?> execClass) {
+  public void report(String status, String alias) {
     MetricNames names = env.getMetricNames();
     MetricRegistry registry = env.getSharedResources().getMetricRegistry();
-    String sn = execClass.getSimpleName();
     if (getLockWaitTime() > 0) {
-      MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime(sn)).update(
-          getLockWaitTime(), TimeUnit.MILLISECONDS);
+      MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime(alias))
+          .update(getLockWaitTime(), TimeUnit.MILLISECONDS);
     }
-    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime(sn)).update(
+    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime(alias)).update(
         getReadTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0) {
-      registry.meter(names.getTxWithCollision(sn)).mark();
-      registry.meter(names.getTxCollisions(sn)).mark(getCollisions());
+      registry.meter(names.getTxWithCollision(alias)).mark();
+      registry.meter(names.getTxCollisions(alias)).mark(getCollisions());
     }
-    registry.meter(names.getTxEntriesSet(sn)).mark(getEntriesSet());
-    registry.meter(names.getTxEntriesRead(sn)).mark(getEntriesReturned());
+    registry.meter(names.getTxEntriesSet(alias)).mark(getEntriesSet());
+    registry.meter(names.getTxEntriesRead(alias)).mark(getEntriesReturned());
     if (getTimedOutLocks() > 0) {
-      registry.meter(names.getTxLocksTimedout(sn)).mark(getTimedOutLocks());
+      registry.meter(names.getTxLocksTimedout(alias)).mark(getTimedOutLocks());
     }
     if (getDeadLocks() > 0) {
-      registry.meter(names.getTxLocksDead(sn)).mark(getDeadLocks());
+      registry.meter(names.getTxLocksDead(alias)).mark(getDeadLocks());
     }
-    registry.meter(names.getTxStatus(status.toLowerCase(), sn)).mark();
+    registry.meter(names.getTxStatus(status.toLowerCase(), alias)).mark();
   }
 
   public void setCommitBeginTime(long t) {

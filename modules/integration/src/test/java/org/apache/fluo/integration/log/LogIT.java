@@ -121,8 +121,8 @@ public class LogIT extends ITBaseMini {
   public static class LogItObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.registers(STAT_COUNT, WEAK, new TestObserver());
-      or.register(bCol2, WEAK, new BinaryObserver());
+      or.forColumn(STAT_COUNT, WEAK).useStrObserver(new TestObserver());
+      or.forColumn(bCol2, WEAK).useObserver(new BinaryObserver());
     }
   }
 

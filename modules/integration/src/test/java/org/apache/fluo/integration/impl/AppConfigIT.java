@@ -99,7 +99,7 @@ public class AppConfigIT extends ITBaseMini {
     public void provide(Registry or, Context ctx) {
       int limit = ctx.getAppConfiguration().getInt("myapp.sizeLimit");
 
-      or.registers(DF_COL, STRONG, (tx, row, col) -> {
+      or.forColumn(DF_COL, STRONG).useStrObserver((tx, row, col) -> {
         int d = Integer.parseInt(tx.gets(row, col));
         if (2 * d < limit) {
           tx.set(row.toString(), DB_COL, Integer.toString(2 * d));

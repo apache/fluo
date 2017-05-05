@@ -118,24 +118,22 @@ To create an observer, follow these steps:
     ```
 2.  Create a class that implements [ObserverProvider] like the example below.  The purpose of this
     class is associate a set Observers with columns that trigger the observers.  The class can
-    create multiple observers.
+    register multiple observers.
 
     ```java
     class AppObserverProvider implements ObserverProvider {
       @Override
       public void provide(Registry or, Context ctx) {
         //setup InvertObserver to be triggered when the column obs:data is modified
-        or.register(new Column("obs", "data"),
-                           NotificationType.STRONG,
-                           new InvertObserver());
+        or.forColumn(new Column("obs", "data"), NotificationType.STRONG)
+          .useObserver(new InvertObserver());
         
         //Observer is a Functional interface.  So Obsevers can be written as lambdas.
-        or.register(new Column("new","data"),
-                           NotificationType.WEAK,
-                           (tx,row,col) -> { 
-                             Bytes combined = combineNewAndOld(tx,row);
-                             tx.set(row, new Column("current","data"), combined);
-                           });
+        or.forColumn(new Column("new","data"), NotificationType.WEAK)
+          .useObserver((tx,row,col) -> {
+             Bytes combined = combineNewAndOld(tx,row);
+             tx.set(row, new Column("current","data"), combined);
+           });
       }
     }
     ```

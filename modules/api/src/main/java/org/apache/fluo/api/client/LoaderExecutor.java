@@ -30,6 +30,15 @@ public interface LoaderExecutor extends AutoCloseable {
   void execute(Loader loader);
 
   /**
+   * Same as {@link #execute(Loader)}, but allows specifing an identity. The identity is used in
+   * metrics and trace logging. When an identity is not supplied, the class name is used. In the
+   * case of lambdas the class name may not be the same in different processes.
+   * 
+   * @since 1.1.0
+   */
+  void execute(String identity, Loader loader);
+
+  /**
    * Waits for all queued and running Loader task to complete, then cleans up resources.
    */
   @Override

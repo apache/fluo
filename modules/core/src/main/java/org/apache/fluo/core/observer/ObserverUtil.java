@@ -90,6 +90,11 @@ public class ObserverUtil {
             public Observer getObserver(Column col) {
               throw new UnsupportedOperationException();
             }
+
+            @Override
+            public String getObserverId(Column col) {
+              throw new UnsupportedOperationException();
+            }
           };
         }
 

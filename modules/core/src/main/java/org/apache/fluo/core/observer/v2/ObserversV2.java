@@ -15,8 +15,6 @@
 
 package org.apache.fluo.core.observer.v2;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,70 +23,30 @@ import com.google.common.collect.Sets.SetView;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
-import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.ObserverProvider;
-import org.apache.fluo.api.observer.ObserverProvider.Registry;
-import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.observer.Observers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.fluo.core.util.Hex;
 
 class ObserversV2 implements Observers {
 
-  private static final Logger log = LoggerFactory.getLogger(ObserversV2.class);
-
   Map<Column, Observer> observers;
+  Map<Column, String> aliases;
 
   public ObserversV2(Environment env, JsonObservers jco, Set<Column> strongColumns,
       Set<Column> weakColumns) {
-    observers = new HashMap<>();
 
     ObserverProvider obsProvider =
         ObserverStoreV2.newObserverProvider(jco.getObserverProviderClass());
 
     ObserverProviderContextImpl ctx = new ObserverProviderContextImpl(env);
 
-    Registry or = new Registry() {
-
-      @Override
-      public void register(Column col, NotificationType nt, Observer obs) {
-        try {
-          Method closeMethod = obs.getClass().getMethod("close");
-          if (!closeMethod.getDeclaringClass().equals(Observer.class)) {
-            log.warn(
-                "Observer {} implements close().  Close is not called on Observers created using ObserverProvider."
-                    + " Close is only called on Observers configured the old way.", obs.getClass()
-                    .getName());
-          }
-        } catch (NoSuchMethodException | SecurityException e) {
-          throw new RuntimeException("Failed to check if close() is implemented", e);
-        }
-
-        if (nt == NotificationType.STRONG && !strongColumns.contains(col)) {
-          throw new IllegalArgumentException("Column " + col
-              + " not previously configured for strong notifications");
-        }
-
-        if (nt == NotificationType.WEAK && !weakColumns.contains(col)) {
-          throw new IllegalArgumentException("Column " + col
-              + " not previously configured for weak notifications");
-        }
-
-        if (observers.containsKey(col)) {
-          throw new IllegalArgumentException("Duplicate observed column " + col);
-        }
-
-        observers.put(col, obs);
-      }
-
-      @Override
-      public void registers(Column col, NotificationType nt, StringObserver obs) {
-        register(col, nt, obs);
-      }
-    };
-
+    ObserverRegistry or = new ObserverRegistry(strongColumns, weakColumns);
     obsProvider.provide(or, ctx);
+
+    this.observers = or.observers;
+    this.aliases = or.aliases;
+    this.observers.forEach((k, v) -> aliases.computeIfAbsent(k, col -> Hex.encNonAscii(col, ":")));
 
     // the following check ensures observers are provided for all previously configured columns
     SetView<Column> diff =
@@ -109,4 +67,9 @@ class ObserversV2 implements Observers {
 
   @Override
   public void close() {}
+
+  @Override
+  public String getObserverId(Column col) {
+    return aliases.get(col);
+  }
 }

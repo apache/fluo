@@ -19,6 +19,8 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 
 public interface Observers extends AutoCloseable {
+  String getObserverId(Column col);
+
   Observer getObserver(Column col);
 
   void returnObserver(Observer o);

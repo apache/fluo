@@ -60,13 +60,13 @@ public class CommitManager {
     private final AsyncCommitObserver aco;
     private final int size;
     private final AtomicBoolean finished = new AtomicBoolean(false);
-    private final Class<?> txExecClass;
+    private final String alias;
 
     private void finish(TxResult status) {
       if (finished.compareAndSet(false, true)) {
         commitingTransactions.decrementAndGet();
         tx.getStats().setCommitFinishTime(System.currentTimeMillis());
-        tx.getStats().report(status.toString(), txExecClass);
+        tx.getStats().report(status.toString(), alias);
         memoryLimit.release(size);
         try {
           tx.close();
@@ -76,12 +76,11 @@ public class CommitManager {
       }
     }
 
-    public CQCommitObserver(AsyncTransaction tx, AsyncCommitObserver aco, Class<?> txExecClass,
-        int size) {
+    public CQCommitObserver(AsyncTransaction tx, AsyncCommitObserver aco, String alias, int size) {
       this.tx = tx;
       this.aco = aco;
       this.size = size;
-      this.txExecClass = txExecClass;
+      this.alias = alias;
     }
 
     @Override
@@ -123,15 +122,15 @@ public class CommitManager {
   }
 
 
-  public void beginCommit(AsyncTransaction tx, Class<?> txExecClass, AsyncCommitObserver aco) {
+  public void beginCommit(AsyncTransaction tx, String alias, AsyncCommitObserver aco) {
     Objects.requireNonNull(tx);
-    Objects.requireNonNull(txExecClass);
+    Objects.requireNonNull(alias);
     Objects.requireNonNull(aco);
 
     int size = tx.getSize();
     memoryLimit.acquire(size);
     commitingTransactions.incrementAndGet();
-    CQCommitObserver myAco = new CQCommitObserver(tx, aco, txExecClass, size);
+    CQCommitObserver myAco = new CQCommitObserver(tx, aco, alias, size);
     tx.getStats().setCommitBeginTime(System.currentTimeMillis());
     tx.commitAsync(myAco);
   }

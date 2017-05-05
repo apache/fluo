@@ -58,7 +58,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
   public static class WeakNtfyObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.registers(STAT_CHANGED, WEAK, TOTAL_OBSERVER);
+      or.forColumn(STAT_CHANGED, WEAK).useStrObserver(TOTAL_OBSERVER);
     }
   }
 

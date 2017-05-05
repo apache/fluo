@@ -68,7 +68,7 @@ public class FailureIT extends ITBaseImpl {
   public static class FailuresObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.register(new Column("attr", "lastupdate"), STRONG, new NullObserver());
+      or.forColumn(new Column("attr", "lastupdate"), STRONG).useObserver(new NullObserver());
     }
   }
 

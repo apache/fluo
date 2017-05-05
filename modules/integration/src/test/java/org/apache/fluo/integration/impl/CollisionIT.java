@@ -80,7 +80,7 @@ public class CollisionIT extends ITBaseMini {
   public static class CollisionObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.registers(STAT_CHANGED, NotificationType.WEAK, (tx, row, col) -> {
+      or.forColumn(STAT_CHANGED, NotificationType.WEAK).useStrObserver((tx, row, col) -> {
         int total = Integer.parseInt(tx.gets(row, STAT_TOTAL));
         int processed = TestUtil.getOrDefault(tx, row, STAT_PROCESSED, 0);
 

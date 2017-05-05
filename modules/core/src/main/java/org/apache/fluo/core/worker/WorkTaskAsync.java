@@ -77,17 +77,18 @@ public class WorkTaskAsync implements Runnable {
   @Override
   public void run() {
     Observer observer = observers.getObserver(notification.getColumn());
+    String observerId = observers.getObserverId(notification.getColumn());
     try {
       AsyncTransaction atx = new TransactionImpl(env, notification);
 
       if (TracingTransaction.isTracingEnabled()) {
-        atx = new TracingTransaction(atx, notification, observer.getClass());
+        atx = new TracingTransaction(atx, notification, observer.getClass(), observerId);
       }
 
       observer.process(atx, notification.getRow(), notification.getColumn());
 
       CommitManager commitManager = env.getSharedResources().getCommitManager();
-      commitManager.beginCommit(atx, observer.getClass(), new WorkTaskCommitObserver());
+      commitManager.beginCommit(atx, observerId, new WorkTaskCommitObserver());
 
     } catch (Exception e) {
       log.error("Failed to process work " + Hex.encNonAscii(notification), e);

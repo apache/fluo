@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import com.google.common.collect.Iterables;
 import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
@@ -37,6 +39,7 @@ class ObserversV1 implements Observers {
   Map<Column, List<Observer>> observers = new HashMap<>();
   Map<Column, ObserverSpecification> strongObservers;
   Map<Column, ObserverSpecification> weakObservers;
+  Map<Column, String> aliases;
 
   private List<Observer> getObserverList(Column col) {
     List<Observer> observerList;
@@ -55,6 +58,19 @@ class ObserversV1 implements Observers {
     this.env = env;
     this.strongObservers = strongObservers;
     this.weakObservers = weakObservers;
+    this.aliases = new HashMap<>();
+
+    for (Entry<Column, ObserverSpecification> e : Iterables.concat(strongObservers.entrySet(),
+        weakObservers.entrySet())) {
+      ObserverSpecification observerConfig = e.getValue();
+      try {
+        String alias =
+            Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).getSimpleName();
+        aliases.put(e.getKey(), alias);
+      } catch (ClassNotFoundException e1) {
+        throw new RuntimeException(e1);
+      }
+    }
   }
 
   public Observer getObserver(Column col) {
@@ -127,4 +143,8 @@ class ObserversV1 implements Observers {
     observers = null;
   }
 
+  @Override
+  public String getObserverId(Column col) {
+    return aliases.get(col);
+  }
 }

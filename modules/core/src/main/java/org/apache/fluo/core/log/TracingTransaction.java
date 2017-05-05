@@ -61,11 +61,11 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   }
 
   public TracingTransaction(AsyncTransaction tx) {
-    this(tx, null, null);
+    this(tx, null, null, null);
   }
 
-  public TracingTransaction(AsyncTransaction tx, Class<?> clazz) {
-    this(tx, null, clazz);
+  public TracingTransaction(AsyncTransaction tx, Class<?> clazz, String txExecId) {
+    this(tx, null, clazz, txExecId);
   }
 
   private String encB(Collection<Bytes> columns) {
@@ -96,7 +96,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
         + "=" + enc(e.getValue())));
   }
 
-  public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz) {
+  public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz,
+      String txExecId) {
     this.tx = tx;
     this.txid = tx.getStartTimestamp();
 
@@ -113,6 +114,10 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
 
       if (clazz != null) {
         log.trace("txid: {} class: {}", txid, clazz.getName());
+      }
+
+      if (txExecId != null) {
+        log.trace("txid: {} identity: {}", txid, txExecId);
       }
     }
 

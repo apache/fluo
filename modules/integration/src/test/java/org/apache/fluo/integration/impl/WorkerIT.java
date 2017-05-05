@@ -76,7 +76,7 @@ public class WorkerIT extends ITBaseMini {
   public static class WorkerITObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {
-      or.register(observedColumn, STRONG, new DegreeIndexer());
+      or.forColumn(observedColumn, STRONG).useObserver(new DegreeIndexer());
     }
   }
 

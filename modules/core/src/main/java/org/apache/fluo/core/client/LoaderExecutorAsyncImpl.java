@@ -61,6 +61,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     AsyncTransaction txi;
     Loader loader;
     private AtomicBoolean done = new AtomicBoolean(false);
+    private String identity;
 
     private void close() {
       txi = null;
@@ -75,7 +76,8 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
 
 
-    public LoaderCommitObserver(Loader loader2) {
+    public LoaderCommitObserver(String alias, Loader loader2) {
+      this.identity = alias;
       this.loader = loader2;
     }
 
@@ -111,7 +113,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
       txi = new TransactionImpl(env);
 
       if (TracingTransaction.isTracingEnabled()) {
-        txi = new TracingTransaction(txi, loader.getClass());
+        txi = new TracingTransaction(txi, loader.getClass(), identity);
       }
 
       Loader.Context context = new Loader.Context() {
@@ -128,7 +130,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
       try {
         loader.load(txi, context);
-        env.getSharedResources().getCommitManager().beginCommit(txi, loader.getClass(), this);
+        env.getSharedResources().getCommitManager().beginCommit(txi, identity, this);
       } catch (Exception e) {
         setException(e);
         close();
@@ -183,6 +185,11 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
   @Override
   public void execute(Loader loader) {
+    execute(loader.getClass().getSimpleName(), loader);
+  }
+
+  @Override
+  public void execute(String alias, Loader loader) {
     if (exceptionRef.get() != null) {
       throw new RuntimeException("Previous failure", exceptionRef.get());
     }
@@ -199,7 +206,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
     try {
       commiting.increment();
-      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver(loader)));
+      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver(alias, loader)));
     } catch (RejectedExecutionException rje) {
       semaphore.release();
       commiting.decrement();
@@ -235,5 +242,4 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
       env.getSharedResources().getBatchWriter().waitForAsyncFlush();
     }
   }
-
 }

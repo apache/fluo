@@ -56,8 +56,12 @@ public class Hex {
   }
 
   public static String encNonAscii(Column col) {
+    return encNonAscii(col, " ");
+  }
+
+  public static String encNonAscii(Column col, String sep) {
     StringBuilder sb = new StringBuilder();
-    encNonAscii(sb, col, " ");
+    encNonAscii(sb, col, sep);
     return sb.toString();
   }
 
