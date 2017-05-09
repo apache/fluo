@@ -596,9 +596,16 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @Override
   public synchronized void commit() throws CommitException {
-    SyncCommitObserver sco = new SyncCommitObserver();
-    commitAsync(sco);
-    sco.waitForCommit();
+    SyncCommitObserver sco = null;
+    try {
+      sco = new SyncCommitObserver();
+      commitAsync(sco);
+      sco.waitForCommit();
+    } finally {
+      updates.clear();
+      weakNotification = null;
+      columnsRead.clear();
+    }
   }
 
   void deleteWeakRow() {
@@ -906,7 +913,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     cd.acceptedRows = new HashSet<>();
-
 
 
     ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
