@@ -15,6 +15,9 @@
 
 package org.apache.fluo.core.impl;
 
+import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
+import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,12 +30,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -78,8 +75,12 @@ import org.apache.fluo.core.util.Flutation;
 import org.apache.fluo.core.util.Hex;
 import org.apache.fluo.core.util.SpanUtil;
 
-import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
-import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Transaction implementation
@@ -596,9 +597,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @Override
   public synchronized void commit() throws CommitException {
-    SyncCommitObserver sco = new SyncCommitObserver();
-    commitAsync(sco);
-    sco.waitForCommit();
+    SyncCommitObserver sco = null;
+    try {
+      sco = new SyncCommitObserver();
+      commitAsync(sco);
+      sco.waitForCommit();
+    } finally {
+      sco = null;
+    }
   }
 
   void deleteWeakRow() {
@@ -906,7 +912,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     cd.acceptedRows = new HashSet<>();
-
 
 
     ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
