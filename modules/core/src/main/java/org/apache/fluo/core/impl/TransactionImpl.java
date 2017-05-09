@@ -604,7 +604,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     } finally {
       updates.clear();
       weakNotification = null;
-      observedColumns.clear();
       columnsRead.clear();
     }
   }
