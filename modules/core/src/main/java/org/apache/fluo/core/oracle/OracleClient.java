@@ -111,12 +111,12 @@ public class OracleClient implements AutoCloseable {
             Thread.sleep(200);
           }
 
+          leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
+
           pathChildrenCache =
               new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
           pathChildrenCache.getListenable().addListener(this);
           pathChildrenCache.start();
-
-          leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
 
           connect();
         }
