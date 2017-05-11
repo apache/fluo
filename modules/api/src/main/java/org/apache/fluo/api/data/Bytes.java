@@ -565,4 +565,72 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   public static BytesBuilder builder(int initialCapacity) {
     return new BytesBuilder(initialCapacity);
   }
+
+  /**
+   * Copy entire Bytes object to specific byte array
+   * <p>
+   * Uses the specified offset in the dest byte array to start the copy.
+   * 
+   * @see Bytes.arraycopy
+   * 
+   * @param dest destination array
+   * @param destPos starting position in the destination data.
+   * @exception IndexOutOfBoundsException if copying would cause access of data outside array
+   *            bounds.
+   * @exception ArrayStoreException if an element in the <code>src</code> array could not be stored
+   *            into the <code>dest</code> array because of a type mismatch.
+   * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
+   *            <code>null</code>.
+   */
+  public void copyTo(Object dest, int destPos) {
+    arraycopy(this, 0, dest, destPos, this.length);
+  }
+
+  /**
+   * Copy a subsequence of Bytes to specific byte array
+   * <p>
+   * Uses the specified offset in the dest byte array to start the copy.
+   * 
+   * @see Bytes.arraycopy
+   * 
+   * @param start index of subsequence start (inclusive)
+   * @param end index of subsequence end (exclusive)
+   * @param dest destination array
+   * @param destPos starting position in the destination data.
+   * @exception IndexOutOfBoundsException if copying would cause access of data outside array
+   *            bounds.
+   * @exception ArrayStoreException if an element in the <code>src</code> array could not be stored
+   *            into the <code>dest</code> array because of a type mismatch.
+   * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
+   *            <code>null</code>.
+   */
+  public void copyTo(int start, int end, Object dest, int destPos) {
+    // Using this.subSequence(start, end).copyTo(dest, destPos)
+    // would allocate another Bytes object
+    arraycopy(this, start, dest, destPos, end - start);
+  }
+
+  /**
+   * Copies an array from the specified source Bytes, beginning at the specified position, to the
+   * specified position of the destination array starting at the destPos offset. Copies the length
+   * specified to the dest array.
+   * <p>
+   * Uses {@link java.lang.System#arraycopy} under the covers, so the same exceptions can be thrown
+   * 
+   * @param src Bytes object that will converted to byte[]
+   * @param srcPos starting position in the source array.
+   * @param dest the destination array.
+   * @param destPos starting position in the destination data.
+   * @param length the number of array elements to be copied.
+   * @exception IndexOutOfBoundsException if copying would cause access of data outside array
+   *            bounds.
+   * @exception ArrayStoreException if an element in the <code>src</code> array could not be stored
+   *            into the <code>dest</code> array because of a type mismatch.
+   * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
+   *            <code>null</code>.
+   */
+  public static void arraycopy(Bytes src, int start, Object dest, int destPos, int length) {
+    System.arraycopy(src.toArray(), start, dest, destPos, length);
+  }
+
 }

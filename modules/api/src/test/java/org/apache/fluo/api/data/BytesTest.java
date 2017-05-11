@@ -15,6 +15,8 @@
 
 package org.apache.fluo.api.data;
 
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -22,7 +24,7 @@ import java.nio.ReadOnlyBufferException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -252,4 +254,80 @@ public class BytesTest {
     Assert.assertSame(s1, b1.toString());
     Assert.assertSame(s2, b2.toString());
   }
+
+  @Test
+  public void testCopyTo() {
+    Bytes field1 = Bytes.of("foo");
+    Bytes field2 = Bytes.of("bar");
+
+    byte[] dest = new byte[field1.length() + field2.length() + 1];
+
+    field1.copyTo(dest, 0);
+    dest[field1.length()] = ':';
+    field2.copyTo(dest, field1.length() + 1);
+
+    Assert.assertEquals("foo:bar", new String(dest));
+  }
+
+  @Test
+  public void testCopyToOutOfBounds() {
+    Bytes field = Bytes.of("abcdefg");
+    byte[] dest = new byte[field.length() - 1];
+    String initialDest = new String(dest);
+
+    try {
+      field.copyTo(dest, 0);
+      fail("Should not get here");
+    } catch (ArrayIndexOutOfBoundsException e) {
+      // dest should not have changed
+      Assert.assertEquals(new String(dest), initialDest);
+    }
+  }
+
+  @Test
+  public void testCopyToSubset() {
+    Bytes field = Bytes.of("abcdefg");
+    byte[] dest = new byte[4];
+
+    field.copyTo(3, 6, dest, 0);
+    String expected = "def\0";
+    String actual = new String(dest);
+
+    Assert.assertEquals(expected, actual);
+
+    field.subSequence(3, 6).copyTo(dest, 1);
+    // because offset was 1, it will replace ef\0 with def and leave d at position 0
+    Assert.assertEquals("ddef", new String(dest));
+  }
+
+  @Test
+  public void testArraycopyWithUnicode() {
+    // first observe System.arraycopy
+    String begin = "abc"; // 3 chars, 3 bytes
+    String mid1 = "†"; // 1 char, 3 bytes
+    String mid2 = "𝔊"; // 2 chars, 4 bytes
+    String end = "efghi"; // 5 chars, 5 bytes
+    Assert.assertEquals(11, begin.length() + mid1.length() + mid2.length() + end.length());
+
+    byte[] copyFrom = (begin + mid1 + mid2 + end).getBytes();
+    // [ a, b, c, †, 𝔊, e, f, g, h, i]
+    // [97, 98, 99, -30, -128, -96, -16, -99, -108, -118, 101, 102, 103, 104, 105]
+    Assert.assertEquals(15, copyFrom.length);
+
+    byte[] copyTo = new byte[9];
+    System.arraycopy(copyFrom, 2, copyTo, 0, 9);
+    Assert.assertEquals("c†𝔊e", new String(copyTo));
+
+    // now make a Bytes out of the craziness
+    BytesBuilder builder = new BytesBuilder(15);
+    builder.append(new String(copyFrom));
+    Bytes all = builder.toBytes();
+    Assert.assertEquals(15, all.length());
+
+    // and test Bytes.arraycopy works the same
+    byte[] copyTo2 = new byte[9];
+    Bytes.arraycopy(all, 2, copyTo2, 0, 9);
+    Assert.assertEquals("c†𝔊e", new String(copyTo2));
+  }
+
 }
