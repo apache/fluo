@@ -43,10 +43,10 @@
     <module>modules/mini</module>
   </modules>
   <scm>
-    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-fluo.git</developerConnection>
+    <connection>scm:git:https://gitbox.apache.org/repos/asf/incubator-fluo.git</connection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-fluo.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://git-wip-us.apache.org/repos/asf?p=incubator-fluo.git</url>
+    <url>https://gitbox.apache.org/repos/asf?p=incubator-fluo.git</url>
   </scm>
   <issueManagement>
     <system>GitHub</system>
