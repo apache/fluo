@@ -100,30 +100,30 @@ public class ScanTask implements Runnable {
         rangeData.keySet().retainAll(rangeSet);
 
         long minRetryTime = maxSleepTime + System.currentTimeMillis();
-        int notifications = 0;
+        ScanCounts ntfyCounts = new ScanCounts();
         int tabletsScanned = 0;
         try {
           for (TableRange tabletRange : ranges) {
             TabletData tabletData = rangeData.computeIfAbsent(tabletRange, tr -> new TabletData());
             if (System.currentTimeMillis() >= tabletData.retryTime) {
-              int count = 0;
+              ScanCounts counts;
               PartitionInfo pi = partitionManager.getPartitionInfo();
               if (partition.equals(pi)) {
                 try (Session session =
                     proccessor.beginAddingNotifications(rc -> tabletRange.contains(rc.getRow()))) {
                   // notifications could have been asynchronously queued for deletion. Let that
-                  // happen
-                  // 1st before scanning
+                  // happen 1st before scanning
                   env.getSharedResources().getBatchWriter().waitForAsyncFlush();
 
-                  count = scan(session, partition, tabletRange.getRange());
+                  counts = scan(session, partition, tabletRange.getRange());
                   tabletsScanned++;
                 }
               } else {
                 break;
               }
-              tabletData.updateScanCount(count, maxSleepTime);
-              notifications += count;
+              tabletData.updateScanCount(counts.added, maxSleepTime);
+              ntfyCounts.added += counts.added;
+              ntfyCounts.seen += counts.seen;
               if (stopped.get()) {
                 break;
               }
@@ -139,8 +139,8 @@ public class ScanTask implements Runnable {
 
         qSize = proccessor.size();
 
-        log.debug("Scanned {} of {} tablets, added {} new notifications (total queued {})",
-            tabletsScanned, ranges.size(), notifications, qSize);
+        log.debug("Scanned {} of {} tablets. Notifications added: {} seen: {} queued: {}",
+            tabletsScanned, ranges.size(), ntfyCounts.added, ntfyCounts.seen, qSize);
 
         if (!stopped.get()) {
           UtilWaitThread.sleep(sleepTime, stopped);
@@ -168,7 +168,13 @@ public class ScanTask implements Runnable {
     return wasInt;
   }
 
-  private int scan(Session session, PartitionInfo pi, Range range) throws TableNotFoundException {
+  private static class ScanCounts {
+    int seen = 0;
+    int added = 0;
+  }
+
+  private ScanCounts scan(Session session, PartitionInfo pi, Range range)
+      throws TableNotFoundException {
     Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
 
     scanner.setRange(range);
@@ -179,7 +185,7 @@ public class ScanTask implements Runnable {
     NotificationHashFilter.setModulusParams(iterCfg, pi.getMyGroupSize(), pi.getMyIdInGroup());
     scanner.addScanIterator(iterCfg);
 
-    int count = 0;
+    ScanCounts counts = new ScanCounts();
 
     for (Entry<Key, Value> entry : scanner) {
       if (!pi.equals(partitionManager.getPartitionInfo())) {
@@ -187,13 +193,15 @@ public class ScanTask implements Runnable {
       }
 
       if (stopped.get()) {
-        return count;
+        return counts;
       }
 
+      counts.seen++;
+
       if (session.addNotification(finder, Notification.from(entry.getKey()))) {
-        count++;
+        counts.added++;
       }
     }
-    return count;
+    return counts;
   }
 }

@@ -95,7 +95,7 @@ public class NotificationProcessor implements AutoCloseable {
         }
       }
 
-      if (queuedWork.containsKey(rowCol)) {
+      if (queuedWork.containsKey(rowCol) || recentlyDeleted.contains(rowCol)) {
         return false;
       }
 
@@ -164,7 +164,7 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
-  private static class NotificationProcessingTask implements Runnable {
+  private class NotificationProcessingTask implements Runnable {
 
     Notification notification;
     NotificationFinder notificationFinder;
@@ -184,6 +184,8 @@ public class NotificationProcessor implements AutoCloseable {
         // notification should be processed.
         if (notificationFinder.shouldProcess(notification)) {
           workTask.run();
+        } else {
+          notificationProcessed(notification);
         }
       } catch (Exception e) {
         log.error("Failed to process work " + Hex.encNonAscii(notification), e);
@@ -192,7 +194,7 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
-  private static class FutureNotificationTask extends FutureTask<Void> implements
+  private class FutureNotificationTask extends FutureTask<Void> implements
       Comparable<FutureNotificationTask> {
 
     private final Notification notification;
