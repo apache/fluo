@@ -56,9 +56,17 @@ public class LogIT extends ITBaseMini {
   private static final Column STAT_COUNT = new Column("stat", "count");
 
   static class SimpleLoader implements Loader {
-
     public void load(TransactionBase tx, Context context) throws Exception {
       TestUtil.increment(tx, "r1", new Column("a", "b"), 1);
+    }
+  }
+
+  static class SimpleBinaryLoader implements Loader {
+
+    private static final Bytes ROW = Bytes.of(new byte[] {'r', '1', 13});
+
+    public void load(TransactionBase tx, Context context) throws Exception {
+      TestUtil.increment(tx, ROW, new Column(Bytes.of("a"), Bytes.of(new byte[] {0, 9})), 1);
     }
   }
 
@@ -147,7 +155,7 @@ public class LogIT extends ITBaseMini {
 
       try (LoaderExecutor le = client.newLoaderExecutor()) {
         for (int i = 0; i < 20; i++) {
-          le.execute(new SimpleLoader());
+          le.execute(new SimpleBinaryLoader());
           le.execute(new TriggerLoader(i));
         }
       }
@@ -166,13 +174,13 @@ public class LogIT extends ITBaseMini {
 
     String pattern;
 
-    pattern = ".*txid: (\\d+) class: org.apache.fluo.integration.log.LogIT\\$SimpleLoader";
-    pattern += ".*txid: \\1 collisions: \\Q{r1=[a b ]}\\E.*";
+    pattern = ".*txid: (\\d+) class: org.apache.fluo.integration.log.LogIT\\$SimpleBinaryLoader";
+    pattern += ".*txid: \\1 collisions: \\Q[r1\\x0d=[a \\x00\\x09 ]]\\E.*";
     Assert.assertTrue(logMsgs.matches(pattern));
 
     pattern = ".*txid: (\\d+) trigger: \\d+ stat count  \\d+";
     pattern += ".*txid: \\1 class: org.apache.fluo.integration.log.LogIT\\$TestObserver";
-    pattern += ".*txid: \\1 collisions: \\Q{all=[stat count ]}\\E.*";
+    pattern += ".*txid: \\1 collisions: \\Q[all=[stat count ]]\\E.*";
     Assert.assertTrue(logMsgs.matches(pattern));
   }
 

@@ -37,6 +37,8 @@ import org.apache.fluo.core.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.fluo.core.util.Hex.encNonAscii;
+
 public class TracingTransaction extends AbstractTransactionBase implements AsyncTransaction,
     Snapshot {
 
@@ -52,12 +54,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   private Class<?> clazz;
   private boolean committed = false;
 
-  private static String enc(Bytes b) {
-    return Hex.encNonAscii(b);
-  }
-
-  private static String enc(Column c) {
-    return Hex.encNonAscii(c);
+  private static String toStringEncNonAscii(Column c) {
+    return encNonAscii(c);
   }
 
   public TracingTransaction(AsyncTransaction tx) {
@@ -68,32 +66,37 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
     this(tx, null, clazz, txExecId);
   }
 
-  private String encB(Collection<Bytes> columns) {
+  private String toStringEncNonAsciiCB(Collection<Bytes> columns) {
     return Iterators.toString(Iterators.transform(columns.iterator(), Hex::encNonAscii));
   }
 
-  private String encRC(Collection<RowColumn> ret) {
+  private String toStringEncNonAsciiCRC(Collection<RowColumn> ret) {
     return Iterators.toString(Iterators.transform(ret.iterator(), Hex::encNonAscii));
   }
 
-  private String encRC(Map<Bytes, Map<Column, Bytes>> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
-        + "=" + encC(e.getValue())));
-  }
-
-  private String encRCM(Map<RowColumn, Bytes> ret) {
+  private String toStringEncNonAsciiMBMCB(Map<Bytes, Map<Column, Bytes>> ret) {
     return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
-        e -> Hex.encNonAscii(e.getKey()) + "=" + enc(e.getValue())));
+        e -> encNonAscii(e.getKey()) + "=" + toStringEncNonAsciiMCB(e.getValue())));
+  }
+
+  private String toStringEncNonAsciiMRCB(Map<RowColumn, Bytes> ret) {
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        e -> encNonAscii(e.getKey()) + "=" + encNonAscii(e.getValue())));
   }
 
 
-  private String encC(Collection<Column> columns) {
+  private String toStringEncNonAsciiCC(Collection<Column> columns) {
     return Iterators.toString(Iterators.transform(columns.iterator(), Hex::encNonAscii));
   }
 
-  private String encC(Map<Column, Bytes> ret) {
-    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(), e -> enc(e.getKey())
-        + "=" + enc(e.getValue())));
+  private String toStringEncNonAsciiMCB(Map<Column, Bytes> ret) {
+    return Iterators.toString(Iterators.transform(ret.entrySet().iterator(),
+        e -> toStringEncNonAscii(e.getKey()) + "=" + encNonAscii(e.getValue())));
+  }
+
+  private String toStringEncNonAsciiMBSC(Map<Bytes, Set<Column>> m) {
+    return Iterators.toString(Iterators.transform(m.entrySet().iterator(),
+        e -> encNonAscii(e.getKey()) + "=" + toStringEncNonAsciiCC(e.getValue())));
   }
 
   public TracingTransaction(AsyncTransaction tx, Notification notification, Class<?> clazz,
@@ -108,8 +111,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
       log.trace("txid: {} begin() thread: {}", txid, Thread.currentThread().getId());
 
       if (notification != null) {
-        log.trace("txid: {} trigger: {} {} {}", txid, enc(notification.getRow()),
-            enc(notification.getColumn()), notification.getTimestamp());
+        log.trace("txid: {} trigger: {} {} {}", txid, encNonAscii(notification.getRow()),
+            toStringEncNonAscii(notification.getColumn()), notification.getTimestamp());
       }
 
       if (clazz != null) {
@@ -127,7 +130,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   public Bytes get(Bytes row, Column column) {
     Bytes ret = tx.get(row, column);
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} get({}, {}) -> {}", txid, enc(row), enc(column), enc(ret));
+      log.trace("txid: {} get({}, {}) -> {}", txid, encNonAscii(row), toStringEncNonAscii(column),
+          encNonAscii(ret));
     }
     return ret;
   }
@@ -136,7 +140,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     Map<Column, Bytes> ret = tx.get(row, columns);
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} get({}, {}) -> {}", txid, enc(row), encC(columns), encC(ret));
+      log.trace("txid: {} get({}, {}) -> {}", txid, encNonAscii(row),
+          toStringEncNonAsciiCC(columns), toStringEncNonAsciiMCB(ret));
     }
     return ret;
   }
@@ -145,7 +150,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     Map<Bytes, Map<Column, Bytes>> ret = tx.get(rows, columns);
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} get({}, {}) -> {}", txid, encB(rows), encC(columns), encRC(ret));
+      log.trace("txid: {} get({}, {}) -> {}", txid, toStringEncNonAsciiCB(rows),
+          toStringEncNonAsciiCC(columns), toStringEncNonAsciiMBMCB(ret));
     }
     return ret;
   }
@@ -154,7 +160,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     Map<RowColumn, Bytes> ret = tx.get(rowColumns);
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} get({}) -> {}", txid, encRC(rowColumns), encRCM(ret));
+      log.trace("txid: {} get({}) -> {}", txid, toStringEncNonAsciiCRC(rowColumns),
+          toStringEncNonAsciiMRCB(ret));
     }
     return ret;
   }
@@ -167,7 +174,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   @Override
   public void setWeakNotification(Bytes row, Column col) {
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} setWeakNotification({}, {})", txid, enc(row), enc(col));
+      log.trace("txid: {} setWeakNotification({}, {})", txid, encNonAscii(row),
+          toStringEncNonAscii(col));
     }
     tx.setWeakNotification(row, col);
   }
@@ -175,7 +183,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   @Override
   public void set(Bytes row, Column col, Bytes value) throws AlreadySetException {
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} set({}, {}, {})", txid, enc(row), enc(col), enc(value));
+      log.trace("txid: {} set({}, {}, {})", txid, encNonAscii(row), toStringEncNonAscii(col),
+          encNonAscii(value));
     }
     tx.set(row, col, value);
   }
@@ -183,7 +192,7 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
   @Override
   public void delete(Bytes row, Column col) throws AlreadySetException {
     if (log.isTraceEnabled()) {
-      log.trace("txid: {} delete({}, {})", txid, enc(row), enc(col));
+      log.trace("txid: {} delete({}, {})", txid, encNonAscii(row), toStringEncNonAscii(col));
     }
     tx.delete(row, col);
   }
@@ -212,7 +221,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
       collisionLog.trace("txid: {} class: {}", txid, clazz.getName());
     }
 
-    collisionLog.trace("txid: {} collisions: {}", txid, tx.getStats().getRejected());
+    collisionLog.trace("txid: {} collisions: {}", txid, toStringEncNonAsciiMBSC(tx.getStats()
+        .getRejected()));
   }
 
   @Override
