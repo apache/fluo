@@ -24,7 +24,6 @@ import java.nio.ReadOnlyBufferException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -319,14 +318,12 @@ public class BytesTest {
     Assert.assertEquals("c†𝔊e", new String(copyTo));
 
     // now make a Bytes out of the craziness
-    BytesBuilder builder = new BytesBuilder(15);
-    builder.append(new String(copyFrom));
-    Bytes all = builder.toBytes();
-    Assert.assertEquals(15, all.length());
+    Bytes allBytes = Bytes.of(copyFrom);
+    Assert.assertEquals(15, allBytes.length());
 
     // and test Bytes.arraycopy works the same
     byte[] copyTo2 = new byte[9];
-    Bytes.arraycopy(all, 2, copyTo2, 0, 9);
+    Bytes.arraycopy(allBytes, 2, copyTo2, 0, 9);
     Assert.assertEquals("c†𝔊e", new String(copyTo2));
   }
 
