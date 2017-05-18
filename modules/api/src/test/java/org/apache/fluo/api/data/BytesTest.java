@@ -300,7 +300,7 @@ public class BytesTest {
   }
 
   @Test
-  public void testArraycopyWithUnicode() {
+  public void testCopyToWithUnicode() {
     // first observe System.arraycopy
     String begin = "abc"; // 3 chars, 3 bytes
     String mid1 = "†"; // 1 char, 3 bytes
@@ -309,8 +309,10 @@ public class BytesTest {
     Assert.assertEquals(11, begin.length() + mid1.length() + mid2.length() + end.length());
 
     byte[] copyFrom = (begin + mid1 + mid2 + end).getBytes();
-    // [ a, b, c, †, 𝔊, e, f, g, h, i]
+    //@formatter:off
+    // [ a,  b,  c,              †,                    𝔊,   e,   f,   g,   h,   i]
     // [97, 98, 99, -30, -128, -96, -16, -99, -108, -118, 101, 102, 103, 104, 105]
+    //@formatter:on
     Assert.assertEquals(15, copyFrom.length);
 
     byte[] copyTo = new byte[9];
@@ -323,7 +325,7 @@ public class BytesTest {
 
     // and test Bytes.arraycopy works the same
     byte[] copyTo2 = new byte[9];
-    Bytes.arraycopy(allBytes, 2, copyTo2, 0, 9);
+    allBytes.copyTo(2, 11, copyTo2, 0);
     Assert.assertEquals("c†𝔊e", new String(copyTo2));
   }
 
