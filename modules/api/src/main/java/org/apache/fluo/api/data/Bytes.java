@@ -567,11 +567,8 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * Copy entire Bytes object to specific byte array
-   * <p>
-   * Uses the specified offset in the dest byte array to start the copy.
-   * 
-   * @see Bytes.arraycopy
+   * Copy entire Bytes object to specific byte array. Uses the specified offset in the dest byte
+   * array to start the copy. See {@link org.apache.fluo.api.data.Bytes#arraycopy}.
    * 
    * @param dest destination array
    * @param destPos starting position in the destination data.
@@ -587,11 +584,8 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * Copy a subsequence of Bytes to specific byte array
-   * <p>
-   * Uses the specified offset in the dest byte array to start the copy.
-   * 
-   * @see Bytes.arraycopy
+   * Copy a subsequence of Bytes to specific byte array. Uses the specified offset in the dest byte
+   * array to start the copy. See {@link org.apache.fluo.api.data.Bytes#arraycopy}.
    * 
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
@@ -613,12 +607,11 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   /**
    * Copies an array from the specified source Bytes, beginning at the specified position, to the
    * specified position of the destination array starting at the destPos offset. Copies the length
-   * specified to the dest array.
-   * <p>
-   * Uses {@link java.lang.System#arraycopy} under the covers, so the same exceptions can be thrown
+   * specified to the dest array. Uses {@link java.lang.System#arraycopy} under the covers, so the
+   * same exceptions can be thrown
    * 
    * @param src Bytes object that will converted to byte[]
-   * @param srcPos starting position in the source array.
+   * @param start starting position in the source array.
    * @param dest the destination array.
    * @param destPos starting position in the destination data.
    * @param length the number of array elements to be copied.
