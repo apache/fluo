@@ -568,7 +568,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Copy entire Bytes object to specific byte array. Uses the specified offset in the dest byte
-   * array to start the copy. See {@link org.apache.fluo.api.data.Bytes#arraycopy}.
+   * array to start the copy.
    * 
    * @param dest destination array
    * @param destPos starting position in the destination data.
@@ -576,6 +576,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    *            bounds.
    * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
    *            <code>null</code>.
+   * @since 1.1.0
    */
   public void copyTo(byte[] dest, int destPos) {
     arraycopy(0, dest, destPos, this.length);
@@ -583,7 +584,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Copy a subsequence of Bytes to specific byte array. Uses the specified offset in the dest byte
-   * array to start the copy. See {@link org.apache.fluo.api.data.Bytes#arraycopy}.
+   * array to start the copy.
    * 
    * @param start index of subsequence start (inclusive)
    * @param end index of subsequence end (exclusive)
@@ -593,6 +594,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    *            bounds.
    * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
    *            <code>null</code>.
+   * @since 1.1.0
    */
   public void copyTo(int start, int end, byte[] dest, int destPos) {
     // this.subSequence(start, end).copyTo(dest, destPos) would allocate another Bytes object

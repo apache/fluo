@@ -300,6 +300,29 @@ public class BytesTest {
   }
 
   @Test
+  public void testCopyToArgsReversed() {
+    Bytes field = Bytes.of("abcdefg");
+    byte[] dest = new byte[4];
+
+    try {
+      field.copyTo(6, 3, dest, 0);
+      fail("should not get here");
+    } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+      Assert.assertEquals("\0\0\0\0", new String(dest));
+    }
+  }
+
+  @Test
+  public void testCopyToNothing() {
+    Bytes field = Bytes.of("abcdefg");
+    byte[] dest = new byte[4];
+
+    field.copyTo(3, 3, dest, 0);
+    // should not have changed
+    Assert.assertEquals("\0\0\0\0", new String(dest));
+  }
+
+  @Test
   public void testCopyToWithUnicode() {
     // first observe System.arraycopy
     String begin = "abc"; // 3 chars, 3 bytes
