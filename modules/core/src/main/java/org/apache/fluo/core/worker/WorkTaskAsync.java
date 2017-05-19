@@ -85,7 +85,13 @@ public class WorkTaskAsync implements Runnable {
         atx = new TracingTransaction(atx, notification, observer.getClass(), observerId);
       }
 
-      observer.process(atx, notification.getRow(), notification.getColumn());
+      try {
+        observer.process(atx, notification.getRow(), notification.getColumn());
+      } catch (Exception e) {
+        notificationFinder.failedToProcess(notification, TxResult.ERROR);
+        notificationProcessor.notificationProcessed(notification);
+        throw e;
+      }
 
       CommitManager commitManager = env.getSharedResources().getCommitManager();
       commitManager.beginCommit(atx, observerId, new WorkTaskCommitObserver());
