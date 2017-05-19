@@ -565,4 +565,45 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   public static BytesBuilder builder(int initialCapacity) {
     return new BytesBuilder(initialCapacity);
   }
+
+  /**
+   * Copy entire Bytes object to specific byte array. Uses the specified offset in the dest byte
+   * array to start the copy.
+   * 
+   * @param dest destination array
+   * @param destPos starting position in the destination data.
+   * @exception IndexOutOfBoundsException if copying would cause access of data outside array
+   *            bounds.
+   * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
+   *            <code>null</code>.
+   * @since 1.1.0
+   */
+  public void copyTo(byte[] dest, int destPos) {
+    arraycopy(0, dest, destPos, this.length);
+  }
+
+  /**
+   * Copy a subsequence of Bytes to specific byte array. Uses the specified offset in the dest byte
+   * array to start the copy.
+   * 
+   * @param start index of subsequence start (inclusive)
+   * @param end index of subsequence end (exclusive)
+   * @param dest destination array
+   * @param destPos starting position in the destination data.
+   * @exception IndexOutOfBoundsException if copying would cause access of data outside array
+   *            bounds.
+   * @exception NullPointerException if either <code>src</code> or <code>dest</code> is
+   *            <code>null</code>.
+   * @since 1.1.0
+   */
+  public void copyTo(int start, int end, byte[] dest, int destPos) {
+    // this.subSequence(start, end).copyTo(dest, destPos) would allocate another Bytes object
+    arraycopy(start, dest, destPos, end - start);
+  }
+
+  private void arraycopy(int start, byte[] dest, int destPos, int length) {
+    // since dest is byte[], we can't get the ArrayStoreException
+    System.arraycopy(this.data, start + this.offset, dest, destPos, length);
+  }
+
 }
