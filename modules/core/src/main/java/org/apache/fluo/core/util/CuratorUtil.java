@@ -58,7 +58,7 @@ public class CuratorUtil {
    * chroot.
    */
   public static CuratorFramework newFluoCurator(FluoConfiguration config) {
-    return newCurator(config.getInstanceZookeepers(), config.getZookeeperTimeout());
+    return newCurator(config.getConnectionZookeepers(), config.getZookeeperTimeout());
   }
 
   /**
@@ -66,7 +66,7 @@ public class CuratorUtil {
    * "/" of Zookeeper.
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
-    return newCurator(ZookeeperUtil.parseServers(config.getInstanceZookeepers()),
+    return newCurator(ZookeeperUtil.parseServers(config.getConnectionZookeepers()),
         config.getZookeeperTimeout());
   }
 

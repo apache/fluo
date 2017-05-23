@@ -90,7 +90,7 @@ public interface ObserverProvider {
        * <pre>
        * <code>
        *   void provide(ObserverRegistry or, Context ctx) {
-       *     or.forColumn(someColumn, WEAK).useStrObserver((tx,row,col) -> {
+       *     or.forColumn(someColumn, WEAK).useStrObserver((tx,row,col) -&gt; {
        *      //row is of type String
        *     };
        *   }

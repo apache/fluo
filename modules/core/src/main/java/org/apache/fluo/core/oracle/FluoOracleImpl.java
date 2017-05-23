@@ -44,7 +44,7 @@ public class FluoOracleImpl implements FluoOracle {
     Objects.requireNonNull(config);
     Preconditions.checkArgument(config.hasRequiredOracleProps());
     // any client in oracle should retry forever
-    config.setClientRetryTimeout(-1);
+    config.setConnectionRetryTimeout(-1);
     try {
       config.validate();
     } catch (Exception e) {

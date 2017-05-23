@@ -50,9 +50,15 @@ public class FluoClientImpl implements FluoClient {
   }
 
   public FluoClientImpl(FluoConfiguration config) {
+    if (!config.hasRequiredConnectionProps()) {
+      String msg = "FluoConfiguration is missing required 'connection' properties";
+      log.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+    FluoAdminImpl.readSharedConfig(config);
     this.config = config;
     if (!config.hasRequiredClientProps()) {
-      String msg = "Client configuration is missing required properties";
+      String msg = "FluoConfiguration is missing required 'client' properties";
       log.error(msg);
       throw new IllegalArgumentException(msg);
     }

@@ -83,7 +83,7 @@ public class FluoInstall {
           + "' does not match given appName: " + appName);
     }
     if (debug) {
-      System.out.println("Connecting to Fluo instance (" + config.getInstanceZookeepers()
+      System.out.println("Connecting to Fluo instance (" + config.getConnectionZookeepers()
           + ") using config (" + stripFluoHomeDir(propsPath) + ")");
     }
     return config;
@@ -102,7 +102,7 @@ public class FluoInstall {
     String propsPath = getFluoPropsPath();
     FluoConfiguration config = new FluoConfiguration(new File(propsPath));
     if (debug) {
-      System.out.println("Connecting to Fluo instance (" + config.getInstanceZookeepers()
+      System.out.println("Connecting to Fluo instance (" + config.getConnectionZookeepers()
           + ") using config (" + stripFluoHomeDir(propsPath) + ")");
     }
     return config;

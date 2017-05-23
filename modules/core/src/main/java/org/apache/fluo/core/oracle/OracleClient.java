@@ -365,7 +365,7 @@ public class OracleClient implements AutoCloseable {
     TimeRequest tr = new TimeRequest();
     try {
       queue.put(tr);
-      int timeout = env.getConfiguration().getClientRetryTimeout();
+      int timeout = env.getConfiguration().getConnectionRetryTimeout();
       if (timeout < 0) {
         long waitPeriod = 1;
         long waitTotal = 0;

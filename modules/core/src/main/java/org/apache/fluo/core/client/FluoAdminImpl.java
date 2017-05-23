@@ -15,6 +15,7 @@
 
 package org.apache.fluo.core.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -84,9 +85,10 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void initialize(InitializationOptions opts) throws AlreadyInitializedException,
       TableExistsException {
-    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers())
-        .equals("/"), "The Zookeeper connection string (set by 'fluo.client.zookeeper.connect') "
-        + " must have a chroot suffix.");
+    Preconditions.checkArgument(
+        !ZookeeperUtil.parseRoot(config.getConnectionZookeepers()).equals("/"),
+        "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
+            + " must have a chroot suffix.");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException("Fluo application already initialized at "
@@ -207,9 +209,7 @@ public class FluoAdminImpl implements FluoAdmin {
     Iterator<String> iter = config.getKeys();
     while (iter.hasNext()) {
       String key = iter.next();
-      if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
-        sharedProps.setProperty(key, Long.toString(config.getLong(key)));
-      } else if (key.startsWith(FluoConfiguration.APP_PREFIX)) {
+      if (!key.startsWith(FluoConfiguration.CONNECTION_PREFIX)) {
         sharedProps.setProperty(key, config.getRawString(key));
       }
     }
@@ -225,6 +225,23 @@ public class FluoAdminImpl implements FluoAdmin {
           CuratorUtil.NodeExistsPolicy.OVERWRITE);
     } catch (Exception e) {
       throw new FluoException("Failed to update shared configuration in Zookeeper", e);
+    }
+  }
+
+  public static void readSharedConfig(FluoConfiguration config) {
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
+      curator.start();
+
+      ByteArrayInputStream bais =
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
+      Properties sharedProps = new Properties();
+      sharedProps.load(bais);
+
+      for (String prop : sharedProps.stringPropertyNames()) {
+        config.setProperty(prop, sharedProps.getProperty(prop));
+      }
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
     }
   }
 
