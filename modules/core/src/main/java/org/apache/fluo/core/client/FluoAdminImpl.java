@@ -15,7 +15,13 @@
 
 package org.apache.fluo.core.client;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -26,6 +32,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -44,6 +51,9 @@ import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
@@ -64,9 +74,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
-    if (!config.hasRequiredAdminProps()) {
-      throw new IllegalArgumentException("Admin configuration is missing required properties");
-    }
+
 
     appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
     rootCurator = CuratorUtil.newRootFluoCurator(config);
@@ -84,8 +92,11 @@ public class FluoAdminImpl implements FluoAdmin {
   @Override
   public void initialize(InitializationOptions opts) throws AlreadyInitializedException,
       TableExistsException {
+    if (!config.hasRequiredAdminProps()) {
+      throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
     Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers())
-        .equals("/"), "The Zookeeper connection string (set by 'fluo.client.zookeeper.connect') "
+        .equals("/"), "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
         + " must have a chroot suffix.");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
@@ -128,19 +139,38 @@ public class FluoAdminImpl implements FluoAdmin {
 
     try {
       initialize(conn);
-      updateSharedConfig();
 
-      if (!config.getAccumuloClasspath().trim().isEmpty()) {
-        // TODO add fluo version to context name to make it unique
-        String contextName = "fluo";
+      String accumuloJars;
+      if (!config.getAccumuloJars().trim().isEmpty()) {
+        accumuloJars = config.getAccumuloJars().trim();
+      } else {
+        accumuloJars = getJarsFromClasspath();
+      }
+
+      String accumuloClasspath;
+      if (!accumuloJars.isEmpty()) {
+        accumuloClasspath = copyJarsToHdfs(accumuloJars, "lib/accumulo");
+      } else {
+        accumuloClasspath = config.getAccumuloClasspath().trim();
+      }
+
+      if (!accumuloClasspath.isEmpty()) {
+        String contextName = "fluo-" + config.getApplicationName();
         conn.instanceOperations().setProperty(
-            AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + "fluo", config.getAccumuloClasspath());
+            AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + contextName, accumuloClasspath);
         conn.tableOperations().setProperty(config.getAccumuloTable(),
             AccumuloProps.TABLE_CLASSPATH, contextName);
       }
 
+      if (config.getObserverJarsUrl().isEmpty() && !config.getObserverInitDir().trim().isEmpty()) {
+        String observerUrl = copyDirToHdfs(config.getObserverInitDir().trim(), "lib/observers");
+        config.setObserverJarsUrl(observerUrl);
+      }
+
       conn.tableOperations().setProperty(config.getAccumuloTable(),
           AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
+
+      updateSharedConfig();
     } catch (NodeExistsException nee) {
       throw new AlreadyInitializedException();
     } catch (Exception e) {
@@ -202,14 +232,14 @@ public class FluoAdminImpl implements FluoAdmin {
 
   @Override
   public void updateSharedConfig() {
-
+    if (!config.hasRequiredAdminProps()) {
+      throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
     Properties sharedProps = new Properties();
     Iterator<String> iter = config.getKeys();
     while (iter.hasNext()) {
       String key = iter.next();
-      if (key.equals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_PROP)) {
-        sharedProps.setProperty(key, Long.toString(config.getLong(key)));
-      } else if (key.startsWith(FluoConfiguration.APP_PREFIX)) {
+      if (!key.startsWith(FluoConfiguration.CONNECTION_PREFIX)) {
         sharedProps.setProperty(key, config.getRawString(key));
       }
     }
@@ -229,10 +259,125 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   @Override
+  public FluoConfiguration getSharedConfig() {
+    FluoConfiguration copy = new FluoConfiguration(config);
+    readSharedConfig(copy);
+    return copy;
+  }
+
+  private String copyDirToHdfs(String srcDir, String destDir) {
+    return copyDirToHdfs(config.getHdfsRoot(), config.getApplicationName(), srcDir, destDir);
+  }
+
+  @VisibleForTesting
+  public static String copyDirToHdfs(String hdfsRoot, String appName, String srcDir, String destDir) {
+    String hdfsAppRoot = hdfsRoot + "/" + appName;
+    String hdfsDestDir = hdfsAppRoot + "/" + destDir;
+
+    FileSystem fs;
+    try {
+      fs = FileSystem.get(new URI(hdfsRoot), new Configuration());
+      fs.delete(new Path(hdfsDestDir), true);
+      fs.mkdirs(new Path(hdfsAppRoot));
+      fs.copyFromLocalFile(new Path(srcDir), new Path(hdfsDestDir));
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+    return hdfsDestDir;
+  }
+
+  private String copyJarsToHdfs(String jars, String destDir) {
+    String hdfsAppRoot = config.getHdfsRoot() + "/" + config.getApplicationName();
+    String hdfsDestDir = hdfsAppRoot + "/" + destDir;
+
+    FileSystem fs;
+    try {
+      fs = FileSystem.get(new URI(config.getHdfsRoot()), new Configuration());
+      fs.mkdirs(new Path(hdfsDestDir));
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+
+    StringBuilder classpath = new StringBuilder();
+    for (String jarPath : jars.split(",")) {
+      File jarFile = new File(jarPath);
+      String jarName = jarFile.getName();
+      try {
+        fs.copyFromLocalFile(new Path(jarPath), new Path(hdfsDestDir));
+      } catch (IOException e) {
+        logger.error("Failed to copy file {} to HDFS directory {}", jarPath, hdfsDestDir);
+      }
+      if (classpath.length() != 0) {
+        classpath.append(",");
+      }
+      classpath.append(hdfsDestDir + "/" + jarName);
+    }
+    return classpath.toString();
+  }
+
+  public static boolean isInitialized(FluoConfiguration config) {
+    try (CuratorFramework rootCurator = CuratorUtil.newRootFluoCurator(config)) {
+      rootCurator.start();
+      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
+      return rootCurator.checkExists().forPath(appRootDir) != null;
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public static void readSharedConfig(FluoConfiguration config) {
+    if (!isInitialized(config)) {
+      throw new IllegalStateException("Fluo Application '" + config.getApplicationName()
+          + "' has not been initialized");
+    }
+
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
+      curator.start();
+
+      ByteArrayInputStream bais =
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
+      Properties sharedProps = new Properties();
+      sharedProps.load(bais);
+
+      for (String prop : sharedProps.stringPropertyNames()) {
+        config.setProperty(prop, sharedProps.getProperty(prop));
+      }
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Override
   public void close() {
     rootCurator.close();
     if (appCurator != null) {
       appCurator.close();
+    }
+  }
+
+  private String getJarsFromClasspath() {
+    StringBuilder jars = new StringBuilder();
+    ClassLoader cl = ClassLoader.getSystemClassLoader();
+    URL[] urls = ((URLClassLoader) cl).getURLs();
+    for (URL url : urls) {
+      String jarName = new File(url.getFile()).getName();
+      if (jarName.startsWith("fluo-api-") || jarName.startsWith("fluo-accumulo-")) {
+        if (jars.length() != 0) {
+          jars.append(",");
+        }
+        jars.append(url.getFile());
+      }
+    }
+    return jars.toString();
+  }
+
+  public static boolean oracleExists(FluoConfiguration config) {
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
+      curator.start();
+      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
+          && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -255,6 +400,9 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public boolean accumuloTableExists() {
+    if (!config.hasRequiredAdminProps()) {
+      throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
     Connector conn = AccumuloUtil.getConnector(config);
     return conn.tableOperations().exists(config.getAccumuloTable());
   }

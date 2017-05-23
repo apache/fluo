@@ -75,7 +75,7 @@ public class WorkerRunnable extends AbstractTwillRunnable {
         System.exit(-1);
       }
       // any client in worker should retry forever
-      config.setClientRetryTimeout(-1);
+      config.setConnectionRetryTimeout(-1);
 
       try {
         config.validate();

@@ -13,48 +13,65 @@
  * the License.
  */
 
-package org.apache.fluo.core.client;
+package org.apache.fluo.integration.client;
 
+import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
+import org.apache.fluo.core.client.FluoClientImpl;
+import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class FluoClientTest {
+public class FluoClientIT extends ITBaseImpl {
+
+  @Test
+  public void testBasic() {
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      client.newSnapshot();
+    }
+
+    FluoConfiguration fluoConfig = new FluoConfiguration();
+    fluoConfig.setApplicationName(config.getApplicationName());
+    fluoConfig.setInstanceZookeepers(config.getInstanceZookeepers());
+
+    try (FluoClient client = FluoFactory.newClient(fluoConfig)) {
+      client.newSnapshot();
+    }
+
+    try (FluoClientImpl client = new FluoClientImpl(fluoConfig)) {
+      client.newSnapshot();
+      FluoConfiguration sharedConfig = client.getSharedConfiguration();
+      Assert.assertEquals(config.getAccumuloTable(), sharedConfig.getAccumuloTable());
+      Assert.assertEquals(config.getAccumuloInstance(), sharedConfig.getAccumuloInstance());
+      Assert.assertEquals(config.getAccumuloUser(), sharedConfig.getAccumuloUser());
+      Assert.assertEquals(config.getZookeeperTimeout(), sharedConfig.getZookeeperTimeout());
+      Assert.assertEquals(config.getTransactionRollbackTime(),
+          sharedConfig.getTransactionRollbackTime());
+    }
+  }
 
   @Test
   public void testFailures() {
-
     // we are expecting errors in this test
     Level clientLevel = Logger.getLogger(FluoClientImpl.class).getLevel();
     Logger.getLogger(FluoClientImpl.class).setLevel(Level.FATAL);
     Level factoryLevel = Logger.getLogger(FluoFactory.class).getLevel();
     Logger.getLogger(FluoFactory.class).setLevel(Level.FATAL);
 
-    FluoConfiguration config = new FluoConfiguration();
+    FluoConfiguration fluoConfig = new FluoConfiguration();
     try {
-      FluoFactory.newClient(config);
+      FluoFactory.newClient(fluoConfig);
       Assert.fail();
     } catch (FluoException e) {
     }
 
-    try (FluoClientImpl impl = new FluoClientImpl(config)) {
+    try (FluoClientImpl impl = new FluoClientImpl(fluoConfig)) {
       Assert.fail("FluoClientImpl was " + impl);
     } catch (IllegalArgumentException e) {
-    }
-
-    config.setApplicationName("test");
-    config.setAccumuloUser("test");
-    config.setAccumuloPassword("test");
-    config.setAccumuloInstance("test");
-    config.setZookeeperTimeout(5);
-
-    try (FluoClientImpl impl = new FluoClientImpl(config)) {
-      Assert.fail("FluoClientImpl was " + impl);
-    } catch (IllegalStateException e) {
     }
 
     Logger.getLogger(FluoClientImpl.class).setLevel(clientLevel);
