@@ -87,14 +87,20 @@ public class FluoFactory {
   }
 
   /**
-   * Creates a {@link FluoOracle} using the provided configuration.
+   * Creates a {@link FluoOracle}. Configuration (see {@link FluoConfiguration}) should contain
+   * properties with connection.* prefix. Please review all connection.* properties
+   * but many have a default. At a minimum, configuration should contain the following properties
+   * that have no default: fluo.connection.application.name
    */
   public static FluoOracle newOracle(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, ORACLE_CLASS_PROP, ORACLE_CLASS_DEFAULT);
   }
 
   /**
-   * Creates a {@link FluoWorker} using the provided configuration.
+   * Creates a {@link FluoWorker}. Configuration (see {@link FluoConfiguration}) should contain
+   * properties with connection.* prefix. Please review all connection.* properties
+   * but many have a default. At a minimum, configuration should contain the following properties
+   * that have no default: fluo.connection.application.name
    */
   public static FluoWorker newWorker(SimpleConfiguration configuration) {
     return getAndBuildClassWithConfig(configuration, WORKER_CLASS_PROP, WORKER_CLASS_DEFAULT);
