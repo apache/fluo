@@ -76,7 +76,6 @@ public class ScanTask implements Runnable {
   @Override
   public void run() {
 
-
     List<TableRange> ranges = new ArrayList<>();
     Set<TableRange> rangeSet = new HashSet<>();
 
@@ -135,7 +134,12 @@ public class ScanTask implements Runnable {
           // nothing to do
         }
 
-        long sleepTime = Math.max(minSleepTime, minRetryTime - System.currentTimeMillis());
+        long sleepTime;
+        if (!partition.equals(partitionManager.getPartitionInfo())) {
+          sleepTime = minSleepTime;
+        } else {
+          sleepTime = Math.max(minSleepTime, minRetryTime - System.currentTimeMillis());
+        }
 
         qSize = proccessor.size();
 
