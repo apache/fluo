@@ -13,7 +13,7 @@
 language: java
 jdk:
   - oraclejdk8
-script: mvn verify
+script: mvn verify javadoc:jar
 notifications:
   irc:
     channels:

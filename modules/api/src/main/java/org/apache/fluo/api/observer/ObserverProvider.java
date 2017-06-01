@@ -67,7 +67,7 @@ public interface ObserverProvider {
 
     /**
      * The terminal part of a Fluent API for registering observers.
-     * 
+     *
      * @since 1.1.0
      */
     interface ObserverArgument {
@@ -75,22 +75,22 @@ public interface ObserverProvider {
       /**
        * Calling this method registers the given observer using the parameters previously passed to
        * the Fluent API.
-       * 
+       *
        */
       void useObserver(Observer observer);
 
       /**
        * Calling this method registers the given observer using the parameters previously passed to
        * the Fluent API.
-       * 
+       *
        * <p>
        * This method was created to allow Observers written as lambda to be passed {@link String}
        * instead of {@link Bytes} for the row.
-       * 
+       *
        * <pre>
        * <code>
        *   void provide(ObserverRegistry or, Context ctx) {
-       *     or.forColumn(someColumn, WEAK).useStrObserver((tx,row,col) -> {
+       *     or.forColumn(someColumn, WEAK).useStrObserver((tx,row,col) -&gt; {
        *      //row is of type String
        *     };
        *   }
@@ -102,7 +102,7 @@ public interface ObserverProvider {
 
     /**
      * One part of a Fluent API for registering observers.
-     * 
+     *
      * @since 1.1.0
      */
     interface IdentityOption extends ObserverArgument {
