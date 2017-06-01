@@ -63,7 +63,7 @@ public class HashTest {
     byte[] cfcq = NotificationUtil.encodeCol(col);
     Key k = new Key(row, ColumnConstants.NOTIFY_CF.toArray(), cfcq, new byte[0], 6);
     boolean accept = NotificationHashFilter.accept(k, 7, 3);
-    Assert.assertEquals(accept, ParitionManager.shouldProcess(Notification.from(k), 7, 3));
+    Assert.assertEquals(accept, PartitionManager.shouldProcess(Notification.from(k), 7, 3));
     return accept;
   }
 }

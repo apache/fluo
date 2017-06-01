@@ -47,7 +47,7 @@ public class ScanTask implements Runnable {
   private static final Logger log = LoggerFactory.getLogger(ScanTask.class);
 
   private final NotificationFinder finder;
-  private final ParitionManager partitionManager;
+  private final PartitionManager partitionManager;
   private final NotificationProcessor proccessor;
   private final Random rand = new Random();
   private final AtomicBoolean stopped;
@@ -58,7 +58,7 @@ public class ScanTask implements Runnable {
   private long maxSleepTime;
 
   ScanTask(NotificationFinder finder, NotificationProcessor proccessor,
-      ParitionManager partitionManager, Environment env, AtomicBoolean stopped, long minSleepTime,
+      PartitionManager partitionManager, Environment env, AtomicBoolean stopped, long minSleepTime,
       long maxSleepTime) {
     this.finder = finder;
     this.rangeData = new HashMap<>();

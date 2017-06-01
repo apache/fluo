@@ -26,7 +26,7 @@ import org.apache.fluo.core.worker.TxResult;
 
 public class PartitionNotificationFinder implements NotificationFinder {
 
-  private ParitionManager paritionManager;
+  private PartitionManager partitionManager;
   private Thread scanThread;
   private NotificationProcessor processor;
   private Environment env;
@@ -49,10 +49,10 @@ public class PartitionNotificationFinder implements NotificationFinder {
         env.getConfiguration().getInt(FluoConfigurationImpl.NTFY_FINDER_MAX_SLEEP_TIME_PROP,
             FluoConfigurationImpl.NTFY_FINDER_MAX_SLEEP_TIME_DEFAULT);
 
-    paritionManager = new ParitionManager(env, minSleepTime, maxSleepTime);
+    partitionManager = new PartitionManager(env, minSleepTime, maxSleepTime);
 
     scanThread =
-        new Thread(new ScanTask(this, processor, paritionManager, env, stopped, minSleepTime,
+        new Thread(new ScanTask(this, processor, partitionManager, env, stopped, minSleepTime,
             maxSleepTime));
     scanThread.setName(getClass().getSimpleName() + " " + ScanTask.class.getSimpleName());
     scanThread.setDaemon(true);
@@ -70,12 +70,12 @@ public class PartitionNotificationFinder implements NotificationFinder {
       throw new RuntimeException(e);
     }
 
-    paritionManager.stop();
+    partitionManager.stop();
   }
 
   @Override
   public boolean shouldProcess(Notification notification) {
-    return paritionManager.shouldProcess(notification);
+    return partitionManager.shouldProcess(notification);
   }
 
   @Override
