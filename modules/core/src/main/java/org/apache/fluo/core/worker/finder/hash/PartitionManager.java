@@ -67,9 +67,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * notifications. This limitation is important for scaling, even if there are 1,000 workers there
  * will never be more than 7 to 13 workers scanning a portion of the table.
  */
-public class ParitionManager {
+public class PartitionManager {
 
-  private static final Logger log = LoggerFactory.getLogger(ParitionManager.class);
+  private static final Logger log = LoggerFactory.getLogger(PartitionManager.class);
 
   private final PathChildrenCache childrenCache;
   private final PersistentEphemeralNode myESNode;
@@ -267,7 +267,7 @@ public class ParitionManager {
     }
   }
 
-  ParitionManager(Environment env, long minSleepTime, long maxSleepTime) {
+  PartitionManager(Environment env, long minSleepTime, long maxSleepTime) {
     try {
       this.curator = env.getSharedResources().getCurator();
       this.env = env;

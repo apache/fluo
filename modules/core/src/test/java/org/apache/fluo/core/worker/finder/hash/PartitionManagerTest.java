@@ -59,7 +59,7 @@ public class PartitionManagerTest {
 
           for (int i = 0; i < numWorkers; i++) {
             String me = nff.apply(i);
-            PartitionInfo pi = ParitionManager.getGroupInfo(me, children, tablets, groupSize);
+            PartitionInfo pi = PartitionManager.getGroupInfo(me, children, tablets, groupSize);
             Assert.assertEquals(expectedGroups, pi.getNumGroups());
             Assert.assertTrue(pi.getMyGroupSize() >= Math.min(numWorkers, groupSize)
                 && pi.getMyGroupSize() <= maxGroupSize);
