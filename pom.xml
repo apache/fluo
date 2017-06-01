@@ -360,6 +360,20 @@
   </build>
   <profiles>
     <profile>
+      <!-- This profile skips all Quality Assurance checks  -->
+      <id>skipQA</id>
+      <properties>
+        <accumulo.skip>true</accumulo.skip>
+        <checkstyle.skip>true</checkstyle.skip>
+        <findbugs.skip>true</findbugs.skip>
+        <mdep.analyze.skip>true</mdep.analyze.skip>
+        <modernizer.skip>true</modernizer.skip>
+        <rat.skip>true</rat.skip>
+        <skipITs>true</skipITs>
+        <skipTests>true</skipTests>
+      </properties>
+    </profile>
+    <profile>
       <id>fluo-release</id>
       <!-- some properties to make the release build a bit faster -->
       <properties>
