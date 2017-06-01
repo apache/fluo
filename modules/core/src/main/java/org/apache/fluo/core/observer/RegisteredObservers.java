@@ -15,14 +15,13 @@
 
 package org.apache.fluo.core.observer;
 
-import java.util.Set;
-
+import com.google.common.collect.ImmutableSet;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
 
 public interface RegisteredObservers {
-  Set<Column> getObservedColumns(Observer.NotificationType nt);
+  ImmutableSet<Column> getObservedColumns(Observer.NotificationType nt);
 
   Observers getObservers(Environment env);
 }

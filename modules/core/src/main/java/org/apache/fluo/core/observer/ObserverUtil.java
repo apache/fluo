@@ -15,9 +15,7 @@
 
 package org.apache.fluo.core.observer;
 
-import java.util.Collections;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableSet;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
@@ -99,8 +97,8 @@ public class ObserverUtil {
         }
 
         @Override
-        public Set<Column> getObservedColumns(NotificationType nt) {
-          return Collections.emptySet();
+        public ImmutableSet<Column> getObservedColumns(NotificationType nt) {
+          return ImmutableSet.of();
         }
       };
     }

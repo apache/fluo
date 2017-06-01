@@ -16,8 +16,8 @@
 package org.apache.fluo.core.observer.v2;
 
 import java.util.Map;
-import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import org.apache.fluo.api.data.Column;
@@ -33,8 +33,8 @@ class ObserversV2 implements Observers {
   Map<Column, Observer> observers;
   Map<Column, String> aliases;
 
-  public ObserversV2(Environment env, JsonObservers jco, Set<Column> strongColumns,
-      Set<Column> weakColumns) {
+  public ObserversV2(Environment env, JsonObservers jco, ImmutableSet<Column> strongColumns,
+      ImmutableSet<Column> weakColumns) {
 
     ObserverProvider obsProvider =
         ObserverStoreV2.newObserverProvider(jco.getObserverProviderClass());

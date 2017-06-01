@@ -21,12 +21,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -38,9 +39,9 @@ import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.Observer.ObservedColumn;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.RegisteredObservers;
-import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.observer.ObserverStore;
+import org.apache.fluo.core.observer.Observers;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.util.ColumnUtil;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.hadoop.io.WritableUtils;
@@ -158,10 +159,12 @@ public class ObserverStoreV1 implements ObserverStore {
   }
 
 
-  private static Map<Column, ObserverSpecification> readObservers(DataInputStream dis)
+  private static ImmutableMap<Column, ObserverSpecification> readObservers(DataInputStream dis)
       throws IOException {
 
-    HashMap<Column, ObserverSpecification> omap = new HashMap<>();
+    ImmutableMap.Builder<Column, ObserverSpecification> omapBuilder =
+        new ImmutableMap.Builder<Column, ObserverSpecification>();
+    ImmutableMap<Column, ObserverSpecification> omap = ImmutableMap.of();
 
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
@@ -176,17 +179,17 @@ public class ObserverStoreV1 implements ObserverStore {
       }
 
       ObserverSpecification ospec = new ObserverSpecification(clazz, params);
-      omap.put(col, ospec);
+      omapBuilder.put(col, ospec);
     }
-
+    omap = omapBuilder.build();
     return omap;
   }
 
   @Override
   public RegisteredObservers load(CuratorFramework curator) throws Exception {
 
-    Map<Column, ObserverSpecification> observers;
-    Map<Column, ObserverSpecification> weakObservers;
+    ImmutableMap<Column, ObserverSpecification> observers;
+    ImmutableMap<Column, ObserverSpecification> weakObservers;
 
     ByteArrayInputStream bais;
     try {
@@ -197,8 +200,8 @@ public class ObserverStoreV1 implements ObserverStore {
     }
     DataInputStream dis = new DataInputStream(bais);
 
-    observers = Collections.unmodifiableMap(readObservers(dis));
-    weakObservers = Collections.unmodifiableMap(readObservers(dis));
+    observers = readObservers(dis);
+    weakObservers = readObservers(dis);
 
 
     return new RegisteredObservers() {
@@ -209,7 +212,7 @@ public class ObserverStoreV1 implements ObserverStore {
       }
 
       @Override
-      public Set<Column> getObservedColumns(NotificationType nt) {
+      public ImmutableSet<Column> getObservedColumns(NotificationType nt) {
         switch (nt) {
           case STRONG:
             return observers.keySet();
