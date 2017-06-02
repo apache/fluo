@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
@@ -110,15 +111,18 @@ public class ObserverStoreV2 implements ObserverStore {
     for (Entry<Column, NotificationType> entry : jco.getObservedColumns().entrySet()) {
       switch (entry.getValue()) {
         case STRONG:
-          strongColumns = strongColumnsBuilder.add(entry.getKey()).build();
+          strongColumnsBuilder.add(entry.getKey());
           break;
         case WEAK:
-          weakColumns = weakColumnsBuilder.add(entry.getKey()).build();
+          weakColumnsBuilder.add(entry.getKey());
           break;
         default:
           throw new IllegalStateException("Unknown notification type " + entry.getValue());
       }
     }
+
+    strongColumns = strongColumnsBuilder.build();
+    weakColumns = weakColumnsBuilder.build();
 
     return new RegisteredObservers() {
 
@@ -128,7 +132,7 @@ public class ObserverStoreV2 implements ObserverStore {
       }
 
       @Override
-      public ImmutableSet<Column> getObservedColumns(NotificationType nt) {
+      public Set<Column> getObservedColumns(NotificationType nt) {
         switch (nt) {
           case STRONG:
             return strongColumns;

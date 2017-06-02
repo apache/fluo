@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;

@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -159,7 +158,7 @@ public class ObserverStoreV1 implements ObserverStore {
   }
 
 
-  private static ImmutableMap<Column, ObserverSpecification> readObservers(DataInputStream dis)
+  private static Map<Column, ObserverSpecification> readObservers(DataInputStream dis)
       throws IOException {
 
     ImmutableMap.Builder<Column, ObserverSpecification> omapBuilder =
@@ -188,8 +187,8 @@ public class ObserverStoreV1 implements ObserverStore {
   @Override
   public RegisteredObservers load(CuratorFramework curator) throws Exception {
 
-    ImmutableMap<Column, ObserverSpecification> observers;
-    ImmutableMap<Column, ObserverSpecification> weakObservers;
+    Map<Column, ObserverSpecification> observers;
+    Map<Column, ObserverSpecification> weakObservers;
 
     ByteArrayInputStream bais;
     try {
@@ -212,7 +211,7 @@ public class ObserverStoreV1 implements ObserverStore {
       }
 
       @Override
-      public ImmutableSet<Column> getObservedColumns(NotificationType nt) {
+      public Set<Column> getObservedColumns(NotificationType nt) {
         switch (nt) {
           case STRONG:
             return observers.keySet();
