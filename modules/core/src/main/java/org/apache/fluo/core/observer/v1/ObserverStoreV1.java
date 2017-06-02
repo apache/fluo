@@ -78,8 +78,8 @@ public class ObserverStoreV1 implements ObserverStore {
             + "found.  Check for class name misspellings or failure to include "
             + "the observer jar.", e1);
       } catch (InstantiationException | IllegalAccessException e2) {
-        throw new FluoException("Observer class '" + ospec.getClassName()
-            + "' could not be created.", e2);
+        throw new FluoException(
+            "Observer class '" + ospec.getClassName() + "' could not be created.", e2);
       }
 
       SimpleConfiguration oc = ospec.getConfiguration();
@@ -115,8 +115,8 @@ public class ObserverStoreV1 implements ObserverStore {
     } catch (NoNodeException nne) {
       // it's ok if node doesn't exist
     } catch (Exception e) {
-      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath
-          + "], error=[" + e.getMessage() + "]");
+      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=["
+          + e.getMessage() + "]");
       throw new RuntimeException(e);
     }
 
@@ -163,7 +163,6 @@ public class ObserverStoreV1 implements ObserverStore {
 
     ImmutableMap.Builder<Column, ObserverSpecification> omapBuilder =
         new ImmutableMap.Builder<Column, ObserverSpecification>();
-    ImmutableMap<Column, ObserverSpecification> omap = ImmutableMap.of();
 
     int num = WritableUtils.readVInt(dis);
     for (int i = 0; i < num; i++) {
@@ -180,8 +179,7 @@ public class ObserverStoreV1 implements ObserverStore {
       ObserverSpecification ospec = new ObserverSpecification(clazz, params);
       omapBuilder.put(col, ospec);
     }
-    omap = omapBuilder.build();
-    return omap;
+    return omapBuilder.build();
   }
 
   @Override
