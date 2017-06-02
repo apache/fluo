@@ -364,6 +364,7 @@
       <id>skipQA</id>
       <properties>
         <accumulo.skip>true</accumulo.skip>
+        <apilyzer.skip>true</apilyzer.skip>
         <checkstyle.skip>true</checkstyle.skip>
         <findbugs.skip>true</findbugs.skip>
         <mdep.analyze.skip>true</mdep.analyze.skip>
