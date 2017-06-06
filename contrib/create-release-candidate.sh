@@ -139,8 +139,8 @@ Please vote one of:
 [ ] -1 - Because..., I do not accept...
 ... these artifacts as the $(green "$ver") release of Apache Fluo.
 
-This vote will end on $(green "$votedate")
-($(green "$edtvotedate") / $(green "$pdtvotedate"))
+This vote will remain open until at least $(green "$votedate") ($(green "$edtvotedate") / $(green "$pdtvotedate")).
+Voting can continue after this deadline until the release manager sends an email ending the vote.
 
 Thanks!
 
