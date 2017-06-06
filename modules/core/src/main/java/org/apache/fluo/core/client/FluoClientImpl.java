@@ -15,8 +15,10 @@
 
 package org.apache.fluo.core.client;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
@@ -50,18 +52,16 @@ public class FluoClientImpl implements FluoClient {
   }
 
   public FluoClientImpl(FluoConfiguration config) {
+    Objects.requireNonNull(config);
+    Preconditions.checkArgument(config.hasRequiredConnectionProps(), "missing required connection properties");
+    FluoAdminImpl.readSharedConfig(config);
+    Preconditions.checkArgument(config.hasRequiredClientProps());
     this.config = config;
-    if (!config.hasRequiredClientProps()) {
-      String msg = "Client configuration is missing required properties";
-      log.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
     try {
       this.env = new Environment(config);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-
     reporter = setupReporters(env, "client", reporterCounter);
   }
 

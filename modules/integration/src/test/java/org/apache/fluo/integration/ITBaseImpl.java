@@ -73,7 +73,7 @@ public class ITBaseImpl extends ITBase {
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloTable(table);
     config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
-    config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
+    config.setConnectionZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     setupObservers(config);
     config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "1000");

@@ -81,7 +81,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         new InitializationOptions().setClearZookeeper(true).setClearTable(true);
 
     for (String host : new String[] {"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
-      config.setInstanceZookeepers(host);
+      config.setConnectionZookeepers(host);
       try (FluoAdmin fluoAdmin = new FluoAdminImpl(config)) {
         fluoAdmin.initialize(opts);
         fail("This should have failed");
@@ -98,7 +98,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     String zk = config.getAppZookeepers();
     String longPath = "/very/long/path";
-    config.setInstanceZookeepers(zk + longPath);
+    config.setConnectionZookeepers(zk + longPath);
 
     InitializationOptions opts = new InitializationOptions();
     opts.setClearZookeeper(true).setClearTable(true);
@@ -113,7 +113,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
 
     String longPath2 = "/very/long/path2";
-    config.setInstanceZookeepers(zk + longPath2);
+    config.setConnectionZookeepers(zk + longPath2);
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.initialize(opts);

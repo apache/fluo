@@ -13,17 +13,20 @@
  * the License.
  */
 
-package org.apache.fluo.core.client;
+package org.apache.fluo.integration.client;
 
+import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
+import org.apache.fluo.core.client.FluoClientImpl;
+import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class FluoClientTest {
+public class FluoClientIT extends ITBaseImpl {
 
   @Test
   public void testFailures() {
@@ -34,27 +37,24 @@ public class FluoClientTest {
     Level factoryLevel = Logger.getLogger(FluoFactory.class).getLevel();
     Logger.getLogger(FluoFactory.class).setLevel(Level.FATAL);
 
-    FluoConfiguration config = new FluoConfiguration();
+    FluoConfiguration fluoConfig = new FluoConfiguration();
     try {
-      FluoFactory.newClient(config);
+      FluoFactory.newClient(fluoConfig);
       Assert.fail();
     } catch (FluoException e) {
     }
 
-    try (FluoClientImpl impl = new FluoClientImpl(config)) {
+    try (FluoClientImpl impl = new FluoClientImpl(fluoConfig)) {
       Assert.fail("FluoClientImpl was " + impl);
     } catch (IllegalArgumentException e) {
     }
 
-    config.setApplicationName("test");
-    config.setAccumuloUser("test");
-    config.setAccumuloPassword("test");
-    config.setAccumuloInstance("test");
-    config.setZookeeperTimeout(5);
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      client.newSnapshot();
+    }
 
-    try (FluoClientImpl impl = new FluoClientImpl(config)) {
-      Assert.fail("FluoClientImpl was " + impl);
-    } catch (IllegalStateException e) {
+    try (FluoClientImpl client = new FluoClientImpl(config)) {
+      client.newSnapshot();
     }
 
     Logger.getLogger(FluoClientImpl.class).setLevel(clientLevel);

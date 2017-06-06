@@ -57,14 +57,15 @@ public interface FluoClient extends AutoCloseable {
 
   /**
    * @return All properties w/ the prefix
-   *         {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX} that were set at
-   *         initialization time. The configuration returned is a subset of configuration using the
-   *         prefix {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX} The reason
-   *         these properties are stored and read from zookeeper is to offer a consistent view of
-   *         application config across all nodes in the cluster. So there is no need to worry w/
-   *         keeping config files consistent across a cluster. To update this configuration, use
-   *         {@link FluoAdmin#updateSharedConfig()}. Changes made to the returned Configuration will
-   *         not update Zookeeper.
+   *         {@value org.apache.fluo.api.config.FluoConfiguration#APPLICATION_CONFIG_PREFIX} that
+   *         were set at initialization time. The configuration returned is a subset of
+   *         configuration using the prefix
+   *         {@value org.apache.fluo.api.config.FluoConfiguration#APPLICATION_CONFIG_PREFIX} The
+   *         reason these properties are stored and read from zookeeper is to offer a consistent
+   *         view of application config across all nodes in the cluster. So there is no need to
+   *         worry w/ keeping config files consistent across a cluster. To update this
+   *         configuration, use {@link FluoAdmin#updateSharedConfig()}. Changes made to the returned
+   *         Configuration will not update Zookeeper.
    * @see FluoConfiguration#getAppConfiguration()
    * @see Context#getAppConfiguration()
    */

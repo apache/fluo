@@ -111,20 +111,21 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
       try {
         if (curator.checkExists().forPath("/") == null) {
-          System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") has not been "
+          System.out.println("Fluo instance (" + config.getConnectionZookeepers()
+              + ") has not been "
               + "created yet in Zookeeper.  It will be created when the first Fluo application is "
               + "initialized for this instance.");
           return;
         }
         List<String> children = curator.getChildren().forPath("/");
         if (children.isEmpty()) {
-          System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") does not "
+          System.out.println("Fluo instance (" + config.getConnectionZookeepers() + ") does not "
               + "contain any Fluo applications.");
           return;
         }
         Collections.sort(children);
 
-        System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") contains "
+        System.out.println("Fluo instance (" + config.getConnectionZookeepers() + ") contains "
             + children.size() + " application(s)\n");
         System.out.println("Application     Status      YarnAppName          YarnAppId");
         System.out.println("-----------     ------      -----------          ---------");
