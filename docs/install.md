@@ -49,7 +49,7 @@ After you obtain a Fluo distribution tarball, follow these steps to install Fluo
 
 1.  Choose a directory with plenty of space and untar the distribution:
 
-        tar -xvzf fluo-1.0.0-incubating-bin.tar.gz
+        tar -xvzf fluo-1.1.0-incubating-bin.tar.gz
 
 2.  Copy the example configuration to the base of your configuration directory to create the default
     configuration for your Fluo install:
@@ -93,7 +93,7 @@ invoked by this script.
 Modify and add the following to your `~/.bashrc` if you want to be able to execute the fluo script
 from any directory:
 
-    export PATH=/path/to/fluo-1.0.0-incubating/bin:$PATH
+    export PATH=/path/to/fluo-1.1.0-incubating/bin:$PATH
 
 Source your `.bashrc` for the changes to take effect and test the script
 
