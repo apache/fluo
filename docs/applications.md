@@ -26,12 +26,12 @@ For both clients and observers, you will need to include the following in your M
 <dependency>
   <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-api</artifactId>
-  <version>1.0.0-incubating</version>
+  <version>1.1.0-incubating</version>
 </dependency>
 <dependency>
   <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-core</artifactId>
-  <version>1.0.0-incubating</version>
+  <version>1.1.0-incubating</version>
   <scope>runtime</scope>
 </dependency>
 ```
@@ -100,9 +100,9 @@ public class AppCommand {
 
 To create an observer, follow these steps:
 
-1. Create one or more classes that extend [Observer] like the example below. Please use [slf4j] for
-   any logging in observers as [slf4j] supports multiple logging implementations. This is
-   necessary as Fluo applications have a hard requirement on [logback] when running in YARN.
+1.  Create one or more classes that extend [Observer] like the example below. Please use [slf4j] for
+    any logging in observers as [slf4j] supports multiple logging implementations. This is
+    necessary as Fluo applications have a hard requirement on [logback] when running in YARN.
 
     ```java
     public class InvertObserver implements Observer {
@@ -116,6 +116,7 @@ To create an observer, follow these steps:
       }
     }
     ```
+
 2.  Create a class that implements [ObserverProvider] like the example below.  The purpose of this
     class is associate a set Observers with columns that trigger the observers.  The class can
     register multiple observers.
@@ -128,7 +129,7 @@ To create an observer, follow these steps:
         or.forColumn(new Column("obs", "data"), NotificationType.STRONG)
           .useObserver(new InvertObserver());
         
-        //Observer is a Functional interface.  So Obsevers can be written as lambdas.
+        //Observer is a Functional interface.  So Observers can be written as lambdas.
         or.forColumn(new Column("new","data"), NotificationType.WEAK)
           .useObserver((tx,row,col) -> {
              Bytes combined = combineNewAndOld(tx,row);
@@ -138,7 +139,7 @@ To create an observer, follow these steps:
     }
     ```
 
-3.  Build a jar containing thses classes and include this jar in the `lib/` directory of your Fluo
+3.  Build a jar containing these classes and include this jar in the `lib/` directory of your Fluo
     application.
 4.  Configure your Fluo instance to use this observer provider by modifying the Observer section of
     [fluo.properties].
