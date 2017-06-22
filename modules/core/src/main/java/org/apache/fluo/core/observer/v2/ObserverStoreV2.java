@@ -16,7 +16,6 @@
 package org.apache.fluo.core.observer.v2;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -24,6 +23,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -32,9 +32,9 @@ import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.core.impl.Environment;
-import org.apache.fluo.core.observer.RegisteredObservers;
-import org.apache.fluo.core.observer.Observers;
 import org.apache.fluo.core.observer.ObserverStore;
+import org.apache.fluo.core.observer.Observers;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 
@@ -45,6 +45,9 @@ import static org.apache.fluo.accumulo.util.ZookeeperPath.CONFIG_FLUO_OBSERVERS2
  * Support for observers configured the new way.
  */
 public class ObserverStoreV2 implements ObserverStore {
+
+  ImmutableSet<Column> weakColumns = ImmutableSet.of();
+  ImmutableSet<Column> strongColumns = ImmutableSet.of();
 
   @Override
   public boolean handles(FluoConfiguration config) {
@@ -102,21 +105,24 @@ public class ObserverStoreV2 implements ObserverStore {
     String json = new String(data, UTF_8);
     JsonObservers jco = new Gson().fromJson(json, JsonObservers.class);
 
-    Set<Column> weakColumns = new HashSet<>();
-    Set<Column> strongColumns = new HashSet<>();
+    ImmutableSet.Builder<Column> weakColumnsBuilder = new ImmutableSet.Builder<Column>();
+    ImmutableSet.Builder<Column> strongColumnsBuilder = new ImmutableSet.Builder<Column>();
 
     for (Entry<Column, NotificationType> entry : jco.getObservedColumns().entrySet()) {
       switch (entry.getValue()) {
         case STRONG:
-          strongColumns.add(entry.getKey());
+          strongColumnsBuilder.add(entry.getKey());
           break;
         case WEAK:
-          weakColumns.add(entry.getKey());
+          weakColumnsBuilder.add(entry.getKey());
           break;
         default:
           throw new IllegalStateException("Unknown notification type " + entry.getValue());
       }
     }
+
+    strongColumns = strongColumnsBuilder.build();
+    weakColumns = weakColumnsBuilder.build();
 
     return new RegisteredObservers() {
 
