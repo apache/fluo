@@ -16,9 +16,7 @@
 package org.apache.fluo.accumulo.util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,21 +96,61 @@ public class ByteArrayUtil {
    * @param listOfBytes Bytes objects to concatenate
    * @return Bytes
    */
-  public static final byte[] concat(Bytes... listOfBytes) {
-    try {
-      // TODO calculate exact array size needed
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      DataOutputStream dos = new DataOutputStream(baos);
+  public static byte[] concat(Bytes... listOfBytes) {
+    int offset = 0;
+    int counter = 0;
 
-      for (Bytes b : listOfBytes) {
-        WritableUtils.writeVInt(dos, b.length());
-        b.writeTo(dos);
+    for (Bytes b : listOfBytes) {
+      counter += b.length() + 1;
+    }
+
+    byte[] data = new byte[counter];
+    for (Bytes b : listOfBytes) {
+      writeVint(data, offset, b.length());
+      offset++;
+      for (int i = offset, j = 0; i < b.length() || j < b.length(); i++, j++) {
+        data[i] = b.byteAt(j);
       }
+      offset += b.length();
+    }
+    return data;
+  }
 
-      dos.close();
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  // public static final byte[] concat(Bytes... listOfBytes) {
+  // UnsynchronizedBuffer.Writer bf = new UnsynchronizedBuffer.Writer();
+  // for (Bytes b : listOfBytes) {
+  // bf.writeVInt(b.length());
+  // bf.add(b.toArray(), 0, b.length());
+  // }
+  // return bf.toArray();
+  // }
+
+  public static void writeVint(byte[] dest, int offset, int i) {
+    if (i >= -112 && i <= 127) {
+      dest[offset++] = (byte) i;
+      return;
+    }
+
+    int len = -112;
+    if (i < 0) {
+      i ^= -1L; // take one's complement'
+      len = -120;
+    }
+
+    long tmp = i;
+    while (tmp != 0) {
+      tmp = tmp >> 8;
+      len--;
+    }
+
+    dest[offset++] = (byte) len;
+
+    len = (len < -120) ? -(len + 120) : -(len + 112);
+
+    for (int idx = len; idx != 0; idx--) {
+      int shiftbits = (idx - 1) * 8;
+      long mask = 0xFFL << shiftbits;
+      dest[offset++] = (byte) ((i & mask) >> shiftbits);
     }
   }
 
