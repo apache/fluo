@@ -98,57 +98,92 @@ public class ByteArrayUtil {
    */
   public static byte[] concat(Bytes... listOfBytes) {
     int offset = 0;
-    int counter = 0;
+    int size = 0;
 
     for (Bytes b : listOfBytes) {
-      counter += b.length() + 1;
+      size += b.length() + checkVlen(b.length());
     }
 
-    byte[] data = new byte[counter];
+    byte[] data = new byte[size];
     for (Bytes b : listOfBytes) {
-      writeVint(data, offset, b.length());
-      offset++;
+      offset = writeVint(data, offset, b.length());
       b.copyTo(0, b.length(), data, offset);
       offset += b.length();
     }
     return data;
   }
 
-  // public static final byte[] concat(Bytes... listOfBytes) {
-  // UnsynchronizedBuffer.Writer bf = new UnsynchronizedBuffer.Writer();
-  // for (Bytes b : listOfBytes) {
-  // bf.writeVInt(b.length());
-  // bf.add(b.toArray(), 0, b.length());
-  // }
-  // return bf.toArray();
-  // }
-
-  public static void writeVint(byte[] dest, int offset, int i) {
+  /**
+   * Writes a vInt directly to a byte array
+   * 
+   * @param dest The destination array for the vInt to be written to
+   * @param offset The location where to write the vInt to
+   * @param i The Value being written into byte array
+   * @return Returns the new offset location
+   */
+  public static int writeVint(byte[] dest, int offset, int i) {
     if (i >= -112 && i <= 127) {
       dest[offset++] = (byte) i;
-      return;
+    } else {
+      int len = -112;
+      if (i < 0) {
+        i ^= -1L; // take one's complement'
+        len = -120;
+      }
+
+      long tmp = i;
+      while (tmp != 0) {
+        tmp = tmp >> 8;
+        len--;
+      }
+
+      dest[offset++] = (byte) len;
+
+      len = (len < -120) ? -(len + 120) : -(len + 112);
+
+      for (int idx = len; idx != 0; idx--) {
+        int shiftbits = (idx - 1) * 8;
+        long mask = 0xFFL << shiftbits;
+        dest[offset++] = (byte) ((i & mask) >> shiftbits);
+      }
     }
 
-    int len = -112;
-    if (i < 0) {
-      i ^= -1L; // take one's complement'
-      len = -120;
-    }
+    return offset;
+  }
 
-    long tmp = i;
-    while (tmp != 0) {
-      tmp = tmp >> 8;
-      len--;
-    }
+  /**
+   * Determines the number bytes required to store a variable length
+   * 
+   * @param i length of Bytes
+   * @return number of bytes needed
+   */
+  public static int checkVlen(int i) {
+    int count = 0;
+    if (i >= -112 && i <= 127) {
+      return 1;
+    } else {
+      int len = -112;
+      if (i < 0) {
+        i ^= -1L; // take one's complement'
+        len = -120;
+      }
 
-    dest[offset++] = (byte) len;
+      long tmp = i;
+      while (tmp != 0) {
+        tmp = tmp >> 8;
+        len--;
+      }
 
-    len = (len < -120) ? -(len + 120) : -(len + 112);
+      count++;
 
-    for (int idx = len; idx != 0; idx--) {
-      int shiftbits = (idx - 1) * 8;
-      long mask = 0xFFL << shiftbits;
-      dest[offset++] = (byte) ((i & mask) >> shiftbits);
+      len = (len < -120) ? -(len + 120) : -(len + 112);
+
+      while (len != 0) {
+        count++;
+        len--;
+      }
+
+      return count;
     }
   }
 
