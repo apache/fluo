@@ -108,9 +108,7 @@ public class ByteArrayUtil {
     for (Bytes b : listOfBytes) {
       writeVint(data, offset, b.length());
       offset++;
-      for (int i = offset, j = 0; i < b.length() || j < b.length(); i++, j++) {
-        data[i] = b.byteAt(j);
-      }
+      b.copyTo(0, b.length(), data, offset);
       offset += b.length();
     }
     return data;
