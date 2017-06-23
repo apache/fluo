@@ -16,9 +16,7 @@
 package org.apache.fluo.accumulo.util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,21 +96,94 @@ public class ByteArrayUtil {
    * @param listOfBytes Bytes objects to concatenate
    * @return Bytes
    */
-  public static final byte[] concat(Bytes... listOfBytes) {
-    try {
-      // TODO calculate exact array size needed
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      DataOutputStream dos = new DataOutputStream(baos);
+  public static byte[] concat(Bytes... listOfBytes) {
+    int offset = 0;
+    int size = 0;
 
-      for (Bytes b : listOfBytes) {
-        WritableUtils.writeVInt(dos, b.length());
-        b.writeTo(dos);
+    for (Bytes b : listOfBytes) {
+      size += b.length() + checkVlen(b.length());
+    }
+
+    byte[] data = new byte[size];
+    for (Bytes b : listOfBytes) {
+      offset = writeVint(data, offset, b.length());
+      b.copyTo(0, b.length(), data, offset);
+      offset += b.length();
+    }
+    return data;
+  }
+
+  /**
+   * Writes a vInt directly to a byte array
+   * 
+   * @param dest The destination array for the vInt to be written to
+   * @param offset The location where to write the vInt to
+   * @param i The Value being written into byte array
+   * @return Returns the new offset location
+   */
+  public static int writeVint(byte[] dest, int offset, int i) {
+    if (i >= -112 && i <= 127) {
+      dest[offset++] = (byte) i;
+    } else {
+      int len = -112;
+      if (i < 0) {
+        i ^= -1L; // take one's complement'
+        len = -120;
       }
 
-      dos.close();
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      long tmp = i;
+      while (tmp != 0) {
+        tmp = tmp >> 8;
+        len--;
+      }
+
+      dest[offset++] = (byte) len;
+
+      len = (len < -120) ? -(len + 120) : -(len + 112);
+
+      for (int idx = len; idx != 0; idx--) {
+        int shiftbits = (idx - 1) * 8;
+        long mask = 0xFFL << shiftbits;
+        dest[offset++] = (byte) ((i & mask) >> shiftbits);
+      }
+    }
+
+    return offset;
+  }
+
+  /**
+   * Determines the number bytes required to store a variable length
+   * 
+   * @param i length of Bytes
+   * @return number of bytes needed
+   */
+  public static int checkVlen(int i) {
+    int count = 0;
+    if (i >= -112 && i <= 127) {
+      return 1;
+    } else {
+      int len = -112;
+      if (i < 0) {
+        i ^= -1L; // take one's complement'
+        len = -120;
+      }
+
+      long tmp = i;
+      while (tmp != 0) {
+        tmp = tmp >> 8;
+        len--;
+      }
+
+      count++;
+
+      len = (len < -120) ? -(len + 120) : -(len + 112);
+
+      while (len != 0) {
+        count++;
+        len--;
+      }
+
+      return count;
     }
   }
 
