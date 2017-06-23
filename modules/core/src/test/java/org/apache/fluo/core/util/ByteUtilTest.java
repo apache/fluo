@@ -54,12 +54,18 @@ public class ByteUtilTest {
     Bytes b1 = Bytes.of("str1");
     Bytes b2 = Bytes.of("string2");
     Bytes b3 = Bytes.of("s3");
-    byte[] ball = ByteArrayUtil.concat(b1, b2, b3);
+    Bytes b4 =
+        Bytes.of("testinggreaterthan128characterstestinggreaterthan128characters"
+            + "testinggreaterthan128characterstestinggreaterthan128characters"
+            + "testinggreaterthan128characters"); // 155 length
+
+    byte[] ball = ByteArrayUtil.concat(b1, b2, b3, b4);
 
     List<Bytes> blist = ByteArrayUtil.split(ball);
 
     Assert.assertEquals(b1, blist.get(0));
     Assert.assertEquals(b2, blist.get(1));
     Assert.assertEquals(b3, blist.get(2));
+    Assert.assertEquals(b4, blist.get(3));
   }
 }
