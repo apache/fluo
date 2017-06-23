@@ -91,6 +91,27 @@ public class ByteArrayUtil {
   }
 
   /**
+   * An optimized version of {@link #concat(Bytes...)} for two args that avoids creating the varargs
+   * array.
+   *
+   */
+  public static byte[] concat(Bytes b1, Bytes b2) {
+    int offset = 0;
+    int size = b1.length() + checkVlen(b1.length()) + b2.length() + checkVlen(b2.length());
+
+    byte[] data = new byte[size];
+
+    offset = writeVint(data, offset, b1.length());
+    b1.copyTo(data, offset);
+    offset += b1.length();
+
+    offset = writeVint(data, offset, b2.length());
+    b2.copyTo(data, offset);
+
+    return data;
+  }
+
+  /**
    * Concatenates of list of Bytes objects to create a byte array
    *
    * @param listOfBytes Bytes objects to concatenate

@@ -63,9 +63,27 @@ public class ByteUtilTest {
 
     List<Bytes> blist = ByteArrayUtil.split(ball);
 
+    Assert.assertEquals(4, blist.size());
     Assert.assertEquals(b1, blist.get(0));
     Assert.assertEquals(b2, blist.get(1));
     Assert.assertEquals(b3, blist.get(2));
     Assert.assertEquals(b4, blist.get(3));
+
+    // test two args
+    blist = ByteArrayUtil.split(ByteArrayUtil.concat(b1, b2));
+    Assert.assertEquals(2, blist.size());
+    Assert.assertEquals(b1, blist.get(0));
+    Assert.assertEquals(b2, blist.get(1));
+
+    blist = ByteArrayUtil.split(ByteArrayUtil.concat(b4, b2));
+    Assert.assertEquals(2, blist.size());
+    Assert.assertEquals(b4, blist.get(0));
+    Assert.assertEquals(b2, blist.get(1));
+
+    blist = ByteArrayUtil.split(ByteArrayUtil.concat(b1, b4));
+    Assert.assertEquals(2, blist.size());
+    Assert.assertEquals(b1, blist.get(0));
+    Assert.assertEquals(b4, blist.get(1));
+
   }
 }
