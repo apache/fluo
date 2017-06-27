@@ -19,10 +19,12 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.Loader;
@@ -164,6 +166,11 @@ public class CollisionIT extends ITBaseMini {
       String rowCol =
           k.getRow() + ":" + k.getColumnFamily() + ":" + k.getColumnQualifier() + ":"
               + String.format("%x", k.getTimestamp() & ColumnConstants.PREFIX_MASK);
+      if (rowCols.contains(rowCol)) {
+        System.err.println("DEBUG oldestTs : " + oldestTS + " recentTS : " + recentTS);
+        Iterables.transform(scanner, e -> "DEBUG " + FluoFormatter.toString(e)).forEach(
+            System.err::println);;
+      }
       Assert.assertFalse("Duplicate row col " + rowCol, rowCols.contains(rowCol));
       rowCols.add(rowCol);
     }
