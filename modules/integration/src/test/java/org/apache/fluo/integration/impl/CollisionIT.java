@@ -169,7 +169,7 @@ public class CollisionIT extends ITBaseMini {
       if (rowCols.contains(rowCol)) {
         System.err.println("DEBUG oldestTs : " + oldestTS + " recentTS : " + recentTS);
         Iterables.transform(scanner, e -> "DEBUG " + FluoFormatter.toString(e)).forEach(
-            System.err::println);;
+            System.err::println);
       }
       Assert.assertFalse("Duplicate row col " + rowCol, rowCols.contains(rowCol));
       rowCols.add(rowCol);
