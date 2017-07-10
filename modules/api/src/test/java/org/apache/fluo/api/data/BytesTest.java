@@ -15,8 +15,6 @@
 
 package org.apache.fluo.api.data;
 
-import static org.junit.Assert.fail;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,6 +24,8 @@ import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 /**
  * Unit test for {@link Bytes}
@@ -331,7 +331,7 @@ public class BytesTest {
     String end = "efghi"; // 5 chars, 5 bytes
     Assert.assertEquals(11, begin.length() + mid1.length() + mid2.length() + end.length());
 
-    byte[] copyFrom = (begin + mid1 + mid2 + end).getBytes();
+    byte[] copyFrom = (begin + mid1 + mid2 + end).getBytes(StandardCharsets.UTF_8);
     //@formatter:off
     // [ a,  b,  c,              †,                    𝔊,   e,   f,   g,   h,   i]
     // [97, 98, 99, -30, -128, -96, -16, -99, -108, -118, 101, 102, 103, 104, 105]
