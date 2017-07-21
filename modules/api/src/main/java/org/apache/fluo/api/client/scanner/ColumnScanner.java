@@ -15,6 +15,9 @@
 
 package org.apache.fluo.api.client.scanner;
 
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.ColumnValue;
 
@@ -24,12 +27,21 @@ import org.apache.fluo.api.data.ColumnValue;
 public interface ColumnScanner extends Iterable<ColumnValue> {
 
   /**
+   * @since 1.0.0
    * @return the row for all column values
    */
   Bytes getRow();
 
   /**
+   * @since 1.0.0
    * @return the row for all column values decoded as UTF-8
    */
   String getsRow();
+
+  /**
+   * @since 1.2.0
+   */
+  default Stream<ColumnValue> stream() {
+    return StreamSupport.stream(spliterator(), false);
+  }
 }

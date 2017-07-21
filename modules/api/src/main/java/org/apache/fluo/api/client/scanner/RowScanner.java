@@ -15,9 +15,19 @@
 
 package org.apache.fluo.api.client.scanner;
 
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 /**
  * @since 1.0.0
  */
 public interface RowScanner extends Iterable<ColumnScanner> {
+
+  /**
+   * @since 1.2.0
+   */
+  default Stream<ColumnScanner> stream() {
+    return StreamSupport.stream(spliterator(), false);
+  }
 
 }
