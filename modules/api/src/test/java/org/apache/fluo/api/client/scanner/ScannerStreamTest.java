@@ -46,16 +46,19 @@ public class ScannerStreamTest {
     rowCols.add(new RowColumnValue("r2", new Column("f1", "q2"), "v4"));
     rowCols.add(new RowColumnValue("r4", new Column("f2", "q5"), "v5"));
 
-    CellScannerImpl cellScanStream = new CellScannerImpl(rowCols);
+    CellScannerImpl cellScanner = new CellScannerImpl(rowCols);
 
-    rowCols.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
-        .collect(Collectors.toSet());
-    cellScanStream.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
-        .collect(Collectors.toSet());
+    Set<RowColumnValue> expected =
+        rowCols.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
+            .collect(Collectors.toSet());
+    Set<RowColumnValue> actualSubSet =
+        cellScanner.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
+            .collect(Collectors.toSet());
 
-    Assert.assertNotEquals(empty, cellScanStream.stream().collect(Collectors.toSet()));
-    Assert.assertEquals(rowCols, cellScanStream.stream().collect(Collectors.toSet()));
-    Assert.assertEquals(rowCols.size(), cellScanStream.stream().count());
+    Assert.assertNotEquals(empty, actualSubSet);
+    Assert.assertNotEquals(empty, cellScanner.stream().collect(Collectors.toSet()));
+    Assert.assertEquals(rowCols, cellScanner.stream().collect(Collectors.toSet()));
+    Assert.assertEquals(expected, actualSubSet);
   }
 
   @Test
@@ -70,16 +73,19 @@ public class ScannerStreamTest {
     colsVal.add(new ColumnValue(new Column("f1", "q2"), Bytes.of("v4")));
     colsVal.add(new ColumnValue(new Column("f2", "q5"), Bytes.of("v5")));
 
-    ColumnScanner colScanStream = new ColumnScannerImpl(row, colsVal);
+    ColumnScanner colScanner = new ColumnScannerImpl(row, colsVal);
 
-    colsVal.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
-        .collect(Collectors.toSet());
-    colScanStream.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
-        .collect(Collectors.toSet());
+    Set<ColumnValue> expected =
+        colsVal.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
+            .collect(Collectors.toSet());
+    Set<ColumnValue> colSubSet =
+        colScanner.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
+            .collect(Collectors.toSet());
 
-    Assert.assertNotEquals(empty, colScanStream.stream().collect(Collectors.toSet()));
-    Assert.assertEquals(colsVal, colScanStream.stream().collect(Collectors.toSet()));
-    Assert.assertEquals(colsVal.size(), colScanStream.stream().count());
+    Assert.assertNotEquals(empty, colSubSet);
+    Assert.assertNotEquals(empty, colScanner.stream().collect(Collectors.toSet()));
+    Assert.assertEquals(colsVal, colScanner.stream().collect(Collectors.toSet()));
+    Assert.assertEquals(expected, colSubSet);
   }
 
   @Test
@@ -110,8 +116,7 @@ public class ScannerStreamTest {
     expected.add(new Person("Chris", "McTague", 21, 555555555));
     expected.add(new Person("Hulk", "Hogan", 60, 55234234));
 
-    Assert.assertEquals(expected.hashCode(), people.hashCode());
-    Assert.assertEquals(expected.size(), people.size());
+    Assert.assertEquals(expected, people);
   }
 
   private static Person toPerson(ColumnScanner cs) {
@@ -214,6 +219,20 @@ public class ScannerStreamTest {
     @Override
     public int hashCode() {
       return Objects.hash(firstname, lastname, age, id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      }
+
+      if (o instanceof Person) {
+        Person p = (Person) o;
+        return (this.firstname.equals(p.firstname)) && (this.lastname.equals(p.lastname))
+            && (this.age == p.age) && (this.id == p.id);
+      }
+      return false;
     }
   }
 }
