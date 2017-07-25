@@ -52,6 +52,8 @@ public class FluoGetProp {
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
     config.load(applicationPropsFile);
 
-    System.out.println(config.getString(prop));
+    if (config.containsKey(prop)) {
+      System.out.println(config.getString(prop));
+    }
   }
 }

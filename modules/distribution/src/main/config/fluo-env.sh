@@ -15,10 +15,9 @@
 
 # cmd - Command that is being called such as oracle, worker, etc.
 # app - Fluo application name 
-# basedir - Root of Accumulo installation
-# bin - Directory containing Accumulo scripts
-# conf - Directory containing Accumulo configuration
-# lib - Directory containing Accumulo libraries
+# basedir - Root of Fluo installation
+# conf - Directory containing Fluo configuration
+# lib - Directory containing Fluo libraries
 
 ############################
 # Variables that must be set
@@ -102,7 +101,7 @@ setupClasspathFromSystem()
 # `./lib/fetch.sh ahz` to download dependencies to this directory.
 setupClasspathFromLib(){
   CLASSPATH="$lib/*"
-  if [ -f "$conf/connnection.properties" ]; then
+  if [ -f "$conf/connection.properties" ]; then
     CLASSPATH="$CLASSPATH:$lib/log4j/*"
   else
     CLASSPATH="$CLASSPATH:$lib/logback/*"

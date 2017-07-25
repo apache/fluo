@@ -179,7 +179,7 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingOldPropsFile() {
-    File propsFile = new File("../distribution/src/main/config/fluo.properties");
+    File propsFile = new File("../distribution/src/main/config/fluo.properties.deprecated");
     Assert.assertTrue(propsFile.exists());
 
     FluoConfiguration config = new FluoConfiguration(propsFile);

@@ -30,7 +30,7 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-public class FluoSetup {
+public class FluoInit {
 
   public static class InitOptions {
 
@@ -90,7 +90,7 @@ public class FluoSetup {
   public static void main(String[] args) {
     if (args.length < 1) {
       System.err
-          .println("Usage: FluoSetup <connectionPropsPath> <applicationPropsPath> userArgs...");
+          .println("Usage: FluoInit <connectionPropsPath> <applicationPropsPath> userArgs...");
       System.exit(-1);
     }
     String connectionPropsPath = args[0];

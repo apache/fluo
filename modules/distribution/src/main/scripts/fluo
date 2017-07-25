@@ -39,6 +39,14 @@ export CLASSPATH
 
 mkdir -p "$basedir/run" 2>/dev/null
 
+conn_props=$conf/connection.properties
+fluo_props=$conf/fluo.properties
+
+if [[ -f "$conn_props" && -f "$fluo_props" ]]; then
+  echo "Both connection.properites & fluo.properties cannot exist in $conf"
+  exit 1
+fi
+
 # stop if any command fails
 set -e
 
@@ -56,10 +64,10 @@ function copy_config {
 function print_usage {
   echo -e "Usage: fluo <command> (<argument> ...)\n"
   echo -e "Possible commands:\n"
+  echo "  init <appProps> {<arg>}     Initializes Fluo application using <appProps>. Run with -h to see additional args."
   echo "  classpath                   Prints the classpath setup in fluo-env.sh"
   echo "  list                        Lists all Fluo applications in Fluo instance"
   echo "  scan <app>                  Prints snapshot of data in Fluo <app>"
-  echo "  setup <appProps> {<arg>}    Sets up Fluo application using <appProps>. Run with -h to see additional args."
   echo "  stop <app>                  Stops Fluo application processes on this machine for <app>"
   echo "  oracle <app>                Starts Fluo Oracle process for <app>"
   echo "  worker <app>                Starts Fluo Worker process for <app>"
@@ -67,10 +75,10 @@ function print_usage {
   echo "  wait <app>                  Waits until all notifications are processed for <app>"
   echo "  exec <app> <class> {<arg>}  Executes <class> with <args> using classpath for <app>";
 
-  echo -e "\nDeprecated commands:\n"
+  echo -e "\nDeprecated commands (available if fluo.properties exists):\n"
   echo "  new <app>     Creates configuration for new application in apps/"
-  echo "  init <app>    Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
   echo "  start <app>   Starts Fluo application on cluster"
+  echo "  init <app>    Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
   echo "  kill <app>    Kills Fluo application on cluster"
   echo "  status <app>  Prints status of Fluo application"
   echo "  info <app>    Prints information about containers of Fluo application"
@@ -79,27 +87,30 @@ function print_usage {
 }
 
 function check_conn_props {
-  connection_props=$conf/connection.properties
-  if [ ! -f "$connection_props" ]; then
-    echo "A connection.properties file must exist at $connection_props"
+  if [ ! -f "$conn_props" ]; then
+    echo "connection.properties must exist at $conn_props"
     exit 1
   fi
 }
 
+function verify_app {
+  if [ -z "$1" ]; then
+    echo -e "The application name (set by <app>) cannot be an empty string!\n"
+    print_usage
+  fi
+  if [[ $1 = *"-h"* ]]; then
+    print_usage
+  fi
+}
+
 function deprecated_verify {
+  verify_app "$1"
   APP=$1
   APP_DIR=$basedir/apps/$APP
   APP_CONF_DIR=$APP_DIR/conf
   APP_LIB_DIR=$APP_DIR/lib
-  if [ -z "$APP" ]; then
-    echo -e "The application name (set by <app>) cannot be an empty string!\n"
-    print_usage
-  fi
-  if [[ $APP = *"-h"* ]]; then
-    print_usage
-  fi
-  if [ -f "$conf/connection.properties" ]; then
-    echo "ERROR - If using deprecated commands, connection.properties cannot exist in $conf/"
+  if [ ! -f "$fluo_props" ]; then
+    echo "ERROR - This command is deprecated can only be used if fluo.properties exists in $conf"
     exit 1
   fi
 }
@@ -125,52 +136,61 @@ function check_hadoop {
 }
 
 function setup_service {
+  verify_app "$1"
   check_conn_props
   mkdir -p "$FLUO_LOG_DIR"
   app_lib=$lib/apps/$1
   mkdir -p "$app_lib"
-  java org.apache.fluo.command.FluoGetJars "$connection_props" "$1" "$app_lib"
+  java org.apache.fluo.command.FluoGetJars "$conn_props" "$1" "$app_lib"
   export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
 }
 
 case "$1" in
-setup)
-  check_conn_props
-  app_props=$2
-  if [ ! -f "$app_props" ]; then
-    echo "Application properties file '$app_props' does not exist"
-    exit 1
+init)
+  if [ -f "$conn_props" ]; then
+    check_conn_props
+    app_props=$2
+    if [ ! -f "$app_props" ]; then
+      echo "Application properties file '$app_props' does not exist"
+      exit 1
+    fi
+    init_dir=$(java org.apache.fluo.command.FluoGetProp "$conn_props" "$app_props" fluo.observer.init.dir)
+    if [ -d "$init_dir" ]; then
+      echo "Adding $init_dir/* to CLASSPATH"
+      export CLASSPATH="$init_dir/*:$CLASSPATH"
+    fi
+    java org.apache.fluo.command.FluoInit "$conn_props" "$app_props" ${*:3}
+  else
+    deprecated_verify_full "$2"
+    check_hadoop
+    export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
-  init_dir=$(java org.apache.fluo.command.FluoGetProp "$connection_props" "$app_props" fluo.observer.init.dir)
-  if [ -d "$init_dir" ]; then
-    echo "Adding $init_dir/* to CLASSPATH"
-    export CLASSPATH="$init_dir/*:$CLASSPATH"
-  fi
-  java org.apache.fluo.command.FluoSetup "$connection_props" "$app_props" ${*:3}
   ;;
 oracle)
-  setup_service $2
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoOracle "$connection_props" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
+  setup_service "$2"
+  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoOracle "$conn_props" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
   echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
   echo "Started Oracle for '$2' Fluo application. Logs can be found in ${FLUO_LOG_DIR}"
   ;;
 worker)
-  setup_service $2
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoWorker "$connection_props" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
+  setup_service "$2"
+  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoWorker "$conn_props" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
   echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
   echo "Started Worker for '$2' Fluo application. Logs can be found in ${FLUO_LOG_DIR}"
   ;;
 scan)
-  if [ -f "$conf/connection.properties" ]; then
-    check_conn_props
-    java org.apache.fluo.command.FluoScan "$connection_props" ${*:2}
-  else 
+  if [ -f "$conn_props" ]; then
+    verify_app "$2"
+    java org.apache.fluo.command.FluoScan "$conn_props" ${*:2}
+  else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
 stop)
-  if [ -f "$conf/connection.properties" ]; then
+  if [ -f "$conn_props" ]; then
+    verify_app "$2"
     echo "Stopping all processes for ${2} application"
     for pid_file in $basedir/run/${2}_*.pid; do
       if [ -f "$pid_file" ]; then
@@ -187,9 +207,8 @@ ps)
   jps -m | grep Fluo
   ;;
 list)
-  if [ -f "$conf/connection.properties" ]; then
-    check_conn_props
-    java org.apache.fluo.command.FluoList "$connection_props"
+  if [ -f "$conn_props" ]; then
+    java org.apache.fluo.command.FluoList "$conn_props"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" list app ${*:2}
@@ -199,9 +218,9 @@ classpath)
   echo "$CLASSPATH"
   ;;
 exec)
-  if [ -f "$conf/connection.properties" ]; then
+  if [ -f "$conn_props" ]; then
     setup_service $2
-    java org.apache.fluo.command.FluoExec "$connection_props" ${*:2}
+    java org.apache.fluo.command.FluoExec "$conn_props" ${*:2}
   else
     deprecated_verify "$2"
     export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
@@ -212,9 +231,9 @@ version)
   echo "$FLUO_VERSION"
   ;;
 wait)
-  if [ -f "$conf/connection.properties" ]; then
-    check_conn_props
-    java org.apache.fluo.command.FluoWait "$connection_props" $2
+  if [ -f "$conn_props" ]; then
+    verify_app "$2"
+    java org.apache.fluo.command.FluoWait "$conn_props" $2
   else
     deprecated_verify "$2"
     export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
@@ -240,12 +259,6 @@ new)
   fi
   $sed_cmd "s/fluo.client.application.name=/fluo.client.application.name=$APP/g" "$APP_CONF_DIR/fluo.properties"
   copy_config logback.xml
-  ;;
-init)
-  deprecated_verify_full "$2"
-  check_hadoop
-  export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
-  java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   ;;
 start)
   deprecated_verify_full "$2"

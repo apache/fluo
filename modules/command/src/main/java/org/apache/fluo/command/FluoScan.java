@@ -251,8 +251,8 @@ public class FluoScan {
   }
 
   public static void main(String[] args) {
-    if (args.length < 1) {
-      System.err.println("Usage: FluoScan <connectionPropsPath> userArgs...");
+    if (args.length < 2) {
+      System.err.println("Usage: FluoScan <connectionPropsPath> <appName> userArgs...");
       System.exit(-1);
     }
     final String connectionPropsPath = args[0];

@@ -15,7 +15,10 @@
 # Fluo properties
 #################
 
-# NOTE - All properties that have a default are set with it.  Uncomment
+# NOTE - This file has been deprecated and replaced by connection.properties & application.properties! 
+# If you would like to use this file instead, rename it to fluo.properties and remove connection.properties.
+#
+# All properties that have a default are set with it.  Uncomment
 # a property if you want to use a value different than the default. 
 # Properties that have no default are uncommented and must be set by
 # the user.  Most are unset except for fluo.accumulo.classpath which
