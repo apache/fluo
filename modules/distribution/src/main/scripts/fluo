@@ -149,6 +149,10 @@ case "$1" in
 init)
   if [ -f "$conn_props" ]; then
     check_conn_props
+    if [[ $2 = *"-h"* ]]; then
+      java org.apache.fluo.command.FluoInit "$conn_props" "/dev/null" "$2"
+      exit 1
+    fi
     app_props=$2
     if [ ! -f "$app_props" ]; then
       echo "Application properties file '$app_props' does not exist"

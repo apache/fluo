@@ -94,21 +94,17 @@ public class FluoInit {
       System.exit(-1);
     }
     String connectionPropsPath = args[0];
-    String applicationPropsPath = args[1];
     Objects.requireNonNull(connectionPropsPath);
-    Objects.requireNonNull(applicationPropsPath);
+    Preconditions.checkArgument(!connectionPropsPath.isEmpty(), "<connectionPropsPath> is empty");
     File connectionPropsFile = new File(connectionPropsPath);
-    File applicationPropsFile = new File(applicationPropsPath);
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-    Preconditions.checkArgument(applicationPropsFile.exists(), applicationPropsPath
         + " does not exist");
 
     String[] userArgs = Arrays.copyOfRange(args, 2, args.length);
 
     InitOptions commandOpts = new InitOptions();
     JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName("fluo setup");
+    jcommand.setProgramName("fluo init");
     try {
       jcommand.parse(userArgs);
     } catch (ParameterException e) {
@@ -121,6 +117,12 @@ public class FluoInit {
       jcommand.usage();
       System.exit(0);
     }
+
+    String applicationPropsPath = args[1];
+    Objects.requireNonNull(applicationPropsPath);
+    File applicationPropsFile = new File(applicationPropsPath);
+    Preconditions.checkArgument(applicationPropsFile.exists(), applicationPropsPath
+        + " does not exist");
 
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
     config.load(applicationPropsFile);

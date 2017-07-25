@@ -55,13 +55,13 @@ After you obtain a Fluo distribution tarball, follow these steps to install Fluo
     The distribution contains a `fluo` script in `bin/` that administers Fluo and the
     following configuration files in `conf/`:
 
-    | Configuration file           | Description                                                              |
-    |------------------------------|--------------------------------------------------------------------------|
-    | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.       |
-    | [connection.properties]      | Configures connection to Fluo. Required for all commands.                |
-    | [application.properties]     | Configuration passed to `fluo init` when initializing Fluo application. |
-    | [log4j.properties]           | Configures logging                                                       |
-    | [fluo.properties.deprecated] | Deprecated Fluo configuration file                                       |
+    | Configuration file           | Description                                                                                      |
+    |------------------------------|--------------------------------------------------------------------------------------------------|
+    | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.                               |
+    | [connection.properties]      | Configures connection to Fluo. Required for all commands.                                        |
+    | [application.properties]     | Configuration passed to `fluo init` when initializing Fluo application.                          |
+    | [log4j.properties]           | Configures logging                                                                               |
+    | [fluo.properties.deprecated] | Deprecated Fluo configuration file. Replaced by connection.properties and application.properties |
 
 2.  Configure [fluo-env.sh] to set up your classpath using jars from the versions of Hadoop, Accumulo, and
 Zookeeper that you are using. Choose one of the two ways below to make these jars available to Fluo:
