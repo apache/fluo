@@ -15,11 +15,21 @@
 
 package org.apache.fluo.api.client.scanner;
 
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import org.apache.fluo.api.data.RowColumnValue;
 
 /**
  * @since 1.0.0
  */
 public interface CellScanner extends Iterable<RowColumnValue> {
+
+  /**
+   * @since 1.2.0
+   */
+  default Stream<RowColumnValue> stream() {
+    return StreamSupport.stream(spliterator(), false);
+  }
 
 }
