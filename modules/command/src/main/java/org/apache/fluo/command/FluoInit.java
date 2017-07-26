@@ -104,7 +104,7 @@ public class FluoInit {
 
     InitOptions commandOpts = new InitOptions();
     JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName("fluo init");
+    jcommand.setProgramName("fluo init <appProps>");
     try {
       jcommand.parse(userArgs);
     } catch (ParameterException e) {
