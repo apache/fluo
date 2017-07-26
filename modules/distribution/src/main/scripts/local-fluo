@@ -45,6 +45,7 @@ APP_LOG_DIR=$APP_DIR/logs
 
 function print_usage {
   echo -e "Usage: local-fluo <command> (<argument> ...)\n"
+  echo -e "This script is now deprecated.  Use 'fluo' script to start local processes\n"
   echo -e "Possible commands:\n"
   echo "  start-oracle <app>    Starts local Fluo oracle for application"
   echo "  start-worker <app>    Starts local Fluo worker for application"
