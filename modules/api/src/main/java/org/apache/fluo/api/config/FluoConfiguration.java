@@ -319,6 +319,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getConnectionRetryTimeout();
   }
 
+  /**
+   * @since 1.2.0
+   */
   public FluoConfiguration setConnectionRetryTimeout(int timeoutMS) {
     Preconditions.checkArgument(timeoutMS >= -1, CONNECTION_RETRY_TIMEOUT_MS_PROP
         + " must be >= -1");
@@ -326,6 +329,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     return this;
   }
 
+  /**
+   * @since 1.2.0
+   */
   public int getConnectionRetryTimeout() {
     int retval;
     if (containsKey(CONNECTION_RETRY_TIMEOUT_MS_PROP)) {
@@ -399,19 +405,31 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
   }
 
+  /**
+   * @since 1.2.0
+   */
   public FluoConfiguration setAccumuloJars(String path) {
     setProperty(ACCUMULO_JARS_PROP, verifyNotNull(ACCUMULO_JARS_PROP, path));
     return this;
   }
 
+  /**
+   * @since 1.2.0
+   */
   public String getAccumuloJars() {
     return getString(ACCUMULO_JARS_PROP, ACCUMULO_JARS_DEFAULT);
   }
 
+  /**
+   * @since 1.2.0
+   */
   public FluoConfiguration setHdfsRoot(String hdfsRoot) {
     return setNonEmptyString(HDFS_ROOT_PROP, hdfsRoot);
   }
 
+  /**
+   * @since 1.2.0
+   */
   public String getHdfsRoot() {
     return getNonEmptyString(HDFS_ROOT_PROP, HDFS_ROOT_DEFAULT);
   }
@@ -541,12 +559,16 @@ public class FluoConfiguration extends SimpleConfiguration {
    * Sets URL to directory where observer jars can be found
    *
    * @param observerJarsUrl URL to observer jars directory
+   * @since 1.2.0
    */
   public FluoConfiguration setObserverJarsUrl(String observerJarsUrl) {
     setProperty(OBSERVER_JARS_URL_PROP, verifyNotNull(OBSERVER_JARS_URL_PROP, observerJarsUrl));
     return this;
   }
 
+  /**
+   * @since 1.2.0
+   */
   public String getObserverJarsUrl() {
     return getString(OBSERVER_JARS_URL_PROP, OBSERVER_JARS_URL_DEFAULT);
   }
