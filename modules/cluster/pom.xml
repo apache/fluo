@@ -18,11 +18,11 @@
   <parent>
     <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-project</artifactId>
-    <version>1.2.0-incubating-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-cluster</artifactId>
-  <name>Apache Fluo (incubating) Cluster</name>
+  <name>Apache Fluo Cluster</name>
   <description>This module contains all code necessary to run Apache Fluo on a YARN cluster using
     Apache Twill. It was separated from fluo-core to keep dependencies (like Twill) out of Fluo
     clients which depend on the fluo-core jar.  It was also done to limit conflicts. For example,

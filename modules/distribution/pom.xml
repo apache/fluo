@@ -18,12 +18,12 @@
   <parent>
     <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-project</artifactId>
-    <version>1.2.0-incubating-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo</artifactId>
   <packaging>pom</packaging>
-  <name>Apache Fluo (incubating) Distribution</name>
+  <name>Apache Fluo Distribution</name>
   <description>This module produces a tarball distribution of Apache Fluo. It contains all of the
     default configuration and scripts required for the distribution.</description>
   <!-- NOTE: These dependencies are bundled in this assembly -->
