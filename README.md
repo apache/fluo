@@ -17,7 +17,7 @@
 
 [![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Apache License][li]][ll]
 
-# Apache Fluo Build Resources (incubating)
+# Apache Fluo Build Resources
 
 View documentation at:
 https://fluo.apache.org
@@ -26,9 +26,9 @@ Build Resources for Apache Fluo projects
 
 This project uses semantic versioning.
 
-[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=build-resources
-[tl]: https://travis-ci.org/apache/incubator-fluo/branches
+[ti]: https://travis-ci.org/apache/fluo.svg?branch=build-resources
+[tl]: https://travis-ci.org/apache/fluo/branches
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/build-resources/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/build-resources
 [li]: https://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/apache/incubator-fluo/blob/build-resources/LICENSE
+[ll]: https://github.com/apache/fluo/blob/build-resources/LICENSE
