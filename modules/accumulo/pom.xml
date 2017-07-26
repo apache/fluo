@@ -18,11 +18,11 @@
   <parent>
     <groupId>org.apache.fluo</groupId>
     <artifactId>fluo-project</artifactId>
-    <version>1.2.0-incubating-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-accumulo</artifactId>
-  <name>Apache Fluo (incubating) Accumulo Extensions</name>
+  <name>Apache Fluo Accumulo Extensions</name>
   <description>This module contains all Apache Fluo code that is run by Accumulo. This includes
     iterators and formatters. Given that this module produces a JAR that needs to be included on the
     Accumulo classpath, external dependencies should be limited. Some utility classes in this module
