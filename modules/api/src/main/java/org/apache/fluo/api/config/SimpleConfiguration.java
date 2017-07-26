@@ -168,6 +168,7 @@ public class SimpleConfiguration implements Serializable {
 
   /**
    * Loads configuration from InputStream. Later loads have lower priority.
+   * 
    * @param in InputStream to load from
    * @since 1.2.0
    */
@@ -185,6 +186,7 @@ public class SimpleConfiguration implements Serializable {
 
   /**
    * Loads configuration from File. Later loads have lower priority.
+   * 
    * @param file File to load from
    * @since 1.2.0
    */
