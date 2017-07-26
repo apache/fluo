@@ -55,13 +55,13 @@ After you obtain a Fluo distribution tarball, follow these steps to install Fluo
     The distribution contains a `fluo` script in `bin/` that administers Fluo and the
     following configuration files in `conf/`:
 
-    | Configuration file           | Description                                                                                      |
-    |------------------------------|--------------------------------------------------------------------------------------------------|
-    | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.                               |
-    | [connection.properties]      | Configures connection to Fluo. Required for all commands.                                        |
-    | [application.properties]     | Configuration passed to `fluo init` when initializing Fluo application.                          |
-    | [log4j.properties]           | Configures logging                                                                               |
-    | [fluo.properties.deprecated] | Deprecated Fluo configuration file. Replaced by connection.properties and application.properties |
+    | Configuration file           | Description                                                                                  |
+    |------------------------------|----------------------------------------------------------------------------------------------|
+    | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.                           |
+    | [fluo-conn.properties]       | Configures connection to Fluo. Required for all commands.                                    |
+    | [fluo-app.properties]        | Configuration passed to `fluo init` when initializing Fluo application.                      |
+    | [log4j.properties]           | Configures logging                                                                           |
+    | [fluo.properties.deprecated] | Deprecated Fluo configuration file. Replaced by fluo-conn.properties and fluo-app.properties |
 
 2.  Configure [fluo-env.sh] to set up your classpath using jars from the versions of Hadoop, Accumulo, and
 Zookeeper that you are using. Choose one of the two ways below to make these jars available to Fluo:
@@ -103,12 +103,11 @@ Running the script without any arguments prints a description of all commands.
 
 ## Initialize Fluo application
 
-1. Create a copy of [application.properties] for your Fluo application. While not required, you can
-   name the file using your desired application name (which is `myapp` below).
+1. Create a copy of [fluo-app.properties] for your Fluo application. 
 
-        cp conf/application.properties conf/myapp.properties
+        cp conf/fluo-app.properties /path/to/myapp/fluo-app.properties
 
-2. Edit your copy of [application.properties] and make sure to set the following:
+2. Edit your copy of [fluo-app.properties] and make sure to set the following:
 
     * Fluo application name
     * Class name of your ObserverProvider
@@ -116,17 +115,17 @@ Running the script without any arguments prints a description of all commands.
     * Accumulo configuration
     * HDFS configuration
 
-   When configuring the observer section of application.properties, you can configure your instance for the
+   When configuring the observer section of fluo-app.properties, you can configure your instance for the
    [phrasecount] application if you have not created your own application. See the [phrasecount]
    example for instructions. You can also choose not to configure any observers but your workers will
    be idle when started.
 
 3. Run the command below to initialize your Fluo application:
 
-        fluo init conf/myapp.properties
+        fluo init /path/to/myapp/fluo-app.properties
 
    A Fluo application only needs to be initialized once. After initialization, the Fluo application
-   name (set by `fluo.application.name` in your [application.properties]) is used to start/stop the application
+   name (set by `fluo.application.name` in your [fluo-app.properties]) is used to start/stop the application
    and scan the Fluo table.
 
 4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
@@ -135,7 +134,7 @@ Running the script without any arguments prints a description of all commands.
 
 Follow the instructions below to start a Fluo application which contains an oracle and multiple workers.
 
-1. Configure [fluo-env.sh] and [connection.properties] if you have not already.
+1. Configure [fluo-env.sh] and [fluo-conn.properties] if you have not already.
 
 2. Run Fluo application processes using the `fluo oracle` and `fluo worker` commands. Fluo applications
    are typically run with one oracle process and multiple worker processes. The commands below will start
@@ -183,8 +182,8 @@ Using at least Accumulo 1.6.1 is recommended because multiple performance bugs w
 [related]: https://fluo.apache.org/related-projects/
 [release]: https://fluo.apache.org/download/
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[connection.properties]: ../modules/distribution/src/main/config/connection.properties
-[application.properties]: ../modules/distribution/src/main/config/application.properties
+[fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
+[fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [log4j.properties]: ../modules/distribution/src/main/config/log4j.properties
 [fluo.properties.deprecated]: ../modules/distribution/src/main/config/fluo.properties.deprecated
 [fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh

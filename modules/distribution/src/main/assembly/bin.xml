@@ -56,7 +56,7 @@
       <outputDirectory>conf</outputDirectory>
       <excludes>
         <exclude>src/main/config/fluo.properties.deprecated</exclude>
-        <exclude>src/main/config/application.properties</exclude>
+        <exclude>src/main/config/fluo-app.properties</exclude>
       </excludes>
     </fileSet>
     <fileSet>
@@ -94,7 +94,7 @@
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/config/application.properties</source>
+      <source>src/main/config/fluo-app.properties</source>
       <outputDirectory>conf</outputDirectory>
       <filtered>true</filtered>
     </file>

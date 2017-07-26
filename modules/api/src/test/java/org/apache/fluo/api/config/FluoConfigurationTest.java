@@ -208,9 +208,9 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingDistPropsFile() {
-    File connectionProps = new File("../distribution/src/main/config/connection.properties");
+    File connectionProps = new File("../distribution/src/main/config/fluo-conn.properties");
     Assert.assertTrue(connectionProps.exists());
-    File applicationProps = new File("../distribution/src/main/config/application.properties");
+    File applicationProps = new File("../distribution/src/main/config/fluo-app.properties");
     Assert.assertTrue(applicationProps.exists());
 
     FluoConfiguration config = new FluoConfiguration(connectionProps);
@@ -270,7 +270,7 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingTestPropsFile() {
-    File applicationProps = new File("src/test/resources/application.properties");
+    File applicationProps = new File("src/test/resources/fluo-app.properties");
     Assert.assertTrue(applicationProps.exists());
 
     FluoConfiguration config = new FluoConfiguration(applicationProps);
@@ -287,7 +287,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(30000, config.getZookeeperTimeout());
     Assert.assertEquals(-1, config.getConnectionRetryTimeout());
 
-    File connectionProps = new File("src/test/resources/connection.properties");
+    File connectionProps = new File("src/test/resources/fluo-conn.properties");
     Assert.assertTrue(applicationProps.exists());
     config.load(connectionProps);
     Assert.assertEquals("localhost/test-fluo", config.getInstanceZookeepers());

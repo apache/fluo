@@ -15,8 +15,8 @@
 # Fluo properties
 #################
 
-# NOTE - This file has been deprecated and replaced by connection.properties & application.properties! 
-# If you would like to use this file instead, rename it to fluo.properties and remove connection.properties.
+# NOTE - This file has been deprecated and replaced by fluo-conn.properties & fluo-app.properties! 
+# If you would like to use this file instead, rename it to fluo.properties and remove fluo-conn.properties.
 #
 # All properties that have a default are set with it.  Uncomment
 # a property if you want to use a value different than the default. 

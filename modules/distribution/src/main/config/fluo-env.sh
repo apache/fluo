@@ -27,6 +27,10 @@
 export FLUO_LOG_DIR="${FLUO_LOG_DIR:-${basedir}/logs}"
 ## Hadoop installation
 export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
+## Fluo connection properties
+export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
+## Fluo log4j configuration
+export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
 
 ##################################################################
 # Build JAVA_OPTS variable. Defaults below work but can be edited.
@@ -34,7 +38,7 @@ export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
 
 export FLUO_LOG_ID="${app}_${cmd}_$(hostname)_$(date +%s)"
 
-JAVA_OPTS=("-Dlog4j.configuration=file:${conf}/log4j.properties"
+JAVA_OPTS=("-Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}"
            "-Dfluo.log.dir=${FLUO_LOG_DIR}"
            "-Dfluo.log.id=${FLUO_LOG_ID}")
 export JAVA_OPTS
@@ -74,7 +78,7 @@ setupClasspathFromSystem()
   test -z "$ZOOKEEPER_HOME" && ZOOKEEPER_HOME=/path/to/zookeeper
 
   CLASSPATH="$lib/*"
-  if [ -f "$conf/connection.properties" ]; then
+  if [ -f "$FLUO_CONN_PROPS" ]; then
     CLASSPATH="$CLASSPATH:$lib/log4j/*"
   else
     CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
@@ -101,7 +105,7 @@ setupClasspathFromSystem()
 # `./lib/fetch.sh ahz` to download dependencies to this directory.
 setupClasspathFromLib(){
   CLASSPATH="$lib/*"
-  if [ -f "$conf/connection.properties" ]; then
+  if [ -f "$FLUO_CONN_PROPS" ]; then
     CLASSPATH="$CLASSPATH:$lib/log4j/*"
   else
     CLASSPATH="$CLASSPATH:$lib/logback/*"

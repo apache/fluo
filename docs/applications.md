@@ -45,11 +45,11 @@ allow the scripts to use the versions of Hadoop, Accumulo, and Zookeeper install
 To create a [FluoClient], you will need to provide it with a [FluoConfiguration] object that is
 configured to connect to your Fluo instance.
 
-If you have access to the [connection.properties] file that was used to configure your Fluo instance, you
+If you have access to the [fluo-conn.properties] file that was used to configure your Fluo instance, you
 can use it to build a [FluoConfiguration] object with all necessary properties:
 
 ```java
-FluoConfiguration config = new FluoConfiguration(new File("connection.properties"));
+FluoConfiguration config = new FluoConfiguration(new File("fluo-conn.properties"));
 config.setApplicationName("myapp");
 ```
 
@@ -141,7 +141,7 @@ To create an observer, follow these steps:
 3.  Build a jar containing these classes and include this jar in the `lib/` directory of your Fluo
     application.
 4.  Configure your Fluo instance to use this observer provider by modifying the Application section of
-    [application.properties].
+    [fluo-app.properties].
 5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
     ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
     are used by transactions to know when to trigger observers.
@@ -215,8 +215,8 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
 [Observer]: ../modules/api/src/main/java/org/apache/fluo/api/observer/Observer.java
 [ObserverProvider]: ../modules/api/src/main/java/org/apache/fluo/api/observer/ObserverProvider.java
-[connection.properties]: ../modules/distribution/src/main/config/connection.properties
-[application.properties]: ../modules/distribution/src/main/config/application.properties
+[fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
+[fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [API]: https://fluo.apache.org/apidocs/
 [metrics]: metrics.md
 [slf4j]: http://www.slf4j.org/
