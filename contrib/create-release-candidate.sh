@@ -67,7 +67,7 @@ gitSubject() { pretty %s "$@"; }
 
 createEmail() {
   # $1 version (optional); $2 rc seqence num (optional); $3 staging repo num (optional)
-  local ver; [[ -n $1 ]] && ver=$1 || ver=$(prompter 'version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+([-]incubating)?')
+  local ver; [[ -n $1 ]] && ver=$1 || ver=$(prompter 'version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+')
   local rc; [[ -n $2 ]] && rc=$2 || rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
   local stagingrepo; [[ -n $3 ]] && stagingrepo=$3 || stagingrepo=$(prompter 'staging repository number from https://repository.apache.org/#stagingRepositories' '[0-9]+')
 
@@ -128,7 +128,7 @@ Binary: $(green "https://repository.apache.org/content/repositories/orgapacheflu
 All artifacts were built and staged with:
     mvn release:prepare && mvn release:perform
 
-Signing keys are available at https://www.apache.org/dist/incubator/fluo/KEYS
+Signing keys are available at https://www.apache.org/dist/fluo/KEYS
 (Expected fingerprint: $(green "$fingerprint"))
 
 Release notes (in progress) can be found at: $(green "https://fluo.apache.org/.../$ver")
@@ -216,7 +216,7 @@ createReleaseCandidate() {
 
   local cBranch; cBranch=$(currentBranch) || fail "$(red Failure)" to get current branch from git
   local rc; rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
-  local nextVer; nextVer=$(prompter 'next snapshot version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+([-]incubating)?')
+  local nextVer; nextVer=$(prompter 'next snapshot version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+')
   local rcBranch; rcBranch=$ver-rc$rc
   local nBranch; nBranch=$rcBranch-next
 

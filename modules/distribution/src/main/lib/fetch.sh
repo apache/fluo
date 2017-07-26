@@ -95,7 +95,7 @@ extra)
   download org.slf4j:slf4j-api:jar:1.7.12
   download org.slf4j:slf4j-log4j12:jar:1.7.12 ./log4j
   download org.xerial.snappy:snappy-java:jar:1.0.5
-  # See https://github.com/apache/incubator-fluo/issues/820
+  # See https://github.com/apache/fluo/issues/820
   download io.netty:netty:jar:3.9.9.Final
 
   echo -e "Done!\n"
