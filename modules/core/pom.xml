@@ -22,7 +22,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>fluo-core</artifactId>
-  <name>Apache Fluo (incubating) Core</name>
+  <name>Apache Fluo Core</name>
   <description>The modules contains the core implementation code of Apache Fluo.</description>
   <dependencies>
     <dependency>
