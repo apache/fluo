@@ -419,7 +419,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           numCollisions += cols.size();
         }
 
-        sb.append("Collsions(");
+        sb.append("Collisions(");
         sb.append(numCollisions);
         sb.append("):");
 
