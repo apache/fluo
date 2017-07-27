@@ -77,7 +77,7 @@
   </issueManagement>
   <properties>
     <assembly.tarLongFileMode>posix</assembly.tarLongFileMode>
-    <build-resources.version>1.0.0-incubating</build-resources.version>
+    <build-resources.version>2.0.0</build-resources.version>
     <checkstyle.config>org/apache/fluo/resources/java-checkstyle.xml</checkstyle.config>
     <extraReleaseArguments />
     <findbugs.effort>Max</findbugs.effort>
