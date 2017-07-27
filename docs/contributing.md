@@ -22,7 +22,7 @@ limitations under the License.
 If you have [Git], [Maven], and [Java][java] (version 8+) installed, run these commands to build
 Fluo:
 
-    git clone https://github.com/apache/incubator-fluo.git
+    git clone https://github.com/apache/fluo.git
     cd fluo
     mvn package
 

@@ -39,7 +39,7 @@ Before you can install Fluo, you will need to obtain a distribution tarball. It 
 you download the [latest release][release]. You can also build a distribution from the master
 branch by following these steps which create a tarball in `modules/distribution/target`:
 
-    git clone https://github.com/apache/incubator-fluo.git
+    git clone https://github.com/apache/fluo.git
     cd fluo/
     mvn package
 
