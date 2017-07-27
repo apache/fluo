@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Run method of Fluo oracle that is called within a Twill/YARN application
  */
+@Deprecated
 public class OracleRunnable extends AbstractTwillRunnable {
 
   private static final Logger log = LoggerFactory.getLogger(OracleRunnable.class);

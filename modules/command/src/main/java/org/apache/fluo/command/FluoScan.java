@@ -17,9 +17,7 @@ package org.apache.fluo.command;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,25 +25,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.security.Authorizations;
-import org.apache.fluo.accumulo.format.FluoFormatter;
-import org.apache.fluo.api.client.FluoClient;
-import org.apache.fluo.api.client.FluoFactory;
-import org.apache.fluo.api.client.Snapshot;
-import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.RowColumnValue;
-import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.core.util.AccumuloUtil;
-import org.apache.fluo.core.util.ByteUtil;
-import org.apache.fluo.core.util.Hex;
-import org.apache.fluo.core.util.SpanUtil;
+import org.apache.fluo.core.util.ScanUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -105,148 +86,10 @@ public class FluoScan {
       }
       return columns;
     }
-  }
 
-  public static Span getSpan(ScanOptions options) {
-    Span span = new Span();
-    if ((options.getExactRow() != null)
-        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
-            .getRowPrefix() != null))) {
-      throw new IllegalArgumentException(
-          "You cannot specify an exact row with a start/end row or row prefix!");
-    }
-
-    if ((options.getRowPrefix() != null)
-        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
-            .getExactRow() != null))) {
-      throw new IllegalArgumentException(
-          "You cannot specify an prefix row with a start/end row or exact row!");
-    }
-
-    // configure span of scanner
-    if (options.getExactRow() != null) {
-      span = Span.exact(options.getExactRow());
-    } else if (options.getRowPrefix() != null) {
-      span = Span.prefix(options.getRowPrefix());
-    } else {
-      if ((options.getStartRow() != null) && (options.getEndRow() != null)) {
-        span = new Span(options.getStartRow(), true, options.getEndRow(), true);
-      } else if (options.getStartRow() != null) {
-        span = new Span(Bytes.of(options.getStartRow()), true, Bytes.EMPTY, true);
-      } else if (options.getEndRow() != null) {
-        span = new Span(Bytes.EMPTY, true, Bytes.of(options.getEndRow()), true);
-      }
-    }
-
-    return span;
-  }
-
-  public static Collection<Column> getColumns(ScanOptions options) {
-    Collection<Column> columns = new HashSet<>();
-
-    // configure columns of scanner
-    for (String column : options.getColumns()) {
-      String[] colFields = column.split(":");
-      if (colFields.length == 1) {
-        columns.add(new Column(colFields[0]));
-      } else if (colFields.length == 2) {
-        columns.add(new Column(colFields[0], colFields[1]));
-      } else {
-        throw new IllegalArgumentException("Failed to scan!  Column '" + column
-            + "' has too many fields (indicated by ':')");
-      }
-    }
-
-    return columns;
-  }
-
-  private static void scanFluo(ScanOptions options, FluoConfiguration sConfig) {
-    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName()
-        + "' application.");
-
-    long entriesFound = 0;
-    try (FluoClient client = FluoFactory.newClient(sConfig)) {
-      try (Snapshot s = client.newSnapshot()) {
-
-        Span span = null;
-        Collection<Column> columns = null;
-        try {
-          span = getSpan(options);
-          columns = getColumns(options);
-        } catch (IllegalArgumentException e) {
-          System.err.println(e.getMessage());
-          System.exit(-1);
-        }
-
-        CellScanner cellScanner = s.scanner().over(span).fetch(columns).build();
-
-        StringBuilder sb = new StringBuilder();
-        for (RowColumnValue rcv : cellScanner) {
-          if (options.hexEncNonAscii) {
-            sb.setLength(0);
-            Hex.encNonAscii(sb, rcv.getRow());
-            sb.append(" ");
-            Hex.encNonAscii(sb, rcv.getColumn(), " ");
-            sb.append("\t");
-            Hex.encNonAscii(sb, rcv.getValue());
-            System.out.println(sb.toString());
-          } else {
-            sb.setLength(0);
-            sb.append(rcv.getsRow());
-            sb.append(" ");
-            sb.append(rcv.getColumn());
-            sb.append("\t");
-            sb.append(rcv.getsValue());
-            System.out.println(sb.toString());
-          }
-          entriesFound++;
-          if (System.out.checkError()) {
-            break;
-          }
-        }
-
-        if (entriesFound == 0) {
-          System.out.println("\nNo data found\n");
-        }
-      } catch (FluoException e) {
-        System.out.println("Scan failed - " + e.getMessage());
-      }
-    }
-  }
-
-  private static void scanAccumulo(ScanOptions options, FluoConfiguration sConfig) {
-    System.out.println("Scanning data in Accumulo directly for '" + sConfig.getApplicationName()
-        + "' application.");
-
-    Connector conn = AccumuloUtil.getConnector(sConfig);
-
-    Span span = null;
-    Collection<Column> columns = null;
-    try {
-      span = getSpan(options);
-      columns = getColumns(options);
-    } catch (IllegalArgumentException e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    }
-
-    try {
-      Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
-      scanner.setRange(SpanUtil.toRange(span));
-      for (Column col : columns) {
-        if (col.isQualifierSet()) {
-          scanner
-              .fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
-        } else {
-          scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
-        }
-      }
-
-      for (String entry : Iterables.transform(scanner, FluoFormatter::toString)) {
-        System.out.println(entry);
-      }
-    } catch (Exception e) {
-      System.out.println("Scan failed - " + e.getMessage());
+    public ScanUtil.ScanOpts getScanOpts() {
+      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
+          hexEncNonAscii, scanAccumuloTable);
     }
   }
 
@@ -288,9 +131,9 @@ public class FluoScan {
     CommandUtil.verifyAppRunning(config);
 
     if (options.scanAccumuloTable) {
-      scanAccumulo(options, config);
+      ScanUtil.scanAccumulo(options.getScanOpts(), config);
     } else {
-      scanFluo(options, config);
+      ScanUtil.scanFluo(options.getScanOpts(), config);
     }
   }
 }

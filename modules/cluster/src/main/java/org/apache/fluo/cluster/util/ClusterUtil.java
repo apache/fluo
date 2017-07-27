@@ -17,6 +17,7 @@ package org.apache.fluo.cluster.util;
 
 import java.io.File;
 
+@Deprecated
 public class ClusterUtil {
 
   private ClusterUtil() {}

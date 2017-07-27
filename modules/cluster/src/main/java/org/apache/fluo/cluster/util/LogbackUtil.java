@@ -30,6 +30,7 @@ import static org.apache.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
 /**
  * Used to initialize Logging for cluster applications
  */
+@Deprecated
 public class LogbackUtil {
 
   private static final Logger log = LoggerFactory.getLogger(LogbackUtil.class);

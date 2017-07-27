@@ -13,26 +13,28 @@
  * the License.
  */
 
-package org.apache.fluo.cluster.runner;
+package org.apache.fluo.command;
 
 import com.beust.jcommander.JCommander;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.core.impl.SnapshotScanner;
+import org.apache.fluo.core.util.ScanUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Unit test for Scan command
+ * Unit test for ScanUtil
  */
 public class ScanTest {
 
   private SnapshotScanner.Opts parseArgs(String args) {
-    ScanOptions options = new ScanOptions();
+    FluoScan.ScanOptions options = new FluoScan.ScanOptions();
     JCommander jcommand = new JCommander(options);
     jcommand.parse(args.split(" "));
-    return new SnapshotScanner.Opts(AppRunner.getSpan(options), AppRunner.getColumns(options));
+    ScanUtil.ScanOpts opts = options.getScanOpts();
+    return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts));
   }
 
   @Test
