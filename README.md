@@ -17,7 +17,7 @@
 
 [![Build Status][ti]][tl] [![Maven Central][mi]][ml] [![Apache License][li]][ll]
 
-# Apache Fluo Parent POM (incubating)
+# Apache Fluo Parent POM
 
 View documentation at:
 https://fluo.apache.org
@@ -26,9 +26,9 @@ Parent pom for Apache Fluo projects
 
 This project uses a 1-up counter for its versioning.
 
-[ti]: https://travis-ci.org/apache/incubator-fluo.svg?branch=fluo-parent
-[tl]: https://travis-ci.org/apache/incubator-fluo/branches
+[ti]: https://travis-ci.org/apache/fluo.svg?branch=fluo-parent
+[tl]: https://travis-ci.org/apache/fluo/branches
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-parent
 [li]: https://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/apache/incubator-fluo/blob/fluo-parent/LICENSE
+[ll]: https://github.com/apache/fluo/blob/fluo-parent/LICENSE
