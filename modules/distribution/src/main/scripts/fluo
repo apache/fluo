@@ -66,6 +66,7 @@ function print_usage {
   echo "  init <appProps> {<arg>}     Initializes Fluo application using <appProps>. Run with -h to see additional args."
   echo "  classpath                   Prints the classpath setup in fluo-env.sh"
   echo "  list                        Lists all Fluo applications in Fluo instance"
+  echo "  config <app>                Lists configuration for Fluo <app>"
   echo "  scan <app>                  Prints snapshot of data in Fluo <app>"
   echo "  stop <app>                  Stops Fluo application processes on this machine for <app>"
   echo "  oracle <app>                Starts Fluo Oracle process for <app>"
@@ -145,6 +146,11 @@ function setup_service {
 }
 
 case "$1" in
+config)
+  verify_app "$2"
+  check_conn_props
+  java org.apache.fluo.command.FluoConfig "$FLUO_CONN_PROPS" "$2"
+  ;;
 init)
   if [ -f "$FLUO_CONN_PROPS" ]; then
     check_conn_props
