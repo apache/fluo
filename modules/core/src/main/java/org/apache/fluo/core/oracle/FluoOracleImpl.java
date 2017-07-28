@@ -41,10 +41,10 @@ public class FluoOracleImpl implements FluoOracle {
   private OracleServer oracleServer;
   private NodeCache appIdCache;
 
-  public FluoOracleImpl(FluoConfiguration config) {
-    Objects.requireNonNull(config);
-    Preconditions.checkArgument(config.hasRequiredConnectionProps());
-    FluoAdminImpl.readSharedConfig(config);
+  public FluoOracleImpl(FluoConfiguration connConfig) {
+    Objects.requireNonNull(connConfig);
+    Preconditions.checkArgument(connConfig.hasRequiredConnectionProps());
+    config = FluoAdminImpl.mergeZookeeperConfig(connConfig);
     Preconditions.checkArgument(config.hasRequiredOracleProps());
     // any client in oracle should retry forever
     config.setConnectionRetryTimeout(-1);
@@ -53,7 +53,6 @@ public class FluoOracleImpl implements FluoOracle {
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid FluoConfiguration", e);
     }
-    this.config = config;
   }
 
   @Override

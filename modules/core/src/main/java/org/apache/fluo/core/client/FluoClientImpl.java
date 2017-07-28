@@ -52,13 +52,12 @@ public class FluoClientImpl implements FluoClient {
         + reporterCounter.getAndIncrement());
   }
 
-  public FluoClientImpl(FluoConfiguration config) {
-    Objects.requireNonNull(config);
-    Preconditions.checkArgument(config.hasRequiredConnectionProps(),
+  public FluoClientImpl(FluoConfiguration connConfig) {
+    Objects.requireNonNull(connConfig);
+    Preconditions.checkArgument(connConfig.hasRequiredConnectionProps(),
         "missing required connection properties");
-    FluoAdminImpl.readSharedConfig(config);
+    config = FluoAdminImpl.mergeZookeeperConfig(connConfig);
     Preconditions.checkArgument(config.hasRequiredClientProps());
-    this.config = config;
     try {
       this.env = new Environment(config);
     } catch (Exception e) {

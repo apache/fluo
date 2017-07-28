@@ -46,6 +46,7 @@ import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
@@ -259,10 +260,13 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   @Override
-  public FluoConfiguration getSharedConfig() {
-    FluoConfiguration copy = new FluoConfiguration(config);
-    readSharedConfig(copy);
-    return copy;
+  public SimpleConfiguration getConnectionConfig() {
+    return new SimpleConfiguration(config);
+  }
+
+  @Override
+  public SimpleConfiguration getApplicationConfig() {
+    return getZookeeperConfig(config);
   }
 
   private String copyDirToHdfs(String srcDir, String destDir) {
@@ -325,11 +329,22 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  public static void readSharedConfig(FluoConfiguration config) {
+  public static FluoConfiguration mergeZookeeperConfig(FluoConfiguration config) {
+    SimpleConfiguration zooConfig = getZookeeperConfig(config);
+    FluoConfiguration copy = new FluoConfiguration(config);
+    for (Map.Entry<String, String> entry : zooConfig.toMap().entrySet()) {
+      copy.setProperty(entry.getKey(), entry.getValue());
+    }
+    return copy;
+  }
+
+  public static SimpleConfiguration getZookeeperConfig(FluoConfiguration config) {
     if (!isInitialized(config)) {
       throw new IllegalStateException("Fluo Application '" + config.getApplicationName()
           + "' has not been initialized");
     }
+
+    SimpleConfiguration zooConfig = new SimpleConfiguration();
 
     try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
@@ -340,11 +355,12 @@ public class FluoAdminImpl implements FluoAdmin {
       sharedProps.load(bais);
 
       for (String prop : sharedProps.stringPropertyNames()) {
-        config.setProperty(prop, sharedProps.getProperty(prop));
+        zooConfig.setProperty(prop, sharedProps.getProperty(prop));
       }
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
+    return zooConfig;
   }
 
   @Override

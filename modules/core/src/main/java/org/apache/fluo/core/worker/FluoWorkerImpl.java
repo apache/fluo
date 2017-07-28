@@ -42,12 +42,11 @@ public class FluoWorkerImpl implements FluoWorker {
   private NotificationFinder notificationFinder;
   private NodeCache appIdCache;
 
-  public FluoWorkerImpl(FluoConfiguration config) {
-    Objects.requireNonNull(config);
-    Preconditions.checkArgument(config.hasRequiredConnectionProps());
-    FluoAdminImpl.readSharedConfig(config);
+  public FluoWorkerImpl(FluoConfiguration connConfig) {
+    Objects.requireNonNull(connConfig);
+    Preconditions.checkArgument(connConfig.hasRequiredConnectionProps());
+    config = FluoAdminImpl.mergeZookeeperConfig(connConfig);
     Preconditions.checkArgument(config.hasRequiredWorkerProps());
-    this.config = config;
   }
 
   @Override

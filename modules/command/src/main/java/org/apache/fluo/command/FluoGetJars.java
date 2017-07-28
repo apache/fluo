@@ -52,7 +52,7 @@ public class FluoGetJars {
     config.setApplicationName(applicationName);
     CommandUtil.verifyAppInitialized(config);
 
-    FluoAdminImpl.readSharedConfig(config);
+    config = FluoAdminImpl.mergeZookeeperConfig(config);
 
     if (config.getObserverJarsUrl().isEmpty()) {
       log.info("No observer jars found for the '{}' Fluo application!", applicationName);

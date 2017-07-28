@@ -15,11 +15,9 @@
 
 package org.apache.fluo.core.impl;
 
-import java.io.ByteArrayInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Properties;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.client.Connector;
@@ -126,7 +124,7 @@ public class Environment implements AutoCloseable {
 
       observers = ObserverUtil.load(curator);
 
-      FluoAdminImpl.readSharedConfig(config);
+      config = FluoAdminImpl.mergeZookeeperConfig(config);
 
       // make sure not to include config passed to env, only want config from zookeeper
       appConfig = config.getAppConfiguration();

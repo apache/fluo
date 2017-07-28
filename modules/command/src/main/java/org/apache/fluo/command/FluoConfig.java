@@ -22,7 +22,10 @@ import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
+import org.apache.fluo.api.client.FluoAdmin;
+import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -51,10 +54,10 @@ public class FluoConfig {
     config.setApplicationName(applicationName);
     CommandUtil.verifyAppInitialized(config);
 
-    FluoAdminImpl.readSharedConfig(config);
-
-    for (Map.Entry<String, String> entry : config.toMap().entrySet()) {
-      System.out.println(entry.getKey() + " = " + entry.getValue());
+    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      for (Map.Entry<String, String> entry : admin.getApplicationConfig().toMap().entrySet()) {
+        System.out.println(entry.getKey() + " = " + entry.getValue());
+      }
     }
   }
 }

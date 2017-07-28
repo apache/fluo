@@ -109,7 +109,7 @@ public class FluoWait {
     FluoConfiguration fluoConfig = new FluoConfiguration(connectionPropsFile);
     fluoConfig.setApplicationName(applicationName);
     CommandUtil.verifyAppRunning(fluoConfig);
-    FluoAdminImpl.readSharedConfig(fluoConfig);
+    fluoConfig = FluoAdminImpl.mergeZookeeperConfig(fluoConfig);
 
     waitUntilFinished(fluoConfig);
   }

@@ -16,6 +16,7 @@
 package org.apache.fluo.api.client;
 
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 /**
  * Provides methods for initializing and administering a Fluo application.
@@ -132,7 +133,17 @@ public interface FluoAdmin extends AutoCloseable {
    */
   void updateSharedConfig();
 
-  FluoConfiguration getSharedConfig();
+  /**
+   * @return SimpleConfiguration containing connection-specific configuration passed to FluoFactory
+   * @since 1.2.0
+   */
+  SimpleConfiguration getConnectionConfig();
+
+  /**
+   * @return SimpleConfiguration containing application-specific configuration stored in Zookeeper
+   * @since 1.2.0
+   */
+  SimpleConfiguration getApplicationConfig();
 
   @Override
   void close();
