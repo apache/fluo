@@ -76,12 +76,12 @@ function print_usage {
   echo "  exec <app> <class> {<arg>}  Executes <class> with <args> using classpath for <app>";
 
   echo -e "\nDeprecated commands (available if fluo.properties exists):\n"
-  echo "  new <app>     Creates configuration for new application in apps/"
-  echo "  start <app>   Starts Fluo application on cluster"
-  echo "  init <app>    Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
-  echo "  kill <app>    Kills Fluo application on cluster"
-  echo "  status <app>  Prints status of Fluo application"
-  echo "  info <app>    Prints information about containers of Fluo application"
+  echo "  new <app>     (Deprecated) Creates configuration for new application in apps/"
+  echo "  start <app>   (Deprecated) Starts Fluo application on cluster"
+  echo "  init <app>    (Deprecated) Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
+  echo "  kill <app>    (Deprecated) Kills Fluo application on cluster"
+  echo "  status <app>  (Deprecated) Prints status of Fluo application"
+  echo "  info <app>    (Deprecated) Prints information about containers of Fluo application"
   echo " "
   exit 1
 }

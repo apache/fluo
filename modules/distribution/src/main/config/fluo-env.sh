@@ -78,6 +78,7 @@ setupClasspathFromSystem()
   test -z "$ZOOKEEPER_HOME" && ZOOKEEPER_HOME=/path/to/zookeeper
 
   CLASSPATH="$lib/*"
+  # If fluo-conn.properties exists, then classpath does not need to include twill or logback
   if [ -f "$FLUO_CONN_PROPS" ]; then
     CLASSPATH="$CLASSPATH:$lib/log4j/*"
   else
@@ -108,7 +109,7 @@ setupClasspathFromLib(){
   if [ -f "$FLUO_CONN_PROPS" ]; then
     CLASSPATH="$CLASSPATH:$lib/log4j/*"
   else
-    CLASSPATH="$CLASSPATH:$lib/logback/*"
+    CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
   fi
   CLASSPATH="$CLASSPATH:$lib/ahz/*"
   export CLASSPATH
