@@ -36,10 +36,10 @@ export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
 # Build JAVA_OPTS variable. Defaults below work but can be edited.
 ##################################################################
 
-export FLUO_LOG_ID="${app}_${cmd}_$(hostname)_$(date +%s)"
+export FLUO_LOG_ID="${cmd}_$(hostname)_$(date +%s)"
 
 JAVA_OPTS=("-Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}"
-           "-Dfluo.log.dir=${FLUO_LOG_DIR}"
+           "-Dfluo.log.dir=${FLUO_LOG_DIR}/${app}"
            "-Dfluo.log.id=${FLUO_LOG_ID}")
 export JAVA_OPTS
 

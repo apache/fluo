@@ -138,7 +138,8 @@ function check_hadoop {
 function setup_service {
   verify_app "$1"
   check_conn_props
-  mkdir -p "$FLUO_LOG_DIR"
+  app_log_dir=$FLUO_LOG_DIR/$app
+  mkdir -p "$app_log_dir"
   app_lib=$lib/apps/$1
   mkdir -p "$app_lib"
   java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$1" "$app_lib"
@@ -179,15 +180,15 @@ init)
   ;;
 oracle)
   setup_service "$2"
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
+  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
   echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
-  echo "Started Oracle for '$2' Fluo application. Logs can be found in ${FLUO_LOG_DIR}"
+  echo "Started Oracle for '$2' Fluo application. Logs can be found in $app_log_dir"
   ;;
 worker)
   setup_service "$2"
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.out" 2> "${FLUO_LOG_DIR}/${FLUO_LOG_ID}.err" &
+  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
   echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
-  echo "Started Worker for '$2' Fluo application. Logs can be found in ${FLUO_LOG_DIR}"
+  echo "Started Worker for '$2' Fluo application. Logs can be found in $app_log_dir"
   ;;
 scan)
   if [ -f "$FLUO_CONN_PROPS" ]; then

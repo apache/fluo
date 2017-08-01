@@ -17,7 +17,7 @@ limitations under the License.
 
 # Fluo Install Instructions
 
-Instructions for installing Apache Fluo and starting a Fluo application in YARN on a cluster where
+Instructions for installing Apache Fluo and starting a Fluo application on a cluster where
 Accumulo, Hadoop & Zookeeper are running.  If you need help setting up these dependencies, see the
 [related projects page][related] for external projects that may help.
 
@@ -59,7 +59,7 @@ After you obtain a Fluo distribution tarball, follow these steps to install Fluo
     |------------------------------|----------------------------------------------------------------------------------------------|
     | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.                           |
     | [fluo-conn.properties]       | Configures connection to Fluo. Required for all commands.                                    |
-    | [fluo-app.properties]        | Configuration passed to `fluo init` when initializing Fluo application.                      |
+    | [fluo-app.properties]        | Template for configuration file passed to `fluo init` when initializing Fluo application.    |
     | [log4j.properties]           | Configures logging                                                                           |
     | [fluo.properties.deprecated] | Deprecated Fluo configuration file. Replaced by fluo-conn.properties and fluo-app.properties |
 
@@ -145,10 +145,9 @@ Follow the instructions below to start a Fluo application which contains an orac
         fluo worker myapp
 
    The commands will retrieve your application configuration and observer jars (using your
-   application name) before starting the oracle or worker process. The commands are designed
-   to be run on a cluster to distribute the oracle and workers across multiple nodes.
+   application name) before starting the oracle or worker process.
 
-The oracle & worker logs can be found in the `logs/` directory of your Fluo installation.
+The oracle & worker logs can be found in the directory `logs/<applicationName>` of your Fluo installation.
 
 If you want to distribute the processes of your Fluo application across a cluster, you will need install
 Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
