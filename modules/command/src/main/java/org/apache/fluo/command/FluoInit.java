@@ -90,7 +90,7 @@ public class FluoInit {
   public static void main(String[] args) {
     if (args.length < 1) {
       System.err
-          .println("Usage: FluoInit <connectionPropsPath> <applicationPropsPath> userArgs...");
+          .println("Usage: FluoInit <connectionPropsPath> <appName> <applicationPropsPath> userArgs...");
       System.exit(-1);
     }
     String connectionPropsPath = args[0];
@@ -100,11 +100,11 @@ public class FluoInit {
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
         + " does not exist");
 
-    String[] userArgs = Arrays.copyOfRange(args, 2, args.length);
+    String[] userArgs = Arrays.copyOfRange(args, 3, args.length);
 
     InitOptions commandOpts = new InitOptions();
     JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName("fluo init <appProps>");
+    jcommand.setProgramName("fluo init <app> <appProps>");
     try {
       jcommand.parse(userArgs);
     } catch (ParameterException e) {
@@ -115,10 +115,12 @@ public class FluoInit {
 
     if (commandOpts.help) {
       jcommand.usage();
-      System.exit(0);
+      System.exit(1);
     }
 
-    String applicationPropsPath = args[1];
+    String applicationName = args[1];
+    Objects.requireNonNull(applicationName);
+    String applicationPropsPath = args[2];
     Objects.requireNonNull(applicationPropsPath);
     File applicationPropsFile = new File(applicationPropsPath);
     Preconditions.checkArgument(applicationPropsFile.exists(), applicationPropsPath
@@ -126,6 +128,7 @@ public class FluoInit {
 
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
     config.load(applicationPropsFile);
+    config.setApplicationName(applicationName);
 
     if (!config.hasRequiredAdminProps()) {
       System.err.println("Error - Required properties are not set in " + applicationPropsPath);

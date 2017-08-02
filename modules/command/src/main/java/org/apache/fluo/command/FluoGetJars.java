@@ -61,7 +61,7 @@ public class FluoGetJars {
 
     try {
       if (config.getObserverJarsUrl().startsWith("hdfs://")) {
-        FileSystem fs = FileSystem.get(new URI(config.getHdfsRoot()), new Configuration());
+        FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
         File downloadPathFile = new File(downloadPath);
         if (downloadPathFile.exists()) {
           FileUtils.deleteDirectory(downloadPathFile);

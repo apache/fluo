@@ -48,21 +48,45 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   // Client properties
   private static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.connection.application.name
+   */
   @Deprecated
   public static final String CLIENT_APPLICATION_NAME_PROP = CLIENT_PREFIX + ".application.name";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.accumulo.password
+   */
   @Deprecated
   public static final String CLIENT_ACCUMULO_PASSWORD_PROP = CLIENT_PREFIX + ".accumulo.password";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.accumulo.user
+   */
   @Deprecated
   public static final String CLIENT_ACCUMULO_USER_PROP = CLIENT_PREFIX + ".accumulo.user";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.accumulo.instance
+   */
   @Deprecated
   public static final String CLIENT_ACCUMULO_INSTANCE_PROP = CLIENT_PREFIX + ".accumulo.instance";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.accumulo.zookeepers
+   */
   @Deprecated
   public static final String CLIENT_ACCUMULO_ZOOKEEPERS_PROP = CLIENT_PREFIX
       + ".accumulo.zookeepers";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.connection.zookeeper.timeout
+   */
   @Deprecated
   public static final String CLIENT_ZOOKEEPER_TIMEOUT_PROP = CLIENT_PREFIX + ".zookeeper.timeout";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.connection.zookeepers
+   */
   @Deprecated
   public static final String CLIENT_ZOOKEEPER_CONNECT_PROP = CLIENT_PREFIX + ".zookeeper.connect";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.connection.retry.timeout.ms
+   */
   @Deprecated
   public static final String CLIENT_RETRY_TIMEOUT_MS_PROP = CLIENT_PREFIX + ".retry.timeout.ms";
   @Deprecated
@@ -75,6 +99,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   public static final int CLIENT_RETRY_TIMEOUT_MS_DEFAULT = -1;
 
   // Connection properties
+  /**
+   * @since 1.2.0
+   */
   public static final String CONNECTION_PREFIX = FLUO_PREFIX + ".connection";
   /**
    * @since 1.2.0
@@ -129,16 +156,22 @@ public class FluoConfiguration extends SimpleConfiguration {
   public static final String ACCUMULO_ZOOKEEPERS_DEFAULT = "localhost";
   public static final String ACCUMULO_JARS_DEFAULT = "";
 
-  // HDFS properties
-  private static final String HDFS_PREFIX = FLUO_PREFIX + ".hdfs";
-  public static final String HDFS_ROOT_PROP = HDFS_PREFIX + ".root";
-  // HDFS defaults
-  public static final String HDFS_ROOT_DEFAULT = "hdfs://localhost:8020/fluo";
+  // DFS properties
+  private static final String DFS_PREFIX = FLUO_PREFIX + ".dfs";
+  public static final String DFS_ROOT_PROP = DFS_PREFIX + ".root";
+  // DFS defaults
+  public static final String DFS_ROOT_DEFAULT = "hdfs://localhost:8020/fluo";
 
   // Administration properties
   private static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.accumulo.table
+   */
   @Deprecated
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
+  /**
+   * @deprecated since 1.2.0 replaced by fluo.observer.init.dir & fluo.observer.jars.url
+   */
   @Deprecated
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
   @Deprecated
@@ -423,15 +456,15 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * @since 1.2.0
    */
-  public FluoConfiguration setHdfsRoot(String hdfsRoot) {
-    return setNonEmptyString(HDFS_ROOT_PROP, hdfsRoot);
+  public FluoConfiguration setDfsRoot(String dfsRoot) {
+    return setNonEmptyString(DFS_ROOT_PROP, dfsRoot);
   }
 
   /**
    * @since 1.2.0
    */
-  public String getHdfsRoot() {
-    return getNonEmptyString(HDFS_ROOT_PROP, HDFS_ROOT_DEFAULT);
+  public String getDfsRoot() {
+    return getNonEmptyString(DFS_ROOT_PROP, DFS_ROOT_DEFAULT);
   }
 
   public FluoConfiguration setWorkerThreads(int numThreads) {
@@ -836,7 +869,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public static void setDefaultConfiguration(SimpleConfiguration config) {
     config.setProperty(CONNECTION_ZOOKEEPERS_PROP, CONNECTION_ZOOKEEPERS_DEFAULT);
     config.setProperty(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT);
-    config.setProperty(HDFS_ROOT_PROP, HDFS_ROOT_DEFAULT);
+    config.setProperty(DFS_ROOT_PROP, DFS_ROOT_DEFAULT);
     config.setProperty(ACCUMULO_ZOOKEEPERS_PROP, ACCUMULO_ZOOKEEPERS_DEFAULT);
     config.setProperty(WORKER_NUM_THREADS_PROP, WORKER_NUM_THREADS_DEFAULT);
     config.setProperty(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);

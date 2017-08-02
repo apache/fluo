@@ -100,6 +100,10 @@ public class FluoAdminImpl implements FluoAdmin {
         .equals("/"), "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
         + " must have a chroot suffix.");
 
+    Preconditions.checkArgument(config.getObserverJarsUrl().isEmpty()
+        || config.getObserverInitDir().isEmpty(),
+        "Only one of 'fluo.observer.init.dir' and 'fluo.observer.jars.url' can be set");
+
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException("Fluo application already initialized at "
           + config.getAppZookeepers());
@@ -150,7 +154,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
       String accumuloClasspath;
       if (!accumuloJars.isEmpty()) {
-        accumuloClasspath = copyJarsToHdfs(accumuloJars, "lib/accumulo");
+        accumuloClasspath = copyJarsToDfs(accumuloJars, "lib/accumulo");
       } else {
         accumuloClasspath = config.getAccumuloClasspath().trim();
       }
@@ -164,7 +168,7 @@ public class FluoAdminImpl implements FluoAdmin {
       }
 
       if (config.getObserverJarsUrl().isEmpty() && !config.getObserverInitDir().trim().isEmpty()) {
-        String observerUrl = copyDirToHdfs(config.getObserverInitDir().trim(), "lib/observers");
+        String observerUrl = copyDirToDfs(config.getObserverInitDir().trim(), "lib/observers");
         config.setObserverJarsUrl(observerUrl);
       }
 
@@ -269,35 +273,35 @@ public class FluoAdminImpl implements FluoAdmin {
     return getZookeeperConfig(config);
   }
 
-  private String copyDirToHdfs(String srcDir, String destDir) {
-    return copyDirToHdfs(config.getHdfsRoot(), config.getApplicationName(), srcDir, destDir);
+  private String copyDirToDfs(String srcDir, String destDir) {
+    return copyDirToDfs(config.getDfsRoot(), config.getApplicationName(), srcDir, destDir);
   }
 
   @VisibleForTesting
-  public static String copyDirToHdfs(String hdfsRoot, String appName, String srcDir, String destDir) {
-    String hdfsAppRoot = hdfsRoot + "/" + appName;
-    String hdfsDestDir = hdfsAppRoot + "/" + destDir;
+  public static String copyDirToDfs(String dfsRoot, String appName, String srcDir, String destDir) {
+    String dfsAppRoot = dfsRoot + "/" + appName;
+    String dfsDestDir = dfsAppRoot + "/" + destDir;
 
     FileSystem fs;
     try {
-      fs = FileSystem.get(new URI(hdfsRoot), new Configuration());
-      fs.delete(new Path(hdfsDestDir), true);
-      fs.mkdirs(new Path(hdfsAppRoot));
-      fs.copyFromLocalFile(new Path(srcDir), new Path(hdfsDestDir));
+      fs = FileSystem.get(new URI(dfsRoot), new Configuration());
+      fs.delete(new Path(dfsDestDir), true);
+      fs.mkdirs(new Path(dfsAppRoot));
+      fs.copyFromLocalFile(new Path(srcDir), new Path(dfsDestDir));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-    return hdfsDestDir;
+    return dfsDestDir;
   }
 
-  private String copyJarsToHdfs(String jars, String destDir) {
-    String hdfsAppRoot = config.getHdfsRoot() + "/" + config.getApplicationName();
-    String hdfsDestDir = hdfsAppRoot + "/" + destDir;
+  private String copyJarsToDfs(String jars, String destDir) {
+    String dfsAppRoot = config.getDfsRoot() + "/" + config.getApplicationName();
+    String dfsDestDir = dfsAppRoot + "/" + destDir;
 
     FileSystem fs;
     try {
-      fs = FileSystem.get(new URI(config.getHdfsRoot()), new Configuration());
-      fs.mkdirs(new Path(hdfsDestDir));
+      fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
+      fs.mkdirs(new Path(dfsDestDir));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -307,14 +311,14 @@ public class FluoAdminImpl implements FluoAdmin {
       File jarFile = new File(jarPath);
       String jarName = jarFile.getName();
       try {
-        fs.copyFromLocalFile(new Path(jarPath), new Path(hdfsDestDir));
+        fs.copyFromLocalFile(new Path(jarPath), new Path(dfsDestDir));
       } catch (IOException e) {
-        logger.error("Failed to copy file {} to HDFS directory {}", jarPath, hdfsDestDir);
+        logger.error("Failed to copy file {} to HDFS directory {}", jarPath, dfsDestDir);
       }
       if (classpath.length() != 0) {
         classpath.append(",");
       }
-      classpath.append(hdfsDestDir + "/" + jarName);
+      classpath.append(dfsDestDir + "/" + jarName);
     }
     return classpath.toString();
   }
@@ -373,7 +377,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
   private String getJarsFromClasspath() {
     StringBuilder jars = new StringBuilder();
-    ClassLoader cl = ClassLoader.getSystemClassLoader();
+    ClassLoader cl = FluoAdminImpl.class.getClassLoader();
     URL[] urls = ((URLClassLoader) cl).getURLs();
     for (URL url : urls) {
       String jarName = new File(url.getFile()).getName();

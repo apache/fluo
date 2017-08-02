@@ -26,7 +26,7 @@ export conf="$basedir/conf"
 export lib="$basedir/lib"
 export cmd="$1"
 case "$cmd" in
-  oracle|worker) export app="$2" ;;
+  oracle|worker|init) export app="$2" ;;
 esac
 export FLUO_VERSION=${project.version}
 
@@ -63,17 +63,17 @@ function copy_config {
 function print_usage {
   echo -e "Usage: fluo <command> (<argument> ...)\n"
   echo -e "Possible commands:\n"
-  echo "  init <appProps> {<arg>}     Initializes Fluo application using <appProps>. Run with -h to see additional args."
-  echo "  classpath                   Prints the classpath setup in fluo-env.sh"
-  echo "  list                        Lists all Fluo applications in Fluo instance"
-  echo "  config <app>                Prints application configuration stored in Zookeeper for <app>"
-  echo "  scan <app>                  Prints snapshot of data in Fluo <app>"
-  echo "  stop <app>                  Stops Fluo application processes on this machine for <app>"
-  echo "  oracle <app>                Starts Fluo Oracle process for <app>"
-  echo "  worker <app>                Starts Fluo Worker process for <app>"
-  echo "  version                     Prints the version of Fluo"
-  echo "  wait <app>                  Waits until all notifications are processed for <app>"
-  echo "  exec <app> <class> {<arg>}  Executes <class> with <args> using classpath for <app>";
+  echo "  init <app> <appProps> {<arg>} Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
+  echo "  classpath                     Prints the classpath setup in fluo-env.sh"
+  echo "  list                          Lists all Fluo applications in Fluo instance"
+  echo "  config <app>                  Prints application configuration stored in Zookeeper for <app>"
+  echo "  scan <app>                    Prints snapshot of data in Fluo <app>"
+  echo "  stop <app>                    Stops Fluo application processes on this machine for <app>"
+  echo "  oracle <app>                  Starts Fluo Oracle process for <app>"
+  echo "  worker <app>                  Starts Fluo Worker process for <app>"
+  echo "  version                       Prints the version of Fluo"
+  echo "  wait <app>                    Waits until all notifications are processed for <app>"
+  echo "  exec <app> <class> {<arg>}    Executes <class> with <args> using classpath for <app>";
 
   echo -e "\nDeprecated commands (available if fluo.properties exists):\n"
   echo "  new <app>     (Deprecated) Creates configuration for new application in apps/"
@@ -155,11 +155,15 @@ config)
 init)
   if [ -f "$FLUO_CONN_PROPS" ]; then
     check_conn_props
-    if [[ "$2" = *"-h"* ]]; then
-      java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" "/dev/null" "$2"
+    if [ -z "$app" ]; then
+      echo -e "The application name (set by <app>) cannot be an empty string!\n"
+      print_usage
+    fi
+    if [[ "$app" = *"-h"* ]]; then
+      java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" none /dev/null "$2"
       exit 1
     fi
-    app_props=$2
+    app_props=$3
     if [ ! -f "$app_props" ]; then
       echo "<appProps> is set to path '$app_props' that does not exist"
       print_usage
@@ -170,7 +174,7 @@ init)
       echo "Adding $init_dir/* to CLASSPATH"
       export CLASSPATH="$init_dir/*:$CLASSPATH"
     fi
-    java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" "$app_props" ${*:3}
+    java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" "$app" "$app_props" ${*:4}
   else
     deprecated_verify_full "$2"
     check_hadoop

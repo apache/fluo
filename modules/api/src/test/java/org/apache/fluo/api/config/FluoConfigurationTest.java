@@ -60,7 +60,7 @@ public class FluoConfigurationTest {
     Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
     Assert.assertEquals(FluoConfiguration.OBSERVER_INIT_DIR_DEFAULT, base.getObserverInitDir());
     Assert.assertEquals(FluoConfiguration.OBSERVER_JARS_URL_DEFAULT, base.getObserverJarsUrl());
-    Assert.assertEquals(FluoConfiguration.HDFS_ROOT_DEFAULT, base.getHdfsRoot());
+    Assert.assertEquals(FluoConfiguration.DFS_ROOT_DEFAULT, base.getDfsRoot());
   }
 
   @Test(expected = NoSuchElementException.class)
@@ -110,7 +110,7 @@ public class FluoConfigurationTest {
         .getObserverInitDir());
     Assert.assertEquals("hdfs://localhost/mydir",
         config.setObserverJarsUrl("hdfs://localhost/mydir").getObserverJarsUrl());
-    Assert.assertEquals("hdfs123", config.setHdfsRoot("hdfs123").getHdfsRoot());
+    Assert.assertEquals("hdfs123", config.setDfsRoot("hdfs123").getDfsRoot());
   }
 
   @Test
@@ -218,7 +218,7 @@ public class FluoConfigurationTest {
     // check for values set in prop file
     Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
     Assert.assertEquals("localhost", config.getAccumuloZookeepers());
-    Assert.assertEquals("hdfs://localhost:8020/fluo", config.getHdfsRoot());
+    Assert.assertEquals("hdfs://localhost:8020/fluo", config.getDfsRoot());
     Assert.assertEquals("", config.getAccumuloPassword());
     Assert.assertEquals("", config.getObserverProvider());
     Assert.assertEquals("", config.getObserverInitDir());
@@ -228,15 +228,10 @@ public class FluoConfigurationTest {
     try {
       config.getApplicationName();
       Assert.fail();
-    } catch (IllegalArgumentException e) {
+    } catch (NoSuchElementException e) {
     }
     try {
       config.getAccumuloUser();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-    }
-    try {
-      config.getAccumuloTable();
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
@@ -274,6 +269,7 @@ public class FluoConfigurationTest {
     Assert.assertTrue(applicationProps.exists());
 
     FluoConfiguration config = new FluoConfiguration(applicationProps);
+    config.setApplicationName("test-app");
     Assert.assertEquals("com.foo.FooObserverProvider", config.getObserverProvider());
     Assert.assertEquals("test-app", config.getApplicationName());
     Assert.assertEquals("/path/to/observer/foo/", config.getObserverInitDir());
@@ -282,7 +278,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals("testUser", config.getAccumuloUser());
     Assert.assertEquals("testPass", config.getAccumuloPassword());
     Assert.assertEquals("myhost", config.getAccumuloZookeepers());
-    Assert.assertEquals("hdfs://myhost:10000", config.getHdfsRoot());
+    Assert.assertEquals("hdfs://myhost:10000", config.getDfsRoot());
     Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
     Assert.assertEquals(30000, config.getZookeeperTimeout());
     Assert.assertEquals(-1, config.getConnectionRetryTimeout());
@@ -448,7 +444,7 @@ public class FluoConfigurationTest {
     }
     String[] nonEmptyMethods =
         {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser", "setAccumuloZookeepers",
-            "setMiniDataDir", "setInstanceZookeepers", "setHdfsRoot"};
+            "setMiniDataDir", "setInstanceZookeepers", "setDfsRoot"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

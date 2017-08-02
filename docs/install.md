@@ -109,7 +109,6 @@ Running the script without any arguments prints a description of all commands.
 
 2. Edit your copy of [fluo-app.properties] and make sure to set the following:
 
-    * Fluo application name
     * Class name of your ObserverProvider
     * Paths to your Fluo observer jars
     * Accumulo configuration
@@ -120,13 +119,12 @@ Running the script without any arguments prints a description of all commands.
    example for instructions. You can also choose not to configure any observers but your workers will
    be idle when started.
 
-3. Run the command below to initialize your Fluo application:
+3. Run the command below to initialize your Fluo application. Change `myapp` to your application name:
 
-        fluo init /path/to/myapp/fluo-app.properties
+        fluo init myapp /path/to/myapp/fluo-app.properties
 
    A Fluo application only needs to be initialized once. After initialization, the Fluo application
-   name (set by `fluo.application.name` in your [fluo-app.properties]) is used to start/stop the application
-   and scan the Fluo table.
+   name is used to start/stop the application and scan the Fluo table.
 
 4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
 
