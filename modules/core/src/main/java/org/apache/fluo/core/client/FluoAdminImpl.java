@@ -383,8 +383,9 @@ public class FluoAdminImpl implements FluoAdmin {
     ClassLoader cl = FluoAdminImpl.class.getClassLoader();
     URL[] urls = ((URLClassLoader) cl).getURLs();
 
-    String regex = config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
-                                    FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
+    String regex =
+        config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
+            FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
     Pattern pattern = Pattern.compile(regex);
 
     for (URL url : urls) {
