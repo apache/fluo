@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -48,6 +50,7 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
+import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.ByteUtil;
@@ -379,9 +382,14 @@ public class FluoAdminImpl implements FluoAdmin {
     StringBuilder jars = new StringBuilder();
     ClassLoader cl = FluoAdminImpl.class.getClassLoader();
     URL[] urls = ((URLClassLoader) cl).getURLs();
+
+    String regex = config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
+                                    FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
+    Pattern pattern = Pattern.compile(regex);
+
     for (URL url : urls) {
       String jarName = new File(url.getFile()).getName();
-      if (jarName.startsWith("fluo-api-") || jarName.startsWith("fluo-accumulo-")) {
+      if (pattern.matcher(jarName).matches()) {
         if (jars.length() != 0) {
           jars.append(",");
         }
