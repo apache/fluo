@@ -37,7 +37,6 @@ fi
 source "$conf/fluo-env.sh"
 export CLASSPATH
 
-mkdir -p "$basedir/run" 2>/dev/null
 
 deprecated_fluo_props=$conf/fluo.properties
 
@@ -138,8 +137,10 @@ function check_hadoop {
 function setup_service {
   verify_app "$1"
   check_conn_props
+  app_run_dir=$basedir/run/$app
+  mkdir -p "$app_run_dir" 2>/dev/null
   app_log_dir=$FLUO_LOG_DIR/$app
-  mkdir -p "$app_log_dir"
+  mkdir -p "$app_log_dir" 2>/dev/null
   app_lib=$lib/apps/$1
   mkdir -p "$app_lib"
   java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$1" "$app_lib"
@@ -184,14 +185,14 @@ init)
   ;;
 oracle)
   setup_service "$2"
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
+  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
+  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
   echo "Started Oracle for '$2' Fluo application. Logs can be found in $app_log_dir"
   ;;
 worker)
   setup_service "$2"
-  nohup java "${JAVA_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "$basedir/run/${FLUO_LOG_ID}.pid"
+  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
+  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
   echo "Started Worker for '$2' Fluo application. Logs can be found in $app_log_dir"
   ;;
 scan)
@@ -207,7 +208,7 @@ stop)
   if [ -f "$FLUO_CONN_PROPS" ]; then
     verify_app "$2"
     echo "Stopping all processes for ${2} application"
-    for pid_file in $basedir/run/${2}_*.pid; do
+    for pid_file in $basedir/run/$2/*.pid; do
       if [ -f "$pid_file" ]; then
         kill -s KILL "$(cat "$pid_file")" 2>/dev/null
         rm -f "${pid_file}" 2>/dev/null
