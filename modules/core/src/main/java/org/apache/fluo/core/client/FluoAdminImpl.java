@@ -316,7 +316,8 @@ public class FluoAdminImpl implements FluoAdmin {
       try {
         fs.copyFromLocalFile(new Path(jarPath), new Path(dfsDestDir));
       } catch (IOException e) {
-        logger.error("Failed to copy file {} to HDFS directory {}", jarPath, dfsDestDir);
+        logger.error("Failed to copy file {} to DFS directory {}", jarPath, dfsDestDir);
+        throw new IllegalStateException(e);
       }
       if (classpath.length() != 0) {
         classpath.append(",");

@@ -442,6 +442,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
+   * Sets paths to jars to provide to Accumulo. If not set, Fluo will find jars on classpath
+   *
+   * @param path CSV list of paths
    * @since 1.2.0
    */
   public FluoConfiguration setAccumuloJars(String path) {
@@ -450,6 +453,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
+   * Gets CSV list of jar paths to provide to Accumulo
+   *
    * @since 1.2.0
    */
   public String getAccumuloJars() {
