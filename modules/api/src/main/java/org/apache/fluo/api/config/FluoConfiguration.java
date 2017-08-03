@@ -173,7 +173,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   @Deprecated
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
   /**
-   * @deprecated since 1.2.0 replaced by fluo.observer.init.dir & fluo.observer.jars.url
+   * @deprecated since 1.2.0 replaced by fluo.observer.init.dir and fluo.observer.jars.url
    */
   @Deprecated
   public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
