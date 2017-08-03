@@ -19,25 +19,27 @@
 # conf - Directory containing Fluo configuration
 # lib - Directory containing Fluo libraries
 
-############################
-# Variables that must be set
-############################
+####################################
+# General variables that must be set
+####################################
 
-## Fluo logs directory. Referenced by logger config.
-export FLUO_LOG_DIR="${FLUO_LOG_DIR:-${basedir}/logs}"
 ## Hadoop installation
 export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
 ## Fluo connection properties
 export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
+
+###########################################################
+# Variables for running Fluo services (i.e oracle, worker).
+# Defaults below work but can be edited.
+###########################################################
+
+## Fluo logs directory. Referenced by logger config.
+export FLUO_LOG_DIR="${FLUO_LOG_DIR:-${basedir}/logs}"
 ## Fluo log4j configuration
 export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
-
-#####################################################################
-# Build SERVICE_OPTS variable. Defaults below work but can be edited.
-#####################################################################
-
+## Fluo log identifier
 export FLUO_LOG_ID="${cmd}_$(hostname)_$(date +%s)"
-
+## Java options for Fluo services
 SERVICE_OPTS=("-Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}"
            "-Dfluo.log.dir=${FLUO_LOG_DIR}/${app}"
            "-Dfluo.log.id=${FLUO_LOG_ID}")
