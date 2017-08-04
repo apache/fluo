@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Represents Fluo application in Twill
  */
+@Deprecated
 public class FluoTwillApp implements TwillApplication {
 
   private static final Logger log = LoggerFactory.getLogger(FluoTwillApp.class);

@@ -1,0 +1,153 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+# agreements.  See the NOTICE file distributed with this work for additional information regarding
+# copyright ownership.  The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with the License.  You may
+# obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+# is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+# or implied. See the License for the specific language governing permissions and limitations under
+# the License.
+
+#################
+# Fluo properties
+#################
+
+# NOTE - This file has been deprecated and replaced by fluo-conn.properties & fluo-app.properties! 
+# If you would like to use this file instead, rename it to fluo.properties and remove fluo-conn.properties.
+#
+# All properties that have a default are set with it.  Uncomment
+# a property if you want to use a value different than the default. 
+# Properties that have no default are uncommented and must be set by
+# the user.  Most are unset except for fluo.accumulo.classpath which
+# has a suggested value.
+
+# Client properties
+# -----------------
+# Fluo application name
+fluo.client.application.name=
+# Zookeeper connection string specifying host and chroot where Fluo stores data.
+# A chroot directory suffix must be specified but doesn't need to be named
+# '/fluo'.  If not specified, a Fluo application cannot be initialized.
+# Interpolation (i.e \${fluo.client.accumulo.zookeepers}/fluo) can be used
+# when setting this to reuse Accumulo's zookeeper connection string.
+#fluo.client.zookeeper.connect=localhost/fluo
+# Zookeeper timeout
+#fluo.client.zookeeper.timeout=30000
+# Accumulo instance to connect to
+fluo.client.accumulo.instance=
+# Accumulo user
+fluo.client.accumulo.user=
+# Accumulo password
+fluo.client.accumulo.password=
+# Accumulo zookeepers
+#fluo.client.accumulo.zookeepers=localhost
+# Client retry timeout (in milliseconds). Set to -1 to retry forever.
+#fluo.client.retry.timeout.ms=-1
+
+# Admin properties
+# ----------------
+# Accumulo table to initialize
+fluo.admin.accumulo.table=\${fluo.client.application.name}
+# HDFS root path. Should match 'fs.defaultFS' property in Hadoop's core-site.xml
+fluo.admin.hdfs.root=hdfs://localhost:10000
+# Fluo uses iterators within Accumulo tablet servers, therefore Accumulo per
+# table classpath need to be configured with a comma seperated list of uris
+# where Accumulo can find Fluo jars.  These jars should be reachable from
+# every tablet server.  For the default jars below, `fluo init` will place them
+# in HDFS.  If you add more jars to the classpath below, you will need to
+# add them to HDFS.
+fluo.admin.accumulo.classpath=\${fluo.admin.hdfs.root}/fluo/lib/fluo-api-${project.version}.jar,\${fluo.admin.hdfs.root}/fluo/lib/fluo-accumulo-${project.version}.jar
+
+# Observer properties
+# -------------------
+# Specifies an observer provider.  This should be the name of a class that
+# implements org.apache.fluo.api.observer.ObserverProvider.
+#fluo.observer.provider=com.foo.AppObserverProvider
+
+# Transaction properties
+# ----------------------
+# Amount of time (in milliseconds) clients wait before rolling back transaction
+#fluo.tx.rollback.time=300000
+
+# Worker properties
+# -----------------
+# Number of threads in each worker instance
+#fluo.worker.num.threads=10
+
+# Loader properties
+# -----------------
+# Number of threads each loader runs.  Can set to zero for no threads, thread
+# adding Loader will execute.  Must also set fluo.loader.queue.size to zero
+# when setting this to zero.
+#fluo.loader.num.threads=10
+# Queue size of loader
+#fluo.loader.queue.size=10
+
+# YARN properties
+# ----------------
+# Number of oracle yarn instances
+#fluo.yarn.oracle.instances=1
+# Max memory of Oracle yarn containers (in MB)
+#fluo.yarn.oracle.max.memory.mb=512
+# Number of oracle virtual cores
+#fluo.yarn.oracle.num.cores=1
+# Number of worker yarn instances
+#fluo.yarn.worker.instances=1
+# Max memory of worker YARN containers (in MB). If YARN is killing worker processes consider
+# increasing twill.java.reserved.memory.mb (which defaults to 200 and is set in yarn-site.xml).
+# The twill.java.reserved.memory.mb config determines the gap between the YARN memory limit set
+# below and the java -Xmx setting.  For example, if max memory is 1024 and twill reserved memory
+# is 200, the java -Xmx setting will be 1024-200 = 824 MB.
+#fluo.yarn.worker.max.memory.mb=1024
+# Number of worker virtual cores
+#fluo.yarn.worker.num.cores=1
+
+#Metrics
+#------------------
+#Configure reporters for metrics.   The frequency for each type of reporter is in seconds.
+
+#fluo.metrics.reporter.console.enable=false
+#fluo.metrics.reporter.console.target=stdout
+#fluo.metrics.reporter.console.rateUnit=seconds
+#fluo.metrics.reporter.console.durationUnit=milliseconds
+#fluo.metrics.reporter.console.frequency=60
+
+#fluo.metrics.reporter.csv.enable=false
+#fluo.metrics.reporter.csv.dir=/tmp/
+#fluo.metrics.reporter.csv.rateUnit=seconds
+#fluo.metrics.reporter.csv.durationUnit=milliseconds
+#fluo.metrics.reporter.csv.frequency=60
+
+#fluo.metrics.reporter.graphite.enable=false
+#fluo.metrics.reporter.graphite.host=carbon.server.com
+#fluo.metrics.reporter.graphite.port=8080
+#fluo.metrics.reporter.graphite.rateUnit=seconds
+#fluo.metrics.reporter.graphite.durationUnit=milliseconds
+#fluo.metrics.reporter.graphite.frequency=60
+#fluo.metrics.reporter.graphite.prefix=
+
+#fluo.metrics.reporter.jmx.enable=false
+#fluo.metrics.reporter.jmx.rateUnit=seconds
+#fluo.metrics.reporter.jmx.durationUnit=milliseconds
+
+#fluo.metrics.reporter.slf4j.enable=false
+#fluo.metrics.reporter.slf4j.logger=metrics
+#fluo.metrics.reporter.slf4j.rateUnit=seconds
+#fluo.metrics.reporter.slf4j.durationUnit=milliseconds
+
+# MiniFluo properties
+# -------------------
+# Path to directory where MiniFluo stores its data
+#fluo.mini.data.dir=\${env:FLUO_HOME}/apps/\${fluo.client.application.name}/mini
+# Indicates if MiniFluo should start a MiniAccumulo cluster
+#fluo.mini.start.accumulo=true
+
+#Application properties
+#---------------
+#Properties with a prefix of fluo.app are stored in zookeeper at
+#initialization time and can easily be retrieved by a Fluo application running
+#on any node in the cluster.
+#fluo.app.config1=val1

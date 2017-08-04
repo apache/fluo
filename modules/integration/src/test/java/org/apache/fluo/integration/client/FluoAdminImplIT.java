@@ -21,7 +21,9 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoAdmin.TableExistsException;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
+import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.junit.Assert;
@@ -69,6 +71,30 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
 
     assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
+  }
+
+  @Test
+  public void testInitializeConfig() throws Exception {
+
+    // stop oracle to avoid spurious exceptions when initializing
+    oserver.stop();
+
+    FluoConfiguration localConfig = new FluoConfiguration(config);
+    localConfig.setAccumuloClasspath("${fluo.connection.application.name}");
+    Assert.assertEquals(localConfig.getApplicationName(), localConfig.getAccumuloClasspath());
+
+    try (FluoAdmin admin = new FluoAdminImpl(localConfig)) {
+
+      InitializationOptions opts =
+          new InitializationOptions().setClearZookeeper(true).setClearTable(true);
+      admin.initialize(opts);
+    }
+
+    try (FluoClientImpl client = new FluoClientImpl(localConfig)) {
+      FluoConfiguration sharedConfig = client.getSharedConfiguration();
+      Assert.assertEquals(localConfig.getAccumuloClasspath(), sharedConfig.getAccumuloClasspath());
+      Assert.assertEquals(sharedConfig.getApplicationName(), sharedConfig.getAccumuloClasspath());
+    }
   }
 
   @Test

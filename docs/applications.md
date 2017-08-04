@@ -45,21 +45,20 @@ allow the scripts to use the versions of Hadoop, Accumulo, and Zookeeper install
 To create a [FluoClient], you will need to provide it with a [FluoConfiguration] object that is
 configured to connect to your Fluo instance.
 
-If you have access to the [fluo.properties] file that was used to configure your Fluo instance, you
-can use it to build a [FluoConfiguration] object with all necessary properties which are all
-properties with the `fluo.client.*` prefix in [fluo.properties]:
+If you have access to the [fluo-conn.properties] file that was used to configure your Fluo instance, you
+can use it to build a [FluoConfiguration] object with all necessary properties:
 
 ```java
-FluoConfiguration config = new FluoConfiguration(new File("fluo.properties"));
+FluoConfiguration config = new FluoConfiguration(new File("fluo-conn.properties"));
+config.setApplicationName("myapp");
 ```
 
 You can also create an empty [FluoConfiguration] object and set properties using Java:
 
 ```java
 FluoConfiguration config = new FluoConfiguration();
-config.setAccumuloUser("user");
-config.setAccumuloPassword("pass");
-config.setAccumuloInstance("instance");
+config.setInstanceZookeepers("localhost/fluo");
+config.setApplicationName("myapp");
 ```
 
 Once you have [FluoConfiguration] object, pass it to the `newClient()` method of [FluoFactory] to
@@ -141,8 +140,8 @@ To create an observer, follow these steps:
 
 3.  Build a jar containing these classes and include this jar in the `lib/` directory of your Fluo
     application.
-4.  Configure your Fluo instance to use this observer provider by modifying the Observer section of
-    [fluo.properties].
+4.  Configure your Fluo instance to use this observer provider by modifying the Application section of
+    [fluo-app.properties].
 5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
     ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
     are used by transactions to know when to trigger observers.
@@ -216,7 +215,8 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [FluoConfiguration]: ../modules/api/src/main/java/org/apache/fluo/api/config/FluoConfiguration.java
 [Observer]: ../modules/api/src/main/java/org/apache/fluo/api/observer/Observer.java
 [ObserverProvider]: ../modules/api/src/main/java/org/apache/fluo/api/observer/ObserverProvider.java
-[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
+[fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
+[fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [API]: https://fluo.apache.org/apidocs/
 [metrics]: metrics.md
 [slf4j]: http://www.slf4j.org/

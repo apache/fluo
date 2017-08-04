@@ -29,6 +29,7 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 /**
  * For running Fluo app on cluster
  */
+@Deprecated
 public abstract class ClusterAppRunner extends AppRunner {
 
   public ClusterAppRunner(String scriptName) {

@@ -18,6 +18,7 @@ package org.apache.fluo.cluster.util;
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.config.FluoConfiguration;
 
+@Deprecated
 public class FluoYarnConfig {
 
   private static final String YARN_PREFIX = FluoConfiguration.FLUO_PREFIX + ".yarn";

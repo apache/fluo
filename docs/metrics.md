@@ -17,16 +17,16 @@ limitations under the License.
 
 # Fluo Metrics
 
-A Fluo application can be configured (in [fluo.properties]) to report metrics. When metrics are
+A Fluo application can be configured (in [fluo-app.properties]) to report metrics. When metrics are
 configured, Fluo will report some 'default' metrics about an application that help users monitor its
 performance. Users can also write code to report 'application-specific' metrics from their
 applications. Both 'application-specific' and 'default' metrics share the same reporter configured
-by [fluo.properties] and are described in detail below.
+by [fluo-app.properties] and are described in detail below.
 
 ## Configuring reporters
 
 Fluo metrics are not published by default. To publish metrics, configure a reporter in the 'metrics'
-section of [fluo.properties]. There are several different reporter types (i.e Console, CSV,
+section of [fluo-app.properties]. There are several different reporter types (i.e Console, CSV,
 Graphite, JMX, SLF4J) that are implemented using [Dropwizard]. The choice of which reporter to use
 depends on the visualization tool used. If you are not currently using a visualization tool, there
 is [documentation][grafana] for reporting Fluo metrics to Grafana/InfluxDB.
@@ -116,7 +116,7 @@ the metric was updated and not a sum of the updates. For example if a request fo
 made to the oracle followed by a request for 3 timestamps, then the count for `oracle_server_stamps`
 would be 2 and the mean would be (5+3)/2.
 
-[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
+[fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [Dropwizard]: https://dropwizard.github.io/metrics/3.1.0/
 [grafana]: grafana.md
 [MetricsReporter]: ../modules/api/src/main/java/org/apache/fluo/api/metrics/MetricsReporter.java

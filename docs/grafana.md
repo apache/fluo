@@ -62,7 +62,7 @@ Follow the instructions below to setup InfluxDB and Grafana.
     $INFLUXDB_HOME/bin/influx -import -path $FLUO_HOME/contrib/influxdb/fluo_metrics_setup.txt
     ```
 
-3. Configure `fluo.properties` in your Fluo app configuration to send Graphite metrics to InfluxDB.
+3. Configure the `fluo-app.properties` of your Fluo application to send Graphite metrics to InfluxDB.
    Below is example configuration. Remember to replace `<INFLUXDB_HOST>` with the actual host.
 
     ```

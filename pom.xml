@@ -37,6 +37,7 @@
     <module>modules/api</module>
     <module>modules/cluster</module>
     <module>modules/core</module>
+    <module>modules/command</module>
     <module>modules/distribution</module>
     <module>modules/integration</module>
     <module>modules/mapreduce</module>
@@ -166,6 +167,11 @@
       <dependency>
         <groupId>org.apache.fluo</groupId>
         <artifactId>fluo-cluster</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.fluo</groupId>
+        <artifactId>fluo-command</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

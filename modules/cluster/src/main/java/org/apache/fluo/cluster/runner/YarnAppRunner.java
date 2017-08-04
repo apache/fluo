@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Yarn Implementation of ClusterAppRunner
  */
+@Deprecated
 public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
 
   private static final Logger log = LoggerFactory.getLogger(YarnAppRunner.class);

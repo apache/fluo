@@ -16,6 +16,7 @@
 package org.apache.fluo.api.client;
 
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 
 /**
  * Provides methods for initializing and administering a Fluo application.
@@ -39,7 +40,7 @@ public interface FluoAdmin extends AutoCloseable {
 
     /**
      * Clears zookeeper root (if exists) specified by
-     * {@value FluoConfiguration#CLIENT_ZOOKEEPER_CONNECT_PROP}. Default is false.
+     * {@value FluoConfiguration#CONNECTION_ZOOKEEPERS_PROP}. Default is false.
      */
     public InitializationOptions setClearZookeeper(boolean clearZookeeper) {
       this.clearZookeeper = clearZookeeper;
@@ -51,8 +52,8 @@ public interface FluoAdmin extends AutoCloseable {
     }
 
     /**
-     * Clears accumulo table (if exists) specified by
-     * {@value FluoConfiguration#ADMIN_ACCUMULO_TABLE_PROP}. Default is false.
+     * Clears accumulo table (if exists) specified by {@value FluoConfiguration#ACCUMULO_TABLE_PROP}
+     * . Default is false.
      */
     public InitializationOptions setClearTable(boolean clearTable) {
       this.clearTable = clearTable;
@@ -107,9 +108,8 @@ public interface FluoAdmin extends AutoCloseable {
 
   /**
    * Initializes Fluo application and stores shared configuration in Zookeeper. Shared configuration
-   * consists of properties with {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX},
-   * {@value org.apache.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
-   * {@value org.apache.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. Throws
+   * consists of all properties except those with
+   * {@value org.apache.fluo.api.config.FluoConfiguration#CONNECTION_PREFIX} prefix. Throws
    * {@link AlreadyInitializedException} if Fluo application was already initialized in Zookeeper.
    * If you want to initialize Zookeeper again, set
    * {@link InitializationOptions#setClearZookeeper(boolean)} to true. Throws
@@ -120,12 +120,11 @@ public interface FluoAdmin extends AutoCloseable {
       TableExistsException;
 
   /**
-   * Updates shared configuration in Zookeeper. Shared configuration consists of properties with
-   * {@value org.apache.fluo.api.config.FluoConfiguration#APP_PREFIX},
-   * {@value org.apache.fluo.api.config.FluoConfiguration#OBSERVER_PREFIX} and
-   * {@value org.apache.fluo.api.config.FluoConfiguration#TRANSACTION_PREFIX} prefixes. This method
-   * is called if a user has previously called {@link #initialize(InitializationOptions)} but wants
-   * changes to shared configuration updated in Zookeeper.
+   * Updates shared configuration in Zookeeper. Shared configuration consists of all properties
+   * except those with {@value org.apache.fluo.api.config.FluoConfiguration#CONNECTION_PREFIX}
+   * prefix. This method is called if a user has previously called
+   * {@link #initialize(InitializationOptions)} but wants changes to shared configuration updated in
+   * Zookeeper.
    * 
    * <p>
    * During this method Observers are reinitialized using configuration passed to FluoAdmin and not
@@ -133,6 +132,18 @@ public interface FluoAdmin extends AutoCloseable {
    * is present.
    */
   void updateSharedConfig();
+
+  /**
+   * @return SimpleConfiguration containing connection-specific configuration passed to FluoFactory
+   * @since 1.2.0
+   */
+  SimpleConfiguration getConnectionConfig();
+
+  /**
+   * @return SimpleConfiguration containing application-specific configuration stored in Zookeeper
+   * @since 1.2.0
+   */
+  SimpleConfiguration getApplicationConfig();
 
   @Override
   void close();

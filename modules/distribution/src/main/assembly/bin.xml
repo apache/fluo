@@ -49,15 +49,14 @@
       <includes>
         <include>*/**</include>
       </includes>
-      <excludes>
-        <exclude>src/main/scripts/impl/fluo-version.sh</exclude>
-      </excludes>
+      <filtered>true</filtered>
     </fileSet>
     <fileSet>
       <directory>src/main/config</directory>
-      <outputDirectory>conf/examples</outputDirectory>
+      <outputDirectory>conf</outputDirectory>
       <excludes>
-        <exclude>src/main/config/fluo.properties</exclude>
+        <exclude>src/main/config/fluo.properties.deprecated</exclude>
+        <exclude>src/main/config/fluo-app.properties</exclude>
       </excludes>
     </fileSet>
     <fileSet>
@@ -90,13 +89,13 @@
   </fileSets>
   <files>
     <file>
-      <source>src/main/config/fluo.properties</source>
-      <outputDirectory>conf/examples</outputDirectory>
+      <source>src/main/config/fluo.properties.deprecated</source>
+      <outputDirectory>conf</outputDirectory>
       <filtered>true</filtered>
     </file>
     <file>
-      <source>src/main/scripts/impl/fluo-version.sh</source>
-      <outputDirectory>bin/impl</outputDirectory>
+      <source>src/main/config/fluo-app.properties</source>
+      <outputDirectory>conf</outputDirectory>
       <filtered>true</filtered>
     </file>
   </files>

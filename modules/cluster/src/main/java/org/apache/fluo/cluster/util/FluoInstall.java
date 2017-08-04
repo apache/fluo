@@ -20,6 +20,7 @@ import java.io.File;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 
+@Deprecated
 public class FluoInstall {
 
   private String fluoHomeDir;

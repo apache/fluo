@@ -11,11 +11,43 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# Sets HADOOP_PREFIX if it is not already set.  Please modify the
-# export statement to use the correct directory.  Remove the test
-# statement to override any previously set environment.
+## Before fluo-env.sh is loaded, these environment variables are set and can be used in this file:
 
-test -z "$HADOOP_PREFIX" && export HADOOP_PREFIX=/path/to/hadoop
+# cmd - Command that is being called such as oracle, worker, etc.
+# app - Fluo application name 
+# basedir - Root of Fluo installation
+# conf - Directory containing Fluo configuration
+# lib - Directory containing Fluo libraries
+
+####################################
+# General variables that must be set
+####################################
+
+## Hadoop installation
+export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
+## Fluo connection properties
+export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
+
+###########################################################
+# Variables for running Fluo services (i.e oracle, worker).
+# Defaults below work but can be edited.
+###########################################################
+
+## Fluo logs directory. Referenced by logger config.
+export FLUO_LOG_DIR="${FLUO_LOG_DIR:-${basedir}/logs}"
+## Fluo log4j configuration
+export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
+## Fluo log identifier
+export FLUO_LOG_ID="${cmd}_$(hostname)_$(date +%s)"
+## Java options for Fluo services
+SERVICE_OPTS=("-Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}"
+           "-Dfluo.log.dir=${FLUO_LOG_DIR}/${app}"
+           "-Dfluo.log.id=${FLUO_LOG_ID}")
+export SERVICE_OPTS
+
+##########################
+# Build CLASSPATH variable
+##########################
 
 # The classpath for Fluo must be defined.  The Fluo tarball does not include
 # jars for Accumulo, Zookeeper, or Hadoop.  This example env file offers two
@@ -47,7 +79,13 @@ setupClasspathFromSystem()
   test -z "$ACCUMULO_HOME" && ACCUMULO_HOME=/path/to/accumulo
   test -z "$ZOOKEEPER_HOME" && ZOOKEEPER_HOME=/path/to/zookeeper
 
-  CLASSPATH="$FLUO_HOME/lib/*:$FLUO_HOME/lib/logback/*"
+  CLASSPATH="$lib/*"
+  # If fluo-conn.properties exists, then classpath does not need to include twill or logback
+  if [ -f "$FLUO_CONN_PROPS" ]; then
+    CLASSPATH="$CLASSPATH:$lib/log4j/*"
+  else
+    CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
+  fi
 
   #any jars matching this pattern is excluded from classpath
   EXCLUDE_RE="(.*log4j.*)|(.*asm.*)|(.*guava.*)|(.*gson.*)"
@@ -61,14 +99,22 @@ setupClasspathFromSystem()
   addToClasspath "$HADOOP_PREFIX/share/hadoop/hdfs/lib" $EXCLUDE_RE;
   addToClasspath "$HADOOP_PREFIX/share/hadoop/yarn" $EXCLUDE_RE;
   addToClasspath "$HADOOP_PREFIX/share/hadoop/yarn/lib" $EXCLUDE_RE;
+  export CLASSPATH
 }
 
 
 # This function obtains Accumulo, Hadoop, and Zookeeper jars from
-# $FLUO_HOME/lib/ahz/. Before using this function, make sure you run
+# $lib/ahz/. Before using this function, make sure you run
 # `./lib/fetch.sh ahz` to download dependencies to this directory.
 setupClasspathFromLib(){
-  CLASSPATH="$FLUO_HOME/lib/*:$FLUO_HOME/lib/logback/*:$FLUO_HOME/lib/ahz/*"
+  CLASSPATH="$lib/*"
+  if [ -f "$FLUO_CONN_PROPS" ]; then
+    CLASSPATH="$CLASSPATH:$lib/log4j/*"
+  else
+    CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
+  fi
+  CLASSPATH="$CLASSPATH:$lib/ahz/*"
+  export CLASSPATH
 }
 
 # Call one of the following functions to setup the classpath or write your own

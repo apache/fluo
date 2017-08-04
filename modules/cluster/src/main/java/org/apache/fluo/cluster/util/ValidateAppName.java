@@ -17,6 +17,7 @@ package org.apache.fluo.cluster.util;
 
 import org.apache.fluo.api.config.FluoConfiguration;
 
+@Deprecated
 public class ValidateAppName {
 
   public static void main(String[] args) {

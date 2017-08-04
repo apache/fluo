@@ -17,7 +17,7 @@ limitations under the License.
 
 # Fluo Install Instructions
 
-Instructions for installing Apache Fluo and starting a Fluo application in YARN on a cluster where
+Instructions for installing Apache Fluo and starting a Fluo application on a cluster where
 Accumulo, Hadoop & Zookeeper are running.  If you need help setting up these dependencies, see the
 [related projects page][related] for external projects that may help.
 
@@ -50,24 +50,21 @@ After you obtain a Fluo distribution tarball, follow these steps to install Fluo
 1.  Choose a directory with plenty of space and untar the distribution:
 
         tar -xvzf fluo-1.1.0-incubating-bin.tar.gz
+        cd fluo-1.1.0-incubating
 
-2.  Copy the example configuration to the base of your configuration directory to create the default
-    configuration for your Fluo install:
+    The distribution contains a `fluo` script in `bin/` that administers Fluo and the
+    following configuration files in `conf/`:
 
-        cp conf/examples/* conf/
+    | Configuration file           | Description                                                                                  |
+    |------------------------------|----------------------------------------------------------------------------------------------|
+    | [fluo-env.sh]                | Configures classpath for `fluo` script. Required for all commands.                           |
+    | [fluo-conn.properties]       | Configures connection to Fluo. Required for all commands.                                    |
+    | [fluo-app.properties]        | Template for configuration file passed to `fluo init` when initializing Fluo application.    |
+    | [log4j.properties]           | Configures logging                                                                           |
+    | [fluo.properties.deprecated] | Deprecated Fluo configuration file. Replaced by fluo-conn.properties and fluo-app.properties |
 
-    The default configuration will be used as the base configuration for each new application.
-
-3.  Modify [fluo.properties] for your environment. However, you should not configure any
-    application settings (like observers).
-
-    NOTE - All properties that have a default are set with it. Uncomment a property if you want
-    to use a value different than the default. Properties that are unset and uncommented must be
-    set by the user.
-
-4. Fluo needs to build its classpath using jars from the versions of Hadoop, Accumulo, and
-Zookeeper that you are using. Choose one of the two ways below to make these jars available
-to Fluo:
+2.  Configure [fluo-env.sh] to set up your classpath using jars from the versions of Hadoop, Accumulo, and
+Zookeeper that you are using. Choose one of the two ways below to make these jars available to Fluo:
 
     * Set `HADOOP_PREFIX`, `ACCUMULO_HOME`, and `ZOOKEEPER_HOME` in your environment or configure
     these variables in [fluo-env.sh]. Fluo will look in these locations for jars.
@@ -78,12 +75,12 @@ to Fluo:
 
             ./lib/fetch.sh ahz -Daccumulo.version=1.7.2 -Dhadoop.version=2.7.2 -Dzookeeper.version=3.4.8
 
-5. Fluo needs more dependencies than what is available from Hadoop, Accumulo, and Zookeeper. These
+3. Fluo needs more dependencies than what is available from Hadoop, Accumulo, and Zookeeper. These
    extra dependencies need to be downloaded to `lib/` using the command below:
 
         ./lib/fetch.sh extra
 
-You are now ready to use the Fluo command script.
+You are now ready to use the `fluo` script.
 
 ## Fluo command script
 
@@ -104,101 +101,63 @@ Running the script without any arguments prints a description of all commands.
 
     ./bin/fluo
 
-## Configure a Fluo application
+## Initialize Fluo application
 
-You are now ready to configure a Fluo application. Use the command below to create the
-configuration necessary for a new application. Feel free to pick a different name (other than
-`myapp`) for your application:
+1. Create a copy of [fluo-app.properties] for your Fluo application. 
 
-    fluo new myapp
+        cp conf/fluo-app.properties /path/to/myapp/fluo-app.properties
 
-This command will create a directory for your application at `apps/myapp` of your Fluo install which
-will contain a `conf` and `lib`.
+2. Edit your copy of [fluo-app.properties] and make sure to set the following:
 
-The `apps/myapp/conf` directory contains a copy of the `fluo.properties` from your default
-configuration. This should be configured for your application:
+    * Class name of your ObserverProvider
+    * Paths to your Fluo observer jars
+    * Accumulo configuration
+    * HDFS configuration
 
-    vim apps/myapp/fluo.properties
+   When configuring the observer section of fluo-app.properties, you can configure your instance for the
+   [phrasecount] application if you have not created your own application. See the [phrasecount]
+   example for instructions. You can also choose not to configure any observers but your workers will
+   be idle when started.
 
-When configuring the observer section in fluo.properties, you can configure your instance for the
-[phrasecount] application if you have not created your own application. See the [phrasecount]
-example for instructions. You can also choose not to configure any observers but your workers will
-be idle when started.
+3. Run the command below to initialize your Fluo application. Change `myapp` to your application name:
 
-The `apps/myapp/lib` directory should contain any observer jars for your application. If you
-configured [fluo.properties] for observers, copy any jars containing these observer classes to this
-directory.
+        fluo init myapp /path/to/myapp/fluo-app.properties
 
-## Initialize your application
+   A Fluo application only needs to be initialized once. After initialization, the Fluo application
+   name is used to start/stop the application and scan the Fluo table.
 
-After your application has been configured, use the command below to initialize it:
+4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
 
-    fluo init myapp
+## Start your Fluo application
 
-This only needs to be called once and stores configuration in Zookeeper.
+Follow the instructions below to start a Fluo application which contains an oracle and multiple workers.
 
-## Start your application
+1. Configure [fluo-env.sh] and [fluo-conn.properties] if you have not already.
 
-A Fluo application consists of one oracle process and multiple worker processes. Before starting
-your application, you can configure the number of worker process in your [fluo.properties] file.
+2. Run Fluo application processes using the `fluo oracle` and `fluo worker` commands. Fluo applications
+   are typically run with one oracle process and multiple worker processes. The commands below will start
+   a Fluo oracle and two workers on your local machine:
 
-When you are ready to start your Fluo application on your YARN cluster, run the command below:
+        fluo oracle myapp
+        fluo worker myapp
+        fluo worker myapp
 
-    fluo start myapp
+   The commands will retrieve your application configuration and observer jars (using your
+   application name) before starting the oracle or worker process.
 
-The start command above will work for a single-node or a large cluster. By using YARN, you do not
-need to deploy the Fluo binaries to every node on your cluster or start processes on every node.
+The oracle & worker logs can be found in the directory `logs/<applicationName>` of your Fluo installation.
 
-You can use the following command to check the status of your instance:
+If you want to distribute the processes of your Fluo application across a cluster, you will need install
+Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
 
-    fluo status myapp
+## Manage your Fluo application
 
-For more detailed information on the YARN containers running Fluo:
+When you have data in your Fluo application, you can view it using the command `fluo scan myapp`. 
+Pipe the output to `less` using the command `fluo scan myapp | less` if you want to page through the data.
 
-    fluo info myapp
+To list all Fluo applications, run `fluo list`.
 
-You can also use `yarn application -list` to check the status of your Fluo instance in YARN. 
-
-## View Fluo application logs
-
-Fluo application logs are viewable within YARN using the methods below:
-
-1. View logs using the web interface of the the YARN resource manager
-(`http://<resource manager>:8088/cluster`). First, click on the application ID (i.e `application_*`)
-of your Fluo application and then click on the latest attempt ID (i.e `appattempt_*`). You should
-see a list of containers. There should be a container for the application master (typically
-container 1), a Fluo oracle (typically container 2), and Fluo workers (containers 3+). You can view
-the log files produced by a container by clicking on its 'logs' link. Logs from Fluo observers will
-be in the `worker_*.log` file for each of your worker containers. 
-
-2. View logs on disk in the directory specified by the YARN property `yarn.nodemanager.log-dirs` in
-your YARN configuration `yarn-site.xml` (see [yarn-default.xml] for more info about this property).
-If you are running Fluo on single machine, this method works well. If you are running Fluo on a
-cluster, your containers and their logs will be spread across the cluster.
-
-When running Fluo in YARN, Fluo must use [logback] for logging (due to a hard requirement by Twill).
-Logback is configured using `/path/to/fluo/apps/<app_name>/conf/logback.xml`. You should review this
-configuration but the root logger is configured by default to print any message that is debug level
-or higher.
-
-In addition the `*.log` files, Fluo oracle and worker containers will have `stdout` and `stderr`
-files. These files may have helpful error messages. Especially, if a process failed to start
-or calls were made to `System.out` or `System.err` in your application.
-
-## View Fluo application data
-
-When you have data in your Fluo application, you can view it using the command `fluo scan`. Pipe the
-output to `less` using the command `fluo scan | less` if you want to page through the data.
-
-## Stop your Fluo application
-
-Use the following command to stop your Fluo application:
-
-    fluo stop myapp
-
-If stop fails, there is also a kill command.
-
-    fluo kill myapp
+To stop your Fluo application, run `jps -m | grep Fluo` to find process IDs and use `kill` to stop them.
 
 ## Tuning Accumulo
 
@@ -213,31 +172,6 @@ probably increase the `tserver.server.threads.minimum` Accumulo setting.
 
 Using at least Accumulo 1.6.1 is recommended because multiple performance bugs were fixed.
 
-## Tuning YARN
-
-When running Fluo oracles and workers in YARN, the number of instances, max memory, and number of
-cores for Fluo processes can be configured in [fluo.properties]. If YARN is killing processes
-consider increasing `twill.java.reserved.memory.mb` (which defaults to 200 and is set in
-yarn-site.xml). The `twill.java.reserved.memory.mb` config determines the gap between the YARN
-memory limit set in [fluo.properties] and the java -Xmx setting. For example, if max memory is 1024
-and twill reserved memory is 200, the java -Xmx setting will be 1024-200 = 824 MB.
-
-## Run locally without YARN
-
-If you do not have YARN set up, you can start the oracle and worker as a local Fluo process using
-the following commands:
-
-    local-fluo start-oracle
-    local-fluo start-worker
-
-Use the following commands to stop a local Fluo process:
-
-    local-fluo stop-worker
-    local-fluo stop-oracle
-
-In a distributed environment, you will need to deploy and configure a Fluo distribution on every
-node in your cluster.
-
 [Accumulo]: https://accumulo.apache.org/
 [Hadoop]: http://hadoop.apache.org/
 [Zookeeper]: http://zookeeper.apache.org/
@@ -245,8 +179,9 @@ node in your cluster.
 [related]: https://fluo.apache.org/related-projects/
 [release]: https://fluo.apache.org/download/
 [phrasecount]: https://github.com/fluo-io/phrasecount
-[fluo.properties]: ../modules/distribution/src/main/config/fluo.properties
+[fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
+[fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
+[log4j.properties]: ../modules/distribution/src/main/config/log4j.properties
+[fluo.properties.deprecated]: ../modules/distribution/src/main/config/fluo.properties.deprecated
 [fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh
 [lib/ahz/pom.xml]: ../modules/distribution/src/main/lib/ahz/pom.xml
-[yarn-default.xml]: https://hadoop.apache.org/docs/r2.7.0/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
-[logback]: http://logback.qos.ch/

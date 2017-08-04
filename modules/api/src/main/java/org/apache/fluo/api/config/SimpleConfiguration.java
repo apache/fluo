@@ -60,18 +60,6 @@ public class SimpleConfiguration implements Serializable {
     internalConfig = compositeConfig;
   }
 
-  private void load(InputStream in) {
-    try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(in);
-      ((CompositeConfiguration) internalConfig).addConfiguration(config);
-    } catch (ConfigurationException e) {
-      throw new IllegalArgumentException(e);
-    }
-  }
-
   public SimpleConfiguration() {
     init();
   }
@@ -85,15 +73,7 @@ public class SimpleConfiguration implements Serializable {
    */
   public SimpleConfiguration(File propertiesFile) {
     this();
-    try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(propertiesFile);
-      ((CompositeConfiguration) internalConfig).addConfiguration(config);
-    } catch (ConfigurationException e) {
-      throw new IllegalArgumentException(e);
-    }
+    load(propertiesFile);
   }
 
   /**
@@ -184,6 +164,42 @@ public class SimpleConfiguration implements Serializable {
 
   public String getString(String key, String defaultValue) {
     return internalConfig.getString(key, defaultValue);
+  }
+
+  /**
+   * Loads configuration from InputStream. Later loads have lower priority.
+   * 
+   * @param in InputStream to load from
+   * @since 1.2.0
+   */
+  public void load(InputStream in) {
+    try {
+      PropertiesConfiguration config = new PropertiesConfiguration();
+      // disabled to prevent accumulo classpath value from being shortened
+      config.setDelimiterParsingDisabled(true);
+      config.load(in);
+      ((CompositeConfiguration) internalConfig).addConfiguration(config);
+    } catch (ConfigurationException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * Loads configuration from File. Later loads have lower priority.
+   * 
+   * @param file File to load from
+   * @since 1.2.0
+   */
+  public void load(File file) {
+    try {
+      PropertiesConfiguration config = new PropertiesConfiguration();
+      // disabled to prevent accumulo classpath value from being shortened
+      config.setDelimiterParsingDisabled(true);
+      config.load(file);
+      ((CompositeConfiguration) internalConfig).addConfiguration(config);
+    } catch (ConfigurationException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   public void save(File file) {

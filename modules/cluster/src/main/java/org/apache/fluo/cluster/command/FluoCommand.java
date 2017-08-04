@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of Fluo command
  */
+@Deprecated
 public class FluoCommand {
 
   public static void verifyNoArgs(String[] remainArgs) {

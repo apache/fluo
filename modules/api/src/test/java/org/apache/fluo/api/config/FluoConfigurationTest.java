@@ -41,14 +41,14 @@ public class FluoConfigurationTest {
 
   @Test
   public void testDefaults() {
-    Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_CONNECT_DEFAULT,
+    Assert.assertEquals(FluoConfiguration.CONNECTION_ZOOKEEPERS_DEFAULT,
         base.getInstanceZookeepers());
-    Assert.assertEquals(FluoConfiguration.CLIENT_ZOOKEEPER_TIMEOUT_DEFAULT,
+    Assert.assertEquals(FluoConfiguration.CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT,
         base.getZookeeperTimeout());
-    Assert.assertEquals(FluoConfiguration.CLIENT_RETRY_TIMEOUT_MS_DEFAULT,
-        base.getClientRetryTimeout());
-    Assert.assertEquals(FluoConfiguration.CLIENT_ACCUMULO_ZOOKEEPERS_DEFAULT,
-        base.getAccumuloZookeepers());
+    Assert.assertEquals(FluoConfiguration.CONNECTION_RETRY_TIMEOUT_MS_DEFAULT,
+        base.getConnectionRetryTimeout());
+    Assert
+        .assertEquals(FluoConfiguration.ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
     Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT,
         base.getAccumuloClasspath());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
@@ -58,6 +58,9 @@ public class FluoConfigurationTest {
     Assert.assertEquals(FluoConfiguration.LOADER_QUEUE_SIZE_DEFAULT, base.getLoaderQueueSize());
     Assert.assertEquals(FluoConfiguration.MINI_START_ACCUMULO_DEFAULT, base.getMiniStartAccumulo());
     Assert.assertTrue(base.getMiniDataDir().endsWith("/mini"));
+    Assert.assertEquals(FluoConfiguration.OBSERVER_INIT_DIR_DEFAULT, base.getObserverInitDir());
+    Assert.assertEquals(FluoConfiguration.OBSERVER_JARS_URL_DEFAULT, base.getObserverJarsUrl());
+    Assert.assertEquals(FluoConfiguration.DFS_ROOT_DEFAULT, base.getDfsRoot());
   }
 
   @Test(expected = NoSuchElementException.class)
@@ -85,6 +88,7 @@ public class FluoConfigurationTest {
     FluoConfiguration config = new FluoConfiguration();
     Assert.assertEquals("path1,path2", config.setAccumuloClasspath("path1,path2")
         .getAccumuloClasspath());
+    Assert.assertEquals("path1,path2", config.setAccumuloJars("path1,path2").getAccumuloJars());
     Assert.assertEquals("instance", config.setAccumuloInstance("instance").getAccumuloInstance());
     Assert.assertEquals("pass", config.setAccumuloPassword("pass").getAccumuloPassword());
     Assert.assertEquals("table", config.setAccumuloTable("table").getAccumuloTable());
@@ -101,7 +105,12 @@ public class FluoConfigurationTest {
     Assert.assertEquals(14, config.setZookeeperTimeout(14).getZookeeperTimeout());
     Assert.assertFalse(config.setMiniStartAccumulo(false).getMiniStartAccumulo());
     Assert.assertEquals("mydata", config.setMiniDataDir("mydata").getMiniDataDir());
-    Assert.assertEquals(17, config.setClientRetryTimeout(17).getClientRetryTimeout());
+    Assert.assertEquals(17, config.setConnectionRetryTimeout(17).getConnectionRetryTimeout());
+    Assert.assertEquals("/path/to/dir", config.setObserverInitDir("/path/to/dir")
+        .getObserverInitDir());
+    Assert.assertEquals("hdfs://localhost/mydir",
+        config.setObserverJarsUrl("hdfs://localhost/mydir").getObserverJarsUrl());
+    Assert.assertEquals("hdfs123", config.setDfsRoot("hdfs123").getDfsRoot());
   }
 
   @Test
@@ -169,8 +178,8 @@ public class FluoConfigurationTest {
   }
 
   @Test
-  public void testLoadingPropsFile() {
-    File propsFile = new File("../distribution/src/main/config/fluo.properties");
+  public void testLoadingOldPropsFile() {
+    File propsFile = new File("../distribution/src/main/config/fluo.properties.deprecated");
     Assert.assertTrue(propsFile.exists());
 
     FluoConfiguration config = new FluoConfiguration(propsFile);
@@ -195,6 +204,91 @@ public class FluoConfigurationTest {
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }
+  }
+
+  @Test
+  public void testLoadingDistPropsFile() {
+    File connectionProps = new File("../distribution/src/main/config/fluo-conn.properties");
+    Assert.assertTrue(connectionProps.exists());
+    File applicationProps = new File("../distribution/src/main/config/fluo-app.properties");
+    Assert.assertTrue(applicationProps.exists());
+
+    FluoConfiguration config = new FluoConfiguration(connectionProps);
+    config.load(applicationProps);
+    // check for values set in prop file
+    Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
+    Assert.assertEquals("localhost", config.getAccumuloZookeepers());
+    Assert.assertEquals("hdfs://localhost:8020/fluo", config.getDfsRoot());
+    Assert.assertEquals("", config.getAccumuloPassword());
+    Assert.assertEquals("", config.getObserverProvider());
+    Assert.assertEquals("", config.getObserverInitDir());
+    Assert.assertEquals("", config.getAccumuloJars());
+    Assert.assertEquals("", config.getObserverJarsUrl());
+
+    try {
+      config.getApplicationName();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+    }
+    try {
+      config.getAccumuloUser();
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+    }
+    try {
+      config.getAccumuloInstance();
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+    }
+  }
+
+  @Test
+  public void testLoadingOldTestPropsFile() {
+    File propsFile = new File("src/test/resources/fluo.properties");
+    Assert.assertTrue(propsFile.exists());
+
+    FluoConfiguration config = new FluoConfiguration(propsFile);
+    // make sure classpath contains comma. otherwise it was shortened
+    Assert.assertTrue(config.getAccumuloClasspath().contains(","));
+    // check for values set in prop file
+    Assert.assertEquals("app1", config.getApplicationName());
+    Assert.assertEquals("localhost/fluo2", config.getInstanceZookeepers());
+    Assert.assertEquals(3, config.getZookeeperTimeout());
+    Assert.assertEquals("instance4", config.getAccumuloInstance());
+    Assert.assertEquals("user5", config.getAccumuloUser());
+    Assert.assertEquals("pass6", config.getAccumuloPassword());
+    Assert.assertEquals("zoo7", config.getAccumuloZookeepers());
+    Assert.assertEquals(8, config.getClientRetryTimeout());
+    Assert.assertEquals(8, config.getConnectionRetryTimeout());
+    Assert.assertEquals("table9", config.getAccumuloTable());
+  }
+
+  @Test
+  public void testLoadingTestPropsFile() {
+    File applicationProps = new File("src/test/resources/fluo-app.properties");
+    Assert.assertTrue(applicationProps.exists());
+
+    FluoConfiguration config = new FluoConfiguration(applicationProps);
+    config.setApplicationName("test-app");
+    Assert.assertEquals("com.foo.FooObserverProvider", config.getObserverProvider());
+    Assert.assertEquals("test-app", config.getApplicationName());
+    Assert.assertEquals("/path/to/observer/foo/", config.getObserverInitDir());
+    Assert.assertEquals("myInstance", config.getAccumuloInstance());
+    Assert.assertEquals("test-app", config.getAccumuloTable());
+    Assert.assertEquals("testUser", config.getAccumuloUser());
+    Assert.assertEquals("testPass", config.getAccumuloPassword());
+    Assert.assertEquals("myhost", config.getAccumuloZookeepers());
+    Assert.assertEquals("hdfs://myhost:10000", config.getDfsRoot());
+    Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
+    Assert.assertEquals(30000, config.getZookeeperTimeout());
+    Assert.assertEquals(-1, config.getConnectionRetryTimeout());
+
+    File connectionProps = new File("src/test/resources/fluo-conn.properties");
+    Assert.assertTrue(applicationProps.exists());
+    config.load(connectionProps);
+    Assert.assertEquals("localhost/test-fluo", config.getInstanceZookeepers());
+    Assert.assertEquals(50000, config.getZookeeperTimeout());
+    Assert.assertEquals(3000, config.getConnectionRetryTimeout());
   }
 
   @Test
@@ -298,7 +392,7 @@ public class FluoConfigurationTest {
   private void assertGetNameIAE(String name) {
     FluoConfiguration config = new FluoConfiguration();
     try {
-      config.setProperty(FluoConfiguration.CLIENT_APPLICATION_NAME_PROP, name);
+      config.setProperty(FluoConfiguration.CONNECTION_APPLICATION_NAME_PROP, name);
       config.getApplicationName();
       Assert.fail();
     } catch (IllegalArgumentException e) {
@@ -350,7 +444,7 @@ public class FluoConfigurationTest {
     }
     String[] nonEmptyMethods =
         {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser", "setAccumuloZookeepers",
-            "setMiniDataDir", "setInstanceZookeepers"};
+            "setMiniDataDir", "setInstanceZookeepers", "setDfsRoot"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

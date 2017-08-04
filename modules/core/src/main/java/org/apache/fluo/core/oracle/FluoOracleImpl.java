@@ -23,6 +23,7 @@ import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.service.FluoOracle;
+import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.metrics.ReporterUtil;
 import org.apache.fluo.core.util.CuratorUtil;
@@ -40,17 +41,18 @@ public class FluoOracleImpl implements FluoOracle {
   private OracleServer oracleServer;
   private NodeCache appIdCache;
 
-  public FluoOracleImpl(FluoConfiguration config) {
-    Objects.requireNonNull(config);
+  public FluoOracleImpl(FluoConfiguration connConfig) {
+    Objects.requireNonNull(connConfig);
+    Preconditions.checkArgument(connConfig.hasRequiredConnectionProps());
+    config = FluoAdminImpl.mergeZookeeperConfig(connConfig);
     Preconditions.checkArgument(config.hasRequiredOracleProps());
     // any client in oracle should retry forever
-    config.setClientRetryTimeout(-1);
+    config.setConnectionRetryTimeout(-1);
     try {
       config.validate();
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid FluoConfiguration", e);
     }
-    this.config = config;
   }
 
   @Override

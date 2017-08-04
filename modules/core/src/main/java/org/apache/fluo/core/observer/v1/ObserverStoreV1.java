@@ -86,7 +86,7 @@ public class ObserverStoreV1 implements ObserverStore {
       logger.info("Setting up observer {} using params {}.", observer.getClass().getSimpleName(),
           oc.toMap());
       try {
-        observer.init(new ObserverContext(config.subset(FluoConfiguration.APP_PREFIX), oc));
+        observer.init(new ObserverContext(config.getAppConfiguration(), oc));
       } catch (Exception e) {
         throw new FluoException("Observer '" + ospec.getClassName() + "' could not be initialized",
             e);
