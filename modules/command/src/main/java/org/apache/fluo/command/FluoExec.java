@@ -63,7 +63,6 @@ public class FluoExec {
     FluoConfiguration fluoConfig = new FluoConfiguration(connectionPropsFile);
     fluoConfig.setApplicationName(applicationName);
     CommandUtil.verifyAppInitialized(fluoConfig);
-    fluoConfig = FluoAdminImpl.mergeZookeeperConfig(fluoConfig);
 
     Arrays.copyOfRange(args, 3, args.length);
 
