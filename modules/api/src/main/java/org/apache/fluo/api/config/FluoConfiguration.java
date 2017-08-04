@@ -113,10 +113,17 @@ public class FluoConfiguration extends SimpleConfiguration {
    */
   public static final String CONNECTION_ZOOKEEPER_TIMEOUT_PROP = CONNECTION_PREFIX
       + ".zookeeper.timeout";
+
+  /**
+   * @since 1.2.0
+   */
+  public static final String CONNECTION_ZOOKEEPER_SECRET = CONNECTION_PREFIX + ".zookeeper.secret";
+
   /**
    * @since 1.2.0
    */
   public static final String CONNECTION_ZOOKEEPERS_PROP = CONNECTION_PREFIX + ".zookeepers";
+
   /**
    * @since 1.2.0
    */
@@ -343,6 +350,33 @@ public class FluoConfiguration extends SimpleConfiguration {
   public int getZookeeperTimeout() {
     return getDepPositiveInt(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_PROP,
         CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT);
+  }
+
+  /**
+   * Get the secret configured to access data in zookeeper. If the secret is an empty string, then
+   * nothing in zookeeper is locked down.
+   *
+   * <p>
+   * Gets the value of the property {@value #CONNECTION_ZOOKEEPER_SECRET}
+   *
+   * @since 1.2.0
+   */
+  public String getZookeeperSecret() {
+    return getString(CONNECTION_ZOOKEEPER_SECRET, "");
+  }
+
+  /**
+   * Setting this before initializing an application will cause Fluo to lock down Zookeeper such
+   * that this secret is required to read data from zookeeper. If set to an empty string, then
+   * nothing in zookeeper will be locked down. This property defaults to an empty string.
+   *
+   * <p>
+   * Sets the value of the property {@value #CONNECTION_ZOOKEEPER_SECRET}
+   *
+   * @since 1.2.0
+   */
+  public void setZookeeperSecret(String secret) {
+    setProperty(CONNECTION_ZOOKEEPER_SECRET, verifyNotNull(CONNECTION_ZOOKEEPER_SECRET, secret));
   }
 
   @Deprecated
@@ -968,7 +1002,6 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   private static String verifyNotNull(String property, String value) {
-    Objects.requireNonNull(value, property + " cannot be null");
-    return value;
+    return Objects.requireNonNull(value, property + " cannot be null");
   }
 }

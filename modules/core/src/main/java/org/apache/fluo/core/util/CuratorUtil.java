@@ -16,10 +16,13 @@
 package org.apache.fluo.core.util;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.api.ACLProvider;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.NodeCacheListener;
@@ -32,6 +35,8 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooDefs.Perms;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +55,8 @@ public class CuratorUtil {
    * at Fluo application chroot.
    */
   public static CuratorFramework newAppCurator(FluoConfiguration config) {
-    return newCurator(config.getAppZookeepers(), config.getZookeeperTimeout());
+    return newCurator(config.getAppZookeepers(), config.getZookeeperTimeout(),
+        config.getZookeeperSecret());
   }
 
   /**
@@ -58,7 +64,8 @@ public class CuratorUtil {
    * chroot.
    */
   public static CuratorFramework newFluoCurator(FluoConfiguration config) {
-    return newCurator(config.getInstanceZookeepers(), config.getZookeeperTimeout());
+    return newCurator(config.getInstanceZookeepers(), config.getZookeeperTimeout(),
+        config.getZookeeperSecret());
   }
 
   /**
@@ -67,15 +74,47 @@ public class CuratorUtil {
    */
   public static CuratorFramework newRootFluoCurator(FluoConfiguration config) {
     return newCurator(ZookeeperUtil.parseServers(config.getInstanceZookeepers()),
-        config.getZookeeperTimeout());
+        config.getZookeeperTimeout(), config.getZookeeperSecret());
   }
+
+  private static final List<ACL> CREATOR_ALL_ACL = ImmutableList.of(new ACL(Perms.ALL,
+      ZooDefs.Ids.AUTH_IDS));
+
+  private static final List<ACL> PUBLICLY_READABLE_ACL = ImmutableList.of(new ACL(Perms.READ,
+      ZooDefs.Ids.ANYONE_ID_UNSAFE), new ACL(Perms.ALL, ZooDefs.Ids.AUTH_IDS));
 
   /**
    * Creates a curator built using the given zookeeper connection string and timeout
    */
-  public static CuratorFramework newCurator(String zookeepers, int timeout) {
-    return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout,
-        new ExponentialBackoffRetry(1000, 10));
+  public static CuratorFramework newCurator(String zookeepers, int timeout, String secret) {
+
+    final ExponentialBackoffRetry retry = new ExponentialBackoffRetry(1000, 10);
+
+    if (secret.isEmpty()) {
+      return CuratorFrameworkFactory.newClient(zookeepers, timeout, timeout, retry);
+    } else {
+      return CuratorFrameworkFactory.builder().connectString(zookeepers)
+          .connectionTimeoutMs(timeout).sessionTimeoutMs(timeout).retryPolicy(retry)
+          .authorization("digest", ("fluo:" + secret).getBytes(StandardCharsets.UTF_8))
+          .aclProvider(new ACLProvider() {
+            @Override
+            public List<ACL> getDefaultAcl() {
+              return CREATOR_ALL_ACL;
+            }
+
+            @Override
+            public List<ACL> getAclForPath(String path) {
+              switch (path) {
+                case ZookeeperPath.ORACLE_GC_TIMESTAMP:
+                  // The garbage collection iterator running in Accumulo tservers needs to read this
+                  // value w/o authenticating.
+                  return PUBLICLY_READABLE_ACL;
+                default:
+                  return CREATOR_ALL_ACL;
+              }
+            }
+          }).build();
+    }
   }
 
   public static boolean putData(CuratorFramework curator, String zPath, byte[] data,
@@ -87,7 +126,7 @@ public class CuratorUtil {
     while (true) {
       try {
         curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-            .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE).forPath(zPath, data);
+            .forPath(zPath, data);
         return true;
       } catch (Exception nee) {
         if (nee instanceof KeeperException.NodeExistsException) {
@@ -119,7 +158,7 @@ public class CuratorUtil {
 
   /**
    * Starts the ephemeral node and waits for it to be created
-   * 
+   *
    * @param node Node to start
    * @param maxWaitSec Maximum time in seconds to wait
    */
