@@ -17,25 +17,12 @@ limitations under the License.
 
 # Fluo Applications
 
-Once you have Fluo installed and running on your cluster, you can now run Fluo applications which
-consist of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer is user provided code that is run by a Fluo worker process in response to notifications.  Notifications are set by Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo oracle service.  This documentations will show you how to :
+Once you have Fluo installed and running on your cluster, you can run Fluo applications consisting of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer is user provided code that is run by Fluo worker processes in response to notifications.  Notifications are set by Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo oracle service.  This documentations will show you how to :
 
  * Create a Fluo client
  * Create a Fluo observer
  * Initialize a Fluo Application
  * Start and stop Fluo Oracle and Worker processes
-
-
-## Application Properties
-
- * **Initialization** : During initialization of an application, the following is done.
-   * **Copy jars to DFS** :  TODO document props that influence this and why the jars are copied to DFS.
-   * **Create Accumulo table** : TODO document configuring jars, props that influence this, that Fluo has server side code.
-   * **Create Zookeeper node** :  TODO document that app props are stored here along with runtime info.
- * Start service processes :
-   * **Oracle**: document what it does and that it must run for clients to work
-   * **Worker** : document what it does.. Document that it uses jars from DFS and config from zookeeper for things like #worker threads
- * **External client**  .. TODO uses ORacle service process
 
 ## Fluo Maven Dependencies
 
@@ -143,15 +130,16 @@ To create an observer, follow these steps:
 
 ## Initialize Fluo application
 
-Below is an overview of what initialization does and some of the key properties in `fluo-app.properties`. 
+Below is an overview of what initialization does and some of the key properties it uses.
 
- * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper. If `fluo.connection.zookeepers=localhost/fluo` then `/fluo/<app name>` is created in ZooKeeper. This ZooKeeper area is used for application configuration, Oracle state, and worker coordination. All properties, except `fluo.connections.*`, are copied into ZooKeeper. For example, if `fluo.worker.num.threads=128` was set, then when a worker process starts it will read this from ZooKeeper.
- * **Copy Observer jars to DFS** : Fluo workers processes run on many nodes and need the jars containing observers. There are three ways to make these jars available.
+ * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper that is used for application configuration, Oracle state, and worker coordination. All properties, except `fluo.connections.*`, are copied into ZooKeeper. For example, if `fluo.worker.num.threads=128` was set, then when a worker process starts it will read this from ZooKeeper.
+ * **Copy Observer jars to DFS** : Fluo workers processes need the jars containing observers. These are provided in one of the following ways.
    * Set the property `fluo.observer.init.dir` to a local directory containing observer jars. The jars in this directory are copied to DFS under `<fluo.dfs.root>/<app name>`. When a worker is started, the jars are pulled from DFS and added to its classpath.
    * Set the property `fluo.observer.jars.url` to a directory in DFS containing observer jars.  No copying is done. When a worker is started, the jars are pulled from this location and added to its classpath.
    * Do not set any of the properties above and have the mechanism that starts the worker process add the needed jars to the classpath.
- * **Create Accumulo table** : Each Fluo appliaction has an Accumulo table which is created and configured. The `fluo.accumulo.*` properties determine which Accumulo instance is used. For performance reasons, Fluo runs its own code in Accumulo tablet servers. Fluo attempts to copy Fluo jars into DFS and configure Accumulo to use them. Fluo first checks the property `fluo.accumulo.jars` and if set, copies the jars listed there. If that property is not set, then Fluo looks on the classpath to find jars. Jars are copied to a location under `<fluo.dfs.root>/<app name>`.
+ * **Create Accumulo table** : Each Fluo application creates and configures an Accumulo table. The `fluo.accumulo.*` properties determine which Accumulo instance is used. For performance reasons, Fluo runs its own code in Accumulo tablet servers. Fluo attempts to copy Fluo jars into DFS and configure Accumulo to use them. Fluo first checks the property `fluo.accumulo.jars` and if set, copies the jars listed there. If that property is not set, then Fluo looks on the classpath to find jars. Jars are copied to a location under `<fluo.dfs.root>/<app name>`.
 
+Below are the steps to initialize an appliaction from the command line. It is also possible to initialize an appliaction using Fluo's Java API.
 
 1. Create a copy of [fluo-app.properties] for your Fluo application. 
 
