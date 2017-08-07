@@ -20,8 +20,6 @@
   <property name="charset" value="UTF-8"/>
 
   <property name="severity" value="warning"/>
-  <module name="SuppressWithNearbyCommentFilter"/>
-  <module name="SuppressionCommentFilter"/>
 
   <!-- Checks for whitespace                               -->
   <!-- See http://checkstyle.sf.net/config_whitespace.html -->
@@ -30,6 +28,8 @@
   </module>
 
   <module name="TreeWalker">
+    <module name="SuppressWithNearbyCommentFilter"/>
+    <module name="SuppressionCommentFilter"/>
     <module name="FileContentsHolder"/>
     <module name="OuterTypeFilename"/>
     <module name="IllegalTokenText">
