@@ -143,14 +143,14 @@ To create an observer, follow these steps:
 
 ## Initialize Fluo application
 
-During initialization of an application, the following is done.
+Below is an overview of what initialization does and some of the key properties in `fluo-app.properties`. 
 
- * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper that is setup during initialization. If the property `fluo.connection.zookeepers` is set to `localhost/fluo` and the property `fluo.connection.application.name` is set to `app15`, then initialization will create `/fluo/app15` in ZooKeeper. This area in ZooKeeper is used to for configuration, Oracle state, and worker coordination. All application configuration is stored in ZooKeeper. So if the property `fluo.worker.num.threads` was set to `128` at initialization, then later when starting a worker processes it would read this from ZooKeeper and start 128 threads.
- * **Copy jars to DFS** : Fluo workers processes can run on many nodes and need the jars containing observers. There are three ways to make these jars available.
-   * Set the property `fluo.observer.init.dir` to a local directory containing observer jars. During initialization, the jars in this directory are copied into DFS. Later when a worker is started, the jars are pulled from DFS and added to its classpath. Jars are copied to a location under `<value of fluo.dfs.root>/<app name>`.
-   * Set the property `fluo.observer.jars.url` to a directory in DFS containing observer jars.  No copying is done during initialization, however this URL is stored in ZooKeeper. Later when a worker is started, the jars are pulled from this location and added to its classpath.
-   * Do not set any of the properties above and have the mechanism that launches the worker process add the needed jars to the classpath.
- * **Create Accumulo table** : Each Fluo appliaction has an associated table in Accumulo. At initialization time this table is created and configured. The `fluo.accumulo.*` properties determine which Accumulo instance is used. For performance reasons, Fluo runs its own code in Accumulo tablet servers. At initialization time Fluo attempts to copy Fluo jars into DFS and configure Accumulo to use them. Fluo first checks the property `fluo.accumulo.jars` and if set, copies the jars listed there. If that property is not set, then Fluo looks on the classpath to find jars. Jars are copied to a location under `<value of fluo.dfs.root>/<app name>`.
+ * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper. If `fluo.connection.zookeepers=localhost/fluo` then `/fluo/<app name>` is created in ZooKeeper. This ZooKeeper area is used for application configuration, Oracle state, and worker coordination. All properties, except `fluo.connections.*`, are copied into ZooKeeper. For example, if `fluo.worker.num.threads=128` was set, then when a worker process starts it will read this from ZooKeeper.
+ * **Copy Observer jars to DFS** : Fluo workers processes run on many nodes and need the jars containing observers. There are three ways to make these jars available.
+   * Set the property `fluo.observer.init.dir` to a local directory containing observer jars. The jars in this directory are copied to DFS under `<fluo.dfs.root>/<app name>`. When a worker is started, the jars are pulled from DFS and added to its classpath.
+   * Set the property `fluo.observer.jars.url` to a directory in DFS containing observer jars.  No copying is done. When a worker is started, the jars are pulled from this location and added to its classpath.
+   * Do not set any of the properties above and have the mechanism that starts the worker process add the needed jars to the classpath.
+ * **Create Accumulo table** : Each Fluo appliaction has an Accumulo table which is created and configured. The `fluo.accumulo.*` properties determine which Accumulo instance is used. For performance reasons, Fluo runs its own code in Accumulo tablet servers. Fluo attempts to copy Fluo jars into DFS and configure Accumulo to use them. Fluo first checks the property `fluo.accumulo.jars` and if set, copies the jars listed there. If that property is not set, then Fluo looks on the classpath to find jars. Jars are copied to a location under `<fluo.dfs.root>/<app name>`.
 
 
 1. Create a copy of [fluo-app.properties] for your Fluo application. 
@@ -177,6 +177,8 @@ During initialization of an application, the following is done.
    name is used to start/stop the application and scan the Fluo table.
 
 4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
+
+5. Run `fluo config myapp` to see what configuration is stored in ZooKeeper.
 
 ## Start your Fluo application
 
