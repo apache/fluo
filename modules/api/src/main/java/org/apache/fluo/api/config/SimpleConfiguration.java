@@ -213,7 +213,6 @@ public class SimpleConfiguration implements Serializable {
     }
   }
 
-
   public void save(OutputStream out) {
     PropertiesConfiguration pconf = new PropertiesConfiguration();
     pconf.setDelimiterParsingDisabled(true);
@@ -223,6 +222,34 @@ public class SimpleConfiguration implements Serializable {
     } catch (ConfigurationException e) {
       throw new FluoException(e);
     }
+  }
+
+  /**
+   * @since 1.2.0
+   */
+  public void addProperty(String key, Boolean value) {
+    internalConfig.addProperty(key, value);
+  }
+
+  /**
+   * @since 1.2.0
+   */
+  public void addProperty(String key, Integer value) {
+    internalConfig.addProperty(key, value);
+  }
+
+  /**
+   * @since 1.2.0
+   */
+  public void addProperty(String key, Long value) {
+    internalConfig.addProperty(key, value);
+  }
+
+  /**
+   * @since 1.2.0
+   */
+  public void addProperty(String key, String value) {
+    internalConfig.addProperty(key, value);
   }
 
   public void setProperty(String key, Boolean value) {
@@ -248,6 +275,22 @@ public class SimpleConfiguration implements Serializable {
    */
   public SimpleConfiguration subset(String prefix) {
     return new SimpleConfiguration(internalConfig.subset(prefix));
+  }
+
+  /**
+   * @param SimpleConfigs SimpleConfiguration's to be merged
+   * @return SimpleConfiguration
+   * 
+   * @since 1.2.0
+   */
+  public static SimpleConfiguration merge(SimpleConfiguration... simpleConfigs) {
+    SimpleConfiguration mrg = new SimpleConfiguration();
+    for (SimpleConfiguration sc : simpleConfigs) {
+      for (Map.Entry<String, String> entry : sc.toMap().entrySet()) {
+        mrg.addProperty(entry.getKey(), entry.getValue());
+      }
+    }
+    return mrg;
   }
 
   @Override
