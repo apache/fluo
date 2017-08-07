@@ -17,7 +17,7 @@ limitations under the License.
 
 # Fluo Applications
 
-Once you have Fluo installed and running on your cluster, you can run Fluo applications consisting of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer is user provided code that is run by Fluo worker processes in response to notifications.  Notifications are set by Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo oracle service.  This documentations will show you how to :
+Once you have Fluo installed and running on your cluster, you can run Fluo applications consisting of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer is user provided code run by Fluo Workers in response to notifications.  Notifications are set by Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo oracle service.  This documentations will show you how to :
 
  * Create a Fluo client
  * Create a Fluo observer
