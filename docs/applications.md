@@ -18,7 +18,26 @@ limitations under the License.
 # Fluo Applications
 
 Once you have Fluo installed and running on your cluster, you can now run Fluo applications which
-consist of clients and observers.
+consist of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer is user provided code that is run by a Fluo worker process in response to notifications.  Notifications are set by Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo oracle service.  This documentations will show you how to :
+
+ * Create a Fluo client
+ * Create a Fluo observer
+ * Initialize a Fluo Application
+ * Start and stop Fluo Oracle and Worker processes
+
+
+## Application Properties
+
+ * **Initialization** : During initialization of an application, the following is done.
+   * **Copy jars to DFS** :  TODO document props that influence this and why the jars are copied to DFS.
+   * **Create Accumulo table** : TODO document configuring jars, props that influence this, that Fluo has server side code.
+   * **Create Zookeeper node** :  TODO document that app props are stored here along with runtime info.
+ * Start service processes :
+   * **Oracle**: document what it does and that it must run for clients to work
+   * **Worker** : document what it does.. Document that it uses jars from DFS and config from zookeeper for things like #worker threads
+ * **External client**  .. TODO uses ORacle service process
+
+## Fluo Maven Dependencies
 
 For both clients and observers, you will need to include the following in your Maven pom:
 
@@ -69,31 +88,6 @@ FluoClient client = FluoFactory.newClient(config)
 ```
 
 It may help to reference the [API javadocs][API] while you are learning the Fluo API.
-
-## Running application code
-
-The `fluo exec <app name> <class> {arguments}` provides an easy way to execute application code. It
-will execute a class with a main method if a jar containing the class is placed in the lib directory
-of the application. When the class is run, Fluo classes and dependencies will be on the classpath.
-The `fluo exec` command can inject the applications configuration if the class is written in the
-following way. Defining the injection point is optional.
-
-```java
-import javax.inject.Inject;
-
-public class AppCommand {
-
-  //when run with fluo exec command, the applications configuration will be injected
-  @Inject
-  private static FluoConfiguration fluoConfig;
-
-  public static void main(String[] args) throws Exception {
-    try(FluoClient fluoClient = FluoFactory.newClient(fluoConfig)) {
-      //do stuff with Fluo
-    }
-  }
-}
-```
 
 ## Creating a Fluo observer
 
@@ -146,6 +140,99 @@ To create an observer, follow these steps:
     ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
     are used by transactions to know when to trigger observers.
 6.  Start your Fluo instance so that your Fluo workers load the new observer.
+
+## Initialize Fluo application
+
+During initialization of an application, the following is done.
+
+ * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper that is setup during initialization. If the property `fluo.connection.zookeepers` is set to `localhost/fluo` and the property `fluo.connection.application.name` is set to `app15`, then initialization will create `/fluo/app15` in ZooKeeper. This area in ZooKeeper is used to for configuration, Oracle state, and worker coordination. All application configuration is stored in ZooKeeper. So if the property `fluo.worker.num.threads` was set to `128` at initialization, then later when starting a worker processes it would read this from ZooKeeper and start 128 threads.
+ * **Copy jars to DFS** : Fluo workers processes can run on many nodes and need the jars containing observers. There are three ways to make these jars available.
+   * Set the property `fluo.observer.init.dir` to a local directory containing observer jars. During initialization, the jars in this directory are copied into DFS. Later when a worker is started, the jars are pulled from DFS and added to its classpath. Jars are copied to a location under `<value of fluo.dfs.root>/<app name>`.
+   * Set the property `fluo.observer.jars.url` to a directory in DFS containing observer jars.  No copying is done during initialization, however this URL is stored in ZooKeeper. Later when a worker is started, the jars are pulled from this location and added to its classpath.
+   * Do not set any of the properties above and have the mechanism that launches the worker process add the needed jars to the classpath.
+ * **Create Accumulo table** : Each Fluo appliaction has an associated table in Accumulo. At initialization time this table is created and configured. The `fluo.accumulo.*` properties determine which Accumulo instance is used. For performance reasons, Fluo runs its own code in Accumulo tablet servers. At initialization time Fluo attempts to copy Fluo jars into DFS and configure Accumulo to use them. Fluo first checks the property `fluo.accumulo.jars` and if set, copies the jars listed there. If that property is not set, then Fluo looks on the classpath to find jars. Jars are copied to a location under `<value of fluo.dfs.root>/<app name>`.
+
+
+1. Create a copy of [fluo-app.properties] for your Fluo application. 
+
+        cp conf/fluo-app.properties /path/to/myapp/fluo-app.properties
+
+2. Edit your copy of [fluo-app.properties] and make sure to set the following:
+
+    * Class name of your ObserverProvider
+    * Paths to your Fluo observer jars
+    * Accumulo configuration
+    * HDFS configuration
+
+   When configuring the observer section of fluo-app.properties, you can configure your instance for the
+   [phrasecount] application if you have not created your own application. See the [phrasecount]
+   example for instructions. You can also choose not to configure any observers but your workers will
+   be idle when started.
+
+3. Run the command below to initialize your Fluo application. Change `myapp` to your application name:
+
+        fluo init myapp /path/to/myapp/fluo-app.properties
+
+   A Fluo application only needs to be initialized once. After initialization, the Fluo application
+   name is used to start/stop the application and scan the Fluo table.
+
+4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
+
+## Start your Fluo application
+
+Follow the instructions below to start a Fluo application which contains an oracle and multiple workers.
+
+1. Configure [fluo-env.sh] and [fluo-conn.properties] if you have not already.
+
+2. Run Fluo application processes using the `fluo oracle` and `fluo worker` commands. Fluo applications
+   are typically run with one oracle process and multiple worker processes. The commands below will start
+   a Fluo oracle and two workers on your local machine:
+
+        fluo oracle myapp
+        fluo worker myapp
+        fluo worker myapp
+
+   The commands will retrieve your application configuration and observer jars (using your
+   application name) before starting the oracle or worker process.
+
+The oracle & worker logs can be found in the directory `logs/<applicationName>` of your Fluo installation.
+
+If you want to distribute the processes of your Fluo application across a cluster, you will need install
+Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
+
+## Manage your Fluo application
+
+When you have data in your Fluo application, you can view it using the command `fluo scan myapp`. 
+Pipe the output to `less` using the command `fluo scan myapp | less` if you want to page through the data.
+
+To list all Fluo applications, run `fluo list`.
+
+To stop your Fluo application, run `jps -m | grep Fluo` to find process IDs and use `kill` to stop them.
+
+## Running application code
+
+The `fluo exec <app name> <class> {arguments}` provides an easy way to execute application code. It
+will execute a class with a main method if a jar containing the class is placed in the lib directory
+of the application. When the class is run, Fluo classes and dependencies will be on the classpath.
+The `fluo exec` command can inject the applications configuration if the class is written in the
+following way. Defining the injection point is optional.
+
+```java
+import javax.inject.Inject;
+
+public class AppCommand {
+
+  //when run with fluo exec command, the applications configuration will be injected
+  @Inject
+  private static FluoConfiguration fluoConfig;
+
+  public static void main(String[] args) throws Exception {
+    try(FluoClient fluoClient = FluoFactory.newClient(fluoConfig)) {
+      //do stuff with Fluo
+    }
+  }
+}
+```
 
 ## Application Configuration
 
