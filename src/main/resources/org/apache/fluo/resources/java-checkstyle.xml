@@ -170,5 +170,11 @@
       <message key="name.invalidPattern" value="Method name ''{0}'' must match pattern ''{1}''."/>
     </module>
     <module name="SingleLineJavadoc"/>
+    <module name="RegexpSinglelineJava">
+      <!--check that only Accumulo public APIs are imported-->
+      <property name="format" value="import\s+org[.]apache[.]accumulo[.](?:.*[.](?:impl|thrift)[.].*|(?!core|minicluster).*|core[.](?!client|data|iterators|security[.]Authorizations|security[.]ColumnVisibility|util[.]format[.]Formatter).*|core[.]data[.](?!Key|Mutation|Value|Range|Condition|ConditionalMutation|ByteSequence|PartialKey|ColumnUpdate|ArrayByteSequence).*)" />
+      <property name="ignoreComments" value="true" />
+      <property name="message" value="Accumulo non-public classes imported" />
+    </module>
   </module>
 </module>
