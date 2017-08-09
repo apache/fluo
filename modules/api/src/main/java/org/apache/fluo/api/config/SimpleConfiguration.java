@@ -268,7 +268,7 @@ public class SimpleConfiguration implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(this.toString());
+    return Objects.hashCode(this.toMap().entrySet());
   }
 
   @Override
@@ -278,8 +278,11 @@ public class SimpleConfiguration implements Serializable {
     }
 
     if (o instanceof SimpleConfiguration) {
-      SimpleConfiguration sc = (SimpleConfiguration) o;
-      return this.toString().equals(sc.toString());
+      Map<String, String> th = this.toMap();
+      Map<String, String> sc = ((SimpleConfiguration) o).toMap();
+      if (th.size() == sc.size()) {
+        return th.entrySet().equals(sc.entrySet());
+      }
     }
     return false;
   }

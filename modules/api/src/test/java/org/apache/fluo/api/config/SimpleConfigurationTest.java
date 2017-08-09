@@ -50,6 +50,33 @@ public class SimpleConfigurationTest {
     expected.setProperty("set5", "value5");
     expected.setProperty("set7", "value7");
 
+    SimpleConfiguration expNoOrder = new SimpleConfiguration();
+    expNoOrder.setProperty("set7", "value7");
+    expNoOrder.setProperty("set4", "value4");
+    expNoOrder.setProperty("set5", "value5");
+    expNoOrder.setProperty("set1", "value2");
+    expNoOrder.setProperty("set3", "value3");
+
+    SimpleConfiguration diff = new SimpleConfiguration();
+    diff.setProperty("set7", "value7");
+    diff.setProperty("set4", "value11");
+    diff.setProperty("set5", "value12");
+    diff.setProperty("set1", "value13");
+    diff.setProperty("set3", "value14");
+
     Assert.assertEquals(expected, msc);
+    Assert.assertEquals(expNoOrder, msc);
+    Assert.assertNotEquals(diff, msc);
+
+    Assert.assertEquals(expected, sc1); // sc2 and sc3 where added to sc1
+    Assert.assertEquals(expNoOrder, sc1); // sc2 and sc3 where added to sc1
+
+    Assert.assertNotEquals(expected, sc2);
+    Assert.assertNotEquals(expected, sc3);
+
+    Assert.assertNotEquals(expNoOrder, sc2);
+    Assert.assertNotEquals(expNoOrder, sc3);
+
+    Assert.assertNotEquals(expNoOrder.toString(), msc.toString());
   }
 }
