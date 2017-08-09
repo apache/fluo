@@ -101,64 +101,6 @@ Running the script without any arguments prints a description of all commands.
 
     ./bin/fluo
 
-## Initialize Fluo application
-
-1. Create a copy of [fluo-app.properties] for your Fluo application. 
-
-        cp conf/fluo-app.properties /path/to/myapp/fluo-app.properties
-
-2. Edit your copy of [fluo-app.properties] and make sure to set the following:
-
-    * Class name of your ObserverProvider
-    * Paths to your Fluo observer jars
-    * Accumulo configuration
-    * HDFS configuration
-
-   When configuring the observer section of fluo-app.properties, you can configure your instance for the
-   [phrasecount] application if you have not created your own application. See the [phrasecount]
-   example for instructions. You can also choose not to configure any observers but your workers will
-   be idle when started.
-
-3. Run the command below to initialize your Fluo application. Change `myapp` to your application name:
-
-        fluo init myapp /path/to/myapp/fluo-app.properties
-
-   A Fluo application only needs to be initialized once. After initialization, the Fluo application
-   name is used to start/stop the application and scan the Fluo table.
-
-4. Run `fluo list` which connects to Fluo and lists applications to verify initialization.
-
-## Start your Fluo application
-
-Follow the instructions below to start a Fluo application which contains an oracle and multiple workers.
-
-1. Configure [fluo-env.sh] and [fluo-conn.properties] if you have not already.
-
-2. Run Fluo application processes using the `fluo oracle` and `fluo worker` commands. Fluo applications
-   are typically run with one oracle process and multiple worker processes. The commands below will start
-   a Fluo oracle and two workers on your local machine:
-
-        fluo oracle myapp
-        fluo worker myapp
-        fluo worker myapp
-
-   The commands will retrieve your application configuration and observer jars (using your
-   application name) before starting the oracle or worker process.
-
-The oracle & worker logs can be found in the directory `logs/<applicationName>` of your Fluo installation.
-
-If you want to distribute the processes of your Fluo application across a cluster, you will need install
-Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
-
-## Manage your Fluo application
-
-When you have data in your Fluo application, you can view it using the command `fluo scan myapp`. 
-Pipe the output to `less` using the command `fluo scan myapp | less` if you want to page through the data.
-
-To list all Fluo applications, run `fluo list`.
-
-To stop your Fluo application, run `jps -m | grep Fluo` to find process IDs and use `kill` to stop them.
-
 ## Tuning Accumulo
 
 Fluo will reread the same data frequently when it checks conditions on mutations. When Fluo
@@ -178,7 +120,6 @@ Using at least Accumulo 1.6.1 is recommended because multiple performance bugs w
 [Java]: http://openjdk.java.net/
 [related]: https://fluo.apache.org/related-projects/
 [release]: https://fluo.apache.org/download/
-[phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
 [fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [log4j.properties]: ../modules/distribution/src/main/config/log4j.properties
