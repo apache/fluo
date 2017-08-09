@@ -64,12 +64,20 @@ public class SimpleConfigurationTest {
     diff.setProperty("set1", "value13");
     diff.setProperty("set3", "value14");
 
+    SimpleConfiguration noChange = new SimpleConfiguration(sc3);
+    // check to make sure this is not being changed.
+    sc3.orElse(sc1).orElse(sc2);
+    sc1.orElse(msc);
+    sc2.orElse(diff);
+
+    Assert.assertEquals(noChange, sc3);
+
     Assert.assertEquals(expected, msc);
     Assert.assertEquals(expNoOrder, msc);
     Assert.assertNotEquals(diff, msc);
 
-    Assert.assertEquals(expected, sc1); // sc2 and sc3 where added to sc1
-    Assert.assertEquals(expNoOrder, sc1); // sc2 and sc3 where added to sc1
+    Assert.assertNotEquals(expected, sc1);
+    Assert.assertNotEquals(expNoOrder, sc1);
 
     Assert.assertNotEquals(expected, sc2);
     Assert.assertNotEquals(expected, sc3);

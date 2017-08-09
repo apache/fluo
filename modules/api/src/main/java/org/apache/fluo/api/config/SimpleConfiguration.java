@@ -258,12 +258,13 @@ public class SimpleConfiguration implements Serializable {
    * @since 1.2.0
    */
   public SimpleConfiguration orElse(SimpleConfiguration fallback) {
+    SimpleConfiguration copy = new SimpleConfiguration(this);
     for (Map.Entry<String, String> entry : fallback.toMap().entrySet()) {
-      if (!this.containsKey(entry.getKey())) {
-        this.setProperty(entry.getKey(), entry.getValue());
+      if (!copy.containsKey(entry.getKey())) {
+        copy.setProperty(entry.getKey(), entry.getValue());
       }
     }
-    return this;
+    return copy;
   }
 
   @Override
