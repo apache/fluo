@@ -30,12 +30,10 @@ to your data. Therefore, developers should only interact with the data in a Fluo
 Fluo client or observer code:
 
 * **Clients** ingest data or interact with Fluo from external applications (REST services,
-  crawlers, etc).
-* **Observers** are run by Fluo workers and trigger a transaction when a requested column is
-  modified in the Fluo table.
+  crawlers, etc).  These are generally user started process that use the Fluo API.
+* **Observers** are user provided functions run by Fluo Workers that execute transactions in response to notifications. Notifications are set by Fluo transactions, executing in a client or observer, when a requested column is modified. 
 
-Multiple Fluo applications can run on a cluster at the same time. Each Fluo application runs as a
-Hadoop YARN application and can be stopped, started, and upgraded independently. Fluo applications
+Multiple Fluo applications can run on a cluster at the same time. Fluo applications
 consist of an oracle process and a configurable number of worker processes:
 
 * The **Oracle** process allocates timestamps for transactions. While only one Oracle is required,

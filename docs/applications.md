@@ -18,10 +18,7 @@ limitations under the License.
 # Fluo Applications
 
 Once you have Fluo installed and running on your cluster, you can run Fluo applications consisting
-of clients and observers.  A client is a user started process that uses the Fluo API.  An Observer
-is user provided code run by Fluo Workers in response to notifications.  Notifications are set by
-Fluo transactions executing in a client or observer.  Clients and observers rely on a running Fluo
-oracle service.  This documentations will shows how to :
+of [clients and observers](architecture.md). This documentations will shows how to :
 
  * Create a Fluo client
  * Create a Fluo observer
@@ -327,3 +324,5 @@ where D is a hex digit. Also the `\` character is escaped to make the output una
 [metrics]: metrics.md
 [slf4j]: http://www.slf4j.org/
 [logback]: http://logback.qos.ch/
+[phrasecount]: https://github.com/fluo-io/phrasecount
+[fluo-env.sh]: ../modules/distribution/src/main/config/fluo-env.sh

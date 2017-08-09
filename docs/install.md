@@ -120,7 +120,6 @@ Using at least Accumulo 1.6.1 is recommended because multiple performance bugs w
 [Java]: http://openjdk.java.net/
 [related]: https://fluo.apache.org/related-projects/
 [release]: https://fluo.apache.org/download/
-[phrasecount]: https://github.com/fluo-io/phrasecount
 [fluo-conn.properties]: ../modules/distribution/src/main/config/fluo-conn.properties
 [fluo-app.properties]: ../modules/distribution/src/main/config/fluo-app.properties
 [log4j.properties]: ../modules/distribution/src/main/config/log4j.properties
