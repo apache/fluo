@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -224,34 +225,6 @@ public class SimpleConfiguration implements Serializable {
     }
   }
 
-  /**
-   * @since 1.2.0
-   */
-  public void addProperty(String key, Boolean value) {
-    internalConfig.addProperty(key, value);
-  }
-
-  /**
-   * @since 1.2.0
-   */
-  public void addProperty(String key, Integer value) {
-    internalConfig.addProperty(key, value);
-  }
-
-  /**
-   * @since 1.2.0
-   */
-  public void addProperty(String key, Long value) {
-    internalConfig.addProperty(key, value);
-  }
-
-  /**
-   * @since 1.2.0
-   */
-  public void addProperty(String key, String value) {
-    internalConfig.addProperty(key, value);
-  }
-
   public void setProperty(String key, Boolean value) {
     internalConfig.setProperty(key, value);
   }
@@ -278,19 +251,37 @@ public class SimpleConfiguration implements Serializable {
   }
 
   /**
-   * @param SimpleConfigs SimpleConfiguration's to be merged
-   * @return SimpleConfiguration
+   * @param fallback SimpleConfiguration to join together
+   * @return a new simple configuration that contains all of the current properties from this plus
+   *         the properties from fallback that are not present in this.
    * 
    * @since 1.2.0
    */
-  public static SimpleConfiguration merge(SimpleConfiguration... simpleConfigs) {
-    SimpleConfiguration mrg = new SimpleConfiguration();
-    for (SimpleConfiguration sc : simpleConfigs) {
-      for (Map.Entry<String, String> entry : sc.toMap().entrySet()) {
-        mrg.addProperty(entry.getKey(), entry.getValue());
+  public SimpleConfiguration orElse(SimpleConfiguration fallback) {
+    for (Map.Entry<String, String> entry : fallback.toMap().entrySet()) {
+      if (!this.containsKey(entry.getKey())) {
+        this.setProperty(entry.getKey(), entry.getValue());
       }
     }
-    return mrg;
+    return this;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(this.toString());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (o instanceof SimpleConfiguration) {
+      SimpleConfiguration sc = (SimpleConfiguration) o;
+      return this.toString().equals(sc.toString());
+    }
+    return false;
   }
 
   @Override
