@@ -26,7 +26,7 @@ oracle service.  This documentations will shows how to :
  * Create a Fluo client
  * Create a Fluo observer
  * Initialize a Fluo Application
- * Start and stop Fluo Oracle and Worker processes
+ * Start and stop a Fluo application (which consists of Oracle and Worker processes)
 
 ## Fluo Maven Dependencies
 
@@ -75,7 +75,17 @@ Once you have [FluoConfiguration] object, pass it to the `newClient()` method of
 create a [FluoClient]:
 
 ```java
-FluoClient client = FluoFactory.newClient(config)
+try(FluoClient client = FluoFactory.newClient(config)){
+
+  try (Transaction tx = client.newTransaction()) {
+    // read and write some data
+    tx.commit();
+  }
+
+  try (Snapshot snapshot = client.newSnapshot()) {
+    //read some data
+  }
+}
 ```
 
 It may help to reference the [API javadocs][API] while you are learning the Fluo API.
@@ -125,16 +135,16 @@ To create an observer, follow these steps:
 
 3.  Build a jar containing these classes and include this jar in the `lib/` directory of your Fluo
     application.
-4.  Configure your Fluo instance to use this observer provider by modifying the Application section of
+4.  Configure your Fluo application to use this observer provider by modifying the Application section of
     [fluo-app.properties]. Set `fluo.observer.provider` to the observer provider class name.
-5.  Initialize Fluo.  During initialization Fluo will obtain the observed columns from the 
-    ObserverProvider and persist the columns in Zookeeper.  These columns persisted in Zookeeper
-    are used by transactions to know when to trigger observers.
-6.  Start your Fluo instance so that your Fluo workers load the new observer.
+5.  Initialize your Fluo application as described in the next section.  During initialization Fluo
+    will obtain the observed columns from the ObserverProvider and persist the columns in Zookeeper.
+    These columns persisted in Zookeeper are used by transactions to know when to trigger observers.
 
-## Initialize Fluo application
+## Initializing a Fluo Application
 
-Below is an overview of what initialization does and some of the key properties it uses.
+Before a Fluo Application can run, it must be initiaized.  Below is an overview of what
+initialization does and some of the properties that may be set for initialization.
 
  * **Initialize ZooKeeper** : Each application has its own area in ZooKeeper used for configuration,
    Oracle state, and worker coordination. All properties, except `fluo.connections.*`, are copied
@@ -187,7 +197,7 @@ initialize an application using Fluo's Java API.
 
 5. Run `fluo config myapp` to see what configuration is stored in ZooKeeper.
 
-## Start your Fluo application
+## Starting your Fluo application
 
 Follow the instructions below to start a Fluo application which contains an oracle and multiple workers.
 
@@ -209,7 +219,7 @@ The oracle & worker logs can be found in the directory `logs/<applicationName>` 
 If you want to distribute the processes of your Fluo application across a cluster, you will need install
 Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
 
-## Manage your Fluo application
+## Managing your Fluo application
 
 When you have data in your Fluo application, you can view it using the command `fluo scan myapp`. 
 Pipe the output to `less` using the command `fluo scan myapp | less` if you want to page through the data.
