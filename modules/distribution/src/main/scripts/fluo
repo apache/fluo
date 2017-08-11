@@ -64,8 +64,9 @@ function print_usage {
   echo -e "Possible commands:\n"
   echo "  init <app> <appProps> {<arg>} Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
   echo "  classpath                     Prints the classpath setup in fluo-env.sh"
-  echo "  list                          Lists all Fluo applications in Fluo instance"
   echo "  config <app>                  Prints application configuration stored in Zookeeper for <app>"
+  echo "  get-jars <app> <dir>          Copies <app> jars from DFS to local <dir>"
+  echo "  list                          Lists all Fluo applications in Fluo instance"
   echo "  scan <app>                    Prints snapshot of data in Fluo <app>"
   echo "  stop <app>                    Stops Fluo application processes on this machine for <app>"
   echo "  oracle <app>                  Starts Fluo Oracle process for <app>"
@@ -152,6 +153,14 @@ config)
   verify_app "$2"
   check_conn_props
   java org.apache.fluo.command.FluoConfig "$FLUO_CONN_PROPS" "$2"
+  ;;
+get-jars)
+  verify_app "$2"
+  if [ ! -d "$3" ]; then
+    echo "Directory '$3' does not exist"
+    exit 1
+  fi
+  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$2" "$3"
   ;;
 init)
   if [ -f "$FLUO_CONN_PROPS" ]; then
