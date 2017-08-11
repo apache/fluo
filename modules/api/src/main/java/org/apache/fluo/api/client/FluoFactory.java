@@ -25,8 +25,6 @@ import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.mini.MiniFluo;
 import org.apache.fluo.api.service.FluoOracle;
 import org.apache.fluo.api.service.FluoWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.apache.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
 
@@ -37,8 +35,6 @@ import static org.apache.fluo.api.config.FluoConfiguration.FLUO_PREFIX;
  * @since 1.0.0
  */
 public class FluoFactory {
-
-  private static final Logger log = LoggerFactory.getLogger(FluoFactory.class);
 
   private static final String FLUO_IMPL_PREFIX = FLUO_PREFIX + ".impl";
   private static final String CLIENT_CLASS_PROP = FLUO_IMPL_PREFIX + ".client.class";
@@ -123,14 +119,11 @@ public class FluoFactory {
       String msg =
           "Could not find " + clazz
               + " class which could be caused by fluo-core jar not being on the classpath.";
-      log.error(msg);
       throw new FluoException(msg, e);
     } catch (InvocationTargetException e) {
       String msg = "Failed to construct " + clazz + " class due to exception";
-      log.error(msg, e);
       throw new FluoException(msg, e);
     } catch (Exception e) {
-      log.error("Could not instantiate class - " + clazz);
       throw new FluoException(e);
     }
   }

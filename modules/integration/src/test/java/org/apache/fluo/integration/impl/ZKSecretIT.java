@@ -28,6 +28,7 @@ import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
@@ -66,6 +67,37 @@ public class ZKSecretIT extends ITBaseMini {
     }
 
     return zk;
+  }
+
+  @Test
+  public void testClientWithoutZKSecret() {
+    try (FluoClient client = FluoFactory.newClient(miniFluo.getClientConfiguration())) {
+      try (Transaction tx = client.newTransaction()) {
+        tx.set("node08", new Column("edge", "forward"), "node75");
+        tx.commit();
+      }
+
+      miniFluo.waitForObservers();
+    }
+
+    FluoConfiguration conf = new FluoConfiguration(miniFluo.getClientConfiguration());
+    conf.setZookeeperSecret("");
+    try (FluoClient client = FluoFactory.newClient(conf)) {
+      Assert.fail("Expected client creation to fail.");
+    } catch (Exception e) {
+      boolean sawNoAuth = false;
+      Throwable throwable = e;
+      while (throwable != null) {
+        if (throwable instanceof NoAuthException) {
+          sawNoAuth = true;
+          break;
+        }
+        throwable = throwable.getCause();
+      }
+
+      Assert.assertTrue(sawNoAuth);
+    }
+
   }
 
   @Test
