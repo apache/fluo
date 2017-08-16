@@ -300,7 +300,7 @@ start)
   export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
   java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   ;;
-kill|status|info)
+kill|info)
   deprecated_verify "$2"
   check_hadoop
   java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
