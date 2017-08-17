@@ -60,16 +60,20 @@ public class FluoList {
 
       System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") contains "
           + children.size() + " application(s)\n");
-      System.out.println("Application     Status");
-      System.out.println("-----------     ------");
+      System.out.println("Application     Status     # Workers");
+      System.out.println("-----------     ------     ---------");
+
       for (String path : children) {
         FluoConfiguration appConfig = new FluoConfiguration(config);
         appConfig.setApplicationName(path);
-        String state = "STOPPED";
-        if (FluoAdminImpl.oracleExists(appConfig)) {
-          state = "RUNNING";
+        try (FluoAdminImpl admin = new FluoAdminImpl(appConfig)) {
+          String state = "STOPPED";
+          if (admin.applicationRunning()) {
+            state = "RUNNING";
+          }
+          int numWorkers = admin.numWorkers();
+          System.out.format("%-15s %-11s %4d\n", path, state, numWorkers);
         }
-        System.out.format("%-15s %-11s\n", path, state);
       }
     }
   }

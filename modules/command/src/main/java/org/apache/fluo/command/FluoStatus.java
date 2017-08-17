@@ -43,18 +43,15 @@ public class FluoStatus {
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
     config.setApplicationName(applicationName);
 
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-      if (curator.checkExists().forPath("/" + applicationName) == null) {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      if (!admin.zookeeperInitialized()) {
         System.out.println("NOT_FOUND");
-        return;
       }
-    }
-
-    if (FluoAdminImpl.oracleExists(config)) {
-      System.out.println("RUNNING");
-    } else {
-      System.out.println("STOPPED");
+      if (admin.applicationRunning()) {
+        System.out.println("RUNNING");
+      } else {
+        System.out.println("STOPPED");
+      }
     }
   }
 }
