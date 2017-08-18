@@ -17,6 +17,7 @@ package org.apache.fluo.command;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
@@ -34,7 +35,7 @@ public class FluoGetJars {
   private static final Logger log = LoggerFactory.getLogger(FluoGetJars.class);
 
   public static void main(String[] args) {
-    if (args.length != 3) {
+    if (args.length < 3) {
       System.err
           .println("Usage: FluoGetJars <connectionPropsPath> <applicationName> <downloadPath>");
       System.exit(-1);
@@ -48,8 +49,13 @@ public class FluoGetJars {
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
         + " does not exist");
 
+    String[] userArgs = Arrays.copyOfRange(args, 3, args.length);
+    CommandOpts commandOpts = CommandOpts.parse("fluo get-jars <app> <dir>", userArgs);
+
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
     config.setApplicationName(applicationName);
+    commandOpts.overrideConfig(config);
+
     CommandUtil.verifyAppInitialized(config);
 
     config = FluoAdminImpl.mergeZookeeperConfig(config);

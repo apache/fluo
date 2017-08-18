@@ -46,8 +46,7 @@ public class FluoStatus {
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.zookeeperInitialized()) {
         System.out.println("NOT_FOUND");
-      }
-      if (admin.applicationRunning()) {
+      } else if (admin.applicationRunning()) {
         System.out.println("RUNNING");
       } else {
         System.out.println("STOPPED");

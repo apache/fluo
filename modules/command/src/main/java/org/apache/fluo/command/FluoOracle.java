@@ -16,6 +16,7 @@
 package org.apache.fluo.command;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
@@ -30,8 +31,8 @@ public class FluoOracle {
   private static final Logger log = LoggerFactory.getLogger(FluoOracle.class);
 
   public static void main(String[] args) {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoOracle <connectionPropsPath> <applicationName>");
+    if (args.length < 2) {
+      System.err.println("Usage: FluoOracle <connectionPropsPath> <applicationName> args...");
       System.exit(-1);
     }
     String connectionPropsPath = args[0];
@@ -42,10 +43,16 @@ public class FluoOracle {
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
         + " does not exist");
 
+    String[] userArgs = Arrays.copyOfRange(args, 2, args.length);
+    CommandOpts commandOpts = CommandOpts.parse("fluo oracle <app>", userArgs);
+
+    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
+    config.setApplicationName(applicationName);
+    commandOpts.overrideConfig(config);
+
+    CommandUtil.verifyAppInitialized(config);
+
     try {
-      FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-      config.setApplicationName(applicationName);
-      CommandUtil.verifyAppInitialized(config);
       org.apache.fluo.api.service.FluoOracle oracle = FluoFactory.newOracle(config);
       oracle.start();
       while (true) {

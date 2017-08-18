@@ -37,7 +37,6 @@ fi
 source "$conf/fluo-env.sh"
 export CLASSPATH
 
-
 deprecated_fluo_props=$conf/fluo.properties
 
 if [[ -f "$FLUO_CONN_PROPS" && -f "$deprecated_fluo_props" ]]; then
@@ -144,7 +143,7 @@ function setup_service {
   mkdir -p "$app_log_dir" 2>/dev/null
   app_lib=$lib/apps/$1
   mkdir -p "$app_lib"
-  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$1" "$app_lib"
+  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$1" "$app_lib" ${*:2}
   export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
 }
 
@@ -160,7 +159,7 @@ get-jars)
     echo "Directory '$3' does not exist"
     exit 1
   fi
-  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$2" "$3"
+  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" ${*:2}
   ;;
 init)
   if [ -f "$FLUO_CONN_PROPS" ]; then
@@ -193,16 +192,26 @@ init)
   fi
   ;;
 oracle)
-  setup_service "$2"
-  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
-  echo "Started Oracle for '$2' Fluo application. Logs can be found in $app_log_dir"
+  setup_service ${*:2}
+  echo "Starting Oracle for '$2' Fluo application. Logs can be found in $app_log_dir"
+  cmd="java ${SERVICE_OPTS[@]} org.apache.fluo.command.FluoOracle $FLUO_CONN_PROPS ${*:2}"
+  if [[ "${*:2}" =~ .*\-fg.* ]]; then
+    $cmd > ${app_log_dir}/${FLUO_LOG_ID}.out 2> ${app_log_dir}/${FLUO_LOG_ID}.err
+  else
+    nohup $cmd > ${app_log_dir}/${FLUO_LOG_ID}.out 2> ${app_log_dir}/${FLUO_LOG_ID}.err &
+    echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
+  fi
   ;;
 worker)
-  setup_service "$2"
-  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
-  echo "Started Worker for '$2' Fluo application. Logs can be found in $app_log_dir"
+  setup_service ${*:2}
+  echo "Starting Worker for '$2' Fluo application. Logs can be found in $app_log_dir"
+  cmd="java ${SERVICE_OPTS[@]} org.apache.fluo.command.FluoWorker $FLUO_CONN_PROPS ${*:2}"
+  if [[ "${*:2}" =~ .*\-fg.* ]]; then
+    $cmd > ${app_log_dir}/${FLUO_LOG_ID}.out 2> ${app_log_dir}/${FLUO_LOG_ID}.err
+  else
+    nohup $cmd > ${app_log_dir}/${FLUO_LOG_ID}.out 2> ${app_log_dir}/${FLUO_LOG_ID}.err &
+    echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
+  fi
   ;;
 scan)
   if [ -f "$FLUO_CONN_PROPS" ]; then

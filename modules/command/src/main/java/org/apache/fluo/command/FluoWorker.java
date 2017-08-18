@@ -16,6 +16,7 @@
 package org.apache.fluo.command;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
@@ -30,8 +31,8 @@ public class FluoWorker {
   private static final Logger log = LoggerFactory.getLogger(FluoWorker.class);
 
   public static void main(String[] args) {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoWorker <connectionPropsPath> <applicationName>");
+    if (args.length < 2) {
+      System.err.println("Usage: FluoWorker <connectionPropsPath> <applicationName> args...");
       System.exit(-1);
     }
     String connectionPropsPath = args[0];
@@ -42,10 +43,15 @@ public class FluoWorker {
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
         + " does not exist");
 
+    String[] userArgs = Arrays.copyOfRange(args, 2, args.length);
+    CommandOpts commandOpts = CommandOpts.parse("fluo worker <app>", userArgs);
+
+    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
+    config.setApplicationName(applicationName);
+    commandOpts.overrideConfig(config);
+    CommandUtil.verifyAppInitialized(config);
+
     try {
-      FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-      config.setApplicationName(applicationName);
-      CommandUtil.verifyAppInitialized(config);
       org.apache.fluo.api.service.FluoWorker worker = FluoFactory.newWorker(config);
       worker.start();
       while (true) {
