@@ -26,54 +26,31 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 
-public class FluoList {
+public class FluoStatus {
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 1) {
-      System.err.println("Usage: FluoList <connectionPropsPath>");
+    if (args.length != 2) {
+      System.err.println("Usage: FluoStatus <connectionPropsPath> <applicationName>");
       System.exit(-1);
     }
     String connectionPropsPath = args[0];
+    String applicationName = args[1];
     Objects.requireNonNull(connectionPropsPath);
     File connectionPropsFile = new File(connectionPropsPath);
     Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
         + " does not exist");
 
     FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
+    config.setApplicationName(applicationName);
 
-    try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
-      curator.start();
-
-      if (curator.checkExists().forPath("/") == null) {
-        System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") has not been "
-            + "created yet in Zookeeper.  It will be created when the first Fluo application is "
-            + "initialized for this instance.");
-        return;
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      if (!admin.zookeeperInitialized()) {
+        System.out.println("NOT_FOUND");
       }
-      List<String> children = curator.getChildren().forPath("/");
-      if (children.isEmpty()) {
-        System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") does not "
-            + "contain any Fluo applications.");
-        return;
-      }
-      Collections.sort(children);
-
-      System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") contains "
-          + children.size() + " application(s)\n");
-      System.out.println("Application     Status     # Workers");
-      System.out.println("-----------     ------     ---------");
-
-      for (String path : children) {
-        FluoConfiguration appConfig = new FluoConfiguration(config);
-        appConfig.setApplicationName(path);
-        try (FluoAdminImpl admin = new FluoAdminImpl(appConfig)) {
-          String state = "STOPPED";
-          if (admin.applicationRunning()) {
-            state = "RUNNING";
-          }
-          int numWorkers = admin.numWorkers();
-          System.out.format("%-15s %-11s %4d\n", path, state, numWorkers);
-        }
+      if (admin.applicationRunning()) {
+        System.out.println("RUNNING");
+      } else {
+        System.out.println("STOPPED");
       }
     }
   }

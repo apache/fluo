@@ -68,6 +68,7 @@ function print_usage {
   echo "  get-jars <app> <dir>          Copies <app> jars from DFS to local <dir>"
   echo "  list                          Lists all Fluo applications in Fluo instance"
   echo "  scan <app>                    Prints snapshot of data in Fluo <app>"
+  echo "  status <app>                  Prints status of Fluo application for <app>"
   echo "  stop <app>                    Stops Fluo application processes on this machine for <app>"
   echo "  oracle <app>                  Starts Fluo Oracle process for <app>"
   echo "  worker <app>                  Starts Fluo Worker process for <app>"
@@ -80,7 +81,6 @@ function print_usage {
   echo "  start <app>   (Deprecated) Starts Fluo application on cluster"
   echo "  init <app>    (Deprecated) Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
   echo "  kill <app>    (Deprecated) Kills Fluo application on cluster"
-  echo "  status <app>  (Deprecated) Prints status of Fluo application"
   echo "  info <app>    (Deprecated) Prints information about containers of Fluo application"
   echo " "
   exit 1
@@ -252,6 +252,15 @@ exec)
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
+status)
+  if [ -f "$FLUO_CONN_PROPS" ]; then
+    verify_app "$2"
+    java org.apache.fluo.command.FluoStatus "$FLUO_CONN_PROPS" "$2"
+  else
+    check_hadoop
+    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
+  fi
+  ;;
 version)
   echo "$FLUO_VERSION"
   ;;
@@ -291,7 +300,7 @@ start)
   export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
   java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   ;;
-kill|status|info)
+kill|info)
   deprecated_verify "$2"
   check_hadoop
   java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"

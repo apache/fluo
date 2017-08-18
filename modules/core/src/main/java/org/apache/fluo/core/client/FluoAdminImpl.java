@@ -54,6 +54,7 @@ import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -400,9 +401,8 @@ public class FluoAdminImpl implements FluoAdmin {
     return jars.toString();
   }
 
-  public static boolean oracleExists(FluoConfiguration config) {
-    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
-      curator.start();
+  public static boolean oracleExists(CuratorFramework curator) {
+    try {
       return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
           && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
     } catch (Exception e) {
@@ -411,13 +411,35 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public boolean oracleExists() {
-    CuratorFramework curator = getAppCurator();
+    return oracleExists(getAppCurator());
+  }
+
+  public static int numWorkers(CuratorFramework curator) {
+    int numWorkers = 0;
     try {
-      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
-          && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
+      if (curator.checkExists().forPath(ZookeeperPath.FINDERS) != null) {
+        for (String path : curator.getChildren().forPath(ZookeeperPath.FINDERS)) {
+          if (path.startsWith(PartitionManager.ZK_FINDER_PREFIX)) {
+            numWorkers++;
+          }
+        }
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    return numWorkers;
+  }
+
+  public int numWorkers() {
+    return numWorkers(getAppCurator());
+  }
+
+  public static boolean applicationRunning(CuratorFramework curator) {
+    return oracleExists(curator) || (numWorkers(curator) > 0);
+  }
+
+  public boolean applicationRunning() {
+    return applicationRunning(getAppCurator());
   }
 
   public boolean zookeeperInitialized() {

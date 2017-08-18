@@ -143,7 +143,7 @@ public class FluoInit {
 
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
-      if (admin.oracleExists()) {
+      if (admin.applicationRunning()) {
         System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application"
             + " is already running and must be stopped before running 'fluo init'. "
             + " Aborted initialization.");
