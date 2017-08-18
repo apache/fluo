@@ -54,6 +54,7 @@ import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -418,7 +419,7 @@ public class FluoAdminImpl implements FluoAdmin {
     try {
       if (curator.checkExists().forPath(ZookeeperPath.FINDERS) != null) {
         for (String path : curator.getChildren().forPath(ZookeeperPath.FINDERS)) {
-          if (path.startsWith("f-")) {
+          if (path.startsWith(PartitionManager.ZK_FINDER_PREFIX)) {
             numWorkers++;
           }
         }

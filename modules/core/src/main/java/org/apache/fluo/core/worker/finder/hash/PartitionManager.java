@@ -71,6 +71,8 @@ public class PartitionManager {
 
   private static final Logger log = LoggerFactory.getLogger(PartitionManager.class);
 
+  public static final String ZK_FINDER_PREFIX = "f-";
+
   private final PathChildrenCache childrenCache;
   private final PersistentEphemeralNode myESNode;
   private final int groupSize;
@@ -282,7 +284,7 @@ public class PartitionManager {
 
       myESNode =
           new PersistentEphemeralNode(curator, Mode.EPHEMERAL_SEQUENTIAL, ZookeeperPath.FINDERS
-              + "/f-", ("" + groupSize).getBytes(UTF_8));
+              + "/" + ZK_FINDER_PREFIX, ("" + groupSize).getBytes(UTF_8));
       myESNode.start();
       myESNode.waitForInitialCreate(1, TimeUnit.MINUTES);
 
