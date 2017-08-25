@@ -31,9 +31,6 @@ public class CommandOpts {
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   boolean help;
 
-  @Parameter(names = {"-fg", "--fg"}, description = "Runs command in foreground")
-  boolean foreground;
-
   List<String> getProperties() {
     return properties;
   }
@@ -54,7 +51,7 @@ public class CommandOpts {
   public static CommandOpts parse(String programName, String[] args) {
     CommandOpts commandOpts = new CommandOpts();
     JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName("fluo oracle <app>");
+    jcommand.setProgramName(programName);
     try {
       jcommand.parse(args);
     } catch (ParameterException e) {
