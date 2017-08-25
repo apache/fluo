@@ -204,14 +204,12 @@ Follow the instructions below to start a Fluo application which contains an orac
    are typically run with one oracle process and multiple worker processes. The commands below will start
    a Fluo oracle and two workers on your local machine:
 
-        fluo oracle myapp
-        fluo worker myapp
-        fluo worker myapp
+        fluo oracle myapp &> oracle.log &
+        fluo worker myapp &> worker1.log &
+        fluo worker myapp &> worker2.log &
 
    The commands will retrieve your application configuration and observer jars (using your
    application name) before starting the oracle or worker process.
-
-The oracle & worker logs can be found in the directory `logs/<applicationName>` of your Fluo installation.
 
 If you want to distribute the processes of your Fluo application across a cluster, you will need install
 Fluo on every node where you want to run a Fluo process and follow the instructions above on each node.
