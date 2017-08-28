@@ -15,45 +15,20 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
-import java.net.URI;
 import java.util.Map;
-import java.util.Objects;
 
-import com.google.common.base.Preconditions;
-import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.SimpleConfiguration;
-import org.apache.fluo.core.client.FluoAdminImpl;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FluoConfig {
 
-  private static final Logger log = LoggerFactory.getLogger(FluoConfig.class);
-
   public static void main(String[] args) {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoConfig <connectionPropsPath> <applicationName>");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    Objects.requireNonNull(connectionPropsPath);
-    Objects.requireNonNull(applicationName);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-    config.setApplicationName(applicationName);
+    ApplicationOpts opts = ApplicationOpts.parse("fluo config", args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(opts.getApplicationName());
+    CommandUtil.overrideFluoConfig(config, opts.getProperties());
     CommandUtil.verifyAppInitialized(config);
-
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       for (Map.Entry<String, String> entry : admin.getApplicationConfig().toMap().entrySet()) {
         System.out.println(entry.getKey() + " = " + entry.getValue());

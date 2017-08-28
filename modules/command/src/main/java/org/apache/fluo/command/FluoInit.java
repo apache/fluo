@@ -19,8 +19,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -33,6 +33,12 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 public class FluoInit {
 
   public static class InitOptions {
+
+    @Parameter(names = "-a", required = true, description = "Fluo application name")
+    private String applicationName;
+
+    @Parameter(names = "-p", required = true, description = "Path to application properties file")
+    private String appPropsPath;
 
     @Parameter(names = {"-f", "--force"},
         description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to "
@@ -48,8 +54,26 @@ public class FluoInit {
     @Parameter(names = {"-u", "--update"}, description = "Update Fluo configuration in Zookeeper")
     private boolean update;
 
+    @Parameter(names = "--retrieveProperty", description = "Gets specified property without initializing")
+    private String retrieveProperty;
+
+    @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
+    private List<String> properties = new ArrayList<>();
+
     @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
     boolean help;
+
+    String getApplicationName() {
+      return applicationName;
+    }
+
+    String getAppPropsPath() {
+      return appPropsPath;
+    }
+
+    List<String> getProperties() {
+      return properties;
+    }
 
     boolean getForce() {
       return force;
@@ -66,7 +90,12 @@ public class FluoInit {
     boolean getUpdate() {
       return update;
     }
+
+    String getRetrieveProperty() {
+      return retrieveProperty;
+    }
   }
+
 
   private static boolean readYes() {
     String input = "unk";
@@ -88,50 +117,42 @@ public class FluoInit {
   }
 
   public static void main(String[] args) {
-    if (args.length < 1) {
-      System.err
-          .println("Usage: FluoInit <connectionPropsPath> <appName> <applicationPropsPath> userArgs...");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    Objects.requireNonNull(connectionPropsPath);
-    Preconditions.checkArgument(!connectionPropsPath.isEmpty(), "<connectionPropsPath> is empty");
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
 
-    String[] userArgs = Arrays.copyOfRange(args, 3, args.length);
-
-    InitOptions commandOpts = new InitOptions();
-    JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName("fluo init <app> <appProps>");
+    InitOptions opts = new InitOptions();
+    JCommander jcommand = new JCommander(opts);
+    jcommand.setProgramName("fluo init");
     try {
-      jcommand.parse(userArgs);
+      jcommand.parse(args);
     } catch (ParameterException e) {
       System.err.println(e.getMessage());
       jcommand.usage();
       System.exit(-1);
     }
 
-    if (commandOpts.help) {
+    if (opts.help) {
       jcommand.usage();
       System.exit(1);
     }
 
-    String applicationName = args[1];
-    Objects.requireNonNull(applicationName);
-    String applicationPropsPath = args[2];
-    Objects.requireNonNull(applicationPropsPath);
-    File applicationPropsFile = new File(applicationPropsPath);
-    Preconditions.checkArgument(applicationPropsFile.exists(), applicationPropsPath
-        + " does not exist");
+    File applicationPropsFile = new File(opts.getAppPropsPath());
+    Preconditions.checkArgument(applicationPropsFile.exists(), opts.getAppPropsPath()
+            + " does not exist");
 
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.load(applicationPropsFile);
-    config.setApplicationName(applicationName);
+    config.setApplicationName(opts.getApplicationName());
+    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+
+    String propKey = opts.getRetrieveProperty();
+    if (propKey != null && !propKey.isEmpty()) {
+      if (config.containsKey(propKey)) {
+        System.out.println(config.getString(propKey));
+      }
+      System.exit(0);
+    }
 
     if (!config.hasRequiredAdminProps()) {
-      System.err.println("Error - Required properties are not set in " + applicationPropsPath);
+      System.err.println("Error - Required properties are not set in " + opts.getAppPropsPath());
       System.exit(-1);
     }
     try {
@@ -152,18 +173,18 @@ public class FluoInit {
 
       FluoAdmin.InitializationOptions initOpts = new FluoAdmin.InitializationOptions();
 
-      if (commandOpts.getUpdate()) {
+      if (opts.getUpdate()) {
         System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
-            + "' application in Zookeeper using " + applicationPropsPath);
+            + "' application in Zookeeper using " + opts.getAppPropsPath());
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
         System.exit(0);
       }
 
-      if (commandOpts.getForce()) {
+      if (opts.getForce()) {
         initOpts.setClearZookeeper(true).setClearTable(true);
       } else {
-        if (commandOpts.getClearZookeeper()) {
+        if (opts.getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
           System.out.print("A Fluo '" + config.getApplicationName()
@@ -178,7 +199,7 @@ public class FluoInit {
           }
         }
 
-        if (commandOpts.getClearTable()) {
+        if (opts.getClearTable()) {
           initOpts.setClearTable(true);
         } else if (admin.accumuloTableExists()) {
           System.out.print("The Accumulo table '" + config.getAccumuloTable()
@@ -193,7 +214,7 @@ public class FluoInit {
       }
 
       System.out.println("Initializing Fluo '" + config.getApplicationName()
-          + "' application using " + applicationPropsPath);
+          + "' application using " + opts.getAppPropsPath());
       try {
         admin.initialize(initOpts);
       } catch (Exception e) {

@@ -23,7 +23,10 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import org.apache.fluo.api.config.FluoConfiguration;
 
-public class CommandOpts {
+public class ApplicationOpts {
+
+  @Parameter(names = "-a", required = true, description = "Fluo application name")
+  private String applicationName;
 
   @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
   private List<String> properties = new ArrayList<>();
@@ -31,12 +34,16 @@ public class CommandOpts {
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   boolean help;
 
+  String getApplicationName() {
+    return applicationName;
+  }
+
   List<String> getProperties() {
     return properties;
   }
 
-  public static CommandOpts parse(String programName, String[] args) {
-    CommandOpts commandOpts = new CommandOpts();
+  public static ApplicationOpts parse(String programName, String[] args) {
+    ApplicationOpts commandOpts = new ApplicationOpts();
     JCommander jcommand = new JCommander(commandOpts);
     jcommand.setProgramName(programName);
     try {

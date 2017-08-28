@@ -15,11 +15,12 @@
 
 package org.apache.fluo.command;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.api.client.FluoAdmin;
+import java.io.File;
+import java.util.List;
+
+import com.google.common.base.Preconditions;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
-import org.apache.fluo.core.util.CuratorUtil;
 
 public class CommandUtil {
 
@@ -38,6 +39,34 @@ public class CommandUtil {
         System.out.println("A Fluo '" + config.getApplicationName()
             + "' application is initialized " + "but is not running!");
         System.exit(-1);
+      }
+    }
+  }
+
+  public static FluoConfiguration resolveFluoConfig() {
+    String connPropsPath = System.getProperty("fluo.conn.props");
+    if (connPropsPath == null) {
+      return new FluoConfiguration();
+    } else {
+      File connPropsFile = new File(connPropsPath);
+      Preconditions.checkArgument(connPropsFile.exists(), "System property 'fluo.conn.props' is set to file that doesn't exist: " + connPropsPath);
+      return new FluoConfiguration(connPropsFile);
+    }
+  }
+
+  public static void overrideFluoConfig(FluoConfiguration config, List<String> properties) {
+    for (String prop : properties) {
+      String[] propArgs = prop.split("=", 2);
+      if (propArgs.length == 2) {
+        String key = propArgs[0].trim();
+        String value = propArgs[1].trim();
+        if (key.isEmpty() || value.isEmpty()) {
+          throw new IllegalArgumentException("Invalid command line -D option: " + prop);
+        } else {
+          config.setProperty(key, value);
+        }
+      } else {
+        throw new IllegalArgumentException("Invalid command line -D option: " + prop);
       }
     }
   }

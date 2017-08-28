@@ -15,14 +15,11 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Objects;
 
 import javax.inject.Provider;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -48,19 +45,14 @@ public class FluoExec {
   }
 
   public static void main(String[] args) throws Exception {
-    if (args.length < 3) {
-      System.err.println("Usage: FluoExec <connectionPropsPath> <applicationName> <class> args...");
+    if (args.length < 2) {
+      System.err.println("Usage: fluo exec <app> <class> args...");
       System.exit(-1);
     }
-    final String connectionPropsPath = args[0];
-    final String applicationName = args[1];
-    final String className = args[2];
-    Objects.requireNonNull(connectionPropsPath);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
+    final String applicationName = args[0];
+    final String className = args[1];
 
-    FluoConfiguration fluoConfig = new FluoConfiguration(connectionPropsFile);
+    FluoConfiguration fluoConfig = CommandUtil.resolveFluoConfig();
     fluoConfig.setApplicationName(applicationName);
     CommandUtil.verifyAppInitialized(fluoConfig);
     fluoConfig = FluoAdminImpl.mergeZookeeperConfig(fluoConfig);

@@ -17,10 +17,12 @@ package org.apache.fluo.command;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.google.common.base.Preconditions;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
@@ -34,45 +36,70 @@ public class FluoGetJars {
 
   private static final Logger log = LoggerFactory.getLogger(FluoGetJars.class);
 
+  public static class GetJarsOpts {
+
+    @Parameter(names = "-a", required = true, description = "Fluo application name")
+    private String applicationName;
+
+    @Parameter(names = "-d", required = true, description = "Download directory path")
+    private String downloadPath;
+
+    @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
+    private List<String> properties = new ArrayList<>();
+
+    @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
+    boolean help;
+
+    String getApplicationName() {
+      return applicationName;
+    }
+
+    public String getDownloadPath() {
+      return downloadPath;
+    }
+
+    List<String> getProperties() {
+      return properties;
+    }
+  }
+
   public static void main(String[] args) {
-    if (args.length < 3) {
-      System.err
-          .println("Usage: FluoGetJars <connectionPropsPath> <applicationName> <downloadPath>");
+
+    GetJarsOpts options = new GetJarsOpts();
+    JCommander jcommand = new JCommander(options);
+    jcommand.setProgramName("fluo get-jars");
+    try {
+      jcommand.parse(args);
+    } catch (ParameterException e) {
+      System.err.println(e.getMessage());
+      jcommand.usage();
       System.exit(-1);
     }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    String downloadPath = args[2];
-    Objects.requireNonNull(connectionPropsPath);
-    Objects.requireNonNull(applicationName);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
 
-    String[] userArgs = Arrays.copyOfRange(args, 3, args.length);
-    CommandOpts commandOpts = CommandOpts.parse("fluo get-jars <app> <dir>", userArgs);
+    if (options.help) {
+      jcommand.usage();
+      System.exit(0);
+    }
 
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-    config.setApplicationName(applicationName);
-    commandOpts.overrideConfig(config);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(options.getApplicationName());
+    CommandUtil.overrideFluoConfig(config, options.getProperties());
 
     CommandUtil.verifyAppInitialized(config);
-
     config = FluoAdminImpl.mergeZookeeperConfig(config);
-
     if (config.getObserverJarsUrl().isEmpty()) {
-      log.info("No observer jars found for the '{}' Fluo application!", applicationName);
+      log.info("No observer jars found for the '{}' Fluo application!", options.getApplicationName());
       return;
     }
 
     try {
       if (config.getObserverJarsUrl().startsWith("hdfs://")) {
         FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
-        File downloadPathFile = new File(downloadPath);
+        File downloadPathFile = new File(options.getDownloadPath());
         if (downloadPathFile.exists()) {
           FileUtils.deleteDirectory(downloadPathFile);
         }
-        fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(downloadPath));
+        fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(options.getDownloadPath()));
       } else {
         log.error("Unsupported url prefix for {}={}", FluoConfiguration.OBSERVER_JARS_URL_PROP,
             config.getObserverJarsUrl());
