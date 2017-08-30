@@ -15,13 +15,10 @@
 
 package org.apache.fluo.command;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.util.ScanUtil;
 import org.apache.log4j.Level;
@@ -29,10 +26,7 @@ import org.apache.log4j.Logger;
 
 public class FluoScan {
 
-  public static class ScanOptions {
-
-    @Parameter(names = "-a", required = true, description = "Fluo application name")
-    private String applicationName;
+  public static class ScanOptions extends CommonOpts {
 
     @Parameter(names = "-s", description = "Start row (inclusive) of scan")
     private String startRow;
@@ -50,12 +44,6 @@ public class FluoScan {
     @Parameter(names = "-p", description = "Row prefix to scan")
     private String rowPrefix;
 
-    @Parameter(names = {"-D"}, description = "Sets configuration property. Expected format: <name>=<value>")
-    private List<String> properties = new ArrayList<>();
-
-    @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-    public boolean help;
-
     @Parameter(names = {"-esc", "--escape-non-ascii"}, help = true,
         description = "Hex encode non ascii bytes", arity = 1)
     public boolean hexEncNonAscii = true;
@@ -66,10 +54,6 @@ public class FluoScan {
         description = "Show underlying key/values stored in Accumulo. Interprets the data using Fluo "
             + "internal schema, making it easier to comprehend.")
     public boolean scanAccumuloTable = false;
-
-    public String getApplicationName() {
-      return applicationName;
-    }
 
     public String getStartRow() {
       return startRow;
@@ -94,13 +78,15 @@ public class FluoScan {
       return columns;
     }
 
-    List<String> getProperties() {
-      return properties;
-    }
-
     public ScanUtil.ScanOpts getScanOpts() {
       return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
           hexEncNonAscii, scanAccumuloTable);
+    }
+
+    public static ScanOptions parse(String[] args) {
+      ScanOptions opts = new ScanOptions();
+      parse("fluo scan", opts, args);
+      return opts;
     }
   }
 
@@ -109,26 +95,10 @@ public class FluoScan {
     Logger.getRootLogger().setLevel(Level.ERROR);
     Logger.getLogger("org.apache.fluo").setLevel(Level.ERROR);
 
-    ScanOptions options = new ScanOptions();
-    JCommander jcommand = new JCommander(options);
-    jcommand.setProgramName("fluo scan <app>");
-    try {
-      jcommand.parse(args);
-    } catch (ParameterException e) {
-      System.err.println(e.getMessage());
-      jcommand.usage();
-      System.exit(-1);
-    }
-
-    if (options.help) {
-      jcommand.usage();
-      System.exit(0);
-    }
-
+    ScanOptions options = ScanOptions.parse(args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(options.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, options.getProperties());
-
+    options.overrideFluoConfig(config);
     CommandUtil.verifyAppRunning(config);
 
     if (options.scanAccumuloTable) {

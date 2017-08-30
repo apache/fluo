@@ -88,10 +88,10 @@ public class FluoWait {
   }
 
   public static void main(String[] args) throws Exception {
-    ApplicationOpts opts = ApplicationOpts.parse("fluo wait", args);
+    CommonOpts opts = CommonOpts.parse("fluo wait", args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(opts.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+    opts.overrideFluoConfig(config);
     CommandUtil.verifyAppRunning(config);
     config = FluoAdminImpl.mergeZookeeperConfig(config);
     waitUntilFinished(config);

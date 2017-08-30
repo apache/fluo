@@ -18,46 +18,38 @@ package org.apache.fluo.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import org.apache.fluo.api.config.FluoConfiguration;
 
-public class ApplicationOpts {
-
-  @Parameter(names = "-a", required = true, description = "Fluo application name")
-  private String applicationName;
+public class ConfigOpts extends BaseOpts {
 
   @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
   private List<String> properties = new ArrayList<>();
-
-  @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-  boolean help;
-
-  String getApplicationName() {
-    return applicationName;
-  }
 
   List<String> getProperties() {
     return properties;
   }
 
-  public static ApplicationOpts parse(String programName, String[] args) {
-    ApplicationOpts commandOpts = new ApplicationOpts();
-    JCommander jcommand = new JCommander(commandOpts);
-    jcommand.setProgramName(programName);
-    try {
-      jcommand.parse(args);
-    } catch (ParameterException e) {
-      System.err.println(e.getMessage());
-      jcommand.usage();
-      System.exit(-1);
+  void overrideFluoConfig(FluoConfiguration config) {
+    for (String prop : getProperties()) {
+      String[] propArgs = prop.split("=", 2);
+      if (propArgs.length == 2) {
+        String key = propArgs[0].trim();
+        String value = propArgs[1].trim();
+        if (key.isEmpty() || value.isEmpty()) {
+          throw new IllegalArgumentException("Invalid command line -D option: " + prop);
+        } else {
+          config.setProperty(key, value);
+        }
+      } else {
+        throw new IllegalArgumentException("Invalid command line -D option: " + prop);
+      }
     }
+  }
 
-    if (commandOpts.help) {
-      jcommand.usage();
-      System.exit(1);
-    }
-    return commandOpts;
+  public static ConfigOpts parse(String programName, String[] args) {
+    ConfigOpts opts = new ConfigOpts();
+    parse(programName, opts, args);
+    return opts;
   }
 }

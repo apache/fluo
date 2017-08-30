@@ -21,10 +21,10 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 public class FluoStatus {
 
   public static void main(String[] args) throws Exception {
-    ApplicationOpts opts = ApplicationOpts.parse("fluo status", args);
+    CommonOpts opts = CommonOpts.parse("fluo status", args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(opts.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+    opts.overrideFluoConfig(config);
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.zookeeperInitialized()) {
         System.out.println("NOT_FOUND");

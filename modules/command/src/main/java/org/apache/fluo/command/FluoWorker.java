@@ -27,10 +27,10 @@ public class FluoWorker {
 
   public static void main(String[] args) {
 
-    ApplicationOpts opts = ApplicationOpts.parse("fluo worker", args);
+    CommonOpts opts = CommonOpts.parse("fluo worker", args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(opts.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+    opts.overrideFluoConfig(config);
     CommandUtil.verifyAppInitialized(config);
 
     try {

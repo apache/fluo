@@ -16,7 +16,6 @@
 package org.apache.fluo.command;
 
 import java.io.File;
-import java.util.List;
 
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -51,23 +50,6 @@ public class CommandUtil {
       File connPropsFile = new File(connPropsPath);
       Preconditions.checkArgument(connPropsFile.exists(), "System property 'fluo.conn.props' is set to file that doesn't exist: " + connPropsPath);
       return new FluoConfiguration(connPropsFile);
-    }
-  }
-
-  public static void overrideFluoConfig(FluoConfiguration config, List<String> properties) {
-    for (String prop : properties) {
-      String[] propArgs = prop.split("=", 2);
-      if (propArgs.length == 2) {
-        String key = propArgs[0].trim();
-        String value = propArgs[1].trim();
-        if (key.isEmpty() || value.isEmpty()) {
-          throw new IllegalArgumentException("Invalid command line -D option: " + prop);
-        } else {
-          config.setProperty(key, value);
-        }
-      } else {
-        throw new IllegalArgumentException("Invalid command line -D option: " + prop);
-      }
     }
   }
 }

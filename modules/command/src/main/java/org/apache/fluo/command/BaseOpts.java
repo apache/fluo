@@ -15,29 +15,17 @@
 
 package org.apache.fluo.command;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import org.apache.fluo.api.config.FluoConfiguration;
 
-public class CommandOpts {
-
-  @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
-  private List<String> properties = new ArrayList<>();
+public class BaseOpts {
 
   @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
   boolean help;
 
-  List<String> getProperties() {
-    return properties;
-  }
-
-  public static CommandOpts parse(String programName, String[] args) {
-    CommandOpts commandOpts = new CommandOpts();
-    JCommander jcommand = new JCommander(commandOpts);
+  public static void parse(String programName, BaseOpts opts, String[] args) {
+    JCommander jcommand = new JCommander(opts);
     jcommand.setProgramName(programName);
     try {
       jcommand.parse(args);
@@ -47,10 +35,9 @@ public class CommandOpts {
       System.exit(-1);
     }
 
-    if (commandOpts.help) {
+    if (opts.help) {
       jcommand.usage();
       System.exit(1);
     }
-    return commandOpts;
   }
 }

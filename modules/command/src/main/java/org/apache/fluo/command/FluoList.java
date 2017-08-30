@@ -27,9 +27,9 @@ public class FluoList {
 
   public static void main(String[] args) throws Exception {
 
-    CommandOpts commandOpts = CommandOpts.parse("fluo list", args);
+    ConfigOpts commandOpts = ConfigOpts.parse("fluo list", args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    CommandUtil.overrideFluoConfig(config, commandOpts.getProperties());
+    commandOpts.overrideFluoConfig(config);
 
     try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();

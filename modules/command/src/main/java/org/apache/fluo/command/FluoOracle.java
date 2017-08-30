@@ -26,10 +26,10 @@ public class FluoOracle {
   private static final Logger log = LoggerFactory.getLogger(FluoOracle.class);
 
   public static void main(String[] args) {
-    ApplicationOpts opts = ApplicationOpts.parse("fluo oracle", args);
+    CommonOpts opts = CommonOpts.parse("fluo oracle", args);
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(opts.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+    opts.overrideFluoConfig(config);
     CommandUtil.verifyAppInitialized(config);
     try {
       org.apache.fluo.api.service.FluoOracle oracle = FluoFactory.newOracle(config);

@@ -19,12 +19,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -32,10 +28,7 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 
 public class FluoInit {
 
-  public static class InitOptions {
-
-    @Parameter(names = "-a", required = true, description = "Fluo application name")
-    private String applicationName;
+  public static class InitOptions extends CommonOpts {
 
     @Parameter(names = "-p", required = true, description = "Path to application properties file")
     private String appPropsPath;
@@ -57,22 +50,8 @@ public class FluoInit {
     @Parameter(names = "--retrieveProperty", description = "Gets specified property without initializing")
     private String retrieveProperty;
 
-    @Parameter(names = "-D", description = "Sets configuration property. Expected format: <name>=<value>")
-    private List<String> properties = new ArrayList<>();
-
-    @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-    boolean help;
-
-    String getApplicationName() {
-      return applicationName;
-    }
-
     String getAppPropsPath() {
       return appPropsPath;
-    }
-
-    List<String> getProperties() {
-      return properties;
     }
 
     boolean getForce() {
@@ -94,11 +73,16 @@ public class FluoInit {
     String getRetrieveProperty() {
       return retrieveProperty;
     }
+
+    public static InitOptions parse(String[] args) {
+      InitOptions opts = new InitOptions();
+      parse("fluo init", opts, args);
+      return opts;
+    }
   }
 
-
   private static boolean readYes() {
-    String input = "unk";
+    String input;
     while (true) {
       BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
       try {
@@ -118,22 +102,7 @@ public class FluoInit {
 
   public static void main(String[] args) {
 
-    InitOptions opts = new InitOptions();
-    JCommander jcommand = new JCommander(opts);
-    jcommand.setProgramName("fluo init");
-    try {
-      jcommand.parse(args);
-    } catch (ParameterException e) {
-      System.err.println(e.getMessage());
-      jcommand.usage();
-      System.exit(-1);
-    }
-
-    if (opts.help) {
-      jcommand.usage();
-      System.exit(1);
-    }
-
+    InitOptions opts = InitOptions.parse(args);
     File applicationPropsFile = new File(opts.getAppPropsPath());
     Preconditions.checkArgument(applicationPropsFile.exists(), opts.getAppPropsPath()
             + " does not exist");
@@ -141,7 +110,7 @@ public class FluoInit {
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.load(applicationPropsFile);
     config.setApplicationName(opts.getApplicationName());
-    CommandUtil.overrideFluoConfig(config, opts.getProperties());
+    opts.overrideFluoConfig(config);
 
     String propKey = opts.getRetrieveProperty();
     if (propKey != null && !propKey.isEmpty()) {
