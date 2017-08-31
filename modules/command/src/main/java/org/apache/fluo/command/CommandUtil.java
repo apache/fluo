@@ -34,9 +34,9 @@ public class CommandUtil {
   public static void verifyAppRunning(FluoConfiguration config) {
     verifyAppInitialized(config);
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
-      if (admin.applicationRunning()) {
+      if (!admin.applicationRunning()) {
         System.out.println("A Fluo '" + config.getApplicationName()
-            + "' application is initialized " + "but is not running!");
+            + "' application is initialized but is not running!");
         System.exit(-1);
       }
     }
