@@ -47,7 +47,8 @@ public class FluoInit {
     @Parameter(names = {"-u", "--update"}, description = "Update Fluo configuration in Zookeeper")
     private boolean update;
 
-    @Parameter(names = "--retrieveProperty", description = "Gets specified property without initializing")
+    @Parameter(names = "--retrieveProperty",
+        description = "Gets specified property without initializing")
     private String retrieveProperty;
 
     String getAppPropsPath() {
@@ -105,7 +106,7 @@ public class FluoInit {
     InitOptions opts = InitOptions.parse(args);
     File applicationPropsFile = new File(opts.getAppPropsPath());
     Preconditions.checkArgument(applicationPropsFile.exists(), opts.getAppPropsPath()
-            + " does not exist");
+        + " does not exist");
 
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.load(applicationPropsFile);

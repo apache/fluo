@@ -48,7 +48,8 @@ public class CommandUtil {
       return new FluoConfiguration();
     } else {
       File connPropsFile = new File(connPropsPath);
-      Preconditions.checkArgument(connPropsFile.exists(), "System property 'fluo.conn.props' is set to file that doesn't exist: " + connPropsPath);
+      Preconditions.checkArgument(connPropsFile.exists(),
+          "System property 'fluo.conn.props' is set to file that doesn't exist: " + connPropsPath);
       return new FluoConfiguration(connPropsFile);
     }
   }
