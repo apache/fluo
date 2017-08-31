@@ -17,9 +17,8 @@ package org.apache.fluo.command;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Objects;
 
-import com.google.common.base.Preconditions;
+import com.beust.jcommander.Parameter;
 import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
@@ -33,40 +32,45 @@ public class FluoGetJars {
 
   private static final Logger log = LoggerFactory.getLogger(FluoGetJars.class);
 
-  public static void main(String[] args) {
-    if (args.length != 3) {
-      System.err
-          .println("Usage: FluoGetJars <connectionPropsPath> <applicationName> <downloadPath>");
-      System.exit(-1);
+  public static class GetJarsOpts extends CommonOpts {
+
+    @Parameter(names = "-d", required = true, description = "Download directory path")
+    private String downloadPath;
+
+    String getDownloadPath() {
+      return downloadPath;
     }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    String downloadPath = args[2];
-    Objects.requireNonNull(connectionPropsPath);
-    Objects.requireNonNull(applicationName);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
 
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-    config.setApplicationName(applicationName);
+    public static GetJarsOpts parse(String[] args) {
+      GetJarsOpts opts = new GetJarsOpts();
+      parse("fluo get-jars", opts, args);
+      return opts;
+    }
+  }
+
+  public static void main(String[] args) {
+
+    GetJarsOpts opts = GetJarsOpts.parse(args);
+
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(opts.getApplicationName());
+    opts.overrideFluoConfig(config);
+
     CommandUtil.verifyAppInitialized(config);
-
     config = FluoAdminImpl.mergeZookeeperConfig(config);
-
     if (config.getObserverJarsUrl().isEmpty()) {
-      log.info("No observer jars found for the '{}' Fluo application!", applicationName);
+      log.info("No observer jars found for the '{}' Fluo application!", opts.getApplicationName());
       return;
     }
 
     try {
       if (config.getObserverJarsUrl().startsWith("hdfs://")) {
         FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
-        File downloadPathFile = new File(downloadPath);
+        File downloadPathFile = new File(opts.getDownloadPath());
         if (downloadPathFile.exists()) {
           FileUtils.deleteDirectory(downloadPathFile);
         }
-        fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(downloadPath));
+        fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(opts.getDownloadPath()));
       } else {
         log.error("Unsupported url prefix for {}={}", FluoConfiguration.OBSERVER_JARS_URL_PROP,
             config.getObserverJarsUrl());

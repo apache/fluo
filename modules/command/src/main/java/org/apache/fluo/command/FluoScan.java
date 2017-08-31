@@ -15,16 +15,10 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.google.common.base.Preconditions;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.util.ScanUtil;
 import org.apache.log4j.Level;
@@ -32,7 +26,7 @@ import org.apache.log4j.Logger;
 
 public class FluoScan {
 
-  public static class ScanOptions {
+  public static class ScanOptions extends CommonOpts {
 
     @Parameter(names = "-s", description = "Start row (inclusive) of scan")
     private String startRow;
@@ -49,9 +43,6 @@ public class FluoScan {
 
     @Parameter(names = "-p", description = "Row prefix to scan")
     private String rowPrefix;
-
-    @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
-    public boolean help;
 
     @Parameter(names = {"-esc", "--escape-non-ascii"}, help = true,
         description = "Hex encode non ascii bytes", arity = 1)
@@ -91,43 +82,23 @@ public class FluoScan {
       return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
           hexEncNonAscii, scanAccumuloTable);
     }
+
+    public static ScanOptions parse(String[] args) {
+      ScanOptions opts = new ScanOptions();
+      parse("fluo scan", opts, args);
+      return opts;
+    }
   }
 
   public static void main(String[] args) {
-    if (args.length < 2) {
-      System.err.println("Usage: FluoScan <connectionPropsPath> <appName> userArgs...");
-      System.exit(-1);
-    }
-    final String connectionPropsPath = args[0];
-    final String applicationName = args[1];
-    Objects.requireNonNull(connectionPropsPath);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-
-    String[] userArgs = Arrays.copyOfRange(args, 2, args.length);
 
     Logger.getRootLogger().setLevel(Level.ERROR);
     Logger.getLogger("org.apache.fluo").setLevel(Level.ERROR);
 
-    ScanOptions options = new ScanOptions();
-    JCommander jcommand = new JCommander(options);
-    jcommand.setProgramName("fluo scan <app>");
-    try {
-      jcommand.parse(userArgs);
-    } catch (ParameterException e) {
-      System.err.println(e.getMessage());
-      jcommand.usage();
-      System.exit(-1);
-    }
-
-    if (options.help) {
-      jcommand.usage();
-      System.exit(0);
-    }
-
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-    config.setApplicationName(applicationName);
+    ScanOptions options = ScanOptions.parse(args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(options.getApplicationName());
+    options.overrideFluoConfig(config);
     CommandUtil.verifyAppRunning(config);
 
     if (options.scanAccumuloTable) {

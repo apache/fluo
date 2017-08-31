@@ -36,7 +36,10 @@ if [ ! -f "$conf/fluo-env.sh" ]; then
 fi
 source "$conf/fluo-env.sh"
 export CLASSPATH
-
+JAVA="java ${JAVA_OPTS[*]}"
+if [ -f "$FLUO_CONN_PROPS" ]; then
+  JAVA="$JAVA -Dfluo.conn.props=$FLUO_CONN_PROPS"
+fi
 
 deprecated_fluo_props=$conf/fluo.properties
 
@@ -62,23 +65,23 @@ function copy_config {
 function print_usage {
   echo -e "Usage: fluo <command> (<argument> ...)\n"
   echo -e "Possible commands:\n"
-  echo "  init <app> <appProps> {<arg>} Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
+  echo "  init -a <app> -p <appProps>   Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
   echo "  classpath                     Prints the classpath setup in fluo-env.sh"
-  echo "  config <app>                  Prints application configuration stored in Zookeeper for <app>"
-  echo "  get-jars <app> <dir>          Copies <app> jars from DFS to local <dir>"
+  echo "  config -a <app>               Prints application configuration stored in Zookeeper for <app>"
+  echo "  get-jars -a <app> -d <dir>    Copies <app> jars from DFS to local <dir>"
   echo "  list                          Lists all Fluo applications in Fluo instance"
-  echo "  scan <app>                    Prints snapshot of data in Fluo <app>"
-  echo "  status <app>                  Prints status of Fluo application for <app>"
-  echo "  stop <app>                    Stops Fluo application processes on this machine for <app>"
-  echo "  oracle <app>                  Starts Fluo Oracle process for <app>"
-  echo "  worker <app>                  Starts Fluo Worker process for <app>"
+  echo "  scan -a <app>                 Prints snapshot of data in Fluo <app>"
+  echo "  status -a <app>               Prints status of Fluo application for <app>"
+  echo "  oracle -a <app>               Starts Fluo Oracle process for <app>"
+  echo "  worker -a <app>               Starts Fluo Worker process for <app>"
   echo "  version                       Prints the version of Fluo"
-  echo "  wait <app>                    Waits until all notifications are processed for <app>"
+  echo "  wait -a <app>                 Waits until all notifications are processed for <app>"
   echo "  exec <app> <class> {<arg>}    Executes <class> with <args> using classpath for <app>";
 
   echo -e "\nDeprecated commands (available if fluo.properties exists):\n"
   echo "  new <app>     (Deprecated) Creates configuration for new application in apps/"
   echo "  start <app>   (Deprecated) Starts Fluo application on cluster"
+  echo "  stop <app>    (Deprecated) Stops Fluo application on cluster"
   echo "  init <app>    (Deprecated) Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
   echo "  kill <app>    (Deprecated) Kills Fluo application on cluster"
   echo "  info <app>    (Deprecated) Prints information about containers of Fluo application"
@@ -136,55 +139,42 @@ function check_hadoop {
 }
 
 function setup_service {
-  verify_app "$1"
-  check_conn_props
-  app_run_dir=$basedir/run/$app
-  mkdir -p "$app_run_dir" 2>/dev/null
-  app_log_dir=$FLUO_LOG_DIR/$app
-  mkdir -p "$app_log_dir" 2>/dev/null
-  app_lib=$lib/apps/$1
-  mkdir -p "$app_lib"
-  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$1" "$app_lib"
-  export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
+  if [[ "$@" =~ ^.*-a\ *([^\ ]*).*$ ]]; then
+    app=${BASH_REMATCH[1]}
+    verify_app "$app"
+    check_conn_props
+    app_lib=$lib/apps/$1
+    mkdir -p "$app_lib"
+    $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" "$@"
+    export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
+  else
+    echo "Application name must be set!"
+    print_usage
+    exit 1
+  fi
 }
 
 case "$1" in
 config)
-  verify_app "$2"
   check_conn_props
-  java org.apache.fluo.command.FluoConfig "$FLUO_CONN_PROPS" "$2"
+  $JAVA org.apache.fluo.command.FluoConfig "${@:2}"
   ;;
 get-jars)
-  verify_app "$2"
-  if [ ! -d "$3" ]; then
-    echo "Directory '$3' does not exist"
-    exit 1
-  fi
-  java org.apache.fluo.command.FluoGetJars "$FLUO_CONN_PROPS" "$2" "$3"
+  check_conn_props
+  $JAVA org.apache.fluo.command.FluoGetJars "${@:2}"
   ;;
 init)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    check_conn_props
-    if [ -z "$app" ]; then
-      echo -e "The application name (set by <app>) cannot be an empty string!\n"
-      print_usage
+    if [[ $2 = *"-h"* ]]; then
+      $JAVA org.apache.fluo.command.FluoInit -h
+      exit 0
     fi
-    if [[ "$app" = *"-h"* ]]; then
-      java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" none /dev/null "$2"
-      exit 1
-    fi
-    app_props=$3
-    if [ ! -f "$app_props" ]; then
-      echo "<appProps> is set to path '$app_props' that does not exist"
-      print_usage
-      exit 1
-    fi
-    init_dir=$(java org.apache.fluo.command.FluoGetProp "$FLUO_CONN_PROPS" "$app_props" fluo.observer.init.dir)
+    init_dir=$($JAVA org.apache.fluo.command.FluoInit "${@:2}" --retrieveProperty fluo.observer.init.dir)
     if [ -d "$init_dir" ]; then
       echo "Adding $init_dir/* to CLASSPATH"
       export CLASSPATH="$init_dir/*:$CLASSPATH"
     fi
-    java org.apache.fluo.command.FluoInit "$FLUO_CONN_PROPS" "$app" "$app_props" ${*:4}
+    $JAVA org.apache.fluo.command.FluoInit "${@:2}"
   else
     deprecated_verify_full "$2"
     check_hadoop
@@ -193,37 +183,25 @@ init)
   fi
   ;;
 oracle)
-  setup_service "$2"
-  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoOracle "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
-  echo "Started Oracle for '$2' Fluo application. Logs can be found in $app_log_dir"
+  if [[ $2 = *"-h"* ]]; then
+    $JAVA org.apache.fluo.command.FluoOracle -h
+    exit 0
+  fi
+  setup_service "${@:2}"
+  $JAVA org.apache.fluo.command.FluoOracle "${@:2}"
   ;;
 worker)
-  setup_service "$2"
-  nohup java "${SERVICE_OPTS[@]}" org.apache.fluo.command.FluoWorker "$FLUO_CONN_PROPS" "$2" > "${app_log_dir}/${FLUO_LOG_ID}.out" 2> "${app_log_dir}/${FLUO_LOG_ID}.err" &
-  echo "$!" > "${app_run_dir}/${FLUO_LOG_ID}.pid"
-  echo "Started Worker for '$2' Fluo application. Logs can be found in $app_log_dir"
+  if [[ $2 = *"-h"* ]]; then
+    $JAVA org.apache.fluo.command.FluoWorker -h
+    exit 0
+  fi
+  setup_service "${@:2}"
+  $JAVA org.apache.fluo.command.FluoWorker "${@:2}"
   ;;
 scan)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    verify_app "$2"
-    java org.apache.fluo.command.FluoScan "$FLUO_CONN_PROPS" ${*:2}
+    $JAVA org.apache.fluo.command.FluoScan "${@:2}"
   else
-    check_hadoop
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  fi
-  ;;
-stop)
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    verify_app "$2"
-    echo "Stopping all processes for ${2} application"
-    for pid_file in $basedir/run/$2/*.pid; do
-      if [ -f "$pid_file" ]; then
-        kill -s KILL "$(cat "$pid_file")" 2>/dev/null
-        rm -f "${pid_file}" 2>/dev/null
-      fi 
-    done
-  else 
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
@@ -233,10 +211,10 @@ ps)
   ;;
 list)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    java org.apache.fluo.command.FluoList "$FLUO_CONN_PROPS"
+    $JAVA org.apache.fluo.command.FluoList "${@:2}"
   else
     check_hadoop
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" list app ${*:2}
+    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" list app "${@:2}"
   fi
   ;;
 classpath)
@@ -244,8 +222,8 @@ classpath)
   ;;
 exec)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    setup_service $2
-    java org.apache.fluo.command.FluoExec "$FLUO_CONN_PROPS" ${*:2}
+    setup_service "$2"
+    $JAVA org.apache.fluo.command.FluoExec "$FLUO_CONN_PROPS" "${@:2}"
   else
     deprecated_verify "$2"
     export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
@@ -254,8 +232,7 @@ exec)
   ;;
 status)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    verify_app "$2"
-    java org.apache.fluo.command.FluoStatus "$FLUO_CONN_PROPS" "$2"
+    $JAVA org.apache.fluo.command.FluoStatus "${@:2}"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
@@ -266,8 +243,7 @@ version)
   ;;
 wait)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    verify_app "$2"
-    java org.apache.fluo.command.FluoWait "$FLUO_CONN_PROPS" $2
+    $JAVA org.apache.fluo.command.FluoWait "${@:2}"
   else
     deprecated_verify "$2"
     export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
@@ -298,6 +274,10 @@ start)
   deprecated_verify_full "$2"
   check_hadoop
   export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+  java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
+  ;;
+stop)
+  check_hadoop
   java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   ;;
 kill|info)

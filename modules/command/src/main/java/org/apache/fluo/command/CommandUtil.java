@@ -15,11 +15,11 @@
 
 package org.apache.fluo.command;
 
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.api.client.FluoAdmin;
+import java.io.File;
+
+import com.google.common.base.Preconditions;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
-import org.apache.fluo.core.util.CuratorUtil;
 
 public class CommandUtil {
 
@@ -34,11 +34,23 @@ public class CommandUtil {
   public static void verifyAppRunning(FluoConfiguration config) {
     verifyAppInitialized(config);
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
-      if (admin.applicationRunning()) {
+      if (!admin.applicationRunning()) {
         System.out.println("A Fluo '" + config.getApplicationName()
-            + "' application is initialized " + "but is not running!");
+            + "' application is initialized but is not running!");
         System.exit(-1);
       }
+    }
+  }
+
+  public static FluoConfiguration resolveFluoConfig() {
+    String connPropsPath = System.getProperty("fluo.conn.props");
+    if (connPropsPath == null) {
+      return new FluoConfiguration();
+    } else {
+      File connPropsFile = new File(connPropsPath);
+      Preconditions.checkArgument(connPropsFile.exists(),
+          "System property 'fluo.conn.props' is set to file that doesn't exist: " + connPropsPath);
+      return new FluoConfiguration(connPropsFile);
     }
   }
 }

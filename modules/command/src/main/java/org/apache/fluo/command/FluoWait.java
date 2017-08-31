@@ -15,11 +15,6 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
-import java.util.Objects;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -47,9 +42,8 @@ public class FluoWait {
     return sleep;
   }
 
-  @VisibleForTesting
-  public static long countNotifications(Environment env) {
-    Scanner scanner = null;
+  private static long countNotifications(Environment env) {
+    Scanner scanner;
     try {
       scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
     } catch (TableNotFoundException e) {
@@ -62,7 +56,7 @@ public class FluoWait {
     return Iterables.size(scanner);
   }
 
-  public static void waitUntilFinished(FluoConfiguration config) {
+  private static void waitUntilFinished(FluoConfiguration config) {
     try (Environment env = new Environment(config)) {
       log.info("The wait command will exit when all notifications are processed");
       while (true) {
@@ -93,24 +87,13 @@ public class FluoWait {
     }
   }
 
-
   public static void main(String[] args) throws Exception {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoWait <connectionPropsPath> <applicationName>");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    Objects.requireNonNull(connectionPropsPath);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-
-    FluoConfiguration fluoConfig = new FluoConfiguration(connectionPropsFile);
-    fluoConfig.setApplicationName(applicationName);
-    CommandUtil.verifyAppRunning(fluoConfig);
-    fluoConfig = FluoAdminImpl.mergeZookeeperConfig(fluoConfig);
-
-    waitUntilFinished(fluoConfig);
+    CommonOpts opts = CommonOpts.parse("fluo wait", args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(opts.getApplicationName());
+    opts.overrideFluoConfig(config);
+    CommandUtil.verifyAppRunning(config);
+    config = FluoAdminImpl.mergeZookeeperConfig(config);
+    waitUntilFinished(config);
   }
 }

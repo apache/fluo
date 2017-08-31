@@ -15,39 +15,20 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-
-import com.google.common.base.Preconditions;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
-import org.apache.fluo.core.util.CuratorUtil;
 
 public class FluoStatus {
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoStatus <connectionPropsPath> <applicationName>");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    Objects.requireNonNull(connectionPropsPath);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-    config.setApplicationName(applicationName);
-
+    CommonOpts opts = CommonOpts.parse("fluo status", args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(opts.getApplicationName());
+    opts.overrideFluoConfig(config);
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.zookeeperInitialized()) {
         System.out.println("NOT_FOUND");
-      }
-      if (admin.applicationRunning()) {
+      } else if (admin.applicationRunning()) {
         System.out.println("RUNNING");
       } else {
         System.out.println("STOPPED");

@@ -15,10 +15,6 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
-import java.util.Objects;
-
-import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.util.UtilWaitThread;
@@ -30,22 +26,12 @@ public class FluoOracle {
   private static final Logger log = LoggerFactory.getLogger(FluoOracle.class);
 
   public static void main(String[] args) {
-    if (args.length != 2) {
-      System.err.println("Usage: FluoOracle <connectionPropsPath> <applicationName>");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    String applicationName = args[1];
-    Objects.requireNonNull(connectionPropsPath);
-    Objects.requireNonNull(applicationName);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
-
+    CommonOpts opts = CommonOpts.parse("fluo oracle", args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    config.setApplicationName(opts.getApplicationName());
+    opts.overrideFluoConfig(config);
+    CommandUtil.verifyAppInitialized(config);
     try {
-      FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
-      config.setApplicationName(applicationName);
-      CommandUtil.verifyAppInitialized(config);
       org.apache.fluo.api.service.FluoOracle oracle = FluoFactory.newOracle(config);
       oracle.start();
       while (true) {

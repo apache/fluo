@@ -15,24 +15,20 @@
 
 package org.apache.fluo.command;
 
-import java.util.Map;
+import com.beust.jcommander.Parameter;
 
-import org.apache.fluo.api.client.FluoAdmin;
-import org.apache.fluo.api.client.FluoFactory;
-import org.apache.fluo.api.config.FluoConfiguration;
+class CommonOpts extends ConfigOpts {
 
-public class FluoConfig {
+  @Parameter(names = "-a", required = true, description = "Fluo application name")
+  private String applicationName;
 
-  public static void main(String[] args) {
-    CommonOpts opts = CommonOpts.parse("fluo config", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
-    CommandUtil.verifyAppInitialized(config);
-    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
-      for (Map.Entry<String, String> entry : admin.getApplicationConfig().toMap().entrySet()) {
-        System.out.println(entry.getKey() + " = " + entry.getValue());
-      }
-    }
+  String getApplicationName() {
+    return applicationName;
+  }
+
+  public static CommonOpts parse(String programName, String[] args) {
+    CommonOpts opts = new CommonOpts();
+    parse(programName, opts, args);
+    return opts;
   }
 }

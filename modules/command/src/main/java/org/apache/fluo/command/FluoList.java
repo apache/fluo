@@ -15,12 +15,9 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
-import com.google.common.base.Preconditions;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
@@ -29,17 +26,10 @@ import org.apache.fluo.core.util.CuratorUtil;
 public class FluoList {
 
   public static void main(String[] args) throws Exception {
-    if (args.length != 1) {
-      System.err.println("Usage: FluoList <connectionPropsPath>");
-      System.exit(-1);
-    }
-    String connectionPropsPath = args[0];
-    Objects.requireNonNull(connectionPropsPath);
-    File connectionPropsFile = new File(connectionPropsPath);
-    Preconditions.checkArgument(connectionPropsFile.exists(), connectionPropsPath
-        + " does not exist");
 
-    FluoConfiguration config = new FluoConfiguration(connectionPropsFile);
+    ConfigOpts commandOpts = ConfigOpts.parse("fluo list", args);
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    commandOpts.overrideFluoConfig(config);
 
     try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();

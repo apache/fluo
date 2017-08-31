@@ -41,38 +41,38 @@ public class ScanTest {
   public void testValidInput() {
     SnapshotScanner.Opts config;
 
-    config = parseArgs("");
+    config = parseArgs("-a app");
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getEnd());
     Assert.assertEquals(0, config.getColumns().size());
 
-    config = parseArgs("-s start -e end -c col1,col2");
+    config = parseArgs("-a app -s start -e end -c col1,col2");
     Assert.assertEquals(new RowColumn("start"), config.getSpan().getStart());
     Assert.assertEquals(new RowColumn("end").following(), config.getSpan().getEnd());
     Assert.assertEquals(2, config.getColumns().size());
     Assert.assertTrue(config.getColumns().contains(new Column("col1")));
     Assert.assertTrue(config.getColumns().contains(new Column("col2")));
 
-    config = parseArgs("-s start -c cf:cq");
+    config = parseArgs("-a app -s start -c cf:cq");
     Assert.assertEquals(new RowColumn("start"), config.getSpan().getStart());
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getEnd());
     Assert.assertEquals(1, config.getColumns().size());
     Assert.assertTrue(config.getColumns().contains(new Column("cf", "cq")));
 
-    config = parseArgs("-e end");
+    config = parseArgs("-a app -e end");
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());
     Assert.assertEquals(new RowColumn("end").following(), config.getSpan().getEnd());
     Assert.assertEquals(0, config.getColumns().size());
 
-    config = parseArgs("-p myprefix");
+    config = parseArgs("-a app -p myprefix");
     Assert.assertEquals(Span.prefix("myprefix"), config.getSpan());
     Assert.assertEquals(0, config.getColumns().size());
 
-    config = parseArgs("-r exactRow");
+    config = parseArgs("-a app -r exactRow");
     Assert.assertEquals(Span.exact("exactRow"), config.getSpan());
     Assert.assertEquals(0, config.getColumns().size());
 
-    config = parseArgs("-c cf1:cq1,cf2:cq2");
+    config = parseArgs("-a app -c cf1:cq1,cf2:cq2");
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getStart());
     Assert.assertEquals(RowColumn.EMPTY, config.getSpan().getEnd());
     Assert.assertEquals(2, config.getColumns().size());
@@ -84,7 +84,7 @@ public class ScanTest {
   public void testBadInputs() {
     for (String extraArg : new String[] {"-r exactRow", "-s start", "-e end", "-s start -e end"}) {
       try {
-        parseArgs("-p prefix " + extraArg);
+        parseArgs("-a app -p prefix " + extraArg);
         Assert.fail();
       } catch (IllegalArgumentException e) {
       }
@@ -92,14 +92,14 @@ public class ScanTest {
 
     for (String extraArg : new String[] {"-p prefix", "-s start", "-e end", "-s start -e end"}) {
       try {
-        parseArgs("-r exactRow " + extraArg);
+        parseArgs("-a app -r exactRow " + extraArg);
         Assert.fail();
       } catch (IllegalArgumentException e) {
       }
     }
 
     try {
-      parseArgs("-c col1,cf:cq:oops");
+      parseArgs("-a app -c col1,cf:cq:oops");
       Assert.fail();
     } catch (IllegalArgumentException e) {
     }

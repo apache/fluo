@@ -15,24 +15,29 @@
 
 package org.apache.fluo.command;
 
-import java.util.Map;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 
-import org.apache.fluo.api.client.FluoAdmin;
-import org.apache.fluo.api.client.FluoFactory;
-import org.apache.fluo.api.config.FluoConfiguration;
+public class BaseOpts {
 
-public class FluoConfig {
+  @Parameter(names = {"-h", "-help", "--help"}, help = true, description = "Prints help")
+  boolean help;
 
-  public static void main(String[] args) {
-    CommonOpts opts = CommonOpts.parse("fluo config", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
-    CommandUtil.verifyAppInitialized(config);
-    try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
-      for (Map.Entry<String, String> entry : admin.getApplicationConfig().toMap().entrySet()) {
-        System.out.println(entry.getKey() + " = " + entry.getValue());
-      }
+  public static void parse(String programName, BaseOpts opts, String[] args) {
+    JCommander jcommand = new JCommander(opts);
+    jcommand.setProgramName(programName);
+    try {
+      jcommand.parse(args);
+    } catch (ParameterException e) {
+      System.err.println(e.getMessage());
+      jcommand.usage();
+      System.exit(-1);
+    }
+
+    if (opts.help) {
+      jcommand.usage();
+      System.exit(1);
     }
   }
 }
