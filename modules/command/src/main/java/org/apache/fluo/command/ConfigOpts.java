@@ -16,15 +16,24 @@
 package org.apache.fluo.command;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.converters.IParameterSplitter;
 import org.apache.fluo.api.config.FluoConfiguration;
 
 public class ConfigOpts extends BaseOpts {
 
-  @Parameter(names = "-D",
-      description = "Sets configuration property. Expected format: <name>=<value>")
+  public static class NullSplitter implements IParameterSplitter {
+    @Override
+    public List<String> split(String value) {
+      return Collections.singletonList(value);
+    }
+  }
+
+  @Parameter(names = "-o", splitter = NullSplitter.class,
+      description = "Override configuration set in properties file. Expected format: -o <key>=<value>")
   private List<String> properties = new ArrayList<>();
 
   List<String> getProperties() {
