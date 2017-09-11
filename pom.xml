@@ -24,7 +24,7 @@
   </parent>
   <groupId>org.apache.fluo</groupId>
   <artifactId>build-resources</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>2.0.0</version>
   <name>Apache Fluo Build Resources</name>
   <description>Resources for building Apache Fluo projects</description>
   <url>https://fluo.apache.org</url>
@@ -67,7 +67,7 @@
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/fluo.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/fluo.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>rel/build-resources-2.0.0</tag>
     <url>https://gitbox.apache.org/repos/asf?p=fluo.git</url>
   </scm>
   <issueManagement>
