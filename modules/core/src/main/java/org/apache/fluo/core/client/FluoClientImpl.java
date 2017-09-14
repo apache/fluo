@@ -48,8 +48,8 @@ public class FluoClientImpl implements FluoClient {
 
   public static final AutoCloseable setupReporters(Environment env, String id,
       AtomicInteger reporterCounter) {
-    return ReporterUtil.setupReporters(env, FluoConfiguration.FLUO_PREFIX + "." + id + "."
-        + reporterCounter.getAndIncrement());
+    return ReporterUtil.setupReporters(env,
+        FluoConfiguration.FLUO_PREFIX + "." + id + "." + reporterCounter.getAndIncrement());
   }
 
   public FluoClientImpl(FluoConfiguration connConfig) {

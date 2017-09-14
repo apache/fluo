@@ -65,9 +65,8 @@ public class ReporterUtil {
     }
 
     final String hdrSnapshotClass = HdrHistogramResetOnSnapshotReservoir.class.getName();
-    String clazz =
-        env.getConfiguration().getString(FluoConfigurationImpl.METRICS_RESERVOIR_PROP,
-            hdrSnapshotClass);
+    String clazz = env.getConfiguration().getString(FluoConfigurationImpl.METRICS_RESERVOIR_PROP,
+        hdrSnapshotClass);
     if ((allReporters.size() > 1) && (clazz.equals(hdrSnapshotClass))) {
       throw new IllegalStateException("Multiple metrics reporters cannot be configured when using "
           + hdrSnapshotClass + " as corrupt metrics can be reported");

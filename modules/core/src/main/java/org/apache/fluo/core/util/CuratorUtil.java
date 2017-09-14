@@ -77,11 +77,11 @@ public class CuratorUtil {
         config.getZookeeperTimeout(), config.getZookeeperSecret());
   }
 
-  private static final List<ACL> CREATOR_ALL_ACL = ImmutableList.of(new ACL(Perms.ALL,
-      ZooDefs.Ids.AUTH_IDS));
+  private static final List<ACL> CREATOR_ALL_ACL =
+      ImmutableList.of(new ACL(Perms.ALL, ZooDefs.Ids.AUTH_IDS));
 
-  private static final List<ACL> PUBLICLY_READABLE_ACL = ImmutableList.of(new ACL(Perms.READ,
-      ZooDefs.Ids.ANYONE_ID_UNSAFE), new ACL(Perms.ALL, ZooDefs.Ids.AUTH_IDS));
+  private static final List<ACL> PUBLICLY_READABLE_ACL = ImmutableList.of(
+      new ACL(Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE), new ACL(Perms.ALL, ZooDefs.Ids.AUTH_IDS));
 
   /**
    * Creates a curator built using the given zookeeper connection string and timeout
@@ -125,8 +125,8 @@ public class CuratorUtil {
 
     while (true) {
       try {
-        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-            .forPath(zPath, data);
+        curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(zPath,
+            data);
         return true;
       } catch (Exception nee) {
         if (nee instanceof KeeperException.NodeExistsException) {

@@ -36,8 +36,8 @@ import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.util.FluoExecutors;
 import org.apache.fluo.core.util.Limit;
 
-public class AsyncConditionalWriter implements
-    AsyncFunction<Collection<ConditionalMutation>, Iterator<Result>> {
+public class AsyncConditionalWriter
+    implements AsyncFunction<Collection<ConditionalMutation>, Iterator<Result>> {
 
   private final ConditionalWriter cw;
   private final ListeningExecutorService les;
@@ -46,12 +46,10 @@ public class AsyncConditionalWriter implements
 
   public AsyncConditionalWriter(Environment env, ConditionalWriter cw) {
     this.cw = cw;
-    int numThreads =
-        env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_THREADS,
-            FluoConfigurationImpl.ASYNC_CW_THREADS_DEFAULT);
-    int permits =
-        env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
-            FluoConfigurationImpl.ASYNC_CW_LIMIT_DEFAULT);
+    int numThreads = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_THREADS,
+        FluoConfigurationImpl.ASYNC_CW_THREADS_DEFAULT);
+    int permits = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
+        FluoConfigurationImpl.ASYNC_CW_LIMIT_DEFAULT);
     this.les =
         MoreExecutors.listeningDecorator(FluoExecutors.newFixedThreadPool(numThreads, "asyncCW"));
     // the conditional writer currently has not memory limits... give it too much and it blows out

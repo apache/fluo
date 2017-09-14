@@ -43,7 +43,8 @@ public class FaultyConfig extends Environment {
     private Random rand;
     private double wp;
 
-    FaultyConditionalWriter(ConditionalWriter cw, double unknownProbability, double writeProbability) {
+    FaultyConditionalWriter(ConditionalWriter cw, double unknownProbability,
+        double writeProbability) {
       this.cw = cw;
       this.up = unknownProbability;
       this.wp = writeProbability;

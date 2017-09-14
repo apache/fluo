@@ -48,8 +48,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   }
 
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext arg0) throws IOException,
-      InterruptedException {
+  public OutputCommitter getOutputCommitter(TaskAttemptContext arg0)
+      throws IOException, InterruptedException {
     return new OutputCommitter() {
 
       @Override
@@ -77,9 +77,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   public RecordWriter<Loader, NullWritable> getRecordWriter(TaskAttemptContext context)
       throws IOException, InterruptedException {
 
-    ByteArrayInputStream bais =
-        new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
-            .getBytes(StandardCharsets.UTF_8));
+    ByteArrayInputStream bais = new ByteArrayInputStream(
+        context.getConfiguration().get(PROPS_CONF_KEY).getBytes(StandardCharsets.UTF_8));
 
     FluoConfiguration config = new FluoConfiguration(bais);
 
@@ -99,8 +98,8 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
         }
 
         @Override
-        public void write(Loader loader, NullWritable nullw) throws IOException,
-            InterruptedException {
+        public void write(Loader loader, NullWritable nullw)
+            throws IOException, InterruptedException {
           lexecutor.execute(loader);
         }
       };

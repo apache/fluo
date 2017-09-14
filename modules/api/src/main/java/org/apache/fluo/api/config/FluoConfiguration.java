@@ -72,8 +72,8 @@ public class FluoConfiguration extends SimpleConfiguration {
    * @deprecated since 1.2.0 replaced by fluo.accumulo.zookeepers
    */
   @Deprecated
-  public static final String CLIENT_ACCUMULO_ZOOKEEPERS_PROP = CLIENT_PREFIX
-      + ".accumulo.zookeepers";
+  public static final String CLIENT_ACCUMULO_ZOOKEEPERS_PROP =
+      CLIENT_PREFIX + ".accumulo.zookeepers";
   /**
    * @deprecated since 1.2.0 replaced by fluo.connection.zookeeper.timeout
    */
@@ -106,13 +106,13 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * @since 1.2.0
    */
-  public static final String CONNECTION_APPLICATION_NAME_PROP = CONNECTION_PREFIX
-      + ".application.name";
+  public static final String CONNECTION_APPLICATION_NAME_PROP =
+      CONNECTION_PREFIX + ".application.name";
   /**
    * @since 1.2.0
    */
-  public static final String CONNECTION_ZOOKEEPER_TIMEOUT_PROP = CONNECTION_PREFIX
-      + ".zookeeper.timeout";
+  public static final String CONNECTION_ZOOKEEPER_TIMEOUT_PROP =
+      CONNECTION_PREFIX + ".zookeeper.timeout";
 
   /**
    * @since 1.2.0
@@ -127,8 +127,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * @since 1.2.0
    */
-  public static final String CONNECTION_RETRY_TIMEOUT_MS_PROP = CONNECTION_PREFIX
-      + ".retry.timeout.ms";
+  public static final String CONNECTION_RETRY_TIMEOUT_MS_PROP =
+      CONNECTION_PREFIX + ".retry.timeout.ms";
   public static final int CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT = 30000;
   public static final String CONNECTION_ZOOKEEPERS_DEFAULT = "localhost/fluo";
   public static final int CONNECTION_RETRY_TIMEOUT_MS_DEFAULT = -1;
@@ -318,15 +318,15 @@ public class FluoConfiguration extends SimpleConfiguration {
       } else if (c == '/' || c == '.' || c == ':') {
         reason = "invalid character '" + c + "'";
         break;
-      } else if (c > '\u0000' && c <= '\u001f' || c >= '\u007f' && c <= '\u009F' || c >= '\ud800'
-          && c <= '\uf8ff' || c >= '\ufff0' && c <= '\uffff') {
+      } else if (c > '\u0000' && c <= '\u001f' || c >= '\u007f' && c <= '\u009F'
+          || c >= '\ud800' && c <= '\uf8ff' || c >= '\ufff0' && c <= '\uffff') {
         reason = "invalid character @" + i;
         break;
       }
     }
     if (reason != null) {
-      throw new IllegalArgumentException("Invalid application name \"" + name + "\" caused by "
-          + reason);
+      throw new IllegalArgumentException(
+          "Invalid application name \"" + name + "\" caused by " + reason);
     }
   }
 
@@ -393,8 +393,8 @@ public class FluoConfiguration extends SimpleConfiguration {
    * @since 1.2.0
    */
   public FluoConfiguration setConnectionRetryTimeout(int timeoutMS) {
-    Preconditions.checkArgument(timeoutMS >= -1, CONNECTION_RETRY_TIMEOUT_MS_PROP
-        + " must be >= -1");
+    Preconditions.checkArgument(timeoutMS >= -1,
+        CONNECTION_RETRY_TIMEOUT_MS_PROP + " must be >= -1");
     setProperty(CONNECTION_RETRY_TIMEOUT_MS_PROP, timeoutMS);
     return this;
   }
@@ -557,8 +557,8 @@ public class FluoConfiguration extends SimpleConfiguration {
                 + " has invalid param. Expected 'key=value' but encountered '" + fields[i] + "'");
           }
           if (kv[0].isEmpty() || kv[1].isEmpty()) {
-            throw new IllegalArgumentException(key + " has empty key or value in param: "
-                + fields[i]);
+            throw new IllegalArgumentException(
+                key + " has empty key or value in param: " + fields[i]);
           }
           params.put(kv[0], kv[1]);
         }
@@ -987,8 +987,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   private String getDepNonEmptyString(String property, String depProperty, String defaultValue) {
-    return containsKey(property) ? getNonEmptyString(property, defaultValue) : getNonEmptyString(
-        depProperty, defaultValue);
+    return containsKey(property) ? getNonEmptyString(property, defaultValue)
+        : getNonEmptyString(depProperty, defaultValue);
   }
 
   private String getDepNonEmptyString(String property, String depProperty) {

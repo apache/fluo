@@ -60,8 +60,8 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   static final String GC_TIMESTAMP_OPT = "timestamp.gc";
 
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
-  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(
-      ColumnConstants.NOTIFY_CF.toArray());
+  private static final ByteSequence NOTIFY_CF_BS =
+      new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   private Long gcTimestamp;
   private SortedKeyValueIterator<Key, Value> source;
 

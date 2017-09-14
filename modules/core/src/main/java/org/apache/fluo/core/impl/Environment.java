@@ -31,8 +31,8 @@ import org.apache.fluo.api.metrics.MetricsReporter;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.metrics.MetricNames;
 import org.apache.fluo.core.metrics.MetricsReporterImpl;
-import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.observer.ObserverUtil;
+import org.apache.fluo.core.observer.RegisteredObservers;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.CuratorUtil;
 
@@ -118,9 +118,8 @@ public class Environment implements AutoCloseable {
           new String(curator.getData().forPath(ZookeeperPath.CONFIG_FLUO_APPLICATION_ID),
               StandardCharsets.UTF_8);
 
-      table =
-          new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE),
-              StandardCharsets.UTF_8);
+      table = new String(curator.getData().forPath(ZookeeperPath.CONFIG_ACCUMULO_TABLE),
+          StandardCharsets.UTF_8);
 
       observers = ObserverUtil.load(curator);
 

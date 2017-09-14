@@ -26,9 +26,8 @@ import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotRes
 public class MetricsUtil {
 
   public static Reservoir getConfiguredReservoir(FluoConfiguration config) {
-    String clazz =
-        config.getString(FluoConfigurationImpl.METRICS_RESERVOIR_PROP,
-            HdrHistogramResetOnSnapshotReservoir.class.getName());
+    String clazz = config.getString(FluoConfigurationImpl.METRICS_RESERVOIR_PROP,
+        HdrHistogramResetOnSnapshotReservoir.class.getName());
     try {
       return Class.forName(clazz).asSubclass(Reservoir.class).newInstance();
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {

@@ -341,7 +341,8 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
   }
 
   @Override
-  public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+  public void write(org.apache.thrift.protocol.TProtocol oprot)
+      throws org.apache.thrift.TException {
     schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
 
@@ -376,8 +377,8 @@ public class Stamps implements org.apache.thrift.TBase<Stamps, Stamps._Fields>,
     }
   }
 
-  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException,
-      ClassNotFoundException {
+  private void readObject(java.io.ObjectInputStream in)
+      throws java.io.IOException, ClassNotFoundException {
     try {
       // it doesn't seem like you should have to do this, but java serialization is wacky, and
       // doesn't call the default constructor.

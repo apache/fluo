@@ -142,8 +142,8 @@ public class AbstractTransactionBaseTest {
   public void testColumnsVarargs() {
 
     MockTransaction tx = new MockTransaction(createSnapshot());
-    Assert
-        .assertEquals(ImmutableMap.of(COL1, Bytes.of("v1")), tx.get(Bytes.of("row1"), COL1, COL2));
+    Assert.assertEquals(ImmutableMap.of(COL1, Bytes.of("v1")),
+        tx.get(Bytes.of("row1"), COL1, COL2));
     Assert.assertEquals(ImmutableMap.of(COL1, Bytes.of("v2"), COL2, Bytes.of("v3")),
         tx.get(Bytes.of("row2"), COL1, COL2));
 
@@ -191,8 +191,8 @@ public class AbstractTransactionBaseTest {
     tx.setWeakNotification("row5", COL2);
 
     Assert.assertEquals(ImmutableSet.of(new RowColumn("row5", COL1)), tx.deletes);
-    Assert.assertEquals(ImmutableSet.of(new RowColumnValue("row9", COL2, "99"), new RowColumnValue(
-        "row8", COL2, "88")), tx.sets);
+    Assert.assertEquals(ImmutableSet.of(new RowColumnValue("row9", COL2, "99"),
+        new RowColumnValue("row8", COL2, "88")), tx.sets);
     Assert.assertEquals(ImmutableSet.of(new RowColumn("row5", COL2)), tx.weakNtfys);
 
     tx.close();

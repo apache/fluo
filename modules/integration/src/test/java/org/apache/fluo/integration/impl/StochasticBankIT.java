@@ -201,8 +201,8 @@ public class StochasticBankIT extends ITBaseImpl {
         long t2 = System.currentTimeMillis();
 
         log.debug("avg : %,9.2f  min : %,6d  max : %,6d  stddev : %1.2f  rate : %,6.2f\n",
-            stat.getAverage(), stat.getMin(), stat.getMax(), stat.getStdDev(), numAccounts
-                / ((t2 - t1) / 1000.0));
+            stat.getAverage(), stat.getMin(), stat.getMax(), stat.getStdDev(),
+            numAccounts / ((t2 - t1) / 1000.0));
 
         if (stat.getSum() != numAccounts * 1000) {
           if (lastTx != null) {

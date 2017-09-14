@@ -72,7 +72,7 @@ public class MetricsReporterImpl implements MetricsReporter {
 
   private static void validateName(String metricName) {
     Objects.requireNonNull(metricName);
-    Preconditions.checkArgument(!metricName.contains("."), "Metric name " + metricName
-        + " should not contain a period '.'");
+    Preconditions.checkArgument(!metricName.contains("."),
+        "Metric name " + metricName + " should not contain a period '.'");
   }
 }

@@ -21,9 +21,8 @@ import org.apache.fluo.core.worker.finder.hash.PartitionNotificationFinder;
 
 public class NotificationFinderFactory {
   public static NotificationFinder newNotificationFinder(FluoConfiguration conf) {
-    String clazz =
-        conf.getString(FluoConfigurationImpl.WORKER_FINDER_PROP,
-            PartitionNotificationFinder.class.getName());
+    String clazz = conf.getString(FluoConfigurationImpl.WORKER_FINDER_PROP,
+        PartitionNotificationFinder.class.getName());
     try {
       return Class.forName(clazz).asSubclass(NotificationFinder.class).newInstance();
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {

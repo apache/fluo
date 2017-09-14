@@ -512,9 +512,8 @@ public class FluoIT extends ITBaseImpl {
 
     Map<String, Map<Column, String>> map1 =
         tx2.gets(Arrays.asList("d:0001", "d:0002"), Collections.singleton(ccol));
-    Map<String, ImmutableMap<Column, String>> expected1 =
-        ImmutableMap.of("d:0001", ImmutableMap.of(ccol, "abc def"), "d:0002",
-            ImmutableMap.of(ccol, "neb feg"));
+    Map<String, ImmutableMap<Column, String>> expected1 = ImmutableMap.of("d:0001",
+        ImmutableMap.of(ccol, "abc def"), "d:0002", ImmutableMap.of(ccol, "neb feg"));
     Assert.assertEquals(expected1, map1);
 
     Assert.assertEquals("45", tx2.gets("d:0001", tcol));

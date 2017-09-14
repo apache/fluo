@@ -116,9 +116,8 @@ public class FluoFactory {
       return (T) Class.forName(clazz).getDeclaredConstructor(FluoConfiguration.class)
           .newInstance(config);
     } catch (ClassNotFoundException e) {
-      String msg =
-          "Could not find " + clazz
-              + " class which could be caused by fluo-core jar not being on the classpath.";
+      String msg = "Could not find " + clazz
+          + " class which could be caused by fluo-core jar not being on the classpath.";
       throw new FluoException(msg, e);
     } catch (InvocationTargetException e) {
       String msg = "Failed to construct " + clazz + " class due to exception";

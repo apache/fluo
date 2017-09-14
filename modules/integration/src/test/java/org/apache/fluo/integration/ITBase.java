@@ -41,10 +41,10 @@ public class ITBase {
   protected final static String USER = "root";
   protected final static String PASSWORD = "ITSecret";
   protected final static String TABLE_BASE = "table";
-  protected final static String IT_INSTANCE_NAME_PROP = FluoConfiguration.FLUO_PREFIX
-      + ".it.instance.name";
-  protected final static String IT_INSTANCE_CLEAR_PROP = FluoConfiguration.FLUO_PREFIX
-      + ".it.instance.clear";
+  protected final static String IT_INSTANCE_NAME_PROP =
+      FluoConfiguration.FLUO_PREFIX + ".it.instance.name";
+  protected final static String IT_INSTANCE_CLEAR_PROP =
+      FluoConfiguration.FLUO_PREFIX + ".it.instance.clear";
 
   protected static String instanceName;
   protected static Connector conn;

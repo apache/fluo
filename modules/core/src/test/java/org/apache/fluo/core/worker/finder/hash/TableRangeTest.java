@@ -117,8 +117,9 @@ public class TableRangeTest {
   public void testToRange() {
     for (String prev : new String[] {null, "foo"}) {
       for (String end : new String[] {null, "zoo"}) {
-        Assert.assertEquals(new Range(prev, false, end, true), new TableRange(prev == null ? null
-            : Bytes.of(prev), end == null ? null : Bytes.of(end)).getRange());
+        Assert.assertEquals(new Range(prev, false, end, true),
+            new TableRange(prev == null ? null : Bytes.of(prev), end == null ? null : Bytes.of(end))
+                .getRange());
       }
     }
   }

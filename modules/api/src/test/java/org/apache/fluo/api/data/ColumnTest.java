@@ -46,8 +46,8 @@ public class ColumnTest {
 
     Assert.assertEquals(new Column("a"), new Column(Bytes.of("a")));
     Assert.assertEquals(new Column("a"), new Column(Bytes.of("a"), Bytes.EMPTY, Bytes.EMPTY));
-    Assert.assertEquals(new Column("a").hashCode(), new Column(Bytes.of("a"), Bytes.EMPTY,
-        Bytes.EMPTY).hashCode());
+    Assert.assertEquals(new Column("a").hashCode(),
+        new Column(Bytes.of("a"), Bytes.EMPTY, Bytes.EMPTY).hashCode());
 
     col = new Column("cf1");
     Assert.assertTrue(col.isFamilySet());

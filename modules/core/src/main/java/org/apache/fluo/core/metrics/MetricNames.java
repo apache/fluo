@@ -20,8 +20,8 @@ import org.apache.fluo.api.config.FluoConfiguration;
 
 public class MetricNames {
 
-  public static final String METRICS_REPORTER_ID_PROP = FluoConfiguration.FLUO_PREFIX
-      + ".metrics.reporter.id";
+  public static final String METRICS_REPORTER_ID_PROP =
+      FluoConfiguration.FLUO_PREFIX + ".metrics.reporter.id";
 
   // Metrics prefixes for 'default' metrics
   public static final String CLASS_PREFIX = FluoConfiguration.FLUO_PREFIX + ".class";
@@ -48,8 +48,8 @@ public class MetricNames {
   private final String oracleServerStamps;
 
   public MetricNames(String metricsReporterId, String appName) {
-    Preconditions.checkArgument(!appName.contains("."), "Fluo App name should not contain '.': "
-        + appName);
+    Preconditions.checkArgument(!appName.contains("."),
+        "Fluo App name should not contain '.': " + appName);
     Preconditions.checkArgument(!metricsReporterId.contains("."),
         "Metrics Reporter ID should not contain '.': " + metricsReporterId);
 

@@ -151,8 +151,8 @@ public class WorkerIT extends ITBaseMini {
       Assert.fail();
 
     } catch (IllegalArgumentException ise) {
-      Assert.assertTrue(ise.getMessage().contains(
-          "Column attr2 lastupdate  not previously configured for strong notifications"));
+      Assert.assertTrue(ise.getMessage()
+          .contains("Column attr2 lastupdate  not previously configured for strong notifications"));
     } finally {
       observedColumn = LAST_UPDATE;
     }

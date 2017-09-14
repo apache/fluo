@@ -37,7 +37,6 @@ import org.apache.fluo.core.util.Counter;
 import org.apache.fluo.core.util.FluoExecutors;
 import org.slf4j.LoggerFactory;
 
-
 public class LoaderExecutorAsyncImpl implements LoaderExecutor {
   private final ExecutorService executor;
   private final Semaphore semaphore;
@@ -51,8 +50,8 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
   private void setException(Throwable t) {
     if (!exceptionRef.compareAndSet(null, t)) {
-      LoggerFactory.getLogger(LoaderExecutorAsyncImpl.class).debug(
-          "Multiple exceptions occured, not reporting subsequent ones", t);
+      LoggerFactory.getLogger(LoaderExecutorAsyncImpl.class)
+          .debug("Multiple exceptions occured, not reporting subsequent ones", t);
     }
   }
 

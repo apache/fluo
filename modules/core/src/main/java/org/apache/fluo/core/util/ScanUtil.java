@@ -40,16 +40,14 @@ public class ScanUtil {
 
   public static Span getSpan(ScanOpts options) {
     Span span = new Span();
-    if ((options.getExactRow() != null)
-        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
-            .getRowPrefix() != null))) {
+    if ((options.getExactRow() != null) && ((options.getStartRow() != null)
+        || (options.getEndRow() != null) || (options.getRowPrefix() != null))) {
       throw new IllegalArgumentException(
           "You cannot specify an exact row with a start/end row or row prefix!");
     }
 
-    if ((options.getRowPrefix() != null)
-        && ((options.getStartRow() != null) || (options.getEndRow() != null) || (options
-            .getExactRow() != null))) {
+    if ((options.getRowPrefix() != null) && ((options.getStartRow() != null)
+        || (options.getEndRow() != null) || (options.getExactRow() != null))) {
       throw new IllegalArgumentException(
           "You cannot specify an prefix row with a start/end row or exact row!");
     }
@@ -83,8 +81,8 @@ public class ScanUtil {
       } else if (colFields.length == 2) {
         columns.add(new Column(colFields[0], colFields[1]));
       } else {
-        throw new IllegalArgumentException("Failed to scan!  Column '" + column
-            + "' has too many fields (indicated by ':')");
+        throw new IllegalArgumentException(
+            "Failed to scan!  Column '" + column + "' has too many fields (indicated by ':')");
       }
     }
 
@@ -92,8 +90,8 @@ public class ScanUtil {
   }
 
   public static void scanFluo(ScanOpts options, FluoConfiguration sConfig) {
-    System.out.println("Scanning snapshot of data in Fluo '" + sConfig.getApplicationName()
-        + "' application.");
+    System.out.println(
+        "Scanning snapshot of data in Fluo '" + sConfig.getApplicationName() + "' application.");
 
     long entriesFound = 0;
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
@@ -166,8 +164,8 @@ public class ScanUtil {
       scanner.setRange(SpanUtil.toRange(span));
       for (Column col : columns) {
         if (col.isQualifierSet()) {
-          scanner
-              .fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
+          scanner.fetchColumn(ByteUtil.toText(col.getFamily()),
+              ByteUtil.toText(col.getQualifier()));
         } else {
           scanner.fetchColumnFamily(ByteUtil.toText(col.getFamily()));
         }

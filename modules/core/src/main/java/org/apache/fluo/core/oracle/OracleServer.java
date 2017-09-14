@@ -70,8 +70,8 @@ import org.slf4j.LoggerFactory;
  * next leader. In the case where an oracle fails over, the next oracle will begin a new block of
  * timestamps.
  */
-public class OracleServer extends LeaderSelectorListenerAdapter implements OracleService.Iface,
-    PathChildrenCacheListener {
+public class OracleServer extends LeaderSelectorListenerAdapter
+    implements OracleService.Iface, PathChildrenCacheListener {
 
   private static final Logger log = LoggerFactory.getLogger(OracleServer.class);
 
@@ -132,9 +132,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       boolean nodeFound = false;
 
       for (String child : children) {
-        Long ts =
-            LongUtil.fromByteArray(curator.getData().forPath(
-                ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
+        Long ts = LongUtil.fromByteArray(
+            curator.getData().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
         nodeFound = true;
         if (ts < oldestTs) {
           oldestTs = ts;
@@ -187,9 +186,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
   public OracleServer(Environment env) throws Exception {
     this.env = env;
-    stampsHistogram =
-        MetricsUtil.getHistogram(env.getConfiguration(), env.getSharedResources()
-            .getMetricRegistry(), env.getMetricNames().getOracleServerStamps());
+    stampsHistogram = MetricsUtil.getHistogram(env.getConfiguration(),
+        env.getSharedResources().getMetricRegistry(), env.getMetricNames().getOracleServerStamps());
     this.cnxnListener = new CuratorCnxnListener();
     this.maxTsPath = ZookeeperPath.ORACLE_MAX_TIMESTAMP;
     this.oraclePath = ZookeeperPath.ORACLE_SERVER;
@@ -206,8 +204,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
 
     long newMax = Long.parseLong(new String(d)) + 1000;
 
-    curatorFramework.setData().withVersion(stat.getVersion())
-        .forPath(maxTsPath, LongUtil.toByteArray(newMax));
+    curatorFramework.setData().withVersion(stat.getVersion()).forPath(maxTsPath,
+        LongUtil.toByteArray(newMax));
     maxTs = newMax;
 
     if (!isLeader) {
@@ -440,10 +438,9 @@ public class OracleServer extends LeaderSelectorListenerAdapter implements Oracl
       throws Exception {
 
     try {
-      if (isConnected()
-          && (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
-              || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED) || event
-              .getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED))) {
+      if (isConnected() && (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
+          || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)
+          || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED))) {
         synchronized (this) {
           Participant participant = leaderSelector.getLeader();
           if (isLeader(participant) && !leaderSelector.hasLeadership()) {

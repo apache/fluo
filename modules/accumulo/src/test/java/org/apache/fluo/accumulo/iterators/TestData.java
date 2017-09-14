@@ -100,9 +100,8 @@ public class TestData {
       case "LOCK":
         ts |= ColumnConstants.LOCK_PREFIX;
         String rc[] = value.split("\\s+");
-        val =
-            LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"),
-                value.contains("DELETE"), value.contains("TRIGGER"), 42l);
+        val = LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"),
+            value.contains("DELETE"), value.contains("TRIGGER"), 42l);
         break;
       case "DATA":
         ts |= ColumnConstants.DATA_PREFIX;

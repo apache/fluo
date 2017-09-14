@@ -15,7 +15,6 @@
 
 package org.apache.fluo.integration.impl;
 
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -122,9 +121,8 @@ public class ZKSecretIT extends ITBaseMini {
 
     // Verify oracle gc timestamp is visible w/o a password. The GC iterator that runs in Accumulo
     // tablet servers reads this.
-    String ts =
-        new String(zk.getData(ZookeeperPath.ORACLE_GC_TIMESTAMP, false, null),
-            StandardCharsets.UTF_8);
+    String ts = new String(zk.getData(ZookeeperPath.ORACLE_GC_TIMESTAMP, false, null),
+        StandardCharsets.UTF_8);
     Assert.assertTrue(ts.matches("\\d+"));
 
     // the timestamp should be read only... trying to modify it should fail

@@ -107,8 +107,8 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     hasTop = false;
     long invalidationTime = -1;
 
-    while (source.hasTop()
-        && seekRange.getStartKey().equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop() && seekRange.getStartKey().equals(source.getTopKey(),
+        PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
 
       long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;

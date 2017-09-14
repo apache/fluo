@@ -38,9 +38,8 @@ public class TxInfoCache {
   private final Environment env;
 
   TxInfoCache(Environment env) {
-    cache =
-        CacheBuilder.newBuilder().expireAfterAccess(CACHE_TIMEOUT_MIN, TimeUnit.MINUTES)
-            .maximumWeight(10000000).weigher(new TxStatusWeigher()).concurrencyLevel(10).build();
+    cache = CacheBuilder.newBuilder().expireAfterAccess(CACHE_TIMEOUT_MIN, TimeUnit.MINUTES)
+        .maximumWeight(10000000).weigher(new TxStatusWeigher()).concurrencyLevel(10).build();
     this.env = env;
   }
 

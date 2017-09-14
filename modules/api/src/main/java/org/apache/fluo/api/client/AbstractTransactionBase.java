@@ -24,8 +24,8 @@ import org.apache.fluo.api.exceptions.AlreadySetException;
  * to make implementing TransactionBase easier.
  */
 
-public abstract class AbstractTransactionBase extends AbstractSnapshotBase implements
-    TransactionBase {
+public abstract class AbstractTransactionBase extends AbstractSnapshotBase
+    implements TransactionBase {
 
   public void delete(CharSequence row, Column col) {
     delete(s2bConv(row), col);

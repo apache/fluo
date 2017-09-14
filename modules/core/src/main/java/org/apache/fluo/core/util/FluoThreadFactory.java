@@ -18,7 +18,6 @@ package org.apache.fluo.core.util;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 public class FluoThreadFactory implements ThreadFactory {
 
   private static AtomicInteger poolCount = new AtomicInteger();

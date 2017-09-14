@@ -44,9 +44,8 @@ public class Slf4jReporterStarter implements ReporterStarter {
         TimeUnit.valueOf(config.getString("durationUnit", "milliseconds").toUpperCase());
     Logger logger = LoggerFactory.getLogger(config.getString("logger", "metrics"));
 
-    Slf4jReporter reporter =
-        Slf4jReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
-            .convertRatesTo(rateUnit).outputTo(logger).build();
+    Slf4jReporter reporter = Slf4jReporter.forRegistry(params.getMetricRegistry())
+        .convertDurationsTo(durationUnit).convertRatesTo(rateUnit).outputTo(logger).build();
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
 
     log.info("Reporting metrics using slf4j");

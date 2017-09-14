@@ -128,7 +128,8 @@ public interface SnapshotBase {
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and
    * decoded using UTF-8.
    */
-  Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows, Set<Column> columns);
+  Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
+      Set<Column> columns);
 
   /**
    * Wrapper for {@link #get(Collection, Set)} that uses Strings. All strings are encoded and

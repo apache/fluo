@@ -39,14 +39,14 @@ import org.slf4j.LoggerFactory;
 
 import static org.apache.fluo.core.util.Hex.encNonAscii;
 
-public class TracingTransaction extends AbstractTransactionBase implements AsyncTransaction,
-    Snapshot {
+public class TracingTransaction extends AbstractTransactionBase
+    implements AsyncTransaction, Snapshot {
 
   private static final Logger log = LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX);
-  private static final Logger collisionLog = LoggerFactory
-      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".collisions");
-  private static final Logger summaryLog = LoggerFactory
-      .getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
+  private static final Logger collisionLog =
+      LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".collisions");
+  private static final Logger summaryLog =
+      LoggerFactory.getLogger(FluoConfiguration.TRANSACTION_PREFIX + ".summary");
 
   private final AsyncTransaction tx;
   private final long txid;
@@ -221,8 +221,8 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
       collisionLog.trace("txid: {} class: {}", txid, clazz.getName());
     }
 
-    collisionLog.trace("txid: {} collisions: {}", txid, toStringEncNonAsciiMBSC(tx.getStats()
-        .getRejected()));
+    collisionLog.trace("txid: {} collisions: {}", txid,
+        toStringEncNonAsciiMBSC(tx.getStats().getRejected()));
   }
 
   @Override
@@ -235,11 +235,12 @@ public class TracingTransaction extends AbstractTransactionBase implements Async
         className = clazz.getSimpleName();
       }
       // TODO log total # read, see fluo-426
-      summaryLog.trace("txid: {} thread : {} time: {} ({} {}) #ret: {} #set: {} #collisions: {} "
-          + "waitTime: {} committed: {} class: {}", txid, Thread.currentThread().getId(),
-          stats.getTime(), stats.getReadTime(), stats.getCommitTime(), stats.getEntriesReturned(),
-          stats.getEntriesSet(), stats.getCollisions(), stats.getLockWaitTime(), committed,
-          className);
+      summaryLog.trace(
+          "txid: {} thread : {} time: {} ({} {}) #ret: {} #set: {} #collisions: {} "
+              + "waitTime: {} committed: {} class: {}",
+          txid, Thread.currentThread().getId(), stats.getTime(), stats.getReadTime(),
+          stats.getCommitTime(), stats.getEntriesReturned(), stats.getEntriesSet(),
+          stats.getCollisions(), stats.getLockWaitTime(), committed, className);
     }
     tx.close();
   }

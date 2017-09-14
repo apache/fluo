@@ -80,8 +80,8 @@ public class TxInfo {
 
       if (timePtr != startTs) {
         // expect this to always be false, must be a bug in the iterator
-        throw new IllegalStateException(prow + " " + pcol + " (" + timePtr + " != " + startTs
-            + ") ");
+        throw new IllegalStateException(
+            prow + " " + pcol + " (" + timePtr + " != " + startTs + ") ");
       }
 
       txInfo.status = TxStatus.COMMITTED;

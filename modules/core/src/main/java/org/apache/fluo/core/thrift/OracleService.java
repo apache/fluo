@@ -111,13 +111,15 @@ public class OracleService {
         return result.success;
       }
       throw new org.apache.thrift.TApplicationException(
-          org.apache.thrift.TApplicationException.MISSING_RESULT, "isLeader failed: unknown result");
+          org.apache.thrift.TApplicationException.MISSING_RESULT,
+          "isLeader failed: unknown result");
     }
 
   }
-  public static class AsyncClient extends org.apache.thrift.async.TAsyncClient implements
-      AsyncIface {
-    public static class Factory implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
+  public static class AsyncClient extends org.apache.thrift.async.TAsyncClient
+      implements AsyncIface {
+    public static class Factory
+        implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
       private org.apache.thrift.async.TAsyncClientManager clientManager;
       private org.apache.thrift.protocol.TProtocolFactory protocolFactory;
 
@@ -127,7 +129,8 @@ public class OracleService {
         this.protocolFactory = protocolFactory;
       }
 
-      public AsyncClient getAsyncClient(org.apache.thrift.transport.TNonblockingTransport transport) {
+      public AsyncClient getAsyncClient(
+          org.apache.thrift.transport.TNonblockingTransport transport) {
         return new AsyncClient(protocolFactory, clientManager, transport);
       }
     }
@@ -232,13 +235,11 @@ public class OracleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
 
     public Processor(I iface) {
-      super(
-          iface,
-          getProcessMap(new HashMap<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>>()));
+      super(iface, getProcessMap(
+          new HashMap<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>>()));
     }
 
-    protected Processor(
-        I iface,
+    protected Processor(I iface,
         Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> processMap) {
       super(iface, getProcessMap(processMap));
     }
@@ -250,8 +251,8 @@ public class OracleService {
       return processMap;
     }
 
-    public static class getTimestamps<I extends Iface> extends
-        org.apache.thrift.ProcessFunction<I, getTimestamps_args> {
+    public static class getTimestamps<I extends Iface>
+        extends org.apache.thrift.ProcessFunction<I, getTimestamps_args> {
       public getTimestamps() {
         super("getTimestamps");
       }
@@ -272,8 +273,8 @@ public class OracleService {
       }
     }
 
-    public static class isLeader<I extends Iface> extends
-        org.apache.thrift.ProcessFunction<I, isLeader_args> {
+    public static class isLeader<I extends Iface>
+        extends org.apache.thrift.ProcessFunction<I, isLeader_args> {
       public isLeader() {
         super("isLeader");
       }
@@ -297,18 +298,16 @@ public class OracleService {
 
   }
 
-  public static class AsyncProcessor<I extends AsyncIface> extends
-      org.apache.thrift.TBaseAsyncProcessor<I> {
+  public static class AsyncProcessor<I extends AsyncIface>
+      extends org.apache.thrift.TBaseAsyncProcessor<I> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncProcessor.class.getName());
 
     public AsyncProcessor(I iface) {
-      super(
-          iface,
-          getProcessMap(new HashMap<String, org.apache.thrift.AsyncProcessFunction<I, ? extends org.apache.thrift.TBase, ?>>()));
+      super(iface, getProcessMap(
+          new HashMap<String, org.apache.thrift.AsyncProcessFunction<I, ? extends org.apache.thrift.TBase, ?>>()));
     }
 
-    protected AsyncProcessor(
-        I iface,
+    protected AsyncProcessor(I iface,
         Map<String, org.apache.thrift.AsyncProcessFunction<I, ? extends org.apache.thrift.TBase, ?>> processMap) {
       super(iface, getProcessMap(processMap));
     }
@@ -320,8 +319,8 @@ public class OracleService {
       return processMap;
     }
 
-    public static class getTimestamps<I extends AsyncIface> extends
-        org.apache.thrift.AsyncProcessFunction<I, getTimestamps_args, Stamps> {
+    public static class getTimestamps<I extends AsyncIface>
+        extends org.apache.thrift.AsyncProcessFunction<I, getTimestamps_args, Stamps> {
       public getTimestamps() {
         super("getTimestamps");
       }
@@ -330,7 +329,8 @@ public class OracleService {
         return new getTimestamps_args();
       }
 
-      public AsyncMethodCallback<Stamps> getResultHandler(final AsyncFrameBuffer fb, final int seqid) {
+      public AsyncMethodCallback<Stamps> getResultHandler(final AsyncFrameBuffer fb,
+          final int seqid) {
         final org.apache.thrift.AsyncProcessFunction fcall = this;
         return new AsyncMethodCallback<Stamps>() {
           public void onComplete(Stamps o) {
@@ -351,9 +351,8 @@ public class OracleService {
             getTimestamps_result result = new getTimestamps_result();
             {
               msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;
-              msg =
-                  (org.apache.thrift.TBase) new org.apache.thrift.TApplicationException(
-                      org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
+              msg = (org.apache.thrift.TBase) new org.apache.thrift.TApplicationException(
+                  org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
             }
             try {
               fcall.sendResponse(fb, msg, msgType, seqid);
@@ -376,8 +375,8 @@ public class OracleService {
       }
     }
 
-    public static class isLeader<I extends AsyncIface> extends
-        org.apache.thrift.AsyncProcessFunction<I, isLeader_args, Boolean> {
+    public static class isLeader<I extends AsyncIface>
+        extends org.apache.thrift.AsyncProcessFunction<I, isLeader_args, Boolean> {
       public isLeader() {
         super("isLeader");
       }
@@ -409,9 +408,8 @@ public class OracleService {
             isLeader_result result = new isLeader_result();
             {
               msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;
-              msg =
-                  (org.apache.thrift.TBase) new org.apache.thrift.TApplicationException(
-                      org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
+              msg = (org.apache.thrift.TBase) new org.apache.thrift.TApplicationException(
+                  org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
             }
             try {
               fcall.sendResponse(fb, msg, msgType, seqid);
@@ -436,8 +434,8 @@ public class OracleService {
 
   }
 
-  public static class getTimestamps_args implements
-      org.apache.thrift.TBase<getTimestamps_args, getTimestamps_args._Fields>,
+  public static class getTimestamps_args
+      implements org.apache.thrift.TBase<getTimestamps_args, getTimestamps_args._Fields>,
       java.io.Serializable, Cloneable, Comparable<getTimestamps_args> {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
         new org.apache.thrift.protocol.TStruct("getTimestamps_args");
@@ -529,12 +527,13 @@ public class OracleService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id",
-          org.apache.thrift.TFieldRequirementType.DEFAULT,
-          new org.apache.thrift.meta_data.FieldValueMetaData(
-              org.apache.thrift.protocol.TType.STRING)));
-      tmpMap
-          .put(_Fields.NUM, new org.apache.thrift.meta_data.FieldMetaData("num",
+      tmpMap.put(_Fields.ID,
+          new org.apache.thrift.meta_data.FieldMetaData("id",
+              org.apache.thrift.TFieldRequirementType.DEFAULT,
+              new org.apache.thrift.meta_data.FieldValueMetaData(
+                  org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.NUM,
+          new org.apache.thrift.meta_data.FieldMetaData("num",
               org.apache.thrift.TFieldRequirementType.DEFAULT,
               new org.apache.thrift.meta_data.FieldValueMetaData(
                   org.apache.thrift.protocol.TType.I32)));
@@ -791,8 +790,8 @@ public class OracleService {
       }
     }
 
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException,
-        ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+        throws java.io.IOException, ClassNotFoundException {
       try {
         // it doesn't seem like you should have to do this, but java serialization is wacky, and
         // doesn't call the default constructor.
@@ -810,8 +809,8 @@ public class OracleService {
       }
     }
 
-    private static class getTimestamps_argsStandardScheme extends
-        StandardScheme<getTimestamps_args> {
+    private static class getTimestamps_argsStandardScheme
+        extends StandardScheme<getTimestamps_args> {
 
       public void read(org.apache.thrift.protocol.TProtocol iprot, getTimestamps_args struct)
           throws org.apache.thrift.TException {
@@ -916,8 +915,8 @@ public class OracleService {
 
   }
 
-  public static class getTimestamps_result implements
-      org.apache.thrift.TBase<getTimestamps_result, getTimestamps_result._Fields>,
+  public static class getTimestamps_result
+      implements org.apache.thrift.TBase<getTimestamps_result, getTimestamps_result._Fields>,
       java.io.Serializable, Cloneable, Comparable<getTimestamps_result> {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
         new org.apache.thrift.protocol.TStruct("getTimestamps_result");
@@ -1001,10 +1000,11 @@ public class OracleService {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap =
           new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success",
-          org.apache.thrift.TFieldRequirementType.DEFAULT,
-          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT,
-              Stamps.class)));
+      tmpMap.put(_Fields.SUCCESS,
+          new org.apache.thrift.meta_data.FieldMetaData("success",
+              org.apache.thrift.TFieldRequirementType.DEFAULT,
+              new org.apache.thrift.meta_data.StructMetaData(
+                  org.apache.thrift.protocol.TType.STRUCT, Stamps.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getTimestamps_result.class,
           metaDataMap);
@@ -1195,8 +1195,8 @@ public class OracleService {
       }
     }
 
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException,
-        ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+        throws java.io.IOException, ClassNotFoundException {
       try {
         read(new org.apache.thrift.protocol.TCompactProtocol(
             new org.apache.thrift.transport.TIOStreamTransport(in)));
@@ -1211,8 +1211,8 @@ public class OracleService {
       }
     }
 
-    private static class getTimestamps_resultStandardScheme extends
-        StandardScheme<getTimestamps_result> {
+    private static class getTimestamps_resultStandardScheme
+        extends StandardScheme<getTimestamps_result> {
 
       public void read(org.apache.thrift.protocol.TProtocol iprot, getTimestamps_result struct)
           throws org.apache.thrift.TException {
@@ -1298,9 +1298,9 @@ public class OracleService {
 
   }
 
-  public static class isLeader_args implements
-      org.apache.thrift.TBase<isLeader_args, isLeader_args._Fields>, java.io.Serializable,
-      Cloneable, Comparable<isLeader_args> {
+  public static class isLeader_args
+      implements org.apache.thrift.TBase<isLeader_args, isLeader_args._Fields>,
+      java.io.Serializable, Cloneable, Comparable<isLeader_args> {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
         new org.apache.thrift.protocol.TStruct("isLeader_args");
 
@@ -1489,8 +1489,8 @@ public class OracleService {
       }
     }
 
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException,
-        ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+        throws java.io.IOException, ClassNotFoundException {
       try {
         read(new org.apache.thrift.protocol.TCompactProtocol(
             new org.apache.thrift.transport.TIOStreamTransport(in)));
@@ -1563,9 +1563,9 @@ public class OracleService {
 
   }
 
-  public static class isLeader_result implements
-      org.apache.thrift.TBase<isLeader_result, isLeader_result._Fields>, java.io.Serializable,
-      Cloneable, Comparable<isLeader_result> {
+  public static class isLeader_result
+      implements org.apache.thrift.TBase<isLeader_result, isLeader_result._Fields>,
+      java.io.Serializable, Cloneable, Comparable<isLeader_result> {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC =
         new org.apache.thrift.protocol.TStruct("isLeader_result");
 
@@ -1838,8 +1838,8 @@ public class OracleService {
       }
     }
 
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException,
-        ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+        throws java.io.IOException, ClassNotFoundException {
       try {
         // it doesn't seem like you should have to do this, but java serialization is wacky, and
         // doesn't call the default constructor.

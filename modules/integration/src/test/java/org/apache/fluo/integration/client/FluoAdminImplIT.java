@@ -106,7 +106,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
     InitializationOptions opts =
         new InitializationOptions().setClearZookeeper(true).setClearTable(true);
 
-    for (String host : new String[] {"localhost", "localhost/", "localhost:9999", "localhost:9999/"}) {
+    for (String host : new String[] {"localhost", "localhost/", "localhost:9999",
+        "localhost:9999/"}) {
       config.setInstanceZookeepers(host);
       try (FluoAdmin fluoAdmin = new FluoAdminImpl(config)) {
         fluoAdmin.initialize(opts);

@@ -47,8 +47,8 @@ public class FluoConfigurationTest {
         base.getZookeeperTimeout());
     Assert.assertEquals(FluoConfiguration.CONNECTION_RETRY_TIMEOUT_MS_DEFAULT,
         base.getConnectionRetryTimeout());
-    Assert
-        .assertEquals(FluoConfiguration.ACCUMULO_ZOOKEEPERS_DEFAULT, base.getAccumuloZookeepers());
+    Assert.assertEquals(FluoConfiguration.ACCUMULO_ZOOKEEPERS_DEFAULT,
+        base.getAccumuloZookeepers());
     Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT,
         base.getAccumuloClasspath());
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
@@ -86,8 +86,8 @@ public class FluoConfigurationTest {
   @Test
   public void testSetGet() {
     FluoConfiguration config = new FluoConfiguration();
-    Assert.assertEquals("path1,path2", config.setAccumuloClasspath("path1,path2")
-        .getAccumuloClasspath());
+    Assert.assertEquals("path1,path2",
+        config.setAccumuloClasspath("path1,path2").getAccumuloClasspath());
     Assert.assertEquals("path1,path2", config.setAccumuloJars("path1,path2").getAccumuloJars());
     Assert.assertEquals("instance", config.setAccumuloInstance("instance").getAccumuloInstance());
     Assert.assertEquals("pass", config.setAccumuloPassword("pass").getAccumuloPassword());
@@ -106,8 +106,8 @@ public class FluoConfigurationTest {
     Assert.assertFalse(config.setMiniStartAccumulo(false).getMiniStartAccumulo());
     Assert.assertEquals("mydata", config.setMiniDataDir("mydata").getMiniDataDir());
     Assert.assertEquals(17, config.setConnectionRetryTimeout(17).getConnectionRetryTimeout());
-    Assert.assertEquals("/path/to/dir", config.setObserverInitDir("/path/to/dir")
-        .getObserverInitDir());
+    Assert.assertEquals("/path/to/dir",
+        config.setObserverInitDir("/path/to/dir").getObserverInitDir());
     Assert.assertEquals("hdfs://localhost/mydir",
         config.setObserverJarsUrl("hdfs://localhost/mydir").getObserverJarsUrl());
     Assert.assertEquals("hdfs123", config.setDfsRoot("hdfs123").getDfsRoot());
@@ -442,9 +442,8 @@ public class FluoConfigurationTest {
         Assert.fail();
       }
     }
-    String[] nonEmptyMethods =
-        {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser", "setAccumuloZookeepers",
-            "setMiniDataDir", "setInstanceZookeepers", "setDfsRoot"};
+    String[] nonEmptyMethods = {"setAccumuloInstance", "setAccumuloTable", "setAccumuloUser",
+        "setAccumuloZookeepers", "setMiniDataDir", "setInstanceZookeepers", "setDfsRoot"};
     for (String methodName : nonEmptyMethods) {
       try {
         config.getClass().getMethod(methodName, String.class).invoke(config, "");

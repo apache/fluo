@@ -81,8 +81,8 @@ public class OracleClient implements AutoCloseable {
     }
   }
 
-  private class TimestampRetriever extends LeaderSelectorListenerAdapter implements Runnable,
-      PathChildrenCacheListener {
+  private class TimestampRetriever extends LeaderSelectorListenerAdapter
+      implements Runnable, PathChildrenCacheListener {
 
     private LeaderSelector leaderSelector;
     private CuratorFramework curatorFramework;
@@ -230,8 +230,8 @@ public class OracleClient implements AutoCloseable {
       }
     }
 
-    private synchronized void connect() throws IOException, KeeperException, InterruptedException,
-        TTransportException {
+    private synchronized void connect()
+        throws IOException, KeeperException, InterruptedException, TTransportException {
 
       getLeader();
       while (true) {
@@ -260,8 +260,8 @@ public class OracleClient implements AutoCloseable {
     /**
      * Atomically closes current connection and connects to the current leader
      */
-    private synchronized void reconnect() throws InterruptedException, TTransportException,
-        KeeperException, IOException {
+    private synchronized void reconnect()
+        throws InterruptedException, TTransportException, KeeperException, IOException {
       if (transport.isOpen()) {
         transport.close();
       }
@@ -344,12 +344,10 @@ public class OracleClient implements AutoCloseable {
 
   public OracleClient(Environment env) {
     this.env = env;
-    responseTimer =
-        MetricsUtil.getTimer(env.getConfiguration(), env.getSharedResources().getMetricRegistry(),
-            env.getMetricNames().getOracleResponseTime());
-    stampsHistogram =
-        MetricsUtil.getHistogram(env.getConfiguration(), env.getSharedResources()
-            .getMetricRegistry(), env.getMetricNames().getOracleClientStamps());
+    responseTimer = MetricsUtil.getTimer(env.getConfiguration(),
+        env.getSharedResources().getMetricRegistry(), env.getMetricNames().getOracleResponseTime());
+    stampsHistogram = MetricsUtil.getHistogram(env.getConfiguration(),
+        env.getSharedResources().getMetricRegistry(), env.getMetricNames().getOracleClientStamps());
     timestampRetriever = new TimestampRetriever();
     thread = new Thread(timestampRetriever);
     thread.setDaemon(true);
@@ -375,8 +373,7 @@ public class OracleClient implements AutoCloseable {
           if (waitPeriod < MAX_ORACLE_WAIT_PERIOD) {
             waitPeriod *= 2;
           }
-          log.warn(
-              "Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s",
+          log.warn("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s",
               waitTotal, waitPeriod);
         }
       } else if (!tr.cdl.await(timeout, TimeUnit.MILLISECONDS)) {

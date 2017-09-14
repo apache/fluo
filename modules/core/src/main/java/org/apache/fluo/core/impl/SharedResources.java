@@ -70,35 +70,27 @@ public class SharedResources implements AutoCloseable {
 
     int numTservers = env.getConnector().instanceOperations().getTabletServers().size();
     int numBWThreads = FluoConfigurationImpl.getNumBWThreads(env.getConfiguration(), numTservers);
-    bw =
-        env.getConnector().createBatchWriter(env.getTable(),
-            new BatchWriterConfig().setMaxWriteThreads(numBWThreads));
+    bw = env.getConnector().createBatchWriter(env.getTable(),
+        new BatchWriterConfig().setMaxWriteThreads(numBWThreads));
     sbw = new SharedBatchWriter(bw);
 
     int numCWThreads = FluoConfigurationImpl.getNumCWThreads(env.getConfiguration(), numTservers);
-    cw =
-        env.getConnector().createConditionalWriter(
-            env.getTable(),
-            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
-                .setMaxWriteThreads(numCWThreads));
+    cw = env.getConnector().createConditionalWriter(env.getTable(), new ConditionalWriterConfig()
+        .setAuthorizations(env.getAuthorizations()).setMaxWriteThreads(numCWThreads));
     bulkCw =
-        env.getConnector().createConditionalWriter(
-            env.getTable(),
-            new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
-                .setMaxWriteThreads(numCWThreads));
+        env.getConnector().createConditionalWriter(env.getTable(), new ConditionalWriterConfig()
+            .setAuthorizations(env.getAuthorizations()).setMaxWriteThreads(numCWThreads));
 
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache();
     metricRegistry = new MetricRegistry();
 
-    int commitThreads =
-        env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_COMMIT_THREADS,
-            FluoConfigurationImpl.ASYNC_COMMIT_THREADS_DEFAULT);
+    int commitThreads = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_COMMIT_THREADS,
+        FluoConfigurationImpl.ASYNC_COMMIT_THREADS_DEFAULT);
     asyncCommitExecutor = FluoExecutors.newFixedThreadPool(commitThreads, "async-commits");
 
-    commitThreads =
-        env.getConfiguration().getInt(FluoConfigurationImpl.SYNC_COMMIT_THREADS,
-            FluoConfigurationImpl.SYNC_COMMIT_THREADS_DEFAULT);
+    commitThreads = env.getConfiguration().getInt(FluoConfigurationImpl.SYNC_COMMIT_THREADS,
+        FluoConfigurationImpl.SYNC_COMMIT_THREADS_DEFAULT);
     syncCommitExecutor = FluoExecutors.newFixedThreadPool(commitThreads, "sync-commits");
 
     acw = new AsyncConditionalWriter(env, cw);

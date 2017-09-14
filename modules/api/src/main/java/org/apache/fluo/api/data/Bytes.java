@@ -293,9 +293,8 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     }
     byte[] data;
     if (bb.hasArray()) {
-      data =
-          Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
-              bb.limit() + bb.arrayOffset());
+      data = Arrays.copyOfRange(bb.array(), bb.position() + bb.arrayOffset(),
+          bb.limit() + bb.arrayOffset());
     } else {
       data = new byte[bb.remaining()];
       // duplicate so that it does not change position

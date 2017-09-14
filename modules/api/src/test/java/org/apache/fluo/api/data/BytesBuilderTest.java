@@ -172,9 +172,8 @@ public class BytesBuilderTest {
 
     Assert.assertEquals("abc123:xyz789", b3.toString());
 
-    Bytes b4 =
-        Bytes.builder().append((CharSequence) "abc123").append(":").append((CharSequence) "xyz789")
-            .toBytes();
+    Bytes b4 = Bytes.builder().append((CharSequence) "abc123").append(":")
+        .append((CharSequence) "xyz789").toBytes();
 
     Assert.assertEquals("abc123:xyz789", b4.toString());
   }

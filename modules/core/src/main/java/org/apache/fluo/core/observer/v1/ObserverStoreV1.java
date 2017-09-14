@@ -78,8 +78,8 @@ public class ObserverStoreV1 implements ObserverStore {
             + "found.  Check for class name misspellings or failure to include "
             + "the observer jar.", e1);
       } catch (InstantiationException | IllegalAccessException e2) {
-        throw new FluoException("Observer class '" + ospec.getClassName()
-            + "' could not be created.", e2);
+        throw new FluoException(
+            "Observer class '" + ospec.getClassName() + "' could not be created.", e2);
       }
 
       SimpleConfiguration oc = ospec.getConfiguration();
@@ -115,8 +115,8 @@ public class ObserverStoreV1 implements ObserverStore {
     } catch (NoNodeException nne) {
       // it's ok if node doesn't exist
     } catch (Exception e) {
-      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath
-          + "], error=[" + e.getMessage() + "]");
+      logger.error("An error occurred deleting Zookeeper node. node=[" + observerPath + "], error=["
+          + e.getMessage() + "]");
       throw new RuntimeException(e);
     }
 

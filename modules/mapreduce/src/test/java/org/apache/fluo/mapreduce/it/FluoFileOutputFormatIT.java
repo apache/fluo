@@ -48,8 +48,8 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     private FluoKeyValueGenerator fkvg = new FluoKeyValueGenerator();
 
     @Override
-    public void map(LongWritable key, Text data, Context context) throws IOException,
-        InterruptedException {
+    public void map(LongWritable key, Text data, Context context)
+        throws IOException, InterruptedException {
       String fields[] = data.toString().split(",");
 
       fkvg.setRow(fields[0]).setColumn(new Column(fields[1], fields[2])).setValue(fields[3]);
@@ -61,8 +61,8 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
   }
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder(new File(System.getProperty("user.dir")
-      + "/target"));
+  public TemporaryFolder tempFolder =
+      new TemporaryFolder(new File(System.getProperty("user.dir") + "/target"));
 
   @Test
   public void testImportFile() throws Exception {

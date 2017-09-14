@@ -115,12 +115,12 @@ public abstract class ClusterAppRunner extends AppRunner {
     try {
       config.validate();
     } catch (IllegalArgumentException e) {
-      System.err.println("Error - Invalid fluo.properties (" + propsPath + ") due to "
-          + e.getMessage());
+      System.err
+          .println("Error - Invalid fluo.properties (" + propsPath + ") due to " + e.getMessage());
       System.exit(-1);
     } catch (Exception e) {
-      System.err.println("Error - Invalid fluo.properties (" + propsPath + ") due to "
-          + e.getMessage());
+      System.err
+          .println("Error - Invalid fluo.properties (" + propsPath + ") due to " + e.getMessage());
       e.printStackTrace();
       System.exit(-1);
     }
@@ -176,8 +176,8 @@ public abstract class ClusterAppRunner extends AppRunner {
         }
       }
 
-      System.out.println("Initializing Fluo '" + config.getApplicationName()
-          + "' application using " + propsPath);
+      System.out.println(
+          "Initializing Fluo '" + config.getApplicationName() + "' application using " + propsPath);
       try {
         admin.initialize(initOpts);
       } catch (Exception e) {

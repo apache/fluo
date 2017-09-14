@@ -292,15 +292,13 @@ public final class Span implements Serializable {
 
     if (colPrefix.isVisibilitySet()) {
       Bytes fp = followingPrefix(cv);
-      RowColumn end =
-          (fp == null ? new RowColumn(row, new Column(cf, cq)).following() : new RowColumn(row,
-              new Column(cf, cq, fp)));
+      RowColumn end = (fp == null ? new RowColumn(row, new Column(cf, cq)).following()
+          : new RowColumn(row, new Column(cf, cq, fp)));
       return new Span(new RowColumn(row, colPrefix), true, end, false);
     } else if (colPrefix.isQualifierSet()) {
       Bytes fp = followingPrefix(cq);
-      RowColumn end =
-          (fp == null ? new RowColumn(row, new Column(cf)).following() : new RowColumn(row,
-              new Column(cf, fp)));
+      RowColumn end = (fp == null ? new RowColumn(row, new Column(cf)).following()
+          : new RowColumn(row, new Column(cf, fp)));
       return new Span(new RowColumn(row, colPrefix), true, end, false);
     } else if (colPrefix.isFamilySet()) {
       Bytes fp = followingPrefix(cf);

@@ -78,9 +78,10 @@ public class FluoTwillApp implements TwillApplication {
     final int workerMaxMemory = FluoYarnConfig.getWorkerMaxMemory(config);
     final int workerNumCores = FluoYarnConfig.getWorkerNumCores(config);
 
-    log.info("Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
-        + "with following properties:", config.getApplicationName(), oracleInstances,
-        workerInstances);
+    log.info(
+        "Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
+            + "with following properties:",
+        config.getApplicationName(), oracleInstances, workerInstances);
 
     log.info("{} = {}", FluoYarnConfig.ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
     log.info("{} = {}", FluoYarnConfig.WORKER_MAX_MEMORY_MB_PROP, workerMaxMemory);
@@ -88,19 +89,16 @@ public class FluoTwillApp implements TwillApplication {
     log.info("{} = {}", FluoYarnConfig.WORKER_NUM_CORES_PROP, workerNumCores);
 
     // Start building Fluo Twill application
-    MoreRunnable moreRunnable =
-        TwillSpecification.Builder.with()
-            .setName(YarnAppRunner.getYarnApplicationName(config.getApplicationName()))
-            .withRunnable();
+    MoreRunnable moreRunnable = TwillSpecification.Builder.with()
+        .setName(YarnAppRunner.getYarnApplicationName(config.getApplicationName())).withRunnable();
 
     // Configure Oracle(s)
     ResourceSpecification oracleResources =
         ResourceSpecification.Builder.with().setVirtualCores(oracleNumCores)
             .setMemory(oracleMaxMemory, SizeUnit.MEGA).setInstances(oracleInstances).build();
 
-    LocalFileAdder fileAdder =
-        moreRunnable.add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources)
-            .withLocalFiles();
+    LocalFileAdder fileAdder = moreRunnable
+        .add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources).withLocalFiles();
     RunnableSetter runnableSetter = addConfigFiles(fileAdder).apply();
 
     // Configure Worker(s)
@@ -108,9 +106,8 @@ public class FluoTwillApp implements TwillApplication {
         ResourceSpecification.Builder.with().setVirtualCores(workerNumCores)
             .setMemory(workerMaxMemory, SizeUnit.MEGA).setInstances(workerInstances).build();
 
-    fileAdder =
-        runnableSetter.add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources)
-            .withLocalFiles();
+    fileAdder = runnableSetter
+        .add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources).withLocalFiles();
     runnableSetter = addConfigFiles(fileAdder).apply();
 
     // Set runnable order, build and return TwillSpecification

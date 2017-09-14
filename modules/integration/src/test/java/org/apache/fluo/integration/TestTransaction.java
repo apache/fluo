@@ -136,13 +136,13 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
     return tx.preCommit(cd, primary);
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) throws AccumuloException,
-      AccumuloSecurityException {
+  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp)
+      throws AccumuloException, AccumuloSecurityException {
     return tx.commitPrimaryColumn(cd, commitStamp);
   }
 
-  public void finishCommit(CommitData cd, Stamp commitStamp) throws MutationsRejectedException,
-      TableNotFoundException {
+  public void finishCommit(CommitData cd, Stamp commitStamp)
+      throws MutationsRejectedException, TableNotFoundException {
     tx.finishCommit(cd, commitStamp);
     env.getSharedResources().getBatchWriter().waitForAsyncFlush();
   }

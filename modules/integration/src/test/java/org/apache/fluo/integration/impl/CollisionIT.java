@@ -163,13 +163,12 @@ public class CollisionIT extends ITBaseMini {
 
     for (Entry<Key, Value> entry : scanner) {
       Key k = entry.getKey();
-      String rowCol =
-          k.getRow() + ":" + k.getColumnFamily() + ":" + k.getColumnQualifier() + ":"
-              + String.format("%x", k.getTimestamp() & ColumnConstants.PREFIX_MASK);
+      String rowCol = k.getRow() + ":" + k.getColumnFamily() + ":" + k.getColumnQualifier() + ":"
+          + String.format("%x", k.getTimestamp() & ColumnConstants.PREFIX_MASK);
       if (rowCols.contains(rowCol)) {
         System.err.println("DEBUG oldestTs : " + oldestTS + " recentTS : " + recentTS);
-        Iterables.transform(scanner, e -> "DEBUG " + FluoFormatter.toString(e)).forEach(
-            System.err::println);
+        Iterables.transform(scanner, e -> "DEBUG " + FluoFormatter.toString(e))
+            .forEach(System.err::println);
       }
       Assert.assertFalse("Duplicate row col " + rowCol, rowCols.contains(rowCol));
       rowCols.add(rowCol);

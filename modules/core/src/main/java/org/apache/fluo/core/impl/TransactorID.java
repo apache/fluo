@@ -58,9 +58,8 @@ public class TransactorID {
 
   private static Long createID(CuratorFramework curator) {
     try {
-      DistributedAtomicLong counter =
-          new DistributedAtomicLong(curator, ZookeeperPath.TRANSACTOR_COUNT,
-              new ExponentialBackoffRetry(1000, 10));
+      DistributedAtomicLong counter = new DistributedAtomicLong(curator,
+          ZookeeperPath.TRANSACTOR_COUNT, new ExponentialBackoffRetry(1000, 10));
       AtomicValue<Long> nextId = counter.increment();
       while (nextId.succeeded() == false) {
         nextId = counter.increment();

@@ -48,12 +48,10 @@ public class ScannerStreamTest {
 
     CellScannerImpl cellScanner = new CellScannerImpl(rowCols);
 
-    Set<RowColumnValue> expected =
-        rowCols.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
-            .collect(Collectors.toSet());
-    Set<RowColumnValue> actualSubSet =
-        cellScanner.stream().filter(rcv -> rcv.getColumn().getsFamily().equals("f2"))
-            .collect(Collectors.toSet());
+    Set<RowColumnValue> expected = rowCols.stream()
+        .filter(rcv -> rcv.getColumn().getsFamily().equals("f2")).collect(Collectors.toSet());
+    Set<RowColumnValue> actualSubSet = cellScanner.stream()
+        .filter(rcv -> rcv.getColumn().getsFamily().equals("f2")).collect(Collectors.toSet());
 
     Assert.assertNotEquals(empty, actualSubSet);
     Assert.assertNotEquals(empty, cellScanner.stream().collect(Collectors.toSet()));
@@ -75,12 +73,10 @@ public class ScannerStreamTest {
 
     ColumnScanner colScanner = new ColumnScannerImpl(row, colsVal);
 
-    Set<ColumnValue> expected =
-        colsVal.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
-            .collect(Collectors.toSet());
-    Set<ColumnValue> colSubSet =
-        colScanner.stream().filter(cv -> cv.getColumn().getsFamily().equals("f2"))
-            .collect(Collectors.toSet());
+    Set<ColumnValue> expected = colsVal.stream()
+        .filter(cv -> cv.getColumn().getsFamily().equals("f2")).collect(Collectors.toSet());
+    Set<ColumnValue> colSubSet = colScanner.stream()
+        .filter(cv -> cv.getColumn().getsFamily().equals("f2")).collect(Collectors.toSet());
 
     Assert.assertNotEquals(empty, colSubSet);
     Assert.assertNotEquals(empty, colScanner.stream().collect(Collectors.toSet()));

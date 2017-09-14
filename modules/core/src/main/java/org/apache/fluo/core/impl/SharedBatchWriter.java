@@ -107,7 +107,8 @@ public class SharedBatchWriter {
 
     }
 
-    private void processBatches(ArrayList<MutationBatch> batches) throws MutationsRejectedException {
+    private void processBatches(ArrayList<MutationBatch> batches)
+        throws MutationsRejectedException {
       for (MutationBatch mutationBatch : batches) {
         if (mutationBatch != end) {
           bw.addMutations(mutationBatch.mutations);

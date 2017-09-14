@@ -38,8 +38,8 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
   @VisibleForTesting
   static final String TIMESTAMP_OPT = "timestampOpt";
-  private static final ByteSequence NOTIFY_CF_BS = new ArrayByteSequence(
-      ColumnConstants.NOTIFY_CF.toArray());
+  private static final ByteSequence NOTIFY_CF_BS =
+      new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
 
   static final Set<ByteSequence> NOTIFY_CF_SET = Collections.singleton(NOTIFY_CF_BS);
 

@@ -91,12 +91,11 @@ public class FluoRowInputFormat extends InputFormat<Bytes, Iterator<ColumnValue>
       }
 
       @Override
-      public void initialize(InputSplit split, TaskAttemptContext context) throws IOException,
-          InterruptedException {
+      public void initialize(InputSplit split, TaskAttemptContext context)
+          throws IOException, InterruptedException {
         try {
-          ByteArrayInputStream bais =
-              new ByteArrayInputStream(context.getConfiguration().get(PROPS_CONF_KEY)
-                  .getBytes(StandardCharsets.UTF_8));
+          ByteArrayInputStream bais = new ByteArrayInputStream(
+              context.getConfiguration().get(PROPS_CONF_KEY).getBytes(StandardCharsets.UTF_8));
 
           env = new Environment(new FluoConfiguration(bais));
 
@@ -159,8 +158,8 @@ public class FluoRowInputFormat extends InputFormat<Bytes, Iterator<ColumnValue>
 
         AccumuloInputFormat.setZooKeeperInstance(conf, fconfig.getAccumuloInstance(),
             fconfig.getAccumuloZookeepers());
-        AccumuloInputFormat.setConnectorInfo(conf, fconfig.getAccumuloUser(), new PasswordToken(
-            fconfig.getAccumuloPassword()));
+        AccumuloInputFormat.setConnectorInfo(conf, fconfig.getAccumuloUser(),
+            new PasswordToken(fconfig.getAccumuloPassword()));
         AccumuloInputFormat.setInputTableName(conf, env.getTable());
         AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
       }

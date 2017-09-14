@@ -50,8 +50,8 @@ import static org.apache.fluo.accumulo.util.NotificationUtil.isNtfy;
  */
 public class NotificationIterator extends SkippingIterator {
 
-  public static final ByteSequence NTFY_CF = new ArrayByteSequence(
-      ColumnConstants.NOTIFY_CF.toArray());
+  public static final ByteSequence NTFY_CF =
+      new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
 
   private boolean scanOrFullMajc;
   private boolean lastKeySet = false;
@@ -62,7 +62,8 @@ public class NotificationIterator extends SkippingIterator {
 
   private void skipRowCol(PushbackIterator source, Key key) throws IOException {
     int count = 0;
-    while (source.hasTop() && source.getTopKey().equals(key, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+    while (source.hasTop()
+        && source.getTopKey().equals(key, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
       if (count == 10) {
         Key nextKey = key.followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
         if (!seekRange.afterEndKey(nextKey)) {
@@ -146,9 +147,8 @@ public class NotificationIterator extends SkippingIterator {
   @Override
   public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
       IteratorEnvironment env) throws IOException {
-    scanOrFullMajc =
-        env.getIteratorScope() == IteratorScope.scan
-            || (env.getIteratorScope() == IteratorScope.majc && env.isFullMajorCompaction());
+    scanOrFullMajc = env.getIteratorScope() == IteratorScope.scan
+        || (env.getIteratorScope() == IteratorScope.majc && env.isFullMajorCompaction());
     super.init(new PushbackIterator(source), options, env);
   }
 }

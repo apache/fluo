@@ -27,7 +27,8 @@ public class BankUtil {
 
   private BankUtil() {}
 
-  public static void transfer(Environment env, String from, String to, int amount) throws Exception {
+  public static void transfer(Environment env, String from, String to, int amount)
+      throws Exception {
     TestTransaction tx = new TestTransaction(env);
 
     int bal1 = Integer.parseInt(tx.gets(from, BALANCE));

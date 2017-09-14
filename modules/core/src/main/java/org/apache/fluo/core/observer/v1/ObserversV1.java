@@ -103,9 +103,9 @@ class ObserversV1 implements Observers {
       }
 
       if (!observer.getObservedColumn().getColumn().equals(col)) {
-        throw new IllegalStateException("Mismatch between configured column and class column "
-            + observerConfig.getClassName() + " " + col + " "
-            + observer.getObservedColumn().getColumn());
+        throw new IllegalStateException(
+            "Mismatch between configured column and class column " + observerConfig.getClassName()
+                + " " + col + " " + observer.getObservedColumn().getColumn());
       }
     }
 

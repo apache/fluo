@@ -214,9 +214,8 @@ public class PartitionManager {
 
   private synchronized void scheduleRetry() {
     schedExecutor.schedule(this::updatePartitionInfo, retrySleepTime, TimeUnit.MILLISECONDS);
-    retrySleepTime =
-        Math.min(maxSleepTime,
-            (long) (1.5 * retrySleepTime) + (long) (retrySleepTime * Math.random()));
+    retrySleepTime = Math.min(maxSleepTime,
+        (long) (1.5 * retrySleepTime) + (long) (retrySleepTime * Math.random()));
   }
 
   private synchronized void scheduleUpdate() {
@@ -236,10 +235,9 @@ public class PartitionManager {
         me = ZKPaths.getNodeFromPath(me);
 
         String me2 = me;
-        boolean imFirst =
-            childrenCache.getCurrentData().stream().map(ChildData::getPath)
-                .map(ZKPaths::getNodeFromPath).sorted().findFirst().map(s -> s.equals(me2))
-                .orElse(false);
+        boolean imFirst = childrenCache.getCurrentData().stream().map(ChildData::getPath)
+            .map(ZKPaths::getNodeFromPath).sorted().findFirst().map(s -> s.equals(me2))
+            .orElse(false);
 
         if (imFirst) {
 
@@ -278,13 +276,11 @@ public class PartitionManager {
       this.maxSleepTime = maxSleepTime;
       this.retrySleepTime = minSleepTime;
 
-      groupSize =
-          env.getConfiguration().getInt(FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE,
-              FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE_DEFAULT);
+      groupSize = env.getConfiguration().getInt(FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE,
+          FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE_DEFAULT);
 
-      myESNode =
-          new PersistentEphemeralNode(curator, Mode.EPHEMERAL_SEQUENTIAL, ZookeeperPath.FINDERS
-              + "/" + ZK_FINDER_PREFIX, ("" + groupSize).getBytes(UTF_8));
+      myESNode = new PersistentEphemeralNode(curator, Mode.EPHEMERAL_SEQUENTIAL,
+          ZookeeperPath.FINDERS + "/" + ZK_FINDER_PREFIX, ("" + groupSize).getBytes(UTF_8));
       myESNode.start();
       myESNode.waitForInitialCreate(1, TimeUnit.MINUTES);
 
@@ -292,9 +288,8 @@ public class PartitionManager {
       childrenCache.getListenable().addListener(new FindersListener());
       childrenCache.start(StartMode.BUILD_INITIAL_CACHE);
 
-      schedExecutor =
-          Executors.newScheduledThreadPool(1,
-              new FluoThreadFactory("Fluo worker partition manager"));
+      schedExecutor = Executors.newScheduledThreadPool(1,
+          new FluoThreadFactory("Fluo worker partition manager"));
       schedExecutor.scheduleWithFixedDelay(new CheckTabletsTask(), 0, maxSleepTime,
           TimeUnit.MILLISECONDS);
 

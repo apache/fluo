@@ -128,9 +128,8 @@ public class TimestampTrackerIT extends ITBaseImpl {
     long oldestTs = Long.MAX_VALUE;
 
     for (String child : children) {
-      Long ts =
-          LongUtil.fromByteArray(curator.getData().forPath(
-              ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
+      Long ts = LongUtil.fromByteArray(
+          curator.getData().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
       if (ts < oldestTs) {
         oldestTs = ts;
       }
@@ -140,14 +139,15 @@ public class TimestampTrackerIT extends ITBaseImpl {
   }
 
   private boolean zkNodeExists(TimestampTracker tracker) throws Exception {
-    return env.getSharedResources().getCurator().checkExists().forPath(tracker.getNodePath()) != null;
+    return env.getSharedResources().getCurator().checkExists()
+        .forPath(tracker.getNodePath()) != null;
   }
 
   private long zkNodeValue(TimestampTracker tracker) throws Exception {
     if (zkNodeExists(tracker) == false) {
       throw new IllegalStateException("node does not exist");
     }
-    return LongUtil.fromByteArray(env.getSharedResources().getCurator().getData()
-        .forPath(tracker.getNodePath()));
+    return LongUtil.fromByteArray(
+        env.getSharedResources().getCurator().getData().forPath(tracker.getNodePath()));
   }
 }

@@ -41,17 +41,15 @@ public class PartitionManagerTest {
       for (int numWorkers : new int[] {1, 5, 10, 11, 100}) {
         for (int groupSize : new int[] {1, 2, 3, 5, 7, 13, 17, 19, 43, 73, 97}) {
           int expectedGroups = Math.max(1, numWorkers / groupSize);
-          int maxGroupSize =
-              Math.min(numWorkers,
-                  groupSize + (int) Math.ceil((numWorkers % groupSize) / (double) expectedGroups));
+          int maxGroupSize = Math.min(numWorkers,
+              groupSize + (int) Math.ceil((numWorkers % groupSize) / (double) expectedGroups));
 
           TreeSet<String> children = new TreeSet<>();
 
           IntStream.range(0, numWorkers).mapToObj(nff).forEach(children::add);
 
-          Collection<Bytes> rows =
-              IntStream.iterate(0, i -> i + 1000).limit(numSplits)
-                  .mapToObj(i -> String.format("r%06d", i)).map(Bytes::of).collect(toList());
+          Collection<Bytes> rows = IntStream.iterate(0, i -> i + 1000).limit(numSplits)
+              .mapToObj(i -> String.format("r%06d", i)).map(Bytes::of).collect(toList());
           Collection<TableRange> tablets = TableRange.toTabletRanges(rows);
 
           Set<String> idCombos = new HashSet<>();

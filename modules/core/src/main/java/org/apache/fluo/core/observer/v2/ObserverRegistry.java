@@ -23,10 +23,10 @@ import java.util.Set;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.Observer.NotificationType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.api.observer.StringObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ObserverRegistry implements ObserverProvider.Registry {
 
@@ -84,21 +84,21 @@ public class ObserverRegistry implements ObserverProvider.Registry {
       if (!closeMethod.getDeclaringClass().equals(Observer.class)) {
         log.warn(
             "Observer {} implements close().  Close is not called on Observers registered using ObserverProvider."
-                + " Close is only called on Observers configured the old way.", obs.getClass()
-                .getName());
+                + " Close is only called on Observers configured the old way.",
+            obs.getClass().getName());
       }
     } catch (NoSuchMethodException | SecurityException e) {
       throw new RuntimeException("Failed to check if close() is implemented", e);
     }
 
     if (nt == NotificationType.STRONG && !strongColumns.contains(col)) {
-      throw new IllegalArgumentException("Column " + col
-          + " not previously configured for strong notifications");
+      throw new IllegalArgumentException(
+          "Column " + col + " not previously configured for strong notifications");
     }
 
     if (nt == NotificationType.WEAK && !weakColumns.contains(col)) {
-      throw new IllegalArgumentException("Column " + col
-          + " not previously configured for weak notifications");
+      throw new IllegalArgumentException(
+          "Column " + col + " not previously configured for weak notifications");
     }
 
     if (observers.containsKey(col)) {

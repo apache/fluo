@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import javax.inject.Provider;
 
 import com.beust.jcommander.JCommander;
@@ -197,9 +198,7 @@ public abstract class AppRunner {
         description = "Hex encode non ascii bytes", arity = 1)
     public boolean hexEncNonAscii = true;
 
-    @Parameter(
-        names = "--raw",
-        help = true,
+    @Parameter(names = "--raw", help = true,
         description = "Show underlying key/values stored in Accumulo. Interprets the data using Fluo "
             + "internal schema, making it easier to comprehend.")
     public boolean scanAccumuloTable = false;

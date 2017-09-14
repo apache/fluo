@@ -51,9 +51,8 @@ public class TransactorNode implements AutoCloseable {
   public TransactorNode(Environment env, TransactorID tid) {
     this.env = env;
     this.tid = tid;
-    node =
-        new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
-            getNodePath(), tid.toString().getBytes());
+    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
+        getNodePath(), tid.toString().getBytes());
     CuratorUtil.startAndWait(node, 10);
     status = TrStatus.OPEN;
   }

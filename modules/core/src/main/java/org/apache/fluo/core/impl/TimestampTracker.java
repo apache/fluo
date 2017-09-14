@@ -159,12 +159,12 @@ public class TimestampTracker implements AutoCloseable {
    */
   public synchronized void removeTimestamp(long ts) throws NoSuchElementException {
     Preconditions.checkState(!closed, "tracker closed ");
-    Preconditions.checkState(allocationsInProgress > 0, "allocationsInProgress should be > 0 "
-        + allocationsInProgress);
+    Preconditions.checkState(allocationsInProgress > 0,
+        "allocationsInProgress should be > 0 " + allocationsInProgress);
     Objects.requireNonNull(node);
     if (timestamps.remove(ts) == false) {
-      throw new NoSuchElementException("Timestamp " + ts
-          + " was previously removed or does not exist");
+      throw new NoSuchElementException(
+          "Timestamp " + ts + " was previously removed or does not exist");
     }
 
     allocationsInProgress--;
@@ -176,9 +176,8 @@ public class TimestampTracker implements AutoCloseable {
 
   private void createZkNode(long ts) {
     Preconditions.checkState(node == null, "expected node to be null");
-    node =
-        new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
-            getNodePath(), LongUtil.toByteArray(ts));
+    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
+        getNodePath(), LongUtil.toByteArray(ts));
     CuratorUtil.startAndWait(node, 10);
     zkTimestamp = ts;
   }

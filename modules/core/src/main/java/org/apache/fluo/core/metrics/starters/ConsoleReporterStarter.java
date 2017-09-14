@@ -48,9 +48,8 @@ public class ConsoleReporterStarter implements ReporterStarter {
       out = System.err;
     }
 
-    ConsoleReporter reporter =
-        ConsoleReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
-            .convertRatesTo(rateUnit).outputTo(out).build();
+    ConsoleReporter reporter = ConsoleReporter.forRegistry(params.getMetricRegistry())
+        .convertDurationsTo(durationUnit).convertRatesTo(rateUnit).outputTo(out).build();
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
 
     log.info("Reporting metrics to console");

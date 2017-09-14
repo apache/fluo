@@ -105,8 +105,8 @@ public class FluoInit {
 
     InitOptions opts = InitOptions.parse(args);
     File applicationPropsFile = new File(opts.getAppPropsPath());
-    Preconditions.checkArgument(applicationPropsFile.exists(), opts.getAppPropsPath()
-        + " does not exist");
+    Preconditions.checkArgument(applicationPropsFile.exists(),
+        opts.getAppPropsPath() + " does not exist");
 
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.load(applicationPropsFile);

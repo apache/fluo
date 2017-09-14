@@ -63,7 +63,8 @@ public class ParallelSnapshotScanner {
     this.columnConverter = new CachedColumnConverter(columns);
   }
 
-  ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats) {
+  ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs,
+      TxStats stats) {
     for (RowColumn rc : cells) {
       byte[] r = rc.getRow().toArray();
       byte[] cf = rc.getColumn().getFamily().toArray();

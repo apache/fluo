@@ -45,9 +45,8 @@ public class CsvReporterStarter implements ReporterStarter {
     TimeUnit durationUnit =
         TimeUnit.valueOf(config.getString("durationUnit", "milliseconds").toUpperCase());
 
-    CsvReporter reporter =
-        CsvReporter.forRegistry(params.getMetricRegistry()).convertDurationsTo(durationUnit)
-            .convertRatesTo(rateUnit).build(new File(dir));
+    CsvReporter reporter = CsvReporter.forRegistry(params.getMetricRegistry())
+        .convertDurationsTo(durationUnit).convertRatesTo(rateUnit).build(new File(dir));
     reporter.start(config.getInt("frequency", 60), TimeUnit.SECONDS);
 
     log.info("Reporting metrics as csv to directory {}", dir);

@@ -54,10 +54,10 @@ public class TransactorIT extends ITBaseImpl {
     Assert.assertEquals(id2, t2.getTransactorID().getLongID());
     Assert.assertTrue(checkExists(t1));
     Assert.assertTrue(checkExists(t2));
-    Assert.assertArrayEquals("2".getBytes(), env.getSharedResources().getCurator().getData()
-        .forPath(t1.getNodePath()));
-    Assert.assertArrayEquals("3".getBytes(), env.getSharedResources().getCurator().getData()
-        .forPath(t2.getNodePath()));
+    Assert.assertArrayEquals("2".getBytes(),
+        env.getSharedResources().getCurator().getData().forPath(t1.getNodePath()));
+    Assert.assertArrayEquals("3".getBytes(),
+        env.getSharedResources().getCurator().getData().forPath(t2.getNodePath()));
 
     // verify the cache
     Assert.assertTrue(cache.checkExists(id1));

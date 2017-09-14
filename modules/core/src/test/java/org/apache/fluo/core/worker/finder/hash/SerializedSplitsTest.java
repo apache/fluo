@@ -31,9 +31,8 @@ import static java.util.stream.Collectors.toSet;
 public class SerializedSplitsTest {
   @Test
   public void testLotsOfSplits() {
-    List<Bytes> splits =
-        IntStream.iterate(0, i -> i + 13).limit(1_000_000).mapToObj(i -> String.format("%08x", i))
-            .map(Bytes::of).collect(toList());
+    List<Bytes> splits = IntStream.iterate(0, i -> i + 13).limit(1_000_000)
+        .mapToObj(i -> String.format("%08x", i)).map(Bytes::of).collect(toList());
 
     byte[] data = SerializedSplits.serialize(splits);
     Assert.assertTrue(data.length <= SerializedSplits.MAX_SIZE);
@@ -44,9 +43,8 @@ public class SerializedSplitsTest {
     Assert.assertTrue(splits2.size() > 10_000);
     Assert.assertTrue(splits2.size() < splits.size());
 
-    int expectedDiff =
-        Integer.parseInt(splits2.get(1).toString(), 16)
-            - Integer.parseInt(splits2.get(0).toString(), 16);
+    int expectedDiff = Integer.parseInt(splits2.get(1).toString(), 16)
+        - Integer.parseInt(splits2.get(0).toString(), 16);
     Assert.assertTrue(expectedDiff > 13);
     Assert.assertTrue(expectedDiff % 13 == 0);
     // check that splits are evenly spaced
@@ -65,9 +63,8 @@ public class SerializedSplitsTest {
 
   @Test
   public void testSimple() {
-    Set<Bytes> splits =
-        IntStream.iterate(0, i -> i + 13).limit(1_000).mapToObj(i -> String.format("%08x", i))
-            .map(Bytes::of).collect(toSet());
+    Set<Bytes> splits = IntStream.iterate(0, i -> i + 13).limit(1_000)
+        .mapToObj(i -> String.format("%08x", i)).map(Bytes::of).collect(toSet());
 
     byte[] data = SerializedSplits.serialize(splits);
 

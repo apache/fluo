@@ -60,8 +60,8 @@ public class LockResolver {
     for (Entry<Key, Value> lock : locks) {
       LockValue lockVal = new LockValue(lock.getValue().get());
       PrimaryRowColumn prc =
-          new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(), lock.getKey()
-              .getTimestamp() & ColumnConstants.TIMESTAMP_MASK);
+          new PrimaryRowColumn(lockVal.getPrimaryRow(), lockVal.getPrimaryColumn(),
+              lock.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK);
 
       List<Entry<Key, Value>> lockList = groupedLocks.get(prc);
       if (lockList == null) {
@@ -169,8 +169,8 @@ public class LockResolver {
           break;
         case UNKNOWN:
         default:
-          throw new IllegalStateException("can not abort : " + group.getKey() + " ("
-              + txInfo.status + ")");
+          throw new IllegalStateException(
+              "can not abort : " + group.getKey() + " (" + txInfo.status + ")");
       }
     }
 
@@ -204,9 +204,8 @@ public class LockResolver {
 
     IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
     PrewriteIterator.setSnaptime(iterConf, startTs);
-    ConditionalFlutation delLockMutation =
-        new ConditionalFlutation(env, prc.prow, new FluoCondition(env, prc.pcol).setIterators(
-            iterConf).setValue(lockValue));
+    ConditionalFlutation delLockMutation = new ConditionalFlutation(env, prc.prow,
+        new FluoCondition(env, prc.pcol).setIterators(iterConf).setValue(lockValue));
 
     delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | prc.startTs,
         DelLockValue.encodeRollback(true, true));
@@ -235,8 +234,8 @@ public class LockResolver {
       long lockTs = entry.getKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
       // TODO may be that a stronger sanity check that could be done here
       if (commitTs < lockTs) {
-        throw new IllegalStateException("bad commitTs : " + entry.getKey() + " (" + commitTs + "<"
-            + lockTs + ")");
+        throw new IllegalStateException(
+            "bad commitTs : " + entry.getKey() + " (" + commitTs + "<" + lockTs + ")");
       }
 
       Mutation mut = getMutation(entry.getKey().getRowData(), mutations);

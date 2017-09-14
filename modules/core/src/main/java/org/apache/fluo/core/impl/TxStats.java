@@ -149,8 +149,8 @@ public class TxStats {
       MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxLockWaitTime(alias))
           .update(getLockWaitTime(), TimeUnit.MILLISECONDS);
     }
-    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime(alias)).update(
-        getReadTime(), TimeUnit.MILLISECONDS);
+    MetricsUtil.getTimer(env.getConfiguration(), registry, names.getTxExecTime(alias))
+        .update(getReadTime(), TimeUnit.MILLISECONDS);
     if (getCollisions() > 0) {
       registry.meter(names.getTxWithCollision(alias)).mark();
       registry.meter(names.getTxCollisions(alias)).mark(getCollisions());

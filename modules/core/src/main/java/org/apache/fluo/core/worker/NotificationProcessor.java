@@ -194,8 +194,8 @@ public class NotificationProcessor implements AutoCloseable {
 
   }
 
-  private class FutureNotificationTask extends FutureTask<Void> implements
-      Comparable<FutureNotificationTask> {
+  private class FutureNotificationTask extends FutureTask<Void>
+      implements Comparable<FutureNotificationTask> {
 
     private final Notification notification;
 
@@ -227,9 +227,8 @@ public class NotificationProcessor implements AutoCloseable {
     public boolean addNotification(final NotificationFinder notificationFinder,
         final Notification notification) {
 
-      WorkTaskAsync workTask =
-          new WorkTaskAsync(NotificationProcessor.this, notificationFinder, env, notification,
-              observers);
+      WorkTaskAsync workTask = new WorkTaskAsync(NotificationProcessor.this, notificationFinder,
+          env, notification, observers);
       FutureTask<?> ft = new FutureNotificationTask(notification, notificationFinder, workTask);
 
       if (!tracker.add(notification.getRowColumn(), ft)) {

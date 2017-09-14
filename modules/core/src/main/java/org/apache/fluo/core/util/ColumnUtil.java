@@ -50,9 +50,9 @@ public class ColumnUtil {
     return env.getSharedResources().getVisCache().getCV(col);
   }
 
-  public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary,
-      Column col, boolean isWrite, boolean isDelete, long startTs, long commitTs,
-      Set<Column> observedColumns, Mutation m) {
+  public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary, Column col,
+      boolean isWrite, boolean isDelete, long startTs, long commitTs, Set<Column> observedColumns,
+      Mutation m) {
     if (isWrite) {
       Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
           WriteValue.encode(startTs, isPrimary, isDelete));

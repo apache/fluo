@@ -33,10 +33,9 @@ public class AccumuloUtil {
    * Creates Accumulo instance given FluoConfiguration
    */
   public static Instance getInstance(FluoConfiguration config) {
-    ClientConfiguration clientConfig =
-        new ClientConfiguration().withInstance(config.getAccumuloInstance())
-            .withZkHosts(config.getAccumuloZookeepers())
-            .withZkTimeout(config.getZookeeperTimeout() / 1000);
+    ClientConfiguration clientConfig = new ClientConfiguration()
+        .withInstance(config.getAccumuloInstance()).withZkHosts(config.getAccumuloZookeepers())
+        .withZkTimeout(config.getZookeeperTimeout() / 1000);
     return new ZooKeeperInstance(clientConfig);
   }
 

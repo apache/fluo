@@ -61,10 +61,10 @@ public class RowColumnTest {
 
     Assert.assertEquals(RowColumn.EMPTY, new RowColumn().following());
     Assert.assertEquals(new RowColumn(fb), new RowColumn("data").following());
-    Assert.assertEquals(new RowColumn("row", new Column(fb)), new RowColumn("row", new Column(
-        "data")).following());
-    Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), fb)), new RowColumn("row",
-        new Column("cf", "data")).following());
+    Assert.assertEquals(new RowColumn("row", new Column(fb)),
+        new RowColumn("row", new Column("data")).following());
+    Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), fb)),
+        new RowColumn("row", new Column("cf", "data")).following());
     Assert.assertEquals(new RowColumn("row", new Column(Bytes.of("cf"), Bytes.of("cq"), fb)),
         new RowColumn("row", new Column("cf", "cq", "data")).following());
   }

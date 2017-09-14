@@ -45,10 +45,8 @@ public class ScannerIT extends ITBaseImpl {
     Assert.assertEquals(2, expectedR2.size());
 
     HashSet<RowColumnValue> expectedR2c = new HashSet<>();
-    Iterables.addAll(
-        expectedR2c,
-        Iterables.filter(expected,
-            rcv -> rcv.getsRow().equals("r2") && rcv.getColumn().equals(new Column("f1", "q2"))));
+    Iterables.addAll(expectedR2c, Iterables.filter(expected,
+        rcv -> rcv.getsRow().equals("r2") && rcv.getColumn().equals(new Column("f1", "q2"))));
     Assert.assertEquals(1, expectedR2c.size());
 
     HashSet<RowColumnValue> expectedC = new HashSet<>();
@@ -62,8 +60,7 @@ public class ScannerIT extends ITBaseImpl {
     Assert.assertEquals(2, expectedCF.size());
 
     HashSet<RowColumnValue> expectedCols = new HashSet<>();
-    Iterables.addAll(
-        expectedCols,
+    Iterables.addAll(expectedCols,
         Iterables.filter(expected, rcv -> rcv.getColumn().equals(new Column("f2", "q5"))
             || rcv.getColumn().equals(new Column("f1", "q1"))));
     Assert.assertEquals(3, expectedCols.size());
@@ -74,8 +71,8 @@ public class ScannerIT extends ITBaseImpl {
       Assert.assertEquals(expectedR2, actual);
 
       actual.clear();
-      Iterables.addAll(actual, snap.scanner().over(Span.exact("r2")).fetch(new Column("f1", "q2"))
-          .build());
+      Iterables.addAll(actual,
+          snap.scanner().over(Span.exact("r2")).fetch(new Column("f1", "q2")).build());
       Assert.assertEquals(expectedR2c, actual);
 
       actual.clear();
@@ -87,8 +84,8 @@ public class ScannerIT extends ITBaseImpl {
       Assert.assertEquals(expectedCF, actual);
 
       actual.clear();
-      Iterables.addAll(actual, snap.scanner().fetch(new Column("f2", "q5"), new Column("f1", "q1"))
-          .build());
+      Iterables.addAll(actual,
+          snap.scanner().fetch(new Column("f2", "q5"), new Column("f1", "q1")).build());
       Assert.assertEquals(expectedCols, actual);
     }
 
@@ -102,10 +99,8 @@ public class ScannerIT extends ITBaseImpl {
     Column col2 = new Column("f2", "q3");
 
     HashSet<RowColumnValue> expectedC = new HashSet<>();
-    Iterables.addAll(
-        expectedC,
-        Iterables.filter(expected,
-            rcv -> rcv.getColumn().equals(col1) || rcv.getColumn().equals(col2)));
+    Iterables.addAll(expectedC, Iterables.filter(expected,
+        rcv -> rcv.getColumn().equals(col1) || rcv.getColumn().equals(col2)));
     Assert.assertEquals(3, expectedC.size());
 
     try (Snapshot snap = client.newSnapshot()) {

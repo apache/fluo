@@ -219,21 +219,16 @@ public class LogIT extends ITBaseMini {
     String logMsgs = writer.toString();
     logMsgs = logMsgs.replace('\n', ' ');
 
-    Assert
-        .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
-    Assert
-        .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
-    Assert
-        .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
-    Assert
-        .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
-    Assert
-        .assertTrue(logMsgs
-            .matches(".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
+    Assert.assertTrue(logMsgs.matches(
+        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
+    Assert.assertTrue(logMsgs.matches(
+        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
+    Assert.assertTrue(logMsgs.matches(
+        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
+    Assert.assertTrue(logMsgs.matches(
+        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
+    Assert.assertTrue(logMsgs.matches(
+        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
   }
 
   @Test
@@ -352,10 +347,9 @@ public class LogIT extends ITBaseMini {
             ImmutableMap.of(new RowColumn("r1", c1), "v1", new RowColumn("r2", c2), "v4"), ret1);
         Map<String, Map<Column, String>> ret2 =
             snap.gets(Arrays.asList("r1", "r2"), ImmutableSet.of(c1));
-        Assert
-            .assertEquals(
-                ImmutableMap.of("r1", ImmutableMap.of(c1, "v1"), "r2", ImmutableMap.of(c1, "v3")),
-                ret2);
+        Assert.assertEquals(
+            ImmutableMap.of("r1", ImmutableMap.of(c1, "v1"), "r2", ImmutableMap.of(c1, "v3")),
+            ret2);
         Map<Column, String> ret3 = snap.gets("r1", ImmutableSet.of(c1, c2));
         Assert.assertEquals(ImmutableMap.of(c1, "v1", c2, "v2"), ret3);
         Assert.assertEquals("v1", snap.gets("r1", c1));

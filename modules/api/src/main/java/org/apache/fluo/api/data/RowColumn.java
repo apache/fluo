@@ -150,8 +150,8 @@ public final class RowColumn implements Comparable<RowColumn>, Serializable {
     } else if (!col.isVisibilitySet()) {
       return new RowColumn(row, new Column(col.getFamily(), followingBytes(col.getQualifier())));
     } else {
-      return new RowColumn(row, new Column(col.getFamily(), col.getQualifier(),
-          followingBytes(col.getVisibility())));
+      return new RowColumn(row,
+          new Column(col.getFamily(), col.getQualifier(), followingBytes(col.getVisibility())));
     }
   }
 

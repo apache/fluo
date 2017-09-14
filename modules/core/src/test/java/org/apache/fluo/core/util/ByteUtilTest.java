@@ -54,10 +54,9 @@ public class ByteUtilTest {
     Bytes b1 = Bytes.of("str1");
     Bytes b2 = Bytes.of("string2");
     Bytes b3 = Bytes.of("s3");
-    Bytes b4 =
-        Bytes.of("testinggreaterthan128characterstestinggreaterthan128characters"
-            + "testinggreaterthan128characterstestinggreaterthan128characters"
-            + "testinggreaterthan128characters"); // 155 length
+    Bytes b4 = Bytes.of("testinggreaterthan128characterstestinggreaterthan128characters"
+        + "testinggreaterthan128characterstestinggreaterthan128characters"
+        + "testinggreaterthan128characters"); // 155 length
 
     byte[] ball = ByteArrayUtil.concat(b1, b2, b3, b4);
 

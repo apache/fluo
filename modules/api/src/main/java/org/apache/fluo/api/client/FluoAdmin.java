@@ -116,8 +116,8 @@ public interface FluoAdmin extends AutoCloseable {
    * {@link TableExistsException} if Accumulo table exists. If you want to clear table, set
    * {@link InitializationOptions#setClearTable(boolean)} to true.
    */
-  void initialize(InitializationOptions opts) throws AlreadyInitializedException,
-      TableExistsException;
+  void initialize(InitializationOptions opts)
+      throws AlreadyInitializedException, TableExistsException;
 
   /**
    * Updates shared configuration in Zookeeper. Shared configuration consists of all properties

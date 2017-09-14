@@ -28,26 +28,25 @@ public class FluoExecutors {
     return newFixedThreadPool(numThreads, new LinkedBlockingQueue<Runnable>(), name);
   }
 
-  public static ThreadPoolExecutor newFixedThreadPool(int numThreads,
-      BlockingQueue<Runnable> queue, String name) {
-    ThreadPoolExecutor tpe =
-        new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, queue,
-            new FluoThreadFactory(name)) {
-          @Override
-          protected void afterExecute(Runnable r, Throwable t) {
-            if (t != null) {
-              if (t instanceof Exception) {
-                LoggerFactory.getLogger(FluoExecutors.class).warn(
-                    "Thread pool saw uncaught Exception", t);
-              } else {
-                // this is likely an Error. Things may be in a really bad state, so just print it
-                // instead of logging.
-                System.err.println("Threadpool saw uncaught Throwable");
-                t.printStackTrace();
-              }
-            }
+  public static ThreadPoolExecutor newFixedThreadPool(int numThreads, BlockingQueue<Runnable> queue,
+      String name) {
+    ThreadPoolExecutor tpe = new ThreadPoolExecutor(numThreads, numThreads, 0L,
+        TimeUnit.MILLISECONDS, queue, new FluoThreadFactory(name)) {
+      @Override
+      protected void afterExecute(Runnable r, Throwable t) {
+        if (t != null) {
+          if (t instanceof Exception) {
+            LoggerFactory.getLogger(FluoExecutors.class).warn("Thread pool saw uncaught Exception",
+                t);
+          } else {
+            // this is likely an Error. Things may be in a really bad state, so just print it
+            // instead of logging.
+            System.err.println("Threadpool saw uncaught Throwable");
+            t.printStackTrace();
           }
-        };
+        }
+      }
+    };
     return tpe;
   }
 }

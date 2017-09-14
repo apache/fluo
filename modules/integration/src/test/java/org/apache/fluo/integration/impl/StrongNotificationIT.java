@@ -52,7 +52,8 @@ public class StrongNotificationIT extends ITBaseMini {
   @Test
   public void testRollforward() throws Exception {
     // test for bug #642
-    try (Environment env = new Environment(config); TransactorNode tnode = new TransactorNode(env)) {
+    try (Environment env = new Environment(config);
+        TransactorNode tnode = new TransactorNode(env)) {
       TestTransaction tx = new TestTransaction(env, tnode);
 
       // set three columns that should each trigger observers
@@ -63,8 +64,8 @@ public class StrongNotificationIT extends ITBaseMini {
       // partially commit transaction
       CommitData cd = tx.createCommitData();
       Assert.assertTrue(tx.preCommit(cd));
-      Assert.assertTrue(tx.commitPrimaryColumn(cd, env.getSharedResources().getOracleClient()
-          .getStamp()));
+      Assert.assertTrue(
+          tx.commitPrimaryColumn(cd, env.getSharedResources().getOracleClient().getStamp()));
       tx.close();
     }
 

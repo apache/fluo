@@ -94,22 +94,23 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   @Override
-  public void initialize(InitializationOptions opts) throws AlreadyInitializedException,
-      TableExistsException {
+  public void initialize(InitializationOptions opts)
+      throws AlreadyInitializedException, TableExistsException {
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
-    Preconditions.checkArgument(!ZookeeperUtil.parseRoot(config.getInstanceZookeepers())
-        .equals("/"), "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
-        + " must have a chroot suffix.");
+    Preconditions.checkArgument(
+        !ZookeeperUtil.parseRoot(config.getInstanceZookeepers()).equals("/"),
+        "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
+            + " must have a chroot suffix.");
 
-    Preconditions.checkArgument(config.getObserverJarsUrl().isEmpty()
-        || config.getObserverInitDir().isEmpty(),
+    Preconditions.checkArgument(
+        config.getObserverJarsUrl().isEmpty() || config.getObserverInitDir().isEmpty(),
         "Only one of 'fluo.observer.init.dir' and 'fluo.observer.jars.url' can be set");
 
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
-      throw new AlreadyInitializedException("Fluo application already initialized at "
-          + config.getAppZookeepers());
+      throw new AlreadyInitializedException(
+          "Fluo application already initialized at " + config.getAppZookeepers());
     }
 
     Connector conn = AccumuloUtil.getConnector(config);
@@ -166,8 +167,8 @@ public class FluoAdminImpl implements FluoAdmin {
         String contextName = "fluo-" + config.getApplicationName();
         conn.instanceOperations().setProperty(
             AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + contextName, accumuloClasspath);
-        conn.tableOperations().setProperty(config.getAccumuloTable(),
-            AccumuloProps.TABLE_CLASSPATH, contextName);
+        conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_CLASSPATH,
+            contextName);
       }
 
       if (config.getObserverJarsUrl().isEmpty() && !config.getObserverInitDir().trim().isEmpty()) {
@@ -205,8 +206,9 @@ public class FluoAdminImpl implements FluoAdmin {
     // TODO set Fluo data version
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG, new byte[0],
         CuratorUtil.NodeExistsPolicy.FAIL);
-    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE, config.getAccumuloTable()
-        .getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
+    CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_TABLE,
+        config.getAccumuloTable().getBytes(StandardCharsets.UTF_8),
+        CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_NAME,
         accumuloInstanceName.getBytes(StandardCharsets.UTF_8), CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.CONFIG_ACCUMULO_INSTANCE_ID,
@@ -348,8 +350,8 @@ public class FluoAdminImpl implements FluoAdmin {
 
   public static SimpleConfiguration getZookeeperConfig(FluoConfiguration config) {
     if (!isInitialized(config)) {
-      throw new IllegalStateException("Fluo Application '" + config.getApplicationName()
-          + "' has not been initialized");
+      throw new IllegalStateException(
+          "Fluo Application '" + config.getApplicationName() + "' has not been initialized");
     }
 
     SimpleConfiguration zooConfig = new SimpleConfiguration();
@@ -384,9 +386,8 @@ public class FluoAdminImpl implements FluoAdmin {
     ClassLoader cl = FluoAdminImpl.class.getClassLoader();
     URL[] urls = ((URLClassLoader) cl).getURLs();
 
-    String regex =
-        config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
-            FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
+    String regex = config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
+        FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
     Pattern pattern = Pattern.compile(regex);
 
     for (URL url : urls) {
