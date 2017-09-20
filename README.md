@@ -29,8 +29,8 @@ of a large-scale computation, index, or analytic as new data is discovered. Chec
 ## Getting Started
 
 * Take the [Fluo Tour][tour] if you are completely new to Fluo.
-* Read the [install instructions][install] to install Fluo and start a Fluo application in YARN on a
-  cluster where Accumulo, Hadoop & Zookeeper are running. If you need help setting up these
+* Read the [Fluo documentation][fluo-docs] to learn how to install Fluo and start a Fluo application
+  on a cluster where Accumulo, Hadoop & Zookeeper are running. If you need help setting up these
   dependencies, see the [related projects page][related] for external projects that may help.
 
 ## Applications
@@ -42,25 +42,15 @@ Below are helpful resources for Fluo application developers:
 *  [Fluo Recipes][recipes] is a project that provides common code for Fluo application developers
    implemented using the Fluo API.
 
-## Implementation
-
-*  [Architecture] - Overview of Fluo's architecture
-*  [Contributing] - Documentation for developers who want to contribute to Fluo
-*  [Metrics] - Fluo metrics are visible via JMX by default but can be configured to send to Graphite
-   or Ganglia
-
 [fluo]: https://fluo.apache.org/
 [related]: https://fluo.apache.org/related-projects/
 [tour]: https://fluo.apache.org/tour/
 [accumulo]: https://accumulo.apache.org
 [percolator]: https://research.google.com/pubs/pub36726.html
-[install]: docs/install.md
-[apps]: docs/applications.md
+[fluo-docs]: https://fluo.apache.org/docs/fluo/1.1.0-incubating/
+[apps]: https://fluo.apache.org/docs/fluo/1.1.0-incubating/applications/
 [api]: https://fluo.apache.org/apidocs/
 [recipes]: https://github.com/apache/fluo-recipes
-[Metrics]: docs/metrics.md
-[Contributing]: docs/contributing.md
-[Architecture]: docs/architecture.md
 [ti]: https://travis-ci.org/apache/fluo.svg?branch=master
 [tl]: https://travis-ci.org/apache/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
