@@ -17,7 +17,7 @@ package org.apache.fluo.core.oracle;
 
 import org.junit.Test;
 /**
- * Unit test for ByteUtil class
+ * Unit test for StampTest class
  */
 public class StampTest {
 	
