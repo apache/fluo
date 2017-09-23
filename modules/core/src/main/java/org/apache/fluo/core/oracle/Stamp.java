@@ -15,11 +15,18 @@
 
 package org.apache.fluo.core.oracle;
 
+import org.apache.fluo.accumulo.util.ColumnConstants;
+import com.google.common.base.Preconditions;
+
 public class Stamp {
   private final long txStamp;
   private final long gcStamp;
 
   Stamp(long stamp, long gcStamp) {
+	long b= stamp & ColumnConstants.PREFIX_MASK ;
+	Preconditions.checkArgument(b==0?true:false, "should be zero");
+	long c= gcStamp & ColumnConstants.PREFIX_MASK ;
+	Preconditions.checkArgument(c==0?true:false, "should be zero");
     this.txStamp = stamp;
     this.gcStamp = gcStamp;
   }
