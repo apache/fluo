@@ -281,8 +281,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     return this;
   }
   /**
-   * Returns the application name.
-   * @return String The application name 
+   * Returns the application name after verification to avoid characters Zookeeper does not like
+   * in nodes and Hadoop does not like in HDFS paths.
+   * @return The application name 
    */
   public String getApplicationName() {
     String applicationName;
@@ -333,7 +334,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     }
   }
   /**
-   * Sets the Zookeeper instance.
+   * Sets the value of the property {@value #CONNECTION_ZOOKEEPERS_PROP}
    * @param zookeepers The instance to use, must not be null.
    *
    */
@@ -342,7 +343,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
   
   /**
-   * Returns the Zookeeper instance.
+   * Gets the value of the property {@value #CONNECTION_ZOOKEEPERS_PROP} and if not set
+   * returns the default {@value #CONNECTION_ZOOKEEPERS_DEFAULT}
    * @return The zookeeper instance.
    */
   public String getInstanceZookeepers() {
@@ -357,15 +359,15 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getInstanceZookeepers() + "/" + getApplicationName();
   }
   /**
-   * Set the zookeeper timeout property. 
-   * @param timeout Must be a positive integer.
+   * Sets the value of the property {@value #CONNECTION_ZOOKEEPER_TIMEOUT_PROP} 
+   * @param timeout This must be a positive integer
    */
   public FluoConfiguration setZookeeperTimeout(int timeout) {
     return setPositiveInt(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, timeout);
   }
   /**
-   * Returns the custom zookeeper timeout if set, default otherwise.
-   * @return the custom zookeeper timeout if set, default otherwise.
+   * Gets the value of the property {@value #CONNECTION_ZOOKEEPER_TIMEOUT_PROP} and if not set
+   * returns the default  {@value#CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT}
    */
   public int getZookeeperTimeout() {
     return getDepPositiveInt(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_PROP,
@@ -437,37 +439,35 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Sets the Apache Accumulo instance 
-   * @param accumuloInstance The instance to connect to
+   * Sets the Apache Accumulo instance property {@value #ACCUMULO_INSTANCE_PROP} 
+   * @param accumuloInstance The instance to connect to, must not be empty
    */
   public FluoConfiguration setAccumuloInstance(String accumuloInstance) {
     return setNonEmptyString(ACCUMULO_INSTANCE_PROP, accumuloInstance);
   }
   /**
    * Gets the Apache Accumulo instance
-   * @return
    */
   public String getAccumuloInstance() {
     return getDepNonEmptyString(ACCUMULO_INSTANCE_PROP, CLIENT_ACCUMULO_INSTANCE_PROP);
   }
   /**
-   * Sets the Apache Accumulo user name
-   * @param accumuloUser The user name to use, cannot be null.
+   * Sets the value of the property {@value #ACCUMULO_USER_PROP}
+   * @param accumuloUser The user name to use, must not be null.
    */
   public FluoConfiguration setAccumuloUser(String accumuloUser) {
     return setNonEmptyString(ACCUMULO_USER_PROP, accumuloUser);
   }
 
   /**
-   * Gets the Accumulo user name
-   * @return The Accumulo user name
+   * Gets the value of the property {@value #ACCUMULO_USER_PROP}
    */
   public String getAccumuloUser() {
     return getDepNonEmptyString(ACCUMULO_USER_PROP, CLIENT_ACCUMULO_USER_PROP);
   }
   /**
-   * Sets the Apache Accumulo password 
-   * @param accumuloPassword The password to use
+   * Sets the Apache Accumulo password property {@value #ACCUMULO_PASSWORD_PROP}
+   * @param accumuloPassword The password to use, must not be null.
    */
   public FluoConfiguration setAccumuloPassword(String accumuloPassword) {
     setProperty(ACCUMULO_PASSWORD_PROP, verifyNotNull(ACCUMULO_PASSWORD_PROP, accumuloPassword));
@@ -475,8 +475,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Gets the Apache Accumulo password, if it is set.
-   * @return The password.
+   * Gets the Apache Accumulo password property value {@value #ACCUMULO_PASSWORD_PROP}
+   * @throws NoSuchElementException if {@value #ACCUMULO_PASSWORD_PROP} is not set
    */
   public String getAccumuloPassword() {
     if (containsKey(ACCUMULO_PASSWORD_PROP)) {
@@ -487,10 +487,17 @@ public class FluoConfiguration extends SimpleConfiguration {
     throw new NoSuchElementException(ACCUMULO_PASSWORD_PROP + " is not set!");
   }
 
+  /**
+   * Sets the value of the property {@value #ACCUMULO_ZOOKEEPERS_PROP}
+   */
   public FluoConfiguration setAccumuloZookeepers(String zookeepers) {
     return setNonEmptyString(ACCUMULO_ZOOKEEPERS_PROP, zookeepers);
   }
 
+  /**
+   * Gets the value of the property {@value #ACCUMULO_ZOOKEEPERS_PROP} if t is set,
+   * else returns the value of the property {@value #ACCUMULO_ZOOKEEPERS_DEFAULT}
+   */
   public String getAccumuloZookeepers() {
     return getDepNonEmptyString(ACCUMULO_ZOOKEEPERS_PROP, CLIENT_ACCUMULO_ZOOKEEPERS_PROP,
         ACCUMULO_ZOOKEEPERS_DEFAULT);
@@ -499,13 +506,14 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Sets Accumulo table. This property only needs to be set for FluoAdmin as it will be stored and
    * retrieved from Zookeeper for clients.
+   * <p>
+   * Sets the value of the property {@value #ACCUMULO_TABLE_PROP}
    */
   public FluoConfiguration setAccumuloTable(String table) {
     return setNonEmptyString(ACCUMULO_TABLE_PROP, table);
   }
   /**
-   * Get the Apache Accumulo table name.
-   * @return The Accumulo table name.
+   * Gets the value of the property {@value #ACCUMULO_TABLE_PROP}
    */
   public String getAccumuloTable() {
     return getDepNonEmptyString(ACCUMULO_TABLE_PROP, ADMIN_ACCUMULO_TABLE_PROP);
@@ -543,8 +551,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Set the root for the Hadoop DFS, may not be empty.
-   * @param dfsRoot The path for the dfs root eg: hdfs://host:port/path
+   * Set the root for the Hadoop DFS value in property {@value #DFS_ROOT_PROP} 
+   * @param dfsRoot The path for the dfs root eg: hdfs://host:port/path note: may not be empty.
    * @since 1.2.0
    */
   public FluoConfiguration setDfsRoot(String dfsRoot) {
@@ -552,7 +560,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Get the root for the Hadoop DFS.
+   * Gets the value of property {@value #DFS_ROOT_PROP} if set, otherwise gets
+   * the value of property {@value #DFS_ROOT_DEFAULT}
    * @since 1.2.0
    */
   public String getDfsRoot() {
@@ -560,13 +569,15 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
   /**
    * Set the number of worker threads, must be positive. The default is 10 threads.
-   * @param numThreads The number of threads to use.
+   * Sets this value in the property {@value #WORKER_NUM_THREADS_DEFAULT}
+   * @param numThreads The number of threads to use, must be positive
    */
   public FluoConfiguration setWorkerThreads(int numThreads) {
     return setPositiveInt(WORKER_NUM_THREADS_PROP, numThreads);
   }
   /**
-   * Get the number of worker threads, default if not set.
+   * Gets the value of the property {@value #WORKER_NUM_THREADS_PROP} if set
+   * otherwise returns {@value #WORKER_NUM_THREADS_DEFAULT}
    * @return The number of worker threads being used.
    */
   public int getWorkerThreads() {
@@ -843,7 +854,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     return subset(APP_PREFIX);
   }
   /**
-   * Set the boolean to mini start Accumulo
+   * Set the value of the property {@value #MINI_START_ACCUMULO_PROP}
    * @param startAccumulo Flag to mini start Accumulo or not
    */
   public FluoConfiguration setMiniStartAccumulo(boolean startAccumulo) {
@@ -851,23 +862,23 @@ public class FluoConfiguration extends SimpleConfiguration {
     return this;
   }
   /**
-   * Gets if the flag is set to mini start Accumulo
-   * @return the boolean
+   * Gets the value of the property {@value #MINI_START_ACCUMULO_PROP} if set,
+   * else gets the value of {@value #MINI_START_ACCUMULO_DEFAULT}
    */
   public boolean getMiniStartAccumulo() {
     return getBoolean(MINI_START_ACCUMULO_PROP, MINI_START_ACCUMULO_DEFAULT);
   }
 
   /**
-   * Sets the Mini Data Directory 
+   * Sets the value of the property {@value #MINI_DATA_DIR_PROP}
    * @param dataDir The path to the directory, must not be null
    */
   public FluoConfiguration setMiniDataDir(String dataDir) {
     return setNonEmptyString(MINI_DATA_DIR_PROP, dataDir);
   }
   /**
-   * Gets the Mini Data Directory path 
-   * @return The path as a string
+   * Gets the value of the property {@value #MINI_DATA_DIR_PROP} if set,
+   * otherwise gets the value of the property {@value #MINI_DATA_DIR_DEFAULT}
    */
   public String getMiniDataDir() {
     return getNonEmptyString(MINI_DATA_DIR_PROP, MINI_DATA_DIR_DEFAULT);
