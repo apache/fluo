@@ -16,19 +16,20 @@
 package org.apache.fluo.core.oracle;
 
 import org.junit.Test;
+
 /**
  * Unit test for Stamp class
  */
 public class StampTest {
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testBadStartTime(){
-	   new Stamp(1<<62, 5);
-	}
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testBadGcTime(){
-	   new Stamp(5,1<<62);
-	}
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadStartTime() {
+    new Stamp(1L << 62, 5);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadGcTime() {
+    new Stamp(5, 1L << 62);
+  }
 
 }
