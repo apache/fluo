@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
  * agreements. See the NOTICE file distributed with this work for additional information regarding
@@ -12,30 +13,23 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package org.apache.fluo.core.oracle;
 
-import com.google.common.base.Preconditions;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.junit.Test;
 
-public class Stamp {
-  private final long txStamp;
-  private final long gcStamp;
+/**
+ * Unit test for Stamp class
+ */
+public class StampTest {
 
-  Stamp(long stamp, long gcStamp) {
-    long b = stamp & ColumnConstants.PREFIX_MASK;
-    Preconditions.checkArgument(b == 0, "timestamp prefix should be zero");
-    long c = gcStamp & ColumnConstants.PREFIX_MASK;
-    Preconditions.checkArgument(c == 0, "timestamp prefix should be zero");
-    this.txStamp = stamp;
-    this.gcStamp = gcStamp;
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadStartTime() {
+    new Stamp(1L << 62, 5);
   }
 
-  public long getTxTimestamp() {
-    return txStamp;
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadGcTime() {
+    new Stamp(5, 1L << 62);
   }
 
-  public long getGcTimestamp() {
-    return gcStamp;
-  }
 }
