@@ -37,7 +37,7 @@ Fluo has a test suite that consists of the following:
 ## Pull Request
 
 Before making a pull request please attempt to run `mvn verify`.  If it fails and you are not sure 
-why, go ahead make the pull request.
+why, it's OK to go ahead make the pull request.
 
 ## See Also
 
