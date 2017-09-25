@@ -275,6 +275,11 @@ public class FluoConfiguration extends SimpleConfiguration {
     getZookeeperTimeout();
   }
 
+  /**
+   * Sets the {@value #CONNECTION_APPLICATION_NAME_PROP}
+   * @param applicationName
+   * @return
+   */
   public FluoConfiguration setApplicationName(String applicationName) {
     verifyApplicationName(applicationName);
     setProperty(CONNECTION_APPLICATION_NAME_PROP, applicationName);
@@ -283,7 +288,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Returns the application name after verification to avoid characters Zookeeper does not like
    * in nodes and Hadoop does not like in HDFS paths.
-   * @return The application name 
+   * <p>
+   * gets the {@value #CONNECTION_APPLICATION_NAME_PROP} if set
+   * @throws NoSuchElementException if the property has not been set
    */
   public String getApplicationName() {
     String applicationName;
@@ -303,6 +310,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    * does not like in HDFS paths.
    *
    * @param name Application name
+   * @throws IllegalArgumentException If name contains illegal characters
    */
   private void verifyApplicationName(String name) {
     if (name == null) {
@@ -412,7 +420,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Sets the connection retry timeout property in MS. Must be positive.
+   * Sets the connection retry timeout property {@value #CONNECTION_RETRY_TIMEOUT_MS_PROP}
+   * in MS. Must be positive.
    * @since 1.2.0
    */
   public FluoConfiguration setConnectionRetryTimeout(int timeoutMS) {
@@ -423,8 +432,10 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Returns the custom connection retry timeout property if it is set, default
-   * otherwise. The integer returned represents MS and is always positive.
+   * Returns the value of the property {@value #CONNECTION_RETRY_TIMEOUT_MS_PROP} if it is set,
+   * else the default value of {@value #CONNECTION_RETRY_TIMEOUT_MS_DEFAULT}.
+   * The integer returned represents MS and is always positive.
+   * 
    * @since 1.2.0
    */
   public int getConnectionRetryTimeout() {
@@ -446,7 +457,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     return setNonEmptyString(ACCUMULO_INSTANCE_PROP, accumuloInstance);
   }
   /**
-   * Gets the Apache Accumulo instance
+   * Gets the Apache Accumulo instance property value {@value #ACCUMULO_INSTANCE_PROP}
    */
   public String getAccumuloInstance() {
     return getDepNonEmptyString(ACCUMULO_INSTANCE_PROP, CLIENT_ACCUMULO_INSTANCE_PROP);
@@ -532,8 +543,10 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets paths to jars to provide to Accumulo. If not set, Fluo will find jars on classpath
+   * <p>
+   * Sets the value of the property {@value #ACCUMULO_JARS_PROP}
    *
-   * @param path CSV list of paths
+   * @param path CSV list of paths, must not be null
    * @since 1.2.0
    */
   public FluoConfiguration setAccumuloJars(String path) {
@@ -543,6 +556,9 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Gets CSV list of jar paths to provide to Accumulo
+   * <p>
+   * Gets the value of the property {@value #ACCUMULO_JARS_PROP} if set,
+   * {@value #ACCUMULO_JARS_DEFAULT} else
    *
    * @since 1.2.0
    */
@@ -660,7 +676,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    *
    * @since 1.1.0
    *
-   * @param className Name of a class that implements {@link ObserverProvider}. Must be non-null and
+   * @param className Name of a class that implements {@link #OBSERVER_PROVIDER}. Must be non-null and
    *        non-empty.
    */
   public void setObserverProvider(String className) {
@@ -689,6 +705,9 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Gets directory where observer jars can be found for initialization
+   * <p>
+   * Gets the value of the property {@value #OBSERVER_INIT_DIR_PROP} if set,
+   * {@value #OBSERVER_INIT_DIR_DEFAULT} otherwise
    *
    * @return Path to directory
    * @since 1.2.0
@@ -699,8 +718,10 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets URL to directory where observer jars can be found
+   * <p>
+   * Sets the value of the property {@value #OBSERVER_JARS_URL_PROP}
    *
-   * @param observerJarsUrl URL to observer jars directory
+   * @param observerJarsUrl URL to observer jars directory, must not be null
    * @since 1.2.0
    */
   public FluoConfiguration setObserverJarsUrl(String observerJarsUrl) {
@@ -710,6 +731,9 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Gets the directory where observer jars can be found
+   * <p>
+   * Gets the value of the property {@value #OBSERVER_JARS_URL_PROP} if set,
+   * {@value #OBSERVER_JARS_URL_DEFAULT} otherwise
    * @since 1.2.0
    */
   public String getObserverJarsUrl() {
@@ -786,7 +810,9 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets the transaction rollback time, in milliseconds. 
-   * @param time A long representation of the duration
+   * <p>
+   * Sets the value of the property {@value #TRANSACTION_ROLLBACK_TIME_PROP}
+   * @param time A long representation of the duration, must be positive
    * @param tu The TimeUnit to use
    */
   public FluoConfiguration setTransactionRollbackTime(long time, TimeUnit tu) {
@@ -794,6 +820,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
   /**
    * Gets the transaction rollback time, in milliseconds.
+   * <p>
+   * Gets the value of the property {@value #TRANSACTION_ROLLBACK_TIME_PROP} if set,
+   * {@value #TRANSACTION_ROLLBACK_TIME_DEFAULT} otherwise
    * @return A positive long representation of the rollback time.
    */
   public long getTransactionRollbackTime() {
@@ -802,7 +831,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Sets the non negative number of threads each loader runs. If setting to zero,
    * must also set the queue size to zero.
-   * @param numThreads
+   * <p>
+   * Sets the value of the property {@value #LOADER_NUM_THREADS_PROP}
+   * @param numThreads Must be positive
    * @return
    */
   public FluoConfiguration setLoaderThreads(int numThreads) {
@@ -811,6 +842,9 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Returns the number of threads each loader runs.
+   * <p>
+   * Gets the value of the property {@value #LOADER_NUM_THREADS_PROP} if set,
+   * {@value #LOADER_NUM_THREADS_DEFAULT} otherwise
    * @return The number of threads each loader runs.
    */
   public int getLoaderThreads() {
@@ -820,6 +854,8 @@ public class FluoConfiguration extends SimpleConfiguration {
   /** 
    * Sets the queue size for the loader. This should be set to zero if
    * the number of loader threads is zero.
+   * <p>
+   * Sets the value of the property {@value #LOADER_QUEUE_SIZE_PROP}
    * @param queueSize The non negative size of the queue.
    */
   public FluoConfiguration setLoaderQueueSize(int queueSize) {
@@ -827,6 +863,9 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
   /**
    * Gets the loader queue size.
+   * <p>
+   * Gets the value of the property {@value #LOADER_QUEUE_SIZE_PROP} if set,
+   * {@value #LOADER_QUEUE_SIZE_DEFAULT} otherwise
    * @return the loader queue size.
    */
   public int getLoaderQueueSize() {
@@ -989,7 +1028,10 @@ public class FluoConfiguration extends SimpleConfiguration {
     }
     return valid;
   }
-
+  /**
+   * Returns a SimpleConfiguration clientConfig that has 
+   * @return SimpleConfiguration
+   */
   public SimpleConfiguration getClientConfiguration() {
     SimpleConfiguration clientConfig = new SimpleConfiguration();
     Iterator<String> iter = getKeys();
