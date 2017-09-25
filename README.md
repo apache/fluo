@@ -33,24 +33,12 @@ of a large-scale computation, index, or analytic as new data is discovered. Chec
   on a cluster where Accumulo, Hadoop & Zookeeper are running. If you need help setting up these
   dependencies, see the [related projects page][related] for external projects that may help.
 
-## Applications
-
-Below are helpful resources for Fluo application developers:
-
-*  [Instructions][apps] for creating Fluo applications
-*  [Fluo API][api] javadocs
-*  [Fluo Recipes][recipes] is a project that provides common code for Fluo application developers
-   implemented using the Fluo API.
-
 [fluo]: https://fluo.apache.org/
 [related]: https://fluo.apache.org/related-projects/
 [tour]: https://fluo.apache.org/tour/
 [accumulo]: https://accumulo.apache.org
 [percolator]: https://research.google.com/pubs/pub36726.html
-[fluo-docs]: https://fluo.apache.org/docs/fluo/1.1.0-incubating/
-[apps]: https://fluo.apache.org/docs/fluo/1.1.0-incubating/applications/
-[api]: https://fluo.apache.org/apidocs/
-[recipes]: https://github.com/apache/fluo-recipes
+[fluo-docs]: https://fluo.apache.org/docs/
 [ti]: https://travis-ci.org/apache/fluo.svg?branch=master
 [tl]: https://travis-ci.org/apache/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
