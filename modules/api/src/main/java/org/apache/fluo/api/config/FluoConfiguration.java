@@ -288,9 +288,13 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Returns the application name after verification to avoid characters Zookeeper does not like
    * in nodes and Hadoop does not like in HDFS paths.
+<<<<<<< HEAD
    * <p>
    * gets the {@value #CONNECTION_APPLICATION_NAME_PROP} if set
    * @throws NoSuchElementException if the property has not been set
+=======
+   * @return The application name 
+>>>>>>> fb07d624c1d975c397e2dd257ce4e646221ec5b6
    */
   public String getApplicationName() {
     String applicationName;
@@ -457,7 +461,11 @@ public class FluoConfiguration extends SimpleConfiguration {
     return setNonEmptyString(ACCUMULO_INSTANCE_PROP, accumuloInstance);
   }
   /**
+<<<<<<< HEAD
    * Gets the Apache Accumulo instance property value {@value #ACCUMULO_INSTANCE_PROP}
+=======
+   * Gets the Apache Accumulo instance
+>>>>>>> fb07d624c1d975c397e2dd257ce4e646221ec5b6
    */
   public String getAccumuloInstance() {
     return getDepNonEmptyString(ACCUMULO_INSTANCE_PROP, CLIENT_ACCUMULO_INSTANCE_PROP);
