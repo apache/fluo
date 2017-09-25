@@ -75,10 +75,6 @@
       </includes>
     </fileSet>
     <fileSet>
-      <directory>../../docs</directory>
-      <outputDirectory>docs</outputDirectory>
-    </fileSet>
-    <fileSet>
       <directory>../../contrib/grafana</directory>
       <outputDirectory>contrib/grafana</outputDirectory>
     </fileSet>
