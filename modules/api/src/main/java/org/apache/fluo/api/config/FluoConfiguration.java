@@ -277,24 +277,21 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets the {@value #CONNECTION_APPLICATION_NAME_PROP}
-   * @param applicationName
-   * @return
+   * @param applicationName Must not be null
    */
   public FluoConfiguration setApplicationName(String applicationName) {
     verifyApplicationName(applicationName);
     setProperty(CONNECTION_APPLICATION_NAME_PROP, applicationName);
     return this;
   }
+  
   /**
    * Returns the application name after verification to avoid characters Zookeeper does not like
    * in nodes and Hadoop does not like in HDFS paths.
-<<<<<<< HEAD
    * <p>
-   * gets the {@value #CONNECTION_APPLICATION_NAME_PROP} if set
-   * @throws NoSuchElementException if the property has not been set
-=======
+   * Gets the value of the property {@value #CONNECTION_APPLICATION_NAME_PROP} if set
    * @return The application name 
->>>>>>> fb07d624c1d975c397e2dd257ce4e646221ec5b6
+   * @throws NoSuchElementException if the property has not been set
    */
   public String getApplicationName() {
     String applicationName;
@@ -345,6 +342,7 @@ public class FluoConfiguration extends SimpleConfiguration {
           "Invalid application name \"" + name + "\" caused by " + reason);
     }
   }
+  
   /**
    * Sets the value of the property {@value #CONNECTION_ZOOKEEPERS_PROP}
    * @param zookeepers The instance to use, must not be null.
@@ -363,6 +361,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getDepNonEmptyString(CONNECTION_ZOOKEEPERS_PROP, CLIENT_ZOOKEEPER_CONNECT_PROP,
         CONNECTION_ZOOKEEPERS_DEFAULT);
   }
+  
   /**
    * Returns the zookeeper application name string.
    * @return The zookeeper application string.
@@ -370,6 +369,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public String getAppZookeepers() {
     return getInstanceZookeepers() + "/" + getApplicationName();
   }
+  
   /**
    * Sets the value of the property {@value #CONNECTION_ZOOKEEPER_TIMEOUT_PROP} 
    * @param timeout This must be a positive integer
@@ -377,9 +377,10 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setZookeeperTimeout(int timeout) {
     return setPositiveInt(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, timeout);
   }
+  
   /**
    * Gets the value of the property {@value #CONNECTION_ZOOKEEPER_TIMEOUT_PROP} and if not set
-   * returns the default  {@value#CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT}
+   * returns the default  {@value #CONNECTION_ZOOKEEPER_TIMEOUT_DEFAULT}
    */
   public int getZookeeperTimeout() {
     return getDepPositiveInt(CONNECTION_ZOOKEEPER_TIMEOUT_PROP, CLIENT_ZOOKEEPER_TIMEOUT_PROP,
@@ -425,7 +426,7 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets the connection retry timeout property {@value #CONNECTION_RETRY_TIMEOUT_MS_PROP}
-   * in MS. Must be positive.
+   * in milliseconds. Must be positive.
    * @since 1.2.0
    */
   public FluoConfiguration setConnectionRetryTimeout(int timeoutMS) {
@@ -438,7 +439,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   /**
    * Returns the value of the property {@value #CONNECTION_RETRY_TIMEOUT_MS_PROP} if it is set,
    * else the default value of {@value #CONNECTION_RETRY_TIMEOUT_MS_DEFAULT}.
-   * The integer returned represents MS and is always positive.
+   * The integer returned represents milliseconds and is always positive.
    * 
    * @since 1.2.0
    */
@@ -460,16 +461,15 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setAccumuloInstance(String accumuloInstance) {
     return setNonEmptyString(ACCUMULO_INSTANCE_PROP, accumuloInstance);
   }
+  
   /**
-<<<<<<< HEAD
    * Gets the Apache Accumulo instance property value {@value #ACCUMULO_INSTANCE_PROP}
-=======
    * Gets the Apache Accumulo instance
->>>>>>> fb07d624c1d975c397e2dd257ce4e646221ec5b6
    */
   public String getAccumuloInstance() {
     return getDepNonEmptyString(ACCUMULO_INSTANCE_PROP, CLIENT_ACCUMULO_INSTANCE_PROP);
   }
+  
   /**
    * Sets the value of the property {@value #ACCUMULO_USER_PROP}
    * @param accumuloUser The user name to use, must not be null.
@@ -508,13 +508,14 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets the value of the property {@value #ACCUMULO_ZOOKEEPERS_PROP}
+   * @param zookeepers Must not be null
    */
   public FluoConfiguration setAccumuloZookeepers(String zookeepers) {
     return setNonEmptyString(ACCUMULO_ZOOKEEPERS_PROP, zookeepers);
   }
 
   /**
-   * Gets the value of the property {@value #ACCUMULO_ZOOKEEPERS_PROP} if t is set,
+   * Gets the value of the property {@value #ACCUMULO_ZOOKEEPERS_PROP} if it is set,
    * else returns the value of the property {@value #ACCUMULO_ZOOKEEPERS_DEFAULT}
    */
   public String getAccumuloZookeepers() {
@@ -531,6 +532,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setAccumuloTable(String table) {
     return setNonEmptyString(ACCUMULO_TABLE_PROP, table);
   }
+  
   /**
    * Gets the value of the property {@value #ACCUMULO_TABLE_PROP}
    */
@@ -575,7 +577,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Set the root for the Hadoop DFS value in property {@value #DFS_ROOT_PROP} 
+   * Sets the root for the Hadoop DFS value in property {@value #DFS_ROOT_PROP} 
    * @param dfsRoot The path for the dfs root eg: hdfs://host:port/path note: may not be empty.
    * @since 1.2.0
    */
@@ -585,15 +587,16 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Gets the value of property {@value #DFS_ROOT_PROP} if set, otherwise gets
-   * the value of property {@value #DFS_ROOT_DEFAULT}
+   * the default {@value #DFS_ROOT_DEFAULT}
    * @since 1.2.0
    */
   public String getDfsRoot() {
     return getNonEmptyString(DFS_ROOT_PROP, DFS_ROOT_DEFAULT);
   }
   /**
-   * Set the number of worker threads, must be positive. The default is 10 threads.
-   * Sets this value in the property {@value #WORKER_NUM_THREADS_DEFAULT}
+   * Sets the number of worker threads, must be positive. The default is 
+   * {@value #WORKER_NUM_THREADS_DEFAULT} threads.
+   * Sets this value in the property {@value #WORKER_NUM_THREADS_PROP}
    * @param numThreads The number of threads to use, must be positive
    */
   public FluoConfiguration setWorkerThreads(int numThreads) {
@@ -681,10 +684,12 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Configure the observer provider that Fluo workers will use.
+   * <p>
+   * Sets the property of {@value #OBSERVER_PROVIDER}
    *
    * @since 1.1.0
    *
-   * @param className Name of a class that implements {@link #OBSERVER_PROVIDER}. Must be non-null and
+   * @param className Name of a class that implements {@link ObserverProvider}. Must be non-null and
    *        non-empty.
    */
   public void setObserverProvider(String className) {
@@ -702,8 +707,10 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   /**
    * Sets directory where observers jars can found for initialization
-   *
-   * @param observerDir Path to directory
+   * <p>
+   * Sets the value of the property {@value #OBSERVER_INIT_DIR_PROP}
+   * 
+   * @param observerDir Path to directory, must not be null
    * @since 1.2.0
    */
   public FluoConfiguration setObserverInitDir(String observerDir) {
@@ -826,6 +833,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setTransactionRollbackTime(long time, TimeUnit tu) {
     return setPositiveLong(TRANSACTION_ROLLBACK_TIME_PROP, tu.toMillis(time));
   }
+  
   /**
    * Gets the transaction rollback time, in milliseconds.
    * <p>
@@ -836,13 +844,13 @@ public class FluoConfiguration extends SimpleConfiguration {
   public long getTransactionRollbackTime() {
     return getPositiveLong(TRANSACTION_ROLLBACK_TIME_PROP, TRANSACTION_ROLLBACK_TIME_DEFAULT);
   }
+  
   /**
    * Sets the non negative number of threads each loader runs. If setting to zero,
    * must also set the queue size to zero.
    * <p>
    * Sets the value of the property {@value #LOADER_NUM_THREADS_PROP}
    * @param numThreads Must be positive
-   * @return
    */
   public FluoConfiguration setLoaderThreads(int numThreads) {
     return setNonNegativeInt(LOADER_NUM_THREADS_PROP, numThreads);
@@ -853,6 +861,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    * <p>
    * Gets the value of the property {@value #LOADER_NUM_THREADS_PROP} if set,
    * {@value #LOADER_NUM_THREADS_DEFAULT} otherwise
+   * 
    * @return The number of threads each loader runs.
    */
   public int getLoaderThreads() {
@@ -869,6 +878,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setLoaderQueueSize(int queueSize) {
     return setNonNegativeInt(LOADER_QUEUE_SIZE_PROP, queueSize);
   }
+  
   /**
    * Gets the loader queue size.
    * <p>
@@ -900,6 +910,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public SimpleConfiguration getAppConfiguration() {
     return subset(APP_PREFIX);
   }
+  
   /**
    * Set the value of the property {@value #MINI_START_ACCUMULO_PROP}
    * @param startAccumulo Flag to mini start Accumulo or not
@@ -908,6 +919,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     setProperty(MINI_START_ACCUMULO_PROP, startAccumulo);
     return this;
   }
+  
   /**
    * Gets the value of the property {@value #MINI_START_ACCUMULO_PROP} if set,
    * else gets the value of {@value #MINI_START_ACCUMULO_DEFAULT}
@@ -923,6 +935,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public FluoConfiguration setMiniDataDir(String dataDir) {
     return setNonEmptyString(MINI_DATA_DIR_PROP, dataDir);
   }
+  
   /**
    * Gets the value of the property {@value #MINI_DATA_DIR_PROP} if set,
    * otherwise gets the value of the property {@value #MINI_DATA_DIR_DEFAULT}
@@ -961,6 +974,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     }
     return true;
   }
+  
   /**
    * Verifies that the connection properties are set and and valid.
    * @return A boolean if the requirements have been met.
@@ -1036,8 +1050,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     }
     return valid;
   }
+  
   /**
-   * Returns a SimpleConfiguration clientConfig that has 
+   * Returns a SimpleConfiguration clientConfig with properties set from this configuration
    * @return SimpleConfiguration
    */
   public SimpleConfiguration getClientConfiguration() {
