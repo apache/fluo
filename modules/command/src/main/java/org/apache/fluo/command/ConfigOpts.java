@@ -47,12 +47,12 @@ public class ConfigOpts extends BaseOpts {
         String key = propArgs[0].trim();
         String value = propArgs[1].trim();
         if (key.isEmpty() || value.isEmpty()) {
-          throw new IllegalArgumentException("Invalid command line -D option: " + prop);
+          throw new IllegalArgumentException("Invalid command line -o option: " + prop);
         } else {
           config.setProperty(key, value);
         }
       } else {
-        throw new IllegalArgumentException("Invalid command line -D option: " + prop);
+        throw new IllegalArgumentException("Invalid command line -o option: " + prop);
       }
     }
   }
