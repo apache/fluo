@@ -43,7 +43,7 @@ why, it's OK to go ahead and make the pull request.
 
 * [How to Contribute][contribute] on Apache Fluo project website
 
-[Git]: http://git-scm.com/
+[Git]: https://git-scm.com/
 [java]: http://openjdk.java.net/
-[Maven]: http://maven.apache.org/
+[Maven]: https://maven.apache.org/
 [contribute]: https://fluo.apache.org/how-to-contribute/
