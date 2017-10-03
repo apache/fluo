@@ -109,6 +109,16 @@ public class BytesTest {
   }
 
   @Test
+  public void testContentEquals() {
+    Bytes b1 = Bytes.of("a");
+    byte[] b2 = b1.toArray();
+    Assert.assertTrue(b1.contentEquals(b2));
+
+    byte[] b3 = Bytes.of("b").toArray();
+    Assert.assertFalse(b1.contentEquals(b3));
+  }
+
+  @Test
   public void testCompare() {
     Bytes b1 = Bytes.of("a");
     Bytes b2 = Bytes.of("b");
@@ -117,6 +127,15 @@ public class BytesTest {
     Assert.assertEquals(1, b2.compareTo(b1));
     Assert.assertEquals(0, b1.compareTo(b3));
     Assert.assertEquals(0, b1.compareTo(b1));
+    Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+
+    byte[] b1Arr = b1.toArray();
+    byte[] b2Arr = b2.toArray();
+    byte[] b3Arr = b3.toArray();
+    Assert.assertEquals(-1, b1.compareTo(b2Arr));
+    Assert.assertEquals(1, b2.compareTo(b1Arr));
+    Assert.assertEquals(0, b1.compareTo(b3Arr));
+    Assert.assertEquals(0, b1.compareTo(b1Arr));
     Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
   }
 
