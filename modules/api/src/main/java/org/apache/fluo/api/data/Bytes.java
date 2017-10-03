@@ -211,6 +211,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
    *
+   * @since 1.2.0
    * @return comparison result
    */
   public int compareTo(byte[] bytes) {
@@ -224,9 +225,11 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
    *
+   * @since 1.2.0
    * @return comparison result
    */
   public int compareTo(byte[] bytes, int offset, int len) {
+    Preconditions.checkArgument(offset >= 0 && len >= 0 && offset + len <= bytes.length);
     if (this.length == this.data.length && len == bytes.length) {
 
       int res = UnsignedBytes.lexicographicalComparator().compare(this.data, bytes);
@@ -265,6 +268,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Returns true if this Bytes object equals another.
+   * @since 1.2.0
    */
   public boolean contentEquals(byte[] bytes) {
     return contentEquals(bytes, 0, bytes.length);
@@ -272,9 +276,10 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
 
   /**
    * Returns true if this Bytes object equals another.
+   * @since 1.2.0
    */
   public boolean contentEquals(byte[] bytes, int offset, int len) {
-
+    Preconditions.checkArgument(len >= 0 && offset >= 0);
     if (length != len) {
       return false;
     }
