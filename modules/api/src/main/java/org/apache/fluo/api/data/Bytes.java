@@ -279,7 +279,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * @since 1.2.0
    */
   public boolean contentEquals(byte[] bytes, int offset, int len) {
-    Preconditions.checkArgument(len >= 0 && offset >= 0);
+    Preconditions.checkArgument(len >= 0 && offset >= 0 && offset + len <= bytes.length);
     if (length != len) {
       return false;
     }
