@@ -17,6 +17,7 @@ package org.apache.fluo.api.data;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.nio.charset.StandardCharsets;
@@ -109,6 +110,30 @@ public class BytesTest {
   }
 
   @Test
+  public void testContentEquals() {
+    Bytes b1 = Bytes.of("a");
+    byte[] b2 = b1.toArray();
+    byte[] b3 = Bytes.of("b").toArray();
+    Bytes b5 = Bytes.of("qwerty");
+    byte[] b6 = b5.toArray();
+    Bytes b7 = Bytes.of("");
+    byte[] b8 = b7.toArray();
+
+
+    Assert.assertTrue(b1.contentEquals(b2));
+    Assert.assertTrue(b5.contentEquals(b6));
+    Assert.assertTrue(b7.contentEquals(b8));
+
+    Assert.assertFalse(b1.contentEquals(b3));
+    Assert.assertFalse(b1.contentEquals(b6));
+    Assert.assertFalse(b5.contentEquals(b2));
+    Assert.assertFalse(b1.contentEquals(b8));
+    Assert.assertFalse(b5.contentEquals(b8));
+    Assert.assertFalse(b7.contentEquals(b2));
+    Assert.assertFalse(b7.contentEquals(b6));
+  }
+
+  @Test
   public void testCompare() {
     Bytes b1 = Bytes.of("a");
     Bytes b2 = Bytes.of("b");
@@ -118,6 +143,54 @@ public class BytesTest {
     Assert.assertEquals(0, b1.compareTo(b3));
     Assert.assertEquals(0, b1.compareTo(b1));
     Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+
+    byte[] b1Arr = b1.toArray();
+    byte[] b2Arr = b2.toArray();
+    byte[] b3Arr = b3.toArray();
+    Assert.assertEquals(-1, b1.compareTo(b2Arr));
+    Assert.assertEquals(1, b2.compareTo(b1Arr));
+    Assert.assertEquals(0, b1.compareTo(b3Arr));
+    Assert.assertEquals(0, b1.compareTo(b1Arr));
+    Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+
+    Bytes b4 = Bytes.of("abc");
+    byte[] b4Arr = b4.toArray();
+    Bytes b5 = Bytes.of("baz");
+    byte[] b5Arr = b5.toArray();
+    Bytes b6 = Bytes.of("ab");
+    byte[] b7Arr = Bytes.of("dabc").toArray();
+
+    Assert.assertEquals(0, b4.compareTo(b4Arr, 0, 3));
+    Assert.assertTrue(b4.compareTo(b4Arr, 1, 2) < 0);
+    Assert.assertTrue(b5.compareTo(b4Arr, 1, 2) < 0);
+    Assert.assertTrue(b5.compareTo(b5Arr, 1, 2) > 0);
+    Assert.assertTrue(b4.compareTo(b4Arr, 0, 2) > 0);
+    Assert.assertTrue(b6.compareTo(b7Arr, 1, 3) < 0);
+    Assert.assertTrue(b6.compareTo(b1Arr) > 0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCompareNegOffset() {
+    Bytes b1 = Bytes.of("abc");
+    byte[] b2 = b1.toArray();
+
+    b1.compareTo(b2, -4, 1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCompareNegLen() {
+    Bytes b1 = Bytes.of("abc");
+    byte[] b2 = b1.toArray();
+
+    b1.compareTo(b2, 0, -1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCompareBadArgs() {
+    Bytes b1 = Bytes.of("abc");
+    byte[] b2 = b1.toArray();
+
+    b1.compareTo(b2, 2, 2);
   }
 
   @Test
