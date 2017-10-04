@@ -152,6 +152,21 @@ public class BytesTest {
     Assert.assertEquals(0, b1.compareTo(b3Arr));
     Assert.assertEquals(0, b1.compareTo(b1Arr));
     Assert.assertEquals(1, b1.compareTo(Bytes.EMPTY));
+
+    Bytes b4 = Bytes.of("abc");
+    byte[] b4Arr = b4.toArray();
+    Bytes b5 = Bytes.of("baz");
+    byte[] b5Arr = b5.toArray();
+    Bytes b6 = Bytes.of("ab");
+    byte[] b7Arr = Bytes.of("dabc").toArray();
+
+    Assert.assertEquals(0, b4.compareTo(b4Arr, 0, 3));
+    Assert.assertTrue(b4.compareTo(b4Arr, 1, 2) < 0);
+    Assert.assertTrue(b5.compareTo(b4Arr, 1, 2) < 0);
+    Assert.assertTrue(b5.compareTo(b5Arr, 1, 2) > 0);
+    Assert.assertTrue(b4.compareTo(b4Arr, 0, 2) > 0);
+    Assert.assertTrue(b6.compareTo(b7Arr, 1, 3) < 0);
+    Assert.assertTrue(b6.compareTo(b1Arr) > 0);
   }
 
   @Test(expected = IllegalArgumentException.class)

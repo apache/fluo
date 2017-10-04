@@ -200,7 +200,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     if (this == other) {
       return 0;
     } else {
-      return compareTo(other.data, other.offset, other.length);
+      return compareToUnchecked(other.data, other.offset, other.length);
     }
   }
 
@@ -215,7 +215,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * @return comparison result
    */
   public int compareTo(byte[] bytes) {
-    return compareTo(bytes, 0, bytes.length);
+    return compareToUnchecked(bytes, 0, bytes.length);
   }
 
   /**
@@ -225,13 +225,30 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
    * than a longer one.
    *
+   * This method checks the arguments passed to it.
+   *
    * @since 1.2.0
    * @return comparison result
    */
   public int compareTo(byte[] bytes, int offset, int len) {
     Preconditions.checkArgument(offset >= 0 && len >= 0 && offset + len <= bytes.length);
-    if (this.length == this.data.length && len == bytes.length) {
+    return compareToUnchecked(bytes, offset, len);
+  }
 
+  /**
+   * Compares this to the passed bytes, byte by byte, returning a negative, zero, or positive result
+   * if the first sequence is less than, equal to, or greater than the second. The comparison is
+   * performed starting with the first byte of each sequence, and proceeds until a pair of bytes
+   * differs, or one sequence runs out of byte (is shorter). A shorter sequence is considered less
+   * than a longer one.
+   *
+   * This method does not check the arguments passed to it.
+   *
+   * @since 1.2.0
+   * @return comparison result
+   */
+  private int compareToUnchecked(byte[] bytes, int offset, int len) {
+    if (this.length == this.data.length && len == bytes.length) {
       int res = UnsignedBytes.lexicographicalComparator().compare(this.data, bytes);
       return UnsignedBytes.lexicographicalComparator().compare(this.data, bytes);
     } else {
@@ -239,7 +256,6 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
       for (int i = this.offset, j = offset; i < minLen; i++, j++) {
         int a = (this.data[i] & 0xff);
         int b = (bytes[j] & 0xff);
-
         if (a != b) {
           return a - b;
         }
@@ -261,7 +277,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
     if (other instanceof Bytes) {
       Bytes ob = (Bytes) other;
 
-      return contentEquals(ob.data, ob.offset, ob.length);
+      return contentEqualsUnchecked(ob.data, ob.offset, ob.length);
     }
     return false;
   }
@@ -271,20 +287,30 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    * @since 1.2.0
    */
   public boolean contentEquals(byte[] bytes) {
-    return contentEquals(bytes, 0, bytes.length);
+    return contentEqualsUnchecked(bytes, 0, bytes.length);
   }
 
   /**
    * Returns true if this Bytes object equals another.
+   * This method checks it's arguments.
    * @since 1.2.0
    */
   public boolean contentEquals(byte[] bytes, int offset, int len) {
     Preconditions.checkArgument(len >= 0 && offset >= 0 && offset + len <= bytes.length);
+    return contentEqualsUnchecked(bytes, offset, len);
+  }
+
+  /**
+   * Returns true if this Bytes object equals another.
+   * This method doesn't check it's arguments.
+   * @since 1.2.0
+   */
+  private boolean contentEqualsUnchecked(byte[] bytes, int offset, int len) {
     if (length != len) {
       return false;
     }
 
-    return compareTo(bytes, offset, len) == 0;
+    return compareToUnchecked(bytes, offset, len) == 0;
   }
 
   @Override
