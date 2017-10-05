@@ -222,8 +222,14 @@ classpath)
   ;;
 exec)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    setup_service "$2"
-    $JAVA org.apache.fluo.command.FluoExec "$FLUO_CONN_PROPS" "${@:2}"
+    app=$2
+    verify_app "$app"
+    check_conn_props
+    app_lib=$lib/apps/$app
+    mkdir -p "$app_lib"
+    $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
+    export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
+    $JAVA org.apache.fluo.command.FluoExec "${@:2}"
   else
     deprecated_verify "$2"
     export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"

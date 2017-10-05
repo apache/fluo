@@ -57,14 +57,12 @@ public class FluoExec {
     CommandUtil.verifyAppInitialized(fluoConfig);
     fluoConfig = FluoAdminImpl.mergeZookeeperConfig(fluoConfig);
 
-    Arrays.copyOfRange(args, 3, args.length);
-
     Class<?> clazz = Class.forName(className);
 
     // inject fluo configuration
     Guice.createInjector(new FluoConfigModule(clazz, fluoConfig));
 
     Method method = clazz.getMethod("main", String[].class);
-    method.invoke(null, (Object) Arrays.copyOfRange(args, 3, args.length));
+    method.invoke(null, (Object) Arrays.copyOfRange(args, 2, args.length));
   }
 }
