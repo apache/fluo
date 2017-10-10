@@ -17,6 +17,7 @@ package org.apache.fluo.api.client.scanner;
 
 import java.util.Collection;
 
+import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.Span;
 
@@ -30,6 +31,96 @@ public interface ScannerBuilder {
    */
   ScannerBuilder over(Span span);
 
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#exact(Bytes)
+  * @param row restrict the scanner to data in an exact row
+  * @return self
+  */
+  default ScannerBuilder over(Bytes row) {
+    return over(Span.exact(row));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#exact(CharSequence)
+  * @param row restrict the scanner to data in an exact row. String parameters will be encoded as UTF-8
+  * @return self
+  */
+  default ScannerBuilder over(CharSequence row) {
+    return over(Span.exact(row));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#exact(Bytes, Column)
+  * @param row restrict the scanner to data in an exact row 
+  * @param col restrict the scanner to data in exact {@link org.apache.fluo.api.data.Column}.
+  */
+  default ScannerBuilder over(Bytes row, Column col) {
+    return over(Span.exact(row, col));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#exact(CharSequence, Column)
+  * @param row restrict the scanner to data in an exact row
+  * @param col restrict the scanner to data in exact {@link org.apache.fluo.api.data.Column}. 
+  * @return self
+  */
+  default ScannerBuilder over(CharSequence row, Column col) {
+    return over(Span.exact(row, col));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#prefix(Bytes)
+  * @param rowPrefix restrict the scanner to data in rows that begins with a prefix
+  * @return self
+  */
+  default ScannerBuilder overPrefix(Bytes rowPrefix) {
+    return over(Span.prefix(rowPrefix));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#prefix(CharSequence)
+  * @param rowPrefix restrict the scanner to data in rows that begins with a prefix.
+  * @return self
+  */
+  default ScannerBuilder overPrefix(CharSequence rowPrefix) {
+    return over(Span.prefix(rowPrefix));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#prefix(Bytes, Column)
+  * @param rowPrefix restrict the scanner to data in rows that begins with a prefix 
+  * @param colPrefix restrict the scanner to data in {@link org.apache.fluo.api.data.Column} that begins with a prefix
+  * @return self
+  */
+  default ScannerBuilder overPrefix(Bytes rowPrefix, Column colPrefix) {
+    return over(Span.prefix(rowPrefix, colPrefix));
+  }
+
+  /**
+  *
+  * @since 1.2.0
+  * @see org.apache.fluo.api.data.Span#prefix(CharSequence, Column)
+  * @param rowPrefix restrict the scanner to data in rows that begins with a prefix.
+  * @param colPrefix restrict the scanner to data in {@link org.apache.fluo.api.data.Column} that begins with a prefix
+  * @return self
+  */
+  default ScannerBuilder overPrefix(CharSequence rowPrefix, Column colPrefix) {
+    return over(Span.prefix(rowPrefix, colPrefix));
+  }
 
   /**
    * Passing in a Column with only the family set will fetch the entire column family.
