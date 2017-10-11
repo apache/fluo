@@ -513,10 +513,10 @@ public class LogIT extends ITBaseMini {
         CellScanner scanner1 = snap.scanner().build();
         assertEqual(scanner1, rcv1, rcv2, rcv3, rcv4);
 
-        CellScanner scanner2 = snap.scanner().over(Span.exact("r1")).build();
+        CellScanner scanner2 = snap.scanner().over("r1").build();
         assertEqual(scanner2, rcv1, rcv2);
 
-        CellScanner scanner3 = snap.scanner().over(Span.exact("r1")).fetch(c1).build();
+        CellScanner scanner3 = snap.scanner().over("r1").fetch(c1).build();
         assertEqual(scanner3, rcv1);
 
         CellScanner scanner4 = snap.scanner().fetch(c1).build();
@@ -527,10 +527,10 @@ public class LogIT extends ITBaseMini {
         RowScanner rowScanner1 = snap.scanner().byRow().build();
         assertEqual(rowScanner1, "r1", c1, "v1", c2, "v2", "r2", c1, "v3", c2, "v4");
 
-        RowScanner rowScanner2 = snap.scanner().over(Span.exact("r1")).byRow().build();
+        RowScanner rowScanner2 = snap.scanner().over("r1").byRow().build();
         assertEqual(rowScanner2, "r1", c1, "v1", c2, "v2");
 
-        RowScanner rowScanner3 = snap.scanner().over(Span.exact("r1")).fetch(c1).byRow().build();
+        RowScanner rowScanner3 = snap.scanner().over("r1").fetch(c1).byRow().build();
         assertEqual(rowScanner3, "r1", c1, "v1");
 
         RowScanner rowScanner4 = snap.scanner().fetch(c1).byRow().build();

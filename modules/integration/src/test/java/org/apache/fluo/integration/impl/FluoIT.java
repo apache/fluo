@@ -464,7 +464,7 @@ public class FluoIT extends ITBaseImpl {
     HashSet<Column> columns = new HashSet<>();
 
     CellScanner cellScanner =
-        tx2.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+        tx2.scanner().over(Bytes.of("d00001")).fetch(new Column("outlink")).build();
     for (RowColumnValue rcv : cellScanner) {
       columns.add(rcv.getColumn());
     }
@@ -480,8 +480,7 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx4 = new TestTransaction(env);
     columns.clear();
-    cellScanner =
-        tx4.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+    cellScanner = tx4.scanner().over(Bytes.of("d00001")).fetch(new Column("outlink")).build();
     for (RowColumnValue rcv : cellScanner) {
       columns.add(rcv.getColumn());
     }

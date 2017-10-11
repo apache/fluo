@@ -44,8 +44,7 @@ public class WeakNotificationIT extends ITBaseMini {
     @Override
     public void process(TransactionBase tx, Bytes row, Column col) throws Exception {
 
-      CellScanner cellScanner =
-          tx.scanner().over(Span.exact(row, new Column(Bytes.of("stats")))).build();
+      CellScanner cellScanner = tx.scanner().over(row, new Column(Bytes.of("stats"))).build();
 
       int sum = 0;
 
