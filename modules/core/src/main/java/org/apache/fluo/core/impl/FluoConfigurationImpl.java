@@ -56,7 +56,7 @@ public class FluoConfigurationImpl {
   public static int getNumCWThreads(FluoConfiguration conf, int numTservers) {
     int min = conf.getInt(CW_MIN_THREADS_PROP, CW_MIN_THREADS_DEFAULT);
     int max = conf.getInt(CW_MAX_THREADS_PROP, CW_MAX_THREADS_DEFAULT);
-
+    
     if (min < 0 || max < 0 || min > max) {
       throw new IllegalArgumentException("Bad conditional writer thread props " + min + " " + max);
     }
@@ -100,6 +100,37 @@ public class FluoConfigurationImpl {
       throw new IllegalArgumentException("Bad value for " + COMMIT_MEMORY_PROP + " " + m);
     }
     return m;
+  }
+  
+  // Note the size of the cache is in megabytes
+  public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.info.cache";
+  /* TODO: What is a reasonable default size? What is used currently? */
+  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 1;
+  
+  /** 
+   * Gets the value of the property {@ #TX_INFO_CACHE_SIZE} if set,
+   * else gets the default value {@ #TX_INFO_CACHE_SIZE_DEFAULT}
+   * 
+   * @param conf
+   * @return The size of the cache in megabytes
+   */
+  public static long getTxInfoCacheSize(FluoConfiguration conf) {
+	long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
+	if (size <= 0) {
+	  throw new IllegalArgumentException("Cache size must be positive for " + TX_INFO_CACHE_SIZE);
+	}
+	return size;
+  }
+  
+  public static final String TX_INFO_CACHE_TIMEOUT = FLUO_IMPL_PREFIX + ".tx.info.cache.timeout";
+  public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60; 
+ 
+  public static int getTxInfoCacheTimeout(FluoConfiguration conf) {
+	int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
+	if(timeout <= 0) {
+	  throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
+	}
+	return timeout;
   }
 
   public static final String ASYNC_CW_THREADS = FLUO_IMPL_PREFIX + ".async.cw.threads";
