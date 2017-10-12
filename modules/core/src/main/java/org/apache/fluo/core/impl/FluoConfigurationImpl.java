@@ -103,8 +103,8 @@ public class FluoConfigurationImpl {
   }
   
   // Note the size of the cache is in megabytes
-  public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.info.cache";
-  /* TODO: What is a reasonable default size? What is used currently? */
+  public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
+  /* TODO: What is a reasonable default size? Currently CacheBuilder does not specify a size in TxInfoCache.java */
   public static final long TX_INFO_CACHE_SIZE_DEFAULT = 1;
   
   /** 
@@ -115,22 +115,29 @@ public class FluoConfigurationImpl {
    * @return The size of the cache in megabytes
    */
   public static long getTxInfoCacheSize(FluoConfiguration conf) {
-	long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
-	if (size <= 0) {
-	  throw new IllegalArgumentException("Cache size must be positive for " + TX_INFO_CACHE_SIZE);
-	}
-	return size;
+    long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
+    if (size <= 0) {
+      throw new IllegalArgumentException("Cache size must be positive for " + TX_INFO_CACHE_SIZE);
+    }
+    return size;
   }
   
-  public static final String TX_INFO_CACHE_TIMEOUT = FLUO_IMPL_PREFIX + ".tx.info.cache.timeout";
+  public static final String TX_INFO_CACHE_TIMEOUT = FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime";
   public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60; 
- 
+  
+  /**
+   * Gets the cache expire time that entrys will be evicted after if not accessed
+   * 
+   * @param conf
+   * @return The shelf life of entries before they will be evicted if not accessed
+   * TODO: What timeunit would make most sense? Currently TxCacheInfo uses TimeUnit.MINUTES
+   */
   public static int getTxInfoCacheTimeout(FluoConfiguration conf) {
-	int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
-	if(timeout <= 0) {
-	  throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
-	}
-	return timeout;
+    int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
+      if(timeout <= 0) {
+        throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
+      }
+    return timeout;
   }
 
   public static final String ASYNC_CW_THREADS = FLUO_IMPL_PREFIX + ".async.cw.threads";
