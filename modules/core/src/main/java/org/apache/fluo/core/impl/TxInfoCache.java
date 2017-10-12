@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Weigher;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 
@@ -38,8 +39,12 @@ public class TxInfoCache {
   private final Environment env;
 
   TxInfoCache(Environment env) {
-    cache = CacheBuilder.newBuilder().expireAfterAccess(CACHE_TIMEOUT_MIN, TimeUnit.MINUTES)
-        .maximumWeight(10000000).weigher(new TxStatusWeigher()).concurrencyLevel(10).build();
+    final FluoConfiguration conf = env.getConfiguration();
+    cache = CacheBuilder.newBuilder()
+        .expireAfterAccess(FluoConfigurationImpl.getTxIfoCacheTimeout(conf, TimeUnit.MILLISECONDS),
+            TimeUnit.MILLISECONDS)
+        .maximumWeight(FluoConfigurationImpl.getTxInfoCacheSize(conf))
+        .weigher(new TxStatusWeigher()).concurrencyLevel(10).build();
     this.env = env;
   }
 
@@ -58,7 +63,6 @@ public class TxInfoCache {
         cache.put(key, txInfo);
       }
     }
-
     return txInfo;
   }
 }
