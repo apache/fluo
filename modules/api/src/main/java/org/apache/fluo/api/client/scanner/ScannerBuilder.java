@@ -113,7 +113,7 @@ public interface ScannerBuilder {
   /**
   *
   * @see org.apache.fluo.api.data.Span#prefix(CharSequence, Column)
-  * @param rowPrefix restrict the scanner to data in an exact row.
+  * @param row restrict the scanner to data in an exact row.
   * @param colPrefix restrict scanner to data that begins with specifiec {@link org.apache.fluo.api.data.Column} prefix.
   * @return self
   * @since 1.2.0
