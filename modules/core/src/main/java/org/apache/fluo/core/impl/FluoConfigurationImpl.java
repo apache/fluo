@@ -111,14 +111,10 @@ public class FluoConfigurationImpl {
    * Gets the value of the property {@value #TX_INFO_CACHE_SIZE} if set,
    * else gets the default value {@value  #TX_INFO_CACHE_SIZE_DEFAULT}
    * 
-   * @param conf
+   * @param conf The FluoConfiguration.
    * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_SIZE}
-   *         if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
+   *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
    * @since 1.2.0
-   * 
-   * TODO: Consider using the word "weight" in function name if is more clear/precise than "size".
-   *       The function in TxInfoCache uses this default value to set the maximumWeight(long)  
-   *       Why? CacheBuilder has functions called initialSize(),maximumWeight() and maximumSize()
    */
 
   public static long getTxInfoCacheSize(FluoConfiguration conf) {
@@ -135,12 +131,9 @@ public class FluoConfigurationImpl {
   public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60;
 
   /**
-   * Gets the time before stale entries in the cache are evicted based on age.
-   * This method returns an integer representing the time in minutes.
-   * 
-   * @param conf The FluoConfiguration 
-   * @return The shelf life of entries before they will be evicted if not accessed
-   * @since 1.2.0
+   * Gets the time before stale cache entries are evicted 
+   * @param conf FluoConfiguration
+   * @return the time in minutes
    */
   public static int getTxInfoCacheTimeout(FluoConfiguration conf) {
     int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
