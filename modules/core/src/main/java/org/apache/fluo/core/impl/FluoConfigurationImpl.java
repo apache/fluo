@@ -58,7 +58,7 @@ public class FluoConfigurationImpl {
   public static int getNumCWThreads(FluoConfiguration conf, int numTservers) {
     int min = conf.getInt(CW_MIN_THREADS_PROP, CW_MIN_THREADS_DEFAULT);
     int max = conf.getInt(CW_MAX_THREADS_PROP, CW_MAX_THREADS_DEFAULT);
-    
+
     if (min < 0 || max < 0 || min > max) {
       throw new IllegalArgumentException("Bad conditional writer thread props " + min + " " + max);
     }
@@ -103,24 +103,24 @@ public class FluoConfigurationImpl {
     }
     return m;
   }
-  
+
   public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
   public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
-  
+
   /** 
-   * Gets the value of the property {@ #TX_INFO_CACHE_SIZE} if set,
-   * else gets the default value {@ #TX_INFO_CACHE_SIZE_DEFAULT}
+   * Gets the value of the property {@value #TX_INFO_CACHE_SIZE} if set,
+   * else gets the default value {@value  #TX_INFO_CACHE_SIZE_DEFAULT}
    * 
    * @param conf
-   * @return The size of the cache value from the property {@ #TX_INFO_CACHE_SIZE}
-   *         if it is set, else the value of the default {@ #TX_INFO_CACHE_SIZE_DEFAULT}
+   * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_SIZE}
+   *         if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
    * @since 1.2.0
    * 
-   * TODO: Consider using the word weight in function name if is more clear/precise than "Size"
-   *       The function in TxInfoCache uses this default value to set the maximumWeight(long) 
-   *       Why? CacheBuilder has functions called  initialSize(),maximumWeight(), maximumSize()
+   * TODO: Consider using the word "weight" in function name if is more clear/precise than "size".
+   *       The function in TxInfoCache uses this default value to set the maximumWeight(long)  
+   *       Why? CacheBuilder has functions called initialSize(),maximumWeight() and maximumSize()
    */
-  
+
   public static long getTxInfoCacheSize(FluoConfiguration conf) {
     long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
     if (size <= 0) {
@@ -128,11 +128,12 @@ public class FluoConfigurationImpl {
     }
     return size;
   }
-  
-  public static final String TX_INFO_CACHE_TIMEOUT = FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime";
+
+  public static final String TX_INFO_CACHE_TIMEOUT =
+      FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime";
   /* Note: this default is in minutes */
-  public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60; 
-  
+  public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60;
+
   /**
    * Gets the time before stale entries in the cache are evicted based on age.
    * This method returns an integer representing the time in minutes.
@@ -143,19 +144,19 @@ public class FluoConfigurationImpl {
    */
   public static int getTxInfoCacheTimeout(FluoConfiguration conf) {
     int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
-      if(timeout <= 0) {
-        throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
-      }
+    if (timeout <= 0) {
+      throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
+    }
     return timeout;
   }
-  
+
   /**
    * Gets the time before stale entries in the cache are evicted based on age.
    * This method returns a long representing the time in milliseconds.
    * 
    *@since 1.2.0 
    */
-  
+
   public static long getTxIfoCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
     int minutes = getTxInfoCacheTimeout(conf);
     return tu.toMillis((long) minutes);
