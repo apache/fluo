@@ -15,6 +15,8 @@
 
 package org.apache.fluo.core.impl;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.fluo.api.config.FluoConfiguration;
 
 /**
@@ -102,18 +104,23 @@ public class FluoConfigurationImpl {
     return m;
   }
   
-  // Note the size of the cache is in megabytes
   public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
-  /* TODO: What is a reasonable default size? Currently CacheBuilder does not specify a size in TxInfoCache.java */
-  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 1;
+  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
   
   /** 
    * Gets the value of the property {@ #TX_INFO_CACHE_SIZE} if set,
    * else gets the default value {@ #TX_INFO_CACHE_SIZE_DEFAULT}
    * 
    * @param conf
-   * @return The size of the cache in megabytes
+   * @return The size of the cache value from the property {@ #TX_INFO_CACHE_SIZE}
+   *         if it is set, else the value of the default {@ #TX_INFO_CACHE_SIZE_DEFAULT}
+   * @since 1.2.0
+   * 
+   * TODO: Consider using the word weight in function name if is more clear/precise than "Size"
+   *       The function in TxInfoCache uses this default value to set the maximumWeight(long) 
+   *       Why? CacheBuilder has functions called  initialSize(),maximumWeight(), maximumSize()
    */
+  
   public static long getTxInfoCacheSize(FluoConfiguration conf) {
     long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
     if (size <= 0) {
@@ -123,14 +130,16 @@ public class FluoConfigurationImpl {
   }
   
   public static final String TX_INFO_CACHE_TIMEOUT = FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime";
+  /* Note: this default is in minutes */
   public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60; 
   
   /**
-   * Gets the cache expire time that entrys will be evicted after if not accessed
+   * Gets the time before stale entries in the cache are evicted based on age.
+   * This method returns an integer representing the time in minutes.
    * 
-   * @param conf
+   * @param conf The FluoConfiguration 
    * @return The shelf life of entries before they will be evicted if not accessed
-   * TODO: What timeunit would make most sense? Currently TxCacheInfo uses TimeUnit.MINUTES
+   * @since 1.2.0
    */
   public static int getTxInfoCacheTimeout(FluoConfiguration conf) {
     int timeout = conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
@@ -138,6 +147,18 @@ public class FluoConfigurationImpl {
         throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
       }
     return timeout;
+  }
+  
+  /**
+   * Gets the time before stale entries in the cache are evicted based on age.
+   * This method returns a long representing the time in milliseconds.
+   * 
+   *@since 1.2.0 
+   */
+  
+  public static long getTxIfoCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
+    int minutes = getTxInfoCacheTimeout(conf);
+    return tu.toMillis((long) minutes);
   }
 
   public static final String ASYNC_CW_THREADS = FLUO_IMPL_PREFIX + ".async.cw.threads";
