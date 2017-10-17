@@ -56,8 +56,7 @@ public class WorkerIT extends ITBaseMini {
       String degree = tx.gets(row, DEGREE);
 
       // calculate new degree
-      String degree2 =
-          "" + Iterables.size(tx.scanner().over(Span.exact(row, new Column("link"))).build());
+      String degree2 = "" + Iterables.size(tx.scanner().over(row, new Column("link")).build());
 
       if (degree == null || !degree.equals(degree2)) {
         tx.set(row, DEGREE, degree2);

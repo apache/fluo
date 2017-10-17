@@ -67,12 +67,11 @@ public class ScannerIT extends ITBaseImpl {
 
     try (Snapshot snap = client.newSnapshot()) {
       HashSet<RowColumnValue> actual = new HashSet<>();
-      Iterables.addAll(actual, snap.scanner().over(Span.exact("r2")).build());
+      Iterables.addAll(actual, snap.scanner().over("r2").build());
       Assert.assertEquals(expectedR2, actual);
 
       actual.clear();
-      Iterables.addAll(actual,
-          snap.scanner().over(Span.exact("r2")).fetch(new Column("f1", "q2")).build());
+      Iterables.addAll(actual, snap.scanner().over("r2").fetch(new Column("f1", "q2")).build());
       Assert.assertEquals(expectedR2c, actual);
 
       actual.clear();
