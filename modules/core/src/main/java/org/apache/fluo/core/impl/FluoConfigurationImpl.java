@@ -108,10 +108,9 @@ public class FluoConfigurationImpl {
   public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
 
   /** 
-   * Gets the value of the property {@value #TX_INFO_CACHE_SIZE} if set,
-   * else gets the default value {@value  #TX_INFO_CACHE_SIZE_DEFAULT}
+   * Gets the cache size
    * 
-   * @param conf The FluoConfiguration.
+   * @param conf The FluoConfiguration
    * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_SIZE}
    *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
    */
