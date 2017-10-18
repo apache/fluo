@@ -114,8 +114,6 @@ public class FluoConfigurationImpl {
    * @param conf The FluoConfiguration.
    * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_SIZE}
    *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
-   *     
-   * @since 1.2.0
    */
 
   public static long getTxInfoCacheSize(FluoConfiguration conf) {
@@ -127,24 +125,22 @@ public class FluoConfigurationImpl {
   }
 
   public static final String TX_INFO_CACHE_TIMEOUT =
-      FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime.minutes";
-  public static final int TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60;
+      FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime.ms";
+  public static final long TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60;
 
   /**
    * Gets the time before stale entries in the cache are evicted based on age.
    * This method returns a long representing the time converted from the
-   * TimeUnit passed in. By default, FluoConfiguration uses minutes.
+   * TimeUnit passed in.
    * 
    * @param conf The FluoConfiguration
    * @param tu   The TimeUnit desired to represent the cache timeout
-   * 
-   * @since 1.2.0 
    */
 
   public static long getTxIfoCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
-    long minutes = (long) conf.getInt(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
+    long minutes = conf.getLong(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
     if (minutes <= 0) {
-      throw new IllegalArgumentException("Timout must positive for " + TX_INFO_CACHE_TIMEOUT);
+      throw new IllegalArgumentException("Timeout must positive for " + TX_INFO_CACHE_TIMEOUT);
     }
     return tu.convert(minutes, TimeUnit.MINUTES);
   }
