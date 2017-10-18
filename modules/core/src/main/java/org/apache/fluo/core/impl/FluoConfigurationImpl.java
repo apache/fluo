@@ -125,7 +125,7 @@ public class FluoConfigurationImpl {
 
   public static final String TX_INFO_CACHE_TIMEOUT =
       FLUO_IMPL_PREFIX + ".tx.failed.cache.expireTime.ms";
-  public static final long TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60;
+  public static final long TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
 
   /**
    * Gets the time before stale entries in the cache are evicted based on age.
@@ -137,11 +137,11 @@ public class FluoConfigurationImpl {
    */
 
   public static long getTxIfoCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
-    long minutes = conf.getLong(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
-    if (minutes <= 0) {
+    long millis = conf.getLong(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
+    if (millis <= 0) {
       throw new IllegalArgumentException("Timeout must positive for " + TX_INFO_CACHE_TIMEOUT);
     }
-    return tu.convert(minutes, TimeUnit.MINUTES);
+    return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
 
   public static final String ASYNC_CW_THREADS = FLUO_IMPL_PREFIX + ".async.cw.threads";
