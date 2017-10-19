@@ -49,8 +49,9 @@ public class TransactorCache implements AutoCloseable {
   public TransactorCache(Environment env) {
 
     timeoutCache = CacheBuilder.newBuilder().maximumSize(1 << 15)
-        .expireAfterAccess(TxInfoCache.CACHE_TIMEOUT_MIN, TimeUnit.MINUTES).concurrencyLevel(10)
-        .build();
+        .expireAfterAccess(FluoConfigurationImpl.TX_INFO_CACHE_TIMEOUT_DEFAULT,
+            TimeUnit.MILLISECONDS)
+        .concurrencyLevel(10).build();
 
     this.env = env;
     cache = new PathChildrenCache(env.getSharedResources().getCurator(),

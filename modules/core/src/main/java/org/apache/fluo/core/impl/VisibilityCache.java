@@ -47,9 +47,11 @@ public class VisibilityCache {
   private final Cache<Bytes, ColumnVisibility> visCache;
 
   VisibilityCache() {
-    visCache =
-        CacheBuilder.newBuilder().expireAfterAccess(TxInfoCache.CACHE_TIMEOUT_MIN, TimeUnit.MINUTES)
-            .maximumWeight(10000000).weigher(new VisWeigher()).concurrencyLevel(10).build();
+    visCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(FluoConfigurationImpl.TX_INFO_CACHE_TIMEOUT_DEFAULT,
+            TimeUnit.MILLISECONDS)
+        .maximumWeight(FluoConfigurationImpl.TX_INFO_CACHE_SIZE_DEFAULT).weigher(new VisWeigher())
+        .concurrencyLevel(10).build();
   }
 
   public ColumnVisibility getCV(Column col) {
