@@ -249,7 +249,6 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   private int compareToUnchecked(byte[] bytes, int offset, int len) {
     if (this.length == this.data.length && len == bytes.length) {
-      int res = UnsignedBytes.lexicographicalComparator().compare(this.data, bytes);
       return UnsignedBytes.lexicographicalComparator().compare(this.data, bytes);
     } else {
       int minLen = Math.min(this.length, len);
