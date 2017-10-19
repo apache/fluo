@@ -22,7 +22,7 @@ import org.junit.Test;
  * Basic test to ensure instantiation works
  */
 public class VisibilityCacheTest {
-  
+
   @Test
   public void testVisibilityCacheConstructor() {
     VisibilityCache cache = new VisibilityCache();
