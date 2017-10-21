@@ -105,7 +105,7 @@ public class FluoConfigurationImpl {
   }
 
   public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
-  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
+  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10_000_000;
 
   /** 
    * Gets the cache size
@@ -140,6 +140,47 @@ public class FluoConfigurationImpl {
     long millis = conf.getLong(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
     if (millis <= 0) {
       throw new IllegalArgumentException("Timeout must positive for " + TX_INFO_CACHE_TIMEOUT);
+    }
+    return tu.convert(millis, TimeUnit.MILLISECONDS);
+  }
+
+  public static final String VISIBILITY_CACHE_SIZE = FLUO_IMPL_PREFIX + ".visibility.cache.size.mb";
+  public static final long VISIBILITY_CACHE_SIZE_DEFAULT = 10_000_000;
+
+  /** 
+   * Gets the cache size
+   * 
+   * @param conf The FluoConfiguration
+   * @return The size of the cache value from the property value {@value #VISIBILITY_CACHE_SIZE}
+   *     if it is set, else the value of the default value {@value #VISIBILITY_CACHE_SIZE_DEFAULT}
+   */
+
+  public static long getVisibilityCacheSize(FluoConfiguration conf) {
+    long size = conf.getLong(VISIBILITY_CACHE_SIZE, VISIBILITY_CACHE_SIZE_DEFAULT);
+    if (size <= 0) {
+      throw new IllegalArgumentException(
+          "Cache size must be positive for " + VISIBILITY_CACHE_SIZE);
+    }
+    return size;
+  }
+
+  public static final String VISIBILITY_CACHE_TIMEOUT =
+      FLUO_IMPL_PREFIX + ".visibility.cache.expireTime.ms";
+  public static final long VISIBILITY_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
+
+  /**
+   * Gets the time before stale entries in the cache are evicted based on age.
+   * This method returns a long representing the time converted from the
+   * TimeUnit passed in.
+   * 
+   * @param conf The FluoConfiguration
+   * @param tu   The TimeUnit desired to represent the cache timeout
+   */
+
+  public static long getVisibilityCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
+    long millis = conf.getLong(VISIBILITY_CACHE_TIMEOUT, VISIBILITY_CACHE_TIMEOUT_DEFAULT);
+    if (millis <= 0) {
+      throw new IllegalArgumentException("Timeout must positive for " + VISIBILITY_CACHE_TIMEOUT);
     }
     return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
