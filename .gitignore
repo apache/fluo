@@ -6,3 +6,4 @@ logs
 *.iml
 .idea
 .DS_Store
+/bin
