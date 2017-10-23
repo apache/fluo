@@ -143,6 +143,7 @@ public class FluoConfigurationImpl {
     }
     return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
+
   public static final String VISIBILITY_CACHE_SIZE = FLUO_IMPL_PREFIX + ".visibility.cache.size.mb";
   public static final long VISIBILITY_CACHE_SIZE_DEFAULT = 10_000_000;
 
@@ -157,7 +158,8 @@ public class FluoConfigurationImpl {
   public static long getVisibilityCacheSize(FluoConfiguration conf) {
     long size = conf.getLong(VISIBILITY_CACHE_SIZE, VISIBILITY_CACHE_SIZE_DEFAULT);
     if (size <= 0) {
-      throw new IllegalArgumentException("Cache size must be positive for " + VISIBILITY_CACHE_SIZE);
+      throw new IllegalArgumentException(
+          "Cache size must be positive for " + VISIBILITY_CACHE_SIZE);
     }
     return size;
   }

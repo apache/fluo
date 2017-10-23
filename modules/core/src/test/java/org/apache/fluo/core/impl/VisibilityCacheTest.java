@@ -16,7 +16,6 @@
 package org.apache.fluo.core.impl;
 
 import org.apache.fluo.api.config.FluoConfiguration;
-
 import org.junit.Assert;
 import org.junit.Test;
 
