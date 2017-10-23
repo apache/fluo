@@ -85,6 +85,11 @@
     <findbugs.maxRank>16</findbugs.maxRank>
     <findbugs.xmlOutput>true</findbugs.xmlOutput>
     <formatter.config>org/apache/fluo/resources/eclipse-formatter.xml</formatter.config>
+    <formatter.css.skip>true</formatter.css.skip>
+    <formatter.html.skip>true</formatter.html.skip>
+    <formatter.js.skip>true</formatter.js.skip>
+    <formatter.json.skip>true</formatter.json.skip>
+    <formatter.xml.skip>true</formatter.xml.skip>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.min-version>3.0.5</maven.min-version>
@@ -116,7 +121,7 @@
         <plugin>
           <groupId>com.github.koraktor</groupId>
           <artifactId>mavanagaiata</artifactId>
-          <version>0.7.2</version>
+          <version>0.8.2</version>
           <configuration>
             <skipNoGit>true</skipNoGit>
           </configuration>
@@ -131,7 +136,7 @@
         <plugin>
           <groupId>net.revelc.code.formatter</groupId>
           <artifactId>formatter-maven-plugin</artifactId>
-          <version>2.0.1</version>
+          <version>2.6.0</version>
           <configuration>
             <lineEnding>LF</lineEnding>
             <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
@@ -148,7 +153,7 @@
         <plugin>
           <groupId>net.revelc.code</groupId>
           <artifactId>impsort-maven-plugin</artifactId>
-          <version>1.0.0</version>
+          <version>1.0.1</version>
           <configuration>
             <groups>java.,javax.</groups>
             <staticAfter>true</staticAfter>
@@ -245,11 +250,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
+          <version>0.12</version>
           <configuration>
             <excludes combine.children="append">
               <exclude>/.travis.yml</exclude>
@@ -259,13 +265,13 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
-          <version>3.0.4</version>
+          <version>3.0.5</version>
         </plugin>
         <!-- check for version updates with 'mvn versions:display-plugin-updates' -->
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>versions-maven-plugin</artifactId>
-          <version>2.4</version>
+          <version>2.5</version>
         </plugin>
         <plugin>
           <groupId>org.gaul</groupId>
