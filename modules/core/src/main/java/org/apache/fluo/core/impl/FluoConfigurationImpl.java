@@ -105,7 +105,7 @@ public class FluoConfigurationImpl {
   }
 
   public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
-  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
+  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10_000_000;
 
   /** 
    * Gets the cache size
@@ -144,7 +144,7 @@ public class FluoConfigurationImpl {
     return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
   public static final String VISIBILITY_CACHE_SIZE = FLUO_IMPL_PREFIX + ".visibility.cache.size.mb";
-  public static final long VISIBILITY_CACHE_SIZE_DEFAULT = 10000000;
+  public static final long VISIBILITY_CACHE_SIZE_DEFAULT = 10_000_000;
 
   /** 
    * Gets the cache size
