@@ -82,7 +82,7 @@ public class SharedResources implements AutoCloseable {
             .setAuthorizations(env.getAuthorizations()).setMaxWriteThreads(numCWThreads));
 
     txInfoCache = new TxInfoCache(env);
-    visCache = new VisibilityCache();
+    visCache = new VisibilityCache(env.getConfiguration());
     metricRegistry = new MetricRegistry();
 
     int commitThreads = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_COMMIT_THREADS,

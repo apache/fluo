@@ -20,13 +20,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.Weigher;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.util.ByteUtil;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.Weigher;
 
 /**
  * PArsing Column visibilities can be expensive. This class provides a cache of parsed visibility
@@ -46,11 +48,11 @@ public class VisibilityCache {
 
   private final Cache<Bytes, ColumnVisibility> visCache;
 
-  VisibilityCache() {
+  VisibilityCache(FluoConfiguration conf) {
     visCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(FluoConfigurationImpl.VISIBILITY_CACHE_TIMEOUT_DEFAULT,
+        .expireAfterAccess(FluoConfigurationImpl.getTxIfoCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
-        .maximumWeight(FluoConfigurationImpl.VISIBILITY_CACHE_SIZE_DEFAULT).weigher(new VisWeigher())
+        .maximumWeight(FluoConfigurationImpl.getVisibilityCacheSize(conf)).weigher(new VisWeigher())
         .concurrencyLevel(10).build();
   }
 
