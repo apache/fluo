@@ -15,41 +15,81 @@
 
 package org.apache.fluo.accumulo.iterators;
 
+import java.util.ArrayList;
+import java.util.function.LongPredicate;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
+
 /**
  * This class buffers Keys that all have the same row+column.  Internally 
  * it only stores one Key, a list of timestamps and a list of values.  At iteration 
  * time it materializes each Key+Value.
  */
 class ColumnBuffer {
+
+  private Key key;
+  private ArrayList<Long> timeStamps;
+  private ArrayList<Value> values;
+  private int size;
+
+  public ColumnBuffer() {
+
+    this.key = null;
+    this.timeStamps = new ArrayList<>();
+    this.values = new ArrayList<>();
+    size = 0;
+  }
+
   /**
    * When empty, the first key added sets the row+column.  After this all keys
    * added must have the same row+column.
    */
-  public void add(Key k, Value v){
-    //TODO
+  public void add(Key k, Value v) {
+
+    if (key == null) {
+      key = k;
+      timeStamps.add(k.getTimestamp());
+      values.add(v);
+      size++;
+    } else if (key.compareRow(k.getRow()) == 0
+        && key.compareColumnFamily(k.getColumnFamily()) == 0) {
+      timeStamps.add(k.getTimestamp());
+      values.add(v);
+    } else {
+      //TODO: what happens here
+    }
   }
-  
+
   /**
-   * Clears the dest ColumnBuffer and inserts all entries in destwhere the timestamp passes 
+   * Clears the dest ColumnBuffer and inserts all entries in dest where the timestamp passes 
    * the timestampTest.
    */
-  public void copyTo(ColumnBuffer dest, LongPredicate timestampTest){
-    //TODO
+  public void copyTo(ColumnBuffer dest, LongPredicate timestampTest) {
+    dest.clear();
+
+    for (int i = 0; i < timeStamps.size(); i++) {
+      long time = timeStamps.get(i);
+      if (timestampTest.test(time)) {
+        dest.add(new Key(key.getRow(), time), values.get(i));
+      }
+    }
   }
 
-  public void clear(){
-    //TODO
+  public void clear() {
+    timeStamps = null;
+    values = null;
   }
 
-  public int size(){
-    //TODO
+  public int size() {
+    return size;
   }
-  
-  public Key getKey(int pos){
-    //TODO
+
+  public Key getKey(int pos) {
+    return new Key(key.getRow(), timeStamps.get(pos));
   }
-  
-  public Value getValue(int pos){
-    //TODO
+
+  public Value getValue(int pos) {
+    return values.get(pos);
   }
 }
