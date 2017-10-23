@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -49,10 +50,12 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
   public static final class Opts {
     private final Span span;
     private final Collection<Column> columns;
+    private final boolean showReadLocks;
 
-    public Opts(Span span, Collection<Column> columns) {
+    public Opts(Span span, Collection<Column> columns, boolean showReadLocks) {
       this.span = span;
       this.columns = ImmutableSet.copyOf(columns);
+      this.showReadLocks = showReadLocks;
     }
 
     public Span getSpan() {
@@ -62,12 +65,17 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     public Collection<Column> getColumns() {
       return columns;
     }
+
+    public boolean getShowReadLocks() {
+      return showReadLocks;
+    }
   }
 
   private final long startTs;
   private final Environment env;
   private final TxStats stats;
   private final Opts config;
+  private Consumer<Entry<Key, Value>> locksSeen;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -75,7 +83,8 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
 
 
-  static void setupScanner(ScannerBase scanner, Collection<Column> columns, long startTs) {
+  static void setupScanner(ScannerBase scanner, Collection<Column> columns, long startTs,
+      boolean showReadLocks) {
     for (Column col : columns) {
       if (col.isQualifierSet()) {
         scanner.fetchColumn(ByteUtil.toText(col.getFamily()), ByteUtil.toText(col.getQualifier()));
@@ -86,6 +95,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
     IteratorSetting iterConf = new IteratorSetting(10, SnapshotIterator.class);
     SnapshotIterator.setSnaptime(iterConf, startTs);
+    SnapshotIterator.setReturnReadLockPresent(iterConf, showReadLocks);
     scanner.addScanIterator(iterConf);
   }
 
@@ -111,7 +121,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
       scanner.clearScanIterators();
       scanner.setRange(SpanUtil.toRange(snapIterConfig.getSpan()));
 
-      setupScanner(scanner, snapIterConfig.getColumns(), startTs);
+      setupScanner(scanner, snapIterConfig.getColumns(), startTs, snapIterConfig.showReadLocks);
 
       this.iterator = scanner.iterator();
     }
@@ -137,13 +147,15 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     }
 
     private void resetScanner(Span span) {
-      snapIterConfig = new Opts(span, snapIterConfig.columns);
+      snapIterConfig = new Opts(span, snapIterConfig.columns, snapIterConfig.showReadLocks);
       setUpIterator();
     }
 
     public void resolveLock(Entry<Key, Value> lockEntry) {
 
       // read ahead a little bit looking for other locks to resolve
+
+      locksSeen.accept(lockEntry);
 
       long startTime = System.currentTimeMillis();
       long waitTime = INITIAL_WAIT_TIME;
@@ -164,6 +176,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
           if (colType == ColumnConstants.LOCK_PREFIX) {
             locks.add(entry);
+            locksSeen.accept(lockEntry);
           }
 
           amountRead += entry.getKey().getSize() + entry.getValue().getSize();
@@ -215,6 +228,8 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
         } else if (colType == ColumnConstants.DATA_PREFIX) {
           stats.incrementEntriesReturned(1);
           return entry;
+        } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+          return entry;
         } else {
           throw new IllegalArgumentException("Unexpected column type " + colType);
         }
@@ -227,11 +242,13 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     }
   }
 
-  SnapshotScanner(Environment env, Opts config, long startTs, TxStats stats) {
+  SnapshotScanner(Environment env, Opts config, long startTs, TxStats stats,
+      Consumer<Entry<Key, Value>> locksSeen) {
     this.env = env;
     this.config = config;
     this.startTs = startTs;
     this.stats = stats;
+    this.locksSeen = locksSeen;
   }
 
   @Override

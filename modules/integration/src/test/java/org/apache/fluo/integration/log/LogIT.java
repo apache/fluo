@@ -18,6 +18,7 @@ package org.apache.fluo.integration.log;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
@@ -589,5 +590,73 @@ public class LogIT extends ITBaseMini {
 
     Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
 
+  }
+
+  @Test
+  public void testReadLocks() {
+    Column c1 = new Column("f1", "q1");
+    Column c2 = new Column("f1", "q2");
+
+    try (Transaction tx = client.newTransaction()) {
+      tx.set("r1", c1, "v1");
+      tx.set("r1", c2, "v2");
+      tx.set("r2", c1, "v3");
+      tx.set("r2", c2, "v4");
+      tx.commit();
+    }
+
+    Logger logger = Logger.getLogger("fluo.tx");
+
+    StringWriter writer = new StringWriter();
+    WriterAppender appender =
+        new WriterAppender(new PatternLayout("%d{ISO8601} [%-8c{2}] %-5p: %m%n"), writer);
+
+    Level level = logger.getLevel();
+    boolean additivity = logger.getAdditivity();
+
+    try {
+      logger.setLevel(Level.TRACE);
+      logger.setAdditivity(false);
+      logger.addAppender(appender);
+
+      try (Transaction tx = client.newTransaction()) {
+        Assert.assertEquals("v1", tx.withReadLock().gets("r1", c1));
+        Assert.assertEquals(ImmutableMap.of(c1, "v3", c2, "v4"),
+            tx.withReadLock().gets("r2", c1, c2));
+        Assert.assertEquals(ImmutableMap.of(new RowColumn("r1", c2), "v2"),
+            tx.withReadLock().gets(Arrays.asList(new RowColumn("r1", c2))));
+        Map<String, Map<Column, String>> expected = new HashMap<>();
+        expected.computeIfAbsent("r1", k -> new HashMap<>()).put(c1, "v1");
+        expected.computeIfAbsent("r2", k -> new HashMap<>()).put(c1, "v3");
+        Map<String, Map<Column, String>> actual =
+            tx.withReadLock().gets(Arrays.asList("r1", "r2"), ImmutableSet.of(c1));
+        Assert.assertEquals(expected, actual);
+        tx.set("r3", c1, "345");
+        tx.commit();
+      }
+
+    } finally {
+      logger.removeAppender(appender);
+      logger.setAdditivity(additivity);
+      logger.setLevel(level);
+    }
+
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
+
+    String pattern = "";
+
+    pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
+    pattern += ".*txid: \\1 \\QwithReadLock().get(r1, f1 q1 ) -> v1\\E";
+    pattern +=
+        ".*txid: \\1 \\QwithReadLock().get(r2, [f1 q1 , f1 q2 ]) -> [f1 q1 =v3, f1 q2 =v4]\\E";
+    pattern += ".*txid: \\1 \\QwithReadLock().get([r1 f1 q2 ]) -> [r1 f1 q2 =v2]\\E";
+    pattern +=
+        ".*txid: \\1 \\QwithReadLock().get([r1, r2], [f1 q1 ]) -> [r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
+    pattern += ".*txid: \\1 \\Qset(r3, f1 q1 , 345)\\E";
+    pattern += ".*txid: \\1 \\Qcommit()\\E -> SUCCESSFUL commitTs: \\d+";
+    pattern += ".*txid: \\1 \\Qclose()\\E.*";
+
+    Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
   }
 }

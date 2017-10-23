@@ -49,6 +49,15 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
    */
   private Map<String, Bytes> s2bCache = new WeakHashMap<String, Bytes>();
 
+  public AbstractSnapshotBase() {}
+
+  /**
+   * @since 1.2.0
+   */
+  protected AbstractSnapshotBase(AbstractSnapshotBase other) {
+    this.s2bCache = other.s2bCache;
+  }
+
   Bytes s2bConv(CharSequence cs) {
     Objects.requireNonNull(cs);
     if (cs instanceof String) {
@@ -64,6 +73,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
     }
   }
 
+  @Override
   public Bytes get(Bytes row, Column column, Bytes defaultValue) {
     Bytes ret = get(row, column);
     if (ret == null) {
@@ -73,19 +83,23 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
     return ret;
   }
 
+  @Override
   public Map<Column, Bytes> get(Bytes row, Column... columns) {
     return get(row, ImmutableSet.copyOf(columns));
   }
 
+  @Override
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Column... columns) {
     return get(rows, ImmutableSet.copyOf(columns));
   }
 
+  @Override
   public Map<RowColumn, String> gets(Collection<RowColumn> rowColumns) {
     Map<RowColumn, Bytes> bytesMap = get(rowColumns);
     return Maps.transformValues(bytesMap, b -> b.toString());
   }
 
+  @Override
   public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
       Set<Column> columns) {
     Map<Bytes, Map<Column, Bytes>> rcvs = get(Collections2.transform(rows, this::s2bConv), columns);
@@ -97,11 +111,13 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
     return ret;
   }
 
+  @Override
   public Map<String, Map<Column, String>> gets(Collection<? extends CharSequence> rows,
       Column... columns) {
     return gets(rows, ImmutableSet.copyOf(columns));
   }
 
+  @Override
   public String gets(CharSequence row, Column column) {
     Bytes val = get(s2bConv(row), column);
     if (val == null) {
@@ -110,6 +126,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
     return val.toString();
   }
 
+  @Override
   public String gets(CharSequence row, Column column, String defaultValue) {
     Bytes val = get(s2bConv(row), column);
     if (val == null) {
@@ -119,11 +136,13 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
     return val.toString();
   }
 
+  @Override
   public Map<Column, String> gets(CharSequence row, Set<Column> columns) {
     Map<Column, Bytes> values = get(s2bConv(row), columns);
     return Maps.transformValues(values, b -> b.toString());
   }
 
+  @Override
   public Map<Column, String> gets(CharSequence row, Column... columns) {
     return gets(row, ImmutableSet.copyOf(columns));
   }

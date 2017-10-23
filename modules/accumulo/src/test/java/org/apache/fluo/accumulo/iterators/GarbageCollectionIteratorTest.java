@@ -597,4 +597,104 @@ public class GarbageCollectionIteratorTest {
 
     Assert.assertEquals(expected, output);
   }
+
+  @Test
+  public void testDeletedReadLocks() {
+
+    TestData input = new TestData();
+
+    input.add("0 f q RLOCK 42", "0 f q");
+    input.add("0 f q DEL_RLOCK 42", "50");
+    input.add("0 f q RLOCK 45", "0 f q");
+    input.add("0 f q DEL_RLOCK 45", "53");
+    input.add("0 f q RLOCK 49", "0 f q");
+    input.add("0 f q DEL_RLOCK 49", "ROLLBACK");
+
+    for (long oldestActiveTs : new long[] {20, 40, 42, 45, 46, 49, 50, 51, 52, 53, 54, 70}) {
+      TestData expected = new TestData();
+      if (oldestActiveTs <= 53) {
+        expected.add("0 f q DEL_RLOCK 45", "53");
+      }
+      if (oldestActiveTs <= 50) {
+        expected.add("0 f q DEL_RLOCK 42", "50");
+      }
+
+      TestData output = new TestData(newGCI(input, oldestActiveTs, true));
+      Assert.assertEquals(expected, output);
+
+
+      expected.add("0 f q DEL_RLOCK 45", "53");
+      expected.add("0 f q DEL_RLOCK 42", "50");
+      expected.add("0 f q DEL_RLOCK 49", "ROLLBACK");
+
+      output = new TestData(newGCI(input, oldestActiveTs, false));
+      Assert.assertEquals(expected, output);
+    }
+
+    input.add("0 f q RLOCK 47", "0 f q");
+    input.add("0 f q RLOCK 40", "0 f q");
+
+    for (long oldestActiveTs : new long[] {20, 40, 42, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+        70}) {
+      TestData expected = new TestData();
+      expected.add("0 f q RLOCK 47", "0 f q");
+      expected.add("0 f q RLOCK 40", "0 f q");
+
+      if (oldestActiveTs <= 53) {
+        expected.add("0 f q DEL_RLOCK 45", "53");
+      }
+      if (oldestActiveTs <= 50) {
+        expected.add("0 f q DEL_RLOCK 42", "50");
+      }
+
+      TestData output = new TestData(newGCI(input, oldestActiveTs, true));
+      Assert.assertEquals(expected, output);
+
+      expected.add("0 f q DEL_RLOCK 45", "53");
+      expected.add("0 f q DEL_RLOCK 42", "50");
+      expected.add("0 f q DEL_RLOCK 49", "ROLLBACK");
+      output = new TestData(newGCI(input, oldestActiveTs, false));
+      Assert.assertEquals(expected, output);
+    }
+  }
+
+  @Test
+  public void testInvalidatedReadLocks() {
+    // a write or delete lock invalidates all read locks, so they can be dropped on partial or full
+    // compactions
+    TestData input = new TestData();
+
+    input.add("0 f q RLOCK 42", "0 f q");
+    input.add("0 f q DEL_RLOCK 42", "50");
+    input.add("0 f q RLOCK 45", "0 f q");
+    input.add("0 f q DEL_RLOCK 45", "53");
+    input.add("0 f q RLOCK 60", "0 f q");
+    input.add("0 f q DEL_RLOCK 60", "70");
+    input.add("1 f q RLOCK 42", "0 f q");
+    input.add("1 f q DEL_RLOCK 42", "50");
+
+    TestData input2 = new TestData(input);
+    input2.add("0 f q WRITE 56", "55");
+    input2.add("0 f q DATA 55", "19");
+
+    TestData expected = new TestData();
+    expected.add("0 f q WRITE 56", "55");
+    expected.add("0 f q DATA 55", "19");
+
+    // invalidation time or oldest active should get rid of all read locks
+    TestData output = new TestData(newGCI(input2, 75, true));
+    Assert.assertEquals(expected, output);
+
+    // only invalidation should get rid of read locks in following three cases
+    expected.add("0 f q DEL_RLOCK 60", "70");
+    expected.add("1 f q DEL_RLOCK 42", "50"); // should not be invalidated, in diff column
+    output = new TestData(newGCI(input2, 75, false));
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(input2, 30, true));
+    Assert.assertEquals(expected, output);
+
+    output = new TestData(newGCI(input2, 30, false));
+    Assert.assertEquals(expected, output);
+  }
 }

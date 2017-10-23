@@ -28,6 +28,8 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ReadLockUtil;
+import org.apache.fluo.accumulo.values.DelReadLockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
 
 /**
@@ -37,6 +39,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
   private static final String CHECK_ACK_OPT = "checkAckOpt";
   private static final String NTFY_TIMESTAMP_OPT = "ntfyTsOpt";
+  private static final String READ_LOCK_OPT = "readLock";
 
   private TimestampSkippingIterator source;
   private long snaptime;
@@ -44,6 +47,7 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
   boolean hasTop = false;
   boolean checkAck = false;
   long ntfyTimestamp = -1;
+  boolean readlock;
 
   public static void setSnaptime(IteratorSetting cfg, long time) {
     if (time < 0 || (ColumnConstants.PREFIX_MASK & time) != 0) {
@@ -52,8 +56,12 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     cfg.addOption(TIMESTAMP_OPT, time + "");
   }
 
+  public static void setReadlock(IteratorSetting cfg) {
+    cfg.addOption(READ_LOCK_OPT, Boolean.TRUE.toString());
+  }
+
   public static void enableAckCheck(IteratorSetting cfg, long timestamp) {
-    cfg.addOption(CHECK_ACK_OPT, "true");
+    cfg.addOption(CHECK_ACK_OPT, Boolean.TRUE.toString());
     cfg.addOption(NTFY_TIMESTAMP_OPT, timestamp + "");
   }
 
@@ -66,6 +74,8 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
       this.checkAck = Boolean.parseBoolean(options.get(CHECK_ACK_OPT));
       this.ntfyTimestamp = Long.parseLong(options.get(NTFY_TIMESTAMP_OPT));
     }
+
+    this.readlock = Boolean.parseBoolean(options.getOrDefault(READ_LOCK_OPT, "false"));
   }
 
   @Override
@@ -140,7 +150,58 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
           }
         }
 
-        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
+        if (readlock) {
+          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
+        } else {
+          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.RLOCK_PREFIX);
+        }
+      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+
+        long lastDeleteTs = -1;
+        long rlts = ReadLockUtil.decodeTs(ts);
+
+        if (!readlock) {
+          while (rlts > invalidationTime && colType == ColumnConstants.RLOCK_PREFIX) {
+            if (ReadLockUtil.isDelete(ts)) {
+              // ignore rolled back read locks, these should never prevent a write lock
+              if (!DelReadLockValue.isRollback(source.getTopValue().get())) {
+                if (rlts >= snaptime) {
+                  hasTop = true;
+                  return;
+                } else {
+                  long rlockCommitTs =
+                      DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
+                  if (rlockCommitTs > snaptime) {
+                    hasTop = true;
+                    return;
+                  }
+                }
+              }
+
+
+              lastDeleteTs = rlts;
+            } else {
+              if (rlts != lastDeleteTs) {
+                // this read lock is active
+                hasTop = true;
+                return;
+              }
+            }
+
+            source.next();
+            if (source.hasTop()) {
+              colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+              ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
+              rlts = ReadLockUtil.decodeTs(ts);
+            } else {
+              break;
+            }
+          }
+        }
+
+        if (source.hasTop() && (colType == ColumnConstants.RLOCK_PREFIX)) {
+          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
+        }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime) {
           // nothing supersedes this lock, therefore the column is locked

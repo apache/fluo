@@ -17,6 +17,7 @@ package org.apache.fluo.integration;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
@@ -97,16 +98,20 @@ public class ITBase {
     return TABLE_BASE + tableCounter.incrementAndGet();
   }
 
-  protected void printSnapshot() throws Exception {
+  protected void printSnapshot(Consumer<String> out) throws Exception {
     try (Snapshot s = client.newSnapshot()) {
-      System.out.println("== snapshot start ==");
+      out.accept("== snapshot start ==");
 
       for (RowColumnValue rcv : s.scanner().build()) {
-        System.out.println(rcv.getRow() + " " + rcv.getColumn() + "\t" + rcv.getValue());
+        out.accept(rcv.getRow() + " " + rcv.getColumn() + "\t" + rcv.getValue());
       }
 
-      System.out.println("=== snapshot end ===");
+      out.accept("=== snapshot end ===");
     }
+  }
+
+  protected void printSnapshot() throws Exception {
+    printSnapshot(System.out::println);
   }
 
   @AfterClass

@@ -28,8 +28,11 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.format.FluoFormatter;
+import org.apache.fluo.accumulo.iterators.CountingIterator.Counter;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
+import org.apache.fluo.accumulo.values.DelReadLockValue;
 import org.apache.fluo.accumulo.values.LockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
@@ -37,6 +40,7 @@ import org.apache.fluo.api.data.Column;
 
 public class TestData {
   TreeMap<Key, Value> data = new TreeMap<>();
+  Counter counter = new Counter();
 
   TestData() {}
 
@@ -44,17 +48,27 @@ public class TestData {
     data.putAll(td.data);
   }
 
-  TestData(SortedKeyValueIterator<Key, Value> iter, Range range) {
+  TestData(SortedKeyValueIterator<Key, Value> iter, Range range, boolean reseek) {
     try {
       iter.seek(range, new HashSet<ByteSequence>(), false);
 
       while (iter.hasTop()) {
         data.put(iter.getTopKey(), iter.getTopValue());
-        iter.next();
+        if (reseek) {
+          iter.seek(
+              new Range(iter.getTopKey(), false, range.getEndKey(), range.isEndKeyInclusive()),
+              new HashSet<ByteSequence>(), false);
+        } else {
+          iter.next();
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  TestData(SortedKeyValueIterator<Key, Value> iter, Range range) {
+    this(iter, range, false);
   }
 
   TestData(SortedKeyValueIterator<Key, Value> iter) {
@@ -116,6 +130,21 @@ public class TestData {
           val = DelLockValue.encodeCommit(commitTs, value.contains("PRIMARY"));
         }
         break;
+      case "RLOCK":
+        ts = ReadLockUtil.encodeTs(ts, false);
+        ts |= ColumnConstants.RLOCK_PREFIX;
+        break;
+      case "DEL_RLOCK":
+        ts = ReadLockUtil.encodeTs(ts, true);
+        ts |= ColumnConstants.RLOCK_PREFIX;
+
+        if (value.contains("ROLLBACK") || value.contains("ABORT")) {
+          val = DelReadLockValue.encodeRollback();
+        } else {
+          long commitTs = Long.parseLong(value.split("\\s+")[0]);
+          val = DelReadLockValue.encodeCommit(commitTs);
+        }
+        break;
       case "ntfy":
         break;
       default:
@@ -162,5 +191,9 @@ public class TestData {
   @Override
   public int hashCode() {
     return Objects.hashCode(data);
+  }
+
+  public SortedKeyValueIterator<Key, Value> getIterator() {
+    return new CountingIterator(counter, data);
   }
 }

@@ -34,8 +34,10 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
+import org.apache.fluo.accumulo.values.DelReadLockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
 
 /**
@@ -169,6 +171,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
     boolean oldestSeen = false;
     boolean sawAck = false;
     long firstWrite = -1;
+    long lastReadLockDeleteTs = -1;
 
     truncationTime = -1;
 
@@ -252,6 +255,38 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
           keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         } else if (complete) {
           completeTxs.remove(txDoneTs);
+        }
+      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+        boolean keep = false;
+        long rlts = ReadLockUtil.decodeTs(ts);
+        boolean isDelete = ReadLockUtil.isDelete(ts);
+
+        if (isDelete) {
+          lastReadLockDeleteTs = rlts;
+        }
+
+        if (rlts > invalidationTime) {
+          if (isFullMajc) {
+            if (isDelete) {
+              if (DelReadLockValue.isRollback(source.getTopValue().get())) {
+                // can drop rolled back read lock delete markers on any full majc, do not need to consider gcTimestamp
+                keep = false;
+              } else {
+                long rlockCommitTs =
+                    DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
+                keep = rlockCommitTs >= gcTimestamp;
+              }
+            } else {
+              keep = lastReadLockDeleteTs != rlts;
+            }
+          } else {
+            // can drop deleted read lock entries.. keep the delete entry.
+            keep = isDelete || lastReadLockDeleteTs != rlts;
+          }
+        }
+
+        if (keep) {
+          keys.add(new KeyValue(source.getTopKey(), source.getTopValue()));
         }
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime) {

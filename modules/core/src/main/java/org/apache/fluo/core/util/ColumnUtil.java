@@ -30,7 +30,9 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
+import org.apache.fluo.accumulo.values.DelReadLockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Bytes.BytesBuilder;
@@ -51,9 +53,13 @@ public class ColumnUtil {
   }
 
   public static void commitColumn(Environment env, boolean isTrigger, boolean isPrimary, Column col,
-      boolean isWrite, boolean isDelete, long startTs, long commitTs, Set<Column> observedColumns,
-      Mutation m) {
-    if (isWrite) {
+      boolean isWrite, boolean isDelete, boolean isReadlock, long startTs, long commitTs,
+      Set<Column> observedColumns, Mutation m) {
+    if (isReadlock) {
+      Flutation.put(env, m, col,
+          ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, true),
+          DelReadLockValue.encodeCommit(commitTs));
+    } else if (isWrite) {
       Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
           WriteValue.encode(startTs, isPrimary, isDelete));
     } else {

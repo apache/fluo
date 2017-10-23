@@ -114,6 +114,7 @@ public interface SnapshotBase {
    * </pre>
    *
    * @return A scanner builder.
+   * @see TransactionBase#withReadLock()
    */
 
   ScannerBuilder scanner();

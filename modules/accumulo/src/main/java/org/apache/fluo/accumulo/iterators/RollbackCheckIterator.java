@@ -117,6 +117,8 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
           return;
         }
 
+      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+        // nothing to do
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
         if (ts > invalidationTime) {
           // nothing supersedes this lock, therefore the column is locked

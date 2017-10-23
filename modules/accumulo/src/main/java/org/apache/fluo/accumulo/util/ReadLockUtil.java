@@ -13,32 +13,32 @@
  * the License.
  */
 
-package org.apache.fluo.api.client;
+package org.apache.fluo.accumulo.util;
 
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.exceptions.AlreadySetException;
+import com.google.common.base.Preconditions;
+import org.apache.accumulo.core.data.Key;
 
-/**
- * This class provides default implementations for many of the methods in TransactionBase. It exists
- * to make implementing TransactionBase easier.
- */
+public class ReadLockUtil {
+  private static final long DEL_MASK = 0x0000000000000001L;
 
-public abstract class AbstractTransactionBase extends AbstractSnapshotBase
-    implements TransactionBase {
-
-  @Override
-  public void delete(CharSequence row, Column col) {
-    delete(s2bConv(row), col);
+  public static boolean isDelete(Key k) {
+    return isDelete(k.getTimestamp());
   }
 
-  @Override
-  public void set(CharSequence row, Column col, CharSequence value) throws AlreadySetException {
-    set(s2bConv(row), col, Bytes.of(value));
+  public static boolean isDelete(long ts) {
+    return (ts & DEL_MASK) == DEL_MASK;
   }
 
-  @Override
-  public void setWeakNotification(CharSequence row, Column col) {
-    setWeakNotification(s2bConv(row), col);
+  public static long encodeTs(long ts, boolean isDelete) {
+    Preconditions.checkArgument((ts & ColumnConstants.PREFIX_MASK) == 0);
+    return ts << 1 | (isDelete ? 1 : 0);
+  }
+
+  public static long decodeTs(Key k) {
+    return decodeTs(k.getTimestamp());
+  }
+
+  public static long decodeTs(long ts) {
+    return ts >> 1;
   }
 }

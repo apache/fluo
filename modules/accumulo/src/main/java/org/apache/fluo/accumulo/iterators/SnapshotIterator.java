@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
@@ -38,6 +39,9 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
   @VisibleForTesting
   static final String TIMESTAMP_OPT = "timestampOpt";
+
+  static final String RETURN_READLOCK_PRESENT_OPT = "rrlpOpt";
+
   private static final ByteSequence NOTIFY_CF_BS =
       new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
 
@@ -47,10 +51,35 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
   private long snaptime;
   private boolean hasTop = false;
 
+  private boolean returnReadLockPresent = false;
+
   private final Key curCol = new Key();
 
+  private Key readLockIgnore;
+  private Key readLockKey;
+  private Value readLockValue;
+
+  private void rememberReadLock(Key key, Value val) {
+    Preconditions.checkState(readLockKey == null && readLockValue == null);
+    if (readLockIgnore == null
+        || !key.equals(readLockIgnore, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+      readLockKey = new Key(key);
+      readLockValue = new Value(val);
+    }
+  }
+
+  private void ignoreReadLock(Key key) {
+    readLockIgnore = key;
+  }
+
+  private void clearReadLock() {
+    readLockKey = null;
+    readLockValue = null;
+    readLockIgnore = null;
+  }
+
   private void findTop() throws IOException {
-    outer: while (source.hasTop()) {
+    outer: while (source.hasTop() && readLockKey == null) {
       long invalidationTime = -1;
       long dataPointer = -1;
 
@@ -89,6 +118,18 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
           if (ts > invalidationTime) {
             invalidationTime = ts;
           }
+          if (returnReadLockPresent) {
+            source.skipToPrefix(curCol, ColumnConstants.RLOCK_PREFIX);
+          } else {
+            source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
+          }
+          continue;
+
+        } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+          if (returnReadLockPresent) {
+            rememberReadLock(source.getTopKey(), source.getTopValue());
+          }
+
           source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
           continue;
         } else if (colType == ColumnConstants.LOCK_PREFIX) {
@@ -142,21 +183,26 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
       IteratorEnvironment env) throws IOException {
     this.source = new TimestampSkippingIterator(source);
     this.snaptime = Long.parseLong(options.get(TIMESTAMP_OPT));
+    this.returnReadLockPresent =
+        Boolean.parseBoolean(options.getOrDefault(RETURN_READLOCK_PRESENT_OPT, "false"));
     // TODO could require client to send version as a sanity check
   }
 
   @Override
   public boolean hasTop() {
-    return hasTop && source.hasTop();
+    return hasTop && (readLockKey != null || source.hasTop());
   }
 
   @Override
   public void next() throws IOException {
-    curCol.set(source.getTopKey());
-    source.skipColumn(curCol);
+    if (readLockKey != null) {
+      clearReadLock();
+    } else {
+      curCol.set(source.getTopKey());
+      source.skipColumn(curCol);
 
-    findTop();
-
+      findTop();
+    }
   }
 
   @Override
@@ -167,16 +213,28 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
     Collection<ByteSequence> cols;
     boolean inc;
 
+    clearReadLock();
+
     // handle continue case
     hasTop = true;
     if (range.getStartKey() != null && range.getStartKey().getTimestamp() != Long.MAX_VALUE
         && !range.isStartKeyInclusive()) {
-      Key nextCol = range.getStartKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
-      if (range.afterEndKey(nextCol)) {
-        hasTop = false;
-        return;
+
+      if ((range.getStartKey().getTimestamp()
+          & ColumnConstants.PREFIX_MASK) == ColumnConstants.RLOCK_PREFIX) {
+        Key currCol = new Key(range.getStartKey());
+        currCol.setTimestamp(Long.MAX_VALUE);
+        newRange = new Range(currCol, true, range.getEndKey(), range.isEndKeyInclusive());
+        ignoreReadLock(currCol);
       } else {
-        newRange = new Range(nextCol, true, range.getEndKey(), range.isEndKeyInclusive());
+
+        Key nextCol = range.getStartKey().followingKey(PartialKey.ROW_COLFAM_COLQUAL_COLVIS);
+        if (range.afterEndKey(nextCol)) {
+          hasTop = false;
+          return;
+        } else {
+          newRange = new Range(nextCol, true, range.getEndKey(), range.isEndKeyInclusive());
+        }
       }
     } else {
       newRange = range;
@@ -196,12 +254,20 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
   @Override
   public Key getTopKey() {
-    return source.getTopKey();
+    if (readLockKey != null) {
+      return readLockKey;
+    } else {
+      return source.getTopKey();
+    }
   }
 
   @Override
   public Value getTopValue() {
-    return source.getTopValue();
+    if (readLockValue != null) {
+      return readLockValue;
+    } else {
+      return source.getTopValue();
+    }
   }
 
   @Override
@@ -214,5 +280,9 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
       throw new IllegalArgumentException();
     }
     cfg.addOption(TIMESTAMP_OPT, time + "");
+  }
+
+  public static void setReturnReadLockPresent(IteratorSetting cfg, boolean rrlp) {
+    cfg.addOption(RETURN_READLOCK_PRESENT_OPT, rrlp + "");
   }
 }

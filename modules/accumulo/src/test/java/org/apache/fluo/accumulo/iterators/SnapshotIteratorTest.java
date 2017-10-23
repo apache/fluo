@@ -31,10 +31,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class SnapshotIteratorTest {
-  SnapshotIterator newSI(TestData input, long startTs) {
+  SnapshotIterator newSI(TestData input, long startTs, boolean returnReadLocks) {
     SnapshotIterator si = new SnapshotIterator();
 
     Map<String, String> options = new HashMap<>();
+    options.put(SnapshotIterator.RETURN_READLOCK_PRESENT_OPT, returnReadLocks + "");
     options.put(SnapshotIterator.TIMESTAMP_OPT, startTs + "");
 
     IteratorEnvironment env = TestIteratorEnv.create(IteratorScope.scan, true);
@@ -46,6 +47,10 @@ public class SnapshotIteratorTest {
       throw new RuntimeException(e);
     }
     return si;
+  }
+
+  SnapshotIterator newSI(TestData input, long startTs) {
+    return newSI(input, startTs, true);
   }
 
   @Test
@@ -61,13 +66,11 @@ public class SnapshotIteratorTest {
     TestData output = new TestData(newSI(input, 6));
     Assert.assertEquals(0, output.data.size());
 
-    output = new TestData(newSI(input, 11));
     TestData expected = new TestData().add("0 f q DATA 9", "14");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 11);
 
-    output = new TestData(newSI(input, 17));
     expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 17);
   }
 
   @Test
@@ -85,13 +88,11 @@ public class SnapshotIteratorTest {
     output = new TestData(newSI(input, 15));
     Assert.assertEquals(0, output.data.size());
 
-    output = new TestData(newSI(input, 17));
     TestData expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 17);
 
-    output = new TestData(newSI(input, 22));
     expected = new TestData().add("0 f q LOCK 21", "1 f q");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 22);
   }
 
   @Test
@@ -115,13 +116,11 @@ public class SnapshotIteratorTest {
     output = new TestData(newSI(input, 15));
     Assert.assertEquals(0, output.data.size());
 
-    output = new TestData(newSI(input, 17));
     TestData expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 17);
 
-    output = new TestData(newSI(input, 23));
     expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 23);
 
 
     // test case where there is newer lock thats not invalidated by DEL_LOCK
@@ -137,17 +136,14 @@ public class SnapshotIteratorTest {
     output = new TestData(newSI(input, 6));
     Assert.assertEquals(0, output.data.size());
 
-    output = new TestData(newSI(input, 17));
     expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 17);
 
-    output = new TestData(newSI(input, 19));
     expected = new TestData().add("0 f q DATA 11", "15");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 19);
 
-    output = new TestData(newSI(input, 23));
     expected = new TestData().add("0 f q LOCK 21", "1 f q");
-    Assert.assertEquals(expected, output);
+    checkInput(input, expected, 23);
   }
 
   @Test
@@ -253,7 +249,54 @@ public class SnapshotIteratorTest {
     for (Range range : ranges) {
       checkManyColumnData(input, numToWrite, range);
     }
+  }
 
+  @Test
+  public void testReadLock() {
+    TestData input = new TestData();
+
+    input.add("0 f q WRITE 16", "11 DELETE");
+    input.add("0 f q DATA 11", "15");
+    input.add("0 f q DEL_RLOCK 5", "6");
+    input.add("0 f q RLOCK 5", " 0 f q");
+
+    input.add("1 f q WRITE 16", "11");
+    input.add("1 f q DATA 11", "15");
+
+    input.add("2 f q WRITE 16", "11");
+    input.add("2 f q DATA 11", "17");
+    input.add("2 f q DEL_RLOCK 5", "6");
+    input.add("2 f q RLOCK 5", " 0 f q");
+
+
+    TestData expected = new TestData();
+    expected.add("0 f q DATA 11", "15");
+    expected.add("1 f q DATA 11", "15");
+    expected.add("2 f q DATA 11", "17");
+
+
+    checkInput(input, expected, 20, false);
+
+    expected.add("0 f q DEL_RLOCK 5", "6");
+    expected.add("2 f q DEL_RLOCK 5", "6");
+
+    checkInput(input, expected, 20);
+
+  }
+
+  private void checkInput(TestData input, TestData expected, long startTs) {
+    checkInput(input, expected, startTs, true);
+  }
+
+  private void checkInput(TestData input, TestData expected, long startTs,
+      boolean returnReadLocks) {
+    // run test with a single seek followed by many next calls
+    TestData output = new TestData(newSI(input, startTs, returnReadLocks), new Range());
+    Assert.assertEquals(expected, output);
+
+    // run test reseeking after each key
+    output = new TestData(newSI(input, startTs, returnReadLocks), new Range(), true);
+    Assert.assertEquals(expected, output);
   }
 
   private void checkManyColumnData(TestData input, int numToWrite, Range range) throws IOException {
