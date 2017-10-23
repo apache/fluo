@@ -30,7 +30,7 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.util.ByteUtil;
 
 /**
- * PArsing Column visibilities can be expensive. This class provides a cache of parsed visibility
+ * Parsing Column visibilities can be expensive. This class provides a cache of parsed visibility
  * objects.
  */
 
@@ -49,7 +49,7 @@ public class VisibilityCache {
 
   VisibilityCache(FluoConfiguration conf) {
     visCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(FluoConfigurationImpl.getTxIfoCacheTimeout(conf, TimeUnit.MILLISECONDS),
+        .expireAfterAccess(FluoConfigurationImpl.getVisibilityCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
         .maximumWeight(FluoConfigurationImpl.getVisibilityCacheSize(conf)).weigher(new VisWeigher())
         .concurrencyLevel(10).build();
