@@ -185,9 +185,10 @@ public class FluoConfigurationImpl {
     return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
 
-  private static final String TRANSACTOR_MAX_CACHE_SIZE = FLUO_IMPL_PREFIX + ".transactor.cache.max.size";
+  private static final String TRANSACTOR_MAX_CACHE_SIZE =
+      FLUO_IMPL_PREFIX + ".transactor.cache.max.size";
   private static final long TRANSACTOR_MAX_CACHE_SIZE_DEFAULT = 32768; // this equals 2^15 
-  
+
   public static long getTransactorMaxCacheSize(FluoConfiguration conf) {
     long size = conf.getLong(TRANSACTOR_MAX_CACHE_SIZE, TRANSACTOR_MAX_CACHE_SIZE_DEFAULT);
     if (size <= 0) {
@@ -196,10 +197,10 @@ public class FluoConfigurationImpl {
     }
     return size;
   }
-  
+
   public static final String TRANSACTOR_CACHE_SIZE = FLUO_IMPL_PREFIX + ".transactor.cache.size.mb";
   public static final long TRANSACTOR_CACHE_SIZE_DEFAULT = 10_000_000;
-  
+
   /** 
    * Gets the transactor cache size
    * 
@@ -207,7 +208,7 @@ public class FluoConfigurationImpl {
    * @return The size of the cache value from the property value {@value #TRANSACTOR_CACHE_SIZE}
    *     if it is set, else the value of the default value {@value #TRANSACTOR_CACHE_SIZE_DEFAULT}
    */
-  
+
   public static long getTransactorCacheSize(FluoConfiguration conf) {
     long size = conf.getLong(TRANSACTOR_CACHE_SIZE, TRANSACTOR_CACHE_SIZE_DEFAULT);
     if (size <= 0) {
@@ -216,12 +217,12 @@ public class FluoConfigurationImpl {
     }
     return size;
   }
-  
+
   public static final String TRANSACTOR_CACHE_TIMEOUT =
       FLUO_IMPL_PREFIX + ".transactor.cache.expireTime.ms";
 
   public static final long TRANSACTOR_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
-  
+
   public static long getTransactorCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
     long millis = conf.getLong(TRANSACTOR_CACHE_TIMEOUT, TRANSACTOR_CACHE_TIMEOUT_DEFAULT);
     if (millis <= 0) {
