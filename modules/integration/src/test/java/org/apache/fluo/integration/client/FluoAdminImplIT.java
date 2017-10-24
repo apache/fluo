@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
 
 public class FluoAdminImplIT extends ITBaseImpl {
 
-  @Test
+  @Test(timeout=60000)
   public void testInitializeTwiceFails() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
@@ -73,7 +73,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
   }
 
-  @Test
+  @Test(timeout=60000)
   public void testInitializeConfig() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
@@ -97,7 +97,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
   }
 
-  @Test
+  @Test(timeout=60000)
   public void testInitializeWithNoChroot() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
@@ -117,7 +117,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
   }
 
-  @Test
+  @Test(timeout=60000)
   public void testInitializeLongChroot() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
