@@ -52,8 +52,8 @@ public class VisibilityCache {
         .expireAfterAccess(
             FluoConfigurationImpl.getVisibilityCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
-        .maximumWeight(FluoConfigurationImpl.getVisibilityCacheSize(conf)).weigher(new VisWeigher())
-        .concurrencyLevel(10).build();
+        .maximumWeight(FluoConfigurationImpl.getVisibilityCacheWeight(conf))
+        .weigher(new VisWeigher()).concurrencyLevel(10).build();
   }
 
   public ColumnVisibility getCV(Column col) {

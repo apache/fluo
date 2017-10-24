@@ -41,7 +41,7 @@ public class TxInfoCache {
     cache = CacheBuilder.newBuilder()
         .expireAfterAccess(FluoConfigurationImpl.getTxIfoCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
-        .maximumWeight(FluoConfigurationImpl.getTxInfoCacheSize(conf))
+        .maximumWeight(FluoConfigurationImpl.getTxInfoCacheWeight(conf))
         .weigher(new TxStatusWeigher()).concurrencyLevel(10).build();
     this.env = env;
   }
