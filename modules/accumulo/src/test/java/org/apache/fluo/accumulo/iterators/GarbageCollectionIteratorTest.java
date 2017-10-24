@@ -39,9 +39,11 @@ public class GarbageCollectionIteratorTest {
 
     try {
       gci.init(new SortedMapIterator(input.data), options, env);
+
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+
     return gci;
   }
 

@@ -33,7 +33,6 @@ class ColumnBuffer {
   private Key key;
   private ArrayList<Long> timeStamps;
   private ArrayList<Value> values;
-  private int size;
 
   public ColumnBuffer() {
 
@@ -47,6 +46,7 @@ class ColumnBuffer {
    * @param v Value to be added to buffer
    */
   private void add(long timestamp, Value v) {
+
     timeStamps.add(timestamp);
     values.add(v);
   }
@@ -80,6 +80,8 @@ class ColumnBuffer {
   public void copyTo(ColumnBuffer dest, LongPredicate timestampTest) {
     dest.clear();
 
+    dest.key = key;
+
     for (int i = 0; i < timeStamps.size(); i++) {
       long time = timeStamps.get(i);
       if (timestampTest.test(time)) {
@@ -91,6 +93,7 @@ class ColumnBuffer {
   public void clear() {
     timeStamps.clear();
     values.clear();
+    key = null;
   }
 
   /**
