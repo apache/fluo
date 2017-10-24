@@ -15,10 +15,12 @@
 
 package org.apache.fluo.accumulo.iterators;
 
+import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.function.LongPredicate;
 
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Value;
 
 /**
@@ -38,32 +40,42 @@ class ColumnBuffer {
     this.key = null;
     this.timeStamps = new ArrayList<>();
     this.values = new ArrayList<>();
-    size = 0;
+  }
+
+  /**
+   * @param timestamp Timestamp to be added to buffer
+   * @param v Value to be added to buffer
+   */
+  private void add(long timestamp, Value v) {
+    timeStamps.add(timestamp);
+    values.add(v);
   }
 
   /**
    * When empty, the first key added sets the row+column.  After this all keys
    * added must have the same row+column.
+   *
+   * @param k Key to be added to buffer
+   * @param v Value to be added to buffer
    */
-  public void add(Key k, Value v) {
+  public void add(Key k, Value v) throws IllegalArgumentException {
 
     if (key == null) {
       key = k;
-      timeStamps.add(k.getTimestamp());
-      values.add(v);
-      size++;
-    } else if (key.compareRow(k.getRow()) == 0
-        && key.compareColumnFamily(k.getColumnFamily()) == 0) {
-      timeStamps.add(k.getTimestamp());
-      values.add(v);
+      add(k.getTimestamp(), v);
+    } else if (key.equals(k, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
+      add(k.getTimestamp(), v);
     } else {
-      //TODO: what happens here
+      throw new IllegalArgumentException();
     }
   }
 
   /**
    * Clears the dest ColumnBuffer and inserts all entries in dest where the timestamp passes 
    * the timestampTest.
+   *
+   * @param dest Destination ColumnBuffer
+   * @param timestampTest Test to determine which timestamps get added to dest
    */
   public void copyTo(ColumnBuffer dest, LongPredicate timestampTest) {
     dest.clear();
@@ -71,24 +83,37 @@ class ColumnBuffer {
     for (int i = 0; i < timeStamps.size(); i++) {
       long time = timeStamps.get(i);
       if (timestampTest.test(time)) {
-        dest.add(new Key(key.getRow(), time), values.get(i));
+        dest.add(time, values.get(i));
       }
     }
   }
 
   public void clear() {
-    timeStamps = null;
-    values = null;
+    timeStamps.clear();
+    values.clear();
   }
 
+  /**
+   * @return the size of the current buffer
+   */
   public int size() {
-    return size;
+    return timeStamps.size();
   }
 
+  /**
+   * @param pos Position of the Key that will be retrieved 
+   * @return The key at a given position
+   */
   public Key getKey(int pos) {
-    return new Key(key.getRow(), timeStamps.get(pos));
+    Key tmpKey = new Key(key);
+    tmpKey.setTimestamp(timeStamps.get(pos));
+    return tmpKey;
   }
 
+  /**
+   * @param pos Position of the Value that will be retrieved
+   * @return The value at a given position
+   */
   public Value getValue(int pos) {
     return values.get(pos);
   }
