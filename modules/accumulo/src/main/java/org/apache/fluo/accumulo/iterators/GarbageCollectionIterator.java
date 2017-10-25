@@ -226,7 +226,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
         }
 
         if (keep) {
-          keys.add(source.getTopKey(), new Value(val));
+          keys.add(source.getTopKey(), val);
         } else if (complete) {
           completeTxs.remove(ts);
         }

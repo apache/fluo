@@ -17,6 +17,7 @@ package org.apache.fluo.accumulo.iterators;
 
 import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.LongPredicate;
 
 import org.apache.accumulo.core.data.Key;
@@ -32,7 +33,7 @@ class ColumnBuffer {
 
   private Key key;
   private ArrayList<Long> timeStamps;
-  private ArrayList<Value> values;
+  private ArrayList<byte[]> values;
 
   public ColumnBuffer() {
 
@@ -45,7 +46,7 @@ class ColumnBuffer {
    * @param timestamp Timestamp to be added to buffer
    * @param v Value to be added to buffer
    */
-  private void add(long timestamp, Value v) {
+  private void add(long timestamp, byte[] v) {
 
     timeStamps.add(timestamp);
     values.add(v);
@@ -58,16 +59,28 @@ class ColumnBuffer {
    * @param k Key to be added to buffer
    * @param v Value to be added to buffer
    */
-  public void add(Key k, Value v) throws IllegalArgumentException {
+  public void add(Key k, byte[] vByte) throws IllegalArgumentException {
+    vByte = Arrays.copyOf(vByte, vByte.length);
 
     if (key == null) {
-      key = k;
-      add(k.getTimestamp(), v);
+      key = new Key(k);
+      add(k.getTimestamp(), vByte);
     } else if (key.equals(k, PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      add(k.getTimestamp(), v);
+      add(k.getTimestamp(), vByte);
     } else {
       throw new IllegalArgumentException();
     }
+  }
+
+  /**
+   * When empty, the first key added sets the row+column.  After this all keys
+   * added must have the same row+column.
+   *
+   * @param k Key to be added to buffer
+   * @param v Value to be added to buffer
+   */
+  public void add(Key k, Value v) throws IllegalArgumentException {
+    add(k, v.get());
   }
 
   /**
@@ -80,7 +93,9 @@ class ColumnBuffer {
   public void copyTo(ColumnBuffer dest, LongPredicate timestampTest) {
     dest.clear();
 
-    dest.key = key;
+    if (key != null) {
+      dest.key = new Key(key);
+    }
 
     for (int i = 0; i < timeStamps.size(); i++) {
       long time = timeStamps.get(i);
@@ -118,6 +133,6 @@ class ColumnBuffer {
    * @return The value at a given position
    */
   public Value getValue(int pos) {
-    return values.get(pos);
+    return new Value(values.get(pos));
   }
 }
