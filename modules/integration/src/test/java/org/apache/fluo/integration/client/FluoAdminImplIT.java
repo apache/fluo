@@ -80,8 +80,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
     oserver.stop();
 
     FluoConfiguration localConfig = new FluoConfiguration(config);
-    localConfig.setAccumuloClasspath("${fluo.connection.application.name}");
-    Assert.assertEquals(localConfig.getApplicationName(), localConfig.getAccumuloClasspath());
+    localConfig.setProperty("fluo.test123", "${fluo.connection.application.name}");
+    Assert.assertEquals(localConfig.getApplicationName(), localConfig.getString("fluo.test123"));
 
     try (FluoAdmin admin = new FluoAdminImpl(localConfig)) {
 
@@ -92,8 +92,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     try (FluoClientImpl client = new FluoClientImpl(localConfig)) {
       FluoConfiguration sharedConfig = client.getSharedConfiguration();
-      Assert.assertEquals(localConfig.getAccumuloClasspath(), sharedConfig.getAccumuloClasspath());
-      Assert.assertEquals(sharedConfig.getApplicationName(), sharedConfig.getAccumuloClasspath());
+      Assert.assertEquals(localConfig.getApplicationName(), sharedConfig.getString("fluo.test123"));
+      Assert.assertEquals(localConfig.getApplicationName(), sharedConfig.getApplicationName());
     }
   }
 
