@@ -45,6 +45,7 @@ public class TestData {
   }
 
   TestData(SortedKeyValueIterator<Key, Value> iter, Range range) {
+
     try {
       iter.seek(range, new HashSet<ByteSequence>(), false);
 
