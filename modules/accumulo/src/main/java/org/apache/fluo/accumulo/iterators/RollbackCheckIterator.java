@@ -34,7 +34,7 @@ import org.apache.fluo.accumulo.values.WriteValue;
 public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value> {
   private static final String TIMESTAMP_OPT = "timestampOpt";
 
-  private SortedKeyValueIterator<Key, Value> source;
+  private TimestampSkippingIterator source;
   private long lockTime;
 
   boolean hasTop = false;
@@ -50,7 +50,7 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
   @Override
   public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
       IteratorEnvironment env) throws IOException {
-    this.source = source;
+    this.source = new TimestampSkippingIterator(source);
     this.lockTime = Long.parseLong(options.get(TIMESTAMP_OPT));
   }
 
