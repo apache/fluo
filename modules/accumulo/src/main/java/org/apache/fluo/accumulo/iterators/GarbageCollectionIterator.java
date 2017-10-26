@@ -45,18 +45,6 @@ import org.apache.fluo.accumulo.values.WriteValue;
  */
 public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Value> {
 
-  private static class KeyValue extends SimpleImmutableEntry<Key, Value> {
-    private static final long serialVersionUID = 1L;
-
-    public KeyValue(Key key, Value value) {
-      super(new Key(key), new Value(value));
-    }
-
-    public KeyValue(Key key, byte[] value) {
-      super(new Key(key), new Value(value));
-    }
-  }
-
   @VisibleForTesting
   static final String GC_TIMESTAMP_OPT = "timestamp.gc";
 
