@@ -49,7 +49,8 @@ public class VisibilityCache {
 
   VisibilityCache(FluoConfiguration conf) {
     visCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(FluoConfigurationImpl.getVisibilityCacheTimeout(conf, TimeUnit.MILLISECONDS),
+        .expireAfterAccess(
+            FluoConfigurationImpl.getVisibilityCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
         .maximumWeight(FluoConfigurationImpl.getVisibilityCacheSize(conf)).weigher(new VisWeigher())
         .concurrencyLevel(10).build();
