@@ -152,7 +152,7 @@ public class FluoConfigurationImpl {
    * Gets the visibility cache weight
    * 
    * @param conf The FluoConfiguration
-   * @return The size of the cache value from the property value {@value #VISIBILITY_WEIGHT_SIZE}
+   * @return The size of the cache value from the property value {@value #VISIBILITY_CACHE_WEIGHT}
    *     if it is set, else the value of the default value {@value #VISIBILITY_CACHE_WEIGHT_DEFAULT}
    */
 
