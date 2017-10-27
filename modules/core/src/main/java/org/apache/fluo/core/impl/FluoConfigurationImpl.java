@@ -191,7 +191,7 @@ public class FluoConfigurationImpl {
   private static final long TRANSACTOR_MAX_CACHE_SIZE_DEFAULT = 32768; // this equals 2^15 
 
   /**
-   * Gets the specified number of entries the cache can contain, this get the value
+   * Gets the specified number of entries the cache can contain, this gets the value
    * of {@value #TRANSACTOR_MAX_CACHE_SIZE} if set, the default 
    * {@value #TRANSACTOR_CACHE_TIMEOUT_DEFAULT} otherwise
    * 
