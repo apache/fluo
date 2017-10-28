@@ -26,13 +26,18 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.mini.MiniFluo;
+import org.apache.fluo.integration.ITBase;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Tests MiniFluo
  */
 public class MiniIT {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(ITBase.getTestTimeout());
 
   @Test
   public void testMini() throws Exception {

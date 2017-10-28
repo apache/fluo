@@ -34,12 +34,16 @@ import org.apache.fluo.api.observer.AbstractObserver;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 @Deprecated
 public class ObserverConfigIT extends ITBaseMini {
 
   public static class ConfigurableObserver extends AbstractObserver {
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     private ObservedColumn observedColumn;
     private Bytes outputCQ;

@@ -42,7 +42,9 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,8 @@ import org.slf4j.LoggerFactory;
  * sum of all money in the bank should be the same, therefore the average should not vary.
  */
 public class StochasticBankIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout() * 2);
 
   private static final Logger log = LoggerFactory.getLogger(StochasticBankIT.class);
   private static AtomicInteger txCount = new AtomicInteger();

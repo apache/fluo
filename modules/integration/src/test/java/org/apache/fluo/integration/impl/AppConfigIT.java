@@ -27,12 +27,15 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class AppConfigIT extends ITBaseMini {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   public static final Column DF_COL = new Column("data", "foo");
   public static final Column DB_COL = new Column("data", "bar");
 

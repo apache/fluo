@@ -51,12 +51,14 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FailureIT extends ITBaseImpl {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   @Rule
   public ExpectedException exception = ExpectedException.none();
 

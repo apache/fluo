@@ -24,11 +24,15 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.integration.ITBase;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TimeskippingIT extends ITBase {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static final Logger log = LoggerFactory.getLogger(TimeskippingIT.class);
 
