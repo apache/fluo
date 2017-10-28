@@ -37,7 +37,7 @@ import static org.junit.Assert.fail;
 public class FluoAdminImplIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
-  
+
   @Test
   public void testInitializeTwiceFails() throws Exception {
 

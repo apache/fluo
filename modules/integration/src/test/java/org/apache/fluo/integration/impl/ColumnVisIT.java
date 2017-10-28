@@ -28,6 +28,7 @@ import org.junit.rules.Timeout;
 public class ColumnVisIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   @Test(expected = Exception.class)
   public void testFailFastSet() {
     TestTransaction tx1 = new TestTransaction(env);

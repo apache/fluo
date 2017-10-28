@@ -42,8 +42,9 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 public class ZKSecretIT extends ITBaseMini {
 
   public static class MyObserverProvider implements ObserverProvider {
-	@Rule
-	public Timeout globalTimeout = Timeout.seconds(60);
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(60);
+
     @Override
     public void provide(Registry or, Context ctx) {
       or.forColumn(new Column("edge", "forward"), STRONG).useObserver((tx, row, col) -> {

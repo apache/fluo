@@ -48,6 +48,7 @@ import org.junit.rules.Timeout;
 public class GarbageCollectionIteratorIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   private void waitForGcTime(long expectedTime) throws Exception {
     env.getSharedResources().getTimestampTracker().updateZkNode();
     long oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());

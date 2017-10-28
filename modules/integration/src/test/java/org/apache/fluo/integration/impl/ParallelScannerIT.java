@@ -36,6 +36,7 @@ import org.junit.rules.Timeout;
 public class ParallelScannerIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   @Test
   public void testRowColumn() {
     TestTransaction tx1 = new TestTransaction(env);

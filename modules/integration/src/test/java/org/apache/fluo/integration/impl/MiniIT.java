@@ -37,6 +37,7 @@ import org.junit.rules.Timeout;
 public class MiniIT {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   @Test
   public void testMini() throws Exception {
     File dataDir =

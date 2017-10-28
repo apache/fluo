@@ -45,7 +45,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
  */
 public class WorkerIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(120); 
+  public Timeout globalTimeout = Timeout.seconds(120);
   // timeout needs to be > 60secs for testMultipleFinders()
   private static final Column LAST_UPDATE = new Column("attr", "lastupdate");
   private static final Column DEGREE = new Column("attr", "degree");

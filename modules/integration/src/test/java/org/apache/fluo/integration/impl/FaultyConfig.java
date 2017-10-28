@@ -37,7 +37,7 @@ public class FaultyConfig extends Environment {
    * module.
    */
   private static class FaultyConditionalWriter implements ConditionalWriter {
-    
+
     private ConditionalWriter cw;
     private double up;
     private Random rand;

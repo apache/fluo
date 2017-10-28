@@ -52,6 +52,7 @@ import static org.apache.fluo.integration.BankUtil.BALANCE;
 public class FluoIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   public static class FluoITObserverProvider implements ObserverProvider {
     @Override
     public void provide(Registry or, Context ctx) {

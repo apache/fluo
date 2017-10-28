@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class TimeskippingIT extends ITBase {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);	
+  public Timeout globalTimeout = Timeout.seconds(60);
 
   private static final Logger log = LoggerFactory.getLogger(TimeskippingIT.class);
 

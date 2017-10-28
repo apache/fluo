@@ -42,8 +42,8 @@ import org.junit.rules.Timeout;
 public class ObserverConfigIT extends ITBaseMini {
 
   public static class ConfigurableObserver extends AbstractObserver {
-  @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(60);
 
     private ObservedColumn observedColumn;
     private Bytes outputCQ;

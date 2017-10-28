@@ -31,6 +31,7 @@ import org.junit.rules.Timeout;
 public class ClientExceptionIT extends ITBaseMini {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
+
   @Test
   public void testAlreadySetException() {
 
