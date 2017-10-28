@@ -33,7 +33,9 @@ import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mini.MiniFluoImpl;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
@@ -42,7 +44,9 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
  * index of node degree.
  */
 public class WorkerIT extends ITBaseMini {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(120); 
+  // timeout needs to be > 60secs for testMultipleFinders()
   private static final Column LAST_UPDATE = new Column("attr", "lastupdate");
   private static final Column DEGREE = new Column("attr", "degree");
 

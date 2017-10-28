@@ -38,13 +38,16 @@ import org.apache.fluo.integration.TestTransaction;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Tests GarbageCollectionIterator class
  */
 public class GarbageCollectionIteratorIT extends ITBaseImpl {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
   private void waitForGcTime(long expectedTime) throws Exception {
     env.getSharedResources().getTimestampTracker().updateZkNode();
     long oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
@@ -54,7 +57,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     }
   }
 
-  @Test(timeout = 60000)
+
   public void testVerifyAfterGC() throws Exception {
 
     TestTransaction tx1 = new TestTransaction(env);
@@ -87,7 +90,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx2.done();
   }
 
-  @Test(timeout = 60000)
+
   public void testDeletedDataIsDropped() throws Exception {
 
     final Column docUri = new Column("doc", "uri");
@@ -126,7 +129,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx4.done();
   }
 
-  @Test(timeout = 60000)
+
   public void testRolledBackDataIsDropped() throws Exception {
 
     Column col1 = new Column("fam1", "q1");
