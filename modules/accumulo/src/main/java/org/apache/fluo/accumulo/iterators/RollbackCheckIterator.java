@@ -96,6 +96,7 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
 
       if (colType == ColumnConstants.TX_DONE_PREFIX) {
         source.skipToPrefix(curCol, ColumnConstants.WRITE_PREFIX);
+        continue;
       } else if (colType == ColumnConstants.WRITE_PREFIX) {
         long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
@@ -110,6 +111,7 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
 
         if (lockTime > timePtr) {
           source.skipToPrefix(curCol, ColumnConstants.DEL_LOCK_PREFIX);
+          continue;
         }
 
       } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
@@ -124,6 +126,7 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
 
         if (lockTime > ts) {
           source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
+          continue;
         }
 
       } else if (colType == ColumnConstants.LOCK_PREFIX) {
@@ -140,6 +143,8 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
       } else {
         throw new IllegalArgumentException();
       }
+
+      source.next();
     }
   }
 
