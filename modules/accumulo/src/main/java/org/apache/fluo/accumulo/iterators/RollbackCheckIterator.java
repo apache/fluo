@@ -140,8 +140,6 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
       } else {
         throw new IllegalArgumentException();
       }
-
-      source.next();
     }
   }
 
