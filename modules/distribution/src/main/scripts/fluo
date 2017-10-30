@@ -143,7 +143,10 @@ function setup_service {
     app=${BASH_REMATCH[1]}
     verify_app "$app"
     check_conn_props
-    app_lib=$lib/apps/$1
+    # create a temp dir to fetch application jars to
+    app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
+    # schedule removal of app_lib tmp dir when this script exits
+    trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
     mkdir -p "$app_lib"
     $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" "$@"
     export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
@@ -225,7 +228,10 @@ exec)
     app=$2
     verify_app "$app"
     check_conn_props
-    app_lib=$lib/apps/$app
+    # create a temp dir to fetch application jars to
+    app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
+    # schedule removal of app_lib tmp dir when this script exits
+    trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
     mkdir -p "$app_lib"
     $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
     export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"

@@ -14,7 +14,7 @@
 ## Before fluo-env.sh is loaded, these environment variables are set and can be used in this file:
 
 # cmd - Command that is being called such as oracle, worker, etc.
-# app - Fluo application name 
+# app - Fluo application name
 # basedir - Root of Fluo installation
 # conf - Directory containing Fluo configuration
 # lib - Directory containing Fluo libraries
@@ -27,6 +27,8 @@
 export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
 ## Fluo connection properties
 export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
+## Fluo temp directory where the fluo script will copy jars from HDFS to the local machine
+export FLUO_TMP="${FLUO_TMP:-/tmp}"
 
 ####################################################
 # Build JAVA_OPTS variable used by all Fluo commands
