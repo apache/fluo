@@ -147,7 +147,6 @@ function setup_service {
     app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
     # schedule removal of app_lib tmp dir when this script exits
     trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
-    mkdir -p "$app_lib"
     $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" "$@"
     export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
   else
@@ -232,7 +231,6 @@ exec)
     app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
     # schedule removal of app_lib tmp dir when this script exits
     trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
-    mkdir -p "$app_lib"
     $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
     export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
     $JAVA org.apache.fluo.command.FluoExec "${@:2}"
