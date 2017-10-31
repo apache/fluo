@@ -75,7 +75,7 @@ public class OpenReadLockIterator implements SortedKeyValueIterator<Key, Value> 
         source.skipColumn(source.getTopKey());
         continue;
       } else {
-        throw new IllegalArgumentException("Uknown column type " + source.getTopKey());
+        throw new IllegalArgumentException("Unknown column type " + source.getTopKey());
       }
     }
   }
