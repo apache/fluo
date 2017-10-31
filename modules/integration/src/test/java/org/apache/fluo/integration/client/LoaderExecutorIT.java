@@ -30,7 +30,7 @@ public class LoaderExecutorIT extends ITBaseMini {
 
   public static class BadLoader implements Loader {
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(60);
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     @Override
     public void load(TransactionBase tx, Context context) throws Exception {

@@ -37,7 +37,7 @@ import org.junit.rules.Timeout;
 
 public class ScannerIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test
   public void testFiltering() {

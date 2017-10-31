@@ -43,7 +43,7 @@ public class ZKSecretIT extends ITBaseMini {
 
   public static class MyObserverProvider implements ObserverProvider {
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(60);
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     @Override
     public void provide(Registry or, Context ctx) {

@@ -21,7 +21,6 @@ import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
-import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.api.observer.StringObserver;
 import org.apache.fluo.core.impl.Environment;
@@ -45,7 +44,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
  */
 public class WorkerIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(120);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout() * 2);
   // timeout needs to be > 60secs for testMultipleFinders()
   private static final Column LAST_UPDATE = new Column("attr", "lastupdate");
   private static final Column DEGREE = new Column("attr", "degree");

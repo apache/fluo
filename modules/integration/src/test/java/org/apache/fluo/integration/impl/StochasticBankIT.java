@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
  * sum of all money in the bank should be the same, therefore the average should not vary.
  */
 public class StochasticBankIT extends ITBaseImpl {
-  //@Rule
-  //public Timeout globalTimeout = Timeout.seconds(120);
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(120);
 
   private static final Logger log = LoggerFactory.getLogger(StochasticBankIT.class);
   private static AtomicInteger txCount = new AtomicInteger();

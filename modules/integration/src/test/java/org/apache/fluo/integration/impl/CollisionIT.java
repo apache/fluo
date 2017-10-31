@@ -62,7 +62,7 @@ public class CollisionIT extends ITBaseMini {
   private static final Column STAT_PROCESSED = new Column("stat", "processed");
 
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static class NumLoader implements Loader {
 

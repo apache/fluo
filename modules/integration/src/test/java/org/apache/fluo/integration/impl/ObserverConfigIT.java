@@ -43,7 +43,7 @@ public class ObserverConfigIT extends ITBaseMini {
 
   public static class ConfigurableObserver extends AbstractObserver {
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(60);
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     private ObservedColumn observedColumn;
     private Bytes outputCQ;

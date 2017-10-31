@@ -58,6 +58,19 @@ public class ITBase {
   private static AtomicInteger tableCounter = new AtomicInteger(1);
   protected static AtomicInteger testCounter = new AtomicInteger();
 
+  private final static long JUNIT_TIMEOUT_SECONDS = 120;
+
+  /** 
+   * Gets the duration a test will run before timing out under the JUnit rule. 
+   * This value is in seconds.
+   * 
+   * @return long representation of the time in seconds
+   * @since 1.2.0
+   */
+  public static long getTestTimeout() {
+    return JUNIT_TIMEOUT_SECONDS;
+  }
+
   @BeforeClass
   public static void setUpAccumulo() throws Exception {
     instanceName = System.getProperty(IT_INSTANCE_NAME_PROP, "it-instance-default");

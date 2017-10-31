@@ -39,7 +39,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
  */
 public class SelfNotificationIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static final Column STAT_COUNT_COL = new Column("stat", "count");
   private static final Column EXPORT_CHECK_COL = new Column("export", "check");

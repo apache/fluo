@@ -58,7 +58,7 @@ import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FailureIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   @Rule
   public ExpectedException exception = ExpectedException.none();
 

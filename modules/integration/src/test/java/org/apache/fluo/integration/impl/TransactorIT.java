@@ -31,7 +31,7 @@ import org.junit.rules.Timeout;
  */
 public class TransactorIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   public static Long id1 = Long.valueOf(2);
   public static Long id2 = Long.valueOf(3);

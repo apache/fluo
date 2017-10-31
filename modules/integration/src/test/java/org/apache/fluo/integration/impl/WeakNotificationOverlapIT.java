@@ -42,7 +42,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
 public class WeakNotificationOverlapIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   private static final Column STAT_TOTAL = new Column("stat", "total");
   private static final Column STAT_PROCESSED = new Column("stat", "processed");
   private static final Column STAT_CHANGED = new Column("stat", "changed");

@@ -35,7 +35,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class AppConfigIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   public static final Column DF_COL = new Column("data", "foo");
   public static final Column DB_COL = new Column("data", "bar");
 

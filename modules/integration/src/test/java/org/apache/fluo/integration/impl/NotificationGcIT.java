@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class NotificationGcIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   private static final Logger log = LoggerFactory.getLogger(NotificationGcIT.class);
 
   private static void assertRawNotifications(int expected, Environment env) throws Exception {

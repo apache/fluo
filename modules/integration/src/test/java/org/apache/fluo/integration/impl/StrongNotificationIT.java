@@ -33,7 +33,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class StrongNotificationIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static final Column OC = new Column("f", "q");
   private static final Column RC = new Column("f", "r");

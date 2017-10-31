@@ -55,7 +55,7 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
 public class LogIT extends ITBaseMini {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   private static final Column STAT_COUNT = new Column("stat", "count");
 
   static class SimpleLoader implements Loader {

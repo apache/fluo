@@ -36,7 +36,7 @@ import org.junit.rules.Timeout;
  */
 public class TimestampTrackerIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test(expected = NoSuchElementException.class)
   public void testTsNoElement() {

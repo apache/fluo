@@ -47,7 +47,7 @@ import org.junit.rules.Timeout;
  */
 public class GarbageCollectionIteratorIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private void waitForGcTime(long expectedTime) throws Exception {
     env.getSharedResources().getTimestampTracker().updateZkNode();
