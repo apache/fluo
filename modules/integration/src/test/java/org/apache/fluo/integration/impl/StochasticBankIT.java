@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  */
 public class StochasticBankIT extends ITBaseImpl {
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(120);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout() * 2);
 
   private static final Logger log = LoggerFactory.getLogger(StochasticBankIT.class);
   private static AtomicInteger txCount = new AtomicInteger();
