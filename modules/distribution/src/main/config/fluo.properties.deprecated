@@ -28,22 +28,29 @@
 # -----------------
 # Fluo application name
 fluo.client.application.name=
+
 # Zookeeper connection string specifying host and chroot where Fluo stores data.
 # A chroot directory suffix must be specified but doesn't need to be named
 # '/fluo'.  If not specified, a Fluo application cannot be initialized.
 # Interpolation (i.e \${fluo.client.accumulo.zookeepers}/fluo) can be used
 # when setting this to reuse Accumulo's zookeeper connection string.
 #fluo.client.zookeeper.connect=localhost/fluo
+
 # Zookeeper timeout
 #fluo.client.zookeeper.timeout=30000
+
 # Accumulo instance to connect to
 fluo.client.accumulo.instance=
+
 # Accumulo user
 fluo.client.accumulo.user=
+
 # Accumulo password
 fluo.client.accumulo.password=
+
 # Accumulo zookeepers
 #fluo.client.accumulo.zookeepers=localhost
+
 # Client retry timeout (in milliseconds). Set to -1 to retry forever.
 #fluo.client.retry.timeout.ms=-1
 
@@ -51,8 +58,10 @@ fluo.client.accumulo.password=
 # ----------------
 # Accumulo table to initialize
 fluo.admin.accumulo.table=\${fluo.client.application.name}
+
 # HDFS root path. Should match 'fs.defaultFS' property in Hadoop's core-site.xml
 fluo.admin.hdfs.root=hdfs://localhost:10000
+
 # Fluo uses iterators within Accumulo tablet servers, therefore Accumulo per
 # table classpath need to be configured with a comma seperated list of uris
 # where Accumulo can find Fluo jars.  These jars should be reachable from
@@ -83,6 +92,7 @@ fluo.admin.accumulo.classpath=\${fluo.admin.hdfs.root}/fluo/lib/fluo-api-${proje
 # adding Loader will execute.  Must also set fluo.loader.queue.size to zero
 # when setting this to zero.
 #fluo.loader.num.threads=10
+
 # Queue size of loader
 #fluo.loader.queue.size=10
 
@@ -90,18 +100,23 @@ fluo.admin.accumulo.classpath=\${fluo.admin.hdfs.root}/fluo/lib/fluo-api-${proje
 # ----------------
 # Number of oracle yarn instances
 #fluo.yarn.oracle.instances=1
+
 # Max memory of Oracle yarn containers (in MB)
 #fluo.yarn.oracle.max.memory.mb=512
+
 # Number of oracle virtual cores
 #fluo.yarn.oracle.num.cores=1
+
 # Number of worker yarn instances
 #fluo.yarn.worker.instances=1
+
 # Max memory of worker YARN containers (in MB). If YARN is killing worker processes consider
 # increasing twill.java.reserved.memory.mb (which defaults to 200 and is set in yarn-site.xml).
 # The twill.java.reserved.memory.mb config determines the gap between the YARN memory limit set
 # below and the java -Xmx setting.  For example, if max memory is 1024 and twill reserved memory
 # is 200, the java -Xmx setting will be 1024-200 = 824 MB.
 #fluo.yarn.worker.max.memory.mb=1024
+
 # Number of worker virtual cores
 #fluo.yarn.worker.num.cores=1
 
@@ -142,6 +157,7 @@ fluo.admin.accumulo.classpath=\${fluo.admin.hdfs.root}/fluo/lib/fluo-api-${proje
 # -------------------
 # Path to directory where MiniFluo stores its data
 #fluo.mini.data.dir=\${env:FLUO_HOME}/apps/\${fluo.client.application.name}/mini
+
 # Indicates if MiniFluo should start a MiniAccumulo cluster
 #fluo.mini.start.accumulo=true
 

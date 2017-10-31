@@ -13,21 +13,26 @@
  * the License.
  */
 
-package org.apache.fluo.core.impl;
+package org.apache.fluo.accumulo.iterators;
 
-import org.apache.fluo.api.config.FluoConfiguration;
+import java.lang.IllegalArgumentException;
+
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Basic test to ensure instantiation works
- */
-public class VisibilityCacheTest {
+public class ColumnBufferTest {
 
   @Test
-  public void testVisibilityCacheConstructor() {
-    VisibilityCache cache = new VisibilityCache(new FluoConfiguration());
-    Assert.assertNotNull("VisibilityCache failed to instantiate.", cache);
-    cache = null;
+  public void testDifferentKeys() {
+    ColumnBuffer columnBuffer = new ColumnBuffer();
+    columnBuffer.add(new Key("row1"), new Value());
+    try {
+      columnBuffer.add(new Key("row2"), new Value());
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+
+    }
   }
 }

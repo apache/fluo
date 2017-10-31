@@ -24,12 +24,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Weigher;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.util.ByteUtil;
 
 /**
- * PArsing Column visibilities can be expensive. This class provides a cache of parsed visibility
+ * Parsing Column visibilities can be expensive. This class provides a cache of parsed visibility
  * objects.
  */
 
@@ -46,12 +47,13 @@ public class VisibilityCache {
 
   private final Cache<Bytes, ColumnVisibility> visCache;
 
-  VisibilityCache() {
+  VisibilityCache(FluoConfiguration conf) {
     visCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(FluoConfigurationImpl.TX_INFO_CACHE_TIMEOUT_DEFAULT,
+        .expireAfterAccess(
+            FluoConfigurationImpl.getVisibilityCacheTimeout(conf, TimeUnit.MILLISECONDS),
             TimeUnit.MILLISECONDS)
-        .maximumWeight(FluoConfigurationImpl.TX_INFO_CACHE_SIZE_DEFAULT).weigher(new VisWeigher())
-        .concurrencyLevel(10).build();
+        .maximumWeight(FluoConfigurationImpl.getVisibilityCacheWeight(conf))
+        .weigher(new VisWeigher()).concurrencyLevel(10).build();
   }
 
   public ColumnVisibility getCV(Column col) {

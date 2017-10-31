@@ -104,21 +104,21 @@ public class FluoConfigurationImpl {
     return m;
   }
 
-  public static final String TX_INFO_CACHE_SIZE = FLUO_IMPL_PREFIX + ".tx.failed.cache.size.mb";
-  public static final long TX_INFO_CACHE_SIZE_DEFAULT = 10000000;
+  public static final String TX_INFO_CACHE_WEIGHT = FLUO_IMPL_PREFIX + ".tx.failed.cache.weight.mb";
+  public static final long TX_INFO_CACHE_WEIGHT_DEFAULT = 10_000_000;
 
   /** 
-   * Gets the cache size
+   * Gets the txinfo cache weight 
    * 
    * @param conf The FluoConfiguration
-   * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_SIZE}
-   *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_SIZE_DEFAULT}
+   * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_WEIGHT}
+   *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_WEIGHT_DEFAULT}
    */
 
-  public static long getTxInfoCacheSize(FluoConfiguration conf) {
-    long size = conf.getLong(TX_INFO_CACHE_SIZE, TX_INFO_CACHE_SIZE_DEFAULT);
+  public static long getTxInfoCacheWeight(FluoConfiguration conf) {
+    long size = conf.getLong(TX_INFO_CACHE_WEIGHT, TX_INFO_CACHE_WEIGHT_DEFAULT);
     if (size <= 0) {
-      throw new IllegalArgumentException("Cache size must be positive for " + TX_INFO_CACHE_SIZE);
+      throw new IllegalArgumentException("Cache size must be positive for " + TX_INFO_CACHE_WEIGHT);
     }
     return size;
   }
@@ -140,6 +140,83 @@ public class FluoConfigurationImpl {
     long millis = conf.getLong(TX_INFO_CACHE_TIMEOUT, TX_INFO_CACHE_TIMEOUT_DEFAULT);
     if (millis <= 0) {
       throw new IllegalArgumentException("Timeout must positive for " + TX_INFO_CACHE_TIMEOUT);
+    }
+    return tu.convert(millis, TimeUnit.MILLISECONDS);
+  }
+
+  public static final String VISIBILITY_CACHE_WEIGHT =
+      FLUO_IMPL_PREFIX + ".visibility.cache.weight.mb";
+  public static final long VISIBILITY_CACHE_WEIGHT_DEFAULT = 10_000_000;
+
+  /** 
+   * Gets the visibility cache weight
+   * 
+   * @param conf The FluoConfiguration
+   * @return The size of the cache value from the property value {@value #VISIBILITY_CACHE_WEIGHT}
+   *     if it is set, else the value of the default value {@value #VISIBILITY_CACHE_WEIGHT_DEFAULT}
+   */
+
+  public static long getVisibilityCacheWeight(FluoConfiguration conf) {
+    long size = conf.getLong(VISIBILITY_CACHE_WEIGHT, VISIBILITY_CACHE_WEIGHT_DEFAULT);
+    if (size <= 0) {
+      throw new IllegalArgumentException(
+          "Cache size must be positive for " + VISIBILITY_CACHE_WEIGHT);
+    }
+    return size;
+  }
+
+  public static final String VISIBILITY_CACHE_TIMEOUT =
+      FLUO_IMPL_PREFIX + ".visibility.cache.expireTime.ms";
+  public static final long VISIBILITY_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
+
+  /**
+   * Gets the time before stale entries in the cache are evicted based on age.
+   * This method returns a long representing the time converted from the
+   * TimeUnit passed in.
+   * 
+   * @param conf The FluoConfiguration
+   * @param tu   The TimeUnit desired to represent the cache timeout
+   */
+
+  public static long getVisibilityCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
+    long millis = conf.getLong(VISIBILITY_CACHE_TIMEOUT, VISIBILITY_CACHE_TIMEOUT_DEFAULT);
+    if (millis <= 0) {
+      throw new IllegalArgumentException("Timeout must positive for " + VISIBILITY_CACHE_TIMEOUT);
+    }
+    return tu.convert(millis, TimeUnit.MILLISECONDS);
+  }
+
+  private static final String TRANSACTOR_MAX_CACHE_SIZE =
+      FLUO_IMPL_PREFIX + ".transactor.cache.max.size";
+  private static final long TRANSACTOR_MAX_CACHE_SIZE_DEFAULT = 32768; // this equals 2^15 
+
+  /**
+   * Gets the specified number of entries the cache can contain, this gets the value
+   * of {@value #TRANSACTOR_MAX_CACHE_SIZE} if set, the default 
+   * {@value #TRANSACTOR_CACHE_TIMEOUT_DEFAULT} otherwise
+   * 
+   * @param conf The FluoConfiguartion
+   * @return The maximum number of entries permitted in this cache
+   */
+
+  public static long getTransactorMaxCacheSize(FluoConfiguration conf) {
+    long size = conf.getLong(TRANSACTOR_MAX_CACHE_SIZE, TRANSACTOR_MAX_CACHE_SIZE_DEFAULT);
+    if (size <= 0) {
+      throw new IllegalArgumentException(
+          "Cache size must be positive for " + TRANSACTOR_MAX_CACHE_SIZE);
+    }
+    return size;
+  }
+
+  public static final String TRANSACTOR_CACHE_TIMEOUT =
+      FLUO_IMPL_PREFIX + ".transactor.cache.expireTime.ms";
+
+  public static final long TRANSACTOR_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
+
+  public static long getTransactorCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
+    long millis = conf.getLong(TRANSACTOR_CACHE_TIMEOUT, TRANSACTOR_CACHE_TIMEOUT_DEFAULT);
+    if (millis <= 0) {
+      throw new IllegalArgumentException("Timeout must positive for " + TRANSACTOR_CACHE_TIMEOUT);
     }
     return tu.convert(millis, TimeUnit.MILLISECONDS);
   }
