@@ -27,12 +27,16 @@ import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class FluoAdminImplIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
 
   @Test
   public void testInitializeTwiceFails() throws Exception {

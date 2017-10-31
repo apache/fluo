@@ -28,7 +28,9 @@ import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
@@ -36,6 +38,8 @@ import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
  * Test an observer notifying the column its observing. This is a useful pattern for exporting data.
  */
 public class SelfNotificationIT extends ITBaseMini {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static final Column STAT_COUNT_COL = new Column("stat", "count");
   private static final Column EXPORT_CHECK_COL = new Column("export", "check");

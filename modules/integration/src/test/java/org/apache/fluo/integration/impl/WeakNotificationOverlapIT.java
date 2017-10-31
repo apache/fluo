@@ -34,12 +34,15 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
 public class WeakNotificationOverlapIT extends ITBaseImpl {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   private static final Column STAT_TOTAL = new Column("stat", "total");
   private static final Column STAT_PROCESSED = new Column("stat", "processed");
   private static final Column STAT_CHANGED = new Column("stat", "changed");

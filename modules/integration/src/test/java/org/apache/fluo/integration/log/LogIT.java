@@ -36,7 +36,6 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.RowColumnValue;
-import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.api.observer.StringObserver;
@@ -48,12 +47,15 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
 public class LogIT extends ITBaseMini {
-
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
   private static final Column STAT_COUNT = new Column("stat", "count");
 
   static class SimpleLoader implements Loader {

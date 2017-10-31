@@ -22,11 +22,15 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class LoaderExecutorIT extends ITBaseMini {
 
   public static class BadLoader implements Loader {
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     @Override
     public void load(TransactionBase tx, Context context) throws Exception {

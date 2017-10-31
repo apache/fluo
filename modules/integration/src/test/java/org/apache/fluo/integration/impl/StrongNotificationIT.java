@@ -25,11 +25,15 @@ import org.apache.fluo.core.impl.TransactorNode;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.fluo.integration.TestTransaction;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class StrongNotificationIT extends ITBaseMini {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   private static final Column OC = new Column("f", "q");
   private static final Column RC = new Column("f", "r");

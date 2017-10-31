@@ -27,12 +27,16 @@ import org.apache.fluo.core.impl.TransactorID;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Tests TimestampTracker class
  */
 public class TimestampTrackerIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test(expected = NoSuchElementException.class)
   public void testTsNoElement() {

@@ -24,9 +24,14 @@ import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class ApiBehaviorIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
+
   @Test
   public void testGetNonexistant() {
 

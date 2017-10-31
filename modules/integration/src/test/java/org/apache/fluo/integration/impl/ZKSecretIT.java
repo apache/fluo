@@ -27,20 +27,23 @@ import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.zookeeper.KeeperException.NoAuthException;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class ZKSecretIT extends ITBaseMini {
 
   public static class MyObserverProvider implements ObserverProvider {
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     @Override
     public void provide(Registry or, Context ctx) {

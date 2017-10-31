@@ -21,9 +21,13 @@ import com.google.common.collect.Sets;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class ColumnVisIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test(expected = Exception.class)
   public void testFailFastSet() {

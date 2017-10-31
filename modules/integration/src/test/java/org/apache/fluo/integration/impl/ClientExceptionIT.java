@@ -21,12 +21,16 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.AlreadySetException;
 import org.apache.fluo.integration.ITBaseMini;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * Integration test to verify exceptions thrown by Fluo client
  */
 public class ClientExceptionIT extends ITBaseMini {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test
   public void testAlreadySetException() {

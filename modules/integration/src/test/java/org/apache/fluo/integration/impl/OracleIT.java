@@ -47,7 +47,7 @@ import static org.junit.Assert.assertTrue;
 public class OracleIT extends ITBaseImpl {
 
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   @Test
   public void testRestart() throws Exception {
