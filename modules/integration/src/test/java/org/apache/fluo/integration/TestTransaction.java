@@ -31,6 +31,7 @@ import org.apache.fluo.accumulo.iterators.NotificationIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.api.client.AbstractTransactionBase;
+import org.apache.fluo.api.client.SnapshotBase;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
@@ -198,5 +199,10 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
   @Override
   public long getStartTimestamp() {
     return tx.getStartTimestamp();
+  }
+
+  @Override
+  public SnapshotBase withReadLock() {
+    return tx.withReadLock();
   }
 }

@@ -34,7 +34,7 @@ public class ScanTest {
     JCommander jcommand = new JCommander(options);
     jcommand.parse(args.split(" "));
     ScanUtil.ScanOpts opts = options.getScanOpts();
-    return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts));
+    return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts), false);
   }
 
   @Test

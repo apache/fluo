@@ -26,6 +26,7 @@ public class ColumnConstants {
   public static final long TX_DONE_PREFIX = 0x6000000000000000L;
   public static final long WRITE_PREFIX = 0x4000000000000000L;
   public static final long DEL_LOCK_PREFIX = 0x2000000000000000L;
+  public static final long RLOCK_PREFIX = 0x0000000000000000L;
   public static final long LOCK_PREFIX = 0xe000000000000000L;
   public static final long ACK_PREFIX = 0xc000000000000000L;
   public static final long DATA_PREFIX = 0xa000000000000000L;

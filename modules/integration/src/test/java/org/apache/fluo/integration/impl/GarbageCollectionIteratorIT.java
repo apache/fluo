@@ -29,6 +29,7 @@ import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
+import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.impl.TransactionImpl.CommitData;
 import org.apache.fluo.core.impl.TransactorNode;
@@ -174,6 +175,88 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(0, countInTable("-LOCK"));
     Assert.assertEquals(1, countInTable("-DEL_LOCK"));
     Assert.assertEquals(0, countInTable("-DATA"));
+  }
+
+  private void increment(TransactionBase tx, String row, Column col) {
+    int count = Integer.parseInt(tx.gets(row, col, "0"));
+    tx.set(row, col, count + 1 + "");
+  }
+
+  @Test(timeout = 60000)
+  public void testReadLocks() throws Exception {
+
+    final Column altIdCol = new Column("info", "altId");
+
+    TestTransaction tx1 = new TestTransaction(env);
+    for (int i = 0; i < 10; i++) {
+      tx1.set(String.format("n:%03d", i), altIdCol, "" + (19 * (1 + i)));
+    }
+
+    tx1.done();
+
+    for (int i = 0; i < 50; i++) {
+      String row = String.format("n:%03d", i % 10);
+
+      TestTransaction tx = new TestTransaction(env);
+      String altId = tx.withReadLock().gets(row, altIdCol);
+
+      increment(tx, "a:" + altId, new Column("count", row));
+
+      tx.done();
+    }
+
+    Assert.assertEquals(50, countInTable("-DEL_RLOCK"));
+    Assert.assertEquals(50, countInTable("-RLOCK"));
+
+    TestTransaction tx2 = new TestTransaction(env);
+    for (int i = 0; i < 10; i++) {
+      String row = String.format("n:%03d", i);
+      String newAltId = (13 * (i + 1)) + "";
+      String currAltId = tx2.gets(row, altIdCol);
+
+
+      tx2.set(row, altIdCol, newAltId);
+
+      String count = tx2.gets("a:" + currAltId, new Column("count", row));
+      tx2.set("a:" + newAltId, new Column("count", row), count);
+      tx2.delete("a:" + currAltId, new Column("count", row));
+    }
+
+    tx2.done();
+
+    // all read locks should be garbage collected because of the writes after the read locks
+    conn.tableOperations().compact(table, null, null, true, true);
+
+    Assert.assertEquals(0, countInTable("-DEL_RLOCK"));
+    Assert.assertEquals(0, countInTable("-RLOCK"));
+
+    for (int i = 0; i < 50; i++) {
+      String row = String.format("n:%03d", i % 10);
+
+      TestTransaction tx = new TestTransaction(env);
+      String altId = tx.withReadLock().gets(row, altIdCol);
+
+      increment(tx, "a:" + altId, new Column("count", row));
+
+      tx.done();
+    }
+
+    TestTransaction tx3 = new TestTransaction(env);
+    for (int i = 0; i < 10; i++) {
+      String row = String.format("n:%03d", i);
+      String currAltId = tx3.gets(row, altIdCol);
+      Assert.assertEquals("10", tx3.gets("a:" + currAltId, new Column("count", row)));
+    }
+
+    tx3.done();
+
+    waitForGcTime(tx3.getStartTimestamp());
+    conn.tableOperations().compact(table, null, null, true, true);
+
+
+    // all read locks older than GC time should be dropped
+    Assert.assertEquals(0, countInTable("-DEL_RLOCK"));
+    Assert.assertEquals(0, countInTable("-RLOCK"));
   }
 
   private int countInTable(String str) throws TableNotFoundException {
