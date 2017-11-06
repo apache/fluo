@@ -35,9 +35,12 @@ export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
 ## Fluo log4j configuration
 export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
 ## Java options for Fluo command
-##PREPENDING JAVA_OPTS WITH FLUO_JAVA_OPTS ENVIRONMENT VARIABLE
-JAVA_OPTS=("$FLUO_JAVA_OPTS -Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}")
-
+JAVA_OPTS="-Dlog4j.configuration=file:${FLUO_LOG4J_CONFIG}"
+##Prepending JAVA_OPTS with FLUO_JAVA_OPTS
+for var in "${FLUO_JAVA_OPTS[@]}"
+do
+	JAVA_OPTS=("$var $JAVA_OPTS")
+done
 export JAVA_OPTS
 
 ##########################
