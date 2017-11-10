@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -16,12 +16,9 @@
 package org.apache.fluo.accumulo.iterators;
 
 import java.io.IOException;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.function.LongPredicate;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -86,7 +83,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       gcTimestamp = ZookeeperUtil.getGcTimestamp(zookeepers);
     }
   }
-
 
   @Override
   public boolean hasTop() {
@@ -259,7 +255,8 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
           if (isFullMajc) {
             if (isDelete) {
               if (DelReadLockValue.isRollback(source.getTopValue().get())) {
-                // can drop rolled back read lock delete markers on any full majc, do not need to consider gcTimestamp
+                // can drop rolled back read lock delete markers on any full majc, do not need to
+                // consider gcTimestamp
                 keep = false;
               } else {
                 long rlockCommitTs =

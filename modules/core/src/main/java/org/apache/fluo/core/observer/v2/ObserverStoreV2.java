@@ -105,8 +105,8 @@ public class ObserverStoreV2 implements ObserverStore {
     String json = new String(data, UTF_8);
     JsonObservers jco = new Gson().fromJson(json, JsonObservers.class);
 
-    ImmutableSet.Builder<Column> weakColumnsBuilder = new ImmutableSet.Builder<Column>();
-    ImmutableSet.Builder<Column> strongColumnsBuilder = new ImmutableSet.Builder<Column>();
+    ImmutableSet.Builder<Column> weakColumnsBuilder = new ImmutableSet.Builder<>();
+    ImmutableSet.Builder<Column> strongColumnsBuilder = new ImmutableSet.Builder<>();
 
     for (Entry<Column, NotificationType> entry : jco.getObservedColumns().entrySet()) {
       switch (entry.getValue()) {

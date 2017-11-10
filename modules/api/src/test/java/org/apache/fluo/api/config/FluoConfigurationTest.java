@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -49,8 +49,11 @@ public class FluoConfigurationTest {
         base.getConnectionRetryTimeout());
     Assert.assertEquals(FluoConfiguration.ACCUMULO_ZOOKEEPERS_DEFAULT,
         base.getAccumuloZookeepers());
-    Assert.assertEquals(FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT,
-        base.getAccumuloClasspath());
+    @SuppressWarnings("deprecation")
+    String tmpFieldName = FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT;
+    @SuppressWarnings("deprecation")
+    String tmpCP = base.getAccumuloClasspath();
+    Assert.assertEquals(tmpFieldName, tmpCP);
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
     Assert.assertEquals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_DEFAULT,
         base.getTransactionRollbackTime());
@@ -86,8 +89,9 @@ public class FluoConfigurationTest {
   @Test
   public void testSetGet() {
     FluoConfiguration config = new FluoConfiguration();
-    Assert.assertEquals("path1,path2",
-        config.setAccumuloClasspath("path1,path2").getAccumuloClasspath());
+    @SuppressWarnings("deprecation")
+    String tmpCP = config.setAccumuloClasspath("path1,path2").getAccumuloClasspath();
+    Assert.assertEquals("path1,path2", tmpCP);
     Assert.assertEquals("path1,path2", config.setAccumuloJars("path1,path2").getAccumuloJars());
     Assert.assertEquals("instance", config.setAccumuloInstance("instance").getAccumuloInstance());
     Assert.assertEquals("pass", config.setAccumuloPassword("pass").getAccumuloPassword());
@@ -184,7 +188,9 @@ public class FluoConfigurationTest {
 
     FluoConfiguration config = new FluoConfiguration(propsFile);
     // make sure classpath contains comma. otherwise it was shortened
-    Assert.assertTrue(config.getAccumuloClasspath().contains(","));
+    @SuppressWarnings("deprecation")
+    String tmpCP = config.getAccumuloClasspath();
+    Assert.assertTrue(tmpCP.contains(","));
     // check for values set in prop file
     Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
     Assert.assertEquals("localhost", config.getAccumuloZookeepers());
@@ -249,7 +255,9 @@ public class FluoConfigurationTest {
 
     FluoConfiguration config = new FluoConfiguration(propsFile);
     // make sure classpath contains comma. otherwise it was shortened
-    Assert.assertTrue(config.getAccumuloClasspath().contains(","));
+    @SuppressWarnings("deprecation")
+    String tmpCP = config.getAccumuloClasspath();
+    Assert.assertTrue(tmpCP.contains(","));
     // check for values set in prop file
     Assert.assertEquals("app1", config.getApplicationName());
     Assert.assertEquals("localhost/fluo2", config.getInstanceZookeepers());
@@ -258,7 +266,9 @@ public class FluoConfigurationTest {
     Assert.assertEquals("user5", config.getAccumuloUser());
     Assert.assertEquals("pass6", config.getAccumuloPassword());
     Assert.assertEquals("zoo7", config.getAccumuloZookeepers());
-    Assert.assertEquals(8, config.getClientRetryTimeout());
+    @SuppressWarnings("deprecation")
+    int tmpTimeout = config.getClientRetryTimeout();
+    Assert.assertEquals(8, tmpTimeout);
     Assert.assertEquals(8, config.getConnectionRetryTimeout());
     Assert.assertEquals("table9", config.getAccumuloTable());
   }

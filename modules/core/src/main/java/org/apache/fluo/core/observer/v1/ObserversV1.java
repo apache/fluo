@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Iterables;
-import org.apache.fluo.api.config.ObserverSpecification;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
@@ -37,8 +36,8 @@ class ObserversV1 implements Observers {
 
   private Environment env;
   Map<Column, List<Observer>> observers = new HashMap<>();
-  Map<Column, ObserverSpecification> strongObservers;
-  Map<Column, ObserverSpecification> weakObservers;
+  Map<Column, org.apache.fluo.api.config.ObserverSpecification> strongObservers;
+  Map<Column, org.apache.fluo.api.config.ObserverSpecification> weakObservers;
   Map<Column, String> aliases;
 
   private List<Observer> getObserverList(Column col) {
@@ -53,16 +52,17 @@ class ObserversV1 implements Observers {
     return observerList;
   }
 
-  public ObserversV1(Environment env, Map<Column, ObserverSpecification> strongObservers,
-      Map<Column, ObserverSpecification> weakObservers) {
+  public ObserversV1(Environment env,
+      Map<Column, org.apache.fluo.api.config.ObserverSpecification> strongObservers,
+      Map<Column, org.apache.fluo.api.config.ObserverSpecification> weakObservers) {
     this.env = env;
     this.strongObservers = strongObservers;
     this.weakObservers = weakObservers;
     this.aliases = new HashMap<>();
 
-    for (Entry<Column, ObserverSpecification> e : Iterables.concat(strongObservers.entrySet(),
-        weakObservers.entrySet())) {
-      ObserverSpecification observerConfig = e.getValue();
+    for (Entry<Column, org.apache.fluo.api.config.ObserverSpecification> e : Iterables
+        .concat(strongObservers.entrySet(), weakObservers.entrySet())) {
+      org.apache.fluo.api.config.ObserverSpecification observerConfig = e.getValue();
       try {
         String alias =
             Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).getSimpleName();
@@ -73,6 +73,7 @@ class ObserversV1 implements Observers {
     }
   }
 
+  @Override
   public Observer getObserver(Column col) {
 
     List<Observer> observerList;
@@ -86,7 +87,7 @@ class ObserversV1 implements Observers {
 
     Observer observer = null;
 
-    ObserverSpecification observerConfig = strongObservers.get(col);
+    org.apache.fluo.api.config.ObserverSpecification observerConfig = strongObservers.get(col);
     if (observerConfig == null) {
       observerConfig = weakObservers.get(col);
     }
@@ -112,6 +113,7 @@ class ObserversV1 implements Observers {
     return observer;
   }
 
+  @Override
   public void returnObserver(Observer observer) {
     List<Observer> olist = getObserverList(observer.getObservedColumn().getColumn());
     synchronized (olist) {

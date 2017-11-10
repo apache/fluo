@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -87,7 +87,6 @@ public class LockResolver {
     return groupedLocks;
   }
 
-
   private static class LockInfo {
 
     final Bytes prow;
@@ -125,7 +124,7 @@ public class LockResolver {
    * @param startTs The logical start time from the oracle of the transaction that encountered the
    *        lock
    * @param stats Stats object for the transaction that encountered the lock
-   * @param locks List of locks
+   * @param locksKVs List of locks
    * @param startTime The wall time that the transaction that encountered the lock first saw the
    *        lock
    * @return true if all locks passed in were resolved (rolled forward or back)

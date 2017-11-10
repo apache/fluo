@@ -47,7 +47,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
    * toString(). Second, the actual Transaction implementation will under some circumstances return
    * the Bytes object that was passed in.
    */
-  private Map<String, Bytes> s2bCache = new WeakHashMap<String, Bytes>();
+  private Map<String, Bytes> s2bCache = new WeakHashMap<>();
 
   public AbstractSnapshotBase() {}
 

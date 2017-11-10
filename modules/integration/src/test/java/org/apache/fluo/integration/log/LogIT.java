@@ -328,7 +328,6 @@ public class LogIT extends ITBaseMini {
       tx.commit();
     }
 
-
     Logger logger = Logger.getLogger("fluo.tx");
 
     StringWriter writer = new StringWriter();

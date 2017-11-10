@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -30,11 +30,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
-import org.apache.fluo.cluster.runnable.OracleRunnable;
-import org.apache.fluo.cluster.runnable.WorkerRunnable;
-import org.apache.fluo.cluster.util.FluoYarnConfig;
-import org.apache.fluo.cluster.yarn.FluoTwillApp;
-import org.apache.fluo.cluster.yarn.TwillUtil;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.hadoop.fs.Path;
@@ -185,7 +180,8 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       throw new FluoException("Invalid fluo.properties due to " + e.getMessage(), e);
     }
 
-    TwillPreparer preparer = getTwillRunner(config).prepare(new FluoTwillApp(config, appConfDir));
+    TwillPreparer preparer = getTwillRunner(config)
+        .prepare(new org.apache.fluo.cluster.yarn.FluoTwillApp(config, appConfDir));
 
     // Add jars from fluo lib/ directory that are not being loaded by Twill.
     try {
@@ -327,17 +323,24 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
   }
 
   private boolean allContainersRunning(TwillController controller, FluoConfiguration config) {
-    return TwillUtil.numRunning(controller, OracleRunnable.ORACLE_NAME) == FluoYarnConfig
-        .getOracleInstances(config)
-        && TwillUtil.numRunning(controller, WorkerRunnable.WORKER_NAME) == FluoYarnConfig
-            .getWorkerInstances(config);
+    return org.apache.fluo.cluster.yarn.TwillUtil.numRunning(controller,
+        org.apache.fluo.cluster.runnable.OracleRunnable.ORACLE_NAME) == org.apache.fluo.cluster.util.FluoYarnConfig
+            .getOracleInstances(config)
+        && org.apache.fluo.cluster.yarn.TwillUtil.numRunning(controller,
+            org.apache.fluo.cluster.runnable.WorkerRunnable.WORKER_NAME) == org.apache.fluo.cluster.util.FluoYarnConfig
+                .getWorkerInstances(config);
   }
 
   private String containerStatus(TwillController controller, FluoConfiguration config) {
-    return "" + TwillUtil.numRunning(controller, OracleRunnable.ORACLE_NAME) + " of "
-        + FluoYarnConfig.getOracleInstances(config) + " Oracle containers and "
-        + TwillUtil.numRunning(controller, WorkerRunnable.WORKER_NAME) + " of "
-        + FluoYarnConfig.getWorkerInstances(config) + " Worker containers";
+    return ""
+        + org.apache.fluo.cluster.yarn.TwillUtil.numRunning(controller,
+            org.apache.fluo.cluster.runnable.OracleRunnable.ORACLE_NAME)
+        + " of " + org.apache.fluo.cluster.util.FluoYarnConfig.getOracleInstances(config)
+        + " Oracle containers and "
+        + org.apache.fluo.cluster.yarn.TwillUtil.numRunning(controller,
+            org.apache.fluo.cluster.runnable.WorkerRunnable.WORKER_NAME)
+        + " of " + org.apache.fluo.cluster.util.FluoYarnConfig.getWorkerInstances(config)
+        + " Worker containers";
   }
 
   public void status(FluoConfiguration config, boolean extraInfo) {
@@ -366,15 +369,19 @@ public class YarnAppRunner extends ClusterAppRunner implements AutoCloseable {
       if (extraInfo) {
         ResourceReport report = getResourceReport(controller, 30000);
         Collection<TwillRunResources> resources;
-        resources = report.getRunnableResources(OracleRunnable.ORACLE_NAME);
+        resources = report
+            .getRunnableResources(org.apache.fluo.cluster.runnable.OracleRunnable.ORACLE_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
-            + FluoYarnConfig.getOracleInstances(config) + " desired Oracle containers:\n");
-        TwillUtil.printResources(resources);
+            + org.apache.fluo.cluster.util.FluoYarnConfig.getOracleInstances(config)
+            + " desired Oracle containers:\n");
+        org.apache.fluo.cluster.yarn.TwillUtil.printResources(resources);
 
-        resources = report.getRunnableResources(WorkerRunnable.WORKER_NAME);
+        resources = report
+            .getRunnableResources(org.apache.fluo.cluster.runnable.WorkerRunnable.WORKER_NAME);
         System.out.println("\nThe application has " + resources.size() + " of "
-            + FluoYarnConfig.getWorkerInstances(config) + " desired Worker containers:\n");
-        TwillUtil.printResources(resources);
+            + org.apache.fluo.cluster.util.FluoYarnConfig.getWorkerInstances(config)
+            + " desired Worker containers:\n");
+        org.apache.fluo.cluster.yarn.TwillUtil.printResources(resources);
       }
     }
   }

@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -18,7 +18,6 @@ package org.apache.fluo.integration.impl;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -26,8 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.api.client.Snapshot;
@@ -50,13 +47,6 @@ import static org.apache.fluo.integration.impl.ReadLockIT.addEdge;
 import static org.apache.fluo.integration.impl.ReadLockIT.setAlias;
 
 public class ReadLockFailureIT extends ITBaseImpl {
-
-  private void dumpTable(Consumer<String> out) throws TableNotFoundException {
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    for (Entry<Key, Value> entry : scanner) {
-      out.accept(FluoFormatter.toString(entry));
-    }
-  }
 
   private Set<String> getDerivedEdges() {
     Set<String> derivedEdges = new HashSet<>();
@@ -97,7 +87,6 @@ public class ReadLockFailureIT extends ITBaseImpl {
       tx.commit();
     }
   }
-
 
   private TransactorNode partiallyCommit(Consumer<TransactionBase> action, boolean commitPrimary,
       boolean closeTransactor) throws Exception {
@@ -223,7 +212,7 @@ public class ReadLockFailureIT extends ITBaseImpl {
     }, false, closeTransactor);
 
     retryTwice(tx -> {
-      Map<String, Map<Column, String>> ratios = tx.gets(Arrays.asList("user5", "user6"), crCol);
+      tx.gets(Arrays.asList("user5", "user6"), crCol);
 
       tx.set("user5", crCol, "0.51");
       tx.set("user6", crCol, "0.76");
@@ -267,7 +256,6 @@ public class ReadLockFailureIT extends ITBaseImpl {
       Map<RowColumn, String> ratios = tx.withReadLock()
           .gets(Arrays.asList(new RowColumn("user5", crCol), new RowColumn("user6", crCol)));
 
-
       double cr1 = Double.parseDouble(ratios.get(new RowColumn("user5", crCol)));
       double cr2 = Double.parseDouble(ratios.get(new RowColumn("user6", crCol)));
 
@@ -275,8 +263,7 @@ public class ReadLockFailureIT extends ITBaseImpl {
     }, false, true);
 
     retryTwice(tx -> {
-      Map<RowColumn, String> ratios =
-          tx.gets(Arrays.asList(new RowColumn("user5", crCol), new RowColumn("user6", crCol)));
+      tx.gets(Arrays.asList(new RowColumn("user5", crCol), new RowColumn("user6", crCol)));
 
       tx.set("user5", crCol, "0.51");
       tx.set("user6", crCol, "0.76");

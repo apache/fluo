@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -18,10 +18,6 @@ package org.apache.fluo.cluster.yarn;
 import java.io.File;
 
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.cluster.runnable.OracleRunnable;
-import org.apache.fluo.cluster.runnable.WorkerRunnable;
-import org.apache.fluo.cluster.runner.YarnAppRunner;
-import org.apache.fluo.cluster.util.FluoYarnConfig;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.ResourceSpecification.SizeUnit;
 import org.apache.twill.api.TwillApplication;
@@ -71,26 +67,37 @@ public class FluoTwillApp implements TwillApplication {
   @Override
   public TwillSpecification configure() {
 
-    final int oracleInstances = FluoYarnConfig.getOracleInstances(config);
-    final int oracleMaxMemory = FluoYarnConfig.getOracleMaxMemory(config);
-    final int oracleNumCores = FluoYarnConfig.getOracleNumCores(config);
-    final int workerInstances = FluoYarnConfig.getWorkerInstances(config);
-    final int workerMaxMemory = FluoYarnConfig.getWorkerMaxMemory(config);
-    final int workerNumCores = FluoYarnConfig.getWorkerNumCores(config);
+    final int oracleInstances =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getOracleInstances(config);
+    final int oracleMaxMemory =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getOracleMaxMemory(config);
+    final int oracleNumCores =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getOracleNumCores(config);
+    final int workerInstances =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getWorkerInstances(config);
+    final int workerMaxMemory =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getWorkerMaxMemory(config);
+    final int workerNumCores =
+        org.apache.fluo.cluster.util.FluoYarnConfig.getWorkerNumCores(config);
 
     log.info(
         "Configuring Fluo '{}' application with {} Oracle instances and {} Worker instances "
             + "with following properties:",
         config.getApplicationName(), oracleInstances, workerInstances);
 
-    log.info("{} = {}", FluoYarnConfig.ORACLE_MAX_MEMORY_MB_PROP, oracleMaxMemory);
-    log.info("{} = {}", FluoYarnConfig.WORKER_MAX_MEMORY_MB_PROP, workerMaxMemory);
-    log.info("{} = {}", FluoYarnConfig.ORACLE_NUM_CORES_PROP, oracleNumCores);
-    log.info("{} = {}", FluoYarnConfig.WORKER_NUM_CORES_PROP, workerNumCores);
+    log.info("{} = {}", org.apache.fluo.cluster.util.FluoYarnConfig.ORACLE_MAX_MEMORY_MB_PROP,
+        oracleMaxMemory);
+    log.info("{} = {}", org.apache.fluo.cluster.util.FluoYarnConfig.WORKER_MAX_MEMORY_MB_PROP,
+        workerMaxMemory);
+    log.info("{} = {}", org.apache.fluo.cluster.util.FluoYarnConfig.ORACLE_NUM_CORES_PROP,
+        oracleNumCores);
+    log.info("{} = {}", org.apache.fluo.cluster.util.FluoYarnConfig.WORKER_NUM_CORES_PROP,
+        workerNumCores);
 
     // Start building Fluo Twill application
-    MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-        .setName(YarnAppRunner.getYarnApplicationName(config.getApplicationName())).withRunnable();
+    MoreRunnable moreRunnable =
+        TwillSpecification.Builder.with().setName(org.apache.fluo.cluster.runner.YarnAppRunner
+            .getYarnApplicationName(config.getApplicationName())).withRunnable();
 
     // Configure Oracle(s)
     ResourceSpecification oracleResources =
@@ -98,7 +105,9 @@ public class FluoTwillApp implements TwillApplication {
             .setMemory(oracleMaxMemory, SizeUnit.MEGA).setInstances(oracleInstances).build();
 
     LocalFileAdder fileAdder = moreRunnable
-        .add(OracleRunnable.ORACLE_NAME, new OracleRunnable(), oracleResources).withLocalFiles();
+        .add(org.apache.fluo.cluster.runnable.OracleRunnable.ORACLE_NAME,
+            new org.apache.fluo.cluster.runnable.OracleRunnable(), oracleResources)
+        .withLocalFiles();
     RunnableSetter runnableSetter = addConfigFiles(fileAdder).apply();
 
     // Configure Worker(s)
@@ -107,11 +116,14 @@ public class FluoTwillApp implements TwillApplication {
             .setMemory(workerMaxMemory, SizeUnit.MEGA).setInstances(workerInstances).build();
 
     fileAdder = runnableSetter
-        .add(WorkerRunnable.WORKER_NAME, new WorkerRunnable(), workerResources).withLocalFiles();
+        .add(org.apache.fluo.cluster.runnable.WorkerRunnable.WORKER_NAME,
+            new org.apache.fluo.cluster.runnable.WorkerRunnable(), workerResources)
+        .withLocalFiles();
     runnableSetter = addConfigFiles(fileAdder).apply();
 
     // Set runnable order, build and return TwillSpecification
-    return runnableSetter.withOrder().begin(OracleRunnable.ORACLE_NAME)
-        .nextWhenStarted(WorkerRunnable.WORKER_NAME).build();
+    return runnableSetter.withOrder()
+        .begin(org.apache.fluo.cluster.runnable.OracleRunnable.ORACLE_NAME)
+        .nextWhenStarted(org.apache.fluo.cluster.runnable.WorkerRunnable.WORKER_NAME).build();
   }
 }

@@ -83,7 +83,7 @@ public class TestData {
     String cq = fields[2];
     String ct;
     long ts;
-    byte[] val = new byte[0];;
+    byte[] val = new byte[0];
 
     if (cf.equals("ntfy")) {
       ts = Long.parseLong(fields[3]) << 1;

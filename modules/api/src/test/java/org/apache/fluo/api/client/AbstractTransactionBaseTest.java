@@ -69,7 +69,7 @@ public class AbstractTransactionBaseTest {
 
     @Override
     public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
-      HashMap<Column, Bytes> ret = new HashMap<Column, Bytes>();
+      HashMap<Column, Bytes> ret = new HashMap<>();
       for (Column column : columns) {
         RowColumn rc = new RowColumn(row, column);
         if (snapshot.containsKey(rc)) {

@@ -39,8 +39,7 @@ import org.junit.rules.Timeout;
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 /**
- * A simple test that added links between nodes in a graph. There is an observer that updates an
- * index of node degree.
+ * A simple test that added links between nodes in a graph. There is an observer that updates an index of node degree.
  */
 public class WorkerIT extends ITBaseMini {
   @Rule
