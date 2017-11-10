@@ -27,8 +27,8 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -36,7 +36,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.admin.NewTableConfiguration;
 import org.apache.accumulo.core.iterators.IteratorUtil;
+import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.iterators.GarbageCollectionIterator;
 import org.apache.fluo.accumulo.iterators.NotificationIterator;
@@ -47,6 +49,7 @@ import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
+import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.observer.ObserverUtil;
@@ -56,7 +59,6 @@ import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -76,7 +78,6 @@ public class FluoAdminImpl implements FluoAdmin {
 
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
-
 
     appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
     rootCurator = CuratorUtil.newRootFluoCurator(config);
@@ -145,7 +146,8 @@ public class FluoAdminImpl implements FluoAdmin {
     }
 
     try {
-      initialize(conn);
+      initializeApplicationInZooKeeper(conn);
+      Map<String, String> ntcProps = initializeApplicationTableProps();
 
       String accumuloJars;
       if (!config.getAccumuloJars().trim().isEmpty()) {
@@ -167,8 +169,7 @@ public class FluoAdminImpl implements FluoAdmin {
         String contextName = "fluo-" + config.getApplicationName();
         conn.instanceOperations().setProperty(
             AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + contextName, accumuloClasspath);
-        conn.tableOperations().setProperty(config.getAccumuloTable(), AccumuloProps.TABLE_CLASSPATH,
-            contextName);
+        ntcProps.put(AccumuloProps.TABLE_CLASSPATH, contextName);
       }
 
       if (config.getObserverJarsUrl().isEmpty() && !config.getObserverInitDir().trim().isEmpty()) {
@@ -176,8 +177,11 @@ public class FluoAdminImpl implements FluoAdmin {
         config.setObserverJarsUrl(observerUrl);
       }
 
-      conn.tableOperations().setProperty(config.getAccumuloTable(),
-          AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
+      ntcProps.put(AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
+
+      NewTableConfiguration ntc = new NewTableConfiguration().withoutDefaultIterators();
+      ntc.setProperties(ntcProps);
+      conn.tableOperations().create(config.getAccumuloTable(), ntc);
 
       updateSharedConfig();
     } catch (NodeExistsException nee) {
@@ -190,7 +194,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  private void initialize(Connector conn) throws Exception {
+  private void initializeApplicationInZooKeeper(Connector conn) throws Exception {
 
     final String accumuloInstanceName = conn.getInstance().getInstanceName();
     final String accumuloInstanceID = conn.getInstance().getInstanceID();
@@ -221,23 +225,49 @@ public class FluoAdminImpl implements FluoAdmin {
         CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_GC_TIMESTAMP, new byte[] {'0'},
         CuratorUtil.NodeExistsPolicy.FAIL);
+  }
 
-    conn.tableOperations().create(config.getAccumuloTable(), false);
-    Map<String, Set<Text>> groups = new HashMap<>();
-    groups.put("notify", Collections.singleton(ByteUtil.toText(ColumnConstants.NOTIFY_CF)));
-    conn.tableOperations().setLocalityGroups(config.getAccumuloTable(), groups);
+  private String encodeColumnFamily(Bytes cf) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < cf.length(); i++) {
+      int c = 0xff & cf.byteAt(i);
+      if (c == '\\') {
+        sb.append("\\\\");
+      } else if (c >= 32 && c <= 126 && c != ',') {
+        sb.append((char) c);
+      } else {
+        sb.append("\\x").append(String.format("%02X", c));
+      }
+    }
+    return sb.toString();
+  }
 
-    IteratorSetting gcIter = new IteratorSetting(10, "gc", GarbageCollectionIterator.class);
+  private Map<String, String> initializeApplicationTableProps() {
+    Map<String, String> ntcProps = new HashMap<>();
+    ntcProps.put(AccumuloProps.TABLE_GROUP_PREFIX + ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME,
+        encodeColumnFamily(ColumnConstants.NOTIFY_CF));
+    ntcProps.put(AccumuloProps.TABLE_GROUPS_ENABLED, ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME);
+
+    IteratorSetting gcIter =
+        new IteratorSetting(10, ColumnConstants.GC_CF.toString(), GarbageCollectionIterator.class);
     GarbageCollectionIterator.setZookeepers(gcIter, config.getAppZookeepers());
-
-    conn.tableOperations().attachIterator(config.getAccumuloTable(), gcIter,
-        EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
-
     // the order relative to gc iter should not matter
-    IteratorSetting ntfyIter = new IteratorSetting(11, "ntfy", NotificationIterator.class);
+    IteratorSetting ntfyIter =
+        new IteratorSetting(11, ColumnConstants.NOTIFY_CF.toString(), NotificationIterator.class);
 
-    conn.tableOperations().attachIterator(config.getAccumuloTable(), ntfyIter,
-        EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc));
+    for (IteratorSetting setting : new IteratorSetting[] {gcIter, ntfyIter}) {
+      for (IteratorScope scope : EnumSet.of(IteratorUtil.IteratorScope.majc,
+          IteratorUtil.IteratorScope.minc)) {
+        String root = String.format("%s%s.%s", AccumuloProps.TABLE_ITERATOR_PREFIX,
+            scope.name().toLowerCase(), setting.getName());
+        for (Entry<String, String> prop : setting.getOptions().entrySet()) {
+          ntcProps.put(root + ".opt." + prop.getKey(), prop.getValue());
+        }
+        ntcProps.put(root, setting.getPriority() + "," + setting.getIteratorClass());
+      }
+    }
+
+    return ntcProps;
   }
 
   @Override

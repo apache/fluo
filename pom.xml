@@ -54,7 +54,7 @@
     <url>https://github.com/apache/fluo/issues</url>
   </issueManagement>
   <properties>
-    <accumulo.version>1.6.5</accumulo.version>
+    <accumulo.version>1.7.3</accumulo.version>
     <curator.version>2.7.1</curator.version>
     <dropwizard.version>0.8.1</dropwizard.version>
     <findbugs.maxRank>11</findbugs.maxRank>

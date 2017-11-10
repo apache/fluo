@@ -12,8 +12,8 @@
 # the License.
 language: java
 jdk:
-  - oraclejdk8
-script: mvn verify javadoc:jar
+  - openjdk8
+script: mvn clean verify javadoc:jar -Daccumulo.version=1.8.1 -Dthrift.version=0.9.3
 notifications:
   irc:
     channels:

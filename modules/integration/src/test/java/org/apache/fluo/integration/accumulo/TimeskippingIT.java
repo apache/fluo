@@ -20,6 +20,7 @@ import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.admin.NewTableConfiguration;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.integration.ITBase;
@@ -39,7 +40,7 @@ public class TimeskippingIT extends ITBase {
   @Test
   public void testTimestampSkippingIterPerformance() throws Exception {
 
-    conn.tableOperations().create("ttsi", false);
+    conn.tableOperations().create("ttsi", new NewTableConfiguration().withoutDefaultIterators());
 
     BatchWriter bw = conn.createBatchWriter("ttsi", new BatchWriterConfig());
     Mutation m = new Mutation("r1");
