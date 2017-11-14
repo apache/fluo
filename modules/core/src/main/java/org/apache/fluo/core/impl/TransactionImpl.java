@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -75,6 +76,7 @@ import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.async.SyncCommitObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
+import org.apache.fluo.core.impl.AsyncReader;
 import org.apache.fluo.core.impl.scanner.ScannerBuilderImpl;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.core.util.ByteUtil;
@@ -135,6 +137,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private TransactorNode tnode = null;
   private TxStatus status = TxStatus.OPEN;
   private boolean commitAttempted = false;
+  private AsyncReader asyncReader = null;
+
 
   // for testing
   private boolean stopAfterPreCommit = false;
@@ -292,6 +296,24 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     updateColumnsRead(row, columns);
 
     return ret;
+  }
+
+  @Override
+  public CompletableFuture<String> getsAsync(String row, Column column) {
+    if (asyncReader == null) {
+      asyncReader = new AsyncReader(this);
+    }
+
+    return asyncReader.gets(row, column);
+  }
+
+  @Override
+  public CompletableFuture<String> getsAsync(String row, Column column, String defaultValue) {
+    if (asyncReader == null) {
+      asyncReader = new AsyncReader(this);
+    }
+
+    return asyncReader.gets(row, column, defaultValue);
   }
 
   @Override

@@ -17,7 +17,9 @@ package org.apache.fluo.api.client;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
@@ -166,4 +168,14 @@ public interface SnapshotBase {
    * @return transactions start timestamp allocated from Oracle.
    */
   long getStartTimestamp();
+
+  default CompletableFuture<String> getsAsync(String row, Column column) {
+    return CompletableFuture.supplyAsync(() -> gets(row, column));
+  }
+
+  default CompletableFuture<String> getsAsync(String row, Column column, String defaultValue) {
+    return CompletableFuture.supplyAsync(() -> gets(row, column, defaultValue));
+  }
+
+
 }
