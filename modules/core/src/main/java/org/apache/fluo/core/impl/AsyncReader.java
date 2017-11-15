@@ -15,27 +15,30 @@
 
 package org.apache.fluo.core.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.common.collect.Collections2;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.core.impl.TransactionImpl;
 
 public class AsyncReader {
-  private PriorityQueue<AsyncGet> getsQueue;
+  private BlockingQueue<AsyncGet> asyncGetsQueue;
   private ExecutorService executorService;
   private TransactionImpl tx;
 
   public AsyncReader(TransactionImpl tx) {
     this.tx = tx;
-    getsQueue = new PriorityQueue<>();
+    asyncGetsQueue = new LinkedBlockingQueue<>();
     executorService = Executors.newSingleThreadExecutor();
   }
 
@@ -45,26 +48,28 @@ public class AsyncReader {
 
   public CompletableFuture<String> gets(String row, Column column, String defaultValue) {
     AsyncGet curAsyncGet = new AsyncGet(row, column, defaultValue);
-    getsQueue.add(curAsyncGet);
+    asyncGetsQueue.add(curAsyncGet);
+
+
     executorService.submit(() -> {
-      int i = 0;
-      Collection<RowColumn> rowColumns = new HashSet<>();
-      for (AsyncGet asyncGet : getsQueue) {
-        rowColumns.add(asyncGet.rc);
-      }
+      List<AsyncGet> getsList = new ArrayList<>();
+
+      asyncGetsQueue.drainTo(getsList);
+
+      Collection<RowColumn> rowColumns = Collections2.transform(getsList, ag -> ag.rc);
       Map<RowColumn, Bytes> getsMap = tx.get(rowColumns);
 
-      while (!getsQueue.isEmpty()) {
-        AsyncGet asyncGet = getsQueue.poll();
-        Bytes bytesRes = getsMap.get(asyncGet.rc);
-        asyncGet.res.complete(bytesRes == null ? defaultValue : bytesRes.toString());
+      for (AsyncGet asyncGet : getsList) {
+        Bytes result = getsMap.get(asyncGet.rc);
+        asyncGet.res.complete(result == null ? defaultValue : result.toString());
       }
     });
+
     return curAsyncGet.res;
   }
 
   public void close() {
-
+    executorService.shutdown();
   }
 
   class AsyncGet {

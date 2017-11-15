@@ -802,6 +802,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   private synchronized void close(boolean checkForStaleScan) {
+    if (asyncReader != null) {
+      asyncReader.close();
+    }
+
     if (status != TxStatus.CLOSED) {
       status = TxStatus.CLOSED;
 
