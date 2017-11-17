@@ -24,7 +24,7 @@
   </parent>
   <groupId>org.apache.fluo</groupId>
   <artifactId>fluo-parent</artifactId>
-  <version>3-SNAPSHOT</version>
+  <version>3</version>
   <packaging>pom</packaging>
   <name>Apache Fluo Parent POM</name>
   <description>Parent pom for common configuration across Apache Fluo projects</description>
@@ -68,7 +68,7 @@
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/fluo.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/fluo.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>rel/fluo-parent-3</tag>
     <url>https://gitbox.apache.org/repos/asf?p=fluo.git</url>
   </scm>
   <issueManagement>
