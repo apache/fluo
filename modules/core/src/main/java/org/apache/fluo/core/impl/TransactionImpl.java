@@ -299,6 +299,24 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   @Override
+  public CompletableFuture<Bytes> getAsync(Bytes row, Column column) {
+    if (asyncReader == null) {
+      asyncReader = new AsyncReader(this);
+    }
+
+    return asyncReader.get(row, column);
+  }
+
+  @Override
+  public CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
+    if (asyncReader == null) {
+      asyncReader = new AsyncReader(this);
+    }
+
+    return asyncReader.get(row, column, defaultValue);
+  }
+
+  @Override
   public CompletableFuture<String> getsAsync(String row, Column column) {
     if (asyncReader == null) {
       asyncReader = new AsyncReader(this);
