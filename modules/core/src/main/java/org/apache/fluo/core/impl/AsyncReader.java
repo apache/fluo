@@ -42,30 +42,44 @@ public class AsyncReader {
     executorService = Executors.newSingleThreadExecutor();
   }
 
+  public CompletableFuture<Bytes> get(Bytes row, Column column) {
+    return get(row, column, null);
+  }
+
+  public CompletableFuture<Bytes> get(Bytes row, Column column, Bytes defaultValue) {
+    AsyncGet curAsyncGet = new AsyncGet(row, column, defaultValue);
+    asyncGetsQueue.add(curAsyncGet);
+
+    executorService.submit(() -> {
+      List<AsyncGet> getsList = new ArrayList<>();
+      asyncGetsQueue.drainTo(getsList);
+
+      try {
+        Collection<RowColumn> rowColumns = Collections2.transform(getsList, ag -> ag.rc);
+
+        Map<RowColumn, Bytes> getsMap = tx.get(rowColumns);
+
+        for (AsyncGet asyncGet : getsList) {
+          Bytes result = getsMap.get(asyncGet.rc);
+          asyncGet.res.complete(result == null ? defaultValue : result);
+        }
+      } catch (Exception e) {
+        for (AsyncGet asyncGet : getsList) {
+          asyncGet.res.completeExceptionally(e);
+        }
+      }
+    });
+
+    return curAsyncGet.res;
+  }
+
   public CompletableFuture<String> gets(String row, Column column) {
     return gets(row, column, null);
   }
 
   public CompletableFuture<String> gets(String row, Column column, String defaultValue) {
-    AsyncGet curAsyncGet = new AsyncGet(row, column, defaultValue);
-    asyncGetsQueue.add(curAsyncGet);
-
-
-    executorService.submit(() -> {
-      List<AsyncGet> getsList = new ArrayList<>();
-
-      asyncGetsQueue.drainTo(getsList);
-
-      Collection<RowColumn> rowColumns = Collections2.transform(getsList, ag -> ag.rc);
-      Map<RowColumn, Bytes> getsMap = tx.get(rowColumns);
-
-      for (AsyncGet asyncGet : getsList) {
-        Bytes result = getsMap.get(asyncGet.rc);
-        asyncGet.res.complete(result == null ? defaultValue : result.toString());
-      }
-    });
-
-    return curAsyncGet.res;
+    Bytes defaultValueBytes = defaultValue == null ? new Bytes() : Bytes.of(defaultValue);
+    return get(Bytes.of(row), column, defaultValueBytes).thenApply(b -> b.toString());
   }
 
   public void close() {
@@ -74,10 +88,10 @@ public class AsyncReader {
 
   class AsyncGet {
     RowColumn rc;
-    CompletableFuture<String> res;
-    String defaultValue;
+    CompletableFuture<Bytes> res;
+    Bytes defaultValue;
 
-    public AsyncGet(String row, Column column, String defaultValue) {
+    public AsyncGet(Bytes row, Column column, Bytes defaultValue) {
       rc = new RowColumn(row, column);
       res = new CompletableFuture<>();
       this.defaultValue = defaultValue;

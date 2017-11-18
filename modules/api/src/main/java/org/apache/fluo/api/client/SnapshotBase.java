@@ -176,5 +176,13 @@ public interface SnapshotBase {
     return CompletableFuture.supplyAsync(() -> gets(row, column, defaultValue));
   }
 
+  default CompletableFuture<Bytes> getAsync(Bytes row, Column column) {
+    return CompletableFuture.supplyAsync(() -> get(row, column));
+  }
+
+  default CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
+    return CompletableFuture.supplyAsync(() -> get(row, column, defaultValue));
+  }
+
 
 }
