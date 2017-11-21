@@ -86,7 +86,7 @@ public class AsyncReader {
     executorService.shutdown();
   }
 
-  class AsyncGet {
+  static class AsyncGet {
     RowColumn rc;
     CompletableFuture<Bytes> res;
     Bytes defaultValue;
