@@ -62,6 +62,7 @@ public class AsyncReader {
         for (AsyncGet asyncGet : getsList) {
           Bytes result = getsMap.get(asyncGet.rc);
           asyncGet.res.complete(result == null ? defaultValue : result);
+          getsList.remove(asyncGet);
         }
       } catch (Exception e) {
         for (AsyncGet asyncGet : getsList) {
