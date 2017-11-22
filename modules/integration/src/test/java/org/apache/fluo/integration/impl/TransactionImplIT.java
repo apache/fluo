@@ -38,10 +38,15 @@ public class TransactionImplIT extends ITBaseImpl {
     }
 
     try (Transaction tx = client.newTransaction()) {
-      Assert.assertEquals("val1", tx.getsAsync("row1", new Column("col1")).get());
-      Assert.assertEquals("val2", tx.getsAsync("row2", new Column("col2"), "foo").get());
-      Assert.assertEquals("val3", tx.getsAsync("row3", new Column("col3")).get());
-      Assert.assertEquals("val4", tx.getsAsync("row4", new Column("col4"), "val4").get());
+      CompletableFuture<String> res1 = tx.getsAsync("row1", new Column("col1"));
+      CompletableFuture<String> res2 = tx.getsAsync("row2", new Column("col2"), "foo");
+      CompletableFuture<String> res3 = tx.getsAsync("row3", new Column("col3"));
+      CompletableFuture<String> res4 = tx.getsAsync("row4", new Column("col4"), "val4");
+
+      Assert.assertEquals("val1", res1.get());
+      Assert.assertEquals("val2", res2.get());
+      Assert.assertEquals("val3", res3.get());
+      Assert.assertEquals("val4", res4.get());
     }
   }
 
@@ -66,6 +71,11 @@ public class TransactionImplIT extends ITBaseImpl {
     }
 
     try (Transaction tx = client.newTransaction()) {
+      CompletableFuture<Bytes> res1 = tx.getsAsync(row1, new Column("col1"));
+      CompletableFuture<Bytes> res2 = tx.getsAsync(row2, new Column("col2"), "foo");
+      CompletableFuture<Bytes> res3 = tx.getsAsync(row3, new Column("col3"));
+      CompletableFuture<Bytes> res4 = tx.getsAsync(row4, new Column("col4"), "val4");
+
       Assert.assertEquals(val1, tx.getAsync(row1, new Column("col1")).get());
       Assert.assertEquals(val2, tx.getAsync(row2, new Column("col2"), Bytes.of("foo")).get());
       Assert.assertEquals(val3, tx.getAsync(row3, new Column("col3")).get());
