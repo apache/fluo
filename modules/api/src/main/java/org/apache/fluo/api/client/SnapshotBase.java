@@ -170,19 +170,19 @@ public interface SnapshotBase {
   long getStartTimestamp();
 
   default CompletableFuture<String> getsAsync(String row, Column column) {
-    return CompletableFuture.supplyAsync(() -> gets(row, column));
+    return CompletableFuture.completedFuture(gets(row, column));
   }
 
   default CompletableFuture<String> getsAsync(String row, Column column, String defaultValue) {
-    return CompletableFuture.supplyAsync(() -> gets(row, column, defaultValue));
+    return CompletableFuture.completedFuture(gets(row, column, defaultValue));
   }
 
   default CompletableFuture<Bytes> getAsync(Bytes row, Column column) {
-    return CompletableFuture.supplyAsync(() -> get(row, column));
+    return CompletableFuture.completedFuture(get(row, column));
   }
 
   default CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
-    return CompletableFuture.supplyAsync(() -> get(row, column, defaultValue));
+    return CompletableFuture.completedFuture(get(row, column, defaultValue));
   }
 
 
