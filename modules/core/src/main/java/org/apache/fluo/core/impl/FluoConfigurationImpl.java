@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -107,12 +107,12 @@ public class FluoConfigurationImpl {
   public static final String TX_INFO_CACHE_WEIGHT = FLUO_IMPL_PREFIX + ".tx.failed.cache.weight.mb";
   public static final long TX_INFO_CACHE_WEIGHT_DEFAULT = 10_000_000;
 
-  /** 
-   * Gets the txinfo cache weight 
-   * 
+  /**
+   * Gets the txinfo cache weight
+   *
    * @param conf The FluoConfiguration
-   * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_WEIGHT}
-   *     if it is set, else the value of the default value {@value #TX_INFO_CACHE_WEIGHT_DEFAULT}
+   * @return The size of the cache value from the property value {@value #TX_INFO_CACHE_WEIGHT} if
+   *         it is set, else the value of the default value {@value #TX_INFO_CACHE_WEIGHT_DEFAULT}
    */
 
   public static long getTxInfoCacheWeight(FluoConfiguration conf) {
@@ -128,12 +128,11 @@ public class FluoConfigurationImpl {
   public static final long TX_INFO_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
 
   /**
-   * Gets the time before stale entries in the cache are evicted based on age.
-   * This method returns a long representing the time converted from the
-   * TimeUnit passed in.
-   * 
+   * Gets the time before stale entries in the cache are evicted based on age. This method returns a
+   * long representing the time converted from the TimeUnit passed in.
+   *
    * @param conf The FluoConfiguration
-   * @param tu   The TimeUnit desired to represent the cache timeout
+   * @param tu The TimeUnit desired to represent the cache timeout
    */
 
   public static long getTxIfoCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
@@ -148,12 +147,13 @@ public class FluoConfigurationImpl {
       FLUO_IMPL_PREFIX + ".visibility.cache.weight.mb";
   public static final long VISIBILITY_CACHE_WEIGHT_DEFAULT = 10_000_000;
 
-  /** 
+  /**
    * Gets the visibility cache weight
-   * 
+   *
    * @param conf The FluoConfiguration
    * @return The size of the cache value from the property value {@value #VISIBILITY_CACHE_WEIGHT}
-   *     if it is set, else the value of the default value {@value #VISIBILITY_CACHE_WEIGHT_DEFAULT}
+   *         if it is set, else the value of the default value
+   *         {@value #VISIBILITY_CACHE_WEIGHT_DEFAULT}
    */
 
   public static long getVisibilityCacheWeight(FluoConfiguration conf) {
@@ -170,12 +170,11 @@ public class FluoConfigurationImpl {
   public static final long VISIBILITY_CACHE_TIMEOUT_DEFAULT = 24 * 60 * 1000;
 
   /**
-   * Gets the time before stale entries in the cache are evicted based on age.
-   * This method returns a long representing the time converted from the
-   * TimeUnit passed in.
-   * 
+   * Gets the time before stale entries in the cache are evicted based on age. This method returns a
+   * long representing the time converted from the TimeUnit passed in.
+   *
    * @param conf The FluoConfiguration
-   * @param tu   The TimeUnit desired to represent the cache timeout
+   * @param tu The TimeUnit desired to represent the cache timeout
    */
 
   public static long getVisibilityCacheTimeout(FluoConfiguration conf, TimeUnit tu) {
@@ -188,13 +187,13 @@ public class FluoConfigurationImpl {
 
   private static final String TRANSACTOR_MAX_CACHE_SIZE =
       FLUO_IMPL_PREFIX + ".transactor.cache.max.size";
-  private static final long TRANSACTOR_MAX_CACHE_SIZE_DEFAULT = 32768; // this equals 2^15 
+  private static final long TRANSACTOR_MAX_CACHE_SIZE_DEFAULT = 32768; // this equals 2^15
 
   /**
-   * Gets the specified number of entries the cache can contain, this gets the value
-   * of {@value #TRANSACTOR_MAX_CACHE_SIZE} if set, the default 
+   * Gets the specified number of entries the cache can contain, this gets the value of
+   * {@value #TRANSACTOR_MAX_CACHE_SIZE} if set, the default
    * {@value #TRANSACTOR_CACHE_TIMEOUT_DEFAULT} otherwise
-   * 
+   *
    * @param conf The FluoConfiguartion
    * @return The maximum number of entries permitted in this cache
    */
