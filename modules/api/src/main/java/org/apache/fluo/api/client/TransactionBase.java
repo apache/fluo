@@ -63,10 +63,10 @@ public interface TransactionBase extends SnapshotBase {
 
   /**
    * Normally when a Fluo transaction reads data and does not write to it, it will not collide with
-   * other transactions making concurrent writes.  When this method is called, all reads will
-   * acquire a read lock. These read locks cause collisions with transactions doing concurrent
-   * writes. However, multiple transactions can get concurrent read locks on the same row+col
-   * without colliding.
+   * other transactions making concurrent writes. When this method is called, all reads will acquire
+   * a read lock. These read locks cause collisions with transactions doing concurrent writes.
+   * However, multiple transactions can get concurrent read locks on the same row+col without
+   * colliding.
    *
    * <p>
    * Scanning with read locks is not supported. Attempting to call {@code withReadLock().scanner()}
