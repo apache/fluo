@@ -151,9 +151,16 @@ public class FluoAdminImpl implements FluoAdmin {
 
       String accumuloJars;
       if (!config.getAccumuloJars().trim().isEmpty()) {
+        if (config.getDfsRoot().trim().isEmpty()) {
+          throw new IllegalStateException("The property " + FluoConfiguration.ACCUMULO_JARS_PROP
+              + " is set and " + FluoConfiguration.DFS_ROOT_PROP
+              + " is not set.  So there is no where to copy the jars.");
+        }
         accumuloJars = config.getAccumuloJars().trim();
-      } else {
+      } else if (!config.getDfsRoot().trim().isEmpty()) {
         accumuloJars = getJarsFromClasspath();
+      } else {
+        accumuloJars = "";
       }
 
       String accumuloClasspath;
