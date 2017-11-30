@@ -170,7 +170,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    */
   public static final String DFS_ROOT_PROP = DFS_PREFIX + ".root";
   // DFS defaults
-  public static final String DFS_ROOT_DEFAULT = "hdfs://localhost:8020/fluo";
+  public static final String DFS_ROOT_DEFAULT = "";
 
   // Administration properties
   private static final String ADMIN_PREFIX = FLUO_PREFIX + ".admin";
@@ -605,7 +605,7 @@ public class FluoConfiguration extends SimpleConfiguration {
    * @since 1.2.0
    */
   public String getDfsRoot() {
-    return getNonEmptyString(DFS_ROOT_PROP, DFS_ROOT_DEFAULT);
+    return getString(DFS_ROOT_PROP, DFS_ROOT_DEFAULT);
   }
 
   /**
