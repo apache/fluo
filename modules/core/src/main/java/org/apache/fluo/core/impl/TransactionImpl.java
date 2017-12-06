@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -847,6 +848,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   }
 
+  /**
+   * Funcitonal interface to provide next step of asynchronous commit on successful completion of
+   * the previous one
+   */
+  private static interface OnSuccessInterface<V> {
+    public void onSuccess(CommitData cd, V result) throws Exception;
+  }
+
   private abstract static class SynchronousCommitTask implements Runnable {
 
     private CommitData cd;
@@ -893,6 +902,22 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     return size;
+  }
+
+  private <V> void addCallback(CompletableFuture<V> cfuture, CommitData cd,
+      OnSuccessInterface onSuccessInterface) {
+    cfuture.thenAcceptAsync(result -> {
+      try {
+        // this method currently throws Exception, so must be caught...
+        onSuccessInterface.onSuccess(cd, result);
+      } catch (Exception e) {
+        cd.commitObserver.failed(e);
+      }
+    }, env.getSharedResources().getAsyncCommitExecutor()).exceptionally(exception -> {
+      // not sure this really needed... since code above catches exception
+      cd.commitObserver.failed(exception);
+      return null;
+    });
   }
 
   @Override
