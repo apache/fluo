@@ -26,15 +26,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
@@ -818,33 +816,12 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return startTs;
   }
 
-  // async experiment
-
-  private abstract static class CommitCallback<V> implements FutureCallback<V> {
-
-    private CommitData cd;
-
-    CommitCallback(CommitData cd) {
-      this.cd = cd;
-    }
-
-    @Override
-    public void onSuccess(V result) {
-      try {
-        onSuccess(cd, result);
-      } catch (Exception e) {
-        cd.commitObserver.failed(e);
-      }
-    }
-
-    protected abstract void onSuccess(CommitData cd, V result) throws Exception;
-
-
-    @Override
-    public void onFailure(Throwable t) {
-      cd.commitObserver.failed(t);
-    }
-
+  /**
+   * Funcitonal interface to provide next step of asynchronous commit on successful completion of
+   * the previous one
+   */
+  private static interface OnSuccessInterface<V> {
+    public void onSuccess(V result) throws Exception;
   }
 
   private abstract static class SynchronousCommitTask implements Runnable {
@@ -893,6 +870,24 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     return size;
+  }
+
+  private <V> void addCallback(CompletableFuture<V> cfuture, CommitData cd,
+      OnSuccessInterface<V> onSuccessInterface) {
+    cfuture.handleAsync((result, exception) -> {
+      if (exception != null) {
+        cd.commitObserver.failed(exception);
+        return null;
+      } else {
+        try {
+          onSuccessInterface.onSuccess(result);
+          return null;
+        } catch (Exception e) {
+          cd.commitObserver.failed(e);
+          return null;
+        }
+      }
+    }, env.getSharedResources().getAsyncCommitExecutor());
   }
 
   @Override
@@ -972,13 +967,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     final ConditionalMutation pcm =
         prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, isTriggerRow(cd.prow));
 
-    ListenableFuture<Iterator<Result>> future = cd.acw.apply(Collections.singletonList(pcm));
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
-        postLockPrimary(cd, pcm, Iterators.getOnlyElement(result));
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    CompletableFuture<Iterator<Result>> cfuture = cd.acw.apply(Collections.singletonList(pcm));
+    addCallback(cfuture, cd, result -> postLockPrimary(cd, pcm, Iterators.getOnlyElement(result)));
   }
 
   private void postLockPrimary(final CommitData cd, final ConditionalMutation pcm, Result result)
@@ -1059,13 +1049,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     cd.acceptedRows = new HashSet<>();
 
-    ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> results) throws Exception {
-        postLockOther(cd, results);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    CompletableFuture<Iterator<Result>> cfuture = cd.bacw.apply(mutations);
+    addCallback(cfuture, cd, results -> postLockOther(cd, results));
   }
 
   private void postLockOther(final CommitData cd, Iterator<Result> results) throws Exception {
@@ -1092,13 +1077,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     } else if (stopAfterPreCommit) {
       cd.commitObserver.committed();
     } else {
-      ListenableFuture<Stamp> future = env.getSharedResources().getOracleClient().getStampAsync();
-      Futures.addCallback(future, new CommitCallback<Stamp>(cd) {
-        @Override
-        protected void onSuccess(CommitData cd, Stamp stamp) throws Exception {
-          beginSecondCommitPhase(cd, stamp);
-        }
-      }, env.getSharedResources().getAsyncCommitExecutor());
+      CompletableFuture<Stamp> cfuture = env.getSharedResources().getOracleClient().getStampAsync();
+      addCallback(cfuture, cd, stamp -> beginSecondCommitPhase(cd, stamp));
     }
   }
 
@@ -1124,14 +1104,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       mutations.add(m);
     }
 
-    ListenableFuture<Void> future =
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        rollbackPrimaryLock(cd);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, result -> rollbackPrimaryLock(cd));
   }
 
   private void rollbackPrimaryLock(CommitData cd) throws Exception {
@@ -1143,14 +1118,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         DelLockValue.encodeRollback(startTs, true, true));
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
-    ListenableFuture<Void> future =
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd,
+        result -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
   }
 
   private void beginSecondCommitPhase(CommitData cd, Stamp commitStamp) throws Exception {
@@ -1213,14 +1184,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       }
     }
 
-    ListenableFuture<Void> future =
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations.values());
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        commmitPrimary(cd, commitTs);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, result -> commmitPrimary(cd, commitTs));
   }
 
   private void commmitPrimary(CommitData cd, final long commitTs) {
@@ -1237,15 +1203,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
         isReadLock(cd.pval), startTs, commitTs, observedColumns, delLockMutation);
 
-    ListenableFuture<Iterator<Result>> future =
+    CompletableFuture<Iterator<Result>> cfuture =
         cd.acw.apply(Collections.singletonList(delLockMutation));
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
-        handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
-            Iterators.getOnlyElement(result));
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, result -> handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
+        Iterators.getOnlyElement(result)));
   }
 
   private void handleUnkownStatsAfterPrimary(CommitData cd, final long commitTs,
@@ -1321,16 +1282,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       mutations.add(m);
     }
 
-
-    ListenableFuture<Void> future =
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        finishCommit(cd, commitTs);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
-
+    addCallback(cfuture, cd, result -> finishCommit(cd, commitTs));
   }
 
   @VisibleForTesting
