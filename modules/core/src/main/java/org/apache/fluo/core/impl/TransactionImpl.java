@@ -997,13 +997,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     final ConditionalMutation pcm =
         prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, isTriggerRow(cd.prow));
 
-    ListenableFuture<Iterator<Result>> future = cd.acw.apply(Collections.singletonList(pcm));
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
-        postLockPrimary(cd, pcm, Iterators.getOnlyElement(result));
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    /*
+     * ListenableFuture<Iterator<Result>> future = cd.acw.apply(Collections.singletonList(pcm));
+     * Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
+     * postLockPrimary(cd, pcm, Iterators.getOnlyElement(result)); } },
+     * env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Iterator<Result>> cfuture = cd.acw.apply(Collections.singletonList(pcm));
+    addCallback(cfuture, cd, (cd2, result) -> postLockPrimary(cd2, pcm,
+        Iterators.getOnlyElement((Iterator<Result>) result)));
   }
 
   private void postLockPrimary(final CommitData cd, final ConditionalMutation pcm, Result result)
@@ -1084,13 +1088,15 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     cd.acceptedRows = new HashSet<>();
 
-    ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> results) throws Exception {
-        postLockOther(cd, results);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    /*
+     * ListenableFuture<Iterator<Result>> future = cd.bacw.apply(mutations);
+     * Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Iterator<Result> results) throws Exception
+     * { postLockOther(cd, results); } }, env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Iterator<Result>> cfuture = cd.bacw.apply(mutations);
+    addCallback(cfuture, cd, (cd2, results) -> postLockOther(cd2, (Iterator<Result>) results));
   }
 
   private void postLockOther(final CommitData cd, Iterator<Result> results) throws Exception {
@@ -1265,15 +1271,19 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
         isReadLock(cd.pval), startTs, commitTs, observedColumns, delLockMutation);
 
-    ListenableFuture<Iterator<Result>> future =
+    /*
+     * ListenableFuture<Iterator<Result>> future =
+     * cd.acw.apply(Collections.singletonList(delLockMutation)); Futures.addCallback(future, new
+     * CommitCallback<Iterator<Result>>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
+     * handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
+     * Iterators.getOnlyElement(result)); } }, env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Iterator<Result>> cfuture =
         cd.acw.apply(Collections.singletonList(delLockMutation));
-    Futures.addCallback(future, new CommitCallback<Iterator<Result>>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Iterator<Result> result) throws Exception {
-        handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
-            Iterators.getOnlyElement(result));
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, (cd2, result) -> handleUnkownStatsAfterPrimary(cd, commitTs,
+        delLockMutation, Iterators.getOnlyElement((Iterator<Result>) result)));
   }
 
   private void handleUnkownStatsAfterPrimary(CommitData cd, final long commitTs,

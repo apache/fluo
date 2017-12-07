@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableList;
@@ -37,10 +39,11 @@ import org.apache.fluo.core.util.FluoExecutors;
 import org.apache.fluo.core.util.Limit;
 
 public class AsyncConditionalWriter
-    implements AsyncFunction<Collection<ConditionalMutation>, Iterator<Result>> {
+/* implements AsyncFunction<Collection<ConditionalMutation>, Iterator<Result>> */ {
 
   private final ConditionalWriter cw;
-  private final ListeningExecutorService les;
+  // private final ListeningExecutorService les;
+  private final ExecutorService es;
   private final Limit semaphore;
 
 
@@ -50,8 +53,11 @@ public class AsyncConditionalWriter
         FluoConfigurationImpl.ASYNC_CW_THREADS_DEFAULT);
     int permits = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
         FluoConfigurationImpl.ASYNC_CW_LIMIT_DEFAULT);
-    this.les =
-        MoreExecutors.listeningDecorator(FluoExecutors.newFixedThreadPool(numThreads, "asyncCW"));
+    /*
+     * this.les = MoreExecutors.listeningDecorator(FluoExecutors.newFixedThreadPool(numThreads,
+     * "asyncCW"));
+     */
+    this.es = FluoExecutors.newFixedThreadPool(numThreads, "asyncCw");
     // the conditional writer currently has not memory limits... give it too much and it blows out
     // memory.. need to fix this in conditional writer
     // for now this needs to be memory based
@@ -84,21 +90,42 @@ public class AsyncConditionalWriter
 
   }
 
-  @Override
-  public ListenableFuture<Iterator<Result>> apply(Collection<ConditionalMutation> input) {
+  /*
+   * @Override public ListenableFuture<Iterator<Result>> apply(Collection<ConditionalMutation>
+   * input) { if (input.size() == 0) { return
+   * Futures.immediateFuture(Collections.<Result>emptyList().iterator()); }
+   * 
+   * semaphore.acquire(input.size()); Iterator<Result> iter = cw.write(input.iterator()); return
+   * les.submit(new IterTask(iter, input.size())); }
+   */
+
+  // @Override
+  public CompletableFuture<Iterator<Result>> apply(Collection<ConditionalMutation> input) {
+    CompletableFuture<Iterator<Result>> cfRes = new CompletableFuture<>();
     if (input.size() == 0) {
-      return Futures.immediateFuture(Collections.<Result>emptyList().iterator());
+      cfRes.complete(Collections.<Result>emptyList().iterator());
+      return cfRes;
     }
 
     semaphore.acquire(input.size());
     Iterator<Result> iter = cw.write(input.iterator());
-    return les.submit(new IterTask(iter, input.size()));
+    CompletableFuture.runAsync(() -> {
+      try {
+        Iterator<Result> iterRes = new IterTask(iter, input.size()).call();
+        cfRes.complete(iterRes);
+      } catch (Exception e) {
+        cfRes.completeExceptionally(e);
+      }
+    }, es);
+    return cfRes;
   }
 
   public void close() {
-    les.shutdownNow();
+    // les.shutdownNow();
+    es.shutdownNow();
     try {
-      les.awaitTermination(5, TimeUnit.SECONDS);
+      // les.awaitTermination(5, TimeUnit.SECONDS);
+      es.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
