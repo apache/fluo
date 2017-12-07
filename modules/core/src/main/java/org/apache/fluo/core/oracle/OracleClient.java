@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,7 +74,8 @@ public class OracleClient implements AutoCloseable {
   private static final class TimeRequest implements Callable<Stamp> {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicReference<Stamp> stampRef = new AtomicReference<>();
-    ListenableFutureTask<Stamp> lf = null;
+    // ListenableFutureTask<Stamp> lf = null;
+    CompletableFuture<Stamp> cf = null;
 
     @Override
     public Stamp call() throws Exception {
@@ -211,11 +213,14 @@ public class OracleClient implements AutoCloseable {
 
           for (int i = 0; i < request.size(); i++) {
             TimeRequest tr = request.get(i);
-            tr.stampRef.set(new Stamp(txStampsStart + i, gcStamp));
-            if (tr.lf == null) {
+            Stamp stampRes = new Stamp(txStampsStart + i, gcStamp);
+            tr.stampRef.set(stampRes);
+            // if (tr.lf == null) {
+            if (tr.cf == null) {
               tr.cdl.countDown();
             } else {
-              tr.lf.run();
+              // tr.lf.run();
+              tr.cf.complete(stampRes);
             }
           }
         } catch (InterruptedException e) {
@@ -386,18 +391,26 @@ public class OracleClient implements AutoCloseable {
     return tr.stampRef.get();
   }
 
-  public ListenableFuture<Stamp> getStampAsync() {
+  /*
+   * public ListenableFuture<Stamp> getStampAsync() { checkClosed();
+   * 
+   * TimeRequest tr = new TimeRequest(); ListenableFutureTask<Stamp> lf =
+   * ListenableFutureTask.create(tr); tr.lf = lf; try { queue.put(tr); } catch (InterruptedException
+   * e) { throw new RuntimeException(e); } return lf; }
+   */
+
+  public CompletableFuture<Stamp> getStampAsync() {
     checkClosed();
 
     TimeRequest tr = new TimeRequest();
-    ListenableFutureTask<Stamp> lf = ListenableFutureTask.create(tr);
-    tr.lf = lf;
+    CompletableFuture<Stamp> cf = new CompletableFuture<>();
+    tr.cf = cf;
     try {
       queue.put(tr);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    return lf;
+    return cf;
   }
 
   /**

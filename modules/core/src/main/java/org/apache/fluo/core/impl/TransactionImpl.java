@@ -1117,13 +1117,16 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     } else if (stopAfterPreCommit) {
       cd.commitObserver.committed();
     } else {
-      ListenableFuture<Stamp> future = env.getSharedResources().getOracleClient().getStampAsync();
-      Futures.addCallback(future, new CommitCallback<Stamp>(cd) {
-        @Override
-        protected void onSuccess(CommitData cd, Stamp stamp) throws Exception {
-          beginSecondCommitPhase(cd, stamp);
-        }
-      }, env.getSharedResources().getAsyncCommitExecutor());
+      /*
+       * ListenableFuture<Stamp> future =
+       * env.getSharedResources().getOracleClient().getStampAsync(); Futures.addCallback(future, new
+       * CommitCallback<Stamp>(cd) {
+       * 
+       * @Override protected void onSuccess(CommitData cd, Stamp stamp) throws Exception {
+       * beginSecondCommitPhase(cd, stamp); } }, env.getSharedResources().getAsyncCommitExecutor());
+       */
+      CompletableFuture<Stamp> cfuture = env.getSharedResources().getOracleClient().getStampAsync();
+      addCallback(cfuture, cd, (cd2, stamp) -> beginSecondCommitPhase(cd2, (Stamp) stamp));
     }
   }
 
