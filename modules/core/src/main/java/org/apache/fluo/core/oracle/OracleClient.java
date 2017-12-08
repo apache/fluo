@@ -71,16 +71,15 @@ public class OracleClient implements AutoCloseable {
 
   private Participant currentLeader;
 
-  private static final class TimeRequest implements Callable<Stamp> {
+  private static final class TimeRequest /* implements Callable<Stamp> */ {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicReference<Stamp> stampRef = new AtomicReference<>();
     // ListenableFutureTask<Stamp> lf = null;
     CompletableFuture<Stamp> cf = null;
 
-    @Override
-    public Stamp call() throws Exception {
-      return stampRef.get();
-    }
+    /*
+     * @Override public Stamp call() throws Exception { return stampRef.get(); }
+     */
   }
 
   private class TimestampRetriever extends LeaderSelectorListenerAdapter

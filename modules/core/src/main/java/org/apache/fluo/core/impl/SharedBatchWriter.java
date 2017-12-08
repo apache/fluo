@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,7 +49,8 @@ public class SharedBatchWriter {
     private Collection<Mutation> mutations;
     private CountDownLatch cdl;
     private boolean isAsync = false;
-    private ListenableFutureTask<Void> lf;
+    // private ListenableFutureTask<Void> lf;
+    private CompletableFuture<Void> cf;
 
     public MutationBatch(Collection<Mutation> mutations, boolean isAsync) {
       this.mutations = mutations;
@@ -58,9 +60,14 @@ public class SharedBatchWriter {
       }
     }
 
-    public MutationBatch(Collection<Mutation> mutations, ListenableFutureTask<Void> lf) {
+    /*
+     * public MutationBatch(Collection<Mutation> mutations, ListenableFutureTask<Void> lf) {
+     * this.mutations = mutations; this.lf = lf; this.cdl = null; this.isAsync = false; }
+     */
+
+    public MutationBatch(Collection<Mutation> mutations, CompletableFuture<Void> cf) {
       this.mutations = mutations;
-      this.lf = lf;
+      this.cf = cf;
       this.cdl = null;
       this.isAsync = false;
     }
@@ -70,8 +77,11 @@ public class SharedBatchWriter {
         cdl.countDown();
       }
 
-      if (lf != null) {
-        lf.run();
+      /*
+       * if (lf != null) { lf.run(); }
+       */
+      if (cf != null) {
+        cf.complete(null);
       }
     }
   }
@@ -170,27 +180,41 @@ public class SharedBatchWriter {
     }
   }
 
-  private static final Runnable DO_NOTHING = new Runnable() {
-    @Override
-    public void run() {}
-  };
+  /*
+   * private static final Runnable DO_NOTHING = new Runnable() {
+   * 
+   * @Override public void run() {} };
+   */
 
-  ListenableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) {
+  /*
+   * ListenableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) { if (ml.size() == 0)
+   * { return Futures.immediateFuture(null); }
+   * 
+   * ListenableFutureTask<Void> lf = ListenableFutureTask.create(DO_NOTHING, null); try {
+   * MutationBatch mb = new MutationBatch(ml, lf); mutQueue.put(mb); return lf; } catch (Exception
+   * e) { throw new RuntimeException(e); } }
+   */
+  CompletableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) {
     if (ml.size() == 0) {
-      return Futures.immediateFuture(null);
+      return CompletableFuture.completedFuture(null);
     }
 
-    ListenableFutureTask<Void> lf = ListenableFutureTask.create(DO_NOTHING, null);
+    CompletableFuture<Void> cf = new CompletableFuture<>();
     try {
-      MutationBatch mb = new MutationBatch(ml, lf);
+      MutationBatch mb = new MutationBatch(ml, cf);
       mutQueue.put(mb);
-      return lf;
+      return cf;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  ListenableFuture<Void> writeMutationsAsyncFuture(Mutation m) {
+  /*
+   * ListenableFuture<Void> writeMutationsAsyncFuture(Mutation m) { return
+   * writeMutationsAsyncFuture(Collections.singleton(m)); }
+   */
+
+  CompletableFuture<Void> writeMutationsAsyncFuture(Mutation m) {
     return writeMutationsAsyncFuture(Collections.singleton(m));
   }
 

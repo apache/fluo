@@ -1160,14 +1160,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       mutations.add(m);
     }
 
-    ListenableFuture<Void> future =
+    /*
+     * ListenableFuture<Void> future =
+     * env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
+     * Futures.addCallback(future, new CommitCallback<Void>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Void v) throws Exception {
+     * rollbackPrimaryLock(cd); } }, env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        rollbackPrimaryLock(cd);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, (cd2, result) -> rollbackPrimaryLock(cd2));
   }
 
   private void rollbackPrimaryLock(CommitData cd) throws Exception {
@@ -1179,14 +1182,19 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         DelLockValue.encodeRollback(startTs, true, true));
     m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
-    ListenableFuture<Void> future =
+    /*
+     * ListenableFuture<Void> future =
+     * env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
+     * Futures.addCallback(future, new CommitCallback<Void>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Void v) throws Exception {
+     * cd.commitObserver.commitFailed(cd.getShortCollisionMessage()); } },
+     * env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd,
+        (cd2, result) -> cd2.commitObserver.commitFailed(cd2.getShortCollisionMessage()));
   }
 
   private void beginSecondCommitPhase(CommitData cd, Stamp commitStamp) throws Exception {
@@ -1249,14 +1257,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       }
     }
 
-    ListenableFuture<Void> future =
+    /*
+     * ListenableFuture<Void> future =
+     * env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations.values());
+     * Futures.addCallback(future, new CommitCallback<Void>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Void v) throws Exception {
+     * commmitPrimary(cd, commitTs); } }, env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations.values());
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        commmitPrimary(cd, commitTs);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
+    addCallback(cfuture, cd, (cd2, result) -> commmitPrimary(cd2, commitTs));
   }
 
   private void commmitPrimary(CommitData cd, final long commitTs) {
@@ -1362,15 +1373,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
 
-    ListenableFuture<Void> future =
+    /*
+     * ListenableFuture<Void> future =
+     * env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
+     * Futures.addCallback(future, new CommitCallback<Void>(cd) {
+     * 
+     * @Override protected void onSuccess(CommitData cd, Void v) throws Exception { finishCommit(cd,
+     * commitTs); } }, env.getSharedResources().getAsyncCommitExecutor());
+     */
+    CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    Futures.addCallback(future, new CommitCallback<Void>(cd) {
-      @Override
-      protected void onSuccess(CommitData cd, Void v) throws Exception {
-        finishCommit(cd, commitTs);
-      }
-    }, env.getSharedResources().getAsyncCommitExecutor());
-
+    addCallback(cfuture, cd, (cd2, result) -> finishCommit(cd, commitTs));
   }
 
   @VisibleForTesting
