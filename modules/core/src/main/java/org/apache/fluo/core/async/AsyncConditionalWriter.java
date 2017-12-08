@@ -64,31 +64,21 @@ public class AsyncConditionalWriter
     this.semaphore = new Limit(permits);
   }
 
-  private class IterTask implements Callable<Iterator<Result>> {
-
-    private Iterator<Result> input;
-    private int permitsAcquired;
-
-    public IterTask(Iterator<Result> iter, int permitsAcquired) {
-      this.input = iter;
-      this.permitsAcquired = permitsAcquired;
-    }
-
-    @Override
-    public Iterator<Result> call() throws Exception {
-      try {
-        Builder<Result> imlb = ImmutableList.builder();
-        while (input.hasNext()) {
-          Result result = input.next();
-          imlb.add(result);
-        }
-        return imlb.build().iterator();
-      } finally {
-        semaphore.release(permitsAcquired);
-      }
-    }
-
-  }
+  /*
+   * private class IterTask implements Callable<Iterator<Result>> {
+   * 
+   * private Iterator<Result> input; private int permitsAcquired;
+   * 
+   * public IterTask(Iterator<Result> iter, int permitsAcquired) { this.input = iter;
+   * this.permitsAcquired = permitsAcquired; }
+   * 
+   * @Override public Iterator<Result> call() throws Exception { try { Builder<Result> imlb =
+   * ImmutableList.builder(); while (input.hasNext()) { Result result = input.next();
+   * imlb.add(result); } return imlb.build().iterator(); } finally {
+   * semaphore.release(permitsAcquired); } }
+   * 
+   * }
+   */
 
   /*
    * @Override public ListenableFuture<Iterator<Result>> apply(Collection<ConditionalMutation>
@@ -101,23 +91,24 @@ public class AsyncConditionalWriter
 
   // @Override
   public CompletableFuture<Iterator<Result>> apply(Collection<ConditionalMutation> input) {
-    CompletableFuture<Iterator<Result>> cfRes = new CompletableFuture<>();
     if (input.size() == 0) {
-      cfRes.complete(Collections.<Result>emptyList().iterator());
-      return cfRes;
+      return CompletableFuture.completedFuture(Collections.<Result>emptyList().iterator());
     }
 
     semaphore.acquire(input.size());
     Iterator<Result> iter = cw.write(input.iterator());
-    CompletableFuture.runAsync(() -> {
+    return CompletableFuture.supplyAsync(() -> {
       try {
-        Iterator<Result> iterRes = new IterTask(iter, input.size()).call();
-        cfRes.complete(iterRes);
-      } catch (Exception e) {
-        cfRes.completeExceptionally(e);
+        Builder<Result> imlb = ImmutableList.builder();
+        while (iter.hasNext()) {
+          Result result = iter.next();
+          imlb.add(result);
+        }
+        return imlb.build().iterator();
+      } finally {
+        semaphore.release(input.size());
       }
     }, es);
-    return cfRes;
   }
 
   public void close() {
