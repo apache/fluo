@@ -24,6 +24,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,6 +44,8 @@ public class SharedBatchWriter {
 
   private AtomicLong asyncBatchesAdded = new AtomicLong(0);
   private long asyncBatchesProcessed = 0;
+  // added to avoid findbugs false positive
+  private static final Supplier<Void> NULLS = () -> null;
 
   private static class MutationBatch {
 
@@ -81,7 +84,7 @@ public class SharedBatchWriter {
        * if (lf != null) { lf.run(); }
        */
       if (cf != null) {
-        cf.complete(null);
+        cf.complete(NULLS.get());
       }
     }
   }
@@ -196,7 +199,7 @@ public class SharedBatchWriter {
    */
   CompletableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) {
     if (ml.size() == 0) {
-      return CompletableFuture.completedFuture(null);
+      return CompletableFuture.completedFuture(NULLS.get());
     }
 
     CompletableFuture<Void> cf = new CompletableFuture<>();

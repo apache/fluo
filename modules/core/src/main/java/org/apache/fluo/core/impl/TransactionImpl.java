@@ -907,7 +907,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private <V> void addCallback(CompletableFuture<V> cfuture, CommitData cd,
       OnSuccessInterface<V> onSuccessInterface) {
     cfuture.handleAsync((result, exception) -> {
-      if (result != null) {
+      if (exception != null) {
+        cd.commitObserver.failed(exception);
+        return null;
+      } else {
         try {
           onSuccessInterface.onSuccess(cd, result);
           return null;
@@ -915,9 +918,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           cd.commitObserver.failed(e);
           return null;
         }
-      } else {
-        cd.commitObserver.failed(exception);
-        return null;
       }
     }, env.getSharedResources().getAsyncCommitExecutor());
   }
