@@ -26,9 +26,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.data.Mutation;
@@ -52,7 +49,6 @@ public class SharedBatchWriter {
     private Collection<Mutation> mutations;
     private CountDownLatch cdl;
     private boolean isAsync = false;
-    // private ListenableFutureTask<Void> lf;
     private CompletableFuture<Void> cf;
 
     public MutationBatch(Collection<Mutation> mutations, boolean isAsync) {
@@ -62,11 +58,6 @@ public class SharedBatchWriter {
         this.cdl = new CountDownLatch(1);
       }
     }
-
-    /*
-     * public MutationBatch(Collection<Mutation> mutations, ListenableFutureTask<Void> lf) {
-     * this.mutations = mutations; this.lf = lf; this.cdl = null; this.isAsync = false; }
-     */
 
     public MutationBatch(Collection<Mutation> mutations, CompletableFuture<Void> cf) {
       this.mutations = mutations;
@@ -80,9 +71,6 @@ public class SharedBatchWriter {
         cdl.countDown();
       }
 
-      /*
-       * if (lf != null) { lf.run(); }
-       */
       if (cf != null) {
         cf.complete(NULLS.get());
       }
@@ -183,20 +171,6 @@ public class SharedBatchWriter {
     }
   }
 
-  /*
-   * private static final Runnable DO_NOTHING = new Runnable() {
-   * 
-   * @Override public void run() {} };
-   */
-
-  /*
-   * ListenableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) { if (ml.size() == 0)
-   * { return Futures.immediateFuture(null); }
-   * 
-   * ListenableFutureTask<Void> lf = ListenableFutureTask.create(DO_NOTHING, null); try {
-   * MutationBatch mb = new MutationBatch(ml, lf); mutQueue.put(mb); return lf; } catch (Exception
-   * e) { throw new RuntimeException(e); } }
-   */
   CompletableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) {
     if (ml.size() == 0) {
       return CompletableFuture.completedFuture(NULLS.get());
@@ -211,11 +185,6 @@ public class SharedBatchWriter {
       throw new RuntimeException(e);
     }
   }
-
-  /*
-   * ListenableFuture<Void> writeMutationsAsyncFuture(Mutation m) { return
-   * writeMutationsAsyncFuture(Collections.singleton(m)); }
-   */
 
   CompletableFuture<Void> writeMutationsAsyncFuture(Mutation m) {
     return writeMutationsAsyncFuture(Collections.singleton(m));

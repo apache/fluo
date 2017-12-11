@@ -28,8 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
@@ -71,15 +69,10 @@ public class OracleClient implements AutoCloseable {
 
   private Participant currentLeader;
 
-  private static final class TimeRequest /* implements Callable<Stamp> */ {
+  private static final class TimeRequest {
     CountDownLatch cdl = new CountDownLatch(1);
     AtomicReference<Stamp> stampRef = new AtomicReference<>();
-    // ListenableFutureTask<Stamp> lf = null;
     CompletableFuture<Stamp> cf = null;
-
-    /*
-     * @Override public Stamp call() throws Exception { return stampRef.get(); }
-     */
   }
 
   private class TimestampRetriever extends LeaderSelectorListenerAdapter
@@ -214,11 +207,9 @@ public class OracleClient implements AutoCloseable {
             TimeRequest tr = request.get(i);
             Stamp stampRes = new Stamp(txStampsStart + i, gcStamp);
             tr.stampRef.set(stampRes);
-            // if (tr.lf == null) {
             if (tr.cf == null) {
               tr.cdl.countDown();
             } else {
-              // tr.lf.run();
               tr.cf.complete(stampRes);
             }
           }
@@ -389,14 +380,6 @@ public class OracleClient implements AutoCloseable {
     }
     return tr.stampRef.get();
   }
-
-  /*
-   * public ListenableFuture<Stamp> getStampAsync() { checkClosed();
-   * 
-   * TimeRequest tr = new TimeRequest(); ListenableFutureTask<Stamp> lf =
-   * ListenableFutureTask.create(tr); tr.lf = lf; try { queue.put(tr); } catch (InterruptedException
-   * e) { throw new RuntimeException(e); } return lf; }
-   */
 
   public CompletableFuture<Stamp> getStampAsync() {
     checkClosed();
