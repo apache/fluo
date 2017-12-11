@@ -821,7 +821,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
    * the previous one
    */
   private static interface OnSuccessInterface<V> {
-    public void onSuccess(CommitData cd, V result) throws Exception;
+    public void onSuccess(V result) throws Exception;
   }
 
   private abstract static class SynchronousCommitTask implements Runnable {
@@ -880,7 +880,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         return null;
       } else {
         try {
-          onSuccessInterface.onSuccess(cd, result);
+          onSuccessInterface.onSuccess(result);
           return null;
         } catch (Exception e) {
           cd.commitObserver.failed(e);
@@ -968,8 +968,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         prewrite(cd.prow, cd.pcol, cd.pval, cd.prow, cd.pcol, isTriggerRow(cd.prow));
 
     CompletableFuture<Iterator<Result>> cfuture = cd.acw.apply(Collections.singletonList(pcm));
-    addCallback(cfuture, cd,
-        (cd2, result) -> postLockPrimary(cd2, pcm, Iterators.getOnlyElement(result)));
+    addCallback(cfuture, cd, result -> postLockPrimary(cd, pcm, Iterators.getOnlyElement(result)));
   }
 
   private void postLockPrimary(final CommitData cd, final ConditionalMutation pcm, Result result)
@@ -1051,7 +1050,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     cd.acceptedRows = new HashSet<>();
 
     CompletableFuture<Iterator<Result>> cfuture = cd.bacw.apply(mutations);
-    addCallback(cfuture, cd, (cd2, results) -> postLockOther(cd2, results));
+    addCallback(cfuture, cd, results -> postLockOther(cd, results));
   }
 
   private void postLockOther(final CommitData cd, Iterator<Result> results) throws Exception {
@@ -1079,7 +1078,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       cd.commitObserver.committed();
     } else {
       CompletableFuture<Stamp> cfuture = env.getSharedResources().getOracleClient().getStampAsync();
-      addCallback(cfuture, cd, (cd2, stamp) -> beginSecondCommitPhase(cd2, stamp));
+      addCallback(cfuture, cd, stamp -> beginSecondCommitPhase(cd, stamp));
     }
   }
 
@@ -1107,7 +1106,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    addCallback(cfuture, cd, (cd2, result) -> rollbackPrimaryLock(cd2));
+    addCallback(cfuture, cd, result -> rollbackPrimaryLock(cd));
   }
 
   private void rollbackPrimaryLock(CommitData cd) throws Exception {
@@ -1122,7 +1121,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
     addCallback(cfuture, cd,
-        (cd2, result) -> cd2.commitObserver.commitFailed(cd2.getShortCollisionMessage()));
+        result -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
   }
 
   private void beginSecondCommitPhase(CommitData cd, Stamp commitStamp) throws Exception {
@@ -1187,7 +1186,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations.values());
-    addCallback(cfuture, cd, (cd2, result) -> commmitPrimary(cd2, commitTs));
+    addCallback(cfuture, cd, result -> commmitPrimary(cd, commitTs));
   }
 
   private void commmitPrimary(CommitData cd, final long commitTs) {
@@ -1206,8 +1205,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     CompletableFuture<Iterator<Result>> cfuture =
         cd.acw.apply(Collections.singletonList(delLockMutation));
-    addCallback(cfuture, cd, (cd2, result) -> handleUnkownStatsAfterPrimary(cd, commitTs,
-        delLockMutation, Iterators.getOnlyElement(result)));
+    addCallback(cfuture, cd, result -> handleUnkownStatsAfterPrimary(cd, commitTs, delLockMutation,
+        Iterators.getOnlyElement(result)));
   }
 
   private void handleUnkownStatsAfterPrimary(CommitData cd, final long commitTs,
@@ -1285,7 +1284,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     CompletableFuture<Void> cfuture =
         env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
-    addCallback(cfuture, cd, (cd2, result) -> finishCommit(cd, commitTs));
+    addCallback(cfuture, cd, result -> finishCommit(cd, commitTs));
   }
 
   @VisibleForTesting
