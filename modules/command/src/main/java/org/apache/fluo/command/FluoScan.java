@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.beust.jcommander.Parameter;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.ScanUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -100,6 +101,7 @@ public class FluoScan {
     CommandUtil.verifyAppRunning(config);
 
     if (options.scanAccumuloTable) {
+      config = FluoAdminImpl.mergeZookeeperConfig(config);
       ScanUtil.scanAccumulo(options.getScanOpts(), config);
     } else {
       ScanUtil.scanFluo(options.getScanOpts(), config);
