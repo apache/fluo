@@ -74,10 +74,6 @@
       <artifactId>hadoop-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.thrift</groupId>
-      <artifactId>libthrift</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
     </dependency>
@@ -88,6 +84,19 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <!--
+         Ensure that this does not get included in the set of transitive
+         dependencies coming from fluo-core; the specific version of
+         libthrift required for a particular Fluo application at runtime must
+         also be compatible with the libthrift version required by the
+         Accumulo client code, and should be brought in transitively from the
+         Accumulo dependencies.
+      -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
