@@ -77,8 +77,8 @@ public class NotificationProcessor implements AutoCloseable {
 
     private long size(RowColumn rowCol) {
       Column col = rowCol.getColumn();
-      return rowCol.getRow().length() + col.getFamily().length() + col.getQualifier().length()
-          + col.getVisibility().length();
+      return (long) rowCol.getRow().length() + col.getFamily().length()
+          + col.getQualifier().length() + col.getVisibility().length();
     }
 
     public synchronized boolean add(RowColumn rowCol, Future<?> task) {
