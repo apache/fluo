@@ -65,12 +65,14 @@ public class FluoGetJars {
 
     try {
       if (config.getObserverJarsUrl().startsWith("hdfs://")) {
-        FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
-        File downloadPathFile = new File(opts.getDownloadPath());
-        if (downloadPathFile.exists()) {
-          FileUtils.deleteDirectory(downloadPathFile);
+        try (FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration())) {
+          File downloadPathFile = new File(opts.getDownloadPath());
+          if (downloadPathFile.exists()) {
+            FileUtils.deleteDirectory(downloadPathFile);
+          }
+          fs.copyToLocalFile(new Path(config.getObserverJarsUrl()),
+              new Path(opts.getDownloadPath()));
         }
-        fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(opts.getDownloadPath()));
       } else {
         log.error("Unsupported url prefix for {}={}", FluoConfiguration.OBSERVER_JARS_URL_PROP,
             config.getObserverJarsUrl());
