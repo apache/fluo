@@ -70,7 +70,8 @@ public class FluoGetJars {
           if (downloadPathFile.exists()) {
             FileUtils.deleteDirectory(downloadPathFile);
           }
-          fs.copyToLocalFile(new Path(config.getObserverJarsUrl()), new Path(opts.getDownloadPath()));
+          fs.copyToLocalFile(new Path(config.getObserverJarsUrl()),
+              new Path(opts.getDownloadPath()));
         }
       } else {
         log.error("Unsupported url prefix for {}={}", FluoConfiguration.OBSERVER_JARS_URL_PROP,
