@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -90,10 +90,7 @@ public class ScanUtil {
   }
 
   public static void scanFluo(ScanOpts options, FluoConfiguration sConfig) {
-    System.out.println(
-        "Scanning snapshot of data in Fluo '" + sConfig.getApplicationName() + "' application.");
 
-    long entriesFound = 0;
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
 
@@ -128,24 +125,20 @@ public class ScanUtil {
             sb.append(rcv.getsValue());
             System.out.println(sb.toString());
           }
-          entriesFound++;
+
           if (System.out.checkError()) {
             break;
           }
         }
 
-        if (entriesFound == 0) {
-          System.out.println("\nNo data found\n");
-        }
       } catch (FluoException e) {
-        System.out.println("Scan failed - " + e.getMessage());
+        System.err.println("Scan failed - " + e.getMessage());
+        System.exit(-1);
       }
     }
   }
 
   public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig) {
-    System.out.println("Scanning data in Accumulo directly for '" + sConfig.getApplicationName()
-        + "' application.");
 
     Connector conn = AccumuloUtil.getConnector(sConfig);
 
@@ -175,7 +168,8 @@ public class ScanUtil {
         System.out.println(entry);
       }
     } catch (Exception e) {
-      System.out.println("Scan failed - " + e.getMessage());
+      System.err.println("Scan failed - " + e.getMessage());
+      System.exit(-1);
     }
   }
 
