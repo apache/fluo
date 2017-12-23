@@ -324,9 +324,7 @@ public class FluoAdminImpl implements FluoAdmin {
     String dfsAppRoot = dfsRoot + "/" + appName;
     String dfsDestDir = dfsAppRoot + "/" + destDir;
 
-    FileSystem fs;
-    try {
-      fs = FileSystem.get(new URI(dfsRoot), new Configuration());
+    try (FileSystem fs = FileSystem.get(new URI(dfsRoot), new Configuration())) {
       fs.delete(new Path(dfsDestDir), true);
       fs.mkdirs(new Path(dfsAppRoot));
       fs.copyFromLocalFile(new Path(srcDir), new Path(dfsDestDir));
@@ -340,11 +338,19 @@ public class FluoAdminImpl implements FluoAdmin {
     String dfsAppRoot = config.getDfsRoot() + "/" + config.getApplicationName();
     String dfsDestDir = dfsAppRoot + "/" + destDir;
 
-    FileSystem fs;
+    FileSystem fs = null;
     try {
       fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration());
       fs.mkdirs(new Path(dfsDestDir));
     } catch (Exception e) {
+      logger.error("Failed to create DFS directory {}", dfsDestDir);
+      if (fs != null) {
+        try {
+          fs.close();
+        } catch (IOException ioe) {
+          throw new IllegalStateException(ioe);
+        }
+      }
       throw new IllegalStateException(e);
     }
 
@@ -356,12 +362,23 @@ public class FluoAdminImpl implements FluoAdmin {
         fs.copyFromLocalFile(new Path(jarPath), new Path(dfsDestDir));
       } catch (IOException e) {
         logger.error("Failed to copy file {} to DFS directory {}", jarPath, dfsDestDir);
+        try {
+          fs.close();
+        } catch (IOException ioe) {
+          throw new IllegalStateException(ioe);
+        }
         throw new IllegalStateException(e);
       }
       if (classpath.length() != 0) {
         classpath.append(",");
       }
-      classpath.append(dfsDestDir + "/" + jarName);
+      classpath.append(dfsDestDir).append("/").append(jarName);
+    }
+
+    try {
+      fs.close();
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
     return classpath.toString();
   }
