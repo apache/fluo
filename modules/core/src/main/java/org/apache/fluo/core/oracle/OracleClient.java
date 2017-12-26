@@ -368,7 +368,8 @@ public class OracleClient implements AutoCloseable {
           if (waitPeriod < MAX_ORACLE_WAIT_PERIOD) {
             waitPeriod *= 2;
           }
-          log.warn("Waiting for timestamp from Oracle. Is it running? waitTotal={}s waitPeriod={}s",
+          log.warn(
+              "Waiting for timestamp from Oracle. Is it running? Client has waited a total of {}s and will retry in {}s",
               waitTotal, waitPeriod);
         }
       } else if (!tr.cdl.await(timeout, TimeUnit.MILLISECONDS)) {
