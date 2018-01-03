@@ -124,7 +124,7 @@ public class NotificationProcessor implements AutoCloseable {
       notify();
     }
 
-    public boolean requeue(RowColumn rowCol, FutureTask<?> ft) {
+    public synchronized boolean requeue(RowColumn rowCol, FutureTask<?> ft) {
       if (!queuedWork.containsKey(rowCol)) {
         return false;
       }
@@ -245,6 +245,7 @@ public class NotificationProcessor implements AutoCloseable {
       return true;
     }
 
+    @Override
     public void close() {
       tracker.finishAddingNotifications(id);
     }
