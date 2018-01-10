@@ -66,6 +66,7 @@ function print_usage {
   echo -e "Usage: fluo <command> (<argument> ...)\n"
   echo -e "Possible commands:\n"
   echo "  init -a <app> -p <appProps>   Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
+  echo "  remove -a <app> -p <appProps> Removes Fluo application for <app> using <appProps>."
   echo "  classpath                     Prints the classpath setup in fluo-env.sh"
   echo "  config -a <app>               Prints application configuration stored in Zookeeper for <app>"
   echo "  get-jars -a <app> -d <dir>    Copies <app> jars from DFS to local <dir>"
@@ -184,6 +185,25 @@ init)
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
+remove)
+  if [ -f "$FLUO_CONN_PROPS" ]; then
+    if [[ $2 = *"-h"* ]]; then
+      $JAVA org.apache.fluo.command.FluoRemove -h
+      exit 0
+    fi
+    init_dir=$($JAVA org.apache.fluo.command.FluoInit "${@:2}" --retrieveProperty fluo.observer.init.dir)
+    if [ -d "$init_dir" ]; then
+      echo "Adding $init_dir/* to CLASSPATH"
+      export CLASSPATH="$init_dir/*:$CLASSPATH"
+    fi
+    $JAVA org.apache.fluo.command.FluoRemove "${@:2}"
+  else
+    deprecated_verify_full "$2"
+    check_hadoop
+    export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
+    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
+  fi
+  ;;
 oracle)
   if [[ $2 = *"-h"* ]]; then
     $JAVA org.apache.fluo.command.FluoOracle -h
@@ -208,7 +228,7 @@ scan)
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
-ps) 
+ps)
   jps -m | grep Fluo
   ;;
 list)
