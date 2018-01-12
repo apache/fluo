@@ -123,6 +123,8 @@ public interface FluoAdmin extends AutoCloseable {
    * Removes Fluo application, Accumulo table and shared configuration in Zookeeper. Shared configuration
    * consists of all properties except those with
    * {@value org.apache.fluo.api.config.FluoConfiguration#CONNECTION_PREFIX} prefix.
+   * 
+   * @since 1.2.0
    */
   void remove();
 
