@@ -120,12 +120,11 @@ public interface FluoAdmin extends AutoCloseable {
       throws AlreadyInitializedException, TableExistsException;
 
   /**
-   * Removes Fluo application and shared configuration in Zookeeper. Shared configuration
+   * Removes Fluo application, Accumulo table and shared configuration in Zookeeper. Shared configuration
    * consists of all properties except those with
    * {@value org.apache.fluo.api.config.FluoConfiguration#CONNECTION_PREFIX} prefix.
    */
-  void remove(InitializationOptions opts)
-      throws AlreadyInitializedException, TableExistsException;
+  void remove();
 
   /**
    * Updates shared configuration in Zookeeper. Shared configuration consists of all properties

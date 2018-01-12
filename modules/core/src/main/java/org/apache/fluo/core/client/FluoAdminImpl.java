@@ -202,8 +202,7 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   @Override
-  public void remove(InitializationOptions opts)
-      throws AlreadyInitializedException, TableExistsException {
+  public void remove() {
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
