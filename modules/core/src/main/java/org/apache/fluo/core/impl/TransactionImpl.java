@@ -504,7 +504,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     private AsyncConditionalWriter acw;
     private AsyncConditionalWriter bacw;
     private AsyncCommitObserver commitObserver;
-    private long commitTs;
 
   }
 
@@ -973,7 +972,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
               return handleUnknown(cd, resultsList.iterator());
             } catch (Exception e) {
               cd.commitObserver.failed(e);
-              return CompletableFuture.completedFuture(resultsList.iterator());
+              // TODO - what should we return? How do we stop processResults from running?
+              return null;
             }
           }, se);
         } else {
@@ -981,7 +981,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         }
       }).thenApplyAsync(results -> {
         try {
-          return processResults(cd, (Iterator<ConditionalWriter.Result>) results);
+          return processResults(cd, results);
         } catch (Exception e) {
           cd.commitObserver.failed(e);
           return false;
@@ -1078,6 +1078,12 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   class LockOtherStep extends ConditionalStep {
 
     @Override
+    public AsyncConditionalWriter getACW(CommitData cd) {
+      return cd.bacw;
+    }
+
+
+    @Override
     public Collection<ConditionalMutation> createMutations(CommitData cd) {
 
       ArrayList<ConditionalMutation> mutations = new ArrayList<>();
@@ -1122,29 +1128,36 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         }
       }
 
-      return cd.getRejected().size() == 0;
+      return cd.getRejected().size() == 0 || stopAfterPreCommit;
     }
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
-      return CompletableFuture.supplyAsync(() -> {
-        getStats().setRejected(cd.getRejected());
-        try {
-          checkForOrphanedLocks(cd);
-        } catch (Exception e) {
-          cd.commitObserver.failed(e);
-        }
-        return null;
-      }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
-        try {
-          return rollbackLocks(cd);
-        } catch (Exception e) {
-          cd.commitObserver.failed(e);
+      if (stopAfterPreCommit) {
+        return CompletableFuture.supplyAsync(() -> {
+          cd.commitObserver.committed();
           return null;
-        }
-      });
+        }, env.getSharedResources().getSyncCommitExecutor());
+      } else {
+        return CompletableFuture.supplyAsync(() -> {
+          getStats().setRejected(cd.getRejected());
+          try {
+            // Does this need to be async?
+            checkForOrphanedLocks(cd);
+          } catch (Exception e) {
+            cd.commitObserver.failed(e);
+          }
+          return null;
+        }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
+          try {
+            return rollbackLocks(cd);
+          } catch (Exception e) {
+            cd.commitObserver.failed(e);
+            return null;
+          }
+        });
 
-
+      }
     }
 
   }
@@ -1227,7 +1240,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           return false;
         } else {
           getStats().setCommitTs(commitStamp.getTxTimestamp());
-          cd.commitTs = commitStamp.getTxTimestamp();
           return true;
         }
       });
@@ -1251,11 +1263,12 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public Collection<Mutation> createMutations(CommitData cd) {
+      long commitTs = getStats().getCommitTs();
       HashMap<Bytes, Mutation> mutations = new HashMap<>();
 
       if (observedColumns.contains(cd.pcol) && isWrite(cd.pval) && !isDelete(cd.pval)) {
         Flutation m = new Flutation(env, cd.prow);
-        Notification.put(env, m, cd.pcol, cd.commitTs);
+        Notification.put(env, m, cd.pcol, commitTs);
         mutations.put(cd.prow, m);
       }
 
@@ -1270,7 +1283,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
                 m = new Flutation(env, rowUpdates.getKey());
                 mutations.put(rowUpdates.getKey(), m);
               }
-              Notification.put(env, m, colUpdates.getKey(), cd.commitTs);
+              Notification.put(env, m, colUpdates.getKey(), commitTs);
             }
           }
         }
@@ -1283,7 +1296,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           mutations.put(entry.getKey(), m);
         }
         for (Column col : entry.getValue()) {
-          Notification.put(env, m, col, cd.commitTs);
+          Notification.put(env, m, col, commitTs);
         }
       }
       return mutations.values();
@@ -1295,6 +1308,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public Collection<ConditionalMutation> createMutations(CommitData cd) {
+      long commitTs = getStats().getCommitTs();
       IteratorSetting iterConf = new IteratorSetting(10, PrewriteIterator.class);
       PrewriteIterator.setSnaptime(iterConf, startTs);
       boolean isTrigger = isTriggerRow(cd.prow) && cd.pcol.equals(notification.getColumn());
@@ -1305,7 +1319,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       final ConditionalMutation delLockMutation = new ConditionalFlutation(env, cd.prow, lockCheck);
 
       ColumnUtil.commitColumn(env, isTrigger, true, cd.pcol, isWrite(cd.pval), isDelete(cd.pval),
-          isReadLock(cd.pval), startTs, cd.commitTs, observedColumns, delLockMutation);
+          isReadLock(cd.pval), startTs, commitTs, observedColumns, delLockMutation);
 
       return Collections.singletonList(delLockMutation);
     }
@@ -1313,55 +1327,36 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     @Override
     public Iterator<Result> handleUnknown(CommitData cd, Iterator<Result> results)
         throws Exception {
+      // the code for handing this is synchronous and needs to be handled in another thread pool
+      // TODO - how do we do this without return a CF?
+      long commitTs = getStats().getCommitTs();
       Result result = Iterators.getOnlyElement(results);
-      final Status mutationStatus = result.getStatus();
-      if (mutationStatus == Status.UNKNOWN) {
-        // the code for handing this is synchronous and needs to be handled in another thread pool
-        /*
-         * Runnable task = new SynchronousCommitTask(cd) {
-         * 
-         * @Override protected void runCommitStep(CommitData cd) throws Exception {
-         */
+      Status ms = result.getStatus();
 
-        Result newResult = result;
-        Status ms = newResult.getStatus();
+      while (ms == Status.UNKNOWN) {
 
-        while (ms == Status.UNKNOWN) {
+        // TODO async
+        TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
 
-          // TODO async
-          TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
-
-          switch (txInfo.status) {
-            case COMMITTED:
-              if (txInfo.commitTs != cd.commitTs) {
-                throw new IllegalStateException(
-                    cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + cd.commitTs);
-              }
-              ms = Status.ACCEPTED;
-              newResult = new Result(ms, newResult.getMutation(), newResult.getTabletServer());
-              break;
-            case LOCKED:
-              // TODO async
-              ConditionalMutation delLockMutation = result.getMutation();
-              newResult = cd.cw.write(delLockMutation);
-              ms = newResult.getStatus();
-              break;
-            default:
-              ms = Status.REJECTED;
-              newResult = new Result(ms, newResult.getMutation(), newResult.getTabletServer());
-          }
+        switch (txInfo.status) {
+          case COMMITTED:
+            if (txInfo.commitTs != commitTs) {
+              throw new IllegalStateException(
+                  cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + commitTs);
+            }
+            ms = Status.ACCEPTED;
+            break;
+          case LOCKED:
+            // TODO async
+            ConditionalMutation delLockMutation = result.getMutation();
+            ms = cd.cw.write(delLockMutation).getStatus();
+            break;
+          default:
+            ms = Status.REJECTED;
         }
-        return Collections.singletonList(newResult).iterator();
-        // postCommitPrimary(cd, cd.commitTs, ms);
-        /*
-         * } };
-         * 
-         * env.getSharedResources().getSyncCommitExecutor().execute(task);
-         */
-      } else {
-        return results;
-        // postCommitPrimary(cd, cd.commitTs, mutationStatus);
       }
+      Result newResult = new Result(ms, result.getMutation(), result.getTabletServer());
+      return Collections.singletonList(newResult).iterator();
     }
 
     @Override
@@ -1369,7 +1364,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       Result result = Iterators.getOnlyElement(results);
       final Status mutationStatus = result.getStatus();
       if (mutationStatus == Status.ACCEPTED && stopAfterPrimaryCommit) {
-        cd.commitObserver.committed();
         return false;
       }
       return mutationStatus == Status.ACCEPTED;
@@ -1378,7 +1372,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
       return CompletableFuture.runAsync(() -> {
-        if(stopAfterPrimaryCommit) {
+        if (stopAfterPrimaryCommit) {
+          cd.commitObserver.committed();
+        } else {
           cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
         }
       }, env.getSharedResources().getSyncCommitExecutor());
@@ -1390,6 +1386,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public Collection<Mutation> createMutations(CommitData cd) {
+      long commitTs = getStats().getCommitTs();
       ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
       for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
         Flutation m = new Flutation(env, rowUpdates.getKey());
@@ -1398,7 +1395,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           ColumnUtil.commitColumn(env,
               isTriggerRow && colUpdates.getKey().equals(notification.getColumn()), false,
               colUpdates.getKey(), isWrite(colUpdates.getValue()), isDelete(colUpdates.getValue()),
-              isReadLock(colUpdates.getValue()), startTs, cd.commitTs, observedColumns, m);
+              isReadLock(colUpdates.getValue()), startTs, commitTs, observedColumns, m);
         }
 
         mutations.add(m);
@@ -1413,11 +1410,12 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public Collection<Mutation> createMutations(CommitData cd) {
+      long commitTs = getStats().getCommitTs();
       ArrayList<Mutation> afterFlushMutations = new ArrayList<>(2);
 
       Flutation m = new Flutation(env, cd.prow);
       // mark transaction as complete for garbage collection purposes
-      m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | cd.commitTs, EMPTY);
+      m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
       afterFlushMutations.add(m);
 
       if (weakNotification != null) {
