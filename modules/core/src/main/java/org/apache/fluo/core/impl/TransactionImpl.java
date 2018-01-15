@@ -1085,7 +1085,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         }
       }
 
-      return cd.getRejected().size() == 0 || stopAfterPreCommit;
+      return cd.getRejected().size() == 0 && !stopAfterPreCommit;
     }
 
     @Override
