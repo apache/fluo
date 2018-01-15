@@ -137,11 +137,13 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
     return tx.preCommit(cd, primary);
   }
 
+  // TODO - do we still want to test like this with the new format?
   public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp)
       throws AccumuloException, AccumuloSecurityException {
     return tx.commitPrimaryColumn(cd, commitStamp);
   }
 
+  // TODO - do we still want to test like this with the new format?
   public void finishCommit(CommitData cd, Stamp commitStamp)
       throws MutationsRejectedException, TableNotFoundException {
     tx.finishCommit(cd, commitStamp);
