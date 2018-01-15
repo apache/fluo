@@ -1332,7 +1332,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     public Iterator<Result> handleUnknown(CommitData cd, Iterator<Result> results)
         throws Exception {
       // the code for handing this is synchronous and needs to be handled in another thread pool
-      // TODO - how do we do this without return a CF?
+      // TODO - how do we do the above without return a CF?
       long commitTs = getStats().getCommitTs();
       Result result = Iterators.getOnlyElement(results);
       Status ms = result.getStatus();
