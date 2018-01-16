@@ -138,7 +138,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   // for testing
   private boolean stopAfterPreCommit = false;
-  private boolean stopAfterPrimaryCommit = false;
+  // private boolean stopAfterPrimaryCommit = false;
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Objects.requireNonNull(env, "environment cannot be null");
@@ -1192,7 +1192,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @VisibleForTesting
   public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) {
-    stopAfterPrimaryCommit = true;
+    // stopAfterPrimaryCommit = true;
 
     SyncCommitObserver sco = new SyncCommitObserver();
     cd.commitObserver = sco;
@@ -1200,10 +1200,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       GetCommitStampStepTest firstStep = new GetCommitStampStepTest();
       firstStep.setTestStamp(commitStamp);
 
-      firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep())
-          .andThen(new DeleteLocksStep()).andThen(new FinishCommitStep());
+      firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep());
 
-      firstStep.compose(cd);
+      firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed());
       sco.waitForCommit();
     } catch (CommitException e) {
       return false;
@@ -1370,20 +1369,20 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     public boolean processResults(CommitData cd, Iterator<Result> results) throws Exception {
       Result result = Iterators.getOnlyElement(results);
       final Status mutationStatus = result.getStatus();
-      if (mutationStatus == Status.ACCEPTED && stopAfterPrimaryCommit) {
-        return false;
-      }
+      /*
+       * if (mutationStatus == Status.ACCEPTED && stopAfterPrimaryCommit) { return false; }
+       */
       return mutationStatus == Status.ACCEPTED;
     }
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
       return CompletableFuture.runAsync(() -> {
-        if (stopAfterPrimaryCommit) {
-          cd.commitObserver.committed();
-        } else {
-          cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
-        }
+        /*
+         * if (stopAfterPrimaryCommit) { cd.commitObserver.committed(); } else {
+         */
+        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
+        // }
       }, env.getSharedResources().getSyncCommitExecutor());
     }
 
