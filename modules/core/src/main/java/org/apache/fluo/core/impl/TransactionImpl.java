@@ -138,7 +138,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   // for testing
   private boolean stopAfterPreCommit = false;
-  // private boolean stopAfterPrimaryCommit = false;
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Objects.requireNonNull(env, "environment cannot be null");
@@ -1192,7 +1191,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @VisibleForTesting
   public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) {
-    // stopAfterPrimaryCommit = true;
 
     SyncCommitObserver sco = new SyncCommitObserver();
     cd.commitObserver = sco;
@@ -1368,21 +1366,13 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     @Override
     public boolean processResults(CommitData cd, Iterator<Result> results) throws Exception {
       Result result = Iterators.getOnlyElement(results);
-      final Status mutationStatus = result.getStatus();
-      /*
-       * if (mutationStatus == Status.ACCEPTED && stopAfterPrimaryCommit) { return false; }
-       */
-      return mutationStatus == Status.ACCEPTED;
+      return result.getStatus() == Status.ACCEPTED;
     }
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
       return CompletableFuture.runAsync(() -> {
-        /*
-         * if (stopAfterPrimaryCommit) { cd.commitObserver.committed(); } else {
-         */
         cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
-        // }
       }, env.getSharedResources().getSyncCommitExecutor());
     }
 
