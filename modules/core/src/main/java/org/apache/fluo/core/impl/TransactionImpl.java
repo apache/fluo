@@ -906,7 +906,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     @Override
     CompletableFuture<Boolean> getMainOp(CommitData cd) {
       // TODO not sure threading is correct
-      // TODO handle unknown
       Executor ace = env.getSharedResources().getAsyncCommitExecutor();
       return getACW(cd).apply(createMutations(cd)).thenCompose(results -> {
         // ugh icky that this is an iterator, forces copy to inspect.. could refactor async CW to
@@ -1200,7 +1199,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           .andThen(new DeleteLocksStep()).andThen(new FinishCommitStep());
 
       firstStep.compose(cd);
-      // beginSecondCommitPhase(cd, commitStamp);
       sco.waitForCommit();
     } catch (CommitException e) {
       return false;
@@ -1395,7 +1393,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     firstStep.andThen(new FinishCommitStep());
     firstStep.compose(cd);
 
-    // deleteLocks(cd, commitStamp.getTxTimestamp());
     return true;
   }
 
@@ -1452,12 +1449,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       if (notification != null) {
         afterFlushMutations.add(notification.newDelete(env, startTs));
       }
-
-      /*
-       * env.getSharedResources().getBatchWriter().writeMutationsAsync(afterFlushMutations);
-       * 
-       * cd.commitObserver.committed();
-       */
 
       return afterFlushMutations;
     }
