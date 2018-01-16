@@ -1427,6 +1427,15 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   class FinishCommitStep extends BatchWriterStep {
 
     @Override
+    CompletableFuture<Boolean> getMainOp(CommitData cd) {
+      return env.getSharedResources().getBatchWriter()
+          .writeMutationsAsyncFuture(createMutations(cd)).thenApply(v -> {
+            cd.commitObserver.committed();
+            return true;
+          });
+    }
+
+    @Override
     public Collection<Mutation> createMutations(CommitData cd) {
       long commitTs = getStats().getCommitTs();
       ArrayList<Mutation> afterFlushMutations = new ArrayList<>(2);
@@ -1444,9 +1453,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         afterFlushMutations.add(notification.newDelete(env, startTs));
       }
 
-      env.getSharedResources().getBatchWriter().writeMutationsAsync(afterFlushMutations);
-
-      cd.commitObserver.committed();
+      /*
+       * env.getSharedResources().getBatchWriter().writeMutationsAsync(afterFlushMutations);
+       * 
+       * cd.commitObserver.committed();
+       */
 
       return afterFlushMutations;
     }
