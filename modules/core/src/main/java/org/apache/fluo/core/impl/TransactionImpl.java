@@ -1136,53 +1136,58 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
 
   private CompletableFuture<Void> rollbackLocks(CommitData cd) throws Exception {
-    return rollbackOtherLocks(cd).thenCompose(v -> {
-      try {
-        return rollbackPrimaryLock(cd);
-      } catch (Exception e) {
-        cd.commitObserver.failed(e);
-        return null;
-      }
-    }).thenAccept(v -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
+    CommitStep firstStep = new RollbackOtherLocks();
+    firstStep.andThen(new RollbackPrimaryLock());
+
+    return firstStep.compose(cd)
+        .thenAccept(v -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
+
   }
 
 
-  private CompletableFuture<Void> rollbackOtherLocks(CommitData cd) throws Exception {
-    // roll back locks
+  class RollbackOtherLocks extends BatchWriterStep {
 
-    // TODO let rollback be done lazily? this makes GC more difficult
+    @Override
+    public Collection<Mutation> createMutations(CommitData cd) {
+      // roll back locks
 
-    Flutation m;
+      // TODO let rollback be done lazily? this makes GC more difficult
 
-    ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
-    for (Bytes row : cd.acceptedRows) {
-      m = new Flutation(env, row);
-      for (Entry<Column, Bytes> entry : updates.get(row).entrySet()) {
-        if (isReadLock(entry.getValue())) {
-          m.put(entry.getKey(), ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, true),
-              DelReadLockValue.encodeRollback());
-        } else {
-          m.put(entry.getKey(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
-              DelLockValue.encodeRollback(false, true));
+      Flutation m;
+
+      ArrayList<Mutation> mutations = new ArrayList<>(cd.acceptedRows.size());
+      for (Bytes row : cd.acceptedRows) {
+        m = new Flutation(env, row);
+        for (Entry<Column, Bytes> entry : updates.get(row).entrySet()) {
+          if (isReadLock(entry.getValue())) {
+            m.put(entry.getKey(),
+                ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, true),
+                DelReadLockValue.encodeRollback());
+          } else {
+            m.put(entry.getKey(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
+                DelLockValue.encodeRollback(false, true));
+          }
         }
+        mutations.add(m);
       }
-      mutations.add(m);
-    }
 
-    return env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(mutations);
+      return mutations;
+    }
   }
 
+  class RollbackPrimaryLock extends BatchWriterStep {
 
-  private CompletableFuture<Void> rollbackPrimaryLock(CommitData cd) throws Exception {
+    @Override
+    public Collection<Mutation> createMutations(CommitData cd) {
+      // mark transaction as complete for garbage collection purposes
+      Flutation m = new Flutation(env, cd.prow);
 
-    // mark transaction as complete for garbage collection purposes
-    Flutation m = new Flutation(env, cd.prow);
+      m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+          DelLockValue.encodeRollback(startTs, true, true));
+      m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
 
-    m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
-        DelLockValue.encodeRollback(startTs, true, true));
-    m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
-
-    return env.getSharedResources().getBatchWriter().writeMutationsAsyncFuture(m);
+      return Collections.singletonList(m);
+    }
   }
 
   @VisibleForTesting
