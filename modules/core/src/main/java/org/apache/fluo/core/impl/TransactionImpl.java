@@ -521,7 +521,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     SyncCommitObserver sco = new SyncCommitObserver();
-    beginCommitAsyncTest(cd, sco, primary);
+    cd = setUpBeginCommitAsync(cd, sco, primary);
+    if (cd != null) {
+      beginCommitAsyncTest(cd);
+    }
     try {
       sco.waitForCommit();
     } catch (AlreadyAcknowledgedException e) {
@@ -1444,21 +1447,23 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     try {
       CommitData cd = createCommitData();
-      beginCommitAsync(cd, commitCallback, null);
+      cd = setUpBeginCommitAsync(cd, commitCallback, null);
+      if (cd != null) {
+        beginCommitAsync(cd);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       commitCallback.failed(e);
     }
   }
 
-  private void beginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback,
+  private CommitData setUpBeginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback,
       RowColumn primary) {
-
     if (updates.size() == 0) {
       // TODO do async
       deleteWeakRow();
       commitCallback.committed();
-      return;
+      return null;
     }
 
     for (Map<Column, Bytes> cols : updates.values()) {
@@ -1493,7 +1498,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         // there are only read locks, so nothing to write
         deleteWeakRow();
         commitCallback.committed();
-        return;
+        return null;
       }
     }
 
@@ -1507,6 +1512,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     cd.commitObserver = commitCallback;
+
+    return cd;
+  }
+
+  private void beginCommitAsync(CommitData cd) {
 
     CommitStep firstStep = new LockPrimaryStep();
 
@@ -1517,62 +1527,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     firstStep.compose(cd);
   }
 
-  private void beginCommitAsyncTest(CommitData cd, AsyncCommitObserver commitCallback,
-      RowColumn primary) {
-
-    if (updates.size() == 0) {
-      // TODO do async
-      deleteWeakRow();
-      commitCallback.committed();
-      return;
-    }
-
-    for (Map<Column, Bytes> cols : updates.values()) {
-      stats.incrementEntriesSet(cols.size());
-    }
-
-    Bytes primRow = null;
-    Column primCol = null;
-
-    if (primary != null) {
-      primRow = primary.getRow();
-      primCol = primary.getColumn();
-      if (notification != null && !primary.equals(notification.getRowColumn())) {
-        throw new IllegalArgumentException("Primary must be notification");
-      }
-    } else if (notification != null) {
-      primRow = notification.getRow();
-      primCol = notification.getColumn();
-    } else {
-
-      outer: for (Entry<Bytes, Map<Column, Bytes>> entry : updates.entrySet()) {
-        for (Entry<Column, Bytes> entry2 : entry.getValue().entrySet()) {
-          if (!isReadLock(entry2.getValue())) {
-            primRow = entry.getKey();
-            primCol = entry2.getKey();
-            break outer;
-          }
-        }
-      }
-
-      if (primRow == null) {
-        // there are only read locks, so nothing to write
-        deleteWeakRow();
-        commitCallback.committed();
-        return;
-      }
-    }
-
-    // get a primary column
-    cd.prow = primRow;
-    Map<Column, Bytes> colSet = updates.get(cd.prow);
-    cd.pcol = primCol;
-    cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0) {
-      updates.remove(cd.prow);
-    }
-
-    cd.commitObserver = commitCallback;
+  private void beginCommitAsyncTest(CommitData cd) {
 
     CommitStep firstStep = new LockPrimaryStep();
 
