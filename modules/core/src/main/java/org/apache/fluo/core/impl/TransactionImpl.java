@@ -136,9 +136,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private TxStatus status = TxStatus.OPEN;
   private boolean commitAttempted = false;
 
-  // for testing
-  private boolean stopAfterPreCommit = false;
-
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Objects.requireNonNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
@@ -521,12 +518,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       checkIfOpen();
       status = TxStatus.COMMIT_STARTED;
       commitAttempted = true;
-
-      stopAfterPreCommit = true;
     }
 
     SyncCommitObserver sco = new SyncCommitObserver();
-    beginCommitAsync(cd, sco, primary);
+    beginCommitAsyncTest(cd, sco, primary);
     try {
       sco.waitForCommit();
     } catch (AlreadyAcknowledgedException e) {
@@ -1083,38 +1078,29 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         }
       }
 
-      return cd.getRejected().size() == 0 && !stopAfterPreCommit;
+      return cd.getRejected().size() == 0;
     }
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
-      if (stopAfterPreCommit) {
-        return CompletableFuture.supplyAsync(() -> {
-          cd.commitObserver.committed();
+      return CompletableFuture.supplyAsync(() -> {
+        getStats().setRejected(cd.getRejected());
+        try {
+          // Does this need to be async?
+          checkForOrphanedLocks(cd);
+        } catch (Exception e) {
+          cd.commitObserver.failed(e);
+        }
+        return null;
+      }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
+        try {
+          return rollbackLocks(cd);
+        } catch (Exception e) {
+          cd.commitObserver.failed(e);
           return null;
-        }, env.getSharedResources().getSyncCommitExecutor());
-      } else {
-        return CompletableFuture.supplyAsync(() -> {
-          getStats().setRejected(cd.getRejected());
-          try {
-            // Does this need to be async?
-            checkForOrphanedLocks(cd);
-          } catch (Exception e) {
-            cd.commitObserver.failed(e);
-          }
-          return null;
-        }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
-          try {
-            return rollbackLocks(cd);
-          } catch (Exception e) {
-            cd.commitObserver.failed(e);
-            return null;
-          }
-        });
-
-      }
+        }
+      });
     }
-
   }
 
   abstract class BatchWriterStep extends CommitStep {
@@ -1529,6 +1515,70 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         .andThen(new DeleteLocksStep()).andThen(new FinishCommitStep());
 
     firstStep.compose(cd);
+  }
+
+  private void beginCommitAsyncTest(CommitData cd, AsyncCommitObserver commitCallback,
+      RowColumn primary) {
+
+    if (updates.size() == 0) {
+      // TODO do async
+      deleteWeakRow();
+      commitCallback.committed();
+      return;
+    }
+
+    for (Map<Column, Bytes> cols : updates.values()) {
+      stats.incrementEntriesSet(cols.size());
+    }
+
+    Bytes primRow = null;
+    Column primCol = null;
+
+    if (primary != null) {
+      primRow = primary.getRow();
+      primCol = primary.getColumn();
+      if (notification != null && !primary.equals(notification.getRowColumn())) {
+        throw new IllegalArgumentException("Primary must be notification");
+      }
+    } else if (notification != null) {
+      primRow = notification.getRow();
+      primCol = notification.getColumn();
+    } else {
+
+      outer: for (Entry<Bytes, Map<Column, Bytes>> entry : updates.entrySet()) {
+        for (Entry<Column, Bytes> entry2 : entry.getValue().entrySet()) {
+          if (!isReadLock(entry2.getValue())) {
+            primRow = entry.getKey();
+            primCol = entry2.getKey();
+            break outer;
+          }
+        }
+      }
+
+      if (primRow == null) {
+        // there are only read locks, so nothing to write
+        deleteWeakRow();
+        commitCallback.committed();
+        return;
+      }
+    }
+
+    // get a primary column
+    cd.prow = primRow;
+    Map<Column, Bytes> colSet = updates.get(cd.prow);
+    cd.pcol = primCol;
+    cd.pval = colSet.remove(primCol);
+    if (colSet.size() == 0) {
+      updates.remove(cd.prow);
+    }
+
+    cd.commitObserver = commitCallback;
+
+    CommitStep firstStep = new LockPrimaryStep();
+
+    firstStep.andThen(new LockOtherStep());
+
+    firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed());
   }
 
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
