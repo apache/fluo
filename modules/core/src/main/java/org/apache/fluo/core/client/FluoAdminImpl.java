@@ -201,6 +201,44 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
+  @Override
+  public void remove() {
+    if (!config.hasRequiredAdminProps()) {
+      throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
+    Preconditions.checkArgument(
+        !ZookeeperUtil.parseRoot(config.getInstanceZookeepers()).equals("/"),
+        "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
+            + " must have a chroot suffix.");
+
+    Connector conn = AccumuloUtil.getConnector(config);
+
+    boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
+    // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
+    if (tableExists) {
+      logger.info("The Accumulo table '{}' will be dropped", config.getAccumuloTable());
+      try {
+        conn.tableOperations().delete(config.getAccumuloTable());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    try {
+      if (rootCurator.checkExists().forPath(appRootDir) != null) {
+        logger.info("Clearing Fluo '{}' application in Zookeeper at {}",
+            config.getApplicationName(), config.getAppZookeepers());
+        rootCurator.delete().deletingChildrenIfNeeded().forPath(appRootDir);
+      }
+    } catch (KeeperException.NoNodeException nne) {
+      // it's ok if node doesn't exist
+    } catch (Exception e) {
+      logger.error("An error occurred deleting Zookeeper root of [" + config.getAppZookeepers()
+          + "], error=[" + e.getMessage() + "]");
+      throw new RuntimeException(e);
+    }
+  }
+
   private void initializeApplicationInZooKeeper(Connector conn) throws Exception {
 
     final String accumuloInstanceName = conn.getInstance().getInstanceName();

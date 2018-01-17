@@ -66,6 +66,7 @@ function print_usage {
   echo -e "Usage: fluo <command> (<argument> ...)\n"
   echo -e "Possible commands:\n"
   echo "  init -a <app> -p <appProps>   Initializes Fluo application for <app> using <appProps>. Run with -h to see additional args."
+  echo "  remove -a <app>               Removes Fluo application for <app>"
   echo "  classpath                     Prints the classpath setup in fluo-env.sh"
   echo "  config -a <app>               Prints application configuration stored in Zookeeper for <app>"
   echo "  get-jars -a <app> -d <dir>    Copies <app> jars from DFS to local <dir>"
@@ -184,6 +185,13 @@ init)
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
+remove)
+  if [[ $2 = *"-h"* ]]; then
+    $JAVA org.apache.fluo.command.FluoRemove -h
+    exit 0
+  fi
+  $JAVA org.apache.fluo.command.FluoRemove "${@:2}"
+  ;;
 oracle)
   if [[ $2 = *"-h"* ]]; then
     $JAVA org.apache.fluo.command.FluoOracle -h
@@ -208,7 +216,7 @@ scan)
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
   fi
   ;;
-ps) 
+ps)
   jps -m | grep Fluo
   ;;
 list)
