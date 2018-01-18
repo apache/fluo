@@ -195,11 +195,16 @@ public class OracleServer extends LeaderSelectorListenerAdapter
 
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
+    // FLUO-1000
+    while (!curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
+      Thread.sleep(200);
+    }
     byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(maxTsPath);
 
     // TODO check that d is expected
     // TODO check that still server when setting
-    // TODO make num allocated variable... when a server first starts allocate a small amount... the
+    // TODO make num allocated variable... when a server first starts allocate a small amount...
+    // the
     // longer it runs and the busier it is, allocate bigger blocks
 
     long newMax = Long.parseLong(new String(d)) + 1000;
@@ -207,6 +212,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     curatorFramework.setData().withVersion(stat.getVersion()).forPath(maxTsPath,
         LongUtil.toByteArray(newMax));
     maxTs = newMax;
+
 
     if (!isLeader) {
       throw new IllegalStateException();
@@ -318,6 +324,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
 
+    while (!curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
+      Thread.sleep(100);
+    }
+
     while (!cnxnListener.isConnected()) {
       Thread.sleep(200);
     }
@@ -410,14 +420,15 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       }
 
       synchronized (this) {
+        // FLUO-1000
+        isLeader = true;
+
         byte[] d = curatorFramework.getData().forPath(maxTsPath);
         currentTs = maxTs = LongUtil.fromByteArray(d);
       }
 
       gcTsTracker = new GcTimestampTracker();
       gcTsTracker.start();
-
-      isLeader = true;
 
       while (started) {
         // if leadership is lost, then curator will interrupt the thread that called this method
