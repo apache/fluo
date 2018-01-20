@@ -60,12 +60,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Oracle server is the responsible for providing incrementing logical timestamps to clients. It
- * should never give the same timestamp to two clients and it should always provide an incrementing
- * timestamp.
+ * OracleServer is responsible for providing strictly increasing monotonic batches of timestamps. It
+ * should never give the same timestamp to two different clients and it should always provide an 
+ * incrementing unique timestamp or batch of timestamps.
  * 
  * <p>
- * If multiple oracle servers are run, they will choose a leader and clients will automatically
+ * If multiple Oracle Servers are run, they will choose a leader and clients will automatically
  * connect to that leader. If the leader goes down, the client will automatically fail over to the
  * next leader. In the case where an oracle fails over, the next oracle will begin a new block of
  * timestamps.
@@ -307,6 +307,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     return addr;
   }
 
+  /** 
+   * Use this method to start a new OracleServer
+   * @throws Exception
+   */
   public synchronized void start() throws Exception {
     if (started) {
       throw new IllegalStateException();
@@ -340,7 +344,11 @@ public class OracleServer extends LeaderSelectorListenerAdapter
 
     started = true;
   }
-
+  
+  /**
+   * Use this method to shut down the OracleServer 
+   * @throws Exception
+   */
   public synchronized void stop() throws Exception {
     if (started) {
 
@@ -388,6 +396,11 @@ public class OracleServer extends LeaderSelectorListenerAdapter
    * @param curatorFramework Curator framework
    */
   @Override
+  
+  /**
+   * This method is called when this instance is chosen to become the leader by the 
+   * curator framework and zookeeper.
+   */
   public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
 
     try {
