@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -864,22 +865,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
 
     CompletableFuture<Void> compose(CommitData cd) {
-      try {
-        return getMainOp(cd).thenComposeAsync(successful -> {
-          if (successful) {
-            if (nextStep != null) {
-              return nextStep.compose(cd);
-            } else {
-              return CompletableFuture.completedFuture(null);
-            }
+      return getMainOp(cd).thenComposeAsync(successful -> {
+        if (successful) {
+          if (nextStep != null) {
+            return nextStep.compose(cd);
           } else {
-            return getFailureOp(cd);
+            return CompletableFuture.completedFuture(null);
           }
-        }, env.getSharedResources().getAsyncCommitExecutor());
-      } catch (Exception e) {
-        cd.commitObserver.failed(e);
-        return null;
-      }
+        } else {
+          return getFailureOp(cd);
+        }
+      }, env.getSharedResources().getAsyncCommitExecutor());
     }
 
   }
@@ -914,7 +910,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           try {
             containsUknown |= result.getStatus() == Status.UNKNOWN;
           } catch (Exception e) {
-            cd.commitObserver.failed(e);
+            throw new CompletionException(e);
           }
         }
         if (containsUknown) {
@@ -924,9 +920,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
             try {
               return handleUnknown(cd, resultsList.iterator());
             } catch (Exception e) {
-              cd.commitObserver.failed(e);
-              // TODO - what should we return? How do we stop processResults from running?
-              return null;
+              throw new CompletionException(e);
             }
           }, se);
         } else {
@@ -936,8 +930,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         try {
           return processResults(cd, results);
         } catch (Exception e) {
-          cd.commitObserver.failed(e);
-          return false;
+          throw new CompletionException(e);
         }
       }, ace);
     }
@@ -1013,8 +1006,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         try {
           checkForOrphanedLocks(cd);
         } catch (Exception e) {
-          cd.commitObserver.failed(e);
-          return null;
+          throw new CompletionException(e);
         }
         if (checkForAckCollision(pcm)) {
           cd.commitObserver.alreadyAcknowledged();
@@ -1092,15 +1084,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           // Does this need to be async?
           checkForOrphanedLocks(cd);
         } catch (Exception e) {
-          cd.commitObserver.failed(e);
+          throw new CompletionException(e);
         }
         return null;
       }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
         try {
           return rollbackLocks(cd);
         } catch (Exception e) {
-          cd.commitObserver.failed(e);
-          return null;
+          throw new CompletionException(e);
         }
       });
     }
@@ -1128,7 +1119,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     firstStep.andThen(new RollbackPrimaryLock());
 
     return firstStep.compose(cd)
-        .thenAccept(v -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
+        .thenRun(() -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
 
   }
 
@@ -1184,12 +1175,15 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     SyncCommitObserver sco = new SyncCommitObserver();
     cd.commitObserver = sco;
     try {
-      GetCommitStampStepTest firstStep = new GetCommitStampStepTest();
-      firstStep.setTestStamp(commitStamp);
+      CommitStep firstStep = new GetCommitStampStepTest(commitStamp);
 
       firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep());
 
-      firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed());
+      boolean testFailed = false;
+      firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed())
+          .exceptionally(throwable -> {
+            throw new CommitException(throwable.getLocalizedMessage());
+          });
       sco.waitForCommit();
     } catch (CommitException e) {
       return false;
@@ -1203,8 +1197,19 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     CompletableFuture<Boolean> getMainOp(CommitData cd) {
-      // TODO Auto-generated method stub
-      // TODO set commitTs on commit data
+      // Notification are written here for the following reasons :
+      // * At this point all columns are locked, this guarantees that anything triggering as a
+      // result of this transaction will see all of this transactions changes.
+      // * The transaction is not yet committed. If the process dies at this point whatever
+      // was running this transaction should rerun and recreate all of the notifications.
+      // The next transactions will rerun because this transaction will have to be rolled back.
+      // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
+      // partially succeeds notifications may never be written. Because in the case of failure
+      // notifications would not be written until a column is read and it may never be read.
+      // See https://github.com/fluo-io/fluo/issues/642
+      //
+      // Its very important the notifications which trigger an observer are deleted after the 2nd
+      // phase of commit finishes.
       return env.getSharedResources().getOracleClient().getStampAsync().thenApply(commitStamp -> {
         if (startTs < commitStamp.getGcTimestamp()) {
           return false;
@@ -1221,7 +1226,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         try {
           rollbackLocks(cd);
         } catch (Exception e) {
-          cd.commitObserver.failed(e);
+          throw new CompletionException(e);
         }
         return null;
       }, env.getSharedResources().getSyncCommitExecutor());
@@ -1232,15 +1237,13 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   class GetCommitStampStepTest extends GetCommitStampStep {
     private Stamp testStamp;
 
-    public void setTestStamp(Stamp testStamp) {
+    public GetCommitStampStepTest(Stamp testStamp) {
       this.testStamp = testStamp;
     }
 
     @Override
     CompletableFuture<Boolean> getMainOp(CommitData cd) {
-      // TODO Auto-generated method stub
-      // TODO set commitTs on commit data
-      return CompletableFuture.supplyAsync(() -> testStamp).thenApply(commitStamp -> {
+      return CompletableFuture.completedFuture(testStamp).thenApply(commitStamp -> {
         if (startTs < commitStamp.getGcTimestamp()) {
           return false;
         } else {
@@ -1408,11 +1411,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     CompletableFuture<Boolean> getMainOp(CommitData cd) {
-      return env.getSharedResources().getBatchWriter()
-          .writeMutationsAsyncFuture(createMutations(cd)).thenApply(v -> {
-            cd.commitObserver.committed();
-            return true;
-          });
+      return super.getMainOp(cd).thenApply(b -> {
+        Preconditions.checkArgument(b);
+        cd.commitObserver.committed();
+        return true;
+      });
     }
 
     @Override
@@ -1524,7 +1527,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         .andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep())
         .andThen(new DeleteLocksStep()).andThen(new FinishCommitStep());
 
-    firstStep.compose(cd);
+    firstStep.compose(cd).exceptionally(throwable -> {
+      cd.commitObserver.failed(throwable);
+      return null;
+    });
   }
 
   private void beginCommitAsyncTest(CommitData cd) {
@@ -1533,7 +1539,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     firstStep.andThen(new LockOtherStep());
 
-    firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed());
+    firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed())
+        .exceptionally(throwable -> {
+          cd.commitObserver.failed(throwable);
+          return null;
+        });
   }
 
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
