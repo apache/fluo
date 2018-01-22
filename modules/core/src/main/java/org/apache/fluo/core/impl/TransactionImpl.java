@@ -1179,10 +1179,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
       firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep());
 
-      boolean testFailed = false;
-      firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed())
+      firstStep.compose(cd).thenRun(() -> cd.commitObserver.committed())
           .exceptionally(throwable -> {
-            throw new CommitException(throwable.getLocalizedMessage());
+            cd.commitObserver.failed(throwable);
+            return null;
           });
       sco.waitForCommit();
     } catch (CommitException e) {
