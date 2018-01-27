@@ -118,7 +118,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return val == RLOCK_VAL;
   }
 
-  private static enum TxStatus {
+  private enum TxStatus {
     OPEN, COMMIT_STARTED, COMMITTED, CLOSED
   }
 
@@ -862,8 +862,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   abstract class ConditionalStep extends CommitStep {
 
-    CommitData cd;
-
     public abstract Collection<ConditionalMutation> createMutations(CommitData cd);
 
     public abstract Iterator<Result> handleUnknown(CommitData cd, Iterator<Result> results)
@@ -1067,13 +1065,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           throw new CompletionException(e);
         }
         return null;
-      }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> {
-        try {
-          return rollbackLocks(cd);
-        } catch (Exception e) {
-          throw new CompletionException(e);
-        }
-      });
+      }, env.getSharedResources().getSyncCommitExecutor()).thenCompose(v -> rollbackLocks(cd));
     }
   }
 
@@ -1094,7 +1086,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
 
 
-  private CompletableFuture<Void> rollbackLocks(CommitData cd) throws Exception {
+  private CompletableFuture<Void> rollbackLocks(CommitData cd) {
     CommitStep firstStep = new RollbackOtherLocks();
     firstStep.andThen(new RollbackPrimaryLock());
 
@@ -1202,20 +1194,13 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
-      return CompletableFuture.supplyAsync(() -> {
-        try {
-          rollbackLocks(cd);
-        } catch (Exception e) {
-          throw new CompletionException(e);
-        }
-        return null;
-      }, env.getSharedResources().getSyncCommitExecutor());
+      return rollbackLocks(cd);
     }
 
   }
 
   class GetCommitStampStepTest extends GetCommitStampStep {
-    private Stamp testStamp;
+    private final Stamp testStamp;
 
     public GetCommitStampStepTest(Stamp testStamp) {
       this.testStamp = testStamp;
@@ -1351,8 +1336,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   @VisibleForTesting
-  public boolean finishCommit(CommitData cd, Stamp commitStamp)
-      throws TableNotFoundException, MutationsRejectedException {
+  public boolean finishCommit(CommitData cd, Stamp commitStamp) {
     getStats().setCommitTs(commitStamp.getTxTimestamp());
 
     CommitStep firstStep = new DeleteLocksStep();
