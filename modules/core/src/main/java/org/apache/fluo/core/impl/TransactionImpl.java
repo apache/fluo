@@ -30,19 +30,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
 import org.apache.accumulo.core.client.ConditionalWriter.Status;
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.ColumnUpdate;
@@ -105,6 +103,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       Bytes.of("special ntfy value ce0c523e6e4dc093be8a2736b82eca1b95f97ed4");
   private static final Bytes RLOCK_VAL =
       Bytes.of("special rlock value 94da84e7796ff3b23b779805d820a33f1997cb8b");
+
+  // added to avoid findbugs false positive
+  private static final Supplier<Void> NULLS = () -> null;
 
   private static boolean isWrite(Bytes val) {
     return val != NTFY_VAL && val != RLOCK_VAL;
@@ -1312,9 +1313,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
-      return CompletableFuture.runAsync(() -> {
-        cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
-      }, env.getSharedResources().getSyncCommitExecutor());
+      cd.commitObserver.commitFailed(cd.getShortCollisionMessage());
+      return CompletableFuture.completedFuture(NULLS.get());
     }
 
   }
