@@ -1165,20 +1165,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return true;
   }
 
-  // Notification are written here for the following reasons :
-  // * At this point all columns are locked, this guarantees that anything triggering as a
-  // result of this transaction will see all of this transactions changes.
-  // * The transaction is not yet committed. If the process dies at this point whatever
-  // was running this transaction should rerun and recreate all of the notifications.
-  // The next transactions will rerun because this transaction will have to be rolled back.
-  // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
-  // partially succeeds notifications may never be written. Because in the case of failure
-  // notifications would not be written until a column is read and it may never be read.
-  // See https://github.com/fluo-io/fluo/issues/642
-  //
-  // Its very important the notifications which trigger an observer are deleted after the 2nd
-  // phase of commit finishes.
-
   class GetCommitStampStep extends CommitStep {
     protected CompletableFuture<Stamp> getStampOp() {
       return env.getSharedResources().getOracleClient().getStampAsync();
@@ -1486,6 +1472,21 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   private void beginCommitAsync(CommitData cd) {
+
+    // Notification are written between GetCommitStampStep and CommitPrimaryStep for the following
+    // reasons :
+    // * At this point all columns are locked, this guarantees that anything triggering as a
+    // result of this transaction will see all of this transactions changes.
+    // * The transaction is not yet committed. If the process dies at this point whatever
+    // was running this transaction should rerun and recreate all of the notifications.
+    // The next transactions will rerun because this transaction will have to be rolled back.
+    // * If notifications are written in the 2nd phase of commit, then when the 2nd phase
+    // partially succeeds notifications may never be written. Because in the case of failure
+    // notifications would not be written until a column is read and it may never be read.
+    // See https://github.com/fluo-io/fluo/issues/642
+    //
+    // Its very important the notifications which trigger an observer are deleted after the 2nd
+    // phase of commit finishes.
 
     CommitStep firstStep = new LockPrimaryStep();
 
