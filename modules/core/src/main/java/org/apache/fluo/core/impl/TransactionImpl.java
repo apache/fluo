@@ -799,26 +799,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return startTs;
   }
 
-  private abstract static class SynchronousCommitTask implements Runnable {
-
-    private CommitData cd;
-
-    SynchronousCommitTask(CommitData cd) {
-      this.cd = cd;
-    }
-
-    protected abstract void runCommitStep(CommitData cd) throws Exception;
-
-    @Override
-    public void run() {
-      try {
-        runCommitStep(cd);
-      } catch (Exception e) {
-        cd.commitObserver.failed(e);
-      }
-    }
-  }
-
   @Override
   public int getSize() {
     // TODO could calculate as items are added/set
