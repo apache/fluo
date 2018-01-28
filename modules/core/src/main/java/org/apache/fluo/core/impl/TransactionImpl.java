@@ -553,7 +553,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
    *
    * @param cd Commit data
    */
-  private void readUnread(CommitData cd, Consumer<Entry<Key, Value>> locksSeen) throws Exception {
+  private void readUnread(CommitData cd, Consumer<Entry<Key, Value>> locksSeen) {
     // TODO make async
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
     // may not iterate over entire range
@@ -618,14 +618,13 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     if (rowColsToCheck.size() > 0) {
 
-      long startTime = System.currentTimeMillis();
       long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
 
       boolean resolved = false;
 
       List<Entry<Key, Value>> openReadLocks = LockResolver.getOpenReadLocks(env, rowColsToCheck);
 
-      startTime = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
 
       while (!resolved) {
         resolved = LockResolver.resolveLocks(env, startTs, stats, openReadLocks, startTime);
@@ -710,9 +709,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @Override
   public synchronized void commit() throws CommitException {
-    SyncCommitObserver sco = null;
     try {
-      sco = new SyncCommitObserver();
+      SyncCommitObserver sco = new SyncCommitObserver();
       commitAsync(sco);
       sco.waitForCommit();
     } finally {
@@ -789,7 +787,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   // CHECKSTYLE:OFF
   @Override
-  protected void finalize() throws Throwable {
+  protected void finalize() {
     // CHECKSTYLE:ON
     // TODO Log an error if transaction is not closed (See FLUO-486)
     close(false);
