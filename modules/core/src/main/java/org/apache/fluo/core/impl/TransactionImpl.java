@@ -826,7 +826,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return size;
   }
 
-  // TODO exception handling!!!! How?????
   abstract class CommitStep {
     private CommitStep nextStep;
 
@@ -1158,9 +1157,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       sco.waitForCommit();
     } catch (CommitException e) {
       return false;
-    } catch (Exception e) {
-      throw new FluoException(e);
-    }
+    } /*
+       * catch (Exception e) { throw new FluoException(e); }
+       */
     return true;
   }
 

@@ -20,10 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
@@ -124,12 +121,11 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
     tx.close();
   }
 
-  public CommitData createCommitData() throws TableNotFoundException {
+  public CommitData createCommitData() {
     return tx.createCommitData();
   }
 
-  public boolean preCommit(CommitData cd) throws AlreadyAcknowledgedException,
-      TableNotFoundException, AccumuloException, AccumuloSecurityException {
+  public boolean preCommit(CommitData cd) throws AlreadyAcknowledgedException {
     return tx.preCommit(cd);
   }
 
@@ -137,13 +133,11 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
     return tx.preCommit(cd, primary);
   }
 
-  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp)
-      throws AccumuloException, AccumuloSecurityException {
+  public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) {
     return tx.commitPrimaryColumn(cd, commitStamp);
   }
 
-  public void finishCommit(CommitData cd, Stamp commitStamp)
-      throws MutationsRejectedException, TableNotFoundException {
+  public void finishCommit(CommitData cd, Stamp commitStamp) {
     tx.finishCommit(cd, commitStamp);
     env.getSharedResources().getBatchWriter().waitForAsyncFlush();
   }
