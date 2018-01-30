@@ -1139,6 +1139,17 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
   }
 
+  class CommittedTestStep extends CommitStep {
+    CompletableFuture<Boolean> getMainOp(CommitData cd) {
+      cd.commitObserver.committed();
+      return CompletableFuture.completedFuture(true);
+    }
+
+    CompletableFuture<Void> getFailureOp(CommitData cd) {
+      throw new IllegalStateException("Failure not expected");
+    }
+  }
+
   @VisibleForTesting
   public boolean commitPrimaryColumn(CommitData cd, Stamp commitStamp) {
 
@@ -1147,19 +1158,19 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     try {
       CommitStep firstStep = new GetCommitStampStepTest(commitStamp);
 
-      firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep());
+      firstStep.andThen(new WriteNotificationsStep()).andThen(new CommitPrimaryStep())
+          .andThen(new CommittedTestStep());
 
-      firstStep.compose(cd).thenRun(() -> cd.commitObserver.committed())
-          .exceptionally(throwable -> {
-            cd.commitObserver.failed(throwable);
-            return null;
-          });
+      firstStep.compose(cd).exceptionally(throwable -> {
+        cd.commitObserver.failed(throwable);
+        return null;
+      });
       sco.waitForCommit();
     } catch (CommitException e) {
       return false;
-    } /*
-       * catch (Exception e) { throw new FluoException(e); }
-       */
+    } catch (Exception e) {
+      throw new FluoException(e);
+    }
     return true;
   }
 
@@ -1501,13 +1512,12 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     CommitStep firstStep = new LockPrimaryStep();
 
-    firstStep.andThen(new LockOtherStep());
+    firstStep.andThen(new LockOtherStep()).andThen(new CommittedTestStep());
 
-    firstStep.compose(cd).thenAccept(v -> cd.commitObserver.committed())
-        .exceptionally(throwable -> {
-          cd.commitObserver.failed(throwable);
-          return null;
-        });
+    firstStep.compose(cd).exceptionally(throwable -> {
+      cd.commitObserver.failed(throwable);
+      return null;
+    });
   }
 
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
