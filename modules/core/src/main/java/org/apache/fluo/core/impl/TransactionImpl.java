@@ -119,7 +119,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return val == RLOCK_VAL;
   }
 
-  private static enum TxStatus {
+  private enum TxStatus {
     OPEN, COMMIT_STARTED, COMMITTED, CLOSED
   }
 
