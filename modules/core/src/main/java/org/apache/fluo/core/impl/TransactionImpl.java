@@ -1140,11 +1140,13 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   class CommittedTestStep extends CommitStep {
+    @Override
     CompletableFuture<Boolean> getMainOp(CommitData cd) {
       cd.commitObserver.committed();
       return CompletableFuture.completedFuture(true);
     }
 
+    @Override
     CompletableFuture<Void> getFailureOp(CommitData cd) {
       throw new IllegalStateException("Failure not expected");
     }
