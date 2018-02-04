@@ -16,10 +16,12 @@
 package org.apache.fluo.core.async;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
+import com.google.common.base.Preconditions;
 
 public class SyncCommitObserver implements AsyncCommitObserver {
 
@@ -28,27 +30,32 @@ public class SyncCommitObserver implements AsyncCommitObserver {
   private volatile boolean aacked = false;
   private volatile Exception error = null;
   private volatile String commitFailMsg = "";
+  private AtomicBoolean anyMethodCalled= new AtomicBoolean(false);
 
   @Override
   public void committed() {
+    Preconditions.checkState(anyMethodCalled.compareAndSet(false,true),"One of the methods was already called");
     committed = Boolean.TRUE;
     cdl.countDown();
   }
 
   @Override
   public void failed(Throwable t) {
+    Preconditions.checkState(anyMethodCalled.compareAndSet(false,true),"One of the methods was already called");
     error = (Exception) t;
     cdl.countDown();
   }
 
   @Override
   public void alreadyAcknowledged() {
+    Preconditions.checkState(anyMethodCalled.compareAndSet(false,true),"One of the methods was already called");
     aacked = true;
     cdl.countDown();
   }
 
   @Override
   public void commitFailed(String msg) {
+    Preconditions.checkState(anyMethodCalled.compareAndSet(false,true),"One of the methods was already called");
     committed = false;
     commitFailMsg = msg;
     cdl.countDown();
