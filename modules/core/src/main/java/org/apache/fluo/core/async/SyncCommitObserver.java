@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
-import com.google.common.base.Preconditions;
 
 public class SyncCommitObserver implements AsyncCommitObserver {
 
