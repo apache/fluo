@@ -30,7 +30,7 @@ public class SyncCommitObserver implements AsyncCommitObserver {
   private volatile boolean aacked = false;
   private volatile Exception error = null;
   private volatile String commitFailMsg = "";
-  private static AtomicBoolean isMethodCalled = new AtomicBoolean(false);
+  private AtomicBoolean isMethodCalled = new AtomicBoolean(false);
   private static final String METHOD_CALLED_VALIDATION_CHECK_MESSAGE =
       "One of the methods committed,failed,alreadyAcknowledged,commitFailed"
           + " was already called";
