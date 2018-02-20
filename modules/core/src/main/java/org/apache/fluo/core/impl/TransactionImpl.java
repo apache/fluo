@@ -84,6 +84,8 @@ import org.apache.fluo.core.util.Flutation;
 import org.apache.fluo.core.util.Hex;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.fluo.core.util.UtilWaitThread;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.fluo.accumulo.util.ColumnConstants.PREFIX_MASK;
 import static org.apache.fluo.accumulo.util.ColumnConstants.RLOCK_PREFIX;
@@ -1164,7 +1166,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           .andThen(new CommittedTestStep());
 
       firstStep.compose(cd).exceptionally(throwable -> {
-        cd.commitObserver.failed(throwable);
+        setFailed(cd, throwable);
         return null;
       });
       sco.waitForCommit();
@@ -1331,6 +1333,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   @VisibleForTesting
   public boolean finishCommit(CommitData cd, Stamp commitStamp) {
+    cd.commitObserver = new SyncCommitObserver();
+
     getStats().setCommitTs(commitStamp.getTxTimestamp());
 
     CommitStep firstStep = new DeleteLocksStep();
@@ -1481,6 +1485,16 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     return cd;
   }
 
+  private void setFailed(CommitData cd, Throwable throwable) {
+    try {
+      cd.commitObserver.failed(throwable);
+    } catch (RuntimeException e) {
+      Logger log = LoggerFactory.getLogger(TransactionImpl.class);
+      log.error("Failed to set tx failure (startTs=" + startTs + ") cause ", e);
+      log.error("Failed to set tx failure (startTs=" + startTs + ") lost throwable ", throwable);
+    }
+  }
+
   private void beginCommitAsync(CommitData cd) {
 
     // Notification are written between GetCommitStampStep and CommitPrimaryStep for the following
@@ -1505,7 +1519,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         .andThen(new DeleteLocksStep()).andThen(new FinishCommitStep());
 
     firstStep.compose(cd).exceptionally(throwable -> {
-      cd.commitObserver.failed(throwable);
+      setFailed(cd, throwable);
       return null;
     });
   }
@@ -1517,7 +1531,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     firstStep.andThen(new LockOtherStep()).andThen(new CommittedTestStep());
 
     firstStep.compose(cd).exceptionally(throwable -> {
-      cd.commitObserver.failed(throwable);
+      setFailed(cd, throwable);
       return null;
     });
   }
