@@ -35,7 +35,8 @@ import org.apache.fluo.core.util.PortUtils;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.thrift.server.THsHaServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -46,8 +47,13 @@ import static org.junit.Assert.assertTrue;
 
 public class OracleIT extends ITBaseImpl {
 
+  private static final String THRIFT_SERVER_LOGGER_NAME =
+      "org.apache.fluo.core.shaded.thrift.server";
+
   @Rule
   public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
+
+  private Level curLevel;
 
   @Test
   public void testRestart() throws Exception {
@@ -96,16 +102,23 @@ public class OracleIT extends ITBaseImpl {
     }
   }
 
+  @Before
+  public void disableLogger() {
+    curLevel = Logger.getLogger(THRIFT_SERVER_LOGGER_NAME).getLevel();
+    Logger.getLogger(THRIFT_SERVER_LOGGER_NAME).setLevel(Level.FATAL);
+  }
+
+  @After
+  public void enableLogger() {
+    Logger.getLogger(THRIFT_SERVER_LOGGER_NAME).setLevel(curLevel);
+  }
+
   /**
    * Test that bogus input into the oracle server doesn't cause an OOM exception. This essentially
    * tests for THRIFT-602
    */
   @Test
   public void bogusDataTest() throws Exception {
-
-    // we are expecting an error at this point
-    Level curLevel = Logger.getLogger(THsHaServer.class).getLevel();
-    Logger.getLogger(THsHaServer.class).setLevel(Level.FATAL);
 
     Socket socket = new Socket();
     socket.connect(new InetSocketAddress(HostUtil.getHostName(), oserver.getPort()));
@@ -120,8 +133,6 @@ public class OracleIT extends ITBaseImpl {
     OracleClient client = env.getSharedResources().getOracleClient();
 
     assertEquals(2, client.getStamp().getTxTimestamp());
-
-    Logger.getLogger(THsHaServer.class).setLevel(curLevel);
   }
 
   @Test
