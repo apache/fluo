@@ -15,21 +15,37 @@
 
 package org.apache.fluo.core.util;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Iterables;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.QuoteMode;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -37,6 +53,16 @@ import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.FluoException;
 
 public class ScanUtil {
+  public static final String CSV_HEADER = "csv.header";
+  public static final String CSV_QUOTE_MODE = "csv.quoteMode";
+  public static final String CSV_QUOTE = "csv.quote";
+  public static final String CSV_ESCAPE = "csv.escape";
+  public static final String CSV_DELIMITER = "csv.delimiter";
+  public static final String FLUO_VALUE = "value";
+  public static final String FLUO_COLUMN_VISIBILITY = "visibility";
+  public static final String FLUO_COLUMN_QUALIFIER = "qualifier";
+  public static final String FLUO_COLUMN_FAMILY = "family";
+  public static final String FLUO_ROW = "row";
 
   public static Span getSpan(ScanOpts options) {
     Span span = new Span();
@@ -89,68 +115,158 @@ public class ScanUtil {
     return columns;
   }
 
-  public static void scanFluo(ScanOpts options, FluoConfiguration sConfig) {
+  public static void scanFluo(ScanOpts options, FluoConfiguration sConfig, PrintStream out)
+      throws IOException {
 
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
 
-        Span span = null;
-        Collection<Column> columns = null;
-        try {
-          span = getSpan(options);
-          columns = getColumns(options);
-        } catch (IllegalArgumentException e) {
-          System.err.println(e.getMessage());
-          System.exit(-1);
-        }
+        Span span = getSpan(options);
+        Collection<Column> columns = getColumns(options);
 
-        CellScanner cellScanner = s.scanner().over(span).fetch(columns).build();
-
-        StringBuilder sb = new StringBuilder();
-        for (RowColumnValue rcv : cellScanner) {
-          if (options.hexEncNonAscii) {
-            sb.setLength(0);
-            Hex.encNonAscii(sb, rcv.getRow());
-            sb.append(" ");
-            Hex.encNonAscii(sb, rcv.getColumn(), " ");
-            sb.append("\t");
-            Hex.encNonAscii(sb, rcv.getValue());
-            System.out.println(sb.toString());
-          } else {
-            sb.setLength(0);
-            sb.append(rcv.getsRow());
-            sb.append(" ");
-            sb.append(rcv.getColumn());
-            sb.append("\t");
-            sb.append(rcv.getsValue());
-            System.out.println(sb.toString());
-          }
-
-          if (System.out.checkError()) {
-            break;
-          }
+        // Retrieve "fluo.scan.*" from config properties.
+        SimpleConfiguration scanProperties = sConfig.getScanConfiguration();
+        if (options.exportAsJson) {
+          generateJson(options, scanProperties, span, columns, s, out);
+        } else { // TSV or CSV format
+          generateTsvCsv(options, scanProperties, span, columns, s, out);
         }
 
       } catch (FluoException e) {
-        System.err.println("Scan failed - " + e.getMessage());
-        System.exit(-1);
+        throw e;
       }
     }
   }
 
-  public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig) {
+  /**
+   * Generate TSV or CSV format as result of the scan.
+   * 
+   * @since 1.2
+   */
+  private static void generateTsvCsv(ScanOpts options, SimpleConfiguration scan, Span span,
+      Collection<Column> columns, final Snapshot snapshot, PrintStream out) throws IOException {
+    // Default TAB separator and NO quotes if possible.
+    CSVFormat csvFormat = CSVFormat.DEFAULT;
+    csvFormat = csvFormat.withDelimiter(CSVFormat.TDF.getDelimiter());
+    csvFormat = csvFormat.withQuoteMode(QuoteMode.MINIMAL);
+
+    // when "--csv" parameter is passed the "fluo.scan.csv" is analised
+    if (options.exportAsCsv) {
+      if (scan.containsKey(CSV_DELIMITER)
+          && StringUtils.isNotEmpty(scan.getString(CSV_DELIMITER))) {
+        csvFormat = csvFormat.withDelimiter(scan.getString(CSV_DELIMITER).charAt(0));
+      }
+
+      if (scan.containsKey(CSV_ESCAPE) && StringUtils.isNotEmpty(scan.getString(CSV_ESCAPE))) {
+        csvFormat = csvFormat.withEscape(scan.getString(CSV_ESCAPE).charAt(0));
+      }
+
+      if (scan.containsKey(CSV_QUOTE) && StringUtils.isNotEmpty(scan.getString(CSV_QUOTE))) {
+        csvFormat = csvFormat.withQuote(scan.getString(CSV_QUOTE).charAt(0));
+      }
+
+      // It can throw "java.lang.IllegalArgumentException" if the value not exists
+      // in "org.apache.commons.csv.QuoteMode"
+      if (scan.containsKey(CSV_QUOTE_MODE)
+          && StringUtils.isNotEmpty(scan.getString(CSV_QUOTE_MODE))) {
+        csvFormat = csvFormat.withQuoteMode(QuoteMode.valueOf(scan.getString(CSV_QUOTE_MODE)));
+      }
+
+      if (scan.containsKey(CSV_HEADER)
+          && BooleanUtils.toBooleanObject(scan.getString(CSV_HEADER))) {
+        csvFormat = csvFormat.withHeader(FLUO_ROW, FLUO_COLUMN_FAMILY, FLUO_COLUMN_QUALIFIER,
+            FLUO_COLUMN_VISIBILITY, FLUO_VALUE);
+      }
+    }
+
+    try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
+      CellScanner cellScanner = snapshot.scanner().over(span).fetch(columns).build();
+
+      List<Object> record = new LinkedList<>();
+      StringBuilder sb = new StringBuilder();
+      int lines2check = 0;
+      for (RowColumnValue rcv : cellScanner) {
+        record.clear();
+        if (options.hexEncNonAscii) {
+          sb.setLength(0);
+          Hex.encNonAscii(sb, rcv.getRow());
+          record.add(sb.toString());
+          sb.setLength(0);
+          Hex.encNonAscii(sb, rcv.getColumn().getFamily());
+          record.add(sb.toString());
+          sb.setLength(0);
+          Hex.encNonAscii(sb, rcv.getColumn().getQualifier());
+          record.add(sb.toString());
+          sb.setLength(0);
+          Hex.encNonAscii(sb, rcv.getColumn().getVisibility());
+          record.add(sb.toString());
+          sb.setLength(0);
+          Hex.encNonAscii(sb, rcv.getValue());
+          record.add(sb.toString());
+        } else {
+          record.add(rcv.getsRow());
+          record.add(rcv.getColumn().getFamily());
+          record.add(rcv.getColumn().getQualifier());
+          record.add(rcv.getColumn().getVisibility());
+          record.add(rcv.getsValue());
+        }
+
+        printer.printRecord(record);
+        lines2check++;
+        if (lines2check == 100) {
+          lines2check = 0;
+          if (out.checkError()) {
+            throw new IOException("Fail to write data to stream.");
+          }
+        }
+      }
+    }
+    out.flush();
+  }
+
+  /**
+   * Generate JSON format as result of the scan.
+   * 
+   * @since 1.2
+   */
+  private static void generateJson(ScanOpts options, SimpleConfiguration scan, Span span,
+      Collection<Column> columns, final Snapshot snapshot, PrintStream out) throws JsonIOException {
+    Gson gson = new GsonBuilder().serializeNulls().setDateFormat(DateFormat.LONG)
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).setVersion(1.0)
+        .create();
+
+    CellScanner cellScanner = snapshot.scanner().over(span).fetch(columns).build();
+
+    StringBuilder sb = new StringBuilder();
+    Map<String, String> json = new LinkedHashMap<>();
+    for (RowColumnValue rcv : cellScanner) {
+      sb.setLength(0);
+      Hex.encNonAscii(sb, rcv.getRow());
+      json.put(FLUO_ROW, sb.toString());
+      sb.setLength(0);
+      Hex.encNonAscii(sb, rcv.getColumn().getFamily());
+      json.put(FLUO_COLUMN_FAMILY, sb.toString());
+      Hex.encNonAscii(sb, rcv.getColumn().getQualifier());
+      json.put(FLUO_COLUMN_QUALIFIER, sb.toString());
+      sb.setLength(0);
+      Hex.encNonAscii(sb, rcv.getColumn().getVisibility());
+      json.put(FLUO_COLUMN_VISIBILITY, sb.toString());
+      sb.setLength(0);
+      Hex.encNonAscii(sb, rcv.getValue());
+      json.put(FLUO_VALUE, sb.toString());
+
+      gson.toJson(json, out);
+      out.append("\n");
+    }
+    out.flush();
+  }
+
+  public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig, PrintStream out) {
 
     Connector conn = AccumuloUtil.getConnector(sConfig);
 
-    Span span = null;
-    Collection<Column> columns = null;
-    try {
-      span = getSpan(options);
-      columns = getColumns(options);
-    } catch (IllegalArgumentException e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    }
+    Span span = getSpan(options);
+    Collection<Column> columns = getColumns(options);
 
     try {
       Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
@@ -165,11 +281,11 @@ public class ScanUtil {
       }
 
       for (String entry : Iterables.transform(scanner, FluoFormatter::toString)) {
-        System.out.println(entry);
+        out.println(entry);
       }
+      out.flush();
     } catch (Exception e) {
-      System.err.println("Scan failed - " + e.getMessage());
-      System.exit(-1);
+      throw new RuntimeException(e);
     }
   }
 
@@ -183,9 +299,12 @@ public class ScanUtil {
     public boolean help;
     public boolean hexEncNonAscii = true;
     public boolean scanAccumuloTable = false;
+    public boolean exportAsCsv = false;
+    public boolean exportAsJson = false;
 
     public ScanOpts(String startRow, String endRow, List<String> columns, String exactRow,
-        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable) {
+        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable,
+        boolean exportAsCsv, boolean exportAsJson) {
       this.startRow = startRow;
       this.endRow = endRow;
       this.columns = columns;
@@ -194,6 +313,8 @@ public class ScanUtil {
       this.help = help;
       this.hexEncNonAscii = hexEncNonAscii;
       this.scanAccumuloTable = scanAccumuloTable;
+      this.exportAsCsv = exportAsCsv;
+      this.exportAsJson = exportAsJson;
     }
 
     public String getStartRow() {
