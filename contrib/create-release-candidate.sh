@@ -133,6 +133,8 @@ Signing keys are available at https://www.apache.org/dist/fluo/KEYS
 
 Release notes (in progress) can be found at: $(green "https://fluo.apache.org/.../$ver")
 
+Release testing instructions: https://fluo.apache.org/release-process/#test-a-fluo-release
+
 Please vote one of:
 [ ] +1 - I have verified and accept...
 [ ] +0 - I have reservations, but not strong enough to vote against...
