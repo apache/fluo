@@ -131,7 +131,7 @@ All artifacts were built and staged with:
 Signing keys are available at https://www.apache.org/dist/fluo/KEYS
 (Expected fingerprint: $(green "$fingerprint"))
 
-Release notes (in progress) can be found at: $(green "https://fluo.apache.org/.../$ver")
+Release notes (in progress) can be found at: $(green "https://fluo.apache.org/release/fluo-$ver/")
 
 Release testing instructions: https://fluo.apache.org/release-process/#test-a-fluo-release
 
