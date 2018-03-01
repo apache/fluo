@@ -17,6 +17,8 @@
 
 cd "$(dirname "$0")/.." || exit 1
 scriptname=$(basename "$0")
+export projName=fluo
+export projNameLong="Apache Fluo"
 
 # check for gpg2
 hash gpg2 2>/dev/null && gpgCommand=gpg2 || gpgCommand=gpg
@@ -73,7 +75,7 @@ createEmail() {
 
   local branch; branch=$ver-rc$rc
   local commit; commit=$(gitCommit "$branch") || exit 1
-  local tag; tag=rel/fluo-$ver
+  local tag; tag=rel/$projName-$ver
   echo
   yellow  "IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!!"
   echo
@@ -83,7 +85,7 @@ createEmail() {
   echo
   echo    "    Remember, $(red DO NOT PUSH) the $(red "$tag") tag until after the vote"
   echo    "    passes and the tag is re-made with a gpg signature using:"
-  echo    "      $(red "git tag -f -m 'Apache Fluo $ver' -s $tag ${commit:0:7}")"
+  echo    "      $(red "git tag -f -m '$projNameLong $ver' -s $tag ${commit:0:7}")"
   echo
   yellow  "IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!!"
   echo
@@ -105,11 +107,11 @@ createEmail() {
 
   cat <<EOF
 $(yellow '============================================================')
-Subject: $(green [VOTE] Fluo "$branch")
+Subject: $(green [VOTE] "$projNameLong $branch")
 $(yellow '============================================================')
 Fluo Developers,
 
-Please consider the following candidate for Fluo $(green "$ver").
+Please consider the following candidate for $projNameLong $(green "$ver").
 
 Git Commit:
     $(green "$commit")
@@ -117,12 +119,12 @@ Branch:
     $(green "$branch")
 
 If this vote passes, a gpg-signed tag will be created using:
-    $(green "git tag -f -m 'Apache Fluo $ver' -s $tag") \\
+    $(green "git tag -f -m '$projNameLong $ver' -s $tag") \\
     $(green "$commit")
 
 Staging repo: $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo")
-Source (official release artifact): $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/fluo/$ver/fluo-${ver}-source-release.tar.gz")
-Binary: $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/fluo/$ver/fluo-${ver}-bin.tar.gz")
+Source (official release artifact): $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/$projName/$ver/$projName-${ver}-source-release.tar.gz")
+Binary: $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/$projName/$ver/$projName-${ver}-bin.tar.gz")
 (Append ".sha1", ".md5", or ".asc" to download the signature/hash for a given artifact.)
 
 All artifacts were built and staged with:
@@ -131,7 +133,7 @@ All artifacts were built and staged with:
 Signing keys are available at https://www.apache.org/dist/fluo/KEYS
 (Expected fingerprint: $(green "$fingerprint"))
 
-Release notes (in progress) can be found at: $(green "https://fluo.apache.org/release/fluo-$ver/")
+Release notes (in progress) can be found at: $(green "https://fluo.apache.org/release/$projName-$ver/")
 
 Release testing instructions: https://fluo.apache.org/release-process/#test-a-fluo-release
 
@@ -139,10 +141,12 @@ Please vote one of:
 [ ] +1 - I have verified and accept...
 [ ] +0 - I have reservations, but not strong enough to vote against...
 [ ] -1 - Because..., I do not accept...
-... these artifacts as the $(green "$ver") release of Apache Fluo.
+... these artifacts as the $(green "$ver") release of $projNameLong.
 
-This vote will remain open until at least $(green "$votedate") ($(green "$edtvotedate") / $(green "$pdtvotedate")).
-Voting can continue after this deadline until the release manager sends an email ending the vote.
+This vote will remain open until at least $(green "$votedate").
+($(green "$edtvotedate") / $(green "$pdtvotedate"))
+Voting can continue after this deadline until the release manager
+sends an email ending the vote.
 
 Thanks!
 
@@ -208,13 +212,13 @@ createReleaseCandidate() {
     red "You added '${extraReleaseArgs[*]}'"
   fi
   [[ ${#extraReleaseArgs[@]} -eq 0 ]] && [[ $gpgCommand != 'gpg' ]] && extraReleaseArgs=("-Dgpg.executable=$gpgCommand")
-  extraReleaseArgs="-DextraReleaseArguments='${extraReleaseArgs[*]}'"
+  local extraReleaseArgsFlat; extraReleaseArgsFlat="-DextraReleaseArguments='${extraReleaseArgs[*]}'"
 
   local ver
   ver=$(xmllint --shell pom.xml <<<'xpath /*[local-name()="project"]/*[local-name()="version"]/text()' | grep content= | cut -f2 -d=)
   ver=${ver%%-SNAPSHOT}
   echo "Building release candidate for version: $(green "$ver")"
-  local tag; tag=rel/fluo-$ver
+  local tag; tag=rel/$projName-$ver
 
   local cBranch; cBranch=$(currentBranch) || fail "$(red Failure)" to get current branch from git
   local rc; rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
@@ -230,14 +234,14 @@ createReleaseCandidate() {
   } || fail "Unable to create working branch $(red "$nBranch") from $(red "$cBranch")!"
 
   # create a release candidate from a branch
-  local oFile; oFile=$(mktemp --tmpdir "fluo-build-$rcBranch-XXXXXXXX.log")
+  local oFile; oFile=$(mktemp --tmpdir "$projName-build-$rcBranch-XXXXXXXX.log")
   {
     [[ -w $oFile ]] && runLog "$oFile" mvn clean release:clean
   } || cleanUpAndFail 'mvn clean release:clean' "$oFile" "$cBranch" "$nBranch"
-  runLog "$oFile" mvn -B release:prepare -DdevelopmentVersion="${nextVer}-SNAPSHOT" "${extraReleaseArgs}" || \
-    cleanUpAndFail "mvn -B release:prepare -DdevelopmentVersion=${nextVer}-SNAPSHOT ${extraReleaseArgs}" "$oFile" "$cBranch" "$nBranch"
-  runLog "$oFile" mvn release:perform "${extraReleaseArgs}" || \
-    cleanUpAndFail "mvn release:perform ${extraReleaseArgs}" "$oFile" "$cBranch" "$nBranch"
+  runLog "$oFile" mvn -B release:prepare -DdevelopmentVersion="${nextVer}-SNAPSHOT" "${extraReleaseArgsFlat}" || \
+    cleanUpAndFail "mvn -B release:prepare -DdevelopmentVersion=${nextVer}-SNAPSHOT ${extraReleaseArgsFlat}" "$oFile" "$cBranch" "$nBranch"
+  runLog "$oFile" mvn release:perform "${extraReleaseArgsFlat}" || \
+    cleanUpAndFail "mvn release:perform ${extraReleaseArgsFlat}" "$oFile" "$cBranch" "$nBranch"
 
   # switch back to original branch
   run git checkout "${cBranch}"
