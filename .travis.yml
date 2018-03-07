@@ -11,17 +11,22 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 language: java
-jdk:
-  - openjdk8
-script: mvn clean verify javadoc:jar -Daccumulo.version=1.8.1
 notifications:
   irc:
     channels:
       - "chat.freenode.net#fluo"
-    on_success: always
-    on_failure: always
     use_notice: true
+    on_success: change
+    on_failure: always
     skip_join: true
 cache:
   directories:
     - $HOME/.m2
+install: echo NOOP Skipping pre-fetch of Maven dependencies
+jdk:
+  - openjdk8
+env:
+  - ADDITIONAL_MAVEN_OPTS=
+  - ADDITIONAL_MAVEN_OPTS=-Daccumulo.version=1.8.1
+script:
+  - mvn clean verify javadoc:jar $ADDITIONAL_MAVEN_OPTS
