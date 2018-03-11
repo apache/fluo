@@ -151,23 +151,26 @@ public class ScanUtil {
     // when "--csv" parameter is passed the "fluo.scan.csv" is analised
     if (options.exportAsCsv) {
       if (StringUtils.isNotEmpty(options.csvDelimiter)) {
-        if (options.csvDelimiter.length() > 1)
+        if (options.csvDelimiter.length() > 1) {
           throw new IllegalArgumentException(
               "Invalid character for the \"--csv-delimiter\" parameter.");
+        }
         csvFormat = csvFormat.withDelimiter(options.csvDelimiter.charAt(0));
       }
 
       if (StringUtils.isNotEmpty(options.csvEscape)) {
-        if (options.csvEscape.length() > 1)
+        if (options.csvEscape.length() > 1) {
           throw new IllegalArgumentException(
               "Invalid character for the \"--csv-escape\" parameter.");
+        }
         csvFormat = csvFormat.withEscape(options.csvEscape.charAt(0));
       }
 
       if (StringUtils.isNotEmpty(options.csvQuote)) {
-        if (options.csvQuote.length() > 1)
+        if (options.csvQuote.length() > 1) {
           throw new IllegalArgumentException(
               "Invalid character for the \"--csv-quote\" parameter.");
+        }
         csvFormat = csvFormat.withQuote(options.csvQuote.charAt(0));
       }
 
