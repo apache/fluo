@@ -237,9 +237,6 @@ public class FluoConfiguration extends SimpleConfiguration {
   // Application config
   public static final String APP_PREFIX = FLUO_PREFIX + ".app";
 
-  // Scan config
-  public static final String SCAN_PREFIX = FLUO_PREFIX + ".scan";
-
   public FluoConfiguration() {
     super();
   }
@@ -936,18 +933,6 @@ public class FluoConfiguration extends SimpleConfiguration {
    */
   public SimpleConfiguration getAppConfiguration() {
     return subset(APP_PREFIX);
-  }
-
-  /**
-   * @return A subset of this configuration using the prefix {@value #SCAN_PREFIX}. Any change made
-   *         to subset will be reflected in this configuration, but with the prefix added. This
-   *         method is useful for setting application configuration before initialization. For
-   *         reading application configuration after initialization, see
-   *         {@link FluoClient#getAppConfiguration()} and {@link Context#getAppConfiguration()}
-   * @since 1.2
-   */
-  public SimpleConfiguration getScanConfiguration() {
-    return subset(SCAN_PREFIX);
   }
 
   /**

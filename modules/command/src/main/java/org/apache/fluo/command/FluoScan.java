@@ -16,12 +16,10 @@
 package org.apache.fluo.command;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
 import com.beust.jcommander.Parameter;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
@@ -30,13 +28,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class FluoScan {
-
-  public static final String PROPERTY_HEADER = "fluo.scan.csv.header";
-  public static final String PROPERTY_DELIMITER = "fluo.scan.csv.delimiter";
-  public static final String PROPERTY_ESCAPE = "fluo.scan.csv.quote";
-  public static final String PROPERTY_QUOTE = "fluo.scan.csv.escape";
-  public static final String PROPERTY_QUOTEMODE = "fluo.scan.csv.quoteMode";
-
 
   public static class ScanOptions extends CommonOpts {
 
@@ -70,24 +61,24 @@ public class FluoScan {
             + "properties to configure the CSV format.")
     public boolean exportAsCsv = false;
 
-    @Parameter(names = "--csv-header", help = true,
-        description = "Overwrites the key \"fluo.scan.csv.header\" from the Fluo application properties.")
+    @Parameter(names = "--csv-header", help = true, description = "Set header for \"true\".")
     public String csvHeader;
 
     @Parameter(names = "--csv-delimiter", help = true,
-        description = "Overwrites the key \"fluo.scan.csv.delimiter\" from the Fluo application properties.")
+        description = "Configure delimiter to a designeted character.")
     public String csvDelimiter;
 
     @Parameter(names = "--csv-escape", help = true,
-        description = "Overwrites the key \"fluo.scan.csv.escape\" from the Fluo application properties.")
+        description = "Configure escape to a designeted character.")
     public String csvEscape;
 
     @Parameter(names = "--csv-quote", help = true,
-        description = "Overwrites the key \"fluo.scan.csv.quote\" from the Fluo application properties.")
+        description = "Configure quote to a designeted character.")
     public String csvQuote;
 
     @Parameter(names = "--csv-quote-mode", help = true,
-        description = "Overwrites the key \"fluo.scan.csv.quoteMode\" from the Fluo application properties.")
+        description = "Configure quote mode to a designeted mode. The possible "
+                + "modes are: ALL, ALL_NON_NULL, MINIMAL, NONE and NON_NUMERIC")
     public String csvQuoteMode;
 
     @Parameter(names = "--json", help = true,
@@ -137,9 +128,27 @@ public class FluoScan {
       return columns;
     }
 
+    /**
+     * Check if the parameters informed can be used together.
+     * @since 1.2
+     */
+    private void checkScanOptions() {
+      if (this.exportAsCsv && this.exportAsJson) {
+        throw new IllegalArgumentException(
+            "Both \"--csv\" and \"--json\" can not be set together.");
+      }
+
+      if (!this.exportAsCsv && (StringUtils.isNotEmpty(this.csvDelimiter)
+          | StringUtils.isNotEmpty(this.csvEscape) | StringUtils.isNotEmpty(this.csvHeader)
+          | StringUtils.isNotEmpty(this.csvQuote) | StringUtils.isNotEmpty(this.csvQuoteMode))) {
+        throw new IllegalArgumentException("No \"--csv\" detected");
+      }
+    }
+
     public ScanUtil.ScanOpts getScanOpts() {
       return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable, exportAsCsv, exportAsJson);
+          hexEncNonAscii, scanAccumuloTable, exportAsCsv, csvDelimiter, csvEscape, csvHeader,
+          csvQuote, csvQuoteMode, exportAsJson);
     }
 
     public static ScanOptions parse(String[] args) {
@@ -155,16 +164,16 @@ public class FluoScan {
     Logger.getLogger("org.apache.fluo").setLevel(Level.ERROR);
 
     ScanOptions options = ScanOptions.parse(args);
+    options.checkScanOptions();
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(options.getApplicationName());
-    // options.overrideFluoConfig(config);
+    options.overrideFluoConfig(config);
     CommandUtil.verifyAppRunning(config);
 
     try {
-      config = FluoAdminImpl.mergeZookeeperConfig(config);
       options.overrideFluoConfig(config);
-      overwriteFluoConfig(options, config);
       if (options.scanAccumuloTable) {
+        config = FluoAdminImpl.mergeZookeeperConfig(config);
         ScanUtil.scanAccumulo(options.getScanOpts(), config, System.out);
       } else {
         ScanUtil.scanFluo(options.getScanOpts(), config, System.out);
@@ -175,24 +184,4 @@ public class FluoScan {
     }
   }
 
-  /**
-   * @since 1.2 
-   */
-  private static void overwriteFluoConfig(ScanOptions options, FluoConfiguration config) {
-    if (StringUtils.isNotEmpty(options.getCsvHeader())) {
-      config.setProperty(PROPERTY_HEADER, BooleanUtils.toBoolean(options.getCsvHeader()));
-    }
-    if (StringUtils.isNotEmpty(options.getCsvDelimiter())) {
-      config.setProperty(PROPERTY_DELIMITER, options.getCsvDelimiter());
-    }
-    if (StringUtils.isNotEmpty(options.getCsvEscape())) {
-      config.setProperty(PROPERTY_ESCAPE, options.getCsvEscape());
-    }
-    if (StringUtils.isNotEmpty(options.getCsvQuote())) {
-      config.setProperty(PROPERTY_QUOTE, options.getCsvQuote());
-    }
-    if (StringUtils.isNotEmpty(options.getCsvQuoteMode())) {
-      config.setProperty(PROPERTY_QUOTEMODE, options.getCsvQuoteMode());
-    }
-  }
 }

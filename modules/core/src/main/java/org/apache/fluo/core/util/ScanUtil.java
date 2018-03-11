@@ -38,6 +38,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.api.client.FluoClient;
@@ -45,7 +46,6 @@ import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
@@ -124,12 +124,10 @@ public class ScanUtil {
         Span span = getSpan(options);
         Collection<Column> columns = getColumns(options);
 
-        // Retrieve "fluo.scan.*" from config properties.
-        SimpleConfiguration scanProperties = sConfig.getScanConfiguration();
         if (options.exportAsJson) {
-          generateJson(options, scanProperties, span, columns, s, out);
+          generateJson(options, span, columns, s, out);
         } else { // TSV or CSV format
-          generateTsvCsv(options, scanProperties, span, columns, s, out);
+          generateTsvCsv(options, span, columns, s, out);
         }
 
       } catch (FluoException e) {
@@ -143,40 +141,54 @@ public class ScanUtil {
    * 
    * @since 1.2
    */
-  private static void generateTsvCsv(ScanOpts options, SimpleConfiguration scan, Span span,
-      Collection<Column> columns, final Snapshot snapshot, PrintStream out) throws IOException {
-    // Default TAB separator and NO quotes if possible.
+  private static void generateTsvCsv(ScanOpts options, Span span, Collection<Column> columns,
+      final Snapshot snapshot, PrintStream out) throws IOException {
+    // CSV Formater
     CSVFormat csvFormat = CSVFormat.DEFAULT;
-    csvFormat = csvFormat.withDelimiter(CSVFormat.TDF.getDelimiter());
-    csvFormat = csvFormat.withQuoteMode(QuoteMode.MINIMAL);
+    csvFormat = csvFormat.withQuoteMode(QuoteMode.ALL);
+    csvFormat = csvFormat.withRecordSeparator("\n");
 
     // when "--csv" parameter is passed the "fluo.scan.csv" is analised
     if (options.exportAsCsv) {
-      if (scan.containsKey(CSV_DELIMITER)
-          && StringUtils.isNotEmpty(scan.getString(CSV_DELIMITER))) {
-        csvFormat = csvFormat.withDelimiter(scan.getString(CSV_DELIMITER).charAt(0));
+      if (StringUtils.isNotEmpty(options.csvDelimiter)) {
+        if (options.csvDelimiter.length() > 1) {
+          throw new IllegalArgumentException(
+              "Invalid character for the \"--csv-delimiter\" parameter.");
+        }
+        csvFormat = csvFormat.withDelimiter(options.csvDelimiter.charAt(0));
       }
 
-      if (scan.containsKey(CSV_ESCAPE) && StringUtils.isNotEmpty(scan.getString(CSV_ESCAPE))) {
-        csvFormat = csvFormat.withEscape(scan.getString(CSV_ESCAPE).charAt(0));
+      if (StringUtils.isNotEmpty(options.csvEscape)) {
+        if (options.csvEscape.length() > 1) {
+          throw new IllegalArgumentException(
+              "Invalid character for the \"--csv-escape\" parameter.");
+        }
+        csvFormat = csvFormat.withEscape(options.csvEscape.charAt(0));
       }
 
-      if (scan.containsKey(CSV_QUOTE) && StringUtils.isNotEmpty(scan.getString(CSV_QUOTE))) {
-        csvFormat = csvFormat.withQuote(scan.getString(CSV_QUOTE).charAt(0));
+      if (StringUtils.isNotEmpty(options.csvQuote)) {
+        if (options.csvQuote.length() > 1) {
+          throw new IllegalArgumentException(
+              "Invalid character for the \"--csv-quote\" parameter.");
+        }
+        csvFormat = csvFormat.withQuote(options.csvQuote.charAt(0));
       }
 
       // It can throw "java.lang.IllegalArgumentException" if the value not exists
       // in "org.apache.commons.csv.QuoteMode"
-      if (scan.containsKey(CSV_QUOTE_MODE)
-          && StringUtils.isNotEmpty(scan.getString(CSV_QUOTE_MODE))) {
-        csvFormat = csvFormat.withQuoteMode(QuoteMode.valueOf(scan.getString(CSV_QUOTE_MODE)));
+      if (StringUtils.isNotEmpty(options.csvQuoteMode)) {
+        csvFormat = csvFormat.withQuoteMode(QuoteMode.valueOf(options.csvQuoteMode));
       }
 
-      if (scan.containsKey(CSV_HEADER)
-          && BooleanUtils.toBooleanObject(scan.getString(CSV_HEADER))) {
+      if (BooleanUtils.toBooleanObject(
+          ObjectUtils.defaultIfNull(options.csvHeader, Boolean.FALSE.toString()))) {
         csvFormat = csvFormat.withHeader(FLUO_ROW, FLUO_COLUMN_FAMILY, FLUO_COLUMN_QUALIFIER,
             FLUO_COLUMN_VISIBILITY, FLUO_VALUE);
       }
+    } else {
+      // Default TAB separator and NO quotes if possible.
+      csvFormat = csvFormat.withDelimiter(CSVFormat.TDF.getDelimiter());
+      csvFormat = csvFormat.withQuoteMode(QuoteMode.MINIMAL);
     }
 
     try (CSVPrinter printer = new CSVPrinter(out, csvFormat)) {
@@ -229,8 +241,8 @@ public class ScanUtil {
    * 
    * @since 1.2
    */
-  private static void generateJson(ScanOpts options, SimpleConfiguration scan, Span span,
-      Collection<Column> columns, final Snapshot snapshot, PrintStream out) throws JsonIOException {
+  private static void generateJson(ScanOpts options, Span span, Collection<Column> columns,
+      final Snapshot snapshot, PrintStream out) throws JsonIOException {
     Gson gson = new GsonBuilder().serializeNulls().setDateFormat(DateFormat.LONG)
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).setVersion(1.0)
         .create();
@@ -301,10 +313,16 @@ public class ScanUtil {
     public boolean scanAccumuloTable = false;
     public boolean exportAsCsv = false;
     public boolean exportAsJson = false;
+    public final String csvDelimiter;
+    public final String csvEscape;
+    public final String csvHeader;
+    public final String csvQuote;
+    public final String csvQuoteMode;
 
     public ScanOpts(String startRow, String endRow, List<String> columns, String exactRow,
         String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable,
-        boolean exportAsCsv, boolean exportAsJson) {
+        boolean exportAsCsv, String csvDelimiter, String csvEscape, String csvHeader,
+        String csvQuote, String csvQuoteMode, boolean exportAsJson) {
       this.startRow = startRow;
       this.endRow = endRow;
       this.columns = columns;
@@ -314,6 +332,11 @@ public class ScanUtil {
       this.hexEncNonAscii = hexEncNonAscii;
       this.scanAccumuloTable = scanAccumuloTable;
       this.exportAsCsv = exportAsCsv;
+      this.csvDelimiter = csvDelimiter;
+      this.csvEscape = csvEscape;
+      this.csvHeader = csvHeader;
+      this.csvQuote = csvQuote;
+      this.csvQuoteMode = csvQuoteMode;
       this.exportAsJson = exportAsJson;
     }
 

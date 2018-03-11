@@ -210,6 +210,11 @@ public abstract class AppRunner {
     public boolean scanAccumuloTable = false;
 
     public boolean exportAsCsv = false;
+    public String csvHeader;
+    public String csvDelimiter;
+    public String csvEscape;
+    public String csvQuote;
+    public String csvQuoteMode;
     public boolean exportAsJson = false;
 
     public String getStartRow() {
@@ -237,7 +242,8 @@ public abstract class AppRunner {
 
     public ScanUtil.ScanOpts getScanOpts() {
       return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable, exportAsCsv, exportAsJson);
+          hexEncNonAscii, scanAccumuloTable, exportAsCsv, csvDelimiter, csvEscape, csvHeader,
+          csvQuote, csvQuoteMode, exportAsJson);
     }
   }
 }
