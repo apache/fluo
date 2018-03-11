@@ -77,7 +77,8 @@ public class FluoScan {
     public String csvQuote;
 
     @Parameter(names = "--csv-quote-mode", help = true,
-        description = "Configure quote mode to a designeted mode. The possible modes are: ALL, ALL_NON_NULL, MINIMAL, NONE and NON_NUMERIC")
+        description = "Configure quote mode to a designeted mode. The possible "
+                + "modes are: ALL, ALL_NON_NULL, MINIMAL, NONE and NON_NUMERIC")
     public String csvQuoteMode;
 
     @Parameter(names = "--json", help = true,
@@ -126,12 +127,12 @@ public class FluoScan {
       }
       return columns;
     }
-    
+
     /**
      * Check if the parameters informed can be used together.
      * @since 1.2
      */
-    private void checkScanOptions(){
+    private void checkScanOptions() {
       if (this.exportAsCsv && this.exportAsJson) {
         throw new IllegalArgumentException(
             "Both \"--csv\" and \"--json\" can not be set together.");
