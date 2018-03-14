@@ -44,6 +44,6 @@ for news and general information.
 [ll]: https://github.com/apache/fluo/blob/master/LICENSE
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/
-[ji]: https://javadoc-emblem.rhcloud.com/doc/org.apache.fluo/fluo-api/badge.svg
+[ji]: https://www.javadoc.io/badge/org.apache.fluo/fluo-api.svg
 [jl]: http://www.javadoc.io/doc/org.apache.fluo/fluo-api
 [logo]: contrib/fluo-logo.png
