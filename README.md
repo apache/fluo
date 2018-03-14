@@ -22,9 +22,8 @@ limitations under the License.
 [Apache Fluo][fluo] is a distributed processing system that lets users make incremental updates to large
 data sets. With Apache Fluo, users can set up workflows that execute cross node transactions when data
 changes. These workflows enable users to continuously join new data into large existing data sets without
-reprocessing all data. Apache Fluo is an open source implementation of [Percolator][Percolator] (which
-populates Google's search index) that is built on [Apache Accumulo]. Check out the
-[Fluo project website][fluo] for news and general information.
+reprocessing all data. Apache Fluo is built on [Apache Accumulo]. Check out the [Fluo project website][fluo]
+for news and general information.
 
 ## Getting Started
 
