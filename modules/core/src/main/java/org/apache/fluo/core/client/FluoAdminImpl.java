@@ -396,10 +396,11 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   private String copyJarsToDfs(String jars, String destDir) {
-    if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_KERBEROS)) {
+
+    if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_KERBEROS, false)) {
       this.loginWithKerberos(
-          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_REALM),
-          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_KEYTAB));
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_REALM, ""),
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_KEYTAB, ""));
     }
 
 
