@@ -48,22 +48,18 @@ public class FluoConfiguration extends SimpleConfiguration {
 
   // Client properties
   private static final String CLIENT_PREFIX = FLUO_PREFIX + ".client";
-
   /**
-   * @since 1.2.0
+   * @since 1.3.0
    */
-  public static final String CLIENT_KERBEROS = CLIENT_PREFIX + ".kerberos";
-
+  public static final String CLIENT_HDFS_KERBEROS = CLIENT_PREFIX + ".hdfs.kerberos";
   /**
-   * @since 1.2.0
+   * @since 1.3.0
    */
-  public static final String CLIENT_KERBEROS_REALM = CLIENT_PREFIX + ".kerberos.realm";
-
+  public static final String CLIENT_HDFS_KERBEROS_REALM = CLIENT_PREFIX + ".hdfs.kerberos.realm";
   /**
-   * @since 1.2.0
+   * @since 1.3.0
    */
-  public static final String CLIENT_KERBEROS_KEYTAB = CLIENT_PREFIX + ".kerberos.keytab";
-
+  public static final String CLIENT_HDFS_KERBEROS_KEYTAB = CLIENT_PREFIX + ".hdfs.kerberos.keytab";
   /**
    * @deprecated since 1.2.0 replaced by fluo.connection.application.name
    */

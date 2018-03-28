@@ -82,7 +82,7 @@ public class FluoAdminImpl implements FluoAdmin {
    * 
    * @param realm Realm to be used in authentication.
    * @param keytab Keytab path.
-   * @since 1.2.0
+   * @since 1.3.0
    */
   public void loginWithKerberos(final String realm, final String keytab) {
 
@@ -397,10 +397,10 @@ public class FluoAdminImpl implements FluoAdmin {
 
   private String copyJarsToDfs(String jars, String destDir) {
 
-    if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_KERBEROS, false)) {
+    if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_HDFS_KERBEROS, false)) {
       this.loginWithKerberos(
-          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_REALM, ""),
-          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_KERBEROS_KEYTAB, ""));
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_REALM, ""),
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_KEYTAB, ""));
     }
 
 
