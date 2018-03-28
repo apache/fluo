@@ -84,7 +84,7 @@ public class FluoAdminImpl implements FluoAdmin {
    * @param keytab Keytab path.
    * @since 1.3.0
    */
-  public void loginWithKerberos(final String realm, final String keytab) {
+  public void hdfsLoginWithKerberos(final String realm, final String keytab) {
 
     try {
       Configuration conf = new Configuration();
@@ -398,7 +398,7 @@ public class FluoAdminImpl implements FluoAdmin {
   private String copyJarsToDfs(String jars, String destDir) {
 
     if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_HDFS_KERBEROS, false)) {
-      this.loginWithKerberos(
+      this.hdfsLoginWithKerberos(
           config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_REALM, ""),
           config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_KEYTAB, ""));
     }
