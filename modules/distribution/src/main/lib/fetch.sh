@@ -62,8 +62,6 @@ extra)
   download commons-collections:commons-collections:jar:3.2.1
   download commons-configuration:commons-configuration:jar:1.10
   download commons-io:commons-io:jar:2.4
-  download org.apache.commons:commons-csv:jar:1.5
-  download org.apache.commons:commons-lang3:jar:3.7
   download io.dropwizard.metrics:metrics-core:jar:3.1.1
   download io.dropwizard.metrics:metrics-graphite:jar:3.1.1
   download javax.inject:javax.inject:jar:1
