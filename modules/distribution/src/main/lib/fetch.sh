@@ -17,7 +17,7 @@ lib_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 maven_prefix=https://repo1.maven.org/maven2
 
 function download {
-  IFS=':' read -ra DEP <<< "$1" 
+  IFS=':' read -ra DEP <<< "$1"
   dir=$lib_dir/
   if [ -n "$2" ]; then
     dir=$lib_dir/$2
@@ -35,7 +35,7 @@ function download {
 
   if [ -f $dir/$fn ]; then
     echo "SUCCESS: Dependency exists - $dir/$fn"
-  else 
+  else
     wget -q $download_url -P $dir
     if [ $? == 0 ]; then
       echo "SUCCESS: Dependency downloaded from $download_url"
@@ -56,7 +56,7 @@ extra)
   echo "Fetching extra Fluo dependencies"
   download aopalliance:aopalliance:jar:1.0
   download com.beust:jcommander:jar:1.32
-  download com.google.code.gson:gson:jar:2.2.4
+  download com.google.code.gson:gson:jar:2.8.0
   download com.google.guava:guava:jar:13.0.1
   download com.google.inject:guice:jar:4.0
   download commons-collections:commons-collections:jar:3.2.1
@@ -117,4 +117,3 @@ extra)
   echo -e "However, you can override them using the command below:\n"
   echo "./fetch.sh ahz -Daccumulo.version=1.7.2 -Dhadoop.version=2.7.2 -Dzookeeper.version=3.4.8"
 esac
-

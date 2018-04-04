@@ -15,12 +15,17 @@
 
 package org.apache.fluo.core.util;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
-import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.security.Authorizations;
@@ -34,9 +39,19 @@ import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
-import org.apache.fluo.api.exceptions.FluoException;
+
+import com.google.common.collect.Iterables;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 
 public class ScanUtil {
+  public static final String FLUO_VALUE = "value";
+  public static final String FLUO_COLUMN_VISIBILITY = "visibility";
+  public static final String FLUO_COLUMN_QUALIFIER = "qualifier";
+  public static final String FLUO_COLUMN_FAMILY = "family";
+  public static final String FLUO_ROW = "row";
 
   public static Span getSpan(ScanOpts options) {
     Span span = new Span();
@@ -89,68 +104,83 @@ public class ScanUtil {
     return columns;
   }
 
-  public static void scanFluo(ScanOpts options, FluoConfiguration sConfig) {
+
+  private static Function<Bytes, String> getEncoder(ScanOpts options) {
+    if (options.hexEncNonAscii) {
+      return Hex::encNonAscii;
+    } else {
+      return Bytes::toString;
+    }
+  }
+
+  public static void scanFluo(ScanOpts options, FluoConfiguration sConfig, PrintStream out)
+      throws IOException {
 
     try (FluoClient client = FluoFactory.newClient(sConfig)) {
       try (Snapshot s = client.newSnapshot()) {
 
-        Span span = null;
-        Collection<Column> columns = null;
-        try {
-          span = getSpan(options);
-          columns = getColumns(options);
-        } catch (IllegalArgumentException e) {
-          System.err.println(e.getMessage());
-          System.exit(-1);
-        }
-
+        Span span = getSpan(options);
+        Collection<Column> columns = getColumns(options);
         CellScanner cellScanner = s.scanner().over(span).fetch(columns).build();
+        Function<Bytes, String> encoder = getEncoder(options);
 
-        StringBuilder sb = new StringBuilder();
-        for (RowColumnValue rcv : cellScanner) {
-          if (options.hexEncNonAscii) {
-            sb.setLength(0);
-            Hex.encNonAscii(sb, rcv.getRow());
-            sb.append(" ");
-            Hex.encNonAscii(sb, rcv.getColumn(), " ");
-            sb.append("\t");
-            Hex.encNonAscii(sb, rcv.getValue());
-            System.out.println(sb.toString());
-          } else {
-            sb.setLength(0);
-            sb.append(rcv.getsRow());
-            sb.append(" ");
-            sb.append(rcv.getColumn());
-            sb.append("\t");
-            sb.append(rcv.getsValue());
-            System.out.println(sb.toString());
-          }
-
-          if (System.out.checkError()) {
-            break;
+        if (options.exportAsJson) {
+          generateJson(cellScanner, encoder, out);
+        } else {
+          for (RowColumnValue rcv : cellScanner) {
+            out.print(encoder.apply(rcv.getRow()));
+            out.print(' ');
+            out.print(encoder.apply(rcv.getColumn().getFamily()));
+            out.print(' ');
+            out.print(encoder.apply(rcv.getColumn().getQualifier()));
+            out.print(' ');
+            out.print(encoder.apply(rcv.getColumn().getVisibility()));
+            out.print("\t");
+            out.print(encoder.apply(rcv.getValue()));
+            out.println();
+            if (out.checkError()) {
+              break;
+            }
           }
         }
-
-      } catch (FluoException e) {
-        System.err.println("Scan failed - " + e.getMessage());
-        System.exit(-1);
       }
     }
   }
 
-  public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig) {
+  /**
+   * Generate JSON format as result of the scan.
+   *
+   * @since 1.2
+   */
+  private static void generateJson(CellScanner cellScanner, Function<Bytes, String> encoder,
+      PrintStream out) throws JsonIOException {
+    Gson gson = new GsonBuilder().serializeNulls().setDateFormat(DateFormat.LONG)
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).setVersion(1.0)
+        .create();
+
+    Map<String, String> json = new LinkedHashMap<>();
+    for (RowColumnValue rcv : cellScanner) {
+      json.put(FLUO_ROW, encoder.apply(rcv.getRow()));
+      json.put(FLUO_COLUMN_FAMILY, encoder.apply(rcv.getColumn().getFamily()));
+      json.put(FLUO_COLUMN_QUALIFIER, encoder.apply(rcv.getColumn().getQualifier()));
+      json.put(FLUO_COLUMN_VISIBILITY, encoder.apply(rcv.getColumn().getVisibility()));
+      json.put(FLUO_VALUE, encoder.apply(rcv.getValue()));
+      gson.toJson(json, out);
+      out.append("\n");
+
+      if (out.checkError()) {
+        break;
+      }
+    }
+    out.flush();
+  }
+
+  public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig, PrintStream out) {
 
     Connector conn = AccumuloUtil.getConnector(sConfig);
 
-    Span span = null;
-    Collection<Column> columns = null;
-    try {
-      span = getSpan(options);
-      columns = getColumns(options);
-    } catch (IllegalArgumentException e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    }
+    Span span = getSpan(options);
+    Collection<Column> columns = getColumns(options);
 
     try {
       Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
@@ -165,11 +195,11 @@ public class ScanUtil {
       }
 
       for (String entry : Iterables.transform(scanner, FluoFormatter::toString)) {
-        System.out.println(entry);
+        out.println(entry);
       }
+      out.flush();
     } catch (Exception e) {
-      System.err.println("Scan failed - " + e.getMessage());
-      System.exit(-1);
+      throw new RuntimeException(e);
     }
   }
 
@@ -183,9 +213,11 @@ public class ScanUtil {
     public boolean help;
     public boolean hexEncNonAscii = true;
     public boolean scanAccumuloTable = false;
+    public boolean exportAsJson = false;
 
     public ScanOpts(String startRow, String endRow, List<String> columns, String exactRow,
-        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable) {
+        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable,
+        boolean exportAsJson) {
       this.startRow = startRow;
       this.endRow = endRow;
       this.columns = columns;
@@ -194,6 +226,7 @@ public class ScanUtil {
       this.help = help;
       this.hexEncNonAscii = hexEncNonAscii;
       this.scanAccumuloTable = scanAccumuloTable;
+      this.exportAsJson = exportAsJson;
     }
 
     public String getStartRow() {
