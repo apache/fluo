@@ -15,6 +15,7 @@
 
 package org.apache.fluo.cluster.runner;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,10 +73,15 @@ public abstract class AppRunner {
       System.exit(0);
     }
 
-    if (options.scanAccumuloTable) {
-      ScanUtil.scanAccumulo(options.getScanOpts(), config);
-    } else {
-      ScanUtil.scanFluo(options.getScanOpts(), config);
+    try {
+      if (options.scanAccumuloTable) {
+        ScanUtil.scanAccumulo(options.getScanOpts(), config, System.out);
+      } else {
+        ScanUtil.scanFluo(options.getScanOpts(), config, System.out);
+      }
+    } catch (IOException e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
     }
   }
 
@@ -203,6 +209,14 @@ public abstract class AppRunner {
             + "internal schema, making it easier to comprehend.")
     public boolean scanAccumuloTable = false;
 
+    public boolean exportAsCsv = false;
+    public String csvHeader;
+    public String csvDelimiter;
+    public String csvEscape;
+    public String csvQuote;
+    public String csvQuoteMode;
+    public boolean exportAsJson = false;
+
     public String getStartRow() {
       return startRow;
     }
@@ -228,7 +242,8 @@ public abstract class AppRunner {
 
     public ScanUtil.ScanOpts getScanOpts() {
       return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable);
+          hexEncNonAscii, scanAccumuloTable, exportAsCsv, csvDelimiter, csvEscape, csvHeader,
+          csvQuote, csvQuoteMode, exportAsJson);
     }
   }
 }
