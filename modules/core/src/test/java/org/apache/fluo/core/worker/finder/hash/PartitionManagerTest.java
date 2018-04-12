@@ -50,7 +50,7 @@ public class PartitionManagerTest {
 
           Collection<Bytes> rows = IntStream.iterate(0, i -> i + 1000).limit(numSplits)
               .mapToObj(i -> String.format("r%06d", i)).map(Bytes::of).collect(toList());
-          Collection<TableRange> tablets = TableRange.toTabletRanges(rows);
+          Collection<TableRange> tablets = TableRange.fromBytes(rows);
 
           Set<String> idCombos = new HashSet<>();
           Map<Integer, RangeSet> groupTablets = new HashMap<>();

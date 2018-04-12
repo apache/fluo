@@ -69,8 +69,7 @@ public class TableRangeTest {
     Bytes sp2 = Bytes.of("m1");
     Bytes sp3 = Bytes.of("r1");
 
-    Collection<TableRange> trc1 =
-        new HashSet<>(TableRange.toTabletRanges(Arrays.asList(sp2, sp3, sp1)));
+    Collection<TableRange> trc1 = new HashSet<>(TableRange.fromBytes(Arrays.asList(sp2, sp3, sp1)));
 
     Assert.assertEquals(4, trc1.size());
     Assert.assertTrue(trc1.contains(new TableRange(null, sp1)));
@@ -78,7 +77,7 @@ public class TableRangeTest {
     Assert.assertTrue(trc1.contains(new TableRange(sp2, sp3)));
     Assert.assertTrue(trc1.contains(new TableRange(sp3, null)));
 
-    Collection<TableRange> trc2 = new HashSet<>(TableRange.toTabletRanges(Collections.emptyList()));
+    Collection<TableRange> trc2 = new HashSet<>(TableRange.fromBytes(Collections.emptyList()));
     Assert.assertEquals(1, trc2.size());
     Assert.assertTrue(trc2.contains(new TableRange(null, null)));
   }

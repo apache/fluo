@@ -199,7 +199,7 @@ public class PartitionManager {
       List<Bytes> zkSplits = new ArrayList<>();
       SerializedSplits.deserialize(zkSplits::add, zkSplitData);
 
-      Collection<TableRange> tableRanges = TableRange.toTabletRanges(zkSplits);
+      Collection<TableRange> tableRanges = TableRange.fromBytes(zkSplits);
       PartitionInfo newPI = getGroupInfo(me, children, tableRanges, groupSize);
 
       setPartitionInfo(newPI);

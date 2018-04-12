@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -20,10 +20,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.accumulo.core.data.Range;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.core.util.ByteUtil;
+import org.apache.fluo.core.util.Hex;
 import org.apache.hadoop.io.Text;
 
 import static java.util.stream.Collectors.toList;
@@ -69,12 +71,14 @@ public class TableRange implements Comparable<TableRange> {
 
   @Override
   public String toString() {
-    return getPrevEndRow() + " " + getEndRow();
+    String per = prevEndRow == null ? "-INF" : Hex.encNonAscii(prevEndRow);
+    String er = endRow == null ? "+INF" : Hex.encNonAscii(endRow);
+
+    return "(" + per + " " + er + "]";
   }
 
-
-  public static Collection<TableRange> toTabletRanges(Collection<Bytes> rows) {
-    List<Bytes> sortedRows = rows.stream().sorted().collect(toList());
+  private static List<TableRange> fromStream(Stream<Bytes> stream) {
+    List<Bytes> sortedRows = stream.sorted().collect(toList());
     List<TableRange> tablets = new ArrayList<>(sortedRows.size() + 1);
     for (int i = 0; i < sortedRows.size(); i++) {
       tablets.add(new TableRange(i == 0 ? null : sortedRows.get(i - 1), sortedRows.get(i)));
@@ -83,9 +87,16 @@ public class TableRange implements Comparable<TableRange> {
     tablets.add(new TableRange(
         sortedRows.size() == 0 ? null : sortedRows.get(sortedRows.size() - 1), null));
     return tablets;
+
   }
 
+  public static List<TableRange> fromBytes(Collection<Bytes> rows) {
+    return fromStream(rows.stream());
+  }
 
+  public static List<TableRange> fromTexts(Collection<Text> rows) {
+    return fromStream(rows.stream().map(ByteUtil::toBytes));
+  }
 
   public Range getRange() {
     Text tper = Optional.ofNullable(prevEndRow).map(ByteUtil::toText).orElse(null);
