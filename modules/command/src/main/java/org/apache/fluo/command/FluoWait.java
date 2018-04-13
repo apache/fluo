@@ -31,11 +31,13 @@ import org.apache.fluo.core.worker.finder.hash.TableRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 public class FluoWait {
 
   private static final Logger log = LoggerFactory.getLogger(FluoWait.class);
   private static final long MIN_SLEEP_MS = 250;
-  private static final long MAX_SLEEP_MS = 300 * 1000;
+  private static final long MAX_SLEEP_MS = MINUTES.toMillis(5);
 
   private static List<TableRange> getRanges(Environment env)
       throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
@@ -84,6 +86,7 @@ public class FluoWait {
   private static void waitUntilFinished(FluoConfiguration config) {
     try (Environment env = new Environment(config)) {
       List<TableRange> ranges = getRanges(env);
+
       outer: while (true) {
         long ts1 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
         for (TableRange range : ranges) {
@@ -95,7 +98,8 @@ public class FluoWait {
         }
         long ts2 = env.getSharedResources().getOracleClient().getStamp().getTxTimestamp();
 
-        if (ts1 == (ts2 - 1)) {
+        // Check to ensure the Oracle issued no timestamps during the scan for notifications.
+        if (ts2 - ts1 == 1) {
           break;
         }
       }
