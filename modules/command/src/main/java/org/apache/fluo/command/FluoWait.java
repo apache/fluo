@@ -63,6 +63,11 @@ public class FluoWait {
     }
   }
 
+  /**
+   * Wait until a range has no notifications.
+   *
+   * @return true if notifications were ever seen while waiting
+   */
   private static boolean waitTillNoNotifications(Environment env, TableRange range)
       throws TableNotFoundException {
     boolean sawNotifications = false;
@@ -93,6 +98,8 @@ public class FluoWait {
           boolean sawNotifications = waitTillNoNotifications(env, range);
           if (sawNotifications) {
             ranges = getRanges(env);
+            // This range had notifications. Processing those notifications may have created
+            // notifications in previously scanned ranges, so start over.
             continue outer;
           }
         }
