@@ -88,6 +88,10 @@ public class FluoWait {
     return sawNotifications;
   }
 
+  /**
+   * Wait until a scan of the table completes without seeing notifications AND without the Oracle
+   * issuing any timestamps during the scan.
+   */
   private static void waitUntilFinished(FluoConfiguration config) {
     try (Environment env = new Environment(config)) {
       List<TableRange> ranges = getRanges(env);
