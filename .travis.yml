@@ -27,6 +27,6 @@ jdk:
   - openjdk8
 env:
   - ADDITIONAL_MAVEN_OPTS=
-  - ADDITIONAL_MAVEN_OPTS=-Daccumulo.version=1.8.1
+  - ADDITIONAL_MAVEN_OPTS=-Daccumulo.version=1.9.0
 script:
   - mvn clean verify javadoc:jar $ADDITIONAL_MAVEN_OPTS

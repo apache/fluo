@@ -20,6 +20,7 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -235,6 +236,18 @@ public class ScanUtil {
     }
   }
 
+  public static enum ScanFlags {
+    HELP,
+    // hex encode node ascii
+    HEX,
+    // scan accumuo table directly
+    ACCUMULO,
+    // endode output as json
+    JSON,
+    // scan notification
+    NTFY
+  }
+
   public static class ScanOpts {
 
     private String startRow;
@@ -249,18 +262,17 @@ public class ScanUtil {
     public final boolean scanNtfy;
 
     public ScanOpts(String startRow, String endRow, List<String> columns, String exactRow,
-        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable,
-        boolean exportAsJson, boolean scanNtfy) {
+        String rowPrefix, EnumSet<ScanFlags> flags) {
       this.startRow = startRow;
       this.endRow = endRow;
       this.columns = columns;
       this.exactRow = exactRow;
       this.rowPrefix = rowPrefix;
-      this.help = help;
-      this.hexEncNonAscii = hexEncNonAscii;
-      this.scanAccumuloTable = scanAccumuloTable;
-      this.exportAsJson = exportAsJson;
-      this.scanNtfy = scanNtfy;
+      this.help = flags.contains(ScanFlags.HELP);
+      this.hexEncNonAscii = flags.contains(ScanFlags.HEX);
+      this.scanAccumuloTable = flags.contains(ScanFlags.ACCUMULO);
+      this.exportAsJson = flags.contains(ScanFlags.JSON);
+      this.scanNtfy = flags.contains(ScanFlags.NTFY);
     }
 
     public String getStartRow() {
@@ -284,6 +296,12 @@ public class ScanUtil {
         return Collections.emptyList();
       }
       return columns;
+    }
+  }
+
+  public static void setFlag(EnumSet<ScanFlags> flags, boolean b, ScanFlags flag) {
+    if (b) {
+      flags.add(flag);
     }
   }
 }

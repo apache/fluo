@@ -17,12 +17,14 @@ package org.apache.fluo.command;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.beust.jcommander.Parameter;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.ScanUtil;
+import org.apache.fluo.core.util.ScanUtil.ScanFlags;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -101,8 +103,15 @@ public class FluoScan {
     }
 
     public ScanUtil.ScanOpts getScanOpts() {
-      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable, exportAsJson, scanNtfy);
+      EnumSet<ScanFlags> flags = EnumSet.noneOf(ScanFlags.class);
+
+      ScanUtil.setFlag(flags, help, ScanFlags.HELP);
+      ScanUtil.setFlag(flags, hexEncNonAscii, ScanFlags.HEX);
+      ScanUtil.setFlag(flags, scanAccumuloTable, ScanFlags.ACCUMULO);
+      ScanUtil.setFlag(flags, exportAsJson, ScanFlags.JSON);
+      ScanUtil.setFlag(flags, scanNtfy, ScanFlags.NTFY);
+
+      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, flags);
     }
 
     public static ScanOptions parse(String[] args) {
