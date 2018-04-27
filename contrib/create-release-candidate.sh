@@ -17,8 +17,13 @@
 
 cd "$(dirname "$0")/.." || exit 1
 scriptname=$(basename "$0")
-export projName=fluo
-export projNameLong="Apache Fluo"
+export tlpName=fluo
+export projName="$tlpName"
+export projNameLong="Apache ${projName^}"
+export stagingRepoPrefix="https://repository.apache.org/content/repositories/orgapache$tlpName"
+export srcQualifier="source-release"
+export relTestingUrl="https://$tlpName.apache.org/release-process/#test-a-$tlpName-release"
+export tagPrefix="rel/$projName-"
 
 # check for gpg2
 hash gpg2 2>/dev/null && gpgCommand=gpg2 || gpgCommand=gpg
@@ -69,13 +74,15 @@ gitSubject() { pretty %s "$@"; }
 
 createEmail() {
   # $1 version (optional); $2 rc seqence num (optional); $3 staging repo num (optional)
-  local ver; [[ -n $1 ]] && ver=$1 || ver=$(prompter 'version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+')
-  local rc; [[ -n $2 ]] && rc=$2 || rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
-  local stagingrepo; [[ -n $3 ]] && stagingrepo=$3 || stagingrepo=$(prompter 'staging repository number from https://repository.apache.org/#stagingRepositories' '[0-9]+')
+  local ver; [[ -n "$1" ]] && ver=$1 || ver=$(prompter 'version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+')
+  local rc; [[ -n "$2" ]] && rc=$2 || rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
+  local stagingrepo; [[ -n "$3" ]] && stagingrepo=$3 || stagingrepo=$(prompter 'staging repository number from https://repository.apache.org/#stagingRepositories' '[0-9]+')
+  local srcSha; [[ -n "$4" ]] && srcSha=$4 || srcSha=$(prompter 'SHA512 for source tarball' '[0-9a-f]{128}')
+  local binSha; [[ -n "$5" ]] && binSha=$5 || binSha=$(prompter 'SHA512 for binary tarball' '[0-9a-f]{128}')
 
   local branch; branch=$ver-rc$rc
   local commit; commit=$(gitCommit "$branch") || exit 1
-  local tag; tag=rel/$projName-$ver
+  local tag; tag=$tagPrefix$ver
   echo
   yellow  "IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!! IMPORTANT!!"
   echo
@@ -109,7 +116,7 @@ createEmail() {
 $(yellow '============================================================')
 Subject: $(green [VOTE] "$projNameLong $branch")
 $(yellow '============================================================')
-Fluo Developers,
+${tlpName^} Developers,
 
 Please consider the following candidate for $projNameLong $(green "$ver").
 
@@ -122,20 +129,24 @@ If this vote passes, a gpg-signed tag will be created using:
     $(green "git tag -f -m '$projNameLong $ver' -s $tag") \\
     $(green "$commit")
 
-Staging repo: $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo")
-Source (official release artifact): $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/$projName/$ver/$projName-${ver}-source-release.tar.gz")
-Binary: $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/org/apache/fluo/$projName/$ver/$projName-${ver}-bin.tar.gz")
+Staging repo: $(green "$stagingRepoPrefix-$stagingrepo")
+Source (official release artifact): $(green "$stagingRepoPrefix-$stagingrepo/org/apache/$tlpName/$projName/$ver/$projName-$ver-$srcQualifier.tar.gz")
+Binary: $(green "$stagingRepoPrefix-$stagingrepo/org/apache/$tlpName/$projName/$ver/$projName-$ver-bin.tar.gz")
 (Append ".sha1", ".md5", or ".asc" to download the signature/hash for a given artifact.)
 
-All artifacts were built and staged with:
-    mvn release:prepare && mvn release:perform
+In addition to the tarballs, and their signatures, the following checksum
+files will be added to the dist/release SVN area after release:
+$(yellow "$projName-$ver-$srcQualifier.tar.gz.sha512") will contain:
+SHA512 ($(green "$projName-$ver-$srcQualifier.tar.gz")) = $(yellow "$srcSha")
+$(yellow "$projName-$ver-bin.tar.gz.sha512") will contain:
+SHA512 ($(green "$projName-$ver-bin.tar.gz")) = $(yellow "$binSha")
 
-Signing keys are available at https://www.apache.org/dist/fluo/KEYS
+Signing keys are available at https://www.apache.org/dist/$tlpName/KEYS
 (Expected fingerprint: $(green "$fingerprint"))
 
-Release notes (in progress) can be found at: $(green "https://fluo.apache.org/release/$projName-$ver/")
+Release notes (in progress) can be found at: $(green "https://$tlpName.apache.org/release/$projName-$ver/")
 
-Release testing instructions: https://fluo.apache.org/release-process/#test-a-fluo-release
+Release testing instructions: $relTestingUrl
 
 Please vote one of:
 [ ] +1 - I have verified and accept...
@@ -152,7 +163,7 @@ Thanks!
 
 P.S. Hint: download the whole staging repo with
     wget -erobots=off -r -l inf -np -nH \\
-    $(green "https://repository.apache.org/content/repositories/orgapachefluo-$stagingrepo/")
+    $(green "$stagingRepoPrefix-$stagingrepo/")
     # note the trailing slash is needed
 $(yellow '============================================================')
 EOF
@@ -181,7 +192,8 @@ cleanUpAndFail() {
 
   # de-duplicate branches
   local a
-  branches=($(printf "%s\n" "${branches[@]}" | sort -u))
+  local tmpArray; tmpArray=("${branches[@]}")
+  IFS=$'\n' read -d '' -r -a branches < <(printf '%s\n' "${tmpArray[@]}" | sort -u)
   for x in "${branches[@]}"; do
     echo "Do you wish to clean up (delete) the branch $(yellow "$x")?"
     a=$(prompter "letter 'y' or 'n'" '[yn]')
@@ -218,11 +230,13 @@ createReleaseCandidate() {
   ver=$(xmllint --shell pom.xml <<<'xpath /*[local-name()="project"]/*[local-name()="version"]/text()' | grep content= | cut -f2 -d=)
   ver=${ver%%-SNAPSHOT}
   echo "Building release candidate for version: $(green "$ver")"
-  local tag; tag=rel/$projName-$ver
+  local tag; tag=$tagPrefix$ver
 
   local cBranch; cBranch=$(currentBranch) || fail "$(red Failure)" to get current branch from git
   local rc; rc=$(prompter 'release candidate sequence number (eg. 1, 2, etc.)' '[0-9]+')
-  local nextVer; nextVer=$(prompter 'next snapshot version to be released (eg. x.y.z)' '[0-9]+[.][0-9]+[.][0-9]+')
+  local tmpNextVer; tmpNextVer="${ver%.*}.$((${ver##*.}+1))"
+  local nextVer; nextVer=$(prompter "next snapshot version to be released [$tmpNextVer]" '([0-9]+[.][0-9]+[.][0-9]+)?')
+  [[ -n $nextVer ]] || nextVer=$tmpNextVer
   local rcBranch; rcBranch=$ver-rc$rc
   local nBranch; nBranch=$rcBranch-next
 
@@ -277,9 +291,17 @@ createReleaseCandidate() {
       run git push -u origin "refs/heads/$nBranch" "refs/heads/$rcBranch"
   } || red "Did not push branches; you'll need to perform this step manually."
 
+  local numSrc; numSrc=$(find target/checkout/ -type f -name "$projName-$ver-source-release.tar.gz" | wc -l)
+  local numBin; numBin=$(find target/checkout/ -type f -name "$projName-$ver-bin.tar.gz" | wc -l)
+  shopt -s globstar
+  local srcSha; srcSha=""
+  local binSha; binSha=""
+  [[ $numSrc = "1" ]] && srcSha=$(sha512sum target/checkout/**/"$projName-$ver-source-release.tar.gz" | cut -f1 -d" ")
+  [[ $numBin = "1" ]] && binSha=$(sha512sum target/checkout/**/"$projName-$ver-bin.tar.gz" | cut -f1 -d" ")
+
   # continue to creating email notification
   echo "$(red Running)" "$(yellow "$scriptname" --create-email "$ver" "$rc")"
-  createEmail "$ver" "$rc"
+  createEmail "$ver" "$rc" "" "$srcSha" "$binSha"
 }
 
 if [[ $1 == '--create' ]]; then
