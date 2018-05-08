@@ -20,6 +20,7 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.api.client.FluoClient;
@@ -112,6 +114,31 @@ public class ScanUtil {
     }
   }
 
+
+  private static void scan(ScanOpts options, PrintStream out, CellScanner cellScanner) {
+    Function<Bytes, String> encoder = getEncoder(options);
+
+    if (options.exportAsJson) {
+      generateJson(cellScanner, encoder, out);
+    } else {
+      for (RowColumnValue rcv : cellScanner) {
+        out.print(encoder.apply(rcv.getRow()));
+        out.print(' ');
+        out.print(encoder.apply(rcv.getColumn().getFamily()));
+        out.print(' ');
+        out.print(encoder.apply(rcv.getColumn().getQualifier()));
+        out.print(' ');
+        out.print(encoder.apply(rcv.getColumn().getVisibility()));
+        out.print("\t");
+        out.print(encoder.apply(rcv.getValue()));
+        out.println();
+        if (out.checkError()) {
+          break;
+        }
+      }
+    }
+  }
+
   public static void scanFluo(ScanOpts options, FluoConfiguration sConfig, PrintStream out)
       throws IOException {
 
@@ -121,27 +148,34 @@ public class ScanUtil {
         Span span = getSpan(options);
         Collection<Column> columns = getColumns(options);
         CellScanner cellScanner = s.scanner().over(span).fetch(columns).build();
-        Function<Bytes, String> encoder = getEncoder(options);
 
-        if (options.exportAsJson) {
-          generateJson(cellScanner, encoder, out);
-        } else {
-          for (RowColumnValue rcv : cellScanner) {
-            out.print(encoder.apply(rcv.getRow()));
-            out.print(' ');
-            out.print(encoder.apply(rcv.getColumn().getFamily()));
-            out.print(' ');
-            out.print(encoder.apply(rcv.getColumn().getQualifier()));
-            out.print(' ');
-            out.print(encoder.apply(rcv.getColumn().getVisibility()));
-            out.print("\t");
-            out.print(encoder.apply(rcv.getValue()));
-            out.println();
-            if (out.checkError()) {
-              break;
-            }
-          }
-        }
+        scan(options, out, cellScanner);
+      }
+    }
+  }
+
+  public static void scanNotifications(ScanOpts options, FluoConfiguration sConfig, PrintStream out)
+      throws IOException {
+
+    Connector conn = AccumuloUtil.getConnector(sConfig);
+
+    Span span = getSpan(options);
+    Collection<Column> columns = getColumns(options);
+
+    Scanner scanner = null;
+    try {
+      scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
+
+      scanner.setRange(SpanUtil.toRange(span));
+
+      NotificationScanner ntfyScanner = new NotificationScanner(scanner, columns);
+
+      scan(options, out, ntfyScanner);
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (scanner != null) {
+        scanner.close();
       }
     }
   }
@@ -202,6 +236,18 @@ public class ScanUtil {
     }
   }
 
+  public static enum ScanFlags {
+    HELP,
+    // hex encode node ascii
+    HEX,
+    // scan accumuo table directly
+    ACCUMULO,
+    // endode output as json
+    JSON,
+    // scan notification
+    NTFY
+  }
+
   public static class ScanOpts {
 
     private String startRow;
@@ -209,23 +255,24 @@ public class ScanUtil {
     private List<String> columns;
     private String exactRow;
     private String rowPrefix;
-    public boolean help;
-    public boolean hexEncNonAscii = true;
-    public boolean scanAccumuloTable = false;
-    public boolean exportAsJson = false;
+    public final boolean help;
+    public final boolean hexEncNonAscii;
+    public final boolean scanAccumuloTable;
+    public final boolean exportAsJson;
+    public final boolean scanNtfy;
 
     public ScanOpts(String startRow, String endRow, List<String> columns, String exactRow,
-        String rowPrefix, boolean help, boolean hexEncNonAscii, boolean scanAccumuloTable,
-        boolean exportAsJson) {
+        String rowPrefix, EnumSet<ScanFlags> flags) {
       this.startRow = startRow;
       this.endRow = endRow;
       this.columns = columns;
       this.exactRow = exactRow;
       this.rowPrefix = rowPrefix;
-      this.help = help;
-      this.hexEncNonAscii = hexEncNonAscii;
-      this.scanAccumuloTable = scanAccumuloTable;
-      this.exportAsJson = exportAsJson;
+      this.help = flags.contains(ScanFlags.HELP);
+      this.hexEncNonAscii = flags.contains(ScanFlags.HEX);
+      this.scanAccumuloTable = flags.contains(ScanFlags.ACCUMULO);
+      this.exportAsJson = flags.contains(ScanFlags.JSON);
+      this.scanNtfy = flags.contains(ScanFlags.NTFY);
     }
 
     public String getStartRow() {
@@ -249,6 +296,12 @@ public class ScanUtil {
         return Collections.emptyList();
       }
       return columns;
+    }
+  }
+
+  public static void setFlag(EnumSet<ScanFlags> flags, boolean b, ScanFlags flag) {
+    if (b) {
+      flags.add(flag);
     }
   }
 }

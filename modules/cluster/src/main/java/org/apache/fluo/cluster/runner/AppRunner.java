@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import javax.inject.Provider;
@@ -37,6 +38,7 @@ import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ScanUtil;
+import org.apache.fluo.core.util.ScanUtil.ScanFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,8 +235,13 @@ public abstract class AppRunner {
     }
 
     public ScanUtil.ScanOpts getScanOpts() {
-      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable, false);
+      EnumSet<ScanFlags> flags = EnumSet.noneOf(ScanFlags.class);
+
+      ScanUtil.setFlag(flags, help, ScanFlags.HELP);
+      ScanUtil.setFlag(flags, hexEncNonAscii, ScanFlags.HEX);
+      ScanUtil.setFlag(flags, scanAccumuloTable, ScanFlags.ACCUMULO);
+
+      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, flags);
     }
   }
 }

@@ -17,12 +17,14 @@ package org.apache.fluo.command;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.beust.jcommander.Parameter;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.ScanUtil;
+import org.apache.fluo.core.util.ScanUtil.ScanFlags;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -59,6 +61,9 @@ public class FluoScan {
         description = "Export key/values stored in Accumulo as JSON file.")
     public boolean exportAsJson = false;
 
+    @Parameter(names = "--ntfy", help = true, description = "Scan active notifications")
+    public boolean scanNtfy = false;
+
     public String getStartRow() {
       return startRow;
     }
@@ -90,11 +95,23 @@ public class FluoScan {
         throw new IllegalArgumentException(
             "Both \"--raw\" and \"--json\" can not be set together.");
       }
+
+      if (this.scanAccumuloTable && this.scanNtfy) {
+        throw new IllegalArgumentException(
+            "Both \"--raw\" and \"--ntfy\" can not be set together.");
+      }
     }
 
     public ScanUtil.ScanOpts getScanOpts() {
-      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, help,
-          hexEncNonAscii, scanAccumuloTable, exportAsJson);
+      EnumSet<ScanFlags> flags = EnumSet.noneOf(ScanFlags.class);
+
+      ScanUtil.setFlag(flags, help, ScanFlags.HELP);
+      ScanUtil.setFlag(flags, hexEncNonAscii, ScanFlags.HEX);
+      ScanUtil.setFlag(flags, scanAccumuloTable, ScanFlags.ACCUMULO);
+      ScanUtil.setFlag(flags, exportAsJson, ScanFlags.JSON);
+      ScanUtil.setFlag(flags, scanNtfy, ScanFlags.NTFY);
+
+      return new ScanUtil.ScanOpts(startRow, endRow, columns, exactRow, rowPrefix, flags);
     }
 
     public static ScanOptions parse(String[] args) {
@@ -114,14 +131,17 @@ public class FluoScan {
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     config.setApplicationName(options.getApplicationName());
     options.overrideFluoConfig(config);
-    CommandUtil.verifyAppRunning(config);
 
     try {
       options.overrideFluoConfig(config);
       if (options.scanAccumuloTable) {
         config = FluoAdminImpl.mergeZookeeperConfig(config);
         ScanUtil.scanAccumulo(options.getScanOpts(), config, System.out);
+      } else if (options.scanNtfy) {
+        config = FluoAdminImpl.mergeZookeeperConfig(config);
+        ScanUtil.scanNotifications(options.getScanOpts(), config, System.out);
       } else {
+        CommandUtil.verifyAppRunning(config);
         ScanUtil.scanFluo(options.getScanOpts(), config, System.out);
       }
     } catch (RuntimeException | IOException e) {
