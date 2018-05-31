@@ -55,7 +55,7 @@
   </issueManagement>
   <properties>
     <accumulo.version>1.7.3</accumulo.version>
-    <curator.version>2.7.1</curator.version>
+    <curator.version>2.12.0</curator.version>
     <dropwizard.version>0.8.1</dropwizard.version>
     <findbugs.maxRank>11</findbugs.maxRank>
     <hadoop.version>2.6.3</hadoop.version>
