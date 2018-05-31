@@ -196,6 +196,10 @@ public class OracleServer extends LeaderSelectorListenerAdapter
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
 
+    while (curatorFramework.getState().equals(CuratorFrameworkState.LATENT)) {
+      Thread.sleep(100);
+    }
+
     byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(maxTsPath);
 
     // TODO check that d is expected
