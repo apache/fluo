@@ -53,6 +53,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // stop oracle to avoid spurious exceptions when initializing
     // however starting and stopping the oracle too quickly causes exceptions
+    // see CURATOR-467
     Thread.sleep(250);
     oserver.stop();
 
@@ -94,6 +95,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // stop oracle to avoid spurious exceptions when initializing
     // however starting and stopping the oracle too quickly causes exceptions
+    // see CURATOR-467
     Thread.sleep(250);
     oserver.stop();
 
@@ -137,6 +139,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // stop oracle to avoid spurious exceptions when initializing
     // however starting and stopping the oracle too quickly causes exceptions
+    // see CURATOR-467
     Thread.sleep(250);
     oserver.stop();
 
@@ -159,6 +162,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // stop oracle to avoid spurious exceptions when initializing
     // however starting and stopping the oracle too quickly causes exceptions
+    // see CURATOR-467
     Thread.sleep(250);
     oserver.stop();
 
