@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Histogram;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,8 +32,8 @@ import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.leader.LeaderSelector;
-import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.fluo.accumulo.util.LongUtil;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
@@ -41,6 +44,7 @@ import org.apache.fluo.core.metrics.MetricsUtil;
 import org.apache.fluo.core.thrift.OracleService;
 import org.apache.fluo.core.thrift.Stamps;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.util.FluoThreadFactory;
 import org.apache.fluo.core.util.Halt;
 import org.apache.fluo.core.util.HostUtil;
 import org.apache.fluo.core.util.PortUtils;
@@ -63,15 +67,14 @@ import org.slf4j.LoggerFactory;
  * Oracle server is the responsible for providing incrementing logical timestamps to clients. It
  * should never give the same timestamp to two clients and it should always provide an incrementing
  * timestamp.
- * 
+ *
  * <p>
  * If multiple oracle servers are run, they will choose a leader and clients will automatically
  * connect to that leader. If the leader goes down, the client will automatically fail over to the
  * next leader. In the case where an oracle fails over, the next oracle will begin a new block of
  * timestamps.
  */
-public class OracleServer extends LeaderSelectorListenerAdapter
-    implements OracleService.Iface, PathChildrenCacheListener {
+public class OracleServer implements OracleService.Iface, PathChildrenCacheListener {
 
   private static final Logger log = LoggerFactory.getLogger(OracleServer.class);
 
@@ -88,7 +91,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter
   private volatile boolean started = false;
   private int port = 0;
 
-  private LeaderSelector leaderSelector;
+  private LeaderLatch leaderLatch;
+  private ExecutorService execService;
   private PathChildrenCache pathChildrenCache;
   private CuratorFramework curatorFramework;
   private CuratorCnxnListener cnxnListener;
@@ -235,7 +239,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     }
 
     if (!isLeader) {
-      throw new IllegalStateException("Received timestamp request but Oracle is not leader");
+      throw new IllegalStateException("Received timestamp request but Oracle is not leader ");
     }
 
     try {
@@ -253,7 +257,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter
   }
 
   @Override
-  public boolean isLeader() throws TException {
+  public boolean isLeader() {
     return isLeader;
   }
 
@@ -312,8 +316,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       throw new IllegalStateException();
     }
 
-    final InetSocketAddress addr = startServer();
-
     curatorFramework = CuratorUtil.newAppCurator(env.getConfiguration());
     curatorFramework.getConnectionStateListenable().addListener(cnxnListener);
     curatorFramework.start();
@@ -322,11 +324,29 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       Thread.sleep(200);
     }
 
-    leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
+    final InetSocketAddress addr = startServer();
+
     String leaderId = HostUtil.getHostName() + ":" + addr.getPort();
-    leaderSelector.setId(leaderId);
+    leaderLatch = new LeaderLatch(curatorFramework, ZookeeperPath.ORACLE_SERVER, leaderId);
     log.info("Leader ID = " + leaderId);
-    leaderSelector.start();
+    execService = Executors.newSingleThreadExecutor(new FluoThreadFactory("Oracle Server Worker"));
+    leaderLatch.addListener(new LeaderLatchListener() {
+      @Override
+      public void notLeader() {
+        isLeader = false;
+
+        if (started) {
+          // if we stopped the server manually, we shouldn't halt
+          Halt.halt("Oracle has lost leadership unexpectedly and is now halting.");
+        }
+      }
+
+      @Override
+      public void isLeader() {
+        assumeLeadership();
+      }
+    }, execService);
+    leaderLatch.start();
 
     pathChildrenCache = new PathChildrenCache(curatorFramework, oraclePath, true);
     pathChildrenCache.getListenable().addListener(this);
@@ -341,8 +361,47 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     started = true;
   }
 
+  private void assumeLeadership() {
+
+    // sanity check- make sure previous oracle is no longer listening for connections
+    if (currentLeader != null) {
+      String[] address = currentLeader.getId().split(":");
+      String host = address[0];
+      int port = Integer.parseInt(address[1]);
+
+      OracleService.Client client = getOracleClient(host, port);
+      if (client != null) {
+        try {
+          while (client.isLeader()) {
+            Thread.sleep(500);
+          }
+        } catch (Exception e) {
+          log.debug("Exception thrown in takeLeadership()", e);
+        }
+      }
+    }
+
+    try {
+      synchronized (this) {
+        byte[] d = curatorFramework.getData().forPath(maxTsPath);
+        currentTs = maxTs = LongUtil.fromByteArray(d);
+      }
+
+      gcTsTracker = new GcTimestampTracker();
+      gcTsTracker.start();
+
+      isLeader = true;
+      log.info("Assumed leadership " + leaderLatch.getId());
+    } catch (Exception e) {
+      log.warn("Failed to become leader ", e);
+    }
+  }
+
   public synchronized void stop() throws Exception {
     if (started) {
+
+
+      isLeader = false;
 
       server.stop();
       serverThread.join();
@@ -357,8 +416,14 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       if (curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
         pathChildrenCache.getListenable().removeListener(this);
         pathChildrenCache.close();
-        leaderSelector.close();
-        curatorFramework.getConnectionStateListenable().removeListener(this);
+        leaderLatch.close();
+
+        execService.shutdown();
+
+        execService.awaitTermination(10, TimeUnit.SECONDS);
+
+        // curatorFramework.getConnectionStateListenable().removeListener(this);
+
         curatorFramework.close();
       }
       log.info("Oracle server has been stopped.");
@@ -381,58 +446,6 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     return null;
   }
 
-  /**
-   * Upon an oracle being elected the leader, it will need to adjust its starting timestamp to the
-   * last timestamp set in zookeeper.
-   *
-   * @param curatorFramework Curator framework
-   */
-  @Override
-  public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-
-    try {
-      // sanity check- make sure previous oracle is no longer listening for connections
-      if (currentLeader != null) {
-        String[] address = currentLeader.getId().split(":");
-        String host = address[0];
-        int port = Integer.parseInt(address[1]);
-
-        OracleService.Client client = getOracleClient(host, port);
-        if (client != null) {
-          try {
-            while (client.isLeader()) {
-              Thread.sleep(500);
-            }
-          } catch (Exception e) {
-            log.debug("Exception thrown in takeLeadership()", e);
-          }
-        }
-      }
-
-      synchronized (this) {
-        byte[] d = curatorFramework.getData().forPath(maxTsPath);
-        currentTs = maxTs = LongUtil.fromByteArray(d);
-      }
-
-      gcTsTracker = new GcTimestampTracker();
-      gcTsTracker.start();
-
-      isLeader = true;
-
-      while (started) {
-        // if leadership is lost, then curator will interrupt the thread that called this method
-        Thread.sleep(100);
-      }
-    } finally {
-      isLeader = false;
-
-      if (started) {
-        // if we stopped the server manually, we shouldn't halt
-        Halt.halt("Oracle has lost leadership unexpectedly and is now halting.");
-      }
-    }
-  }
-
   @Override
   public void childEvent(CuratorFramework curatorFramework, PathChildrenCacheEvent event)
       throws Exception {
@@ -442,8 +455,8 @@ public class OracleServer extends LeaderSelectorListenerAdapter
           || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)
           || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED))) {
         synchronized (this) {
-          Participant participant = leaderSelector.getLeader();
-          if (isLeader(participant) && !leaderSelector.hasLeadership()) {
+          Participant participant = leaderLatch.getLeader();
+          if (isLeader(participant) && !leaderLatch.hasLeadership()) {
             // in case current instance becomes leader, we want to know who came before it.
             currentLeader = participant;
           }
@@ -453,5 +466,4 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       log.warn("Oracle leadership watcher has been interrupted unexpectedly");
     }
   }
-
 }

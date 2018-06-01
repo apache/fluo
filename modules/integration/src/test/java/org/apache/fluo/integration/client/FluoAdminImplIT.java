@@ -52,6 +52,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
   public void testInitializeTwiceFails() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
+    // however starting and stopping the oracle too quickly causes exceptions
+    Thread.sleep(250);
     oserver.stop();
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
@@ -91,6 +93,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
   public void testInitializeConfig() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
+    // however starting and stopping the oracle too quickly causes exceptions
+    Thread.sleep(250);
     oserver.stop();
 
     FluoConfiguration localConfig = new FluoConfiguration(config);
@@ -132,6 +136,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
   public void testInitializeWithNoChroot() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
+    // however starting and stopping the oracle too quickly causes exceptions
+    Thread.sleep(250);
     oserver.stop();
 
     InitializationOptions opts =
@@ -152,6 +158,8 @@ public class FluoAdminImplIT extends ITBaseImpl {
   public void testInitializeLongChroot() throws Exception {
 
     // stop oracle to avoid spurious exceptions when initializing
+    // however starting and stopping the oracle too quickly causes exceptions
+    Thread.sleep(250);
     oserver.stop();
 
     String zk = config.getAppZookeepers();

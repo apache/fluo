@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -31,7 +31,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.leader.LeaderSelector;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
@@ -77,7 +77,7 @@ public class OracleClient implements AutoCloseable {
   private class TimestampRetriever extends LeaderSelectorListenerAdapter
       implements Runnable, PathChildrenCacheListener {
 
-    private LeaderSelector leaderSelector;
+    private LeaderLatch leaderLatch;
     private CuratorFramework curatorFramework;
     private OracleService.Client client;
     private PathChildrenCache pathChildrenCache;
@@ -104,7 +104,7 @@ public class OracleClient implements AutoCloseable {
             Thread.sleep(200);
           }
 
-          leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
+          leaderLatch = new LeaderLatch(curatorFramework, ZookeeperPath.ORACLE_SERVER);
 
           pathChildrenCache =
               new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
@@ -135,10 +135,10 @@ public class OracleClient implements AutoCloseable {
           || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_ADDED)
           || event.getType().equals(PathChildrenCacheEvent.Type.CHILD_UPDATED)) {
 
-        Participant participant = leaderSelector.getLeader();
+        Participant participant = leaderLatch.getLeader();
         synchronized (this) {
           if (isLeader(participant)) {
-            currentLeader = leaderSelector.getLeader();
+            currentLeader = leaderLatch.getLeader();
           } else {
             currentLeader = null;
           }
@@ -280,14 +280,14 @@ public class OracleClient implements AutoCloseable {
 
       transport = null;
       pathChildrenCache = null;
-      leaderSelector = null;
+      leaderLatch = null;
       curatorFramework = null;
     }
 
     private boolean getLeaderAttempt() {
       Participant possibleLeader = null;
       try {
-        possibleLeader = leaderSelector.getLeader();
+        possibleLeader = leaderLatch.getLeader();
       } catch (KeeperException e) {
         log.debug("Exception throw in getLeaderAttempt()", e);
       } catch (Exception e) {
