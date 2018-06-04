@@ -276,6 +276,8 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
   }
 
   private InetSocketAddress startServer() throws TTransportException {
+    Preconditions.checkState(
+        curatorFramework != null && curatorFramework.getState() == CuratorFrameworkState.STARTED);
 
     if (env.getConfiguration().containsKey(FluoConfigurationImpl.ORACLE_PORT_PROP)) {
       port = env.getConfiguration().getInt(FluoConfigurationImpl.ORACLE_PORT_PROP);
@@ -362,6 +364,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
   }
 
   private void assumeLeadership() {
+    Preconditions.checkState(!isLeader);
 
     // sanity check- make sure previous oracle is no longer listening for connections
     if (currentLeader != null) {
@@ -422,8 +425,11 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
 
         execService.awaitTermination(10, TimeUnit.SECONDS);
 
-        // curatorFramework.getConnectionStateListenable().removeListener(this);
+        curatorFramework.getConnectionStateListenable().removeListener(cnxnListener);
 
+        // leaderLatch.close() schedules a background delete, give it a chance to process before
+        // closing curator... this is done to avoid spurious exceptions, see CURATOR-467
+        Thread.sleep(250);
         curatorFramework.close();
       }
       log.info("Oracle server has been stopped.");
