@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import com.codahale.metrics.Histogram;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -239,7 +240,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
     }
 
     if (!isLeader) {
-      throw new IllegalStateException("Received timestamp request but Oracle is not leader ");
+      throw new IllegalStateException("Received timestamp request but Oracle is not leader");
     }
 
     try {
@@ -429,7 +430,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
 
         // leaderLatch.close() schedules a background delete, give it a chance to process before
         // closing curator... this is done to avoid spurious exceptions, see CURATOR-467
-        Thread.sleep(250);
+        Uninterruptibles.sleepUninterruptibly(250, TimeUnit.MILLISECONDS);
         curatorFramework.close();
       }
       log.info("Oracle server has been stopped.");

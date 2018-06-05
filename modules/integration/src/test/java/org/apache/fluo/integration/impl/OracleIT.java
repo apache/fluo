@@ -181,7 +181,7 @@ public class OracleIT extends ITBaseImpl {
   @Test
   public void failover_newTimestampRequested() throws Exception {
 
-    sleepWhile(() -> !oserver.isConnected());
+    sleepUntil(oserver::isConnected);
 
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
@@ -190,10 +190,10 @@ public class OracleIT extends ITBaseImpl {
     TestOracle oserver3 = createExtraOracle(port3);
 
     oserver2.start();
-    sleepWhile(() -> !oserver2.isConnected());
+    sleepUntil(oserver2::isConnected);
 
     oserver3.start();
-    sleepWhile(() -> !oserver3.isConnected());
+    sleepUntil(oserver3::isConnected);
 
     OracleClient client = env.getSharedResources().getOracleClient();
 
@@ -206,17 +206,17 @@ public class OracleIT extends ITBaseImpl {
     assertTrue(client.getOracle().endsWith(Integer.toString(oserver.getPort())));
 
     oserver.stop();
-    sleepWhile(() -> oserver.isConnected());
-    sleepWhile(() -> !oserver2.isLeader());
+    sleepWhile(oserver::isConnected);
+    sleepUntil(oserver2::isLeader);
 
     assertEquals(1002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port2)));
 
     oserver2.stop();
-    sleepWhile(() -> oserver2.isConnected());
+    sleepWhile(oserver2::isConnected);
     oserver2.close();
 
-    sleepWhile(() -> !oserver3.isLeader());
+    sleepUntil(oserver3::isLeader);
 
     assertEquals(2002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
@@ -232,7 +232,7 @@ public class OracleIT extends ITBaseImpl {
   @Test
   public void singleOracle_goesAwayAndComesBack() throws Exception {
 
-    sleepWhile(() -> !oserver.isConnected());
+    sleepUntil(oserver::isConnected);
 
     OracleClient client = env.getSharedResources().getOracleClient();
 
@@ -243,7 +243,7 @@ public class OracleIT extends ITBaseImpl {
     }
 
     oserver.stop();
-    sleepWhile(() -> oserver.isConnected());
+    sleepWhile(oserver::isConnected);
 
     while (client.getOracle() != null) {
       Thread.sleep(100);
@@ -252,7 +252,7 @@ public class OracleIT extends ITBaseImpl {
     assertNull(client.getOracle());
 
     oserver.start();
-    sleepWhile(() -> !oserver.isConnected());
+    sleepUntil(oserver::isConnected);
 
     assertEquals(1002, client.getStamp().getTxTimestamp());
 
@@ -277,12 +277,12 @@ public class OracleIT extends ITBaseImpl {
     TestOracle oserver2 = createExtraOracle(port2);
 
     oserver2.start();
-    sleepWhile(() -> !oserver2.isConnected());
+    sleepUntil(oserver2::isConnected);
 
     TestOracle oserver3 = createExtraOracle(port3);
 
     oserver3.start();
-    sleepWhile(() -> !oserver3.isConnected());
+    sleepUntil(oserver3::isConnected);
 
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
@@ -320,6 +320,10 @@ public class OracleIT extends ITBaseImpl {
     tpool.shutdown();
     oserver3.stop();
     oserver3.close();
+  }
+
+  private void sleepUntil(Supplier<Boolean> condition) throws InterruptedException {
+    sleepWhile(() -> !condition.get());
   }
 
   private void sleepWhile(Supplier<Boolean> condition) throws InterruptedException {
