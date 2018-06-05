@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
  * Oracle server is the responsible for providing incrementing logical timestamps to clients. It
  * should never give the same timestamp to two clients and it should always provide an incrementing
  * timestamp.
- * 
+ *
  * <p>
  * If multiple oracle servers are run, they will choose a leader and clients will automatically
  * connect to that leader. If the leader goes down, the client will automatically fail over to the
@@ -195,6 +195,11 @@ public class OracleServer extends LeaderSelectorListenerAdapter
 
   private void allocateTimestamp() throws Exception {
     Stat stat = new Stat();
+
+    while (curatorFramework.getState().equals(CuratorFrameworkState.LATENT)) {
+      Thread.sleep(100);
+    }
+
     byte[] d = curatorFramework.getData().storingStatIn(stat).forPath(maxTsPath);
 
     // TODO check that d is expected
@@ -207,6 +212,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     curatorFramework.setData().withVersion(stat.getVersion()).forPath(maxTsPath,
         LongUtil.toByteArray(newMax));
     maxTs = newMax;
+
 
     if (!isLeader) {
       throw new IllegalStateException();
@@ -319,7 +325,7 @@ public class OracleServer extends LeaderSelectorListenerAdapter
     curatorFramework.start();
 
     while (!cnxnListener.isConnected()) {
-      Thread.sleep(200);
+      Thread.sleep(100);
     }
 
     leaderSelector = new LeaderSelector(curatorFramework, ZookeeperPath.ORACLE_SERVER, this);
@@ -412,16 +418,22 @@ public class OracleServer extends LeaderSelectorListenerAdapter
       synchronized (this) {
         byte[] d = curatorFramework.getData().forPath(maxTsPath);
         currentTs = maxTs = LongUtil.fromByteArray(d);
+
+        isLeader = true;
       }
 
       gcTsTracker = new GcTimestampTracker();
       gcTsTracker.start();
 
-      isLeader = true;
-
       while (started) {
         // if leadership is lost, then curator will interrupt the thread that called this method
         Thread.sleep(100);
+      }
+    } catch (IllegalStateException e) {
+      if (curatorFramework.getState() == CuratorFrameworkState.STOPPED && !started) {
+        log.debug("Saw error likely caused by stopping Oracle", e);
+      } else {
+        throw e;
       }
     } finally {
       isLeader = false;
