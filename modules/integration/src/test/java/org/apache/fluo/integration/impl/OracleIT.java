@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -26,6 +26,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.oracle.OracleClient;
@@ -180,7 +181,7 @@ public class OracleIT extends ITBaseImpl {
   @Test
   public void failover_newTimestampRequested() throws Exception {
 
-    sleepUntilConnected(oserver);
+    sleepUntil(oserver::isConnected);
 
     int port2 = PortUtils.getRandomFreePort();
     int port3 = PortUtils.getRandomFreePort();
@@ -189,10 +190,10 @@ public class OracleIT extends ITBaseImpl {
     TestOracle oserver3 = createExtraOracle(port3);
 
     oserver2.start();
-    sleepUntilConnected(oserver2);
+    sleepUntil(oserver2::isConnected);
 
     oserver3.start();
-    sleepUntilConnected(oserver3);
+    sleepUntil(oserver3::isConnected);
 
     OracleClient client = env.getSharedResources().getOracleClient();
 
@@ -205,14 +206,17 @@ public class OracleIT extends ITBaseImpl {
     assertTrue(client.getOracle().endsWith(Integer.toString(oserver.getPort())));
 
     oserver.stop();
-    sleepWhileConnected(oserver);
+    sleepWhile(oserver::isConnected);
+    sleepUntil(oserver2::isLeader);
 
     assertEquals(1002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port2)));
 
     oserver2.stop();
-    sleepWhileConnected(oserver2);
+    sleepWhile(oserver2::isConnected);
     oserver2.close();
+
+    sleepUntil(oserver3::isLeader);
 
     assertEquals(2002, client.getStamp().getTxTimestamp());
     assertTrue(client.getOracle().endsWith(Integer.toString(port3)));
@@ -228,7 +232,7 @@ public class OracleIT extends ITBaseImpl {
   @Test
   public void singleOracle_goesAwayAndComesBack() throws Exception {
 
-    sleepUntilConnected(oserver);
+    sleepUntil(oserver::isConnected);
 
     OracleClient client = env.getSharedResources().getOracleClient();
 
@@ -239,7 +243,7 @@ public class OracleIT extends ITBaseImpl {
     }
 
     oserver.stop();
-    sleepWhileConnected(oserver);
+    sleepWhile(oserver::isConnected);
 
     while (client.getOracle() != null) {
       Thread.sleep(100);
@@ -248,7 +252,7 @@ public class OracleIT extends ITBaseImpl {
     assertNull(client.getOracle());
 
     oserver.start();
-    sleepUntilConnected(oserver);
+    sleepUntil(oserver::isConnected);
 
     assertEquals(1002, client.getStamp().getTxTimestamp());
 
@@ -273,12 +277,12 @@ public class OracleIT extends ITBaseImpl {
     TestOracle oserver2 = createExtraOracle(port2);
 
     oserver2.start();
-    sleepUntilConnected(oserver2);
+    sleepUntil(oserver2::isConnected);
 
     TestOracle oserver3 = createExtraOracle(port3);
 
     oserver3.start();
-    sleepUntilConnected(oserver3);
+    sleepUntil(oserver3::isConnected);
 
     for (int i = 0; i < numThreads; i++) {
       tpool.execute(new TimestampFetcher(numTimes, env, output, cdl));
@@ -318,14 +322,12 @@ public class OracleIT extends ITBaseImpl {
     oserver3.close();
   }
 
-  private void sleepWhileConnected(OracleServer oserver) throws InterruptedException {
-    while (oserver.isConnected()) {
-      Thread.sleep(100);
-    }
+  private void sleepUntil(Supplier<Boolean> condition) throws InterruptedException {
+    sleepWhile(() -> !condition.get());
   }
 
-  private void sleepUntilConnected(OracleServer oserver) throws InterruptedException {
-    while (!oserver.isConnected()) {
+  private void sleepWhile(Supplier<Boolean> condition) throws InterruptedException {
+    while (condition.get()) {
       Thread.sleep(100);
     }
   }
