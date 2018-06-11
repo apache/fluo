@@ -329,11 +329,11 @@ public class FluoAdminImpl implements FluoAdmin {
       }
     }
 
-    try {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
       CuratorFramework curator = getAppCurator();
       ObserverUtil.initialize(curator, config);
 
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
       sharedProps.store(baos, "Shared java props");
 
       CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(),
@@ -451,13 +451,14 @@ public class FluoAdminImpl implements FluoAdmin {
     try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
 
-      ByteArrayInputStream bais =
-          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED));
-      Properties sharedProps = new Properties();
-      sharedProps.load(bais);
+      try (ByteArrayInputStream bais =
+          new ByteArrayInputStream(curator.getData().forPath(ZookeeperPath.CONFIG_SHARED))) {
 
-      for (String prop : sharedProps.stringPropertyNames()) {
-        zooConfig.setProperty(prop, sharedProps.getProperty(prop));
+        Properties sharedProps = new Properties();
+        sharedProps.load(bais);
+        for (String prop : sharedProps.stringPropertyNames()) {
+          zooConfig.setProperty(prop, sharedProps.getProperty(prop));
+        }
       }
     } catch (Exception e) {
       throw new IllegalStateException(e);
