@@ -299,13 +299,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
     serverArgs.outputProtocolFactory(new TCompactProtocol.Factory());
     server = new THsHaServer(serverArgs);
 
-    Runnable st = new Runnable() {
-
-      @Override
-      public void run() {
-        server.serve();
-      }
-    };
+    Runnable st = () -> server.serve();
 
     serverThread = new Thread(st);
     serverThread.setDaemon(true);

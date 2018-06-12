@@ -44,13 +44,9 @@ public class CommitManager {
     memoryLimit = new Limit(FluoConfigurationImpl.getTxCommitMemory(env.getConfiguration()));
     commitingTransactions = new AtomicInteger(0);
 
-    env.getSharedResources().getMetricRegistry()
-        .register(env.getMetricNames().getCommitsProcessing(), new Gauge<Integer>() {
-          @Override
-          public Integer getValue() {
-            return commitingTransactions.get();
-          }
-        });
+    env.getSharedResources().getMetricRegistry().register(
+        env.getMetricNames().getCommitsProcessing(),
+        (Gauge<Integer>) () -> commitingTransactions.get());
   }
 
 

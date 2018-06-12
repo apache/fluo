@@ -27,33 +27,20 @@ public class Halt {
   private Halt() {}
 
   public static void halt(final String msg) {
-    halt(0, new Runnable() {
-      @Override
-      public void run() {
-        log.error(fatal, msg);
-      }
-    });
+    halt(0, () -> log.error(fatal, msg));
   }
 
   public static void halt(final String msg, int status) {
-    halt(status, new Runnable() {
-      @Override
-      public void run() {
-        log.error(fatal, msg);
-      }
-    });
+    halt(status, () -> log.error(fatal, msg));
   }
 
   public static void halt(final int status, Runnable runnable) {
     try {
       // give ourselves a little time to try and do something
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          UtilWaitThread.sleep(100);
-          Runtime.getRuntime().halt(status);
-        }
-      };
+      Thread thread = new Thread(() -> {
+        UtilWaitThread.sleep(100);
+        Runtime.getRuntime().halt(status);
+      });
       thread.setDaemon(true);
       thread.start();
 

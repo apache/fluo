@@ -66,12 +66,7 @@ public class VisibilityCache {
     }
 
     try {
-      return visCache.get(colvis, new Callable<ColumnVisibility>() {
-        @Override
-        public ColumnVisibility call() throws Exception {
-          return new ColumnVisibility(ByteUtil.toText(colvis));
-        }
-      });
+      return visCache.get(colvis, () -> new ColumnVisibility(ByteUtil.toText(colvis)));
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
     }

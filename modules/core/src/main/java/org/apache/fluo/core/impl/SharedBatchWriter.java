@@ -141,12 +141,9 @@ public class SharedBatchWriter {
     this.bw = bw;
     this.mutQueue = new ArrayBlockingQueue<>(100000);
     Thread thread = new FluoThreadFactory("sharedBW").newThread(new FlushTask());
-    thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        System.err.println("Uncaught exception in shared batch writer");
-        e.printStackTrace();
-      }
+    thread.setUncaughtExceptionHandler((t, e) -> {
+      System.err.println("Uncaught exception in shared batch writer");
+      e.printStackTrace();
     });
     thread.setDaemon(true);
     thread.start();

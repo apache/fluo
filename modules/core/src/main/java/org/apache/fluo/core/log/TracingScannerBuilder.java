@@ -87,16 +87,13 @@ public class TracingScannerBuilder implements ScannerBuilder {
   @Override
   public RowScannerBuilder byRow() {
     String scanId = Integer.toHexString(Math.abs(Objects.hash(span, columns, txid)));
-    return new RowScannerBuilder() {
-      @Override
-      public RowScanner build() {
-        log.trace("txid: {} scanId: {} scanner().over({}).fetch({}).byRow().build()", txid, scanId,
-            Hex.encNonAscii(span), Hex.encNonAscii(columns));
-        if (TracingCellScanner.log.isTraceEnabled()) {
-          return new TracingRowScanner(wrappedBuilder.byRow().build(), txid, scanId);
-        } else {
-          return wrappedBuilder.byRow().build();
-        }
+    return () -> {
+      log.trace("txid: {} scanId: {} scanner().over({}).fetch({}).byRow().build()", txid, scanId,
+          Hex.encNonAscii(span), Hex.encNonAscii(columns));
+      if (TracingCellScanner.log.isTraceEnabled()) {
+        return new TracingRowScanner(wrappedBuilder.byRow().build(), txid, scanId);
+      } else {
+        return wrappedBuilder.byRow().build();
       }
     };
   }
