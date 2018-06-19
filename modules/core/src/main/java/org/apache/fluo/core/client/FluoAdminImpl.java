@@ -211,6 +211,10 @@ public class FluoAdminImpl implements FluoAdmin {
         "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
             + " must have a chroot suffix.");
 
+    if (oracleExists(getAppCurator())) {
+      throw new FluoException("You must stop the oracle server to remove an application");
+    }
+
     Connector conn = AccumuloUtil.getConnector(config);
 
     boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());

@@ -19,10 +19,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
@@ -31,9 +38,11 @@ import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoAdmin.TableExistsException;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.util.OracleServerUtils;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
@@ -184,4 +193,63 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
   }
 
+
+  @Test
+  public void testRemove() throws Exception {
+
+
+    // oserver is started before every test so oserver is running
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove();
+      fail("expected remove() to fail with oracle server running");
+    } catch (FluoException e) {
+    }
+
+    oserver.stop();
+
+
+    // this should succeed now with the oracle server stopped
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove();
+    } catch (FluoException e) {
+    }
+
+    // should succeed without clearing anything
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      InitializationOptions opts =
+          new InitializationOptions().setClearTable(false).setClearZookeeper(false);
+      admin.initialize(opts);
+    } catch (FluoException e) {
+
+    }
+
+    oserver.start();
+
+    System.out.println("Current leading oracle: " + OracleServerUtils.getLeadingOracle(config));
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
+      curator.start();
+      System.out.println("Does the oracle exist?: " + OracleServerUtils.oracleExists(curator));
+    }
+
+    BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
+
+    Mutation mutation = new Mutation("id0001");
+    mutation.put("hero", "alias", "Batman");
+    mutation.put("hero", "name", "Bruce Wayne");
+    mutation.put("hero", "wearsCape?", "true");
+
+    writer.addMutation(mutation);
+    writer.close();
+
+    Scanner scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+
+    int count = 0;
+    for (Entry<Key, Value> entry : scan) {
+      System.out.println("Entry number " + count + " with key " + entry.getKey() + " with value "
+          + entry.getValue());
+    }
+
+    scan.close();
+
+  }
 }
