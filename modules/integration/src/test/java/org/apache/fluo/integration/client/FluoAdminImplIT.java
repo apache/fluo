@@ -205,9 +205,13 @@ public class FluoAdminImplIT extends ITBaseImpl {
     } catch (FluoException e) {
     }
 
+    // TODO assert null or something below instead of sys.out
     oserver.stop();
-
-
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
+      curator.start();
+      System.out.println("Does the oracle exist now?: " + OracleServerUtils.oracleExists(curator)
+          + " (it shouldnt)");
+    }
     // this should succeed now with the oracle server stopped
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
@@ -224,15 +228,17 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
 
     oserver.start();
-
-    System.out.println("Current leading oracle: " + OracleServerUtils.getLeadingOracle(config));
     try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
+      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
       System.out.println("Does the oracle exist?: " + OracleServerUtils.oracleExists(curator));
+      System.out.println(
+          "Does the app directory exist in ZK?: " + CuratorUtil.pathExist(curator, appRootDir));
     }
+    System.out.println("Current leading oracle: " + OracleServerUtils.getLeadingOracle(config));
 
+    // write some data into the table and test remove again
     BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
-
     Mutation mutation = new Mutation("id0001");
     mutation.put("hero", "alias", "Batman");
     mutation.put("hero", "name", "Bruce Wayne");
@@ -245,11 +251,32 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     int count = 0;
     for (Entry<Key, Value> entry : scan) {
-      System.out.println("Entry number " + count + " with key " + entry.getKey() + " with value "
+      System.out.println("Entry number " + ++count + " with key " + entry.getKey() + " with value "
           + entry.getValue());
     }
-
+    System.out.println("Found " + count + " entries in the table, expected 3");
     scan.close();
+
+    oserver.stop();
+
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove();
+      InitializationOptions opts =
+          new InitializationOptions().setClearTable(false).setClearZookeeper(false);
+      admin.initialize(opts);
+    } catch (FluoException e) {
+    }
+
+    oserver.start();
+    count = 0; // reset the count
+    scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    for (Entry<Key, Value> entry : scan) {
+      System.out.println("Entry number " + ++count + " with key " + entry.getKey() + " with value "
+          + entry.getValue());
+    }
+    scan.close();
+    System.out.println("Found " + count + " entries in the table, expect 0");
+    // TODO assert the count is zero, remove sys.out statements
 
   }
 }

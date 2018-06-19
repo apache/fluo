@@ -34,7 +34,7 @@ public class OracleServerUtils {
 
 
   /*
-   * Gets the Participant from ZooKeeper at the ZookeeperPath.ORACLE_SERVER
+   * Gets the leading Participant from ZooKeeper at the ZookeeperPath.ORACLE_SERVER
    */
   public static Participant getLeadingOracle(FluoConfiguration config) {
 
