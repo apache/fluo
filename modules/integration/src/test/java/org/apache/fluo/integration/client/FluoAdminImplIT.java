@@ -50,6 +50,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -197,25 +201,31 @@ public class FluoAdminImplIT extends ITBaseImpl {
   @Test
   public void testRemove() throws Exception {
 
+    // the oracle server is started before every test so it is running
+    // double check by making sure its leader
 
-    // oserver is started before every test so oserver is running
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
       fail("expected remove() to fail with oracle server running");
     } catch (FluoException e) {
     }
 
-    // TODO assert null or something below instead of sys.out
     oserver.stop();
+
     try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
       curator.start();
-      System.out.println("Does the oracle exist now?: " + OracleServerUtils.oracleExists(curator)
-          + " (it shouldnt)");
+      Assert.assertFalse(OracleServerUtils.oracleExists(curator));
     }
     // this should succeed now with the oracle server stopped
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
-    } catch (FluoException e) {
+    }
+
+    // verify path is not in zookeeper after remove
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
+      curator.start();
+      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
+      assertFalse(CuratorUtil.pathExist(curator, appRootDir));
     }
 
     // should succeed without clearing anything
@@ -223,19 +233,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
       InitializationOptions opts =
           new InitializationOptions().setClearTable(false).setClearZookeeper(false);
       admin.initialize(opts);
-    } catch (FluoException e) {
-
     }
 
     oserver.start();
-    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
-      curator.start();
-      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
-      System.out.println("Does the oracle exist?: " + OracleServerUtils.oracleExists(curator));
-      System.out.println(
-          "Does the app directory exist in ZK?: " + CuratorUtil.pathExist(curator, appRootDir));
-    }
-    System.out.println("Current leading oracle: " + OracleServerUtils.getLeadingOracle(config));
 
     // write some data into the table and test remove again
     BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
@@ -247,36 +247,48 @@ public class FluoAdminImplIT extends ITBaseImpl {
     writer.addMutation(mutation);
     writer.close();
 
+    // verify we wrote some table data
     Scanner scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
 
     int count = 0;
     for (Entry<Key, Value> entry : scan) {
-      System.out.println("Entry number " + ++count + " with key " + entry.getKey() + " with value "
-          + entry.getValue());
+      count++;
+      assertNotNull(entry);
     }
-    System.out.println("Found " + count + " entries in the table, expected 3");
+
+    Assert.assertEquals(count, 3);
     scan.close();
 
     oserver.stop();
 
+    // test remove again and make sure we have a clean initialization
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
+    }
+
+    // verify path is not in zookeeper after remove
+    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
+      curator.start();
+      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
+      assertFalse(CuratorUtil.pathExist(curator, appRootDir));
+    }
+
+    // should succeed without clearing anything
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
       InitializationOptions opts =
           new InitializationOptions().setClearTable(false).setClearZookeeper(false);
       admin.initialize(opts);
-    } catch (FluoException e) {
     }
 
-    oserver.start();
+    // verify the table is empty after remove
     count = 0; // reset the count
     scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+
     for (Entry<Key, Value> entry : scan) {
-      System.out.println("Entry number " + ++count + " with key " + entry.getKey() + " with value "
-          + entry.getValue());
+      assertNull(entry);
+      count++;
     }
     scan.close();
-    System.out.println("Found " + count + " entries in the table, expect 0");
-    // TODO assert the count is zero, remove sys.out statements
-
+    assertEquals(count, 0);
   }
 }

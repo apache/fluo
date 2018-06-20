@@ -118,10 +118,9 @@ public class CuratorUtil {
 
   public static boolean pathExist(CuratorFramework curator, String zPath) {
     try {
-      return curator.checkExists().forPath(zPath) != null
-          && !curator.getChildren().forPath(zPath).isEmpty();
+      return curator.checkExists().forPath(zPath) != null;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 

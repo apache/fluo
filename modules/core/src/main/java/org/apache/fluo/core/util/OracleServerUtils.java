@@ -48,17 +48,13 @@ public class OracleServerUtils {
         log.debug("Interrupted", e);
       }
 
-      LeaderLatch latch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
-
-      try {
+      try (LeaderLatch latch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER)) {
         latch.start();
         leader = latch.getLeader();
-        Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS); // Polling ZK server
-        latch.close();
+        Uninterruptibles.sleepUninterruptibly(250, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
-        log.debug("Exception in getOracle", e);
+        log.debug("Exception in getLeadingOracle", e);
       }
-
     }
     return leader;
   }
@@ -68,7 +64,7 @@ public class OracleServerUtils {
       return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
           && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 }
