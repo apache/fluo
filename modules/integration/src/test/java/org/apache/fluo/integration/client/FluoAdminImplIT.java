@@ -50,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import com.google.common.collect.Iterables;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -237,6 +239,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     oserver.start();
 
+    // TODO Use the Fluo api to read and write this data 
     // write some data into the table and test remove again
     BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
     Mutation mutation = new Mutation("id0001");
@@ -249,14 +252,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // verify we wrote some table data
     Scanner scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-
-    int count = 0;
-    for (Entry<Key, Value> entry : scan) {
-      count++;
-      assertNotNull(entry);
-    }
-
-    Assert.assertEquals(count, 3);
+    Assert.assertEquals(Iterables.size(scan), 3);
     scan.close();
 
     oserver.stop();
@@ -281,14 +277,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
 
     // verify the table is empty after remove
-    count = 0; // reset the count
     scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-
-    for (Entry<Key, Value> entry : scan) {
-      assertNull(entry);
-      count++;
-    }
+    assertEquals(Iterables.size(scan), 0);    
     scan.close();
-    assertEquals(count, 0);
+
   }
 }

@@ -15,49 +15,13 @@
 
 package org.apache.fluo.core.util;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderLatch;
-import org.apache.curator.framework.recipes.leader.Participant;
-import org.apache.curator.shaded.com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
-import org.apache.fluo.api.config.FluoConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OracleServerUtils {
 
-  private static final Logger log = LoggerFactory.getLogger(OracleServerUtils.class);
-
   private OracleServerUtils() {}
 
-
-  /*
-   * Gets the leading Participant from ZooKeeper at the ZookeeperPath.ORACLE_SERVER
-   */
-  public static Participant getLeadingOracle(FluoConfiguration config) {
-
-    Participant leader = null;
-
-    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
-      curator.start();
-      try {
-        curator.blockUntilConnected();
-      } catch (InterruptedException e) {
-        log.debug("Interrupted", e);
-      }
-
-      try (LeaderLatch latch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER)) {
-        latch.start();
-        leader = latch.getLeader();
-        Uninterruptibles.sleepUninterruptibly(250, TimeUnit.MILLISECONDS);
-      } catch (Exception e) {
-        log.debug("Exception in getLeadingOracle", e);
-      }
-    }
-    return leader;
-  }
 
   public static boolean oracleExists(CuratorFramework curator) {
     try {
