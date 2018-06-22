@@ -22,7 +22,12 @@ public class OracleServerUtils {
 
   private OracleServerUtils() {}
 
-
+  /**
+   * Checks to see if an Oracle Server exists.
+   * 
+   * @param curator It is the responsibility of the caller to ensure the curator is started
+   * @return boolean if the server exists in zookeeper
+   */
   public static boolean oracleExists(CuratorFramework curator) {
     try {
       return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null

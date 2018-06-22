@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.Connector;
@@ -26,9 +27,7 @@ import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ColumnConstants;
@@ -37,7 +36,13 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoAdmin.TableExistsException;
+import org.apache.fluo.api.client.FluoClient;
+import org.apache.fluo.api.client.FluoFactory;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
@@ -50,12 +55,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
-import com.google.common.collect.Iterables;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -206,6 +207,33 @@ public class FluoAdminImplIT extends ITBaseImpl {
     // the oracle server is started before every test so it is running
     // double check by making sure its leader
 
+    System.out.println("testRemove() has started, trying to write data");
+    // TODO Use the Fluo api to read and write this data
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      String row = "Gotham";
+      Column alias = new Column("hero", "alias");
+      Column name = new Column("hero", "name");
+      Column cape = new Column("hero", "wearsCape?");
+
+      try (Transaction tx = client.newTransaction()) {
+        // read and write some data
+        tx.set(row, alias, "Batman");
+        tx.set(row, name, "Bruce Wayne");
+        tx.set(row, cape, "true");
+        tx.commit();
+      }
+
+      try (Snapshot snapshot = client.newSnapshot()) {
+        // read some data
+        for (RowColumnValue rcval : snapshot.scanner().build()) {
+          System.out.println("Row: " + rcval.getsRow() + " Column: " + rcval.getColumn()
+              + " Value: " + rcval.getsValue());
+        }
+      }
+    }
+    System.out.println("Done checking sanity, continuing on to 'real' test");
+
+
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
       fail("expected remove() to fail with oracle server running");
@@ -239,7 +267,31 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     oserver.start();
 
-    // TODO Use the Fluo api to read and write this data 
+    // TODO Use the Fluo api to read and write this data
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      String row = "Gotham";
+      Column alias = new Column("hero", "alias");
+      Column name = new Column("hero", "name");
+      Column cape = new Column("hero", "wearsCape?");
+
+      try (Transaction tx = client.newTransaction()) {
+        // read and write some data
+        tx.set(row, alias, "Batman");
+        tx.set(row, name, "Bruce Wayne");
+        tx.set(row, cape, "true");
+        tx.commit();
+      }
+
+      try (Snapshot snapshot = client.newSnapshot()) {
+        // read some data
+
+        for (RowColumnValue rcval : snapshot.scanner().build()) {
+          System.out.println("Row: " + rcval.getsRow() + " Column: " + rcval.getsValue()
+              + "Column: " + rcval.getColumn());
+        }
+      }
+    }
+
     // write some data into the table and test remove again
     BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
     Mutation mutation = new Mutation("id0001");
@@ -278,7 +330,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
 
     // verify the table is empty after remove
     scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    assertEquals(Iterables.size(scan), 0);    
+    assertEquals(Iterables.size(scan), 0);
     scan.close();
 
   }
