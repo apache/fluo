@@ -192,30 +192,15 @@ public class FluoAdminImplIT extends ITBaseImpl {
   }
 
   @Test
-  public void testRemoveOracleRunning() {
-    try (FluoAdmin admin = new FluoAdminImpl(config)) {
-      admin.remove();
-      fail("expected remove() to fail with oracle server running");
-    } catch (Exception e) {
-    }
-  }
-
-  @Test
   public void testRemove() throws Exception {
-
-    String tablefromIT1 = this.getCurTableName();
-    String tablefromconf1 = config.getAccumuloTable();
-
-    System.out.println("IT Table: " + tablefromIT1 + " and from config: " + tablefromconf1);
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
       fail("This should fail with the oracle server running");
     } catch (FluoException e) {
-
     }
 
-    // write some data
+    // write/verify some data
     String row = "Logicians";
     Column fname = new Column("name", "first");
     Column lname = new Column("name", "last");
@@ -226,7 +211,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         tx.set(row, lname, "Godel");
         tx.commit();
       }
-      // try to read it for sanity
+      // read it for sanity
       try (Snapshot snap = client.newSnapshot()) {
         System.out.println("First name: " + snap.gets(row, fname));
         System.out.println("Last name: " + snap.gets(row, lname));
@@ -237,39 +222,19 @@ public class FluoAdminImplIT extends ITBaseImpl {
     oserver.stop();
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
-      admin.remove(); // expect to pass with oracle stopped
+      admin.remove(); // pass with oracle stopped
     }
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       InitializationOptions opts =
           new InitializationOptions().setClearTable(false).setClearZookeeper(false);
-      admin.initialize(opts); // expect pass without clearing
+      admin.initialize(opts); 
     }
 
     oserver.start();
 
-    while (!oserver.isConnected()) {
-      Thread.sleep(200);
-    }
+    // TODO fix exceptions, replace sys.out with assert
 
-    System.out.println("The oracle server is started again");
-    System.out.println("Verifying snapshot is empty now");
-
-
-    String tablefromIT2 = this.getCurTableName();
-    String tablefromconf2 = config.getAccumuloTable();
-
-    if (!tablefromconf2.equals(tablefromconf1)) {
-      System.out.println(
-          "Table from conf was originally: " + tablefromconf1 + " but now is: " + tablefromconf2);
-    }
-
-    if (!tablefromIT1.equals(tablefromIT2)) {
-      System.out.println(
-          "The ITBaseImpl table was: " + tablefromIT1 + " but the second was: " + tablefromIT2);
-    }
-
-    System.out.println("Do we make it to here?");
     // verify empty
     try (FluoClient client = FluoFactory.newClient(config)) {
       try (Snapshot snap = client.newSnapshot()) {
@@ -278,21 +243,20 @@ public class FluoAdminImplIT extends ITBaseImpl {
         System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
       }
     }
-
+    
     try (FluoClient client = FluoFactory.newClient(config)) {
+      // write data
       try (Transaction tx = client.newTransaction()) {
         tx.set(row, fname, "Stephen");
         tx.set(row, lname, "Kleene");
         tx.commit();
       }
-      // try to read it for sanity
+      // read data
       try (Snapshot snap = client.newSnapshot()) {
         System.out.println("First name: " + snap.gets(row, fname));
         System.out.println("Last name: " + snap.gets(row, lname));
         System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
       }
     }
-
   }
-
 }
