@@ -20,15 +20,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
@@ -42,12 +37,10 @@ import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.util.CuratorUtil;
-import org.apache.fluo.core.util.OracleServerUtils;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
@@ -55,8 +48,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -200,138 +191,108 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
   }
 
+  @Test
+  public void testRemoveOracleRunning() {
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove();
+      fail("expected remove() to fail with oracle server running");
+    } catch (Exception e) {
+    }
+  }
 
   @Test
   public void testRemove() throws Exception {
 
-    // the oracle server is started before every test so it is running
-    // double check by making sure its leader
+    String tablefromIT1 = this.getCurTableName();
+    String tablefromconf1 = config.getAccumuloTable();
 
-    System.out.println("testRemove() has started, trying to write data");
-    // TODO Use the Fluo api to read and write this data
-    try (FluoClient client = FluoFactory.newClient(config)) {
-      String row = "Gotham";
-      Column alias = new Column("hero", "alias");
-      Column name = new Column("hero", "name");
-      Column cape = new Column("hero", "wearsCape?");
-
-      try (Transaction tx = client.newTransaction()) {
-        // read and write some data
-        tx.set(row, alias, "Batman");
-        tx.set(row, name, "Bruce Wayne");
-        tx.set(row, cape, "true");
-        tx.commit();
-      }
-
-      try (Snapshot snapshot = client.newSnapshot()) {
-        // read some data
-        for (RowColumnValue rcval : snapshot.scanner().build()) {
-          System.out.println("Row: " + rcval.getsRow() + " Column: " + rcval.getColumn()
-              + " Value: " + rcval.getsValue());
-        }
-      }
-    }
-    System.out.println("Done checking sanity, continuing on to 'real' test");
-
+    System.out.println("IT Table: " + tablefromIT1 + " and from config: " + tablefromconf1);
 
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       admin.remove();
-      fail("expected remove() to fail with oracle server running");
+      fail("This should fail with the oracle server running");
     } catch (FluoException e) {
+
+    }
+
+    // write some data
+    String row = "Logicians";
+    Column fname = new Column("name", "first");
+    Column lname = new Column("name", "last");
+
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      try (Transaction tx = client.newTransaction()) {
+        tx.set(row, fname, "Kurt");
+        tx.set(row, lname, "Godel");
+        tx.commit();
+      }
+      // try to read it for sanity
+      try (Snapshot snap = client.newSnapshot()) {
+        System.out.println("First name: " + snap.gets(row, fname));
+        System.out.println("Last name: " + snap.gets(row, lname));
+        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
+      }
     }
 
     oserver.stop();
 
-    try (CuratorFramework curator = CuratorUtil.newAppCurator(config)) {
-      curator.start();
-      Assert.assertFalse(OracleServerUtils.oracleExists(curator));
-    }
-    // this should succeed now with the oracle server stopped
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
-      admin.remove();
+      admin.remove(); // expect to pass with oracle stopped
     }
 
-    // verify path is not in zookeeper after remove
-    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-      curator.start();
-      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
-      assertFalse(CuratorUtil.pathExist(curator, appRootDir));
-    }
-
-    // should succeed without clearing anything
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       InitializationOptions opts =
           new InitializationOptions().setClearTable(false).setClearZookeeper(false);
-      admin.initialize(opts);
+      admin.initialize(opts); // expect pass without clearing
     }
 
     oserver.start();
 
-    // TODO Use the Fluo api to read and write this data
-    try (FluoClient client = FluoFactory.newClient(config)) {
-      String row = "Gotham";
-      Column alias = new Column("hero", "alias");
-      Column name = new Column("hero", "name");
-      Column cape = new Column("hero", "wearsCape?");
+    while (!oserver.isConnected()) {
+      Thread.sleep(200);
+    }
 
+    System.out.println("The oracle server is started again");
+    System.out.println("Verifying snapshot is empty now");
+
+
+    String tablefromIT2 = this.getCurTableName();
+    String tablefromconf2 = config.getAccumuloTable();
+
+    if (!tablefromconf2.equals(tablefromconf1)) {
+      System.out.println(
+          "Table from conf was originally: " + tablefromconf1 + " but now is: " + tablefromconf2);
+    }
+
+    if (!tablefromIT1.equals(tablefromIT2)) {
+      System.out.println(
+          "The ITBaseImpl table was: " + tablefromIT1 + " but the second was: " + tablefromIT2);
+    }
+
+    System.out.println("Do we make it to here?");
+    // verify empty
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      try (Snapshot snap = client.newSnapshot()) {
+        System.out.println("First name: " + snap.gets(row, fname));
+        System.out.println("Last name: " + snap.gets(row, lname));
+        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
+      }
+    }
+
+    try (FluoClient client = FluoFactory.newClient(config)) {
       try (Transaction tx = client.newTransaction()) {
-        // read and write some data
-        tx.set(row, alias, "Batman");
-        tx.set(row, name, "Bruce Wayne");
-        tx.set(row, cape, "true");
+        tx.set(row, fname, "Stephen");
+        tx.set(row, lname, "Kleene");
         tx.commit();
       }
-
-      try (Snapshot snapshot = client.newSnapshot()) {
-        // read some data
-
-        for (RowColumnValue rcval : snapshot.scanner().build()) {
-          System.out.println("Row: " + rcval.getsRow() + " Column: " + rcval.getsValue()
-              + "Column: " + rcval.getColumn());
-        }
+      // try to read it for sanity
+      try (Snapshot snap = client.newSnapshot()) {
+        System.out.println("First name: " + snap.gets(row, fname));
+        System.out.println("Last name: " + snap.gets(row, lname));
+        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
       }
     }
 
-    // write some data into the table and test remove again
-    BatchWriter writer = conn.createBatchWriter(getCurTableName(), new BatchWriterConfig());
-    Mutation mutation = new Mutation("id0001");
-    mutation.put("hero", "alias", "Batman");
-    mutation.put("hero", "name", "Bruce Wayne");
-    mutation.put("hero", "wearsCape?", "true");
-
-    writer.addMutation(mutation);
-    writer.close();
-
-    // verify we wrote some table data
-    Scanner scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    Assert.assertEquals(Iterables.size(scan), 3);
-    scan.close();
-
-    oserver.stop();
-
-    // test remove again and make sure we have a clean initialization
-    try (FluoAdmin admin = new FluoAdminImpl(config)) {
-      admin.remove();
-    }
-
-    // verify path is not in zookeeper after remove
-    try (CuratorFramework curator = CuratorUtil.newRootFluoCurator(config)) {
-      curator.start();
-      String appRootDir = ZookeeperUtil.parseRoot(config.getAppZookeepers());
-      assertFalse(CuratorUtil.pathExist(curator, appRootDir));
-    }
-
-    // should succeed without clearing anything
-    try (FluoAdmin admin = new FluoAdminImpl(config)) {
-      InitializationOptions opts =
-          new InitializationOptions().setClearTable(false).setClearZookeeper(false);
-      admin.initialize(opts);
-    }
-
-    // verify the table is empty after remove
-    scan = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
-    assertEquals(Iterables.size(scan), 0);
-    scan.close();
-
   }
+
 }

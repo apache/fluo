@@ -17,6 +17,7 @@ package org.apache.fluo.core.util;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
+import org.apache.zookeeper.KeeperException;
 
 public class OracleServerUtils {
 
@@ -29,11 +30,17 @@ public class OracleServerUtils {
    * @return boolean if the server exists in zookeeper
    */
   public static boolean oracleExists(CuratorFramework curator) {
+    boolean exists = false;
     try {
-      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
+      exists = curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
           && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
+    } catch (Exception nne) {
+      if (nne instanceof KeeperException.NoNodeException) {
+        // you'll do nothing
+      } else {
+        throw new RuntimeException(nne);
+      }
     }
+    return exists;
   }
 }

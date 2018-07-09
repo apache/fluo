@@ -55,6 +55,7 @@ import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.observer.ObserverUtil;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.util.OracleServerUtils;
 import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -211,7 +212,7 @@ public class FluoAdminImpl implements FluoAdmin {
         "The Zookeeper connection string (set by 'fluo.connection.zookeepers') "
             + " must have a chroot suffix.");
 
-    if (oracleExists(getAppCurator())) {
+    if (OracleServerUtils.oracleExists(getAppCurator())) {
       throw new FluoException("You must stop the oracle server to remove an application");
     }
 
