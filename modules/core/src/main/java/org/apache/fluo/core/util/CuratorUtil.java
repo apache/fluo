@@ -116,20 +116,6 @@ public class CuratorUtil {
     }
   }
 
-  public static boolean pathExist(CuratorFramework curator, String zPath) {
-    boolean retval = false;
-    try {
-      retval = curator.checkExists().forPath(zPath) != null;
-    } catch (Exception nne) {
-      if (nne instanceof KeeperException.NoNodeException) {
-        // you'll do nothing
-      } else {
-        throw new RuntimeException(nne);
-      }
-    }
-    return retval;
-  }
-
   public static boolean putData(CuratorFramework curator, String zPath, byte[] data,
       NodeExistsPolicy policy) throws KeeperException, InterruptedException {
     if (policy == null) {

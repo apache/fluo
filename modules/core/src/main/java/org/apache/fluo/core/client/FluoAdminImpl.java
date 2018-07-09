@@ -213,7 +213,7 @@ public class FluoAdminImpl implements FluoAdmin {
             + " must have a chroot suffix.");
 
     if (OracleServerUtils.oracleExists(getAppCurator())) {
-      throw new FluoException("You must stop the oracle server to remove an application");
+      throw new FluoException("Must stop the oracle server to remove an application");
     }
 
     Connector conn = AccumuloUtil.getConnector(config);

@@ -40,6 +40,8 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
+import org.apache.fluo.core.impl.Environment;
+import org.apache.fluo.core.oracle.OracleServer;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
@@ -213,9 +215,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
       }
       // read it for sanity
       try (Snapshot snap = client.newSnapshot()) {
-        System.out.println("First name: " + snap.gets(row, fname));
-        System.out.println("Last name: " + snap.gets(row, lname));
-        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
+        Assert.assertEquals("Kurt", snap.gets(row, fname));
+        Assert.assertEquals("Godel", snap.gets(row, lname));
+        Assert.assertEquals(2, Iterables.size(snap.scanner().build()));
       }
     }
 
@@ -228,22 +230,21 @@ public class FluoAdminImplIT extends ITBaseImpl {
     try (FluoAdmin admin = new FluoAdminImpl(config)) {
       InitializationOptions opts =
           new InitializationOptions().setClearTable(false).setClearZookeeper(false);
-      admin.initialize(opts); 
+      admin.initialize(opts);
     }
 
-    oserver.start();
-
-    // TODO fix exceptions, replace sys.out with assert
+    // necessary workaround due to cached application id
+    Environment env2 = new Environment(config);
+    OracleServer oserver2 = new OracleServer(env2);
+    oserver2.start();
 
     // verify empty
     try (FluoClient client = FluoFactory.newClient(config)) {
       try (Snapshot snap = client.newSnapshot()) {
-        System.out.println("First name: " + snap.gets(row, fname));
-        System.out.println("Last name: " + snap.gets(row, lname));
-        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
+        Assert.assertEquals(0, Iterables.size(snap.scanner().build()));
       }
     }
-    
+
     try (FluoClient client = FluoFactory.newClient(config)) {
       // write data
       try (Transaction tx = client.newTransaction()) {
@@ -253,10 +254,14 @@ public class FluoAdminImplIT extends ITBaseImpl {
       }
       // read data
       try (Snapshot snap = client.newSnapshot()) {
-        System.out.println("First name: " + snap.gets(row, fname));
-        System.out.println("Last name: " + snap.gets(row, lname));
-        System.out.println("Iterables size: " + Iterables.size(snap.scanner().build()));
+        Assert.assertEquals("Stephen", snap.gets(row, fname));
+        Assert.assertEquals("Kleene", snap.gets(row, lname));
+        Assert.assertEquals(2, Iterables.size(snap.scanner().build()));
       }
     }
+
+    oserver2.stop();
+    env2.close();
+
   }
 }
