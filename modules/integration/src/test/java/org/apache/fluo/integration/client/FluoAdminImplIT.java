@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
 import org.apache.accumulo.core.client.ZooKeeperInstance;
@@ -30,9 +31,17 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
 import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoAdmin.TableExistsException;
+import org.apache.fluo.api.client.FluoClient;
+import org.apache.fluo.api.client.FluoFactory;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
+import org.apache.fluo.core.impl.Environment;
+import org.apache.fluo.core.oracle.OracleServer;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
@@ -184,4 +193,75 @@ public class FluoAdminImplIT extends ITBaseImpl {
     }
   }
 
+  @Test
+  public void testRemove() throws Exception {
+
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove();
+      fail("This should fail with the oracle server running");
+    } catch (FluoException e) {
+    }
+
+    // write/verify some data
+    String row = "Logicians";
+    Column fname = new Column("name", "first");
+    Column lname = new Column("name", "last");
+
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      try (Transaction tx = client.newTransaction()) {
+        tx.set(row, fname, "Kurt");
+        tx.set(row, lname, "Godel");
+        tx.commit();
+      }
+      // read it for sanity
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertEquals("Kurt", snap.gets(row, fname));
+        Assert.assertEquals("Godel", snap.gets(row, lname));
+        Assert.assertEquals(2, Iterables.size(snap.scanner().build()));
+      }
+    }
+
+    oserver.stop();
+
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      admin.remove(); // pass with oracle stopped
+    }
+
+    try (FluoAdmin admin = new FluoAdminImpl(config)) {
+      InitializationOptions opts =
+          new InitializationOptions().setClearTable(false).setClearZookeeper(false);
+      admin.initialize(opts);
+    }
+
+    // necessary workaround due to cached application id
+    Environment env2 = new Environment(config);
+    OracleServer oserver2 = new OracleServer(env2);
+    oserver2.start();
+
+    // verify empty
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertEquals(0, Iterables.size(snap.scanner().build()));
+      }
+    }
+
+    try (FluoClient client = FluoFactory.newClient(config)) {
+      // write data
+      try (Transaction tx = client.newTransaction()) {
+        tx.set(row, fname, "Stephen");
+        tx.set(row, lname, "Kleene");
+        tx.commit();
+      }
+      // read data
+      try (Snapshot snap = client.newSnapshot()) {
+        Assert.assertEquals("Stephen", snap.gets(row, fname));
+        Assert.assertEquals("Kleene", snap.gets(row, lname));
+        Assert.assertEquals(2, Iterables.size(snap.scanner().build()));
+      }
+    }
+
+    oserver2.stop();
+    env2.close();
+
+  }
 }
