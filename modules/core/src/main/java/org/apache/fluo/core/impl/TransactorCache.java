@@ -77,12 +77,9 @@ public class TransactorCache implements AutoCloseable {
   public void addTimedoutTransactor(final Long transactorId, final long lockTs,
       final Long startTime) {
     try {
-      AtomicLong cachedLockTs = timeoutCache.get(transactorId, new Callable<AtomicLong>() {
-        @Override
-        public AtomicLong call() throws Exception {
-          logTimedoutTransactor(transactorId, lockTs, startTime);
-          return new AtomicLong(lockTs);
-        }
+      AtomicLong cachedLockTs = timeoutCache.get(transactorId, () -> {
+        logTimedoutTransactor(transactorId, lockTs, startTime);
+        return new AtomicLong(lockTs);
       });
 
       long currVal = cachedLockTs.get();

@@ -157,13 +157,7 @@ public abstract class AppRunner {
     @Override
     protected void configure() {
       requestStaticInjection(clazz);
-      bind(FluoConfiguration.class).toProvider(new Provider<FluoConfiguration>() {
-        @Override
-        public FluoConfiguration get() {
-          // TODO Auto-generated method stub
-          return fluoConfig;
-        }
-      });
+      bind(FluoConfiguration.class).toProvider((Provider<FluoConfiguration>) () -> fluoConfig);
     }
   }
 

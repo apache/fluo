@@ -137,12 +137,8 @@ public interface ObserverProvider {
    * @param colRegistry register all observed columns with this consumer
    */
   default void provideColumns(BiConsumer<Column, NotificationType> colRegistry, Context ctx) {
-    Registry or = new Registry() {
-      @Override
-      public IdentityOption forColumn(Column observedColumn, NotificationType ntfyType) {
-        return new ColumnProviderRegistry(observedColumn, ntfyType, colRegistry);
-      }
-    };
+    Registry or = (observedColumn, ntfyType) -> new ColumnProviderRegistry(observedColumn, ntfyType,
+        colRegistry);
 
     provide(or, ctx);
   }

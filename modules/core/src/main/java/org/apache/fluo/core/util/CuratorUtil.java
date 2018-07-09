@@ -193,13 +193,10 @@ public class CuratorUtil {
       final String uuid = new String(uuidBytes, StandardCharsets.UTF_8);
 
       final NodeCache nodeCache = new NodeCache(curator, ZookeeperPath.CONFIG_FLUO_APPLICATION_ID);
-      nodeCache.getListenable().addListener(new NodeCacheListener() {
-        @Override
-        public void nodeChanged() throws Exception {
-          ChildData node = nodeCache.getCurrentData();
-          if (node == null || !uuid.equals(new String(node.getData(), StandardCharsets.UTF_8))) {
-            Halt.halt("Fluo Application UUID has changed or disappeared");
-          }
+      nodeCache.getListenable().addListener(() -> {
+        ChildData node = nodeCache.getCurrentData();
+        if (node == null || !uuid.equals(new String(node.getData(), StandardCharsets.UTF_8))) {
+          Halt.halt("Fluo Application UUID has changed or disappeared");
         }
       });
       nodeCache.start();

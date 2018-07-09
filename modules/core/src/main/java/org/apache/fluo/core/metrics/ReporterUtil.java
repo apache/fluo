@@ -74,16 +74,12 @@ public class ReporterUtil {
 
     log.info("Started {} metrics reporters", allReporters.size());
 
-    return new AutoCloseable() {
-
-      @Override
-      public void close() {
-        for (AutoCloseable closeable : allReporters) {
-          try {
-            closeable.close();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+    return () -> {
+      for (AutoCloseable closeable : allReporters) {
+        try {
+          closeable.close();
+        } catch (Exception e) {
+          e.printStackTrace();
         }
       }
     };

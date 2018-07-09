@@ -102,15 +102,12 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     // create a thread that will unlock column while transaction tx3 is executing
 
-    Runnable finishCommitTask = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Thread.sleep(500);
-          tx2.finishCommit(cd2, commitTs);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+    Runnable finishCommitTask = () -> {
+      try {
+        Thread.sleep(500);
+        tx2.finishCommit(cd2, commitTs);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
     };
 
