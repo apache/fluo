@@ -17,6 +17,7 @@ package org.apache.fluo.core.worker.finder.hash;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,21 +105,12 @@ public class TableRange implements Comparable<TableRange> {
     return new Range(tper, false, ter, true);
   }
 
+  private static final Comparator<TableRange> TABLE_RANGE_COMPARATOR =
+      Comparator.comparing(TableRange::getPrevEndRow, Comparator.nullsFirst(Bytes::compareTo))
+          .thenComparing(TableRange::getEndRow, Comparator.nullsLast(Bytes::compareTo));
+
   @Override
-  public int compareTo(TableRange o) {
-    if (Objects.equals(getEndRow(), o.getEndRow())) {
-      // this will catch case of both null
-      return 0;
-    }
-
-    if (getEndRow() == null) {
-      return 1;
-    }
-
-    if (o.getEndRow() == null) {
-      return -1;
-    }
-
-    return getEndRow().compareTo(o.getEndRow());
+  public int compareTo(TableRange other) {
+    return TABLE_RANGE_COMPARATOR.compare(this, other);
   }
 }
