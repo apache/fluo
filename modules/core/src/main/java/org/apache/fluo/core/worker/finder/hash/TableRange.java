@@ -106,8 +106,7 @@ public class TableRange implements Comparable<TableRange> {
   }
 
   private static final Comparator<TableRange> TABLE_RANGE_COMPARATOR =
-      Comparator.comparing(TableRange::getPrevEndRow, Comparator.nullsFirst(Bytes::compareTo))
-          .thenComparing(TableRange::getEndRow, Comparator.nullsLast(Bytes::compareTo));
+      Comparator.comparing(TableRange::getEndRow, Comparator.nullsLast(Bytes::compareTo));
 
   @Override
   public int compareTo(TableRange other) {
