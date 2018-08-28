@@ -39,7 +39,7 @@ public abstract class AbstractSnapshotBase implements SnapshotBase {
 
   /*
    * This map of String to Bytes is really only useful when user code is executing a transactions.
-   * Once a transaction is queued for commit, do not want this map to eat up memory. Thats why a
+   * Once a transaction is queued for commit, do not want this map to eat up memory. That's why a
    * weak map is used.
    * 
    * There is intentionally no reverse map from Bytes to String. Relying on two things for this.

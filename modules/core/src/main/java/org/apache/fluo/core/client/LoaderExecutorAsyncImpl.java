@@ -68,7 +68,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
         commiting.decrement();
       } else {
         // its only expected that this should be called once.. if its called multiple times in
-        // indicates an error in asyn code
+        // indicates an error in async code
         LoggerFactory.getLogger(LoaderCommitObserver.class).error("Close called twice ",
             new Exception());
       }

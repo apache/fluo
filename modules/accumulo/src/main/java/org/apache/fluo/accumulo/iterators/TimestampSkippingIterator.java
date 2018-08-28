@@ -191,7 +191,7 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
   @VisibleForTesting
   public final boolean shouldSeek() {
     /*
-     * This method is a saftey check to ensure the deleting iterator was removed. If this iterator
+     * This method is a safety check to ensure the deleting iterator was removed. If this iterator
      * was not removed for some reason, then the performance of seeking will be O(N^2). In the case
      * where its not removed, it would be better to just scan forward.
      */
@@ -202,7 +202,7 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
     if (hasSeeked) {
       // Making assumptions based on how Accumulo currently works. Currently Accumulo does not set
       // up iterators until the 1st seek. Therefore can only remove the deleting iter after the 1st
-      // seek. Also, Accumulo may switch data sources and re-setup the deleting iterator, thats why
+      // seek. Also, Accumulo may switch data sources and re-setup the deleting iterator, that's why
       // this iterator keeps trying to remove it.
       removedDeletingIterator |= removeDeletingIterator(source);
       if (!removedDeletingIterator) {

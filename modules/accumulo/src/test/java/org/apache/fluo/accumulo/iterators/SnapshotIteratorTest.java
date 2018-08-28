@@ -123,7 +123,7 @@ public class SnapshotIteratorTest {
     checkInput(input, expected, 23);
 
 
-    // test case where there is newer lock thats not invalidated by DEL_LOCK
+    // test case where there is newer lock that's not invalidated by DEL_LOCK
     input = new TestData();
     input.add("0 f q DEL_LOCK 18", "0 ABORT");
     input.add("0 f q WRITE 16", "11");
@@ -303,7 +303,7 @@ public class SnapshotIteratorTest {
     for (int i = numToWrite * 3 - 1; i > 3; i -= 3) {
       TestData output = new TestData(newSI(input, i), range);
       TestData expected = new TestData();
-      // snapshot time of commited transaction
+      // snapshot time of committed transaction
       int st = i - 2;
       int val1 = ("" + st).hashCode();
       int val2 = ("" + val1).hashCode();

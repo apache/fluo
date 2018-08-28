@@ -161,14 +161,14 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   }
 
   /**
-   * @return A read only byte buffer thats backed by the internal byte array.
+   * @return A read only byte buffer that's backed by the internal byte array.
    */
   public ByteBuffer toByteBuffer() {
     return ByteBuffer.wrap(data, offset, length).asReadOnlyBuffer();
   }
 
   /**
-   * @return An input stream thats backed by the internal byte array
+   * @return An input stream that's backed by the internal byte array
    */
   public InputStream toInputStream() {
     return new ByteArrayInputStream(data, offset, length);

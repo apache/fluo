@@ -103,7 +103,7 @@ public interface ScannerBuilder {
    *
    * @see org.apache.fluo.api.data.Span#prefix(Bytes, Column)
    * @param row restrict the scanner to data in an exact row.
-   * @param colPrefix restrict scanner to data that begins with specifiec
+   * @param colPrefix restrict scanner to data that begins with a specific
    *        {@link org.apache.fluo.api.data.Column} prefix.
    * @return self
    * @since 1.2.0
@@ -116,7 +116,7 @@ public interface ScannerBuilder {
    *
    * @see org.apache.fluo.api.data.Span#prefix(CharSequence, Column)
    * @param row restrict the scanner to data in an exact row.
-   * @param colPrefix restrict scanner to data that begins with specifiec
+   * @param colPrefix restrict scanner to data that begins with a specific
    *        {@link org.apache.fluo.api.data.Column} prefix.
    * @return self
    * @since 1.2.0

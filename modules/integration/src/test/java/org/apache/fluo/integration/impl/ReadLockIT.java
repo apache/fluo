@@ -273,7 +273,7 @@ public class ReadLockIT extends ITBaseImpl {
         try {
           addEdge(tx, enodes[0], enodes[1]);
         } catch (NullPointerException e) {
-          // TOOD remove after finding bug
+          // TODO remove after finding bug
           System.out.println(
               " en0 " + enodes[0] + " en1 " + enodes[1] + " start ts " + tx.getStartTimestamp());
           dumpRow("r:" + enodes[0], System.out::println);

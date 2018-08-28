@@ -194,7 +194,7 @@ public class FluoConfigurationImpl {
    * {@value #TRANSACTOR_MAX_CACHE_SIZE} if set, the default
    * {@value #TRANSACTOR_CACHE_TIMEOUT_DEFAULT} otherwise
    *
-   * @param conf The FluoConfiguartion
+   * @param conf The FluoConfiguration
    * @return The maximum number of entries permitted in this cache
    */
 
