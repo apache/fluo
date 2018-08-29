@@ -69,7 +69,7 @@ addToClasspath()
 }
 
 
-# This function attemps to obtain Accumulo, Hadoop, and Zookeeper jars from the
+# This function attempts to obtain Accumulo, Hadoop, and Zookeeper jars from the
 # location where those dependencies are installed on the system.
 setupClasspathFromSystem()
 {

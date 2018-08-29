@@ -305,7 +305,7 @@ public class GarbageCollectionIteratorTest {
 
     Assert.assertEquals(expected, output);
 
-    // test write that supercedes a del lock
+    // test write that supersedes a del lock
     input = new TestData();
     input.add("0 f q WRITE 22", "21");
     input.add("0 f q DEL_LOCK 19", "0 ROLLBACK");
@@ -460,7 +460,7 @@ public class GarbageCollectionIteratorTest {
     expected.add("0 h q DATA 33", "9");
     Assert.assertEquals(expected, output);
 
-    // test write that supercededs a delete... delete should not cause write to be GCed
+    // test write that supersedes a delete... delete should not cause write to be GCed
     TestData input = new TestData(inputBase);
     input.add("0 f q WRITE 60", "55");
     input.add("0 f q DATA 55", "abc");

@@ -33,7 +33,7 @@ public class FaultyConfig extends Environment {
    * not have been written.
    *
    * <p>
-   * The following code was copied from Accumulo in order to avoid depedning on accumulo test
+   * The following code was copied from Accumulo in order to avoid depending on accumulo test
    * module.
    */
   private static class FaultyConditionalWriter implements ConditionalWriter {

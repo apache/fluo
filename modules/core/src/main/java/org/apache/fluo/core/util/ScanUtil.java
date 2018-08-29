@@ -240,9 +240,9 @@ public class ScanUtil {
     HELP,
     // hex encode node ascii
     HEX,
-    // scan accumuo table directly
+    // scan accumulo table directly
     ACCUMULO,
-    // endode output as json
+    // encode output as json
     JSON,
     // scan notification
     NTFY

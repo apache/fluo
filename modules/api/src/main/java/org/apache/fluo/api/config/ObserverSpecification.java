@@ -45,8 +45,8 @@ public class ObserverSpecification {
 
   /**
    * @param className The name of a class that implements {@link Observer}
-   * @param observerConfig Per observer configuration thats specific to this observer. For
-   *        configuration thats the same across multiple observers, consider using
+   * @param observerConfig Per observer configuration that's specific to this observer. For
+   *        configuration that's the same across multiple observers, consider using
    *        {@link FluoConfiguration#getAppConfiguration()}
    */
   public ObserverSpecification(String className, SimpleConfiguration observerConfig) {
@@ -56,8 +56,8 @@ public class ObserverSpecification {
 
   /**
    * @param className The name of a class that implements {@link Observer}
-   * @param observerConfig Per observer configuration thats specific to this observer. For
-   *        configuration thats the same across multiple observers, consider using
+   * @param observerConfig Per observer configuration that's specific to this observer. For
+   *        configuration that's the same across multiple observers, consider using
    *        {@link FluoConfiguration#getAppConfiguration()}
    */
   public ObserverSpecification(String className, Map<String, String> observerConfig) {

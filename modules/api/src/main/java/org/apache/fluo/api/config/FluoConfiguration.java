@@ -797,7 +797,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   }
 
   /**
-   * Adds an {@link ObserverSpecification} to the configuration using a unique integer prefix thats
+   * Adds an {@link ObserverSpecification} to the configuration using a unique integer prefix that's
    * not currently in use.
    *
    * @deprecated since 1.1.0. Replaced by {@link #setObserverProvider(String)} and
