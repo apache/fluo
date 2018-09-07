@@ -179,7 +179,8 @@ public class ScanTask implements Runnable {
 
   private ScanCounts scan(Session session, PartitionInfo pi, Range range)
       throws TableNotFoundException {
-    Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
 
     scanner.setRange(range);
 

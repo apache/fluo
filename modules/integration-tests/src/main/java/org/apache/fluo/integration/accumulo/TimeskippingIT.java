@@ -40,9 +40,9 @@ public class TimeskippingIT extends ITBase {
   @Test
   public void testTimestampSkippingIterPerformance() throws Exception {
 
-    conn.tableOperations().create("ttsi", new NewTableConfiguration().withoutDefaultIterators());
+    aClient.tableOperations().create("ttsi", new NewTableConfiguration().withoutDefaultIterators());
 
-    BatchWriter bw = conn.createBatchWriter("ttsi", new BatchWriterConfig());
+    BatchWriter bw = aClient.createBatchWriter("ttsi", new BatchWriterConfig());
     Mutation m = new Mutation("r1");
     for (int i = 0; i < 100000; i++) {
       m.put("f1", "q1", i, "v" + i);
@@ -53,7 +53,7 @@ public class TimeskippingIT extends ITBase {
 
     long t2 = System.currentTimeMillis();
 
-    Scanner scanner = conn.createScanner("ttsi", Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner("ttsi", Authorizations.EMPTY);
     scanner.addScanIterator(new IteratorSetting(10, Skip100StampsIterator.class));
 
     Assert.assertEquals("999 1000", Iterables.getOnlyElement(scanner).getValue().toString());
@@ -63,7 +63,7 @@ public class TimeskippingIT extends ITBase {
       log.warn("Timestamp skipping iterator took longer than expected " + (t3 - t2));
     }
 
-    conn.tableOperations().flush("ttsi", null, null, true);
+    aClient.tableOperations().flush("ttsi", null, null, true);
 
     long t4 = System.currentTimeMillis();
     Assert.assertEquals("999 1000", Iterables.getOnlyElement(scanner).getValue().toString());

@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.api.data.Column;
@@ -61,8 +62,8 @@ public class StochasticBankIT extends ITBaseImpl {
   @Test
   public void testConcurrency() throws Exception {
 
-    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_MAJC_RATIO, "1");
-    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
+    aClient.tableOperations().setProperty(table, AccumuloProps.TABLE_MAJC_RATIO, "1");
+    aClient.tableOperations().setProperty(table, AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
 
     int numAccounts = 5000;
 
@@ -71,7 +72,7 @@ public class StochasticBankIT extends ITBaseImpl {
     splits.add(new Text(fmtAcct(numAccounts / 2)));
     splits.add(new Text(fmtAcct(3 * numAccounts / 4)));
 
-    conn.tableOperations().addSplits(table, splits);
+    aClient.tableOperations().addSplits(table, splits);
 
     AtomicBoolean runFlag = new AtomicBoolean(true);
 
@@ -188,23 +189,24 @@ public class StochasticBankIT extends ITBaseImpl {
       for (int i = 0; i < num; i++) {
 
         if (i == num / 2) {
-          env.getConnector().tableOperations().compact(env.getTable(), null, null, true, false);
+          env.getAccumuloClient().tableOperations().compact(env.getTable(), null, null, true,
+              false);
         }
 
         long t1 = System.currentTimeMillis();
 
         TestTransaction tx = new TestTransaction(env);
-        org.apache.accumulo.core.util.Stat stat = new org.apache.accumulo.core.util.Stat();
+        SummaryStatistics stat = new SummaryStatistics();
 
         for (RowColumnValue rcv : tx.scanner().build()) {
           int amt = Integer.parseInt(rcv.getValue().toString());
-          stat.addStat(amt);
+          stat.addValue(amt);
         }
 
         long t2 = System.currentTimeMillis();
 
         log.debug("avg : %,9.2f  min : %,6d  max : %,6d  stddev : %1.2f  rate : %,6.2f\n",
-            stat.getAverage(), stat.getMin(), stat.getMax(), stat.getStdDev(),
+            stat.getMean(), stat.getMin(), stat.getMax(), stat.getStandardDeviation(),
             numAccounts / ((t2 - t1) / 1000.0));
 
         if (stat.getSum() != numAccounts * 1000) {
@@ -213,7 +215,7 @@ public class StochasticBankIT extends ITBaseImpl {
           }
         }
 
-        Assert.assertEquals(numAccounts * 1000, stat.getSum());
+        Assert.assertEquals(numAccounts * 1000, (int) stat.getSum());
 
         lastTx = tx;
       }
@@ -253,7 +255,8 @@ public class StochasticBankIT extends ITBaseImpl {
     File tmpFile = File.createTempFile("sb_dump", ".txt");
     Writer fw = new BufferedWriter(new FileWriter(tmpFile));
 
-    Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
 
     for (String cell : Iterables.transform(scanner, FluoFormatter::toString)) {
       fw.append(cell);

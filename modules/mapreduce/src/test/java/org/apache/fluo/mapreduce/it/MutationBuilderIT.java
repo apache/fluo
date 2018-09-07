@@ -32,7 +32,7 @@ public class MutationBuilderIT extends ITBaseImpl {
     // test initializing a Fluo table by batch writing to it
 
     // use a batch writer to test this because its easier than using AccumuloOutputFormat
-    BatchWriter bw = conn.createBatchWriter(table, new BatchWriterConfig());
+    BatchWriter bw = aClient.createBatchWriter(table, new BatchWriterConfig());
     try {
 
       FluoMutationGenerator mb1 = new FluoMutationGenerator(Bytes.of("row1"));

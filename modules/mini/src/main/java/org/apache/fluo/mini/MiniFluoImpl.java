@@ -167,7 +167,8 @@ public class MiniFluoImpl implements MiniFluo {
   @Override
   public void waitForObservers() {
     try {
-      Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+      Scanner scanner =
+          env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
       Notification.configureScanner(scanner);
 
       while (true) {

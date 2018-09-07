@@ -32,7 +32,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
-import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
@@ -157,14 +157,14 @@ public class ScanUtil {
   public static void scanNotifications(ScanOpts options, FluoConfiguration sConfig, PrintStream out)
       throws IOException {
 
-    Connector conn = AccumuloUtil.getConnector(sConfig);
+    AccumuloClient client = AccumuloUtil.getClient(sConfig);
 
     Span span = getSpan(options);
     Collection<Column> columns = getColumns(options);
 
     Scanner scanner = null;
     try {
-      scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
+      scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
 
       scanner.setRange(SpanUtil.toRange(span));
 
@@ -210,13 +210,13 @@ public class ScanUtil {
 
   public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig, PrintStream out) {
 
-    Connector conn = AccumuloUtil.getConnector(sConfig);
+    AccumuloClient client = AccumuloUtil.getClient(sConfig);
 
     Span span = getSpan(options);
     Collection<Column> columns = getColumns(options);
 
     try {
-      Scanner scanner = conn.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
+      Scanner scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
       scanner.setRange(SpanUtil.toRange(span));
       for (Column col : columns) {
         if (col.isQualifierSet()) {

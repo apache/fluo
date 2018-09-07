@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -68,12 +68,12 @@ public class ITBaseImpl extends ITBase {
 
     config = new FluoConfiguration();
     config.setApplicationName("impl-test" + testCounter.getAndIncrement());
-    config.setAccumuloInstance(miniAccumulo.getInstanceName());
+    config.setAccumuloInstance(clientInfo.getInstanceName());
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloTable(table);
-    config.setAccumuloZookeepers(miniAccumulo.getZooKeepers());
-    config.setInstanceZookeepers(miniAccumulo.getZooKeepers() + "/fluo");
+    config.setAccumuloZookeepers(clientInfo.getZooKeepers());
+    config.setInstanceZookeepers(clientInfo.getZooKeepers() + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     setupObservers(config);
     config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "1000");
@@ -107,6 +107,6 @@ public class ITBaseImpl extends ITBase {
       oserver.stop();
     }
     env.close();
-    conn.tableOperations().delete(table);
+    aClient.tableOperations().delete(table);
   }
 }

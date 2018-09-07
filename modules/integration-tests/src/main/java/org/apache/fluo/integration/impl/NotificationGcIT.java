@@ -43,7 +43,8 @@ public class NotificationGcIT extends ITBaseMini {
   private static final Logger log = LoggerFactory.getLogger(NotificationGcIT.class);
 
   private static void assertRawNotifications(int expected, Environment env) throws Exception {
-    Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
     scanner.fetchColumnFamily(ByteUtil.toText(ColumnConstants.NOTIFY_CF));
     int size = Iterables.size(scanner);
     if (size != expected) {
@@ -55,7 +56,8 @@ public class NotificationGcIT extends ITBaseMini {
   }
 
   private static int countNotifications(Environment env) throws Exception {
-    Scanner scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+    Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
     Notification.configureScanner(scanner);
     return Iterables.size(scanner);
   }
@@ -100,7 +102,7 @@ public class NotificationGcIT extends ITBaseMini {
     assertRawNotifications(4, env);
     Assert.assertEquals(0, countNotifications(env));
 
-    env.getConnector().tableOperations().flush(env.getTable(), null, null, true);
+    env.getAccumuloClient().tableOperations().flush(env.getTable(), null, null, true);
 
     assertRawNotifications(0, env);
     Assert.assertEquals(0, countNotifications(env));

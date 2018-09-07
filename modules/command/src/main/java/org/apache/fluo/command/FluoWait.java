@@ -42,7 +42,7 @@ public class FluoWait {
   private static List<TableRange> getRanges(Environment env)
       throws TableNotFoundException, AccumuloSecurityException, AccumuloException {
     List<TableRange> ranges =
-        TableRange.fromTexts(env.getConnector().tableOperations().listSplits(env.getTable()));
+        TableRange.fromTexts(env.getAccumuloClient().tableOperations().listSplits(env.getTable()));
     Collections.shuffle(ranges);
     return ranges;
   }
@@ -51,7 +51,7 @@ public class FluoWait {
       throws TableNotFoundException {
     Scanner scanner = null;
     try {
-      scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
       scanner.setRange(range.getRange());
       Notification.configureScanner(scanner);
 

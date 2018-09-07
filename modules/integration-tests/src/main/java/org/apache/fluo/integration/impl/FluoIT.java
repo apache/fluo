@@ -397,7 +397,7 @@ public class FluoIT extends ITBaseImpl {
   @Test
   public void testVisibility() throws Exception {
 
-    conn.securityOperations().changeUserAuthorizations(USER, new Authorizations("A", "B", "C"));
+    aClient.securityOperations().changeUserAuthorizations(USER, new Authorizations("A", "B", "C"));
 
     env.setAuthorizations(new Authorizations("A", "B", "C"));
 

@@ -407,7 +407,7 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertNull(tx3.gets("idx:def", docUrl));
     Assert.assertEquals("3", tx3.gets("url0000", lastUpdate));
 
-    Scanner scanner = env.getConnector().createScanner(env.getTable(), Authorizations.EMPTY);
+    Scanner scanner = env.getAccumuloClient().createScanner(env.getTable(), Authorizations.EMPTY);
     Notification.configureScanner(scanner);
     Iterator<Entry<Key, Value>> iter = scanner.iterator();
     Assert.assertTrue(iter.hasNext());
@@ -469,7 +469,7 @@ public class FailureIT extends ITBaseImpl {
     BankUtil.transfer(env, "bob", "joe", 2);
     BankUtil.transfer(env, "jill", "joe", 2);
 
-    conn.tableOperations().flush(table, null, null, true);
+    aClient.tableOperations().flush(table, null, null, true);
 
     Assert.assertEquals("20", tx2.gets("joe", BALANCE));
 
@@ -523,7 +523,7 @@ public class FailureIT extends ITBaseImpl {
     }
 
     // GC iterator will clear data that tx2 wants to scan
-    conn.tableOperations().flush(table, null, null, true);
+    aClient.tableOperations().flush(table, null, null, true);
 
     // this data should have been GCed, but the problem is not detected here
     Assert.assertNull(tx2.gets("joe", BALANCE));
@@ -635,7 +635,7 @@ public class FailureIT extends ITBaseImpl {
   private boolean wasRolledBackPrimary(long startTs, String rolledBackRow)
       throws TableNotFoundException {
     boolean sawExpected = false;
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(getCurTableName(), Authorizations.EMPTY);
 
     for (Entry<Key, Value> entry : scanner) {
       long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;

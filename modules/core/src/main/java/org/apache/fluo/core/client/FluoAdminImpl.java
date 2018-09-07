@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.admin.NewTableConfiguration;
 import org.apache.accumulo.core.iterators.IteratorUtil;
@@ -117,7 +117,7 @@ public class FluoAdminImpl implements FluoAdmin {
           "Fluo application already initialized at " + config.getAppZookeepers());
     }
 
-    Connector conn = AccumuloUtil.getConnector(config);
+    AccumuloClient conn = AccumuloUtil.getClient(config);
 
     boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
     if (tableExists && !opts.getClearTable()) {
@@ -224,7 +224,7 @@ public class FluoAdminImpl implements FluoAdmin {
       throw new FluoException("Must stop the oracle server to remove an application");
     }
 
-    Connector conn = AccumuloUtil.getConnector(config);
+    AccumuloClient conn = AccumuloUtil.getClient(config);
 
     boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
     // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
@@ -252,10 +252,10 @@ public class FluoAdminImpl implements FluoAdmin {
     }
   }
 
-  private void initializeApplicationInZooKeeper(Connector conn) throws Exception {
+  private void initializeApplicationInZooKeeper(AccumuloClient client) throws Exception {
 
-    final String accumuloInstanceName = conn.getInstance().getInstanceName();
-    final String accumuloInstanceID = conn.getInstance().getInstanceID();
+    final String accumuloInstanceName = client.info().getInstanceName();
+    final String accumuloInstanceID = client.getInstanceID();
     final String fluoApplicationID = UUID.randomUUID().toString();
 
     // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)
@@ -566,7 +566,7 @@ public class FluoAdminImpl implements FluoAdmin {
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
-    Connector conn = AccumuloUtil.getConnector(config);
-    return conn.tableOperations().exists(config.getAccumuloTable());
+    AccumuloClient client = AccumuloUtil.getClient(config);
+    return client.tableOperations().exists(config.getAccumuloTable());
   }
 }

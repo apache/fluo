@@ -96,7 +96,7 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     Assert.assertTrue(job.waitForCompletion(false));
 
     // bulk import rfiles
-    conn.tableOperations().importDirectory(table, outDir.toString(), failDir.toString(), false);
+    aClient.tableOperations().importDirectory(table, outDir.toString(), failDir.toString(), false);
 
     // read and update data using transactions
     TestTransaction tx1 = new TestTransaction(env);
