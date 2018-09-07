@@ -25,8 +25,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.ACLProvider;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.NodeCache;
-import org.apache.curator.framework.recipes.cache.NodeCacheListener;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
+import org.apache.curator.framework.recipes.nodes.PersistentNode;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
@@ -161,7 +160,7 @@ public class CuratorUtil {
    * @param node Node to start
    * @param maxWaitSec Maximum time in seconds to wait
    */
-  public static void startAndWait(PersistentEphemeralNode node, int maxWaitSec) {
+  public static void startAndWait(PersistentNode node, int maxWaitSec) {
     node.start();
     int waitTime = 0;
     try {

@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -38,8 +38,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
+import org.apache.curator.framework.recipes.nodes.PersistentNode;
 import org.apache.curator.utils.ZKPaths;
 import org.apache.fluo.accumulo.iterators.NotificationHashFilter;
 import org.apache.fluo.accumulo.util.NotificationUtil;
@@ -50,6 +49,7 @@ import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.FluoThreadFactory;
+import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,7 @@ public class PartitionManager {
   public static final String ZK_FINDER_PREFIX = "f-";
 
   private final PathChildrenCache childrenCache;
-  private final PersistentEphemeralNode myESNode;
+  private final PersistentNode myESNode;
   private final int groupSize;
   private long paritionSetTime;
   private PartitionInfo partitionInfo;
@@ -279,7 +279,7 @@ public class PartitionManager {
       groupSize = env.getConfiguration().getInt(FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE,
           FluoConfigurationImpl.WORKER_PARTITION_GROUP_SIZE_DEFAULT);
 
-      myESNode = new PersistentEphemeralNode(curator, Mode.EPHEMERAL_SEQUENTIAL,
+      myESNode = new PersistentNode(curator, CreateMode.EPHEMERAL_SEQUENTIAL, false,
           ZookeeperPath.FINDERS + "/" + ZK_FINDER_PREFIX, ("" + groupSize).getBytes(UTF_8));
       myESNode.start();
       myESNode.waitForInitialCreate(1, TimeUnit.MINUTES);
