@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -18,11 +18,11 @@ package org.apache.fluo.core.impl;
 import java.io.IOException;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
-import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
+import org.apache.curator.framework.recipes.nodes.PersistentNode;
 import org.apache.fluo.accumulo.util.LongUtil;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,20 +38,20 @@ public class TransactorNode implements AutoCloseable {
 
   private static final Logger log = LoggerFactory.getLogger(TransactorNode.class);
   private Environment env;
-  private PersistentEphemeralNode node;
+  private PersistentNode node;
   private TransactorID tid;
   private TrStatus status;
 
   /**
    * Creates a transactor node using given transactor id
-   * 
+   *
    * @param env Environment
    * @param tid Transactor ID used to create node
    */
   public TransactorNode(Environment env, TransactorID tid) {
     this.env = env;
     this.tid = tid;
-    node = new PersistentEphemeralNode(env.getSharedResources().getCurator(), Mode.EPHEMERAL,
+    node = new PersistentNode(env.getSharedResources().getCurator(), CreateMode.EPHEMERAL, false,
         getNodePath(), tid.toString().getBytes());
     CuratorUtil.startAndWait(node, 10);
     status = TrStatus.OPEN;
@@ -59,7 +59,7 @@ public class TransactorNode implements AutoCloseable {
 
   /**
    * Creates a transactor node using new transactor ID
-   * 
+   *
    * @param env Environment
    */
   public TransactorNode(Environment env) {
