@@ -18,12 +18,16 @@ package org.apache.fluo.core.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map.Entry;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.AccumuloClient;
+import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
@@ -54,6 +58,26 @@ public class Environment implements AutoCloseable {
   private SimpleConfiguration appConfig;
   private String metricsReporterID;
 
+  private void ensureDeletesAreDisabled() {
+    String value = null;
+    Iterable<Entry<String, String>> props;
+    try {
+      props = client.tableOperations().getProperties(table);
+    } catch (AccumuloException | TableNotFoundException e) {
+      throw new IllegalStateException(e);
+    }
+
+    for (Entry<String, String> entry : props) {
+      if (entry.getKey().equals(AccumuloProps.TABLE_DELETE_BEHAVIOR)) {
+        value = entry.getValue();
+      }
+    }
+
+    Preconditions.checkState(AccumuloProps.TABLE_DELETE_BEHAVIOR_VALUE.equals(value),
+        "The Accumulo table %s is not configured correctly.  Please set %s=%s for this table in Accumulo.",
+        table, AccumuloProps.TABLE_DELETE_BEHAVIOR, AccumuloProps.TABLE_DELETE_BEHAVIOR_VALUE);
+  }
+
   /**
    * Constructs an environment from given FluoConfiguration
    *
@@ -64,6 +88,8 @@ public class Environment implements AutoCloseable {
     client = AccumuloUtil.getClient(config);
 
     readZookeeperConfig();
+
+    ensureDeletesAreDisabled();
 
     if (!client.info().getInstanceName().equals(accumuloInstance)) {
       throw new IllegalArgumentException("unexpected accumulo instance name "

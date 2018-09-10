@@ -191,6 +191,7 @@ public class FluoAdminImpl implements FluoAdmin {
       }
 
       ntcProps.put(AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
+      ntcProps.put(AccumuloProps.TABLE_DELETE_BEHAVIOR, AccumuloProps.TABLE_DELETE_BEHAVIOR_VALUE);
 
       NewTableConfiguration ntc = new NewTableConfiguration().withoutDefaultIterators();
 

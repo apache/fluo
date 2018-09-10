@@ -19,8 +19,9 @@ public class AccumuloProps {
 
   public static final String TABLE_BLOCKCACHE_ENABLED = "table.cache.block.enable";
   public static final String TABLE_CLASSPATH = "table.classpath.context";
+  public static final String TABLE_DELETE_BEHAVIOR = "table.delete.behavior";
+  public static final String TABLE_DELETE_BEHAVIOR_VALUE = "fail";
   public static final String TABLE_FORMATTER_CLASS = "table.formatter";
   public static final String TABLE_MAJC_RATIO = "table.compaction.major.ratio";
   public static final String VFS_CONTEXT_CLASSPATH_PROPERTY = "general.vfs.context.classpath.";
-
 }
