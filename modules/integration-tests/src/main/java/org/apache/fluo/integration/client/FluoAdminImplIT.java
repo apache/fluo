@@ -76,6 +76,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         admin.initialize(opts);
         fail("This should have failed");
       } catch (AlreadyInitializedException e) {
+        // expected
       }
 
       opts.setClearZookeeper(false).setClearTable(true);
@@ -83,6 +84,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         admin.initialize(opts);
         fail("This should have failed");
       } catch (AlreadyInitializedException e) {
+        // expected
       }
 
       opts.setClearZookeeper(true).setClearTable(false);
@@ -90,6 +92,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         admin.initialize(opts);
         fail("This should have failed");
       } catch (TableExistsException e) {
+        // expected
       }
     }
 
@@ -153,6 +156,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
         fluoAdmin.initialize(opts);
         fail("This should have failed");
       } catch (IllegalArgumentException e) {
+        // expected
       }
     }
   }
@@ -200,6 +204,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
       admin.remove();
       fail("This should fail with the oracle server running");
     } catch (FluoException e) {
+      // expected
     }
 
     // write/verify some data

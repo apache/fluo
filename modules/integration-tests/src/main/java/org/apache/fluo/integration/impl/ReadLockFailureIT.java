@@ -63,7 +63,7 @@ public class ReadLockFailureIT extends ITBaseImpl {
       tx.commit();
       Assert.fail();
     } catch (CommitException ce) {
-
+      // expected
     }
   }
 
@@ -385,7 +385,7 @@ public class ReadLockFailureIT extends ITBaseImpl {
         tx2.commit();
         Assert.fail();
       } catch (CommitException e) {
-
+        // expected
       }
     }
 

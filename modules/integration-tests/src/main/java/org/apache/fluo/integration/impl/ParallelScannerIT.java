@@ -39,7 +39,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
   @Test
   public void testRowColumn() {
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
 
     tx1.set("node1", new Column("edge", "node2"), "");
     tx1.set("node1", new Column("edge", "node3"), "");
@@ -50,7 +50,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     tx1.done();
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
     ArrayList<RowColumn> newEdges = new ArrayList<>();
 
@@ -61,7 +61,7 @@ public class ParallelScannerIT extends ITBaseImpl {
     newEdges.add(new RowColumn("node8", new Column("edge", "node3")));
     newEdges.add(new RowColumn("node5", new Column("edge", "node7")));
 
-    Map<RowColumn, String> existing = tx2.gets(newEdges);
+    final Map<RowColumn, String> existing = tx2.gets(newEdges);
 
     tx2.done();
 
@@ -77,7 +77,7 @@ public class ParallelScannerIT extends ITBaseImpl {
   public void testConcurrentParallelScan() throws Exception {
     // have one transaction lock a row/cole and another attempt to read that row/col as part of a
     // parallel scan
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
 
     tx1.set("bob9", new Column("vote", "election1"), "N");
     tx1.set("bob9", new Column("vote", "election2"), "Y");
@@ -114,7 +114,7 @@ public class ParallelScannerIT extends ITBaseImpl {
     Thread commitThread = new Thread(finishCommitTask);
     commitThread.start();
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     Column e1Col = new Column("vote", "election1");
 
@@ -143,7 +143,7 @@ public class ParallelScannerIT extends ITBaseImpl {
   private static final Column COL = new Column("7", "7");
 
   private void runParallelRecoveryTest(boolean closeTransID) throws Exception {
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
 
     tx1.set("5", COL, "3");
     tx1.set("12", COL, "10");
@@ -157,7 +157,7 @@ public class ParallelScannerIT extends ITBaseImpl {
 
     TransactorNode tNode1 = new TransactorNode(env);
 
-    TestTransaction tx2 = new TestTransaction(env, tNode1);
+    final TestTransaction tx2 = new TestTransaction(env, tNode1);
 
     tx2.set("5", COL, "7");
     tx2.set("12", COL, "14");
@@ -166,7 +166,7 @@ public class ParallelScannerIT extends ITBaseImpl {
     CommitData cd2 = tx2.createCommitData();
     Assert.assertTrue(tx2.preCommit(cd2));
 
-    TestTransaction tx3 = new TestTransaction(env, tNode1);
+    final TestTransaction tx3 = new TestTransaction(env, tNode1);
 
     tx3.set("26", COL, "28");
     tx3.set("33", COL, "35");
@@ -190,7 +190,7 @@ public class ParallelScannerIT extends ITBaseImpl {
   }
 
   private void check() throws Exception {
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
     Map<String, Map<Column, String>> votes =
         tx.gets(Arrays.asList("5", "12", "19", "26", "33", "40", "47"), Sets.newHashSet(COL));
 

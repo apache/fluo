@@ -94,7 +94,7 @@ public class FluoIT extends ITBaseImpl {
     // TX2 commits -- succeeds
     // TX1 commits -- fails
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -102,15 +102,15 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    tx = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
 
-    Assert.assertEquals("10", tx.gets("bob", BALANCE));
-    Assert.assertEquals("20", tx.gets("joe", BALANCE));
+    Assert.assertEquals("10", tx1.gets("bob", BALANCE));
+    Assert.assertEquals("20", tx1.gets("joe", BALANCE));
 
-    TestUtil.increment(tx, "bob", BALANCE, -5);
-    TestUtil.increment(tx, "joe", BALANCE, 5);
+    TestUtil.increment(tx1, "bob", BALANCE, -5);
+    TestUtil.increment(tx1, "joe", BALANCE, 5);
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
     Assert.assertEquals("10", tx2.gets("bob", BALANCE));
     Assert.assertEquals("60", tx2.gets("jill", BALANCE));
@@ -119,9 +119,9 @@ public class FluoIT extends ITBaseImpl {
     TestUtil.increment(tx2, "jill", BALANCE, 5);
 
     tx2.done();
-    assertCommitFails(tx);
+    assertCommitFails(tx1);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     Assert.assertEquals("5", tx3.gets("bob", BALANCE));
     Assert.assertEquals("20", tx3.gets("joe", BALANCE));
@@ -134,6 +134,7 @@ public class FluoIT extends ITBaseImpl {
       tx.done();
       Assert.fail();
     } catch (CommitException ce) {
+      // expected
     }
   }
 
@@ -142,6 +143,7 @@ public class FluoIT extends ITBaseImpl {
       tx.done();
       Assert.fail();
     } catch (AlreadyAcknowledgedException ce) {
+      // expected
     }
   }
 
@@ -154,7 +156,7 @@ public class FluoIT extends ITBaseImpl {
     // TX2 commits
     // TX1 reads -- should not see TX2 writes
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -163,9 +165,9 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
     TestUtil.increment(tx2, "bob", BALANCE, -5);
     TestUtil.increment(tx2, "joe", BALANCE, -5);
@@ -175,7 +177,7 @@ public class FluoIT extends ITBaseImpl {
 
     tx2.done();
 
-    TestTransaction txd = new TestTransaction(env);
+    final TestTransaction txd = new TestTransaction(env);
     txd.delete("jane", BALANCE);
     txd.done();
 
@@ -188,9 +190,9 @@ public class FluoIT extends ITBaseImpl {
 
     assertCommitFails(tx1);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
-    TestTransaction tx4 = new TestTransaction(env);
+    final TestTransaction tx4 = new TestTransaction(env);
     tx4.set("jane", BALANCE, "3");
     tx4.done();
 
@@ -200,7 +202,7 @@ public class FluoIT extends ITBaseImpl {
     Assert.assertNull(tx3.gets("jane", BALANCE));
     tx3.done();
 
-    TestTransaction tx5 = new TestTransaction(env);
+    final TestTransaction tx5 = new TestTransaction(env);
 
     Assert.assertEquals("5", tx5.gets("bob", BALANCE));
     Assert.assertEquals("15", tx5.gets("joe", BALANCE));
@@ -213,7 +215,7 @@ public class FluoIT extends ITBaseImpl {
   public void testAck() throws Exception {
     // when two transactions run against the same observed column, only one should commit
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -221,18 +223,18 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
     tx1.gets("joe", BALANCE);
     tx1.set("jill", BALANCE, "61");
 
-    TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
     tx2.gets("joe", BALANCE);
     tx2.set("bob", BALANCE, "11");
 
     tx1.done();
     assertAAck(tx2);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     Assert.assertEquals("10", tx3.gets("bob", BALANCE));
     Assert.assertEquals("20", tx3.gets("joe", BALANCE));
@@ -243,21 +245,21 @@ public class FluoIT extends ITBaseImpl {
 
     tx3.done();
 
-    TestTransaction tx4 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx4 = new TestTransaction(env, "joe", BALANCE);
     tx4.gets("joe", BALANCE);
     tx4.set("jill", BALANCE, "62");
 
-    TestTransaction tx5 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx5 = new TestTransaction(env, "joe", BALANCE);
     tx5.gets("joe", BALANCE);
     tx5.set("bob", BALANCE, "11");
 
-    TestTransaction tx7 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx7 = new TestTransaction(env, "joe", BALANCE);
 
     // make the 2nd transaction to start commit 1st
     tx5.done();
     assertAAck(tx4);
 
-    TestTransaction tx6 = new TestTransaction(env);
+    final TestTransaction tx6 = new TestTransaction(env);
 
     Assert.assertEquals("11", tx6.gets("bob", BALANCE));
     Assert.assertEquals("21", tx6.gets("joe", BALANCE));
@@ -270,7 +272,7 @@ public class FluoIT extends ITBaseImpl {
 
     assertAAck(tx7);
 
-    TestTransaction tx8 = new TestTransaction(env);
+    final TestTransaction tx8 = new TestTransaction(env);
 
     Assert.assertEquals("11", tx8.gets("bob", BALANCE));
     Assert.assertEquals("21", tx8.gets("joe", BALANCE));
@@ -280,9 +282,9 @@ public class FluoIT extends ITBaseImpl {
 
   @Test
   public void testAck2() throws Exception {
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
-    Column addrCol = new Column("account", "addr");
+    final Column addrCol = new Column("account", "addr");
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -290,9 +292,9 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx1 = new TestTransaction(env, "bob", BALANCE);
-    TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE);
-    TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE);
+    final TestTransaction tx1 = new TestTransaction(env, "bob", BALANCE);
+    final TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE);
+    final TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE);
 
     tx1.gets("bob", BALANCE);
     tx2.gets("bob", BALANCE);
@@ -321,7 +323,7 @@ public class FluoIT extends ITBaseImpl {
 
   @Test
   public void testAck3() throws Exception {
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -332,7 +334,7 @@ public class FluoIT extends ITBaseImpl {
     long notTS1 = TestTransaction.getNotificationTS(env, "bob", BALANCE);
 
     // this transaction should create a second notification
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
     tx1.set("bob", BALANCE, "11");
     tx1.done();
 
@@ -344,16 +346,16 @@ public class FluoIT extends ITBaseImpl {
     // should execute
     // google paper calls this message collapsing
 
-    TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE, notTS1);
+    final TestTransaction tx3 = new TestTransaction(env, "bob", BALANCE, notTS1);
 
-    TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE, notTS1);
+    final TestTransaction tx2 = new TestTransaction(env, "bob", BALANCE, notTS1);
     Assert.assertEquals("11", tx2.gets("bob", BALANCE));
     tx2.done();
 
     Assert.assertEquals("11", tx3.gets("bob", BALANCE));
     assertAAck(tx3);
 
-    TestTransaction tx4 = new TestTransaction(env, "bob", BALANCE, notTS2);
+    final TestTransaction tx4 = new TestTransaction(env, "bob", BALANCE, notTS2);
     Assert.assertEquals("11", tx4.gets("bob", BALANCE));
     assertAAck(tx4);
   }
@@ -363,7 +365,7 @@ public class FluoIT extends ITBaseImpl {
     // setting an acknowledged observed column in a transaction should not affect acknowledged
     // status
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", BALANCE, "10");
     tx.set("joe", BALANCE, "20");
@@ -371,19 +373,19 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx2 = new TestTransaction(env, "joe", BALANCE);
     tx2.gets("joe", BALANCE);
     tx2.set("joe", BALANCE, "21");
     tx2.set("bob", BALANCE, "11");
 
-    TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
+    final TestTransaction tx1 = new TestTransaction(env, "joe", BALANCE);
     tx1.gets("joe", BALANCE);
     tx1.set("jill", BALANCE, "61");
 
     tx1.done();
     assertAAck(tx2);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     Assert.assertEquals("10", tx3.gets("bob", BALANCE));
     Assert.assertEquals("20", tx3.gets("joe", BALANCE));
@@ -401,7 +403,7 @@ public class FluoIT extends ITBaseImpl {
 
     Column balanceCol = new Column("account", "balance", "A|B");
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     tx.set("bob", balanceCol, "10");
     tx.set("joe", balanceCol, "20");
@@ -413,7 +415,7 @@ public class FluoIT extends ITBaseImpl {
     Environment env2 = new Environment(fc);
     env2.setAuthorizations(new Authorizations("B"));
 
-    TestTransaction tx2 = new TestTransaction(env2);
+    final TestTransaction tx2 = new TestTransaction(env2);
     Assert.assertEquals("10", tx2.gets("bob", balanceCol));
     Assert.assertEquals("20", tx2.gets("joe", balanceCol));
     Assert.assertEquals("60", tx2.gets("jill", balanceCol));
@@ -423,7 +425,7 @@ public class FluoIT extends ITBaseImpl {
     Environment env3 = new Environment(fc);
     env3.setAuthorizations(new Authorizations("C"));
 
-    TestTransaction tx3 = new TestTransaction(env3);
+    final TestTransaction tx3 = new TestTransaction(env3);
     Assert.assertNull(tx3.gets("bob", balanceCol));
     Assert.assertNull(tx3.gets("joe", balanceCol));
     Assert.assertNull(tx3.gets("jill", balanceCol));
@@ -436,7 +438,7 @@ public class FluoIT extends ITBaseImpl {
     // setting an acknowledged observed column in a transaction should not affect acknowledged
     // status
 
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
     tx.set("d00001", new Column("data", "content"),
         "blah blah, blah http://a.com. Blah blah http://b.com.  Blah http://c.com");
     tx.set("d00001", new Column("outlink", "http://a.com"), "");
@@ -451,9 +453,9 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     tx3.set("d00001", new Column("data", "content"),
         "blah blah, blah http://a.com. Blah http://c.com .  Blah http://z.com");
@@ -480,7 +482,7 @@ public class FluoIT extends ITBaseImpl {
 
     Assert.assertEquals(expected, columns);
 
-    TestTransaction tx4 = new TestTransaction(env);
+    final TestTransaction tx4 = new TestTransaction(env);
     columns.clear();
     cellScanner = tx4.scanner().over("d00001").fetch(new Column("outlink")).build();
     for (RowColumnValue rcv : cellScanner) {
@@ -495,7 +497,7 @@ public class FluoIT extends ITBaseImpl {
 
   @Test
   public void testStringMethods() {
-    TestTransaction tx = new TestTransaction(env);
+    final TestTransaction tx = new TestTransaction(env);
 
     Column ccol = new Column("doc", "content");
     Column tcol = new Column("doc", "time");
@@ -509,7 +511,7 @@ public class FluoIT extends ITBaseImpl {
 
     tx.done();
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
     Map<String, Map<Column, String>> map1 =
         tx2.gets(Arrays.asList("d:0001", "d:0002"), Collections.singleton(ccol));
@@ -529,7 +531,7 @@ public class FluoIT extends ITBaseImpl {
 
     tx2.done();
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
 
     Assert.assertNull(tx3.gets("d:0003", ccol));
     Assert.assertNull(tx3.gets("d:0003", tcol));

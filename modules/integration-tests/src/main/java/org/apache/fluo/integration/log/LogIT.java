@@ -78,16 +78,16 @@ public class LogIT extends ITBaseMini {
 
   static class TriggerLoader implements Loader {
 
-    int r;
+    int row;
 
     TriggerLoader(int row) {
-      r = row;
+      this.row = row;
     }
 
     @Override
     public void load(TransactionBase tx, Context context) throws Exception {
-      tx.set(r + "", STAT_COUNT, "1");
-      tx.setWeakNotification(r + "", STAT_COUNT);
+      tx.set(row + "", STAT_COUNT, "1");
+      tx.setWeakNotification(row + "", STAT_COUNT);
     }
   }
 
@@ -222,16 +222,21 @@ public class LogIT extends ITBaseMini {
     String logMsgs = writer.toString();
     logMsgs = logMsgs.replace('\n', ' ');
 
-    Assert.assertTrue(logMsgs.matches(
-        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TriggerLoader.*"));
-    Assert.assertTrue(logMsgs.matches(
-        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: SimpleLoader.*"));
-    Assert.assertTrue(logMsgs.matches(
-        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: SimpleLoader.*"));
-    Assert.assertTrue(logMsgs.matches(
-        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ committed: true class: TestObserver.*"));
-    Assert.assertTrue(logMsgs.matches(
-        ".*txid: \\d+ thread : \\d+ time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ committed: false class: TestObserver.*"));
+    Assert.assertTrue(logMsgs.matches(".*txid: \\d+ thread : \\d+ "
+        + "time: \\d+ \\(\\d+ \\d+\\) #ret: 0 #set: 1 #collisions: 0 waitTime: \\d+ "
+        + "committed: true class: TriggerLoader.*"));
+    Assert.assertTrue(logMsgs.matches(".*txid: \\d+ thread : \\d+ "
+        + "time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 0 waitTime: \\d+ "
+        + "committed: true class: SimpleLoader.*"));
+    Assert.assertTrue(logMsgs.matches(".*txid: \\d+ thread : \\d+ "
+        + "time: \\d+ \\(\\d+ \\d+\\) #ret: 1 #set: 1 #collisions: 1 waitTime: \\d+ "
+        + "committed: false class: SimpleLoader.*"));
+    Assert.assertTrue(logMsgs.matches(".*txid: \\d+ thread : \\d+ "
+        + "time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 0 waitTime: \\d+ "
+        + "committed: true class: TestObserver.*"));
+    Assert.assertTrue(logMsgs.matches(".*txid: \\d+ thread : \\d+ "
+        + "time: \\d+ \\(\\d+ \\d+\\) #ret: 2 #set: 1 #collisions: 1 waitTime: \\d+ "
+        + "committed: false class: TestObserver.*"));
   }
 
   @Test
@@ -364,15 +369,15 @@ public class LogIT extends ITBaseMini {
       logger.setLevel(level);
     }
 
-    String origLogMsgs = writer.toString();
-    String logMsgs = origLogMsgs.replace('\n', ' ');
-
     String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
     pattern += ".*txid: \\1 \\Qget([r1 f1 q1 , r2 f1 q2 ]) -> [r2 f1 q2 =v4, r1 f1 q1 =v1]\\E";
     pattern += ".*txid: \\1 \\Qget([r1, r2], [f1 q1 ]) -> [r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
     pattern += ".*txid: \\1 \\Qget(r1, [f1 q1 , f1 q2 ]) -> [f1 q1 =v1, f1 q2 =v2]\\E";
     pattern += ".*txid: \\1 \\Qget(r1, f1 q1 ) -> v1\\E";
     pattern += ".*txid: \\1 close\\(\\).*";
+
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
     Assert.assertTrue(logMsgs.matches(pattern));
   }
 
@@ -418,9 +423,6 @@ public class LogIT extends ITBaseMini {
 
       miniFluo.waitForObservers();
 
-      String origLogMsgs = writer.toString();
-      String logMsgs = origLogMsgs.replace('\n', ' ');
-
       String pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
       pattern += ".*txid: \\1 class: org.apache.fluo.integration.log.LogIT\\$BinaryLoader1";
       pattern += ".*txid: \\1 \\Qdelete(r\\x051, c\\x021 c\\xf51 )\\E";
@@ -433,21 +435,23 @@ public class LogIT extends ITBaseMini {
       pattern += ".*txid: \\1 \\QsetWeakNotification(r\\x062, c\\x092 c\\xe52 )\\E";
       pattern += ".*txid: \\1 \\Qcommit()\\E -> SUCCESSFUL commitTs: \\d+";
       pattern += ".*";
+
+      String origLogMsgs = writer.toString();
+      String logMsgs = origLogMsgs.replace('\n', ' ');
       Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
       waitForClose(writer, pattern);
 
-      String v1 = "\\Qr\\x051=[c\\x092 c\\xe52 =v\\x992]\\E";
-      String v2 = "\\Qr\\x062=[c\\x092 c\\xe52 =v\\xd91]\\E";
+      final String v1 = "\\Qr\\x051=[c\\x092 c\\xe52 =v\\x992]\\E";
+      final String v2 = "\\Qr\\x062=[c\\x092 c\\xe52 =v\\xd91]\\E";
 
       pattern = ".*txid: (\\d+) begin\\(\\) thread: \\d+";
       pattern += ".*txid: \\1 \\Qtrigger: r\\x062 c\\x092 c\\xe52  4\\E";
       pattern += ".*txid: \\1 \\Qclass: org.apache.fluo.integration.log.LogIT$BinaryObserver\\E";
       pattern += ".*txid: \\1 \\Qget(r\\x051, c\\x092 c\\xe52 ) -> v\\x992\\E";
-      pattern +=
-          ".*txid: \\1 \\Qget(r\\x062, [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> [c\\x092 c\\xe52 =v\\xd91]\\E";
-      pattern +=
-          ".*txid: \\1 \\Qget([r\\x051, r\\x062], [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> [\\E("
-              + v1 + "|" + v2 + ")\\, (" + v1 + "|" + v2 + ")\\]";
+      pattern += ".*txid: \\1 \\Qget(r\\x062, [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> "
+          + "[c\\x092 c\\xe52 =v\\xd91]\\E";
+      pattern += ".*txid: \\1 \\Qget([r\\x051, r\\x062], [c\\x021 c\\xf51 , c\\x092 c\\xe52 ]) -> "
+          + "[\\E(" + v1 + "|" + v2 + ")\\, (" + v1 + "|" + v2 + ")\\]";
       pattern += ".*txid: \\1 \\Qcommit() -> SUCCESSFUL commitTs: -1\\E";
       pattern += ".*";
       Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
@@ -545,50 +549,48 @@ public class LogIT extends ITBaseMini {
       logger.setLevel(level);
     }
 
-    String origLogMsgs = writer.toString();
-    String logMsgs = origLogMsgs.replace('\n', ' ');
-
     String pattern = "";
-
     pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
     pattern +=
-        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([]).build()\\E";
+        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf))" + ".fetch([]).build()\\E";
     pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r1 f1 q2  v2\\E";
     pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r2 f1 q1  v3\\E";
     pattern += ".*txid: \\1 scanId: \\2 \\Qnext()-> r2 f1 q2  v4\\E";
-    pattern +=
-        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([]).build()\\E";
+    pattern += ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   ))"
+        + ".fetch([]).build()\\E";
     pattern += ".*txid: \\1 scanId: \\3 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\1 scanId: \\3 \\Qnext()-> r1 f1 q2  v2\\E";
-    pattern +=
-        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([f1 q1 ]).build()\\E";
+    pattern += ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   ))"
+        + ".fetch([f1 q1 ]).build()\\E";
     pattern += ".*txid: \\1 scanId: \\4 \\Qnext()-> r1 f1 q1  v1\\E";
-    pattern +=
-        ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([f1 q1 ]).build()\\E";
+    pattern += ".*txid: \\1 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf))"
+        + ".fetch([f1 q1 ]).build()\\E";
     pattern += ".*txid: \\1 scanId: \\5 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\1 scanId: \\5 \\Qnext()-> r2 f1 q1  v3\\E";
     pattern += ".*txid: \\1 \\Qclose()\\E";
     pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
-    pattern +=
-        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf))"
+        + ".fetch([]).byRow().build()\\E";
     pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r1 f1 q2  v2\\E";
     pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r2 f1 q1  v3\\E";
     pattern += ".*txid: \\6 scanId: \\7 \\Qnext()-> r2 f1 q2  v4\\E";
-    pattern +=
-        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   ))"
+        + ".fetch([]).byRow().build()\\E";
     pattern += ".*txid: \\6 scanId: \\8 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\6 scanId: \\8 \\Qnext()-> r1 f1 q2  v2\\E";
-    pattern +=
-        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   )).fetch([f1 q1 ]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over([r1   ,r1\\x00   ))"
+        + ".fetch([f1 q1 ]).byRow().build()\\E";
     pattern += ".*txid: \\6 scanId: \\9 \\Qnext()-> r1 f1 q1  v1\\E";
-    pattern +=
-        ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf)).fetch([f1 q1 ]).byRow().build()\\E";
+    pattern += ".*txid: \\6 scanId: ([0-9a-f]+) \\Qscanner().over((-inf,+inf))"
+        + ".fetch([f1 q1 ]).byRow().build()\\E";
     pattern += ".*txid: \\6 scanId: \\10 \\Qnext()-> r1 f1 q1  v1\\E";
     pattern += ".*txid: \\6 scanId: \\10 \\Qnext()-> r2 f1 q1  v3\\E";
     pattern += ".*txid: \\6 \\Qclose()\\E.*";
 
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
     Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
 
   }
@@ -642,22 +644,20 @@ public class LogIT extends ITBaseMini {
       logger.setLevel(level);
     }
 
-    String origLogMsgs = writer.toString();
-    String logMsgs = origLogMsgs.replace('\n', ' ');
-
     String pattern = "";
-
     pattern += ".*txid: (\\d+) begin\\(\\) thread: \\d+";
     pattern += ".*txid: \\1 \\QwithReadLock().get(r1, f1 q1 ) -> v1\\E";
     pattern +=
         ".*txid: \\1 \\QwithReadLock().get(r2, [f1 q1 , f1 q2 ]) -> [f1 q1 =v3, f1 q2 =v4]\\E";
     pattern += ".*txid: \\1 \\QwithReadLock().get([r1 f1 q2 ]) -> [r1 f1 q2 =v2]\\E";
-    pattern +=
-        ".*txid: \\1 \\QwithReadLock().get([r1, r2], [f1 q1 ]) -> [r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
+    pattern += ".*txid: \\1 \\QwithReadLock().get([r1, r2], [f1 q1 ]) -> "
+        + "[r1=[f1 q1 =v1], r2=[f1 q1 =v3]]\\E";
     pattern += ".*txid: \\1 \\Qset(r3, f1 q1 , 345)\\E";
     pattern += ".*txid: \\1 \\Qcommit()\\E -> SUCCESSFUL commitTs: \\d+";
     pattern += ".*txid: \\1 \\Qclose()\\E.*";
 
+    String origLogMsgs = writer.toString();
+    String logMsgs = origLogMsgs.replace('\n', ' ');
     Assert.assertTrue(origLogMsgs, logMsgs.matches(pattern));
   }
 }

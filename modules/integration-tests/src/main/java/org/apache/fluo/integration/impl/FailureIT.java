@@ -81,15 +81,15 @@ public class FailureIT extends ITBaseImpl {
 
   @Test
   public void testRollbackMany() throws Exception {
-    testRollbackMany(true);
+    testRollbackManyImpl(true);
   }
 
   @Test
   public void testRollbackManyTimeout() throws Exception {
-    testRollbackMany(false);
+    testRollbackManyImpl(false);
   }
 
-  private void testRollbackMany(boolean killTransactor) throws Exception {
+  private void testRollbackManyImpl(boolean killTransactor) throws Exception {
 
     // test writing lots of columns that need to be rolled back
 
@@ -146,15 +146,15 @@ public class FailureIT extends ITBaseImpl {
 
   @Test
   public void testRollforwardMany() throws Exception {
-    testRollforwardMany(true);
+    testRollforwardManyImpl(true);
   }
 
   @Test
   public void testRollforwardManyTimeout() throws Exception {
-    testRollforwardMany(false);
+    testRollforwardManyImpl(false);
   }
 
-  private void testRollforwardMany(boolean killTransactor) throws Exception {
+  private void testRollforwardManyImpl(boolean killTransactor) throws Exception {
     // test writing lots of columns that need to be rolled forward
 
     Column col1 = new Column("fam1", "q1");
@@ -601,8 +601,7 @@ public class FailureIT extends ITBaseImpl {
 
     tx1.done();
 
-
-    TestTransaction tx2 = new TestTransaction(env, "jill", BALANCE, 1);
+    final TestTransaction tx2 = new TestTransaction(env, "jill", BALANCE, 1);
 
     TestTransaction tx3 = new TestTransaction(env);
     TestUtil.increment(tx3, "bob", BALANCE, 5);

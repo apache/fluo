@@ -58,10 +58,11 @@ public class FaultyConfig extends Environment {
 
       while (mutations.hasNext()) {
         ConditionalMutation cm = mutations.next();
-        if (rand.nextDouble() <= up && rand.nextDouble() > wp)
+        if (rand.nextDouble() <= up && rand.nextDouble() > wp) {
           resultList.add(new Result(Status.UNKNOWN, cm, null));
-        else
+        } else {
           writes.add(cm);
+        }
       }
 
       if (writes.size() > 0) {
@@ -70,8 +71,9 @@ public class FaultyConfig extends Environment {
         while (results.hasNext()) {
           Result result = results.next();
 
-          if (rand.nextDouble() <= up && rand.nextDouble() <= wp)
+          if (rand.nextDouble() <= up && rand.nextDouble() <= wp) {
             result = new Result(Status.UNKNOWN, result.getMutation(), result.getTabletServer());
+          }
           resultList.add(result);
         }
       }

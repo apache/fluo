@@ -62,7 +62,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   public void testVerifyAfterGC() throws Exception {
 
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
     BankUtil.setBalance(tx1, "bob", 10);
     BankUtil.setBalance(tx1, "joe", 20);
     BankUtil.setBalance(tx1, "jill", 60);
@@ -73,7 +73,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     BankUtil.transfer(env, "bob", "joe", 2);
     BankUtil.transfer(env, "jill", "joe", 2);
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
     waitForGcTime(tx2.getStartTimestamp());
 
     long oldestTs = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
@@ -84,7 +84,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
     verify(oldestTs);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
     Assert.assertEquals(9, BankUtil.getBalance(tx3, "bob"));
     Assert.assertEquals(22, BankUtil.getBalance(tx3, "joe"));
     Assert.assertEquals(59, BankUtil.getBalance(tx3, "jill"));
@@ -97,17 +97,17 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
     final Column docUri = new Column("doc", "uri");
 
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
     tx1.set("001", docUri, "file:///abc.txt");
     tx1.done();
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
     tx3.delete("001", docUri);
     tx3.done();
 
-    TestTransaction tx4 = new TestTransaction(env);
+    final TestTransaction tx4 = new TestTransaction(env);
 
     waitForGcTime(tx2.getStartTimestamp());
 
@@ -138,7 +138,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Column col2 = new Column("fam1", "q2");
 
     TransactorNode t2 = new TransactorNode(env);
-    TestTransaction tx2 = new TestTransaction(env, t2);
+    final TestTransaction tx2 = new TestTransaction(env, t2);
 
     for (int r = 0; r < 10; r++) {
       tx2.set(r + "", col1, "1" + r + "0");
@@ -151,7 +151,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     t2.close();
 
     // rollback data
-    TestTransaction tx3 = new TestTransaction(env, t2);
+    final TestTransaction tx3 = new TestTransaction(env, t2);
     for (int r = 0; r < 10; r++) {
       tx3.gets(r + "", col1);
       tx3.gets(r + "", col2);
@@ -187,7 +187,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
     final Column altIdCol = new Column("info", "altId");
 
-    TestTransaction tx1 = new TestTransaction(env);
+    final TestTransaction tx1 = new TestTransaction(env);
     for (int i = 0; i < 10; i++) {
       tx1.set(String.format("n:%03d", i), altIdCol, "" + (19 * (1 + i)));
     }
@@ -197,7 +197,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     for (int i = 0; i < 50; i++) {
       String row = String.format("n:%03d", i % 10);
 
-      TestTransaction tx = new TestTransaction(env);
+      final TestTransaction tx = new TestTransaction(env);
       String altId = tx.withReadLock().gets(row, altIdCol);
 
       increment(tx, "a:" + altId, new Column("count", row));
@@ -208,7 +208,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(50, countInTable("-DEL_RLOCK"));
     Assert.assertEquals(50, countInTable("-RLOCK"));
 
-    TestTransaction tx2 = new TestTransaction(env);
+    final TestTransaction tx2 = new TestTransaction(env);
     for (int i = 0; i < 10; i++) {
       String row = String.format("n:%03d", i);
       String newAltId = (13 * (i + 1)) + "";
@@ -233,7 +233,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     for (int i = 0; i < 50; i++) {
       String row = String.format("n:%03d", i % 10);
 
-      TestTransaction tx = new TestTransaction(env);
+      final TestTransaction tx = new TestTransaction(env);
       String altId = tx.withReadLock().gets(row, altIdCol);
 
       increment(tx, "a:" + altId, new Column("count", row));
@@ -241,7 +241,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
       tx.done();
     }
 
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
     for (int i = 0; i < 10; i++) {
       String row = String.format("n:%03d", i);
       String currAltId = tx3.gets(row, altIdCol);
@@ -274,7 +274,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
   @Test
   public void testGetOldestTimestamp() throws Exception {
     // we are expecting an error in this test
-    Level curLevel = Logger.getLogger(ZookeeperUtil.class).getLevel();
+    final Level curLevel = Logger.getLogger(ZookeeperUtil.class).getLevel();
     Logger.getLogger(ZookeeperUtil.class).setLevel(Level.FATAL);
 
     // verify that oracle initial current ts

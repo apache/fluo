@@ -90,7 +90,7 @@ public class WorkerIT extends ITBaseMini {
   @Test
   public void test1() throws Exception {
 
-    Environment env = new Environment(config);
+    final Environment env = new Environment(config);
 
     addLink("N0003", "N0040");
     addLink("N0003", "N0020");
@@ -98,7 +98,7 @@ public class WorkerIT extends ITBaseMini {
     miniFluo.waitForObservers();
 
     // verify observer updated degree index
-    TestTransaction tx3 = new TestTransaction(env);
+    final TestTransaction tx3 = new TestTransaction(env);
     Assert.assertEquals("2", tx3.gets("N0003", DEGREE));
     Assert.assertEquals("", tx3.gets("IDEG2", new Column("node", "N0003")));
 
@@ -111,18 +111,18 @@ public class WorkerIT extends ITBaseMini {
 
     // verify observer updated degree index. Should have deleted old index entry
     // and added a new one
-    TestTransaction tx4 = new TestTransaction(env);
+    final TestTransaction tx4 = new TestTransaction(env);
     Assert.assertEquals("3", tx4.gets("N0003", DEGREE));
     Assert.assertNull("", tx4.gets("IDEG2", new Column("node", "N0003")));
     Assert.assertEquals("", tx4.gets("IDEG3", new Column("node", "N0003")));
 
     // test rollback
-    TestTransaction tx5 = new TestTransaction(env);
+    final TestTransaction tx5 = new TestTransaction(env);
     tx5.set("N0003", new Column("link", "N0030"), "");
     tx5.set("N0003", LAST_UPDATE, System.currentTimeMillis() + "");
     tx5.done();
 
-    TestTransaction tx6 = new TestTransaction(env);
+    final TestTransaction tx6 = new TestTransaction(env);
     tx6.set("N0003", new Column("link", "N0050"), "");
     tx6.set("N0003", LAST_UPDATE, System.currentTimeMillis() + "");
     CommitData cd = tx6.createCommitData();
@@ -130,7 +130,7 @@ public class WorkerIT extends ITBaseMini {
 
     miniFluo.waitForObservers();
 
-    TestTransaction tx7 = new TestTransaction(env);
+    final TestTransaction tx7 = new TestTransaction(env);
     Assert.assertEquals("4", tx7.gets("N0003", DEGREE));
     Assert.assertNull("", tx7.gets("IDEG3", new Column("node", "N0003")));
     Assert.assertEquals("", tx7.gets("IDEG4", new Column("node", "N0003")));
