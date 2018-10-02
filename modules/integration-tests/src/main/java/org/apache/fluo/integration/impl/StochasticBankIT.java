@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.fluo.accumulo.format.FluoFormatter;
+import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.exceptions.CommitException;
@@ -60,8 +61,8 @@ public class StochasticBankIT extends ITBaseImpl {
   @Test
   public void testConcurrency() throws Exception {
 
-    conn.tableOperations().setProperty(table, "table.compaction.major.ratio", "1");
-    conn.tableOperations().setProperty(table, "table.cache.block.enable", "true");
+    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_MAJC_RATIO, "1");
+    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
 
     int numAccounts = 5000;
 
