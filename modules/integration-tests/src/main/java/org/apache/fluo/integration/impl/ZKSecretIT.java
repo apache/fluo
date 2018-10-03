@@ -132,12 +132,14 @@ public class ZKSecretIT extends ITBaseMini {
       zk.delete(ZookeeperPath.ORACLE_GC_TIMESTAMP, -1);
       Assert.fail();
     } catch (NoAuthException nae) {
+      // expected
     }
 
     try {
       zk.setData(ZookeeperPath.ORACLE_GC_TIMESTAMP, "foo".getBytes(), -1);
       Assert.fail();
     } catch (NoAuthException nae) {
+      // expected
     }
 
     // try accessing a few random nodes in ZK... All should fail.
@@ -148,23 +150,28 @@ public class ZKSecretIT extends ITBaseMini {
         zk.getData(path, false, null);
         Assert.fail();
       } catch (NoAuthException nae) {
+        // expected
       }
 
       try {
         zk.getChildren(path, false);
+        Assert.fail();
       } catch (NoAuthException nae) {
+        // expected
       }
 
       try {
         zk.delete(path, -1);
         Assert.fail();
       } catch (NoAuthException nae) {
+        // expected
       }
 
       try {
         zk.setData(path, "foo".getBytes(), -1);
         Assert.fail();
       } catch (NoAuthException nae) {
+        // expected
       }
     }
 

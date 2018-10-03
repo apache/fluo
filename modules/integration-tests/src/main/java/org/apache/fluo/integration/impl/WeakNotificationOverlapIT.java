@@ -75,14 +75,14 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // this test ensures that processing of weak notification deletes based on startTs and not
     // commitTs
 
-    TestTransaction ttx1 = new TestTransaction(env);
+    final TestTransaction ttx1 = new TestTransaction(env);
     TestUtil.increment(ttx1, "1", STAT_TOTAL, 1);
     ttx1.setWeakNotification("1", STAT_CHANGED);
     ttx1.done();
 
-    TestTransaction ttx2 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx2 = new TestTransaction(env, "1", STAT_CHANGED);
 
-    TestTransaction ttx3 = new TestTransaction(env);
+    final TestTransaction ttx3 = new TestTransaction(env);
     TestUtil.increment(ttx3, "1", STAT_TOTAL, 1);
     ttx3.setWeakNotification("1", STAT_CHANGED);
     ttx3.done();
@@ -93,26 +93,26 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // should not delete notification created by ttx3
     ttx2.done();
 
-    TestTransaction snap1 = new TestTransaction(env);
+    final TestTransaction snap1 = new TestTransaction(env);
     Assert.assertEquals("1", snap1.gets("all", STAT_TOTAL));
     snap1.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
     TOTAL_OBSERVER.process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 
     Assert.assertEquals(0, countNotifications());
 
-    TestTransaction snap2 = new TestTransaction(env);
+    final TestTransaction snap2 = new TestTransaction(env);
     Assert.assertEquals("2", snap2.gets("all", STAT_TOTAL));
     snap2.done();
 
     // the following code is a repeat of the above with a slight diff. The following tx creates a
     // notification, but deletes the data so there is no work for the
     // observer. This test the case where a observer deletes a notification w/o making any updates.
-    TestTransaction ttx5 = new TestTransaction(env);
+    final TestTransaction ttx5 = new TestTransaction(env);
     ttx5.delete("1", STAT_TOTAL);
     ttx5.delete("1", STAT_PROCESSED);
     ttx5.setWeakNotification("1", STAT_CHANGED);
@@ -120,9 +120,9 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction ttx6 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx6 = new TestTransaction(env, "1", STAT_CHANGED);
 
-    TestTransaction ttx7 = new TestTransaction(env);
+    final TestTransaction ttx7 = new TestTransaction(env);
     TestUtil.increment(ttx7, "1", STAT_TOTAL, 1);
     ttx7.setWeakNotification("1", STAT_CHANGED);
     ttx7.done();
@@ -135,17 +135,17 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction snap3 = new TestTransaction(env);
+    final TestTransaction snap3 = new TestTransaction(env);
     Assert.assertEquals("2", snap3.gets("all", STAT_TOTAL));
     snap3.done();
 
-    TestTransaction ttx8 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx8 = new TestTransaction(env, "1", STAT_CHANGED);
     TOTAL_OBSERVER.process(ttx8, Bytes.of("1"), STAT_CHANGED);
     ttx8.done();
 
     Assert.assertEquals(0, countNotifications());
 
-    TestTransaction snap4 = new TestTransaction(env);
+    final TestTransaction snap4 = new TestTransaction(env);
     Assert.assertEquals("3", snap4.gets("all", STAT_TOTAL));
     snap4.done();
   }
@@ -154,14 +154,14 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
   public void testOverlap2() throws Exception {
     // this test ensures that setting weak notification is based on commitTs and not startTs
 
-    TestTransaction ttx1 = new TestTransaction(env);
+    final TestTransaction ttx1 = new TestTransaction(env);
     TestUtil.increment(ttx1, "1", STAT_TOTAL, 1);
     ttx1.setWeakNotification("1", STAT_CHANGED);
     ttx1.done();
 
     Assert.assertEquals(1, countNotifications());
 
-    TestTransaction ttx2 = new TestTransaction(env);
+    final TestTransaction ttx2 = new TestTransaction(env);
     TestUtil.increment(ttx2, "1", STAT_TOTAL, 1);
     ttx2.setWeakNotification("1", STAT_CHANGED);
     CommitData cd2 = ttx2.createCommitData();
@@ -170,7 +170,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // simulate an observer processing the notification created by ttx1 while ttx2 is in the middle
     // of committing. Processing this observer should not delete
     // the notification for ttx2. It should delete the notification for ttx1.
-    TestTransaction ttx3 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx3 = new TestTransaction(env, "1", STAT_CHANGED);
 
     Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
     Assert.assertTrue(ttx2.commitPrimaryColumn(cd2, commitTs));
@@ -187,7 +187,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
       Assert.assertEquals("1", snapshot.gets("all", STAT_TOTAL));
     }
 
-    TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
+    final TestTransaction ttx4 = new TestTransaction(env, "1", STAT_CHANGED);
     TOTAL_OBSERVER.process(ttx4, Bytes.of("1"), STAT_CHANGED);
     ttx4.done();
 

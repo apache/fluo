@@ -150,6 +150,7 @@ public class ReadLockIT extends ITBaseImpl {
       tx1.commit();
       Assert.fail("Expected exception");
     } catch (CommitException ce) {
+      // expected
     }
 
     Assert.assertEquals(ImmutableSet.of("bob:joe", "joe:bob", "bob:alice", "alice:bob"),
@@ -180,6 +181,7 @@ public class ReadLockIT extends ITBaseImpl {
       tx2.commit();
       Assert.fail("Expected exception");
     } catch (CommitException ce) {
+      // expected
     }
 
     // ensure the failed read lock on node1 is cleaned up
@@ -236,9 +238,9 @@ public class ReadLockIT extends ITBaseImpl {
 
   @Test
   public void testRandom() throws Exception {
-    int numNodes = 100;
-    int numEdges = 1000;
-    int numAliasChanges = 25;
+    final int numNodes = 100;
+    final int numEdges = 1000;
+    final int numAliasChanges = 25;
 
     Random rand = new Random();
 
@@ -398,7 +400,7 @@ public class ReadLockIT extends ITBaseImpl {
   private static final Column c2 = new Column("f1", "q2");
   private static final Column invCol = new Column("f1", "inv");
 
-  final private void ensureReadLocksSet(Consumer<TransactionBase> readLockOperation) {
+  private final void ensureReadLocksSet(Consumer<TransactionBase> readLockOperation) {
 
     try (Transaction txi = client.newTransaction()) {
       txi.set("test1", c1, "45");
@@ -436,6 +438,7 @@ public class ReadLockIT extends ITBaseImpl {
         wtx.commit();
         Assert.fail();
       } catch (CommitException ce) {
+        // expected
       }
     }
 

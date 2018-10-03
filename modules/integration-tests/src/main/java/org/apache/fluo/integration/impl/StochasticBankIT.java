@@ -31,9 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.conf.Property;
-import org.apache.accumulo.core.util.Stat;
 import org.apache.fluo.accumulo.format.FluoFormatter;
+import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.exceptions.CommitException;
@@ -62,8 +61,8 @@ public class StochasticBankIT extends ITBaseImpl {
   @Test
   public void testConcurrency() throws Exception {
 
-    conn.tableOperations().setProperty(table, Property.TABLE_MAJC_RATIO.getKey(), "1");
-    conn.tableOperations().setProperty(table, Property.TABLE_BLOCKCACHE_ENABLED.getKey(), "true");
+    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_MAJC_RATIO, "1");
+    conn.tableOperations().setProperty(table, AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
 
     int numAccounts = 5000;
 
@@ -195,7 +194,7 @@ public class StochasticBankIT extends ITBaseImpl {
         long t1 = System.currentTimeMillis();
 
         TestTransaction tx = new TestTransaction(env);
-        Stat stat = new Stat();
+        org.apache.accumulo.core.util.Stat stat = new org.apache.accumulo.core.util.Stat();
 
         for (RowColumnValue rcv : tx.scanner().build()) {
           int amt = Integer.parseInt(rcv.getValue().toString());

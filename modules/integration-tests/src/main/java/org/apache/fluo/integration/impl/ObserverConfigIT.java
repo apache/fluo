@@ -53,7 +53,7 @@ public class ObserverConfigIT extends ITBaseMini {
     public void init(Context context) {
       SimpleConfiguration myConfig = context.getObserverConfiguration();
 
-      String ocTokens[] = myConfig.getString("observedCol").split(":");
+      String[] ocTokens = myConfig.getString("observedCol").split(":");
       observedColumn = new ObservedColumn(new Column(ocTokens[0], ocTokens[1]),
           NotificationType.valueOf(ocTokens[2]));
       outputCQ = Bytes.of(myConfig.getString("outputCQ"));

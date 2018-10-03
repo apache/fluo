@@ -50,13 +50,13 @@ public class TimestampTrackerIT extends ITBaseImpl {
     TimestampTracker tracker = new TimestampTracker(env, new TransactorID(env));
     Assert.assertTrue(tracker.isEmpty());
     Assert.assertFalse(zkNodeExists(tracker));
-    long ts1 = tracker.allocateTimestamp().getTxTimestamp();
+    final long ts1 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertFalse(tracker.isEmpty());
     Assert.assertTrue(zkNodeExists(tracker));
     Assert.assertTrue(ts1 > zkNodeValue(tracker));
     Assert.assertEquals(tracker.getZookeeperTimestamp(), zkNodeValue(tracker));
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
-    long ts2 = tracker.allocateTimestamp().getTxTimestamp();
+    final long ts2 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
     tracker.removeTimestamp(ts1);
     Assert.assertFalse(tracker.isEmpty());
@@ -73,14 +73,14 @@ public class TimestampTrackerIT extends ITBaseImpl {
   @Test
   public void testTrackingWithZkUpdate() throws Exception {
     TimestampTracker tracker = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts1 = tracker.allocateTimestamp().getTxTimestamp();
+    final long ts1 = tracker.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertNotNull(ts1);
     Assert.assertTrue(zkNodeExists(tracker));
     Assert.assertNotNull(zkNodeValue(tracker));
     Assert.assertEquals(tracker.getZookeeperTimestamp(), zkNodeValue(tracker));
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
-    long ts2 = tracker.allocateTimestamp().getTxTimestamp();
+    final long ts2 = tracker.allocateTimestamp().getTxTimestamp();
     Assert.assertEquals(ts1, tracker.getOldestActiveTimestamp());
     Thread.sleep(15);
     tracker.removeTimestamp(ts1);
@@ -98,13 +98,13 @@ public class TimestampTrackerIT extends ITBaseImpl {
   public void testTimestampUtilGetOldestTs() throws Exception {
     Assert.assertEquals(0, getOldestTs());
     TimestampTracker tr1 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts1 = tr1.allocateTimestamp().getTxTimestamp();
+    final long ts1 = tr1.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertEquals(tr1.getZookeeperTimestamp(), getOldestTs());
     TimestampTracker tr2 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts2 = tr2.allocateTimestamp().getTxTimestamp();
+    final long ts2 = tr2.allocateTimestamp().getTxTimestamp();
     TimestampTracker tr3 = new TimestampTracker(env, new TransactorID(env), 5);
-    long ts3 = tr3.allocateTimestamp().getTxTimestamp();
+    final long ts3 = tr3.allocateTimestamp().getTxTimestamp();
     Thread.sleep(15);
     Assert.assertEquals(ts1, getOldestTs());
     tr1.removeTimestamp(ts1);

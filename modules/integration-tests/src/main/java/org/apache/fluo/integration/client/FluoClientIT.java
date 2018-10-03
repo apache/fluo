@@ -61,9 +61,9 @@ public class FluoClientIT extends ITBaseImpl {
   @Test
   public void testFailures() {
     // we are expecting errors in this test
-    Level clientLevel = Logger.getLogger(FluoClientImpl.class).getLevel();
+    final Level clientLevel = Logger.getLogger(FluoClientImpl.class).getLevel();
     Logger.getLogger(FluoClientImpl.class).setLevel(Level.FATAL);
-    Level factoryLevel = Logger.getLogger(FluoFactory.class).getLevel();
+    final Level factoryLevel = Logger.getLogger(FluoFactory.class).getLevel();
     Logger.getLogger(FluoFactory.class).setLevel(Level.FATAL);
 
     FluoConfiguration fluoConfig = new FluoConfiguration();
@@ -71,11 +71,13 @@ public class FluoClientIT extends ITBaseImpl {
       FluoFactory.newClient(fluoConfig);
       Assert.fail();
     } catch (FluoException e) {
+      // expected
     }
 
     try (FluoClientImpl impl = new FluoClientImpl(fluoConfig)) {
       Assert.fail("FluoClientImpl was " + impl);
     } catch (IllegalArgumentException e) {
+      // expected
     }
 
     Logger.getLogger(FluoClientImpl.class).setLevel(clientLevel);
