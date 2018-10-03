@@ -25,6 +25,8 @@ cache:
 install: echo NOOP Skipping pre-fetch of Maven dependencies
 jdk:
   - openjdk8
+before_script:
+  - unset _JAVA_OPTIONS
 env:
   - ADDITIONAL_MAVEN_OPTS=
   - ADDITIONAL_MAVEN_OPTS=-Daccumulo.version=1.9.1
