@@ -63,6 +63,7 @@ public class AppConfigIT extends ITBaseMini {
     appConfig.setProperty("myapp.sizeLimit", 40000);
     appConfig.setProperty("myapp.timeLimit", 30000);
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
+      miniFluo.close();
       admin.updateSharedConfig();
     }
 
