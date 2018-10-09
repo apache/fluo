@@ -60,6 +60,7 @@ import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -76,6 +77,28 @@ public class FluoAdminImpl implements FluoAdmin {
   private CuratorFramework appCurator = null;
 
   private final String appRootDir;
+
+  /**
+   * Kerberos autentication method.
+   * 
+   * @param realm Realm to be used in authentication.
+   * @param keytab Keytab path.
+   * @since 1.3.0
+   */
+  public void hdfsLoginWithKerberos(final String realm, final String keytab) {
+
+    try {
+      Configuration conf = new Configuration();
+      conf.set("hadoop.security.authentication", "kerberos");
+      conf.set("hadoop.security.authorization", "true");
+      UserGroupInformation.setConfiguration(conf);
+      UserGroupInformation.loginUserFromKeytab(realm, keytab);
+
+      logger.info("Connected with REALM: '{}'.", realm);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public FluoAdminImpl(FluoConfiguration config) {
     this.config = config;
@@ -378,6 +401,14 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   private String copyJarsToDfs(String jars, String destDir) {
+
+    if (config.getClientConfiguration().getBoolean(FluoConfiguration.CLIENT_HDFS_KERBEROS, false)) {
+      this.hdfsLoginWithKerberos(
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_REALM, ""),
+          config.getClientConfiguration().getString(FluoConfiguration.CLIENT_HDFS_KERBEROS_KEYTAB, ""));
+    }
+
+
     String dfsAppRoot = config.getDfsRoot() + "/" + config.getApplicationName();
     String dfsDestDir = dfsAppRoot + "/" + destDir;
 
