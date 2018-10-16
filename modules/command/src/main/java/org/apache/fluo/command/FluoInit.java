@@ -134,13 +134,6 @@ public class FluoInit {
 
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
-      if (admin.applicationRunning()) {
-        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application"
-            + " is already running and must be stopped before running 'fluo init'. "
-            + " Aborted initialization.");
-        System.exit(-1);
-      }
-
       FluoAdmin.InitializationOptions initOpts = new FluoAdmin.InitializationOptions();
 
       if (opts.getUpdate()) {
@@ -185,14 +178,16 @@ public class FluoInit {
 
       System.out.println("Initializing Fluo '" + config.getApplicationName()
           + "' application using " + opts.getAppPropsPath());
-      try {
-        admin.initialize(initOpts);
-      } catch (Exception e) {
-        System.out.println("Initialization failed due to the following exception:");
-        e.printStackTrace();
-        System.exit(-1);
-      }
+
+      admin.initialize(initOpts);
       System.out.println("Initialization is complete.");
+    } catch (FluoAdmin.AlreadyInitializedException e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    } catch (Exception e) {
+      System.out.println("Initialization failed due to the following exception:");
+      e.printStackTrace();
+      System.exit(-1);
     }
   }
 }

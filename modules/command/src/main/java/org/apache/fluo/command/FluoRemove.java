@@ -15,7 +15,9 @@
 
 package org.apache.fluo.command;
 
+import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
 public class FluoRemove {
@@ -30,22 +32,16 @@ public class FluoRemove {
     config = FluoAdminImpl.mergeZookeeperConfig(config);
 
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
-      if (admin.applicationRunning()) {
-        System.err.println("Error - The Fluo '" + config.getApplicationName() + "' application"
-            + " is already running and must be stopped before running 'fluo remove'. "
-            + " Aborted remove.");
-        System.exit(-1);
-      }
       System.out.println("Removing Fluo '" + config.getApplicationName());
-      try {
-        admin.remove();
-      } catch (Exception e) {
-        System.out.println("Remove failed due to the following exception:");
-        e.printStackTrace();
-        System.exit(-1);
-      }
+      admin.remove();
       System.out.println("Remove is complete.");
-
+    } catch (FluoException e) {
+      System.err.println(e.getMessage());
+      System.exit(-1);
+    } catch (Exception e) {
+      System.out.println("Remove failed due to the following exception:");
+      e.printStackTrace();
+      System.exit(-1);
     }
   }
 }

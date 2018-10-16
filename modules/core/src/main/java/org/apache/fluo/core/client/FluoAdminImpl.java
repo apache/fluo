@@ -107,7 +107,11 @@ public class FluoAdminImpl implements FluoAdmin {
     Preconditions.checkArgument(
         config.getObserverJarsUrl().isEmpty() || config.getObserverInitDir().isEmpty(),
         "Only one of 'fluo.observer.init.dir' and 'fluo.observer.jars.url' can be set");
-
+    if (applicationRunning()) {
+      throw new AlreadyInitializedException("Error - The Fluo '" + config.getApplicationName()
+          + "' application" + " is already running and must be stopped before initializing. "
+          + " Aborted initialization.");
+    }
     if (zookeeperInitialized() && !opts.getClearZookeeper()) {
       throw new AlreadyInitializedException(
           "Fluo application already initialized at " + config.getAppZookeepers());
@@ -204,6 +208,10 @@ public class FluoAdminImpl implements FluoAdmin {
 
   @Override
   public void remove() {
+    if (applicationRunning()) {
+      throw new FluoException("Error - The Fluo '" + config.getApplicationName() + "' application"
+          + " is already running and must be stopped before removing. Aborted remove.");
+    }
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
@@ -324,6 +332,11 @@ public class FluoAdminImpl implements FluoAdmin {
   public void updateSharedConfig() {
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
+    }
+    if (applicationRunning()) {
+      throw new FluoException("Error - The Fluo '" + config.getApplicationName() + "' application"
+          + " is already running and must be stopped before updating shared configuration. "
+          + " Aborted update.");
     }
     Properties sharedProps = new Properties();
     Iterator<String> iter = config.getKeys();
