@@ -23,11 +23,11 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -49,7 +49,6 @@ import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.observer.ObserverUtil;
@@ -60,6 +59,7 @@ import org.apache.fluo.core.worker.finder.hash.PartitionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
@@ -152,7 +152,6 @@ public class FluoAdminImpl implements FluoAdmin {
 
     try {
       initializeApplicationInZooKeeper(conn);
-      Map<String, String> ntcProps = initializeApplicationTableProps();
 
       String accumuloJars;
       if (!config.getAccumuloJars().trim().isEmpty()) {
@@ -177,6 +176,8 @@ public class FluoAdminImpl implements FluoAdmin {
         accumuloClasspath = tmpCP;
       }
 
+      Map<String, String> ntcProps = new HashMap<>();
+
       if (!accumuloClasspath.isEmpty()) {
         String contextName = "fluo-" + config.getApplicationName();
         conn.instanceOperations().setProperty(
@@ -192,6 +193,12 @@ public class FluoAdminImpl implements FluoAdmin {
       ntcProps.put(AccumuloProps.TABLE_BLOCKCACHE_ENABLED, "true");
 
       NewTableConfiguration ntc = new NewTableConfiguration().withoutDefaultIterators();
+
+      ntc.setLocalityGroups(Collections.singletonMap(ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME,
+          Collections.singleton(new Text(ColumnConstants.NOTIFY_CF.toArray()))));
+
+      configureIterators(ntc);
+
       ntc.setProperties(ntcProps);
       conn.tableOperations().create(config.getAccumuloTable(), ntc);
 
@@ -204,6 +211,20 @@ public class FluoAdminImpl implements FluoAdmin {
       }
       throw new RuntimeException(e);
     }
+  }
+
+  private void configureIterators(NewTableConfiguration ntc) {
+    IteratorSetting gcIter =
+        new IteratorSetting(10, ColumnConstants.GC_CF.toString(), GarbageCollectionIterator.class);
+    GarbageCollectionIterator.setZookeepers(gcIter, config.getAppZookeepers());
+    // the order relative to gc iter should not matter
+    IteratorSetting ntfyIter =
+        new IteratorSetting(11, ColumnConstants.NOTIFY_CF.toString(), NotificationIterator.class);
+
+    EnumSet<IteratorScope> scopes =
+        EnumSet.of(IteratorUtil.IteratorScope.majc, IteratorUtil.IteratorScope.minc);
+    ntc.attachIterator(gcIter, scopes);
+    ntc.attachIterator(ntfyIter, scopes);
   }
 
   @Override
@@ -283,49 +304,6 @@ public class FluoAdminImpl implements FluoAdmin {
         CuratorUtil.NodeExistsPolicy.FAIL);
     CuratorUtil.putData(curator, ZookeeperPath.ORACLE_GC_TIMESTAMP, new byte[] {'0'},
         CuratorUtil.NodeExistsPolicy.FAIL);
-  }
-
-  private String encodeColumnFamily(Bytes cf) {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < cf.length(); i++) {
-      int c = 0xff & cf.byteAt(i);
-      if (c == '\\') {
-        sb.append("\\\\");
-      } else if (c >= 32 && c <= 126 && c != ',') {
-        sb.append((char) c);
-      } else {
-        sb.append("\\x").append(String.format("%02X", c));
-      }
-    }
-    return sb.toString();
-  }
-
-  private Map<String, String> initializeApplicationTableProps() {
-    Map<String, String> ntcProps = new HashMap<>();
-    ntcProps.put(AccumuloProps.TABLE_GROUP_PREFIX + ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME,
-        encodeColumnFamily(ColumnConstants.NOTIFY_CF));
-    ntcProps.put(AccumuloProps.TABLE_GROUPS_ENABLED, ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME);
-
-    IteratorSetting gcIter =
-        new IteratorSetting(10, ColumnConstants.GC_CF.toString(), GarbageCollectionIterator.class);
-    GarbageCollectionIterator.setZookeepers(gcIter, config.getAppZookeepers());
-    // the order relative to gc iter should not matter
-    IteratorSetting ntfyIter =
-        new IteratorSetting(11, ColumnConstants.NOTIFY_CF.toString(), NotificationIterator.class);
-
-    for (IteratorSetting setting : new IteratorSetting[] {gcIter, ntfyIter}) {
-      for (IteratorScope scope : EnumSet.of(IteratorUtil.IteratorScope.majc,
-          IteratorUtil.IteratorScope.minc)) {
-        String root = String.format("%s%s.%s", AccumuloProps.TABLE_ITERATOR_PREFIX,
-            scope.name().toLowerCase(), setting.getName());
-        for (Entry<String, String> prop : setting.getOptions().entrySet()) {
-          ntcProps.put(root + ".opt." + prop.getKey(), prop.getValue());
-        }
-        ntcProps.put(root, setting.getPriority() + "," + setting.getIteratorClass());
-      }
-    }
-
-    return ntcProps;
   }
 
   @Override
