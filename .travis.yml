@@ -27,6 +27,5 @@ before_script:
   - unset _JAVA_OPTIONS
 env:
   - BUILD_ARGS="clean verify javadoc:jar"
-  - BUILD_ARGS="clean verify javadoc:jar -Daccumulo.version=1.9.2"
 script:
   - mvn $BUILD_ARGS
