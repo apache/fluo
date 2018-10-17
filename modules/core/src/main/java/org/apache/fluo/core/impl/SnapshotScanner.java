@@ -113,7 +113,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     private void setUpIterator() {
       Scanner scanner;
       try {
-        scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+        scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
       } catch (TableNotFoundException e) {
         throw new RuntimeException(e);
       }

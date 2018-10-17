@@ -68,18 +68,19 @@ public class SharedResources implements AutoCloseable {
     curator = CuratorUtil.newAppCurator(env.getConfiguration());
     curator.start();
 
-    int numTservers = env.getConnector().instanceOperations().getTabletServers().size();
+    int numTservers = env.getAccumuloClient().instanceOperations().getTabletServers().size();
     int numBWThreads = FluoConfigurationImpl.getNumBWThreads(env.getConfiguration(), numTservers);
-    bw = env.getConnector().createBatchWriter(env.getTable(),
+    bw = env.getAccumuloClient().createBatchWriter(env.getTable(),
         new BatchWriterConfig().setMaxWriteThreads(numBWThreads));
     sbw = new SharedBatchWriter(bw);
 
     int numCWThreads = FluoConfigurationImpl.getNumCWThreads(env.getConfiguration(), numTservers);
-    cw = env.getConnector().createConditionalWriter(env.getTable(), new ConditionalWriterConfig()
-        .setAuthorizations(env.getAuthorizations()).setMaxWriteThreads(numCWThreads));
-    bulkCw =
-        env.getConnector().createConditionalWriter(env.getTable(), new ConditionalWriterConfig()
-            .setAuthorizations(env.getAuthorizations()).setMaxWriteThreads(numCWThreads));
+    cw = env.getAccumuloClient().createConditionalWriter(env.getTable(),
+        new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
+            .setMaxWriteThreads(numCWThreads));
+    bulkCw = env.getAccumuloClient().createConditionalWriter(env.getTable(),
+        new ConditionalWriterConfig().setAuthorizations(env.getAuthorizations())
+            .setMaxWriteThreads(numCWThreads));
 
     txInfoCache = new TxInfoCache(env);
     visCache = new VisibilityCache(env.getConfiguration());

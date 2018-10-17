@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -18,12 +18,16 @@ package org.apache.fluo.core.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map.Entry;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.accumulo.core.client.Connector;
+import com.google.common.base.Preconditions;
+import org.apache.accumulo.core.client.AccumuloClient;
+import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
@@ -45,7 +49,7 @@ public class Environment implements AutoCloseable {
   private Authorizations auths = new Authorizations();
   private String accumuloInstance;
   private RegisteredObservers observers;
-  private Connector conn;
+  private AccumuloClient client;
   private String accumuloInstanceID;
   private String fluoApplicationID;
   private FluoConfiguration config;
@@ -54,6 +58,26 @@ public class Environment implements AutoCloseable {
   private SimpleConfiguration appConfig;
   private String metricsReporterID;
 
+  private void ensureDeletesAreDisabled() {
+    String value = null;
+    Iterable<Entry<String, String>> props;
+    try {
+      props = client.tableOperations().getProperties(table);
+    } catch (AccumuloException | TableNotFoundException e) {
+      throw new IllegalStateException(e);
+    }
+
+    for (Entry<String, String> entry : props) {
+      if (entry.getKey().equals(AccumuloProps.TABLE_DELETE_BEHAVIOR)) {
+        value = entry.getValue();
+      }
+    }
+
+    Preconditions.checkState(AccumuloProps.TABLE_DELETE_BEHAVIOR_VALUE.equals(value),
+        "The Accumulo table %s is not configured correctly.  Please set %s=%s for this table in Accumulo.",
+        table, AccumuloProps.TABLE_DELETE_BEHAVIOR, AccumuloProps.TABLE_DELETE_BEHAVIOR_VALUE);
+  }
+
   /**
    * Constructs an environment from given FluoConfiguration
    *
@@ -61,18 +85,20 @@ public class Environment implements AutoCloseable {
    */
   public Environment(FluoConfiguration configuration) {
     config = configuration;
-    conn = AccumuloUtil.getConnector(config);
+    client = AccumuloUtil.getClient(config);
 
     readZookeeperConfig();
 
-    if (!conn.getInstance().getInstanceName().equals(accumuloInstance)) {
+    ensureDeletesAreDisabled();
+
+    if (!client.info().getInstanceName().equals(accumuloInstance)) {
       throw new IllegalArgumentException("unexpected accumulo instance name "
-          + conn.getInstance().getInstanceName() + " != " + accumuloInstance);
+          + client.info().getInstanceName() + " != " + accumuloInstance);
     }
 
-    if (!conn.getInstance().getInstanceID().equals(accumuloInstanceID)) {
-      throw new IllegalArgumentException("unexpected accumulo instance id "
-          + conn.getInstance().getInstanceID() + " != " + accumuloInstanceID);
+    if (!client.getInstanceID().equals(accumuloInstanceID)) {
+      throw new IllegalArgumentException("unexpected accumulo instance id " + client.getInstanceID()
+          + " != " + accumuloInstanceID);
     }
 
     try {
@@ -93,7 +119,7 @@ public class Environment implements AutoCloseable {
     this.auths = env.auths;
     this.accumuloInstance = env.accumuloInstance;
     this.observers = env.observers;
-    this.conn = env.conn;
+    this.client = env.client;
     this.accumuloInstanceID = env.accumuloInstanceID;
     this.fluoApplicationID = env.fluoApplicationID;
     this.config = env.config;
@@ -169,8 +195,8 @@ public class Environment implements AutoCloseable {
     return table;
   }
 
-  public Connector getConnector() {
-    return conn;
+  public AccumuloClient getAccumuloClient() {
+    return client;
   }
 
   public SharedResources getSharedResources() {

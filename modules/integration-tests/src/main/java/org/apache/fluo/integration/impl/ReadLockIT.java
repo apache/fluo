@@ -199,7 +199,7 @@ public class ReadLockIT extends ITBaseImpl {
   }
 
   private void dumpRow(String row, Consumer<String> out) throws TableNotFoundException {
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(getCurTableName(), Authorizations.EMPTY);
     scanner.setRange(Range.exact(row));
     for (Entry<Key, Value> entry : scanner) {
       out.accept(FluoFormatter.toString(entry));
@@ -207,7 +207,7 @@ public class ReadLockIT extends ITBaseImpl {
   }
 
   private void dumpTable(Consumer<String> out) throws TableNotFoundException {
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(getCurTableName(), Authorizations.EMPTY);
     for (Entry<Key, Value> entry : scanner) {
       out.accept(FluoFormatter.toString(entry));
     }

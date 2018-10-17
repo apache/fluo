@@ -154,9 +154,9 @@ public class CollisionIT extends ITBaseMini {
       oldestTS = ZookeeperUtil.getGcTimestamp(config.getAppZookeepers());
     }
 
-    conn.tableOperations().compact(getCurTableName(), null, null, true, true);
+    aClient.tableOperations().compact(getCurTableName(), null, null, true, true);
 
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(getCurTableName(), Authorizations.EMPTY);
 
     HashSet<String> rowCols = new HashSet<>();
 

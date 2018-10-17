@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -25,7 +25,6 @@ import java.util.List;
 
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Bytes;
@@ -35,6 +34,7 @@ import org.apache.fluo.api.data.RowColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
+import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -141,7 +141,6 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
    * @param conf Job configuration
    * @param config use {@link FluoConfiguration} to configure programmatically
    */
-  @SuppressWarnings("deprecation")
   public static void configure(Job conf, SimpleConfiguration config) {
     try {
       FluoConfiguration fconfig = new FluoConfiguration(config);
@@ -155,10 +154,7 @@ public class FluoEntryInputFormat extends InputFormat<RowColumn, Bytes> {
         conf.getConfiguration().set(PROPS_CONF_KEY,
             new String(baos.toByteArray(), StandardCharsets.UTF_8));
 
-        AccumuloInputFormat.setZooKeeperInstance(conf, fconfig.getAccumuloInstance(),
-            fconfig.getAccumuloZookeepers());
-        AccumuloInputFormat.setConnectorInfo(conf, fconfig.getAccumuloUser(),
-            new PasswordToken(fconfig.getAccumuloPassword()));
+        AccumuloInputFormat.setClientInfo(conf, AccumuloUtil.getClientInfo(fconfig));
         AccumuloInputFormat.setInputTableName(conf, env.getTable());
         AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
       }

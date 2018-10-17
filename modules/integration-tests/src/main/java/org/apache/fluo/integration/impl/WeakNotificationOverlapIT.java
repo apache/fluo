@@ -201,7 +201,7 @@ public class WeakNotificationOverlapIT extends ITBaseImpl {
     // deletes of notifications are queued async at end of transaction
     env.getSharedResources().getBatchWriter().waitForAsyncFlush();
 
-    Scanner scanner = conn.createScanner(getCurTableName(), Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(getCurTableName(), Authorizations.EMPTY);
     Notification.configureScanner(scanner);
 
     int count = 0;

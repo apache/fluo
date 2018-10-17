@@ -101,7 +101,7 @@ public abstract class AppRunner {
   public long countNotifications(Environment env) {
     Scanner scanner = null;
     try {
-      scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
     } catch (TableNotFoundException e) {
       log.error("An exception was thrown -", e);
       throw new FluoException(e);

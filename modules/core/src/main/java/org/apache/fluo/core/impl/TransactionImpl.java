@@ -679,7 +679,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           Scanner scanner;
           try {
             // TODO reuse or share scanner
-            scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+            scanner =
+                env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
           } catch (TableNotFoundException e) {
             // TODO proper exception handling
             throw new RuntimeException(e);

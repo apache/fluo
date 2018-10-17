@@ -20,10 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
@@ -42,6 +39,7 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.oracle.OracleServer;
+import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.CuratorUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
@@ -96,7 +94,7 @@ public class FluoAdminImplIT extends ITBaseImpl {
       }
     }
 
-    assertTrue(conn.tableOperations().exists(config.getAccumuloTable()));
+    assertTrue(aClient.tableOperations().exists(config.getAccumuloTable()));
   }
 
   @Test
@@ -116,12 +114,9 @@ public class FluoAdminImplIT extends ITBaseImpl {
       admin.initialize(opts);
 
       // verify locality groups were set on the table
-      Instance inst =
-          new ZooKeeperInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers());
-      Connector conn = inst.getConnector(config.getAccumuloUser(),
-          new PasswordToken(config.getAccumuloPassword()));
+      AccumuloClient client = AccumuloUtil.getClient(config);
       Map<String, Set<Text>> localityGroups =
-          conn.tableOperations().getLocalityGroups(config.getAccumuloTable());
+          client.tableOperations().getLocalityGroups(config.getAccumuloTable());
       Assert.assertEquals("Unexpected locality group count.", 1, localityGroups.size());
       Entry<String, Set<Text>> localityGroup = localityGroups.entrySet().iterator().next();
       Assert.assertEquals("'notify' locality group not found.",

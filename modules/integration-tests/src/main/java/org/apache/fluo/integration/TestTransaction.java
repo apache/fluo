@@ -57,7 +57,7 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
   public static long getNotificationTS(Environment env, String row, Column col) {
     Scanner scanner;
     try {
-      scanner = env.getConnector().createScanner(env.getTable(), env.getAuthorizations());
+      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }

@@ -19,12 +19,11 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.client.Accumulo;
+import org.apache.accumulo.core.client.AccumuloClient;
+import org.apache.accumulo.core.client.ClientInfo;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
-import org.apache.accumulo.minicluster.MiniAccumuloInstance;
 import org.apache.commons.io.FileUtils;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.Snapshot;
@@ -48,8 +47,8 @@ public class ITBase {
       FluoConfiguration.FLUO_PREFIX + ".it.instance.clear";
 
   protected static String instanceName;
-  protected static Connector conn;
-  protected static Instance miniAccumulo;
+  protected static AccumuloClient aClient;
+  protected static ClientInfo clientInfo;
   private static MiniAccumuloCluster cluster;
   private static boolean startedCluster = false;
 
@@ -88,8 +87,8 @@ public class ITBase {
       cluster.start();
       startedCluster = true;
     }
-    miniAccumulo = new MiniAccumuloInstance(instanceName, instanceDir);
-    conn = miniAccumulo.getConnector(USER, new PasswordToken(PASSWORD));
+    clientInfo = MiniAccumuloCluster.getClientInfo(instanceDir);
+    aClient = Accumulo.newClient().usingClientInfo(clientInfo).build();
   }
 
   protected Class<? extends ObserverProvider> getObserverProviderClass() {

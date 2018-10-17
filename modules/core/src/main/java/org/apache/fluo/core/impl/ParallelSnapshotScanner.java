@@ -95,7 +95,8 @@ public class ParallelSnapshotScanner {
     try {
       // TODO hardcoded number of threads!
       // one thread is probably good.. going for throughput
-      scanner = env.getConnector().createBatchScanner(env.getTable(), env.getAuthorizations(), 1);
+      scanner =
+          env.getAccumuloClient().createBatchScanner(env.getTable(), env.getAuthorizations(), 1);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }

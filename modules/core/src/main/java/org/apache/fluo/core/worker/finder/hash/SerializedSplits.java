@@ -108,7 +108,7 @@ public class SerializedSplits {
   public static byte[] serializeTableSplits(Environment env) {
     List<Bytes> splits;
     try {
-      splits = env.getConnector().tableOperations().listSplits(env.getTable()).stream()
+      splits = env.getAccumuloClient().tableOperations().listSplits(env.getTable()).stream()
           .map(ByteUtil::toBytes).collect(Collectors.toList());
     } catch (TableNotFoundException | AccumuloSecurityException | AccumuloException e) {
       throw new RuntimeException(e);

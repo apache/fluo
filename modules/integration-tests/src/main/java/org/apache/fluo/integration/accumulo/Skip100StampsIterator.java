@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -32,14 +32,12 @@ public class Skip100StampsIterator implements SortedKeyValueIterator<Key, Value>
   private TimestampSkippingIterator source;
   private boolean hasTop;
   private int goodVal;
-  private int goodSeek;
 
   @Override
   public void init(SortedKeyValueIterator<Key, Value> source, Map<String, String> options,
       IteratorEnvironment env) throws IOException {
 
     this.source = new TimestampSkippingIterator(source);
-
   }
 
   @Override
@@ -62,15 +60,6 @@ public class Skip100StampsIterator implements SortedKeyValueIterator<Key, Value>
 
     long ts = 99999;
     goodVal = 0;
-    hasTop = true;
-
-    /*
-     * If the TimestampSkippingIterator is not able to remove the DeletingIterator, then the
-     * following loop will have O(N^2) performance. This happens because every time the following
-     * loop seeks forward a little bit, the DeletingIterator scans from the start of the column
-     * looking for deletes. I manually commented out the code that removes the DeletingIterator and
-     * the following code took 50 to 100 times longer to run.
-     */
 
     while (source.hasTop() && ts > 0) {
       source.skipToTimestamp(k, ts);
@@ -78,14 +67,12 @@ public class Skip100StampsIterator implements SortedKeyValueIterator<Key, Value>
         if (source.getTopValue().toString().equals("v" + ts)) {
           goodVal++;
         }
-
-        if (source.shouldSeek()) {
-          goodSeek++;
-        }
       }
 
       ts -= 100;
     }
+
+    hasTop = goodVal > 0;
   }
 
   @Override
@@ -95,7 +82,7 @@ public class Skip100StampsIterator implements SortedKeyValueIterator<Key, Value>
 
   @Override
   public Value getTopValue() {
-    return new Value(("" + goodVal + " " + goodSeek).getBytes());
+    return new Value("" + goodVal);
   }
 
   @Override

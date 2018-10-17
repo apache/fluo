@@ -80,7 +80,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(tx2.getStartTs(), oldestTs);
 
     // Force a garbage collection
-    conn.tableOperations().flush(table, null, null, true);
+    aClient.tableOperations().flush(table, null, null, true);
 
     verify(oldestTs);
 
@@ -112,7 +112,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     waitForGcTime(tx2.getStartTimestamp());
 
     // Force a garbage collection
-    conn.tableOperations().compact(table, null, null, true, true);
+    aClient.tableOperations().compact(table, null, null, true, true);
 
     Assert.assertEquals("file:///abc.txt", tx2.gets("001", docUri));
 
@@ -121,11 +121,11 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertNull(tx4.gets("001", docUri));
 
     waitForGcTime(tx4.getStartTimestamp());
-    conn.tableOperations().compact(table, null, null, true, true);
+    aClient.tableOperations().compact(table, null, null, true, true);
 
     Assert.assertNull(tx4.gets("001", docUri));
 
-    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(table, Authorizations.EMPTY);
     Assert.assertEquals(0, Iterables.size(scanner));
 
     tx4.done();
@@ -163,14 +163,14 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     Assert.assertEquals(20, countInTable("-DATA"));
 
     // flush should drop locks and data
-    conn.tableOperations().flush(table, null, null, true);
+    aClient.tableOperations().flush(table, null, null, true);
 
     Assert.assertEquals(0, countInTable("-LOCK"));
     Assert.assertEquals(20, countInTable("-DEL_LOCK"));
     Assert.assertEquals(0, countInTable("-DATA"));
 
     // compact should drop all del locks except for primary
-    conn.tableOperations().compact(table, null, null, true, true);
+    aClient.tableOperations().compact(table, null, null, true, true);
 
     Assert.assertEquals(0, countInTable("-LOCK"));
     Assert.assertEquals(1, countInTable("-DEL_LOCK"));
@@ -225,7 +225,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx2.done();
 
     // all read locks should be garbage collected because of the writes after the read locks
-    conn.tableOperations().compact(table, null, null, true, true);
+    aClient.tableOperations().compact(table, null, null, true, true);
 
     Assert.assertEquals(0, countInTable("-DEL_RLOCK"));
     Assert.assertEquals(0, countInTable("-RLOCK"));
@@ -251,7 +251,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx3.done();
 
     waitForGcTime(tx3.getStartTimestamp());
-    conn.tableOperations().compact(table, null, null, true, true);
+    aClient.tableOperations().compact(table, null, null, true, true);
 
 
     // all read locks older than GC time should be dropped
@@ -261,7 +261,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
   private int countInTable(String str) throws TableNotFoundException {
     int count = 0;
-    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(table, Authorizations.EMPTY);
     for (String e : Iterables.transform(scanner, FluoFormatter::toString)) {
       if (e.contains(str)) {
         count++;
@@ -294,7 +294,7 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
    *
    */
   private void verify(long oldestTs) throws TableNotFoundException {
-    Scanner scanner = conn.createScanner(table, Authorizations.EMPTY);
+    Scanner scanner = aClient.createScanner(table, Authorizations.EMPTY);
 
     Iterator<Entry<Key, Value>> iter = scanner.iterator();
 
