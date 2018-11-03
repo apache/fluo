@@ -36,6 +36,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.iterators.OpenReadLockIterator;
 import org.apache.fluo.accumulo.iterators.PrewriteIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.DelReadLockValue;
@@ -50,7 +51,6 @@ import org.apache.fluo.core.util.ConditionalFlutation;
 import org.apache.fluo.core.util.FluoCondition;
 import org.apache.fluo.core.util.SpanUtil;
 
-import static org.apache.fluo.accumulo.util.ColumnConstants.PREFIX_MASK;
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 /**
@@ -99,7 +99,7 @@ public class LockResolver {
     public LockInfo(Entry<Key, Value> kve) {
       long rawTs = kve.getKey().getTimestamp();
       this.entry = kve;
-      if ((rawTs & ColumnConstants.PREFIX_MASK) == ColumnConstants.RLOCK_PREFIX) {
+      if (ColumnType.from(rawTs) == ColumnType.RLOCK) {
         this.lockTs = ReadLockUtil.decodeTs(rawTs);
         ReadLockValue rlv = new ReadLockValue(kve.getValue().get());
         this.prow = rlv.getPrimaryRow();
@@ -221,11 +221,11 @@ public class LockResolver {
       if (lockInfo.isReadLock) {
         mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
             k.getColumnVisibilityParsed(),
-            ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(lockInfo.lockTs, true),
+            ColumnType.RLOCK.prefix(ReadLockUtil.encodeTs(lockInfo.lockTs, true)),
             DelReadLockValue.encodeRollback());
       } else {
         mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
-            k.getColumnVisibilityParsed(), ColumnConstants.DEL_LOCK_PREFIX | lockInfo.lockTs,
+            k.getColumnVisibilityParsed(), ColumnType.DEL_LOCK.prefix(lockInfo.lockTs),
             DelLockValue.encodeRollback(false, true));
       }
     }
@@ -241,7 +241,7 @@ public class LockResolver {
     ConditionalFlutation delLockMutation = new ConditionalFlutation(env, prc.prow,
         new FluoCondition(env, prc.pcol).setIterators(iterConf).setValue(lockValue));
 
-    delLockMutation.put(prc.pcol, ColumnConstants.DEL_LOCK_PREFIX | prc.startTs,
+    delLockMutation.put(prc.pcol, ColumnType.DEL_LOCK.prefix(prc.startTs),
         DelLockValue.encodeRollback(true, true));
 
     ConditionalWriter cw = null;
@@ -312,7 +312,7 @@ public class LockResolver {
       for (Column col : e1.getValue()) {
         Key start = SpanUtil.toKey(new RowColumn(e1.getKey(), col));
         Key end = new Key(start);
-        end.setTimestamp(ColumnConstants.LOCK_PREFIX | ColumnConstants.TIMESTAMP_MASK);
+        end.setTimestamp(ColumnType.LOCK.first());
         ranges.add(new Range(start, true, end, false));
       }
     }
@@ -329,7 +329,7 @@ public class LockResolver {
 
       List<Entry<Key, Value>> ret = new ArrayList<>();
       for (Entry<Key, Value> entry : bscanner) {
-        if ((entry.getKey().getTimestamp() & PREFIX_MASK) == ColumnConstants.RLOCK_PREFIX) {
+        if (ColumnType.from(entry.getKey()) == ColumnType.RLOCK) {
           ret.add(entry);
         }
       }

@@ -52,6 +52,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.iterators.PrewriteIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.DelReadLockValue;
@@ -87,8 +88,6 @@ import org.apache.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.fluo.accumulo.util.ColumnConstants.PREFIX_MASK;
-import static org.apache.fluo.accumulo.util.ColumnConstants.RLOCK_PREFIX;
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
@@ -278,7 +277,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         continue;
       }
 
-      if ((kve.getKey().getTimestamp() & PREFIX_MASK) == RLOCK_PREFIX) {
+      if (ColumnType.from(kve.getKey()) == ColumnType.RLOCK) {
         if (readLockCols == null) {
           readLockCols = readLocksSeen.computeIfAbsent(row, k -> new HashSet<>());
         }
@@ -407,14 +406,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     if (isWrite(val) && !isDelete(val)) {
-      cm.put(col, ColumnConstants.DATA_PREFIX | startTs, val.toArray());
+      cm.put(col, ColumnType.DATA.prefix(startTs), val.toArray());
     }
 
     if (isReadLock(val)) {
-      cm.put(col, ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, false),
+      cm.put(col, ColumnType.RLOCK.prefix(ReadLockUtil.encodeTs(startTs, false)),
           ReadLockValue.encode(primaryRow, primaryColumn, getTransactorID()));
     } else {
-      cm.put(col, ColumnConstants.LOCK_PREFIX | startTs, LockValue.encode(primaryRow, primaryColumn,
+      cm.put(col, ColumnType.LOCK.prefix(startTs), LockValue.encode(primaryRow, primaryColumn,
           isWrite(val), isDelete(val), isTriggerRow, getTransactorID()));
     }
 
@@ -668,11 +667,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         if (notification.getColumn().equals(col)) {
           // check to see if ACK exist after notification
           Key startKey = SpanUtil.toKey(notification.getRowColumn());
-          startKey.setTimestamp(
-              ColumnConstants.ACK_PREFIX | (Long.MAX_VALUE & ColumnConstants.TIMESTAMP_MASK));
+          startKey.setTimestamp(ColumnType.ACK.first());
 
           Key endKey = SpanUtil.toKey(notification.getRowColumn());
-          endKey.setTimestamp(ColumnConstants.ACK_PREFIX | (notification.getTimestamp() + 1));
+          endKey.setTimestamp(ColumnType.ACK.prefix(notification.getTimestamp() + 1));
 
           Range range = new Range(startKey, endKey);
 
@@ -1112,11 +1110,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         m = new Flutation(env, row);
         for (Entry<Column, Bytes> entry : updates.get(row).entrySet()) {
           if (isReadLock(entry.getValue())) {
-            m.put(entry.getKey(),
-                ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, true),
+            m.put(entry.getKey(), ColumnType.RLOCK.prefix(ReadLockUtil.encodeTs(startTs, true)),
                 DelReadLockValue.encodeRollback());
           } else {
-            m.put(entry.getKey(), ColumnConstants.DEL_LOCK_PREFIX | startTs,
+            m.put(entry.getKey(), ColumnType.DEL_LOCK.prefix(startTs),
                 DelLockValue.encodeRollback(false, true));
           }
         }
@@ -1134,9 +1131,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       // mark transaction as complete for garbage collection purposes
       Flutation m = new Flutation(env, cd.prow);
 
-      m.put(cd.pcol, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+      m.put(cd.pcol, ColumnType.DEL_LOCK.prefix(startTs),
           DelLockValue.encodeRollback(startTs, true, true));
-      m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | startTs, EMPTY);
+      m.put(cd.pcol, ColumnType.TX_DONE.prefix(startTs), EMPTY);
 
       return Collections.singletonList(m);
     }
@@ -1392,7 +1389,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
       Flutation m = new Flutation(env, cd.prow);
       // mark transaction as complete for garbage collection purposes
-      m.put(cd.pcol, ColumnConstants.TX_DONE_PREFIX | commitTs, EMPTY);
+      m.put(cd.pcol, ColumnType.TX_DONE.prefix(commitTs), EMPTY);
       afterFlushMutations.add(m);
 
       if (weakNotification != null) {

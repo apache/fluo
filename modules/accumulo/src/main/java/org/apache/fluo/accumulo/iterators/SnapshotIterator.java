@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -33,6 +33,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.values.WriteValue;
 
 public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
@@ -91,87 +92,95 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
 
       while (source.hasTop()
           && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-        long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+        ColumnType colType = ColumnType.from(source.getTopKey());
         long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-        if (colType == ColumnConstants.TX_DONE_PREFIX) {
-          source.skipToPrefix(curCol, ColumnConstants.WRITE_PREFIX);
-          continue;
-        } else if (colType == ColumnConstants.WRITE_PREFIX) {
-          long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
-
-          if (timePtr > invalidationTime) {
-            invalidationTime = timePtr;
+        switch (colType) {
+          case TX_DONE: {
+            source.skipToPrefix(curCol, ColumnType.WRITE);
+            continue;
           }
+          case WRITE: {
+            long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-          if (dataPointer == -1) {
-            if (ts <= snaptime) {
-              dataPointer = timePtr;
-              source.skipToPrefix(curCol, ColumnConstants.DEL_LOCK_PREFIX);
-              continue;
+            if (timePtr > invalidationTime) {
+              invalidationTime = timePtr;
+            }
+
+            if (dataPointer == -1) {
+              if (ts <= snaptime) {
+                dataPointer = timePtr;
+                source.skipToPrefix(curCol, ColumnType.DEL_LOCK);
+                continue;
+              } else {
+                source.skipToTimestamp(curCol, ColumnType.WRITE.prefix(snaptime));
+                continue;
+              }
+            }
+            break;
+          }
+          case DEL_LOCK: {
+            if (ts > invalidationTime) {
+              invalidationTime = ts;
+            }
+            if (returnReadLockPresent) {
+              source.skipToPrefix(curCol, ColumnType.RLOCK);
             } else {
-              source.skipToTimestamp(curCol, ColumnConstants.WRITE_PREFIX | snaptime);
-              continue;
+              source.skipToPrefix(curCol, ColumnType.LOCK);
+            }
+            continue;
+          }
+          case RLOCK: {
+            if (returnReadLockPresent) {
+              rememberReadLock(source.getTopKey(), source.getTopValue());
+            }
+
+            source.skipToPrefix(curCol, ColumnType.LOCK);
+            continue;
+          }
+          case LOCK: {
+            if (ts > invalidationTime && ts <= snaptime) {
+              // nothing supersedes this lock, therefore the column is locked
+              return;
+            } else {
+              if (dataPointer == -1) {
+                source.skipColumn(curCol);
+                continue outer;
+              } else {
+                source.skipToTimestamp(curCol, ColumnType.DATA.prefix(dataPointer));
+                continue;
+              }
             }
           }
-        } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-          if (ts > invalidationTime) {
-            invalidationTime = ts;
-          }
-          if (returnReadLockPresent) {
-            source.skipToPrefix(curCol, ColumnConstants.RLOCK_PREFIX);
-          } else {
-            source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
-          }
-          continue;
+          case DATA: {
+            if (dataPointer == ts) {
+              // found data for this column
+              return;
+            }
 
-        } else if (colType == ColumnConstants.RLOCK_PREFIX) {
-          if (returnReadLockPresent) {
-            rememberReadLock(source.getTopKey(), source.getTopValue());
-          }
+            if (ts < dataPointer || dataPointer == -1) {
+              source.skipColumn(curCol);
+              continue outer;
+            }
 
-          source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
-          continue;
-        } else if (colType == ColumnConstants.LOCK_PREFIX) {
-          if (ts > invalidationTime && ts <= snaptime) {
-            // nothing supersedes this lock, therefore the column is locked
-            return;
-          } else {
+            if (ts > dataPointer) {
+              source.skipToTimestamp(curCol, ColumnType.DATA.prefix(dataPointer));
+              continue;
+            }
+            break;
+          }
+          case ACK: {
             if (dataPointer == -1) {
               source.skipColumn(curCol);
               continue outer;
             } else {
-              source.skipToTimestamp(curCol, ColumnConstants.DATA_PREFIX | dataPointer);
+              source.skipToTimestamp(curCol, ColumnType.DATA.prefix(dataPointer));
               continue;
             }
           }
-        } else if (colType == ColumnConstants.DATA_PREFIX) {
-          if (dataPointer == ts) {
-            // found data for this column
-            return;
-          }
-
-          if (ts < dataPointer || dataPointer == -1) {
-            source.skipColumn(curCol);
-            continue outer;
-          }
-
-          if (ts > dataPointer) {
-            source.skipToTimestamp(curCol, ColumnConstants.DATA_PREFIX | dataPointer);
-            continue;
-          }
-        } else if (colType == ColumnConstants.ACK_PREFIX) {
-          if (dataPointer == -1) {
-            source.skipColumn(curCol);
-            continue outer;
-          } else {
-            source.skipToTimestamp(curCol, ColumnConstants.DATA_PREFIX | dataPointer);
-            continue;
-          }
-        } else {
-          throw new IllegalArgumentException();
+          default:
+            throw new IllegalArgumentException();
         }
-
         // TODO handle case where dataPointer >=0, but no data was found
         source.next();
       }
@@ -220,8 +229,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
     if (range.getStartKey() != null && range.getStartKey().getTimestamp() != Long.MAX_VALUE
         && !range.isStartKeyInclusive()) {
 
-      if ((range.getStartKey().getTimestamp()
-          & ColumnConstants.PREFIX_MASK) == ColumnConstants.RLOCK_PREFIX) {
+      if (ColumnType.from(range.getStartKey()) == ColumnType.RLOCK) {
         Key currCol = new Key(range.getStartKey());
         currCol.setTimestamp(Long.MAX_VALUE);
         newRange = new Range(currCol, true, range.getEndKey(), range.isEndKeyInclusive());

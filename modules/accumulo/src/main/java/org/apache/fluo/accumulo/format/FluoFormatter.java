@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -21,6 +21,7 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
@@ -88,34 +89,21 @@ public class FluoFormatter {
     } else {
       long ts = key.getTimestamp();
       String type = "";
+      ColumnType colType = ColumnType.from(ts);
 
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.TX_DONE_PREFIX) {
-        type = "TX_DONE";
+      switch (colType) {
+        case RLOCK:
+          if (ReadLockUtil.isDelete(ts)) {
+            type = "DEL_RLOCK";
+          } else {
+            type = "RLOCK";
+          }
+          ts = ReadLockUtil.decodeTs(ts);
+          break;
+        default:
+          type = colType.toString();
+          break;
       }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DEL_LOCK_PREFIX) {
-        type = "DEL_LOCK";
-      }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.LOCK_PREFIX) {
-        type = "LOCK";
-      }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.DATA_PREFIX) {
-        type = "DATA";
-      }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.WRITE_PREFIX) {
-        type = "WRITE";
-      }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.ACK_PREFIX) {
-        type = "ACK";
-      }
-      if ((ts & ColumnConstants.PREFIX_MASK) == ColumnConstants.RLOCK_PREFIX) {
-        if (ReadLockUtil.isDelete(ts)) {
-          type = "DEL_RLOCK";
-        } else {
-          type = "RLOCK";
-        }
-        ts = ReadLockUtil.decodeTs(ts);
-      }
-
 
       StringBuilder sb = new StringBuilder();
 

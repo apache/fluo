@@ -32,6 +32,7 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
@@ -125,10 +126,10 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   private boolean consumeData() throws IOException {
     while (source.hasTop()
         && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      ColumnType colType = ColumnType.from(source.getTopKey());
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnConstants.DATA_PREFIX) {
+      if (colType == ColumnType.DATA) {
         if (ts >= truncationTime && !rolledback.contains(ts)) {
           return false;
         }
@@ -173,132 +174,147 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
       return;
     }
 
-    while (source.hasTop()
+    loop: while (source.hasTop()
         && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
 
-      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      ColumnType colType = ColumnType.from(source.getTopKey());
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        keys.add(source.getTopKey(), source.getTopValue());
-        completeTxs.add(ts);
-      } else if (colType == ColumnConstants.WRITE_PREFIX) {
-        boolean keep = false;
-        boolean complete = completeTxs.contains(ts);
-        byte[] val = source.getTopValue().get();
-        long timePtr = WriteValue.getTimestamp(val);
-
-        if (WriteValue.isPrimary(val) && !complete) {
-          keep = true;
+      switch (colType) {
+        case TX_DONE: {
+          keys.add(source.getTopKey(), source.getTopValue());
+          completeTxs.add(ts);
+          break;
         }
+        case WRITE: {
+          boolean keep = false;
+          boolean complete = completeTxs.contains(ts);
+          byte[] val = source.getTopValue().get();
+          long timePtr = WriteValue.getTimestamp(val);
 
-        if (!oldestSeen) {
-          if (firstWrite == -1) {
-            firstWrite = ts;
-          }
-
-          if (ts < gcTimestamp) {
-            oldestSeen = true;
-            truncationTime = timePtr;
-            if (!(WriteValue.isDelete(val) && isFullMajc)) {
-              keep = true;
-            }
-          } else {
+          if (WriteValue.isPrimary(val) && !complete) {
             keep = true;
           }
-        }
 
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
-        }
+          if (!oldestSeen) {
+            if (firstWrite == -1) {
+              firstWrite = ts;
+            }
 
-        if (keep) {
-          keys.add(source.getTopKey(), val);
-        } else if (complete) {
-          completeTxs.remove(ts);
-        }
-      } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-        boolean keep = false;
-        long txDoneTs = DelLockValue.getTxDoneTimestamp(source.getTopValue().get());
-        boolean complete = completeTxs.contains(txDoneTs);
-
-        byte[] val = source.getTopValue().get();
-
-        if (!complete && DelLockValue.isPrimary(val)) {
-          keep = true;
-        }
-
-        if (DelLockValue.isRollback(val)) {
-          rolledback.add(ts);
-          keep |= !isFullMajc;
-        }
-
-        if (ts > invalidationTime) {
-          invalidationTime = ts;
-        }
-
-        if (keep) {
-          keys.add(source.getTopKey(), source.getTopValue());
-        } else if (complete) {
-          completeTxs.remove(txDoneTs);
-        }
-      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
-        boolean keep = false;
-        long rlts = ReadLockUtil.decodeTs(ts);
-        boolean isDelete = ReadLockUtil.isDelete(ts);
-
-        if (isDelete) {
-          lastReadLockDeleteTs = rlts;
-        }
-
-        if (rlts > invalidationTime) {
-          if (isFullMajc) {
-            if (isDelete) {
-              if (DelReadLockValue.isRollback(source.getTopValue().get())) {
-                // can drop rolled back read lock delete markers on any full majc, do not need to
-                // consider gcTimestamp
-                keep = false;
-              } else {
-                long rlockCommitTs =
-                    DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
-                keep = rlockCommitTs >= gcTimestamp;
+            if (ts < gcTimestamp) {
+              oldestSeen = true;
+              truncationTime = timePtr;
+              if (!(WriteValue.isDelete(val) && isFullMajc)) {
+                keep = true;
               }
             } else {
-              keep = lastReadLockDeleteTs != rlts;
+              keep = true;
             }
-          } else {
-            // can drop deleted read lock entries.. keep the delete entry.
-            keep = isDelete || lastReadLockDeleteTs != rlts;
           }
-        }
 
-        if (keep) {
-          keys.add(source.getTopKey(), source.getTopValue());
+          if (timePtr > invalidationTime) {
+            invalidationTime = timePtr;
+          }
+
+          if (keep) {
+            keys.add(source.getTopKey(), val);
+          } else if (complete) {
+            completeTxs.remove(ts);
+          }
+          break;
         }
-      } else if (colType == ColumnConstants.LOCK_PREFIX) {
-        if (ts > invalidationTime) {
-          keys.add(source.getTopKey(), source.getTopValue());
+        case DEL_LOCK: {
+          boolean keep = false;
+          long txDoneTs = DelLockValue.getTxDoneTimestamp(source.getTopValue().get());
+          boolean complete = completeTxs.contains(txDoneTs);
+
+          byte[] val = source.getTopValue().get();
+
+          if (!complete && DelLockValue.isPrimary(val)) {
+            keep = true;
+          }
+
+          if (DelLockValue.isRollback(val)) {
+            rolledback.add(ts);
+            keep |= !isFullMajc;
+          }
+
+          if (ts > invalidationTime) {
+            invalidationTime = ts;
+          }
+
+          if (keep) {
+            keys.add(source.getTopKey(), source.getTopValue());
+          } else if (complete) {
+            completeTxs.remove(txDoneTs);
+          }
+          break;
         }
-      } else if (colType == ColumnConstants.DATA_PREFIX) {
-        // can stop looking
-        break;
-      } else if (colType == ColumnConstants.ACK_PREFIX) {
-        if (!sawAck) {
-          if (ts >= firstWrite) {
+        case RLOCK: {
+          boolean keep = false;
+          long rlts = ReadLockUtil.decodeTs(ts);
+          boolean isDelete = ReadLockUtil.isDelete(ts);
+
+          if (isDelete) {
+            lastReadLockDeleteTs = rlts;
+          }
+
+          if (rlts > invalidationTime) {
+            if (isFullMajc) {
+              if (isDelete) {
+                if (DelReadLockValue.isRollback(source.getTopValue().get())) {
+                  // can drop rolled back read lock delete markers on any full majc, do not need to
+                  // consider gcTimestamp
+                  keep = false;
+                } else {
+                  long rlockCommitTs =
+                      DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
+                  keep = rlockCommitTs >= gcTimestamp;
+                }
+              } else {
+                keep = lastReadLockDeleteTs != rlts;
+              }
+            } else {
+              // can drop deleted read lock entries.. keep the delete entry.
+              keep = isDelete || lastReadLockDeleteTs != rlts;
+            }
+          }
+
+          if (keep) {
             keys.add(source.getTopKey(), source.getTopValue());
           }
-          sawAck = true;
+          break;
         }
-      } else {
-        throw new IllegalArgumentException(" unknown colType " + String.format("%x", colType));
+        case LOCK: {
+          if (ts > invalidationTime) {
+            keys.add(source.getTopKey(), source.getTopValue());
+          }
+          break;
+        }
+        case DATA: {
+          // can stop looking
+          break loop;
+        }
+        case ACK: {
+          if (!sawAck) {
+            if (ts >= firstWrite) {
+              keys.add(source.getTopKey(), source.getTopValue());
+            }
+            sawAck = true;
+          }
+          break;
+        }
+
+        default:
+          throw new IllegalArgumentException(" unknown colType " + String.format("%x", colType));
+
       }
 
       source.next();
     }
 
     keys.copyTo(keysFiltered, (timestamp -> {
-      long colType = timestamp & ColumnConstants.PREFIX_MASK;
-      if (colType == ColumnConstants.TX_DONE_PREFIX) {
+      if (ColumnType.from(timestamp) == ColumnType.TX_DONE) {
         return completeTxs.contains(timestamp & ColumnConstants.TIMESTAMP_MASK);
       } else {
         return true;

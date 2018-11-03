@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -32,7 +32,7 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
@@ -176,16 +176,20 @@ public class ParallelSnapshotScanner {
         Bytes row = rowConverter.apply(entry.getKey().getRowData());
         Column col = columnConverter.apply(entry.getKey());
 
-        long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
-
-        if (colType == ColumnConstants.LOCK_PREFIX) {
-          locks.add(entry);
-        } else if (colType == ColumnConstants.DATA_PREFIX) {
-          ret.computeIfAbsent(row, k -> new HashMap<>()).put(col, Bytes.of(entry.getValue().get()));
-        } else if (colType == ColumnConstants.RLOCK_PREFIX) {
-          readLocksSeen.computeIfAbsent(row, k -> new HashSet<>()).add(col);
-        } else {
-          throw new IllegalArgumentException("Unexpected column type " + colType);
+        ColumnType colType = ColumnType.from(entry.getKey());
+        switch (colType) {
+          case LOCK:
+            locks.add(entry);
+            break;
+          case DATA:
+            ret.computeIfAbsent(row, k -> new HashMap<>()).put(col,
+                Bytes.of(entry.getValue().get()));
+            break;
+          case RLOCK:
+            readLocksSeen.computeIfAbsent(row, k -> new HashSet<>()).add(col);
+            break;
+          default:
+            throw new IllegalArgumentException("Unexpected column type " + colType);
         }
       }
     } finally {
