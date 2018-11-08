@@ -83,8 +83,8 @@ public class FluoMutationGenerator {
   }
 
   public FluoMutationGenerator put(Column col, byte[] value) {
-    Flutation.put(mutation, col, ColumnType.DATA.prefix(0), value);
-    Flutation.put(mutation, col, ColumnType.WRITE.prefix(1), WriteValue.encode(0, false, false));
+    Flutation.put(mutation, col, ColumnType.DATA.enode(0), value);
+    Flutation.put(mutation, col, ColumnType.WRITE.enode(1), WriteValue.encode(0, false, false));
     return this;
   }
 

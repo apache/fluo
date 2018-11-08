@@ -187,11 +187,11 @@ public class FluoKeyValueGenerator {
    */
   public FluoKeyValue[] getKeyValues() {
     FluoKeyValue kv = keyVals[0];
-    kv.setKey(new Key(row, fam, qual, vis, ColumnType.WRITE.prefix(1)));
+    kv.setKey(new Key(row, fam, qual, vis, ColumnType.WRITE.enode(1)));
     kv.getValue().set(WriteValue.encode(0, false, false));
 
     kv = keyVals[1];
-    kv.setKey(new Key(row, fam, qual, vis, ColumnType.DATA.prefix(0)));
+    kv.setKey(new Key(row, fam, qual, vis, ColumnType.DATA.enode(0)));
     kv.getValue().set(val);
 
     return keyVals;

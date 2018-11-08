@@ -32,6 +32,7 @@ import static org.apache.fluo.accumulo.util.ColumnType.RLOCK;
 import static org.apache.fluo.accumulo.util.ColumnType.TX_DONE;
 import static org.apache.fluo.accumulo.util.ColumnType.WRITE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ColumnTypeTest {
 
@@ -56,13 +57,22 @@ public class ColumnTypeTest {
   @Test
   public void testPrefix() {
     for (long l : new long[] {0, 2, 13, 19 * 19L, 1L << 50, 1L << 50 + 1L << 48}) {
-      EPM.forEach((prefix, colType) -> assertEquals(prefix | l, colType.prefix(l)));
+      EPM.forEach((prefix, colType) -> assertEquals(prefix | l, colType.enode(l)));
     }
   }
 
   @Test
   public void testFirst() {
     EPM.forEach((prefix, colType) -> assertEquals(prefix | TIMESTAMP_MASK, colType.first()));
+    for (long l : new long[] {0, 2, 13, 19 * 19L, 1L << 50, 1L << 50 + 1L << 48}) {
+      EPM.forEach((prefix, colType) -> {
+        Key k1 = new Key("r", "f", "q");
+        k1.setTimestamp(prefix | l);
+        Key k2 = new Key("r", "f", "q");
+        k2.setTimestamp(colType.first());
+        assertTrue(k1.compareTo(k2) > 0);
+      });
+    }
   }
 
   @Test

@@ -15,8 +15,12 @@
 
 package org.apache.fluo.accumulo.util;
 
+import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.data.Key;
 
+/**
+ * Abstracts how the Fluo column type is encoded in Accumulo timestamps.
+ */
 public enum ColumnType {
 
   TX_DONE, WRITE, DEL_LOCK, RLOCK, LOCK, ACK, DATA;
@@ -24,14 +28,17 @@ public enum ColumnType {
   private long prefix;
 
   /**
-   * @return The first possible timestamp
+   * @return The first possible timestamp in sorted order.
    */
   public long first() {
     return prefix | ColumnConstants.TIMESTAMP_MASK;
   }
 
-  public long prefix(long timestamp) {
-    // TODO could check that high order bits are zero
+  /**
+   * @return The timestamp with this column type encoded into the high order bits.
+   */
+  public long enode(long timestamp) {
+    Preconditions.checkArgument((timestamp >>> (64 - BITS)) == 0);
     return prefix | timestamp;
   }
 

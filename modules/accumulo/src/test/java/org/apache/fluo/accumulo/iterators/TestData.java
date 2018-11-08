@@ -101,28 +101,28 @@ public class TestData {
 
     switch (ct) {
       case "ACK":
-        ts = ColumnType.ACK.prefix(ts);
+        ts = ColumnType.ACK.enode(ts);
         break;
       case "TX_DONE":
-        ts = ColumnType.TX_DONE.prefix(ts);
+        ts = ColumnType.TX_DONE.enode(ts);
         break;
       case "WRITE":
-        ts = ColumnType.WRITE.prefix(ts);
+        ts = ColumnType.WRITE.enode(ts);
         long writeTs = Long.parseLong(value.split("\\s+")[0]);
         val = WriteValue.encode(writeTs, value.contains("PRIMARY"), value.contains("DELETE"));
         break;
       case "LOCK":
-        ts = ColumnType.LOCK.prefix(ts);
+        ts = ColumnType.LOCK.enode(ts);
         String rc[] = value.split("\\s+");
         val = LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"),
             value.contains("DELETE"), value.contains("TRIGGER"), 42l);
         break;
       case "DATA":
-        ts = ColumnType.DATA.prefix(ts);
+        ts = ColumnType.DATA.enode(ts);
         val = value.getBytes();
         break;
       case "DEL_LOCK":
-        ts = ColumnType.DEL_LOCK.prefix(ts);
+        ts = ColumnType.DEL_LOCK.enode(ts);
         if (value.contains("ROLLBACK") || value.contains("ABORT")) {
           val = DelLockValue.encodeRollback(value.contains("PRIMARY"), true);
         } else {
@@ -132,11 +132,11 @@ public class TestData {
         break;
       case "RLOCK":
         ts = ReadLockUtil.encodeTs(ts, false);
-        ts = ColumnType.RLOCK.prefix(ts);
+        ts = ColumnType.RLOCK.enode(ts);
         break;
       case "DEL_RLOCK":
         ts = ReadLockUtil.encodeTs(ts, true);
-        ts = ColumnType.RLOCK.prefix(ts);
+        ts = ColumnType.RLOCK.enode(ts);
 
         if (value.contains("ROLLBACK") || value.contains("ABORT")) {
           val = DelReadLockValue.encodeRollback();
