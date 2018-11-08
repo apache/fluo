@@ -113,7 +113,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
                 source.skipToPrefix(curCol, ColumnType.DEL_LOCK);
                 continue;
               } else {
-                source.skipToTimestamp(curCol, ColumnType.WRITE.enode(snaptime));
+                source.skipToTimestamp(curCol, ColumnType.WRITE.encode(snaptime));
                 continue;
               }
             }
@@ -147,7 +147,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
                 source.skipColumn(curCol);
                 continue outer;
               } else {
-                source.skipToTimestamp(curCol, ColumnType.DATA.enode(dataPointer));
+                source.skipToTimestamp(curCol, ColumnType.DATA.encode(dataPointer));
                 continue;
               }
             }
@@ -164,7 +164,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
             }
 
             if (ts > dataPointer) {
-              source.skipToTimestamp(curCol, ColumnType.DATA.enode(dataPointer));
+              source.skipToTimestamp(curCol, ColumnType.DATA.encode(dataPointer));
               continue;
             }
             break;
@@ -174,7 +174,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
               source.skipColumn(curCol);
               continue outer;
             } else {
-              source.skipToTimestamp(curCol, ColumnType.DATA.enode(dataPointer));
+              source.skipToTimestamp(curCol, ColumnType.DATA.encode(dataPointer));
               continue;
             }
           }

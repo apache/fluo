@@ -93,11 +93,6 @@
         <version>27.0-jre</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-collections4</artifactId>
-        <version>4.2</version>
-      </dependency>
-      <dependency>
         <groupId>commons-configuration</groupId>
         <artifactId>commons-configuration</artifactId>
         <version>1.10</version>
@@ -141,6 +136,11 @@
         <groupId>org.apache.accumulo</groupId>
         <artifactId>accumulo-test</artifactId>
         <version>${accumulo.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>4.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
