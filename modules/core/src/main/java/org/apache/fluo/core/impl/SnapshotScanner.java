@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -31,7 +31,7 @@ import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.fluo.accumulo.iterators.SnapshotIterator;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
@@ -172,9 +172,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
         while (iterator.hasNext()) {
           Entry<Key, Value> entry = iterator.next();
 
-          long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
-
-          if (colType == ColumnConstants.LOCK_PREFIX) {
+          if (ColumnType.from(entry.getKey()) == ColumnType.LOCK) {
             locks.add(entry);
             locksSeen.accept(lockEntry);
           }
@@ -220,18 +218,19 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
         Entry<Key, Value> entry = iterator.next();
 
-        long colType = entry.getKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+        ColumnType colType = ColumnType.from(entry.getKey());
 
-        if (colType == ColumnConstants.LOCK_PREFIX) {
-          resolveLock(entry);
-          continue mloop;
-        } else if (colType == ColumnConstants.DATA_PREFIX) {
-          stats.incrementEntriesReturned(1);
-          return entry;
-        } else if (colType == ColumnConstants.RLOCK_PREFIX) {
-          return entry;
-        } else {
-          throw new IllegalArgumentException("Unexpected column type " + colType);
+        switch (colType) {
+          case LOCK:
+            resolveLock(entry);
+            continue mloop;
+          case DATA:
+            stats.incrementEntriesReturned(1);
+            return entry;
+          case RLOCK:
+            return entry;
+          default:
+            throw new IllegalArgumentException("Unexpected column type " + colType);
         }
       }
     }

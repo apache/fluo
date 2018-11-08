@@ -26,7 +26,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 
 /**
  * The purpose of this iterator is to make seeking within a columns timestamp range efficient.
@@ -80,10 +80,8 @@ public class TimestampSkippingIterator implements SortedKeyValueIterator<Key, Va
     }
   }
 
-  public void skipToPrefix(Key curCol, long prefix) throws IOException {
-    // first possible timestamp in sorted order for this prefix
-    long timestamp = prefix | ColumnConstants.TIMESTAMP_MASK;
-    skipToTimestamp(curCol, timestamp);
+  public void skipToPrefix(Key curCol, ColumnType colType) throws IOException {
+    skipToTimestamp(curCol, colType.first());
   }
 
   public void skipColumn(Key curCol) throws IOException {

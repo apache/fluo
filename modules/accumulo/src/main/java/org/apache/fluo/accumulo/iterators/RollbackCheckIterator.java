@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -29,6 +29,7 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.values.WriteValue;
 
 public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value> {
@@ -91,60 +92,69 @@ public class RollbackCheckIterator implements SortedKeyValueIterator<Key, Value>
     hasTop = false;
     while (source.hasTop()
         && curCol.equals(source.getTopKey(), PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
-      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      ColumnType colType = ColumnType.from(source.getTopKey());
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        source.skipToPrefix(curCol, ColumnConstants.WRITE_PREFIX);
-        continue;
-      } else if (colType == ColumnConstants.WRITE_PREFIX) {
-        long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
+      switch (colType) {
+        case TX_DONE:
+          source.skipToPrefix(curCol, ColumnType.WRITE);
+          continue;
+        case WRITE: {
+          long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
+          if (timePtr > invalidationTime) {
+            invalidationTime = timePtr;
+          }
+
+          if (lockTime == timePtr) {
+            hasTop = true;
+            return;
+          }
+
+          if (lockTime > timePtr) {
+            source.skipToPrefix(curCol, ColumnType.DEL_LOCK);
+            continue;
+          }
+          break;
         }
+        case DEL_LOCK: {
+          if (ts > invalidationTime) {
+            invalidationTime = ts;
+          }
 
-        if (lockTime == timePtr) {
-          hasTop = true;
-          return;
+          if (ts == lockTime) {
+            hasTop = true;
+            return;
+          }
+
+          if (lockTime > ts) {
+            source.skipToPrefix(curCol, ColumnType.LOCK);
+            continue;
+          }
+          break;
         }
-
-        if (lockTime > timePtr) {
-          source.skipToPrefix(curCol, ColumnConstants.DEL_LOCK_PREFIX);
+        case RLOCK: {
+          source.skipToPrefix(curCol, ColumnType.LOCK);
           continue;
         }
-
-      } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-        if (ts > invalidationTime) {
-          invalidationTime = ts;
+        case LOCK: {
+          if (ts > invalidationTime) {
+            // nothing supersedes this lock, therefore the column is locked
+            hasTop = true;
+            return;
+          }
+          break;
         }
-
-        if (ts == lockTime) {
-          hasTop = true;
+        case DATA: {
+          // can stop looking
           return;
         }
-
-        if (lockTime > ts) {
-          source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
-          continue;
+        case ACK: {
+          // do nothing if ACK
+          break;
         }
-
-      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
-        source.skipToPrefix(curCol, ColumnConstants.LOCK_PREFIX);
-        continue;
-      } else if (colType == ColumnConstants.LOCK_PREFIX) {
-        if (ts > invalidationTime) {
-          // nothing supersedes this lock, therefore the column is locked
-          hasTop = true;
-          return;
-        }
-      } else if (colType == ColumnConstants.DATA_PREFIX) {
-        // can stop looking
-        return;
-      } else if (colType == ColumnConstants.ACK_PREFIX) {
-        // do nothing if ACK
-      } else {
-        throw new IllegalArgumentException();
+        default:
+          throw new IllegalArgumentException();
       }
 
       source.next();

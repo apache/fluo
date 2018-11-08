@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -28,6 +28,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelReadLockValue;
 import org.apache.fluo.accumulo.values.WriteValue;
@@ -102,9 +103,9 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
 
     Key endKey = new Key(range.getStartKey());
     if (checkAck) {
-      endKey.setTimestamp(ColumnConstants.DATA_PREFIX | ColumnConstants.TIMESTAMP_MASK);
+      endKey.setTimestamp(ColumnType.DATA.first());
     } else {
-      endKey.setTimestamp(ColumnConstants.ACK_PREFIX | ColumnConstants.TIMESTAMP_MASK);
+      endKey.setTimestamp(ColumnType.ACK.first());
     }
 
     // Tried seeking directly to WRITE_PREFIX, however this did not work well because of how
@@ -120,114 +121,126 @@ public class PrewriteIterator implements SortedKeyValueIterator<Key, Value> {
     while (source.hasTop() && seekRange.getStartKey().equals(source.getTopKey(),
         PartialKey.ROW_COLFAM_COLQUAL_COLVIS)) {
 
-      long colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
+      ColumnType colType = ColumnType.from(source.getTopKey());
       long ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
 
-      if (colType == ColumnConstants.TX_DONE_PREFIX) {
-        // tried to make 1st seek go to WRITE_PREFIX, but this did not allow the DeleteIterator to
-        // be removed from the stack so it was slower.
-        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.WRITE_PREFIX);
-      } else if (colType == ColumnConstants.WRITE_PREFIX) {
-        long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
-
-        if (timePtr > invalidationTime) {
-          invalidationTime = timePtr;
+      switch (colType) {
+        case TX_DONE: {
+          // tried to make 1st seek go to WRITE_PREFIX, but this did not allow the DeleteIterator to
+          // be removed from the stack so it was slower.
+          source.skipToPrefix(seekRange.getStartKey(), ColumnType.WRITE);
+          break;
         }
+        case WRITE: {
+          long timePtr = WriteValue.getTimestamp(source.getTopValue().get());
 
-        if (ts >= snaptime) {
-          hasTop = true;
-          return;
-        }
-
-        source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.DEL_LOCK_PREFIX);
-      } else if (colType == ColumnConstants.DEL_LOCK_PREFIX) {
-        if (ts > invalidationTime) {
-          invalidationTime = ts;
+          if (timePtr > invalidationTime) {
+            invalidationTime = timePtr;
+          }
 
           if (ts >= snaptime) {
             hasTop = true;
             return;
           }
+
+          source.skipToPrefix(seekRange.getStartKey(), ColumnType.DEL_LOCK);
+          break;
         }
+        case DEL_LOCK: {
+          if (ts > invalidationTime) {
+            invalidationTime = ts;
 
-        if (readlock) {
-          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
-        } else {
-          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.RLOCK_PREFIX);
+            if (ts >= snaptime) {
+              hasTop = true;
+              return;
+            }
+          }
+
+          if (readlock) {
+            source.skipToPrefix(seekRange.getStartKey(), ColumnType.LOCK);
+          } else {
+            source.skipToPrefix(seekRange.getStartKey(), ColumnType.RLOCK);
+          }
+          break;
         }
-      } else if (colType == ColumnConstants.RLOCK_PREFIX) {
+        case RLOCK: {
+          long lastDeleteTs = -1;
+          long rlts = ReadLockUtil.decodeTs(ts);
 
-        long lastDeleteTs = -1;
-        long rlts = ReadLockUtil.decodeTs(ts);
-
-        if (!readlock) {
-          while (rlts > invalidationTime && colType == ColumnConstants.RLOCK_PREFIX) {
-            if (ReadLockUtil.isDelete(ts)) {
-              // ignore rolled back read locks, these should never prevent a write lock
-              if (!DelReadLockValue.isRollback(source.getTopValue().get())) {
-                if (rlts >= snaptime) {
-                  hasTop = true;
-                  return;
-                } else {
-                  long rlockCommitTs =
-                      DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
-                  if (rlockCommitTs > snaptime) {
+          if (!readlock) {
+            while (rlts > invalidationTime && colType == ColumnType.RLOCK) {
+              if (ReadLockUtil.isDelete(ts)) {
+                // ignore rolled back read locks, these should never prevent a write lock
+                if (!DelReadLockValue.isRollback(source.getTopValue().get())) {
+                  if (rlts >= snaptime) {
                     hasTop = true;
                     return;
+                  } else {
+                    long rlockCommitTs =
+                        DelReadLockValue.getCommitTimestamp(source.getTopValue().get());
+                    if (rlockCommitTs > snaptime) {
+                      hasTop = true;
+                      return;
+                    }
                   }
+                }
+
+
+                lastDeleteTs = rlts;
+              } else {
+                if (rlts != lastDeleteTs) {
+                  // this read lock is active
+                  hasTop = true;
+                  return;
                 }
               }
 
-
-              lastDeleteTs = rlts;
-            } else {
-              if (rlts != lastDeleteTs) {
-                // this read lock is active
-                hasTop = true;
-                return;
+              source.next();
+              if (source.hasTop()) {
+                colType = ColumnType.from(source.getTopKey());
+                ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
+                rlts = ReadLockUtil.decodeTs(ts);
+              } else {
+                break;
               }
             }
+          }
 
-            source.next();
-            if (source.hasTop()) {
-              colType = source.getTopKey().getTimestamp() & ColumnConstants.PREFIX_MASK;
-              ts = source.getTopKey().getTimestamp() & ColumnConstants.TIMESTAMP_MASK;
-              rlts = ReadLockUtil.decodeTs(ts);
-            } else {
-              break;
-            }
+          if (source.hasTop() && (colType == ColumnType.RLOCK)) {
+            source.skipToPrefix(seekRange.getStartKey(), ColumnType.LOCK);
+          }
+          break;
+        }
+        case LOCK: {
+          if (ts > invalidationTime) {
+            // nothing supersedes this lock, therefore the column is locked
+            hasTop = true;
+            return;
+          }
+
+          if (checkAck) {
+            source.skipToPrefix(seekRange.getStartKey(), ColumnType.ACK);
+          } else {
+            // only ack and data left and not interested in either so stop looking
+            return;
+          }
+          break;
+        }
+        case DATA: {
+          // can stop looking
+          return;
+        }
+        case ACK: {
+          if (checkAck && ts > ntfyTimestamp) {
+            hasTop = true;
+            return;
+          } else {
+            // nothing else to look at in this column
+            return;
           }
         }
-
-        if (source.hasTop() && (colType == ColumnConstants.RLOCK_PREFIX)) {
-          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.LOCK_PREFIX);
-        }
-      } else if (colType == ColumnConstants.LOCK_PREFIX) {
-        if (ts > invalidationTime) {
-          // nothing supersedes this lock, therefore the column is locked
-          hasTop = true;
-          return;
-        }
-
-        if (checkAck) {
-          source.skipToPrefix(seekRange.getStartKey(), ColumnConstants.ACK_PREFIX);
-        } else {
-          // only ack and data left and not interested in either so stop looking
-          return;
-        }
-      } else if (colType == ColumnConstants.DATA_PREFIX) {
-        // can stop looking
-        return;
-      } else if (colType == ColumnConstants.ACK_PREFIX) {
-        if (checkAck && ts > ntfyTimestamp) {
-          hasTop = true;
-          return;
-        } else {
-          // nothing else to look at in this column
-          return;
-        }
-      } else {
-        throw new IllegalArgumentException();
+        default:
+          throw new IllegalArgumentException();
       }
     }
   }

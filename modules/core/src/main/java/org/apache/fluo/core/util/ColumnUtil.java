@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.DelReadLockValue;
@@ -56,19 +56,18 @@ public class ColumnUtil {
       boolean isWrite, boolean isDelete, boolean isReadlock, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isReadlock) {
-      Flutation.put(env, m, col,
-          ColumnConstants.RLOCK_PREFIX | ReadLockUtil.encodeTs(startTs, true),
+      Flutation.put(env, m, col, ColumnType.RLOCK.enode(ReadLockUtil.encodeTs(startTs, true)),
           DelReadLockValue.encodeCommit(commitTs));
     } else if (isWrite) {
-      Flutation.put(env, m, col, ColumnConstants.WRITE_PREFIX | commitTs,
+      Flutation.put(env, m, col, ColumnType.WRITE.enode(commitTs),
           WriteValue.encode(startTs, isPrimary, isDelete));
     } else {
-      Flutation.put(env, m, col, ColumnConstants.DEL_LOCK_PREFIX | startTs,
+      Flutation.put(env, m, col, ColumnType.DEL_LOCK.enode(startTs),
           DelLockValue.encodeCommit(commitTs, isPrimary));
     }
 
     if (isTrigger) {
-      Flutation.put(env, m, col, ColumnConstants.ACK_PREFIX | startTs, TransactionImpl.EMPTY);
+      Flutation.put(env, m, col, ColumnType.ACK.enode(startTs), TransactionImpl.EMPTY);
     }
   }
 

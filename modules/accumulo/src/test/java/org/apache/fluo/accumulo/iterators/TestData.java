@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -29,7 +29,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.iterators.CountingIterator.Counter;
-import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.accumulo.values.DelReadLockValue;
@@ -101,28 +101,28 @@ public class TestData {
 
     switch (ct) {
       case "ACK":
-        ts |= ColumnConstants.ACK_PREFIX;
+        ts = ColumnType.ACK.enode(ts);
         break;
       case "TX_DONE":
-        ts |= ColumnConstants.TX_DONE_PREFIX;
+        ts = ColumnType.TX_DONE.enode(ts);
         break;
       case "WRITE":
-        ts |= ColumnConstants.WRITE_PREFIX;
+        ts = ColumnType.WRITE.enode(ts);
         long writeTs = Long.parseLong(value.split("\\s+")[0]);
         val = WriteValue.encode(writeTs, value.contains("PRIMARY"), value.contains("DELETE"));
         break;
       case "LOCK":
-        ts |= ColumnConstants.LOCK_PREFIX;
+        ts = ColumnType.LOCK.enode(ts);
         String rc[] = value.split("\\s+");
         val = LockValue.encode(Bytes.of(rc[0]), new Column(rc[1], rc[2]), value.contains("WRITE"),
             value.contains("DELETE"), value.contains("TRIGGER"), 42l);
         break;
       case "DATA":
-        ts |= ColumnConstants.DATA_PREFIX;
+        ts = ColumnType.DATA.enode(ts);
         val = value.getBytes();
         break;
       case "DEL_LOCK":
-        ts |= ColumnConstants.DEL_LOCK_PREFIX;
+        ts = ColumnType.DEL_LOCK.enode(ts);
         if (value.contains("ROLLBACK") || value.contains("ABORT")) {
           val = DelLockValue.encodeRollback(value.contains("PRIMARY"), true);
         } else {
@@ -132,11 +132,11 @@ public class TestData {
         break;
       case "RLOCK":
         ts = ReadLockUtil.encodeTs(ts, false);
-        ts |= ColumnConstants.RLOCK_PREFIX;
+        ts = ColumnType.RLOCK.enode(ts);
         break;
       case "DEL_RLOCK":
         ts = ReadLockUtil.encodeTs(ts, true);
-        ts |= ColumnConstants.RLOCK_PREFIX;
+        ts = ColumnType.RLOCK.enode(ts);
 
         if (value.contains("ROLLBACK") || value.contains("ABORT")) {
           val = DelReadLockValue.encodeRollback();
