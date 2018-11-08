@@ -56,18 +56,18 @@ public class ColumnUtil {
       boolean isWrite, boolean isDelete, boolean isReadlock, long startTs, long commitTs,
       Set<Column> observedColumns, Mutation m) {
     if (isReadlock) {
-      Flutation.put(env, m, col, ColumnType.RLOCK.enode(ReadLockUtil.encodeTs(startTs, true)),
+      Flutation.put(env, m, col, ColumnType.RLOCK.encode(ReadLockUtil.encodeTs(startTs, true)),
           DelReadLockValue.encodeCommit(commitTs));
     } else if (isWrite) {
-      Flutation.put(env, m, col, ColumnType.WRITE.enode(commitTs),
+      Flutation.put(env, m, col, ColumnType.WRITE.encode(commitTs),
           WriteValue.encode(startTs, isPrimary, isDelete));
     } else {
-      Flutation.put(env, m, col, ColumnType.DEL_LOCK.enode(startTs),
+      Flutation.put(env, m, col, ColumnType.DEL_LOCK.encode(startTs),
           DelLockValue.encodeCommit(commitTs, isPrimary));
     }
 
     if (isTrigger) {
-      Flutation.put(env, m, col, ColumnType.ACK.enode(startTs), TransactionImpl.EMPTY);
+      Flutation.put(env, m, col, ColumnType.ACK.encode(startTs), TransactionImpl.EMPTY);
     }
   }
 

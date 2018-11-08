@@ -37,7 +37,7 @@ public enum ColumnType {
   /**
    * @return The timestamp with this column type encoded into the high order bits.
    */
-  public long enode(long timestamp) {
+  public long encode(long timestamp) {
     Preconditions.checkArgument((timestamp >>> (64 - BITS)) == 0);
     return prefix | timestamp;
   }

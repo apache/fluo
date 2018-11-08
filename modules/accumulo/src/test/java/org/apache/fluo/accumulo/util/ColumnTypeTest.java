@@ -57,7 +57,7 @@ public class ColumnTypeTest {
   @Test
   public void testPrefix() {
     for (long l : new long[] {0, 2, 13, 19 * 19L, 1L << 50, 1L << 50 + 1L << 48}) {
-      EPM.forEach((prefix, colType) -> assertEquals(prefix | l, colType.enode(l)));
+      EPM.forEach((prefix, colType) -> assertEquals(prefix | l, colType.encode(l)));
     }
   }
 

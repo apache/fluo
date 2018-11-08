@@ -221,11 +221,11 @@ public class LockResolver {
       if (lockInfo.isReadLock) {
         mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
             k.getColumnVisibilityParsed(),
-            ColumnType.RLOCK.enode(ReadLockUtil.encodeTs(lockInfo.lockTs, true)),
+            ColumnType.RLOCK.encode(ReadLockUtil.encodeTs(lockInfo.lockTs, true)),
             DelReadLockValue.encodeRollback());
       } else {
         mut.put(k.getColumnFamilyData().toArray(), k.getColumnQualifierData().toArray(),
-            k.getColumnVisibilityParsed(), ColumnType.DEL_LOCK.enode(lockInfo.lockTs),
+            k.getColumnVisibilityParsed(), ColumnType.DEL_LOCK.encode(lockInfo.lockTs),
             DelLockValue.encodeRollback(false, true));
       }
     }
@@ -241,7 +241,7 @@ public class LockResolver {
     ConditionalFlutation delLockMutation = new ConditionalFlutation(env, prc.prow,
         new FluoCondition(env, prc.pcol).setIterators(iterConf).setValue(lockValue));
 
-    delLockMutation.put(prc.pcol, ColumnType.DEL_LOCK.enode(prc.startTs),
+    delLockMutation.put(prc.pcol, ColumnType.DEL_LOCK.encode(prc.startTs),
         DelLockValue.encodeRollback(true, true));
 
     ConditionalWriter cw = null;

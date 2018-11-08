@@ -320,6 +320,6 @@ public class SnapshotIteratorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNonZeroPrefix() {
-    SnapshotIterator.setSnaptime(null, ColumnType.DATA.enode(6));
+    SnapshotIterator.setSnaptime(null, ColumnType.DATA.encode(6));
   }
 }
