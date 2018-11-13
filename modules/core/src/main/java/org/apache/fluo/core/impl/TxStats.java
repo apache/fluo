@@ -125,7 +125,7 @@ public class TxStats {
 
   public void setRejected(Map<Bytes, Set<Column>> rejected) {
     Objects.requireNonNull(rejected);
-    Preconditions.checkState(this.rejected.size() == 0);
+    Preconditions.checkState(this.rejected.isEmpty());
     this.rejected = rejected;
     this.collisions = -1;
   }

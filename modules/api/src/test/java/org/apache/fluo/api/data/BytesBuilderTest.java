@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Bytes.BytesBuilder;
 import org.junit.Assert;
 import org.junit.Test;

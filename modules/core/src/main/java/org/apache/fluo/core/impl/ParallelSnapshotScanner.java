@@ -104,7 +104,7 @@ public class ParallelSnapshotScanner {
     scanner.clearColumns();
     scanner.clearScanIterators();
 
-    if (rangesToScan.size() > 0) {
+    if (!rangesToScan.isEmpty()) {
       scanner.setRanges(rangesToScan);
       SnapshotScanner.setupScanner(scanner, Collections.<Column>emptySet(), startTs, true);
     } else if (rows != null) {
@@ -136,7 +136,7 @@ public class ParallelSnapshotScanner {
 
       scan(ret, locks);
 
-      if (locks.size() > 0) {
+      if (!locks.isEmpty()) {
 
         boolean resolvedAll = LockResolver.resolveLocks(env, startTs, stats, locks, startTime);
 

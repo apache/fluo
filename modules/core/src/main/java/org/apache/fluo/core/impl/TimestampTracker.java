@@ -75,7 +75,7 @@ public class TimestampTracker implements AutoCloseable {
 
             if (allocationsInProgress > 0) {
               sawZeroCount = 0;
-              if (timestamps.size() > 0) {
+              if (!timestamps.isEmpty()) {
                 if (updatingZk) {
                   throw new IllegalStateException("expected updatingZk to be false");
                 }
@@ -210,7 +210,7 @@ public class TimestampTracker implements AutoCloseable {
     Preconditions.checkState(!updatingZk, "unexpected concurrent ZK update");
 
     if (allocationsInProgress > 0) {
-      if (timestamps.size() > 0) {
+      if (!timestamps.isEmpty()) {
         updateZkNode(timestamps.first());
       }
     } else if (allocationsInProgress == 0) {
@@ -237,7 +237,7 @@ public class TimestampTracker implements AutoCloseable {
 
   @VisibleForTesting
   public String getNodePath() {
-    return ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + tid.toString();
+    return ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + tid;
   }
 
   @Override

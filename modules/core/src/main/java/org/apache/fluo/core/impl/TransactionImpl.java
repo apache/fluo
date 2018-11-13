@@ -195,7 +195,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   public Map<Bytes, Map<Column, Bytes>> get(Collection<Bytes> rows, Set<Column> columns) {
     checkIfOpen();
 
-    if (rows.size() == 0 || columns.size() == 0) {
+    if (rows.isEmpty() || columns.isEmpty()) {
       return Collections.emptyMap();
     }
 
@@ -217,7 +217,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     checkIfOpen();
 
-    if (rowColumns.size() == 0) {
+    if (rowColumns.isEmpty()) {
       return Collections.emptyMap();
     }
 
@@ -469,7 +469,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     public String getShortCollisionMessage() {
       StringBuilder sb = new StringBuilder();
-      if (getRejected().size() > 0) {
+      if (!getRejected().isEmpty()) {
         int numCollisions = 0;
         for (Set<Column> cols : getRejected().values()) {
           numCollisions += cols.size();
@@ -567,7 +567,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       } else {
         HashSet<Column> colsToRead = new HashSet<>(entry.getValue());
         colsToRead.removeAll(rowColsRead);
-        if (colsToRead.size() > 0) {
+        if (!colsToRead.isEmpty()) {
           columnsToRead.put(entry.getKey(), colsToRead);
         }
       }
@@ -581,7 +581,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private void checkForOrphanedReadLocks(CommitData cd, Map<Bytes, Set<Column>> locksResolved)
       throws Exception {
 
-    if (readLocksSeen.size() == 0) {
+    if (readLocksSeen.isEmpty()) {
       return;
     }
 
@@ -617,7 +617,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       }
     }
 
-    if (rowColsToCheck.size() > 0) {
+    if (!rowColsToCheck.isEmpty()) {
 
       long waitTime = SnapshotScanner.INITIAL_WAIT_TIME;
 
@@ -1050,7 +1050,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         }
       }
 
-      return cd.getRejected().size() == 0;
+      return cd.getRejected().isEmpty();
     }
 
     @Override
@@ -1426,7 +1426,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   private CommitData setUpBeginCommitAsync(CommitData cd, AsyncCommitObserver commitCallback,
       RowColumn primary) {
-    if (updates.size() == 0) {
+    if (updates.isEmpty()) {
       // TODO do async
       deleteWeakRow();
       commitCallback.committed();
@@ -1474,7 +1474,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     Map<Column, Bytes> colSet = updates.get(cd.prow);
     cd.pcol = primCol;
     cd.pval = colSet.remove(primCol);
-    if (colSet.size() == 0) {
+    if (colSet.isEmpty()) {
       updates.remove(cd.prow);
     }
 

@@ -60,7 +60,6 @@ public class NotificationUtil {
 
   public static Column decodeCol(byte[] cq) {
     List<Bytes> ca = ByteArrayUtil.split(cq);
-    Column col = new Column(ca.get(0), ca.get(1));
-    return col;
+    return new Column(ca.get(0), ca.get(1));
   }
 }

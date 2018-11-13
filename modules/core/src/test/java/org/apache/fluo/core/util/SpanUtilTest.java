@@ -28,7 +28,7 @@ public class SpanUtilTest {
 
   @Test
   public void testToKey() {
-    Assert.assertEquals(null, SpanUtil.toKey(null));
+    Assert.assertNull(SpanUtil.toKey(null));
     Assert.assertEquals(new Key("row"), SpanUtil.toKey(new RowColumn("row")));
     Assert.assertEquals(new Key("row", "cf"),
         SpanUtil.toKey(new RowColumn("row", new Column("cf"))));

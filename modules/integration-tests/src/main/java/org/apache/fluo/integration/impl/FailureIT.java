@@ -532,7 +532,7 @@ public class FailureIT extends ITBaseImpl {
     try {
       // closing should detect the stale scan
       tx2.close();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (StaleScanException sse) {
       // do nothing
     }
@@ -541,7 +541,7 @@ public class FailureIT extends ITBaseImpl {
 
     try {
       tx3.commit();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (CommitException e) {
       // should not throw an exception
       tx3.close();

@@ -202,7 +202,7 @@ public class LockResolver {
       }
     }
 
-    if (mutations.size() > 0) {
+    if (!mutations.isEmpty()) {
       env.getSharedResources().getBatchWriter().writeMutations(new ArrayList<>(mutations.values()));
     }
 

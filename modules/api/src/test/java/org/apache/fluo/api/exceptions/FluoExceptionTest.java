@@ -23,7 +23,7 @@ public class FluoExceptionTest {
   @Test
   public void testFluoExceptionConstructors() {
     FluoException e = new FluoException();
-    Assert.assertEquals(null, e.getMessage());
+    Assert.assertNull(e.getMessage());
 
     e = new FluoException("msg1");
     Assert.assertEquals("msg1", e.getMessage());
@@ -44,7 +44,7 @@ public class FluoExceptionTest {
   public void testCatchFluo() {
     try {
       throwFluoException();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (FluoException e) {
     }
   }
@@ -58,13 +58,13 @@ public class FluoExceptionTest {
   public void testCatchCommit() {
     try {
       throwCommitException();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (FluoException e) {
     }
 
     try {
       throwCommitException();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (CommitException e) {
     }
   }
@@ -78,13 +78,13 @@ public class FluoExceptionTest {
   public void testCatchAlreadySet() {
     try {
       throwAlreadySetException();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (FluoException e) {
     }
 
     try {
       throwAlreadySetException();
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (AlreadySetException e) {
     }
   }

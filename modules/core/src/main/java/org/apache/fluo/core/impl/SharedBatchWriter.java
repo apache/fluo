@@ -83,9 +83,9 @@ public class SharedBatchWriter {
       boolean keepRunning = true;
       ArrayList<MutationBatch> batches = new ArrayList<>();
 
-      while (keepRunning || batches.size() > 0) {
+      while (keepRunning || !batches.isEmpty()) {
         try {
-          if (batches.size() == 0) {
+          if (batches.isEmpty()) {
             batches.add(mutQueue.take());
           }
           mutQueue.drainTo(batches);
@@ -154,7 +154,7 @@ public class SharedBatchWriter {
 
   void writeMutations(Collection<Mutation> ml) {
 
-    if (ml.size() == 0) {
+    if (ml.isEmpty()) {
       return;
     }
 
@@ -168,7 +168,7 @@ public class SharedBatchWriter {
   }
 
   CompletableFuture<Void> writeMutationsAsyncFuture(Collection<Mutation> ml) {
-    if (ml.size() == 0) {
+    if (ml.isEmpty()) {
       return CompletableFuture.completedFuture(NULLS.get());
     }
 

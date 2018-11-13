@@ -60,7 +60,7 @@ public class CellScannerImpl implements CellScanner {
 
   CellScannerImpl(Iterable<Entry<Key, Value>> snapshot, Collection<Column> columns) {
     this.snapshot = snapshot;
-    if (columns.size() == 0) {
+    if (columns.isEmpty()) {
       columnConverter = ColumnUtil::convert;
     } else {
       columnConverter = new CachedColumnConverter(columns);

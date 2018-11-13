@@ -15,10 +15,6 @@
 
 package org.apache.fluo.api.data;
 
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.RowColumn;
-import org.apache.fluo.api.data.Span;
 import org.junit.Assert;
 import org.junit.Test;
 

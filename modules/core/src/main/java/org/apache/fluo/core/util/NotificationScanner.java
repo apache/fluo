@@ -40,7 +40,7 @@ public class NotificationScanner implements CellScanner {
   private Predicate<RowColumnValue> filter;
 
   private static Predicate<RowColumnValue> createColumnFilter(Collection<Column> allColumns) {
-    if (allColumns.size() == 0) {
+    if (allColumns.isEmpty()) {
       return rcv -> true;
     } else {
       Set<Bytes> families = allColumns.stream().filter(col -> !col.isQualifierSet())
@@ -48,9 +48,9 @@ public class NotificationScanner implements CellScanner {
       Set<Column> columns =
           allColumns.stream().filter(col -> col.isQualifierSet()).collect(toSet());
 
-      if (families.size() == 0) {
+      if (families.isEmpty()) {
         return rcv -> columns.contains(rcv.getColumn());
-      } else if (columns.size() == 0) {
+      } else if (columns.isEmpty()) {
         return rcv -> families.contains(rcv.getColumn().getFamily());
       } else {
         return rcv -> families.contains(rcv.getColumn().getFamily())

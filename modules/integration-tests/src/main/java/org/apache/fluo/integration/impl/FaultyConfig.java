@@ -65,7 +65,7 @@ public class FaultyConfig extends Environment {
         }
       }
 
-      if (writes.size() > 0) {
+      if (!writes.isEmpty()) {
         Iterator<Result> results = cw.write(writes.iterator());
 
         while (results.hasNext()) {

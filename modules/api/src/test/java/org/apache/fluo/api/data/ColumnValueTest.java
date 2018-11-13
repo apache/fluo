@@ -62,8 +62,8 @@ public class ColumnValueTest {
     ColumnValue cv3 = new ColumnValue(c1, "v2");
     ColumnValue cv4 = new ColumnValue(c1, "v1");
 
-    Assert.assertTrue(cv1.compareTo(cv1) == 0);
-    Assert.assertTrue(cv1.compareTo(cv4) == 0);
+    Assert.assertEquals(0, cv1.compareTo(cv1));
+    Assert.assertEquals(0, cv1.compareTo(cv4));
     Assert.assertTrue(cv1.compareTo(cv2) < 0);
     Assert.assertTrue(cv2.compareTo(cv1) > 0);
     Assert.assertTrue(cv1.compareTo(cv3) < 0);

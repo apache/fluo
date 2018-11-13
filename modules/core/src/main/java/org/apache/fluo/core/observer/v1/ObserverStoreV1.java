@@ -159,8 +159,7 @@ public class ObserverStoreV1 implements ObserverStore {
       serializeObservers(dos, weakObservers);
     }
 
-    byte[] serializedObservers = baos.toByteArray();
-    return serializedObservers;
+    return baos.toByteArray();
   }
 
   private static Map<Column, org.apache.fluo.api.config.ObserverSpecification> readObservers(

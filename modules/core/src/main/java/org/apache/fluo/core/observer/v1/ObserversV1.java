@@ -80,7 +80,7 @@ class ObserversV1 implements Observers {
     observerList = getObserverList(col);
 
     synchronized (observerList) {
-      if (observerList.size() > 0) {
+      if (!observerList.isEmpty()) {
         return observerList.remove(observerList.size() - 1);
       }
     }

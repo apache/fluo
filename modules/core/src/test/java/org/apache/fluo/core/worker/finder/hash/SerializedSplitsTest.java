@@ -46,7 +46,7 @@ public class SerializedSplitsTest {
     int expectedDiff = Integer.parseInt(splits2.get(1).toString(), 16)
         - Integer.parseInt(splits2.get(0).toString(), 16);
     Assert.assertTrue(expectedDiff > 13);
-    Assert.assertTrue(expectedDiff % 13 == 0);
+    Assert.assertEquals(0, expectedDiff % 13);
     // check that splits are evenly spaced
     for (int i = 1; i < splits2.size(); i++) {
       int sp1 = Integer.parseInt(splits2.get(i - 1).toString(), 16);

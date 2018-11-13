@@ -53,7 +53,7 @@ public class AsyncConditionalWriter {
   }
 
   public CompletableFuture<Iterator<Result>> apply(Collection<ConditionalMutation> input) {
-    if (input.size() == 0) {
+    if (input.isEmpty()) {
       return CompletableFuture.completedFuture(Collections.<Result>emptyList().iterator());
     }
 
