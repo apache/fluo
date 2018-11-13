@@ -24,7 +24,7 @@
 ####################################
 
 ## Hadoop installation
-export HADOOP_PREFIX="${HADOOP_PREFIX:-/path/to/hadoop}"
+export HADOOP_HOME="${HADOOP_HOME:-/path/to/hadoop}"
 ## Fluo connection properties
 export FLUO_CONN_PROPS="${FLUO_CONN_PROPS:-${conf}/fluo-conn.properties}"
 ## Fluo temp directory where the fluo script will copy jars from HDFS to the local machine
@@ -85,17 +85,12 @@ setupClasspathFromSystem()
   fi
 
   #any jars matching this pattern is excluded from classpath
-  EXCLUDE_RE="(.*log4j.*)|(.*asm.*)|(.*guava.*)|(.*gson.*)"
+  EXCLUDE_RE="(.*log4j.*)|(.*asm.*)|(.*guava.*)|(.*gson.*)|(.*hadoop-client-minicluster.*)"
 
   addToClasspath "$ACCUMULO_HOME/lib" $EXCLUDE_RE
   addToClasspath "$ZOOKEEPER_HOME" $EXCLUDE_RE
   addToClasspath "$ZOOKEEPER_HOME/lib" $EXCLUDE_RE
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/common" $EXCLUDE_RE;
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/common/lib" $EXCLUDE_RE;
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/hdfs" $EXCLUDE_RE;
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/hdfs/lib" $EXCLUDE_RE;
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/yarn" $EXCLUDE_RE;
-  addToClasspath "$HADOOP_PREFIX/share/hadoop/yarn/lib" $EXCLUDE_RE;
+  addToClasspath "$HADOOP_HOME/share/hadoop/client" $EXCLUDE_RE;
   export CLASSPATH
 }
 

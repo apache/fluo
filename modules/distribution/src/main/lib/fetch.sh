@@ -55,20 +55,20 @@ ahz)
 extra)
   echo "Fetching extra Fluo dependencies"
   download aopalliance:aopalliance:jar:1.0
-  download com.beust:jcommander:jar:1.32
-  download com.google.code.gson:gson:jar:2.8.0
-  download com.google.guava:guava:jar:13.0.1
+  download com.beust:jcommander:jar:1.72
+  download com.google.code.gson:gson:jar:2.8.5
+  download com.google.guava:guava:jar:27.0-jre
   download com.google.inject:guice:jar:4.0
-  download commons-collections:commons-collections:jar:3.2.1
+  download org.apache.commons:commons-collections4:jar:4.2
   download commons-configuration:commons-configuration:jar:1.10
-  download commons-io:commons-io:jar:2.4
+  download commons-io:commons-io:jar:2.6
   download io.dropwizard.metrics:metrics-core:jar:3.1.1
   download io.dropwizard.metrics:metrics-graphite:jar:3.1.1
   download javax.inject:javax.inject:jar:1
-  download org.apache.curator:curator-client:jar:2.7.1
-  download org.apache.curator:curator-framework:jar:2.7.1
-  download org.apache.curator:curator-recipes:jar:2.7.1
-  download org.hdrhistogram:HdrHistogram:jar:2.1.8
+  download org.apache.curator:curator-client:jar:4.0.1
+  download org.apache.curator:curator-framework:jar:4.0.1
+  download org.apache.curator:curator-recipes:jar:4.0.1
+  download org.hdrhistogram:HdrHistogram:jar:2.1.10
   download org.mpierce.metrics.reservoir:hdrhistogram-metrics-reservoir:jar:1.1.0
   download org.slf4j:jcl-over-slf4j:jar:1.7.2
   download org.slf4j:slf4j-api:jar:1.7.12
@@ -76,8 +76,8 @@ extra)
   download log4j:log4j:jar:1.2.17 ./log4j
   download org.slf4j:slf4j-log4j12:jar:1.7.12 ./log4j
 
-  download ch.qos.logback:logback-classic:jar:1.1.3 ./logback
-  download ch.qos.logback:logback-core:jar:1.1.3 ./logback
+  download ch.qos.logback:logback-classic:jar:1.2.3 ./logback
+  download ch.qos.logback:logback-core:jar:1.2.3 ./logback
   download org.slf4j:log4j-over-slf4j:jar:1.7.12 ./logback
 
   # Jars for deprecated launching in YARN (in Twill)
