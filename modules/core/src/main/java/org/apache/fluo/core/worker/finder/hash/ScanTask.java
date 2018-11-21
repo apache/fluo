@@ -83,14 +83,15 @@ public class ScanTask implements Runnable {
 
     while (!stopped.get()) {
       try {
+        ranges.clear();
+        rangeSet.clear();
+
         PartitionInfo partition = partitionManager.waitForPartitionInfo();
 
         while (proccessor.size() > qSize / 2 && !stopped.get()) {
           UtilWaitThread.sleep(50, stopped);
         }
 
-        ranges.clear();
-        rangeSet.clear();
         partition.getMyGroupsRanges().forEach(t -> {
           ranges.add(t);
           rangeSet.add(t);
