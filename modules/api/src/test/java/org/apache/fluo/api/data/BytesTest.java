@@ -17,7 +17,6 @@ package org.apache.fluo.api.data;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.nio.charset.StandardCharsets;

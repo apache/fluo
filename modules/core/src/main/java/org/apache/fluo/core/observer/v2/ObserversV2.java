@@ -51,7 +51,7 @@ class ObserversV2 implements Observers {
     // the following check ensures observers are provided for all previously configured columns
     SetView<Column> diff =
         Sets.difference(observers.keySet(), Sets.union(strongColumns, weakColumns));
-    if (diff.size() > 0) {
+    if (!diff.isEmpty()) {
       throw new FluoException("ObserverProvider " + jco.getObserverProviderClass()
           + " did not provide observers for columns " + diff);
     }

@@ -248,7 +248,7 @@ public class SnapshotIterator implements SortedKeyValueIterator<Key, Value> {
       newRange = range;
     }
 
-    if (columnFamilies.size() == 0 && inclusive == false) {
+    if (columnFamilies.isEmpty() && inclusive == false) {
       cols = NOTIFY_CF_SET;
       inc = false;
     } else {

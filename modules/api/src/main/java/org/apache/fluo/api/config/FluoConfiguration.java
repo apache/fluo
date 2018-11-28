@@ -319,7 +319,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     if (name == null) {
       throw new IllegalArgumentException("Application name cannot be null");
     }
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       throw new IllegalArgumentException("Application name length must be > 0");
     }
     String reason = null;

@@ -85,8 +85,8 @@ public class TableRange implements Comparable<TableRange> {
       tablets.add(new TableRange(i == 0 ? null : sortedRows.get(i - 1), sortedRows.get(i)));
     }
 
-    tablets.add(new TableRange(
-        sortedRows.size() == 0 ? null : sortedRows.get(sortedRows.size() - 1), null));
+    tablets.add(
+        new TableRange(sortedRows.isEmpty() ? null : sortedRows.get(sortedRows.size() - 1), null));
     return tablets;
 
   }

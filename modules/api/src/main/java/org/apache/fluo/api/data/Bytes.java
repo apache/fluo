@@ -409,7 +409,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    */
   public static final Bytes of(String s) {
     Objects.requireNonNull(s);
-    if (s.length() == 0) {
+    if (s.isEmpty()) {
       return EMPTY;
     }
     byte[] data = s.getBytes(StandardCharsets.UTF_8);
@@ -422,7 +422,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
   public static final Bytes of(String s, Charset c) {
     Objects.requireNonNull(s);
     Objects.requireNonNull(c);
-    if (s.length() == 0) {
+    if (s.isEmpty()) {
       return EMPTY;
     }
     byte[] data = s.getBytes(c);

@@ -30,8 +30,8 @@ public class FluoExecutors {
 
   public static ThreadPoolExecutor newFixedThreadPool(int numThreads, BlockingQueue<Runnable> queue,
       String name) {
-    ThreadPoolExecutor tpe = new ThreadPoolExecutor(numThreads, numThreads, 0L,
-        TimeUnit.MILLISECONDS, queue, new FluoThreadFactory(name)) {
+    return new ThreadPoolExecutor(numThreads, numThreads, 0L, TimeUnit.MILLISECONDS, queue,
+        new FluoThreadFactory(name)) {
       @Override
       protected void afterExecute(Runnable r, Throwable t) {
         if (t != null) {
@@ -47,6 +47,5 @@ public class FluoExecutors {
         }
       }
     };
-    return tpe;
   }
 }

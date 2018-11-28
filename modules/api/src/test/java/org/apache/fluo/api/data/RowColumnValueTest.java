@@ -19,9 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.fluo.api.data.Bytes;
-import org.apache.fluo.api.data.Column;
-import org.apache.fluo.api.data.RowColumnValue;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -60,8 +57,8 @@ public class RowColumnValueTest {
 
   @Test
   public void testCompare() {
-    Assert.assertTrue(rcv1.compareTo(rcv1) == 0);
-    Assert.assertTrue(rcv1.compareTo(rcv2) == 0);
+    Assert.assertEquals(0, rcv1.compareTo(rcv1));
+    Assert.assertEquals(0, rcv1.compareTo(rcv2));
     Assert.assertTrue(rcv1.compareTo(rcv3) < 0);
     Assert.assertTrue(rcv3.compareTo(rcv1) > 0);
     Assert.assertTrue(rcv1.compareTo(rcv3) < 0);

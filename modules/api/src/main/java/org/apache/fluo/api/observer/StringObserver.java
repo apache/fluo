@@ -30,5 +30,5 @@ public interface StringObserver extends Observer {
     process(tx, row.toString(), col);
   }
 
-  abstract void process(TransactionBase tx, String row, Column col) throws Exception;
+  void process(TransactionBase tx, String row, Column col) throws Exception;
 }

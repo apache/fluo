@@ -149,7 +149,7 @@ public class NotificationProcessor implements AutoCloseable {
 
     public synchronized void finishAddingNotifications(long sessionId) {
       this.memoryPredicates.remove(sessionId);
-      if (memoryPredicates.size() == 0) {
+      if (memoryPredicates.isEmpty()) {
         recentlyDeleted.clear();
         memoryPredicate = rc -> false;
       } else {

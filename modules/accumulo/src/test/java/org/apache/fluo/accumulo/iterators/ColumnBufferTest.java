@@ -15,8 +15,6 @@
 
 package org.apache.fluo.accumulo.iterators;
 
-import java.lang.IllegalArgumentException;
-
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.junit.Assert;

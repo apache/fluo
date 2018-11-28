@@ -101,15 +101,15 @@ public class TableRangeTest {
     Assert.assertTrue(tr1.compareTo(tr3) < 0);
     Assert.assertTrue(tr3.compareTo(tr1) > 0);
 
-    Assert.assertTrue(tr1.compareTo(tr1) == 0);
-    Assert.assertTrue(tr2.compareTo(tr2) == 0);
-    Assert.assertTrue(tr3.compareTo(tr3) == 0);
+    Assert.assertEquals(0, tr1.compareTo(tr1));
+    Assert.assertEquals(0, tr2.compareTo(tr2));
+    Assert.assertEquals(0, tr3.compareTo(tr3));
 
-    Assert.assertTrue(tr1.compareTo(new TableRange(null, sp1)) == 0);
-    Assert.assertTrue(tr2.compareTo(new TableRange(sp1, sp2)) == 0);
-    Assert.assertTrue(tr3.compareTo(new TableRange(sp2, null)) == 0);
+    Assert.assertEquals(0, tr1.compareTo(new TableRange(null, sp1)));
+    Assert.assertEquals(0, tr2.compareTo(new TableRange(sp1, sp2)));
+    Assert.assertEquals(0, tr3.compareTo(new TableRange(sp2, null)));
 
-    Assert.assertTrue(new TableRange(null, null).compareTo(new TableRange(null, null)) == 0);
+    Assert.assertEquals(0, new TableRange(null, null).compareTo(new TableRange(null, null)));
   }
 
   @Test
