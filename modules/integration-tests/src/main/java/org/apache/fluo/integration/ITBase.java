@@ -16,12 +16,12 @@
 package org.apache.fluo.integration;
 
 import java.io.File;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.accumulo.core.client.Accumulo;
 import org.apache.accumulo.core.client.AccumuloClient;
-import org.apache.accumulo.core.client.ClientInfo;
 import org.apache.accumulo.minicluster.MiniAccumuloCluster;
 import org.apache.accumulo.minicluster.MiniAccumuloConfig;
 import org.apache.commons.io.FileUtils;
@@ -48,7 +48,6 @@ public class ITBase {
 
   protected static String instanceName;
   protected static AccumuloClient aClient;
-  protected static ClientInfo clientInfo;
   private static MiniAccumuloCluster cluster;
   private static boolean startedCluster = false;
 
@@ -87,8 +86,8 @@ public class ITBase {
       cluster.start();
       startedCluster = true;
     }
-    clientInfo = MiniAccumuloCluster.getClientInfo(instanceDir);
-    aClient = Accumulo.newClient().usingClientInfo(clientInfo).build();
+    Properties props = MiniAccumuloCluster.getClientProperties(instanceDir);
+    aClient = Accumulo.newClient().from(props).build();
   }
 
   protected Class<? extends ObserverProvider> getObserverProviderClass() {
@@ -128,6 +127,10 @@ public class ITBase {
 
   @AfterClass
   public static void tearDownAccumulo() throws Exception {
+    if (aClient != null) {
+      aClient.close();
+    }
+
     if (startedCluster) {
       cluster.stop();
     }

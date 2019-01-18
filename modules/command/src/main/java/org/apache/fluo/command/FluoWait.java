@@ -49,17 +49,12 @@ public class FluoWait {
 
   private static boolean hasNotifications(Environment env, TableRange range)
       throws TableNotFoundException {
-    Scanner scanner = null;
-    try {
-      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
+    try (Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations())) {
       scanner.setRange(range.getRange());
       Notification.configureScanner(scanner);
 
       return scanner.iterator().hasNext();
-    } finally {
-      if (scanner != null) {
-        scanner.close();
-      }
     }
   }
 

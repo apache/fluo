@@ -117,9 +117,14 @@ public class FluoAdminImpl implements FluoAdmin {
           "Fluo application already initialized at " + config.getAppZookeepers());
     }
 
-    AccumuloClient conn = AccumuloUtil.getClient(config);
+    try (AccumuloClient client = AccumuloUtil.getClient(config)) {
+      initialize(opts, client);
+    }
+  }
 
-    boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
+  private void initialize(InitializationOptions opts, AccumuloClient client)
+      throws TableExistsException, AlreadyInitializedException {
+    boolean tableExists = client.tableOperations().exists(config.getAccumuloTable());
     if (tableExists && !opts.getClearTable()) {
       throw new TableExistsException("Accumulo table already exists " + config.getAccumuloTable());
     }
@@ -130,7 +135,7 @@ public class FluoAdminImpl implements FluoAdmin {
       logger.info("The Accumulo table '{}' will be dropped and created as requested by user",
           config.getAccumuloTable());
       try {
-        conn.tableOperations().delete(config.getAccumuloTable());
+        client.tableOperations().delete(config.getAccumuloTable());
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -151,7 +156,7 @@ public class FluoAdminImpl implements FluoAdmin {
     }
 
     try {
-      initializeApplicationInZooKeeper(conn);
+      initializeApplicationInZooKeeper(client);
 
       String accumuloJars;
       if (!config.getAccumuloJars().trim().isEmpty()) {
@@ -180,7 +185,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
       if (!accumuloClasspath.isEmpty()) {
         String contextName = "fluo-" + config.getApplicationName();
-        conn.instanceOperations().setProperty(
+        client.instanceOperations().setProperty(
             AccumuloProps.VFS_CONTEXT_CLASSPATH_PROPERTY + contextName, accumuloClasspath);
         ntcProps.put(AccumuloProps.TABLE_CLASSPATH, contextName);
       }
@@ -201,7 +206,7 @@ public class FluoAdminImpl implements FluoAdmin {
       configureIterators(ntc);
 
       ntc.setProperties(ntcProps);
-      conn.tableOperations().create(config.getAccumuloTable(), ntc);
+      client.tableOperations().create(config.getAccumuloTable(), ntc);
 
       updateSharedConfig();
     } catch (NodeExistsException nee) {
@@ -246,16 +251,16 @@ public class FluoAdminImpl implements FluoAdmin {
       throw new FluoException("Must stop the oracle server to remove an application");
     }
 
-    AccumuloClient conn = AccumuloUtil.getClient(config);
-
-    boolean tableExists = conn.tableOperations().exists(config.getAccumuloTable());
-    // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
-    if (tableExists) {
-      logger.info("The Accumulo table '{}' will be dropped", config.getAccumuloTable());
-      try {
-        conn.tableOperations().delete(config.getAccumuloTable());
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+    try (AccumuloClient client = AccumuloUtil.getClient(config)) {
+      boolean tableExists = client.tableOperations().exists(config.getAccumuloTable());
+      // With preconditions met, it's now OK to delete table & zookeeper root (if they exist)
+      if (tableExists) {
+        logger.info("The Accumulo table '{}' will be dropped", config.getAccumuloTable());
+        try {
+          client.tableOperations().delete(config.getAccumuloTable());
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
 
@@ -276,7 +281,8 @@ public class FluoAdminImpl implements FluoAdmin {
 
   private void initializeApplicationInZooKeeper(AccumuloClient client) throws Exception {
 
-    final String accumuloInstanceName = client.info().getInstanceName();
+    final String accumuloInstanceName =
+        client.properties().getProperty(AccumuloProps.CLIENT_INSTANCE_NAME);
     final String accumuloInstanceID = client.getInstanceID();
     final String fluoApplicationID = UUID.randomUUID().toString();
 
@@ -545,7 +551,8 @@ public class FluoAdminImpl implements FluoAdmin {
     if (!config.hasRequiredAdminProps()) {
       throw new IllegalArgumentException("Admin configuration is missing required properties");
     }
-    AccumuloClient client = AccumuloUtil.getClient(config);
-    return client.tableOperations().exists(config.getAccumuloTable());
+    try (AccumuloClient client = AccumuloUtil.getClient(config)) {
+      return client.tableOperations().exists(config.getAccumuloTable());
+    }
   }
 }

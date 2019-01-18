@@ -75,33 +75,31 @@ public class ColumnUtil {
       Column col) {
     Span span = Span.exact(row, col);
 
-    Scanner scanner;
-    try {
-      // TODO reuse or share scanner
-      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
+    try (Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations())) {
+      scanner.setRange(SpanUtil.toRange(span));
+      scanner.addScanIterator(iterConf);
+
+      Iterator<Entry<Key, Value>> iter = scanner.iterator();
+      if (iter.hasNext()) {
+        Entry<Key, Value> entry = iter.next();
+
+        Key k = entry.getKey();
+        Bytes r = Bytes.of(k.getRowData().toArray());
+        Bytes cf = Bytes.of(k.getColumnFamilyData().toArray());
+        Bytes cq = Bytes.of(k.getColumnQualifierData().toArray());
+        Bytes cv = Bytes.of(k.getColumnVisibilityData().toArray());
+
+        if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
+            && cv.equals(col.getVisibility())) {
+          return entry;
+        } else {
+          throw new RuntimeException("unexpected key " + k + " " + row + " " + col);
+        }
+      }
     } catch (TableNotFoundException e) {
       // TODO proper exception handling
       throw new RuntimeException(e);
-    }
-    scanner.setRange(SpanUtil.toRange(span));
-    scanner.addScanIterator(iterConf);
-
-    Iterator<Entry<Key, Value>> iter = scanner.iterator();
-    if (iter.hasNext()) {
-      Entry<Key, Value> entry = iter.next();
-
-      Key k = entry.getKey();
-      Bytes r = Bytes.of(k.getRowData().toArray());
-      Bytes cf = Bytes.of(k.getColumnFamilyData().toArray());
-      Bytes cq = Bytes.of(k.getColumnQualifierData().toArray());
-      Bytes cv = Bytes.of(k.getColumnVisibilityData().toArray());
-
-      if (r.equals(row) && cf.equals(col.getFamily()) && cq.equals(col.getQualifier())
-          && cv.equals(col.getVisibility())) {
-        return entry;
-      } else {
-        throw new RuntimeException("unexpected key " + k + " " + row + " " + col);
-      }
     }
 
     return null;

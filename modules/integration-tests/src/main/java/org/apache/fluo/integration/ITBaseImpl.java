@@ -15,8 +15,10 @@
 
 package org.apache.fluo.integration;
 
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.InitializationOptions;
 import org.apache.fluo.api.client.FluoFactory;
@@ -66,14 +68,15 @@ public class ITBaseImpl extends ITBase {
 
     table = getNextTableName();
 
+    Properties props = aClient.properties();
     config = new FluoConfiguration();
     config.setApplicationName("impl-test" + testCounter.getAndIncrement());
-    config.setAccumuloInstance(clientInfo.getInstanceName());
+    config.setAccumuloInstance(props.getProperty(AccumuloProps.CLIENT_INSTANCE_NAME));
     config.setAccumuloUser(USER);
     config.setAccumuloPassword(PASSWORD);
     config.setAccumuloTable(table);
-    config.setAccumuloZookeepers(clientInfo.getZooKeepers());
-    config.setInstanceZookeepers(clientInfo.getZooKeepers() + "/fluo");
+    config.setAccumuloZookeepers(props.getProperty(AccumuloProps.CLIENT_ZOOKEEPERS));
+    config.setInstanceZookeepers(props.getProperty(AccumuloProps.CLIENT_ZOOKEEPERS) + "/fluo");
     config.setTransactionRollbackTime(1, TimeUnit.SECONDS);
     setupObservers(config);
     config.setProperty(FluoConfigurationImpl.ZK_UPDATE_PERIOD_PROP, "1000");

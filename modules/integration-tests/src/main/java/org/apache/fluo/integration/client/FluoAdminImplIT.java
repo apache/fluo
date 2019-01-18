@@ -114,18 +114,19 @@ public class FluoAdminImplIT extends ITBaseImpl {
       admin.initialize(opts);
 
       // verify locality groups were set on the table
-      AccumuloClient client = AccumuloUtil.getClient(config);
-      Map<String, Set<Text>> localityGroups =
-          client.tableOperations().getLocalityGroups(config.getAccumuloTable());
-      Assert.assertEquals("Unexpected locality group count.", 1, localityGroups.size());
-      Entry<String, Set<Text>> localityGroup = localityGroups.entrySet().iterator().next();
-      Assert.assertEquals("'notify' locality group not found.",
-          ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME, localityGroup.getKey());
-      Assert.assertEquals("'notify' locality group does not contain exactly 1 column family.", 1,
-          localityGroup.getValue().size());
-      Text colFam = localityGroup.getValue().iterator().next();
-      Assert.assertTrue("'notify' locality group does not contain the correct column family.",
-          ColumnConstants.NOTIFY_CF.contentEquals(colFam.getBytes(), 0, colFam.getLength()));
+      try (AccumuloClient client = AccumuloUtil.getClient(config)) {
+        Map<String, Set<Text>> localityGroups =
+            client.tableOperations().getLocalityGroups(config.getAccumuloTable());
+        Assert.assertEquals("Unexpected locality group count.", 1, localityGroups.size());
+        Entry<String, Set<Text>> localityGroup = localityGroups.entrySet().iterator().next();
+        Assert.assertEquals("'notify' locality group not found.",
+            ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME, localityGroup.getKey());
+        Assert.assertEquals("'notify' locality group does not contain exactly 1 column family.", 1,
+            localityGroup.getValue().size());
+        Text colFam = localityGroup.getValue().iterator().next();
+        Assert.assertTrue("'notify' locality group does not contain the correct column family.",
+            ColumnConstants.NOTIFY_CF.contentEquals(colFam.getBytes(), 0, colFam.getLength()));
+      }
     }
 
     try (FluoClientImpl client = new FluoClientImpl(localConfig)) {

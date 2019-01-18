@@ -162,10 +162,7 @@ public class ScanUtil {
     Span span = getSpan(options);
     Collection<Column> columns = getColumns(options);
 
-    Scanner scanner = null;
-    try {
-      scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
-
+    try (Scanner scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY)) {
       scanner.setRange(SpanUtil.toRange(span));
 
       NotificationScanner ntfyScanner = new NotificationScanner(scanner, columns);
@@ -173,10 +170,6 @@ public class ScanUtil {
       scan(options, out, ntfyScanner);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
-    } finally {
-      if (scanner != null) {
-        scanner.close();
-      }
     }
   }
 
@@ -210,13 +203,12 @@ public class ScanUtil {
 
   public static void scanAccumulo(ScanOpts options, FluoConfiguration sConfig, PrintStream out) {
 
-    AccumuloClient client = AccumuloUtil.getClient(sConfig);
-
     Span span = getSpan(options);
     Collection<Column> columns = getColumns(options);
 
-    try {
-      Scanner scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY);
+    try (AccumuloClient client = AccumuloUtil.getClient(sConfig);
+        Scanner scanner = client.createScanner(sConfig.getAccumuloTable(), Authorizations.EMPTY)) {
+
       scanner.setRange(SpanUtil.toRange(span));
       for (Column col : columns) {
         if (col.isQualifierSet()) {

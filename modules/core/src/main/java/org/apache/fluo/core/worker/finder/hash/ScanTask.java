@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -180,34 +180,35 @@ public class ScanTask implements Runnable {
 
   private ScanCounts scan(Session session, PartitionInfo pi, Range range)
       throws TableNotFoundException {
-    Scanner scanner =
-        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
+    try (Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations())) {
 
-    scanner.setRange(range);
+      scanner.setRange(range);
 
-    Notification.configureScanner(scanner);
+      Notification.configureScanner(scanner);
 
-    IteratorSetting iterCfg = new IteratorSetting(30, "nhf", NotificationHashFilter.class);
-    NotificationHashFilter.setModulusParams(iterCfg, pi.getMyGroupSize(), pi.getMyIdInGroup());
-    scanner.addScanIterator(iterCfg);
+      IteratorSetting iterCfg = new IteratorSetting(30, "nhf", NotificationHashFilter.class);
+      NotificationHashFilter.setModulusParams(iterCfg, pi.getMyGroupSize(), pi.getMyIdInGroup());
+      scanner.addScanIterator(iterCfg);
 
-    ScanCounts counts = new ScanCounts();
+      ScanCounts counts = new ScanCounts();
 
-    for (Entry<Key, Value> entry : scanner) {
-      if (!pi.equals(partitionManager.getPartitionInfo())) {
-        throw new PartitionInfoChangedException();
+      for (Entry<Key, Value> entry : scanner) {
+        if (!pi.equals(partitionManager.getPartitionInfo())) {
+          throw new PartitionInfoChangedException();
+        }
+
+        if (stopped.get()) {
+          return counts;
+        }
+
+        counts.seen++;
+
+        if (session.addNotification(finder, Notification.from(entry.getKey()))) {
+          counts.added++;
+        }
       }
-
-      if (stopped.get()) {
-        return counts;
-      }
-
-      counts.seen++;
-
-      if (session.addNotification(finder, Notification.from(entry.getKey()))) {
-        counts.added++;
-      }
+      return counts;
     }
-    return counts;
   }
 }
