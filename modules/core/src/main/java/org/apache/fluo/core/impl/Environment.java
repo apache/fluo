@@ -91,9 +91,10 @@ public class Environment implements AutoCloseable {
 
     ensureDeletesAreDisabled();
 
-    if (!client.info().getInstanceName().equals(accumuloInstance)) {
-      throw new IllegalArgumentException("unexpected accumulo instance name "
-          + client.info().getInstanceName() + " != " + accumuloInstance);
+    String instanceName = client.properties().getProperty(AccumuloProps.CLIENT_INSTANCE_NAME);
+    if (!instanceName.equals(accumuloInstance)) {
+      throw new IllegalArgumentException(
+          "unexpected accumulo instance name " + instanceName + " != " + accumuloInstance);
     }
 
     if (!client.getInstanceID().equals(accumuloInstanceID)) {
@@ -251,5 +252,6 @@ public class Environment implements AutoCloseable {
   @Override
   public void close() {
     resources.close();
+    client.close();
   }
 }

@@ -317,10 +317,9 @@ public class LockResolver {
       }
     }
 
-    BatchScanner bscanner = null;
-    try {
-      bscanner =
-          env.getAccumuloClient().createBatchScanner(env.getTable(), env.getAuthorizations(), 1);
+
+    try (BatchScanner bscanner =
+        env.getAccumuloClient().createBatchScanner(env.getTable(), env.getAuthorizations(), 1)) {
 
       bscanner.setRanges(ranges);
       IteratorSetting iterCfg = new IteratorSetting(10, OpenReadLockIterator.class);
@@ -336,10 +335,6 @@ public class LockResolver {
 
       return ret;
 
-    } finally {
-      if (bscanner != null) {
-        bscanner.close();
-      }
     }
   }
 }

@@ -17,9 +17,6 @@ package org.apache.fluo.core.util;
 
 import org.apache.accumulo.core.client.Accumulo;
 import org.apache.accumulo.core.client.AccumuloClient;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.ClientInfo;
 import org.apache.fluo.api.config.FluoConfiguration;
 
 /**
@@ -32,18 +29,7 @@ public class AccumuloUtil {
    * Creates Accumulo connector given FluoConfiguration
    */
   public static AccumuloClient getClient(FluoConfiguration config) {
-    try {
-      return Accumulo.newClient()
-          .forInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
-          .usingPassword(config.getAccumuloUser(), config.getAccumuloPassword()).build();
-    } catch (AccumuloException | AccumuloSecurityException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  public static ClientInfo getClientInfo(FluoConfiguration config) {
-    return Accumulo.newClient()
-        .forInstance(config.getAccumuloInstance(), config.getAccumuloZookeepers())
-        .usingPassword(config.getAccumuloUser(), config.getAccumuloPassword()).info();
+    return Accumulo.newClient().to(config.getAccumuloInstance(), config.getAccumuloZookeepers())
+        .as(config.getAccumuloUser(), config.getAccumuloPassword()).build();
   }
 }

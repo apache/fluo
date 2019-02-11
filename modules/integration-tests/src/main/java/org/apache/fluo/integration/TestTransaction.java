@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -55,28 +55,28 @@ public class TestTransaction extends AbstractTransactionBase implements Transact
   private Environment env;
 
   public static long getNotificationTS(Environment env, String row, Column col) {
-    Scanner scanner;
-    try {
-      scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
+    try (Scanner scanner =
+        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations())) {
+
+      IteratorSetting iterCfg = new IteratorSetting(11, NotificationIterator.class);
+      scanner.addScanIterator(iterCfg);
+
+      Text cv = ByteUtil.toText(col.getVisibility());
+
+      scanner.setRange(SpanUtil.toRange(Span.prefix(row)));
+      scanner.fetchColumn(ByteUtil.toText(ColumnConstants.NOTIFY_CF),
+          new Text(NotificationUtil.encodeCol(col)));
+
+      for (Entry<Key, org.apache.accumulo.core.data.Value> entry : scanner) {
+        if (entry.getKey().getColumnVisibility().equals(cv)) {
+          return Notification.from(entry.getKey()).getTimestamp();
+        }
+      }
+
+      throw new RuntimeException("No notification found");
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }
-    IteratorSetting iterCfg = new IteratorSetting(11, NotificationIterator.class);
-    scanner.addScanIterator(iterCfg);
-
-    Text cv = ByteUtil.toText(col.getVisibility());
-
-    scanner.setRange(SpanUtil.toRange(Span.prefix(row)));
-    scanner.fetchColumn(ByteUtil.toText(ColumnConstants.NOTIFY_CF),
-        new Text(NotificationUtil.encodeCol(col)));
-
-    for (Entry<Key, org.apache.accumulo.core.data.Value> entry : scanner) {
-      if (entry.getKey().getColumnVisibility().equals(cv)) {
-        return Notification.from(entry.getKey()).getTimestamp();
-      }
-    }
-
-    throw new RuntimeException("No notification found");
   }
 
   @SuppressWarnings("resource")
