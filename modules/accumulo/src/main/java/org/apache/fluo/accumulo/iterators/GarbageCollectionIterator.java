@@ -22,7 +22,6 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.data.ArrayByteSequence;
 import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
@@ -33,6 +32,7 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ColumnType;
+import org.apache.fluo.accumulo.util.NotificationUtil;
 import org.apache.fluo.accumulo.util.ReadLockUtil;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.accumulo.values.DelLockValue;
@@ -49,8 +49,6 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
   static final String GC_TIMESTAMP_OPT = "timestamp.gc";
 
   private static final String ZOOKEEPER_CONNECT_OPT = "zookeeper.connect";
-  private static final ByteSequence NOTIFY_CF_BS =
-      new ArrayByteSequence(ColumnConstants.NOTIFY_CF.toArray());
   private Long gcTimestamp;
   private SortedKeyValueIterator<Key, Value> source;
 
@@ -170,7 +168,7 @@ public class GarbageCollectionIterator implements SortedKeyValueIterator<Key, Va
 
     curCol.set(source.getTopKey());
 
-    if (source.getTopKey().getColumnFamilyData().equals(NOTIFY_CF_BS)) {
+    if (NotificationUtil.isNtfy(source.getTopKey())) {
       return;
     }
 

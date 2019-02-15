@@ -16,9 +16,13 @@
 package org.apache.fluo.mapreduce;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
+import org.apache.accumulo.core.client.summary.SummarizerConfiguration;
 import org.apache.accumulo.core.data.Key;
+import org.apache.fluo.accumulo.summarizer.FluoSummarizer;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
@@ -61,6 +65,7 @@ import org.apache.hadoop.io.Text;
  * </code>
  * </pre>
  *
+ * @see FluoKeyValueGenerator#getSummarizers()
  */
 
 public class FluoKeyValueGenerator {
@@ -195,5 +200,16 @@ public class FluoKeyValueGenerator {
     kv.getValue().set(val);
 
     return keyVals;
+  }
+
+  /**
+   * Use this when configuring Accumulo's File output format to generate initial data to import into
+   * a new Fluo table.
+   *
+   * @return Configuration that will generate Fluo summary data.
+   * @since 1.3.0
+   */
+  public static Collection<SummarizerConfiguration> getSummarizers() {
+    return Collections.singleton(FluoSummarizer.CONFIG);
   }
 }
