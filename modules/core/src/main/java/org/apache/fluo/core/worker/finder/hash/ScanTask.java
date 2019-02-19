@@ -57,6 +57,9 @@ public class ScanTask implements Runnable {
   private long minSleepTime;
   private long maxSleepTime;
 
+  private static final Map<String, String> SCAN_EXEC_HINTS =
+      Collections.singletonMap("scan_type", "fluo-ntfy");
+
   ScanTask(NotificationFinder finder, NotificationProcessor proccessor,
       PartitionManager partitionManager, Environment env, AtomicBoolean stopped, long minSleepTime,
       long maxSleepTime) {
@@ -190,6 +193,8 @@ public class ScanTask implements Runnable {
       IteratorSetting iterCfg = new IteratorSetting(30, "nhf", NotificationHashFilter.class);
       NotificationHashFilter.setModulusParams(iterCfg, pi.getMyGroupSize(), pi.getMyIdInGroup());
       scanner.addScanIterator(iterCfg);
+
+      scanner.setExecutionHints(SCAN_EXEC_HINTS);
 
       ScanCounts counts = new ScanCounts();
 
