@@ -42,6 +42,7 @@ import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.iterators.GarbageCollectionIterator;
 import org.apache.fluo.accumulo.iterators.NotificationIterator;
+import org.apache.fluo.accumulo.summarizer.FluoSummarizer;
 import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ZookeeperPath;
@@ -202,6 +203,8 @@ public class FluoAdminImpl implements FluoAdmin {
 
       ntc.setLocalityGroups(Collections.singletonMap(ColumnConstants.NOTIFY_LOCALITY_GROUP_NAME,
           Collections.singleton(new Text(ColumnConstants.NOTIFY_CF.toArray()))));
+
+      ntc.enableSummarization(FluoSummarizer.CONFIG);
 
       configureIterators(ntc);
 
