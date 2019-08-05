@@ -254,27 +254,13 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <pluginRepositories>
-    <!--
-    needed for accumulo-maven-plugin SNAPSHOT version
-    see PR apache/maven-apache-parent#1
-    -->
-    <pluginRepository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <id>apache.snapshots</id>
-      <name>Apache Snapshot Repository</name>
-      <url>https://repository.apache.org/snapshots</url>
-    </pluginRepository>
-  </pluginRepositories>
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
           <groupId>org.apache.accumulo</groupId>
           <artifactId>accumulo2-maven-plugin</artifactId>
-          <version>1.0.0-SNAPSHOT</version>
+          <version>1.0.0</version>
           <configuration>
             <instanceName>it-instance-maven</instanceName>
             <rootPassword>ITSecret</rootPassword>
