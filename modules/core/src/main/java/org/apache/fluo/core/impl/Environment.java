@@ -97,9 +97,9 @@ public class Environment implements AutoCloseable {
           "unexpected accumulo instance name " + instanceName + " != " + accumuloInstance);
     }
 
-    if (!client.getInstanceID().equals(accumuloInstanceID)) {
-      throw new IllegalArgumentException("unexpected accumulo instance id " + client.getInstanceID()
-          + " != " + accumuloInstanceID);
+    if (!client.instanceOperations().getInstanceID().equals(accumuloInstanceID)) {
+      throw new IllegalArgumentException("unexpected accumulo instance id "
+          + client.instanceOperations().getInstanceID() + " != " + accumuloInstanceID);
     }
 
     try {

@@ -112,7 +112,7 @@
         <plugins>
           <plugin>
             <groupId>org.apache.accumulo</groupId>
-            <artifactId>accumulo-maven-plugin</artifactId>
+            <artifactId>accumulo2-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

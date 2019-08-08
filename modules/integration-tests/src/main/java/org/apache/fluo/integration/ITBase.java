@@ -73,7 +73,7 @@ public class ITBase {
   @BeforeClass
   public static void setUpAccumulo() throws Exception {
     instanceName = System.getProperty(IT_INSTANCE_NAME_PROP, "it-instance-default");
-    File instanceDir = new File("target/accumulo-maven-plugin/" + instanceName);
+    File instanceDir = new File("target/accumulo2-maven-plugin/" + instanceName);
     boolean instanceClear =
         System.getProperty(IT_INSTANCE_CLEAR_PROP, "true").equalsIgnoreCase("true");
     if (instanceDir.exists() && instanceClear) {
