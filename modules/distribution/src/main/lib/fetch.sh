@@ -61,6 +61,7 @@ extra)
   download com.google.inject:guice:jar:4.0
   download org.apache.commons:commons-collections4:jar:4.2
   download commons-configuration:commons-configuration:jar:1.10
+  download commons-lang:commons-lang:jar:2.6
   download commons-io:commons-io:jar:2.6
   download io.dropwizard.metrics:metrics-core:jar:3.1.1
   download io.dropwizard.metrics:metrics-graphite:jar:3.1.1
