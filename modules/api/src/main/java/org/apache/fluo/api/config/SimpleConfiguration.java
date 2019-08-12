@@ -195,9 +195,9 @@ public class SimpleConfiguration implements Serializable {
    * @since 1.2.0
    */
   public void load(File file) {
-    try {
+    try(InputStream in = Files.newInputStream(file.toPath())) {
       PropertiesConfiguration config = newPropertiesConfiguration();
-      new FileHandler(config).load(cleanUp(Files.newInputStream(file.toPath())));
+      new FileHandler(config).load(cleanUp(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException | IOException e) {
       throw new IllegalArgumentException(e);
