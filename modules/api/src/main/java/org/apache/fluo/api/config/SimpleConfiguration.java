@@ -23,7 +23,12 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,11 +36,12 @@ import java.util.Objects;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.ConfigurationUtils;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration2.CompositeConfiguration;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.ConfigurationUtils;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.io.FileHandler;
 import org.apache.fluo.api.exceptions.FluoException;
 
 /**
@@ -57,7 +63,6 @@ public class SimpleConfiguration implements Serializable {
   private void init() {
     CompositeConfiguration compositeConfig = new CompositeConfiguration();
     compositeConfig.setThrowExceptionOnMissing(true);
-    compositeConfig.setDelimiterParsingDisabled(true);
     internalConfig = compositeConfig;
   }
 
@@ -175,10 +180,8 @@ public class SimpleConfiguration implements Serializable {
    */
   public void load(InputStream in) {
     try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(in);
+      PropertiesConfiguration config = newPropertiesConfiguration();
+      new FileHandler(config).load(cleanUp(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException e) {
       throw new IllegalArgumentException(e);
@@ -193,33 +196,29 @@ public class SimpleConfiguration implements Serializable {
    */
   public void load(File file) {
     try {
-      PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(file);
+      PropertiesConfiguration config = newPropertiesConfiguration();
+      new FileHandler(config).load(cleanUp(Files.newInputStream(file.toPath())));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
-    } catch (ConfigurationException e) {
+    } catch (ConfigurationException | IOException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
   public void save(File file) {
-    PropertiesConfiguration pconf = new PropertiesConfiguration();
-    pconf.setDelimiterParsingDisabled(true);
-    pconf.append(internalConfig);
     try {
-      pconf.save(file);
+      PropertiesConfiguration pconf = newPropertiesConfiguration();
+      pconf.append(internalConfig);
+      new FileHandler(pconf).save(file);
     } catch (ConfigurationException e) {
       throw new FluoException(e);
     }
   }
 
   public void save(OutputStream out) {
-    PropertiesConfiguration pconf = new PropertiesConfiguration();
-    pconf.setDelimiterParsingDisabled(true);
-    pconf.append(internalConfig);
     try {
-      pconf.save(out);
+      PropertiesConfiguration pconf = newPropertiesConfiguration();
+      pconf.append(internalConfig);
+      new FileHandler(pconf).save(out);
     } catch (ConfigurationException e) {
       throw new FluoException(e);
     }
@@ -334,5 +333,36 @@ public class SimpleConfiguration implements Serializable {
 
     ByteArrayInputStream bais = new ByteArrayInputStream(data);
     load(bais);
+  }
+
+  private String stream2String(InputStream in) {
+    try {
+      ByteArrayOutputStream result = new ByteArrayOutputStream();
+      byte[] buffer = new byte[4096];
+      int length;
+      while ((length = in.read(buffer)) != -1) {
+        result.write(buffer, 0, length);
+      }
+
+      return result.toString(StandardCharsets.UTF_8.name());
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /*
+   * Commons config 1 was used previously to implement this class. Commons config 1 required
+   * escaping interpolation. This escaping is no longer required with commmons config 2. If
+   * interpolation is escaped, then this API behaves differently. This function suppresses escaped
+   * interpolation in order to maintain behavior for reading.
+   */
+  private Reader cleanUp(InputStream in) {
+    return new StringReader(stream2String(in).replace("\\${", "${"));
+  }
+
+  private PropertiesConfiguration newPropertiesConfiguration() {
+    // TODO confirm defaults are ok... tried to use a builder and it blew up at runtime because of
+    // missing bean lib
+    return new PropertiesConfiguration();
   }
 }
