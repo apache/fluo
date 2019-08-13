@@ -23,11 +23,12 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,8 +42,9 @@ import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ConfigurationUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.configuration2.io.FileHandler;
 import org.apache.fluo.api.exceptions.FluoException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A simple configuration wrapper for Apache Commons configuration. The implementation supports
@@ -181,7 +183,7 @@ public class SimpleConfiguration implements Serializable {
   public void load(InputStream in) {
     try {
       PropertiesConfiguration config = newPropertiesConfiguration();
-      new FileHandler(config).load(cleanUp(in));
+      config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException e) {
       throw new IllegalArgumentException(e);
@@ -195,9 +197,9 @@ public class SimpleConfiguration implements Serializable {
    * @since 1.2.0
    */
   public void load(File file) {
-    try(InputStream in = Files.newInputStream(file.toPath())) {
+    try (InputStream in = Files.newInputStream(file.toPath())) {
       PropertiesConfiguration config = newPropertiesConfiguration();
-      new FileHandler(config).load(cleanUp(in));
+      config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException | IOException e) {
       throw new IllegalArgumentException(e);
@@ -205,11 +207,11 @@ public class SimpleConfiguration implements Serializable {
   }
 
   public void save(File file) {
-    try {
+    try (Writer writer = Files.newBufferedWriter(file.toPath())) {
       PropertiesConfiguration pconf = newPropertiesConfiguration();
       pconf.append(internalConfig);
-      new FileHandler(pconf).save(file);
-    } catch (ConfigurationException e) {
+      pconf.getLayout().save(pconf, writer);
+    } catch (ConfigurationException | IOException e) {
       throw new FluoException(e);
     }
   }
@@ -218,7 +220,7 @@ public class SimpleConfiguration implements Serializable {
     try {
       PropertiesConfiguration pconf = newPropertiesConfiguration();
       pconf.append(internalConfig);
-      new FileHandler(pconf).save(out);
+      pconf.getLayout().save(pconf, new OutputStreamWriter(out, UTF_8));
     } catch (ConfigurationException e) {
       throw new FluoException(e);
     }
@@ -344,7 +346,7 @@ public class SimpleConfiguration implements Serializable {
         result.write(buffer, 0, length);
       }
 
-      return result.toString(StandardCharsets.UTF_8.name());
+      return result.toString(UTF_8.name());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -356,8 +358,16 @@ public class SimpleConfiguration implements Serializable {
    * interpolation is escaped, then this API behaves differently. This function suppresses escaped
    * interpolation in order to maintain behavior for reading.
    */
-  private Reader cleanUp(InputStream in) {
-    return new StringReader(stream2String(in).replace("\\${", "${"));
+  private Reader checkProps(InputStream in) {
+    String propsData = stream2String(in);
+    if (propsData.contains("\\${")) {
+      throw new IllegalArgumentException(
+          "A Fluo properties value contains \\${.  In the past Fluo used Apache Commons Config 1 and this was required for "
+              + "interpolation.  Fluo now uses Commons Config 2 and this is no longer required.  Please remove the slash "
+              + "preceding the interpolation.");
+    }
+
+    return new StringReader(propsData);
   }
 
   private PropertiesConfiguration newPropertiesConfiguration() {
