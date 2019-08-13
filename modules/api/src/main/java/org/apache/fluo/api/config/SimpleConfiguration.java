@@ -182,7 +182,7 @@ public class SimpleConfiguration implements Serializable {
    */
   public void load(InputStream in) {
     try {
-      PropertiesConfiguration config = newPropertiesConfiguration();
+      PropertiesConfiguration config = new PropertiesConfiguration();
       config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException e) {
@@ -198,7 +198,7 @@ public class SimpleConfiguration implements Serializable {
    */
   public void load(File file) {
     try (InputStream in = Files.newInputStream(file.toPath())) {
-      PropertiesConfiguration config = newPropertiesConfiguration();
+      PropertiesConfiguration config = new PropertiesConfiguration();
       config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException | IOException e) {
@@ -208,7 +208,7 @@ public class SimpleConfiguration implements Serializable {
 
   public void save(File file) {
     try (Writer writer = Files.newBufferedWriter(file.toPath())) {
-      PropertiesConfiguration pconf = newPropertiesConfiguration();
+      PropertiesConfiguration pconf = new PropertiesConfiguration();
       pconf.append(internalConfig);
       pconf.getLayout().save(pconf, writer);
     } catch (ConfigurationException | IOException e) {
@@ -218,7 +218,7 @@ public class SimpleConfiguration implements Serializable {
 
   public void save(OutputStream out) {
     try {
-      PropertiesConfiguration pconf = newPropertiesConfiguration();
+      PropertiesConfiguration pconf = new PropertiesConfiguration();
       pconf.append(internalConfig);
       pconf.getLayout().save(pconf, new OutputStreamWriter(out, UTF_8));
     } catch (ConfigurationException e) {
@@ -368,11 +368,5 @@ public class SimpleConfiguration implements Serializable {
     }
 
     return new StringReader(propsData);
-  }
-
-  private PropertiesConfiguration newPropertiesConfiguration() {
-    // TODO confirm defaults are ok... tried to use a builder and it blew up at runtime because of
-    // missing bean lib
-    return new PropertiesConfiguration();
   }
 }
