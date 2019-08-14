@@ -201,8 +201,8 @@ public class FluoConfigurationTest {
     } catch (IllegalArgumentException e) {
     }
     try {
-      config.getAccumuloTable();
-      Assert.fail();
+      String act = config.getAccumuloTable();
+      Assert.fail("Saw " + act);
     } catch (IllegalArgumentException e) {
     }
     try {

@@ -23,7 +23,13 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,12 +37,14 @@ import java.util.Objects;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.ConfigurationUtils;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration2.CompositeConfiguration;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.ConfigurationUtils;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.fluo.api.exceptions.FluoException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A simple configuration wrapper for Apache Commons configuration. The implementation supports
@@ -57,7 +65,6 @@ public class SimpleConfiguration implements Serializable {
   private void init() {
     CompositeConfiguration compositeConfig = new CompositeConfiguration();
     compositeConfig.setThrowExceptionOnMissing(true);
-    compositeConfig.setDelimiterParsingDisabled(true);
     internalConfig = compositeConfig;
   }
 
@@ -176,9 +183,7 @@ public class SimpleConfiguration implements Serializable {
   public void load(InputStream in) {
     try {
       PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(in);
+      config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
     } catch (ConfigurationException e) {
       throw new IllegalArgumentException(e);
@@ -192,34 +197,30 @@ public class SimpleConfiguration implements Serializable {
    * @since 1.2.0
    */
   public void load(File file) {
-    try {
+    try (InputStream in = Files.newInputStream(file.toPath())) {
       PropertiesConfiguration config = new PropertiesConfiguration();
-      // disabled to prevent accumulo classpath value from being shortened
-      config.setDelimiterParsingDisabled(true);
-      config.load(file);
+      config.getLayout().load(config, checkProps(in));
       ((CompositeConfiguration) internalConfig).addConfiguration(config);
-    } catch (ConfigurationException e) {
+    } catch (ConfigurationException | IOException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
   public void save(File file) {
-    PropertiesConfiguration pconf = new PropertiesConfiguration();
-    pconf.setDelimiterParsingDisabled(true);
-    pconf.append(internalConfig);
-    try {
-      pconf.save(file);
-    } catch (ConfigurationException e) {
+    try (Writer writer = Files.newBufferedWriter(file.toPath())) {
+      PropertiesConfiguration pconf = new PropertiesConfiguration();
+      pconf.append(internalConfig);
+      pconf.getLayout().save(pconf, writer);
+    } catch (ConfigurationException | IOException e) {
       throw new FluoException(e);
     }
   }
 
   public void save(OutputStream out) {
-    PropertiesConfiguration pconf = new PropertiesConfiguration();
-    pconf.setDelimiterParsingDisabled(true);
-    pconf.append(internalConfig);
     try {
-      pconf.save(out);
+      PropertiesConfiguration pconf = new PropertiesConfiguration();
+      pconf.append(internalConfig);
+      pconf.getLayout().save(pconf, new OutputStreamWriter(out, UTF_8));
     } catch (ConfigurationException e) {
       throw new FluoException(e);
     }
@@ -334,5 +335,38 @@ public class SimpleConfiguration implements Serializable {
 
     ByteArrayInputStream bais = new ByteArrayInputStream(data);
     load(bais);
+  }
+
+  private String stream2String(InputStream in) {
+    try {
+      ByteArrayOutputStream result = new ByteArrayOutputStream();
+      byte[] buffer = new byte[4096];
+      int length;
+      while ((length = in.read(buffer)) != -1) {
+        result.write(buffer, 0, length);
+      }
+
+      return result.toString(UTF_8.name());
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /*
+   * Commons config 1 was used previously to implement this class. Commons config 1 required
+   * escaping interpolation. This escaping is no longer required with commmons config 2. If
+   * interpolation is escaped, then this API behaves differently. This function suppresses escaped
+   * interpolation in order to maintain behavior for reading.
+   */
+  private Reader checkProps(InputStream in) {
+    String propsData = stream2String(in);
+    if (propsData.contains("\\${")) {
+      throw new IllegalArgumentException(
+          "A Fluo properties value contains \\${.  In the past Fluo used Apache Commons Config 1 and this was required for "
+              + "interpolation.  Fluo now uses Commons Config 2 and this is no longer required.  Please remove the slash "
+              + "preceding the interpolation.");
+    }
+
+    return new StringReader(propsData);
   }
 }
