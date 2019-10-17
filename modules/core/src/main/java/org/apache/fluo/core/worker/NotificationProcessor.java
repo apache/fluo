@@ -205,6 +205,19 @@ public class NotificationProcessor implements AutoCloseable {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (o instanceof FutureNotificationTask) {
+        return compareTo((FutureNotificationTask) o) == 0;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return Long.hashCode(notification.getTimestamp());
+    }
+
+    @Override
     protected void setException(Throwable t) {
       super.setException(t);
       System.err.println("Uncaught Exception ");

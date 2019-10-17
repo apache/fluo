@@ -51,6 +51,10 @@ public class WorkerIT extends ITBaseMini {
 
   private static Column observedColumn = LAST_UPDATE;
 
+  private static void setObservedColumn(Column c) {
+    observedColumn = c;
+  }
+
   public static class DegreeIndexer implements StringObserver {
 
     @Override
@@ -143,7 +147,7 @@ public class WorkerIT extends ITBaseMini {
    */
   @Test
   public void testDiffObserverConfig() throws Exception {
-    observedColumn = new Column("attr2", "lastupdate");
+    setObservedColumn(new Column("attr2", "lastupdate"));
     try {
       try (Environment env = new Environment(config);
           Observers op = env.getConfiguredObservers().getObservers(env)) {
@@ -156,7 +160,7 @@ public class WorkerIT extends ITBaseMini {
       Assert.assertTrue(ise.getMessage()
           .contains("Column attr2 lastupdate  not previously configured for strong notifications"));
     } finally {
-      observedColumn = LAST_UPDATE;
+      setObservedColumn(LAST_UPDATE);
     }
   }
 

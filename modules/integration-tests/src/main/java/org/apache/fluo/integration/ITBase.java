@@ -54,8 +54,8 @@ public class ITBase {
   protected static FluoConfiguration config;
   protected static FluoClient client;
 
-  private static AtomicInteger tableCounter = new AtomicInteger(1);
-  protected static AtomicInteger testCounter = new AtomicInteger();
+  private static final AtomicInteger tableCounter = new AtomicInteger(1);
+  protected static final AtomicInteger testCounter = new AtomicInteger();
 
   private static final long JUNIT_TIMEOUT_SECONDS = 120;
 

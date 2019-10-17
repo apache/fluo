@@ -46,7 +46,7 @@ public class MiniIT {
     if (dataDir.exists()) {
       FileUtils.deleteDirectory(dataDir);
     }
-    dataDir.mkdirs();
+    Assert.assertTrue(dataDir.mkdirs());
     try {
       FluoConfiguration config = new FluoConfiguration();
       config.setApplicationName("mini");

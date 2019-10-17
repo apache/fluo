@@ -17,7 +17,6 @@ package org.apache.fluo.integration.impl;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -234,7 +233,7 @@ public class FailureIT extends ITBaseImpl {
 
     int bobBal = 10;
     int joeBal = 20;
-    if ((new Random()).nextBoolean()) {
+    if (Math.random() < .5) {
       BankUtil.transfer(env, "joe", "jill", 7);
       joeBal -= 7;
     } else {
@@ -359,7 +358,8 @@ public class FailureIT extends ITBaseImpl {
     // test rolling forward primary and non-primary columns
     int bobBal = 3;
     int joeBal = 27;
-    if ((new Random()).nextBoolean()) {
+
+    if (Math.random() < .5) {
       BankUtil.transfer(env, "joe", "jill", 2);
       joeBal = 25;
     } else {

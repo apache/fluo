@@ -34,6 +34,8 @@ public class HostUtil {
       }
     } catch (InterruptedException e) {
       throw new IOException(e);
+    } finally {
+      reader.close();
     }
     return result;
   }
