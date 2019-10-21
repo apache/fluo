@@ -179,13 +179,6 @@ public class FluoConfiguration extends SimpleConfiguration {
    */
   @Deprecated
   public static final String ADMIN_ACCUMULO_TABLE_PROP = ADMIN_PREFIX + ".accumulo.table";
-  /**
-   * @deprecated since 1.2.0 replaced by fluo.observer.init.dir and fluo.observer.jars.url
-   */
-  @Deprecated
-  public static final String ADMIN_ACCUMULO_CLASSPATH_PROP = ADMIN_PREFIX + ".accumulo.classpath";
-  @Deprecated
-  public static final String ADMIN_ACCUMULO_CLASSPATH_DEFAULT = "";
 
   // Worker properties
   private static final String WORKER_PREFIX = FLUO_PREFIX + ".worker";
@@ -550,17 +543,6 @@ public class FluoConfiguration extends SimpleConfiguration {
    */
   public String getAccumuloTable() {
     return getDepNonEmptyString(ACCUMULO_TABLE_PROP, ADMIN_ACCUMULO_TABLE_PROP);
-  }
-
-  @Deprecated
-  public FluoConfiguration setAccumuloClasspath(String path) {
-    setProperty(ADMIN_ACCUMULO_CLASSPATH_PROP, verifyNotNull(ADMIN_ACCUMULO_CLASSPATH_PROP, path));
-    return this;
-  }
-
-  @Deprecated
-  public String getAccumuloClasspath() {
-    return getString(ADMIN_ACCUMULO_CLASSPATH_PROP, ADMIN_ACCUMULO_CLASSPATH_DEFAULT);
   }
 
   /**
@@ -1030,7 +1012,7 @@ public class FluoConfiguration extends SimpleConfiguration {
   public boolean hasRequiredAdminProps() {
     boolean valid = true;
     valid &= hasRequiredClientProps();
-    valid &= verifyStringPropSet(ACCUMULO_TABLE_PROP, ADMIN_ACCUMULO_TABLE_PROP);
+    valid &= verifyStringPropSet(ACCUMULO_TABLE_PROP);
     return valid;
   }
 

@@ -101,7 +101,7 @@ public class OracleClient implements AutoCloseable {
           curatorFramework.start();
 
           while (!cnxnListener.isConnected()) {
-            Thread.sleep(200);
+            UtilWaitThread.sleep(200);
           }
 
           leaderLatch = new LeaderLatch(curatorFramework, ZookeeperPath.ORACLE_SERVER);

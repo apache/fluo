@@ -20,9 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -173,13 +172,9 @@ public class FluoAdminImpl implements FluoAdmin {
         accumuloJars = "";
       }
 
-      String accumuloClasspath;
+      String accumuloClasspath = "";
       if (!accumuloJars.isEmpty()) {
         accumuloClasspath = copyJarsToDfs(accumuloJars, "lib/accumulo");
-      } else {
-        @SuppressWarnings("deprecation")
-        String tmpCP = config.getAccumuloClasspath().trim();
-        accumuloClasspath = tmpCP;
       }
 
       Map<String, String> ntcProps = new HashMap<>();
@@ -481,23 +476,30 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   private String getJarsFromClasspath() {
-    StringBuilder jars = new StringBuilder();
-    ClassLoader cl = FluoAdminImpl.class.getClassLoader();
-    URL[] urls = ((URLClassLoader) cl).getURLs();
+
+    String sep = System.getProperty("path.separator");
+    String[] paths = System.getProperty("java.class.path").split("[" + sep + "]");
 
     String regex = config.getString(FluoConfigurationImpl.ACCUMULO_JARS_REGEX_PROP,
         FluoConfigurationImpl.ACCUMULO_JARS_REGEX_DEFAULT);
     Pattern pattern = Pattern.compile(regex);
 
-    for (URL url : urls) {
-      String jarName = new File(url.getFile()).getName();
-      if (pattern.matcher(jarName).matches()) {
-        if (jars.length() != 0) {
-          jars.append(",");
+    StringBuilder jars = new StringBuilder();
+    for (String path : paths) {
+      java.nio.file.Path name = Paths.get(path).getFileName();
+      if (name != null) {
+        String jarName = name.toString();
+        if (pattern.matcher(jarName).matches()) {
+          if (jars.length() != 0) {
+            jars.append(",");
+          }
+          jars.append(path);
         }
-        jars.append(url.getFile());
       }
     }
+
+    logger.debug("Found Fluo Accumulo jars {} ", jars);
+
     return jars.toString();
   }
 

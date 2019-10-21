@@ -59,8 +59,8 @@ public class MiniFluoImpl implements MiniFluo {
   private FluoConfiguration config;
   private MiniAccumuloCluster cluster = null;
 
-  protected static String USER = "root";
-  protected static String PASSWORD = "secret";
+  protected static final String USER = "root";
+  protected static final String PASSWORD = "secret";
 
   private AutoCloseable reporter;
 

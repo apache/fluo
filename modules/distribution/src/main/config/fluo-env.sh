@@ -77,12 +77,7 @@ setupClasspathFromSystem()
   test -z "$ZOOKEEPER_HOME" && ZOOKEEPER_HOME=/path/to/zookeeper
 
   CLASSPATH="$lib/*"
-  # If fluo-conn.properties exists, then classpath does not need to include twill or logback
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    CLASSPATH="$CLASSPATH:$lib/log4j/*"
-  else
-    CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
-  fi
+  CLASSPATH="$CLASSPATH:$lib/log4j/*"
 
   #any jars matching this pattern is excluded from classpath
   EXCLUDE_RE="(.*log4j.*)|(.*asm.*)|(.*guava.*)|(.*gson.*)|(.*hadoop-client-minicluster.*)"
@@ -100,11 +95,7 @@ setupClasspathFromSystem()
 # `./lib/fetch.sh ahz` to download dependencies to this directory.
 setupClasspathFromLib(){
   CLASSPATH="$lib/*"
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    CLASSPATH="$CLASSPATH:$lib/log4j/*"
-  else
-    CLASSPATH="$CLASSPATH:$lib/twill/*:$lib/logback/*"
-  fi
+  CLASSPATH="$CLASSPATH:$lib/log4j/*"
   CLASSPATH="$CLASSPATH:$lib/ahz/*"
   export CLASSPATH
 }

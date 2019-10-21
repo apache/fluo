@@ -49,6 +49,7 @@ import org.apache.fluo.core.util.FluoThreadFactory;
 import org.apache.fluo.core.util.Halt;
 import org.apache.fluo.core.util.HostUtil;
 import org.apache.fluo.core.util.PortUtils;
+import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -316,7 +317,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
     curatorFramework.start();
 
     while (!cnxnListener.isConnected()) {
-      Thread.sleep(200);
+      UtilWaitThread.sleep(200);
     }
 
     final InetSocketAddress addr = startServer();
@@ -348,7 +349,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
     pathChildrenCache.start();
 
     while (!cnxnListener.isConnected()) {
-      Thread.sleep(200);
+      UtilWaitThread.sleep(200);
     }
 
     log.info("Listening " + addr);

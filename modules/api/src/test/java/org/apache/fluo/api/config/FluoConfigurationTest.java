@@ -49,11 +49,6 @@ public class FluoConfigurationTest {
         base.getConnectionRetryTimeout());
     Assert.assertEquals(FluoConfiguration.ACCUMULO_ZOOKEEPERS_DEFAULT,
         base.getAccumuloZookeepers());
-    @SuppressWarnings("deprecation")
-    String tmpFieldName = FluoConfiguration.ADMIN_ACCUMULO_CLASSPATH_DEFAULT;
-    @SuppressWarnings("deprecation")
-    String tmpCP = base.getAccumuloClasspath();
-    Assert.assertEquals(tmpFieldName, tmpCP);
     Assert.assertEquals(FluoConfiguration.WORKER_NUM_THREADS_DEFAULT, base.getWorkerThreads());
     Assert.assertEquals(FluoConfiguration.TRANSACTION_ROLLBACK_TIME_DEFAULT,
         base.getTransactionRollbackTime());
@@ -89,9 +84,6 @@ public class FluoConfigurationTest {
   @Test
   public void testSetGet() {
     FluoConfiguration config = new FluoConfiguration();
-    @SuppressWarnings("deprecation")
-    String tmpCP = config.setAccumuloClasspath("path1,path2").getAccumuloClasspath();
-    Assert.assertEquals("path1,path2", tmpCP);
     Assert.assertEquals("path1,path2", config.setAccumuloJars("path1,path2").getAccumuloJars());
     Assert.assertEquals("instance", config.setAccumuloInstance("instance").getAccumuloInstance());
     Assert.assertEquals("pass", config.setAccumuloPassword("pass").getAccumuloPassword());
@@ -182,37 +174,6 @@ public class FluoConfigurationTest {
   }
 
   @Test
-  public void testLoadingOldPropsFile() {
-    File propsFile = new File("../distribution/src/main/config/fluo.properties.deprecated");
-    Assert.assertTrue(propsFile.exists());
-
-    FluoConfiguration config = new FluoConfiguration(propsFile);
-    // make sure classpath contains comma. otherwise it was shortened
-    @SuppressWarnings("deprecation")
-    String tmpCP = config.getAccumuloClasspath();
-    Assert.assertTrue(tmpCP.contains(","));
-    // check for values set in prop file
-    Assert.assertEquals("localhost/fluo", config.getInstanceZookeepers());
-    Assert.assertEquals("localhost", config.getAccumuloZookeepers());
-    Assert.assertEquals("", config.getAccumuloPassword());
-    try {
-      config.getAccumuloUser();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-    }
-    try {
-      String act = config.getAccumuloTable();
-      Assert.fail("Saw " + act);
-    } catch (IllegalArgumentException e) {
-    }
-    try {
-      config.getAccumuloInstance();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-    }
-  }
-
-  @Test
   public void testLoadingDistPropsFile() {
     File connectionProps = new File("../distribution/src/main/config/fluo-conn.properties");
     Assert.assertTrue(connectionProps.exists());
@@ -255,9 +216,6 @@ public class FluoConfigurationTest {
 
     FluoConfiguration config = new FluoConfiguration(propsFile);
     // make sure classpath contains comma. otherwise it was shortened
-    @SuppressWarnings("deprecation")
-    String tmpCP = config.getAccumuloClasspath();
-    Assert.assertTrue(tmpCP.contains(","));
     // check for values set in prop file
     Assert.assertEquals("app1", config.getApplicationName());
     Assert.assertEquals("localhost/fluo2", config.getInstanceZookeepers());

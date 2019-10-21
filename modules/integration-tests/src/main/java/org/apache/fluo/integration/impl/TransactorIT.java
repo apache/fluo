@@ -33,9 +33,9 @@ public class TransactorIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
-  public static Long id1 = Long.valueOf(2);
-  public static Long id2 = Long.valueOf(3);
-  public static long NUM_OPEN_TIMEOUT_MS = 1000;
+  public static final Long id1 = Long.valueOf(2);
+  public static final Long id2 = Long.valueOf(3);
+  public static final long NUM_OPEN_TIMEOUT_MS = 1000;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();

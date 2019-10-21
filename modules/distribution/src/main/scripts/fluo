@@ -43,8 +43,8 @@ fi
 
 deprecated_fluo_props=$conf/fluo.properties
 
-if [[ -f "$FLUO_CONN_PROPS" && -f "$deprecated_fluo_props" ]]; then
-  echo "Fluo is being configured by $FLUO_CONN_PROPS and $deprecated_fluo_props. Remove one of these files."
+if [[ -f "$deprecated_fluo_props" ]]; then
+  echo "Fluo no longer supports running applications in YARN using Twill (Twill does not support Hadoop 3).  The presence of the file $deprecated_fluo_props implies this is desired."
   exit 1
 fi
 
@@ -78,14 +78,6 @@ function print_usage {
   echo "  version                       Prints the version of Fluo"
   echo "  wait -a <app>                 Waits until all notifications are processed for <app>"
   echo "  exec <app> <class> {<arg>}    Executes <class> with <args> using classpath for <app>";
-
-  echo -e "\nDeprecated commands (available if fluo.properties exists):\n"
-  echo "  new <app>     (Deprecated) Creates configuration for new application in apps/"
-  echo "  start <app>   (Deprecated) Starts Fluo application on cluster"
-  echo "  stop <app>    (Deprecated) Stops Fluo application on cluster"
-  echo "  init <app>    (Deprecated) Initializes Fluo application using configuration in apps/<app>/conf/fluo.properties"
-  echo "  kill <app>    (Deprecated) Kills Fluo application on cluster"
-  echo "  info <app>    (Deprecated) Prints information about containers of Fluo application"
   echo " "
   exit 1
 }
@@ -104,27 +96,6 @@ function verify_app {
   fi
   if [[ $1 = *"-h"* ]]; then
     print_usage
-  fi
-}
-
-function deprecated_verify {
-  verify_app "$1"
-  APP=$1
-  APP_DIR=$basedir/apps/$APP
-  APP_CONF_DIR=$APP_DIR/conf
-  APP_LIB_DIR=$APP_DIR/lib
-  if [ ! -f "$deprecated_fluo_props" ]; then
-    echo "ERROR - This command is deprecated can only be used if fluo.properties exists in $conf"
-    exit 1
-  fi
-}
-
-function deprecated_verify_full {
-  deprecated_verify "$1"
-  java org.apache.fluo.cluster.util.ValidateAppName "$APP"
-  if [[ ! -d $APP_DIR || ! -d $APP_CONF_DIR || ! -d $APP_LIB_DIR  ]]; then
-    echo "ERROR - The Fluo '$APP' application needs to be configured in apps/ with a conf/ and lib/ directory.  Use 'fluo new $APP' to create this configuration"
-    exit 1
   fi
 }
 
@@ -167,23 +138,16 @@ get-jars)
   $JAVA org.apache.fluo.command.FluoGetJars "${@:2}"
   ;;
 init)
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    if [[ $2 = *"-h"* ]]; then
-      $JAVA org.apache.fluo.command.FluoInit -h
-      exit 0
-    fi
-    init_dir=$($JAVA org.apache.fluo.command.FluoInit "${@:2}" --retrieveProperty fluo.observer.init.dir)
-    if [ -d "$init_dir" ]; then
-      echo "Adding $init_dir/* to CLASSPATH"
-      export CLASSPATH="$init_dir/*:$CLASSPATH"
-    fi
-    $JAVA org.apache.fluo.command.FluoInit "${@:2}"
-  else
-    deprecated_verify_full "$2"
-    check_hadoop
-    export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
+  if [[ $2 = *"-h"* ]]; then
+    $JAVA org.apache.fluo.command.FluoInit -h
+    exit 0
   fi
+  init_dir=$($JAVA org.apache.fluo.command.FluoInit "${@:2}" --retrieveProperty fluo.observer.init.dir)
+  if [ -d "$init_dir" ]; then
+    echo "Adding $init_dir/* to CLASSPATH"
+    export CLASSPATH="$init_dir/*:$CLASSPATH"
+  fi
+  $JAVA org.apache.fluo.command.FluoInit "${@:2}"
   ;;
 remove)
   if [[ $2 = *"-h"* ]]; then
@@ -231,77 +195,25 @@ classpath)
   echo "$CLASSPATH"
   ;;
 exec)
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    app=$2
-    verify_app "$app"
-    check_conn_props
-    # create a temp dir to fetch application jars to
-    app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
-    # schedule removal of app_lib tmp dir when this script exits
-    trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
-    $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
-    export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
-    $JAVA org.apache.fluo.command.FluoExec "${@:2}"
-  else
-    deprecated_verify "$2"
-    export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  fi
+  app=$2
+  verify_app "$app"
+  check_conn_props
+  # create a temp dir to fetch application jars to
+  app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
+  # schedule removal of app_lib tmp dir when this script exits
+  trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
+  $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
+  export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
+  $JAVA org.apache.fluo.command.FluoExec "${@:2}"
   ;;
 status)
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoStatus "${@:2}"
-  else
-    check_hadoop
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  fi
+  $JAVA org.apache.fluo.command.FluoStatus "${@:2}"
   ;;
 version)
   echo "$FLUO_VERSION"
   ;;
 wait)
-  if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoWait "${@:2}"
-  else
-    deprecated_verify "$2"
-    export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
-    java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  fi
-  ;;
-# Commands below this comment are deprecated
-new)
-  deprecated_verify "$2"
-  java org.apache.fluo.cluster.util.ValidateAppName "$APP"
-  if [ -d "$APP_DIR" ]; then
-    echo "The Fluo '$APP' application already has a directory in apps/"
-    exit 1
-  fi
-  mkdir -p "$APP_DIR"
-  mkdir -p "$APP_CONF_DIR"
-  mkdir -p "$APP_LIB_DIR"
-  copy_config fluo.properties
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed_cmd="sed -i .bak"
-  else
-    sed_cmd="sed -i"
-  fi
-  $sed_cmd "s/fluo.client.application.name=/fluo.client.application.name=$APP/g" "$APP_CONF_DIR/fluo.properties"
-  copy_config logback.xml
-  ;;
-start)
-  deprecated_verify_full "$2"
-  check_hadoop
-  export CLASSPATH="$APP_LIB_DIR/*:$CLASSPATH"
-  java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  ;;
-stop)
-  check_hadoop
-  java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
-  ;;
-kill|info)
-  deprecated_verify "$2"
-  check_hadoop
-  java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
+  $JAVA org.apache.fluo.command.FluoWait "${@:2}"
   ;;
 *)
   print_usage

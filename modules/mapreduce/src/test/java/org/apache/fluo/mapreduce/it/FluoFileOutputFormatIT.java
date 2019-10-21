@@ -68,10 +68,10 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
   public void testImportFile() throws Exception {
 
     File inDir = new File(tempFolder.getRoot(), "in");
-    inDir.mkdir();
+    Assert.assertTrue(inDir.mkdir());
     File outDir = new File(tempFolder.getRoot(), "out");
     File failDir = new File(tempFolder.getRoot(), "fail");
-    failDir.mkdir();
+    Assert.assertTrue(failDir.mkdir());
 
     // generate some data for map reduce to read
     PrintWriter writer =

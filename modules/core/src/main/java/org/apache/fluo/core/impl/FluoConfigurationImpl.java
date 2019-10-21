@@ -47,7 +47,7 @@ public class FluoConfigurationImpl {
   // If period is too short, Zookeeper may be overloaded. If too long, garbage collection
   // may keep older versions of table data unnecessarily.
   public static final String ZK_UPDATE_PERIOD_PROP = FLUO_IMPL_PREFIX + ".timestamp.update.period";
-  public static long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
+  public static final long ZK_UPDATE_PERIOD_MS_DEFAULT = 60000;
 
   // CW is short for ConditionalWriter
   public static final String CW_MIN_THREADS_PROP = FLUO_IMPL_PREFIX + ".cw.threads.min";
