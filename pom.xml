@@ -257,6 +257,19 @@
           </configuration>
         </plugin>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <doclint>all,-missing</doclint>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>org.apache.accumulo</groupId>
           <artifactId>accumulo2-maven-plugin</artifactId>
           <version>1.0.0</version>
@@ -339,7 +352,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -417,6 +429,27 @@
       </activation>
       <properties>
         <spotbugs.excludeFilterFile>src/main/spotbugs/exclude-filter.xml</spotbugs.excludeFilterFile>
+      </properties>
+    </profile>
+    <profile>
+      <id>m2e-compiler-compliance</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+      <properties>
+        <!-- add compiler compliance to Eclipse -->
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk-release-flag</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
       </properties>
     </profile>
   </profiles>
