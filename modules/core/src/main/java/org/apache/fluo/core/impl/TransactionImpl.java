@@ -187,8 +187,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   @Override
   public Map<Column, Bytes> get(Bytes row, Set<Column> columns) {
     checkIfOpen();
-    return getImpl(row, columns, kve -> {
-    });
+    return getImpl(row, columns);
   }
 
   @Override
@@ -202,7 +201,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     env.getSharedResources().getVisCache().validate(columns);
 
     ParallelSnapshotScanner pss =
-        new ParallelSnapshotScanner(rows, columns, env, startTs, stats, readLocksSeen);
+        new ParallelSnapshotScanner(rows, columns, env, startTs, stats, readLocksSeen, kve -> {
+        });
 
     Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
 
@@ -216,29 +216,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   @Override
   public Map<RowColumn, Bytes> get(Collection<RowColumn> rowColumns) {
     checkIfOpen();
-
-    if (rowColumns.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    ParallelSnapshotScanner pss =
-        new ParallelSnapshotScanner(rowColumns, env, startTs, stats, readLocksSeen);
-
-    Map<Bytes, Map<Column, Bytes>> scan = pss.scan();
-    Map<RowColumn, Bytes> ret = new HashMap<>();
-
-    for (Entry<Bytes, Map<Column, Bytes>> entry : scan.entrySet()) {
-      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
-      for (Entry<Column, Bytes> colVal : entry.getValue().entrySet()) {
-        ret.put(new RowColumn(entry.getKey(), colVal.getKey()), colVal.getValue());
-      }
-    }
-
-    return ret;
+    return getImpl(rowColumns, kve -> {
+    });
   }
 
-  private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns,
-      Consumer<Entry<Key, Value>> locksSeen) {
+  private Map<Column, Bytes> getImpl(Bytes row, Set<Column> columns) {
 
     // TODO push visibility filtering to server side?
 
@@ -270,7 +252,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     Map<Column, Bytes> ret = new HashMap<>();
     Set<Column> readLockCols = null;
 
-    for (Entry<Key, Value> kve : new SnapshotScanner(env, opts, startTs, stats, locksSeen)) {
+    for (Entry<Key, Value> kve : new SnapshotScanner(env, opts, startTs, stats)) {
 
       Column col = ColumnUtil.convert(kve.getKey());
       if (shouldCopy && !columns.contains(col)) {
@@ -289,6 +271,28 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     // only update columns read after successful read
     updateColumnsRead(row, columns);
+
+    return ret;
+  }
+
+  private Map<RowColumn, Bytes> getImpl(Collection<RowColumn> rowColumns,
+      Consumer<Entry<Key, Value>> writeLocksSeen) {
+    if (rowColumns.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    ParallelSnapshotScanner pss =
+        new ParallelSnapshotScanner(rowColumns, env, startTs, stats, readLocksSeen, writeLocksSeen);
+
+    Map<Bytes, Map<Column, Bytes>> scan = pss.scan();
+    Map<RowColumn, Bytes> ret = new HashMap<>();
+
+    for (Entry<Bytes, Map<Column, Bytes>> entry : scan.entrySet()) {
+      updateColumnsRead(entry.getKey(), entry.getValue().keySet());
+      for (Entry<Column, Bytes> colVal : entry.getValue().entrySet()) {
+        ret.put(new RowColumn(entry.getKey(), colVal.getKey()), colVal.getValue());
+      }
+    }
 
     return ret;
   }
@@ -542,7 +546,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
    * This function helps handle the following case
    *
    * <OL>
-   * <LI>TX1 locls r1 col1
+   * <LI>TX1 locks r1 col1
    * <LI>TX1 fails before unlocking
    * <LI>TX2 attempts to write r1:col1 w/o reading it
    * </OL>
@@ -554,28 +558,29 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
    *
    * @param cd Commit data
    */
-  private void readUnread(CommitData cd, Consumer<Entry<Key, Value>> locksSeen) {
-    // TODO make async
+  private void readUnread(CommitData cd, Consumer<Entry<Key, Value>> writeLocksSeen) {
     // TODO need to keep track of ranges read (not ranges passed in, but actual data read... user
     // may not iterate over entire range
-    Map<Bytes, Set<Column>> columnsToRead = new HashMap<>();
+    Collection<RowColumn> rowColumnsToRead = new ArrayList<>();
 
     for (Entry<Bytes, Set<Column>> entry : cd.getRejected().entrySet()) {
       Set<Column> rowColsRead = columnsRead.get(entry.getKey());
       if (rowColsRead == null) {
-        columnsToRead.put(entry.getKey(), entry.getValue());
+        for (Column column : entry.getValue()) {
+          rowColumnsToRead.add(new RowColumn(entry.getKey(), column));
+        }
       } else {
         HashSet<Column> colsToRead = new HashSet<>(entry.getValue());
         colsToRead.removeAll(rowColsRead);
         if (!colsToRead.isEmpty()) {
-          columnsToRead.put(entry.getKey(), colsToRead);
+          for (Column column : colsToRead) {
+            rowColumnsToRead.add(new RowColumn(entry.getKey(), column));
+          }
         }
       }
     }
 
-    for (Entry<Bytes, Set<Column>> entry : columnsToRead.entrySet()) {
-      getImpl(entry.getKey(), entry.getValue(), locksSeen);
-    }
+    getImpl(rowColumnsToRead, writeLocksSeen);
   }
 
   private void checkForOrphanedReadLocks(CommitData cd, Map<Bytes, Set<Column>> locksResolved)
@@ -642,15 +647,15 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
   private void checkForOrphanedLocks(CommitData cd) throws Exception {
 
-    Map<Bytes, Set<Column>> locksSeen = new HashMap<>();
+    Map<Bytes, Set<Column>> writeLocksSeen = new HashMap<>();
 
     readUnread(cd, kve -> {
       Bytes row = ByteUtil.toBytes(kve.getKey().getRowData());
       Column col = ColumnUtil.convert(kve.getKey());
-      locksSeen.computeIfAbsent(row, k -> new HashSet<>()).add(col);
+      writeLocksSeen.computeIfAbsent(row, k -> new HashSet<>()).add(col);
     });
 
-    checkForOrphanedReadLocks(cd, locksSeen);
+    checkForOrphanedReadLocks(cd, writeLocksSeen);
   }
 
   private boolean checkForAckCollision(ConditionalMutation cm) {
@@ -1532,8 +1537,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
-    return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns, false), startTs, stats,
-        kve -> {
-        });
+    return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns, false), startTs, stats);
   }
 }

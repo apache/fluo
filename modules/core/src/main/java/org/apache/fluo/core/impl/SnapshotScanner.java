@@ -75,7 +75,6 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
   private final Environment env;
   private final TxStats stats;
   private final Opts config;
-  private Consumer<Entry<Key, Value>> locksSeen;
 
   static final long INITIAL_WAIT_TIME = 50;
   // TODO make configurable
@@ -155,8 +154,6 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
       // read ahead a little bit looking for other locks to resolve
 
-      locksSeen.accept(lockEntry);
-
       long startTime = System.currentTimeMillis();
       long waitTime = INITIAL_WAIT_TIME;
 
@@ -174,7 +171,6 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
 
           if (ColumnType.from(entry.getKey()) == ColumnType.LOCK) {
             locks.add(entry);
-            locksSeen.accept(lockEntry);
           }
 
           amountRead += entry.getKey().getSize() + entry.getValue().getSize();
@@ -241,13 +237,11 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     }
   }
 
-  SnapshotScanner(Environment env, Opts config, long startTs, TxStats stats,
-      Consumer<Entry<Key, Value>> locksSeen) {
+  SnapshotScanner(Environment env, Opts config, long startTs, TxStats stats) {
     this.env = env;
     this.config = config;
     this.startTs = startTs;
     this.stats = stats;
-    this.locksSeen = locksSeen;
   }
 
   @Override
