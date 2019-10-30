@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.accumulo.core.client.BatchScanner;
@@ -53,9 +54,11 @@ public class ParallelSnapshotScanner {
   private Function<ByteSequence, Bytes> rowConverter;
   private Function<Key, Column> columnConverter;
   private Map<Bytes, Set<Column>> readLocksSeen;
+  private Consumer<Entry<Key, Value>> writeLocksSeen;
 
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
-      long startTs, TxStats stats, Map<Bytes, Set<Column>> readLocksSeen) {
+      long startTs, TxStats stats, Map<Bytes, Set<Column>> readLocksSeen,
+      Consumer<Entry<Key, Value>> writeLocksSeen) {
     this.rows = rows;
     this.columns = columns;
     this.env = env;
@@ -64,10 +67,11 @@ public class ParallelSnapshotScanner {
     this.rowConverter = new CachedBytesConverter(rows);
     this.columnConverter = new CachedColumnConverter(columns);
     this.readLocksSeen = readLocksSeen;
+    this.writeLocksSeen = writeLocksSeen;
   }
 
   ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats,
-      Map<Bytes, Set<Column>> readLocksSeen) {
+      Map<Bytes, Set<Column>> readLocksSeen, Consumer<Entry<Key, Value>> writeLocksSeen) {
     for (RowColumn rc : cells) {
       byte[] r = rc.getRow().toArray();
       byte[] cf = rc.getColumn().getFamily().toArray();
@@ -87,6 +91,7 @@ public class ParallelSnapshotScanner {
     this.rowConverter = ByteUtil::toBytes;
     this.columnConverter = ColumnUtil::convert;
     this.readLocksSeen = readLocksSeen;
+    this.writeLocksSeen = writeLocksSeen;
   }
 
   private BatchScanner setupBatchScanner() {
@@ -180,6 +185,7 @@ public class ParallelSnapshotScanner {
         switch (colType) {
           case LOCK:
             locks.add(entry);
+            writeLocksSeen.accept(entry);
             break;
           case DATA:
             ret.computeIfAbsent(row, k -> new HashMap<>()).put(col,
