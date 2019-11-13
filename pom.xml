@@ -56,13 +56,15 @@
     <accumulo.version>2.0.0</accumulo.version>
     <curator.version>4.0.1</curator.version>
     <dropwizard.version>0.8.1</dropwizard.version>
+    <extraReleaseArguments>-P thrift</extraReleaseArguments>
     <!-- Prevent findbugs from runnning because it does not work with Java 11 and is configured to run by parent pom.  Spotbugs is configured in place of findbugs. -->
     <findbugs.skip>true</findbugs.skip>
     <hadoop.version>3.1.1</hadoop.version>
     <releaseProfiles>fluo-release</releaseProfiles>
     <slf4j.version>1.7.12</slf4j.version>
     <spotbugs.version>3.1.12</spotbugs.version>
-    <zookeeper.version>3.4.8</zookeeper.version>
+    <thrift.version>0.12.0</thrift.version>
+    <zookeeper.version>3.4.14</zookeeper.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -202,6 +204,11 @@
         <version>${hadoop.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.thrift</groupId>
+        <artifactId>libthrift</artifactId>
+        <version>${thrift.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
@@ -336,6 +343,11 @@
             <!-- must put this here, due to MRELEASE-963 -->
             <tagNameFormat>rel/fluo-@{project.version}</tagNameFormat>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
         </plugin>
       </plugins>
     </pluginManagement>

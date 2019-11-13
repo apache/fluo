@@ -72,7 +72,6 @@
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
-      <version>0.11.0</version>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -167,4 +166,29 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>thrift</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>generate-thrift</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <executable>${basedir}/src/main/scripts/generate-thrift.sh</executable>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
