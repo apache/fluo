@@ -20,9 +20,9 @@
   <version>a</version>
 
   <properties>
-    <accumulo.version>1.7.2</accumulo.version>
-    <hadoop.version>2.7.2</hadoop.version>
-    <zookeeper.version>3.4.8</zookeeper.version>
+    <accumulo.version>2.0.0</accumulo.version>
+    <hadoop.version>3.1.1</hadoop.version>
+    <zookeeper.version>3.4.14</zookeeper.version>
   </properties>
 
   <dependencies>
@@ -38,7 +38,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-yarn-client</artifactId>
+      <artifactId>hadoop-client-runtime</artifactId>
       <version>${hadoop.version}</version>
     </dependency>
     <dependency>

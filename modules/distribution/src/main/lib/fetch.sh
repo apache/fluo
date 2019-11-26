@@ -58,7 +58,7 @@ extra)
   download com.beust:jcommander:jar:1.72
   download com.google.code.gson:gson:jar:2.8.5
   download com.google.guava:guava:jar:27.0-jre
-  download com.google.inject:guice:jar:4.0
+  download com.google.inject:guice:jar:4.2.2
   download org.apache.commons:commons-collections4:jar:4.2
   download org.apache.commons:commons-configuration2:jar:2.5
   download commons-io:commons-io:jar:2.6
@@ -89,5 +89,5 @@ extra)
   echo -e "   extra     Download extra Fluo dependencies\n"
   echo "For 'ahz', the versions of Hadoop, Accumulo, & Zookeeper are specifed in ahz/pom.xml."
   echo -e "However, you can override them using the command below:\n"
-  echo "./fetch.sh ahz -Daccumulo.version=1.7.2 -Dhadoop.version=2.7.2 -Dzookeeper.version=3.4.8"
+  echo "./fetch.sh ahz -Daccumulo.version=2.0.0 -Dhadoop.version=3.1.1 -Dzookeeper.version=3.4.14"
 esac
