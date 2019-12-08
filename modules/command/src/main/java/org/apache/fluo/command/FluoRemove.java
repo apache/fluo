@@ -15,19 +15,17 @@
 
 package org.apache.fluo.command;
 
+import com.beust.jcommander.Parameters;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-public class FluoRemove {
+@Parameters(commandDescription = "Removes Fluo application for <app>")
+public class FluoRemove extends AppCommand {
 
-  public static void main(String[] args) {
-
-    CommonOpts opts = CommonOpts.parse("fluo remove", args);
-
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
     config = FluoAdminImpl.mergeZookeeperConfig(config);
 
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
@@ -35,12 +33,7 @@ public class FluoRemove {
       admin.remove();
       System.out.println("Remove is complete.");
     } catch (FluoException e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    } catch (Exception e) {
-      System.out.println("Remove failed due to the following exception:");
-      e.printStackTrace();
-      System.exit(-1);
+      throw new FluoCommandException(e);
     }
   }
 }

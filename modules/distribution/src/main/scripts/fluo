@@ -131,50 +131,50 @@ function setup_service {
 case "$1" in
 config)
   check_conn_props
-  $JAVA org.apache.fluo.command.FluoConfig "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 get-jars)
   check_conn_props
-  $JAVA org.apache.fluo.command.FluoGetJars "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 init)
   if [[ $2 = *"-h"* ]]; then
-    $JAVA org.apache.fluo.command.FluoInit -h
+    $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
-  init_dir=$($JAVA org.apache.fluo.command.FluoInit "${@:2}" --retrieveProperty fluo.observer.init.dir)
+  init_dir=$($JAVA org.apache.fluo.command.FluoProgram "${@:1}" --retrieveProperty fluo.observer.init.dir)
   if [ -d "$init_dir" ]; then
     echo "Adding $init_dir/* to CLASSPATH"
     export CLASSPATH="$init_dir/*:$CLASSPATH"
   fi
-  $JAVA org.apache.fluo.command.FluoInit "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 remove)
   if [[ $2 = *"-h"* ]]; then
-    $JAVA org.apache.fluo.command.FluoRemove -h
+    $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
-  $JAVA org.apache.fluo.command.FluoRemove "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 oracle)
   if [[ $2 = *"-h"* ]]; then
-    $JAVA org.apache.fluo.command.FluoOracle -h
+    $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
   setup_service "${@:2}"
-  $JAVA org.apache.fluo.command.FluoOracle "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 worker)
   if [[ $2 = *"-h"* ]]; then
-    $JAVA org.apache.fluo.command.FluoWorker -h
+    $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
   setup_service "${@:2}"
-  $JAVA org.apache.fluo.command.FluoWorker "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 scan)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoScan "${@:2}"
+    $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
@@ -185,7 +185,7 @@ ps)
   ;;
 list)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoList "${@:2}"
+    $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" list app "${@:2}"
@@ -202,18 +202,18 @@ exec)
   app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
   # schedule removal of app_lib tmp dir when this script exits
   trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
-  $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" -a "$app"
+  $JAVA org.apache.fluo.command.FluoProgram get-jars -d "$app_lib" -a "$app"
   export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
-  $JAVA org.apache.fluo.command.FluoExec "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 status)
-  $JAVA org.apache.fluo.command.FluoStatus "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 version)
   echo "$FLUO_VERSION"
   ;;
 wait)
-  $JAVA org.apache.fluo.command.FluoWait "${@:2}"
+  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
   ;;
 *)
   print_usage

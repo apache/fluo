@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -22,65 +22,58 @@ import java.io.InputStreamReader;
 import java.util.Optional;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.google.common.base.Preconditions;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-public class FluoInit {
+@Parameters(commandDescription = "Initializes Fluo application for <app> using <appProps>")
+public class FluoInit extends AppCommand {
 
-  public static class InitOptions extends CommonOpts {
+  @Parameter(names = "-p", required = true, description = "Path to application properties file")
+  private String appPropsPath;
 
-    @Parameter(names = "-p", required = true, description = "Path to application properties file")
-    private String appPropsPath;
+  @Parameter(names = {"-f", "--force"},
+      description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to "
+          + "setting both --clearTable --clearZookeeper")
+  private boolean force;
 
-    @Parameter(names = {"-f", "--force"},
-        description = "Skip all prompts and clears Zookeeper and Accumulo table.  Equivalent to "
-            + "setting both --clearTable --clearZookeeper")
-    private boolean force;
+  @Parameter(names = {"--clearTable"}, description = "Skips prompt and clears Accumulo table")
+  private boolean clearTable;
 
-    @Parameter(names = {"--clearTable"}, description = "Skips prompt and clears Accumulo table")
-    private boolean clearTable;
+  @Parameter(names = {"--clearZookeeper"}, description = "Skips prompt and clears Zookeeper")
+  private boolean clearZookeeper;
 
-    @Parameter(names = {"--clearZookeeper"}, description = "Skips prompt and clears Zookeeper")
-    private boolean clearZookeeper;
+  @Parameter(names = {"-u", "--update"}, description = "Update Fluo configuration in Zookeeper")
+  private boolean update;
 
-    @Parameter(names = {"-u", "--update"}, description = "Update Fluo configuration in Zookeeper")
-    private boolean update;
+  @Parameter(names = "--retrieveProperty",
+      description = "Gets specified property without initializing")
+  private String retrieveProperty;
 
-    @Parameter(names = "--retrieveProperty",
-        description = "Gets specified property without initializing")
-    private String retrieveProperty;
+  String getAppPropsPath() {
+    return appPropsPath;
+  }
 
-    String getAppPropsPath() {
-      return appPropsPath;
-    }
+  boolean getForce() {
+    return force;
+  }
 
-    boolean getForce() {
-      return force;
-    }
+  boolean getClearTable() {
+    return clearTable;
+  }
 
-    boolean getClearTable() {
-      return clearTable;
-    }
+  boolean getClearZookeeper() {
+    return clearZookeeper;
+  }
 
-    boolean getClearZookeeper() {
-      return clearZookeeper;
-    }
+  boolean getUpdate() {
+    return update;
+  }
 
-    boolean getUpdate() {
-      return update;
-    }
-
-    String getRetrieveProperty() {
-      return retrieveProperty;
-    }
-
-    public static InitOptions parse(String[] args) {
-      InitOptions opts = new InitOptions();
-      parse("fluo init", opts, args);
-      return opts;
-    }
+  String getRetrieveProperty() {
+    return retrieveProperty;
   }
 
   private static boolean readYes() {
@@ -90,7 +83,7 @@ public class FluoInit {
       try {
         input = Optional.ofNullable(bufferedReader.readLine()).orElse("").trim();
       } catch (IOException e) {
-        throw new IllegalStateException(e);
+        throw new FluoCommandException(e);
       }
       if (input.equalsIgnoreCase("y")) {
         return true;
@@ -102,53 +95,49 @@ public class FluoInit {
     }
   }
 
-  public static void main(String[] args) {
-
-    InitOptions opts = InitOptions.parse(args);
-    File applicationPropsFile = new File(opts.getAppPropsPath());
+  @Override
+  public void execute() throws FluoCommandException {
+    File applicationPropsFile = new File(getAppPropsPath());
     Preconditions.checkArgument(applicationPropsFile.exists(),
-        opts.getAppPropsPath() + " does not exist");
+        getAppPropsPath() + " does not exist");
 
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    FluoConfiguration config = getConfig();
     config.load(applicationPropsFile);
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
 
-    String propKey = opts.getRetrieveProperty();
+    String propKey = getRetrieveProperty();
     if (propKey != null && !propKey.isEmpty()) {
       if (config.containsKey(propKey)) {
         System.out.println(config.getString(propKey));
       }
-      System.exit(0);
+      return;
     }
 
     if (!config.hasRequiredAdminProps()) {
-      System.err.println("Error - Required properties are not set in " + opts.getAppPropsPath());
-      System.exit(-1);
+      throw new FluoCommandException(
+          "Error - Required properties are not set in " + getAppPropsPath());
     }
     try {
       config.validate();
     } catch (Exception e) {
-      System.err.println("Error - Invalid configuration due to " + e.getMessage());
-      System.exit(-1);
+      throw new FluoCommandException("Error - Invalid configuration due to " + e.getMessage(), e);
     }
 
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
 
       FluoAdmin.InitializationOptions initOpts = new FluoAdmin.InitializationOptions();
 
-      if (opts.getUpdate()) {
+      if (getUpdate()) {
         System.out.println("Updating configuration for the Fluo '" + config.getApplicationName()
-            + "' application in Zookeeper using " + opts.getAppPropsPath());
+            + "' application in Zookeeper using " + getAppPropsPath());
         admin.updateSharedConfig();
         System.out.println("Update is complete.");
-        System.exit(0);
+        return;
       }
 
-      if (opts.getForce()) {
+      if (getForce()) {
         initOpts.setClearZookeeper(true).setClearTable(true);
       } else {
-        if (opts.getClearZookeeper()) {
+        if (getClearZookeeper()) {
           initOpts.setClearZookeeper(true);
         } else if (admin.zookeeperInitialized()) {
           System.out.print("A Fluo '" + config.getApplicationName()
@@ -158,12 +147,11 @@ public class FluoInit {
           if (readYes()) {
             initOpts.setClearZookeeper(true);
           } else {
-            System.out.println("Aborted initialization.");
-            System.exit(-1);
+            throw new FluoCommandException("Aborted initialization.");
           }
         }
 
-        if (opts.getClearTable()) {
+        if (getClearTable()) {
           initOpts.setClearTable(true);
         } else if (admin.accumuloTableExists()) {
           System.out.print("The Accumulo table '" + config.getAccumuloTable()
@@ -171,24 +159,18 @@ public class FluoInit {
           if (readYes()) {
             initOpts.setClearTable(true);
           } else {
-            System.out.println("Aborted initialization.");
-            System.exit(-1);
+            throw new FluoCommandException("Aborted initialization.");
           }
         }
       }
 
       System.out.println("Initializing Fluo '" + config.getApplicationName()
-          + "' application using " + opts.getAppPropsPath());
+          + "' application using " + getAppPropsPath());
 
       admin.initialize(initOpts);
       System.out.println("Initialization is complete.");
-    } catch (FluoAdmin.AlreadyInitializedException e) {
-      System.err.println(e.getMessage());
-      System.exit(-1);
-    } catch (Exception e) {
-      System.out.println("Initialization failed due to the following exception:");
-      e.printStackTrace();
-      System.exit(-1);
+    } catch (FluoAdmin.AlreadyInitializedException | FluoAdmin.TableExistsException e) {
+      throw new FluoCommandException(e.getMessage(), e);
     }
   }
 }

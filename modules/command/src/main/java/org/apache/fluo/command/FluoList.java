@@ -18,29 +18,29 @@ package org.apache.fluo.command;
 import java.util.Collections;
 import java.util.List;
 
+import com.beust.jcommander.Parameters;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 
-public class FluoList {
+@Parameters(commandDescription = "Lists all Fluo applications in Fluo instance")
+public class FluoList extends ConfigCommand {
 
-  public static void main(String[] args) throws Exception {
-
-    ConfigOpts commandOpts = ConfigOpts.parse("fluo list", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    commandOpts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
 
     try (CuratorFramework curator = CuratorUtil.newFluoCurator(config)) {
       curator.start();
 
-      if (curator.checkExists().forPath("/") == null) {
+      if (!checkCuratorExists(curator)) {
         System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") has not been "
             + "created yet in Zookeeper.  It will be created when the first Fluo application is "
             + "initialized for this instance.");
         return;
       }
-      List<String> children = curator.getChildren().forPath("/");
+      List<String> children = getCuratorChildren(curator);
       if (children.isEmpty()) {
         System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") does not "
             + "contain any Fluo applications.");
@@ -54,17 +54,37 @@ public class FluoList {
       System.out.println("-----------     ------     ---------");
 
       for (String path : children) {
-        FluoConfiguration appConfig = new FluoConfiguration(config);
-        appConfig.setApplicationName(path);
-        try (FluoAdminImpl admin = new FluoAdminImpl(appConfig)) {
-          String state = "STOPPED";
-          if (admin.applicationRunning()) {
-            state = "RUNNING";
-          }
-          int numWorkers = admin.numWorkers();
-          System.out.format("%-15s %-11s %4d\n", path, state, numWorkers);
-        }
+        listApp(config, path);
       }
+    }
+  }
+
+  private boolean checkCuratorExists(CuratorFramework curator) {
+    try {
+      return curator.checkExists().forPath("/") != null;
+    } catch (Exception e) {
+      throw new RuntimeException("Error checking if curator exists", e);
+    }
+  }
+
+  private List<String> getCuratorChildren(CuratorFramework curator) {
+    try {
+      return curator.getChildren().forPath("/");
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting curator children", e);
+    }
+  }
+
+  private void listApp(FluoConfiguration config, String path) {
+    FluoConfiguration appConfig = new FluoConfiguration(config);
+    appConfig.setApplicationName(path);
+    try (FluoAdminImpl admin = new FluoAdminImpl(appConfig)) {
+      String state = "STOPPED";
+      if (admin.applicationRunning()) {
+        state = "RUNNING";
+      }
+      int numWorkers = admin.numWorkers();
+      System.out.format("%-15s %-11s %4d\n", path, state, numWorkers);
     }
   }
 }

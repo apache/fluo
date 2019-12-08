@@ -15,24 +15,22 @@
 
 package org.apache.fluo.command;
 
-import com.beust.jcommander.Parameters;
-import org.apache.fluo.api.client.FluoFactory;
+import com.beust.jcommander.Parameter;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.core.util.UtilWaitThread;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@Parameters(commandDescription = "Starts Fluo Oracle process for <app>")
-public class FluoOracle extends AppCommand {
+abstract class AppCommand extends ConfigCommand {
+
+  @Parameter(names = "-a", required = true, description = "Fluo application name")
+  private String applicationName;
+
+  String getApplicationName() {
+    return applicationName;
+  }
 
   @Override
-  public void execute() throws FluoCommandException {
-    FluoConfiguration config = getConfig();
-    CommandUtil.verifyAppInitialized(config);
-    org.apache.fluo.api.service.FluoOracle oracle = FluoFactory.newOracle(config);
-    oracle.start();
-    while (true) {
-      UtilWaitThread.sleep(10000);
-    }
+  FluoConfiguration getConfig() {
+    FluoConfiguration config = super.getConfig();
+    config.setApplicationName(applicationName);
+    return config;
   }
 }

@@ -15,16 +15,16 @@
 
 package org.apache.fluo.command;
 
+import com.beust.jcommander.Parameters;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-public class FluoStatus {
+@Parameters(commandDescription = "Prints status of Fluo application for <app>")
+public class FluoStatus extends AppCommand {
 
-  public static void main(String[] args) throws Exception {
-    CommonOpts opts = CommonOpts.parse("fluo status", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.zookeeperInitialized()) {
         System.out.println("NOT_FOUND");

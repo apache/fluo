@@ -23,7 +23,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.IParameterSplitter;
 import org.apache.fluo.api.config.FluoConfiguration;
 
-public class ConfigOpts extends BaseOpts {
+public abstract class ConfigCommand extends BaseCommand {
 
   public static class NullSplitter implements IParameterSplitter {
     @Override
@@ -40,26 +40,26 @@ public class ConfigOpts extends BaseOpts {
     return properties;
   }
 
-  void overrideFluoConfig(FluoConfiguration config) {
+  private void overrideFluoConfig(FluoConfiguration config) {
     for (String prop : getProperties()) {
       String[] propArgs = prop.split("=", 2);
       if (propArgs.length == 2) {
         String key = propArgs[0].trim();
         String value = propArgs[1].trim();
         if (key.isEmpty() || value.isEmpty()) {
-          throw new IllegalArgumentException("Invalid command line -o option: " + prop);
+          throw new FluoCommandException("Invalid command line -o option: " + prop);
         } else {
           config.setProperty(key, value);
         }
       } else {
-        throw new IllegalArgumentException("Invalid command line -o option: " + prop);
+        throw new FluoCommandException("Invalid command line -o option: " + prop);
       }
     }
   }
 
-  public static ConfigOpts parse(String programName, String[] args) {
-    ConfigOpts opts = new ConfigOpts();
-    parse(programName, opts, args);
-    return opts;
+  FluoConfiguration getConfig() {
+    FluoConfiguration config = CommandUtil.resolveFluoConfig();
+    overrideFluoConfig(config);
+    return config;
   }
 }

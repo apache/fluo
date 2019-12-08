@@ -17,17 +17,17 @@ package org.apache.fluo.command;
 
 import java.util.Map;
 
+import com.beust.jcommander.Parameters;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 
-public class FluoConfig {
+@Parameters(commandDescription = "Prints application configuration stored in Zookeeper for <app>")
+public class FluoConfig extends AppCommand {
 
-  public static void main(String[] args) {
-    CommonOpts opts = CommonOpts.parse("fluo config", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
     CommandUtil.verifyAppInitialized(config);
     try (FluoAdmin admin = FluoFactory.newAdmin(config)) {
       for (Map.Entry<String, String> entry : admin.getApplicationConfig().toMap().entrySet()) {
