@@ -20,7 +20,7 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-@Parameters(commandDescription = "Removes Fluo application for <app>")
+@Parameters(commandNames = "remove", commandDescription = "Removes Fluo application for <app>")
 public class FluoRemove extends AppCommand {
 
   @Override

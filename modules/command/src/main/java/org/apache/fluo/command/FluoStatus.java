@@ -19,7 +19,8 @@ import com.beust.jcommander.Parameters;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-@Parameters(commandDescription = "Prints status of Fluo application for <app>")
+@Parameters(commandNames = "status",
+    commandDescription = "Prints status of Fluo application for <app>")
 public class FluoStatus extends AppCommand {
 
   @Override

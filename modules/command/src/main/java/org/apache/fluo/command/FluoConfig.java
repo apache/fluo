@@ -22,7 +22,8 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 
-@Parameters(commandDescription = "Prints application configuration stored in Zookeeper for <app>")
+@Parameters(commandNames = "config",
+    commandDescription = "Prints application configuration stored in Zookeeper for <app>")
 public class FluoConfig extends AppCommand {
 
   @Override

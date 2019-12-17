@@ -29,7 +29,7 @@ import org.apache.fluo.core.util.ScanUtil.ScanFlags;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-@Parameters(commandDescription = "Prints snapshot of data in Fluo <app>")
+@Parameters(commandNames = "scan", commandDescription = "Prints snapshot of data in Fluo <app>")
 public class FluoScan extends AppCommand {
 
   @Parameter(names = "-s", description = "Start row (inclusive) of scan")

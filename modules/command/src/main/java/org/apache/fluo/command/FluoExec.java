@@ -30,7 +30,8 @@ import com.google.inject.Guice;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-@Parameters(commandDescription = "Executes <class> with <args> using classpath for <app>")
+@Parameters(commandNames = "exec",
+    commandDescription = "Executes <class> with <args> using classpath for <app>")
 public class FluoExec extends BaseCommand implements FluoCommand {
 
   private static class FluoConfigModule extends AbstractModule {

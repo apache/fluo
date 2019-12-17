@@ -23,18 +23,6 @@ import com.google.common.collect.Iterables;
 
 public class FluoProgram {
 
-  private static final String CONFIG = "config";
-  private static final String EXEC = "exec";
-  private static final String GET_JARS = "get-jars";
-  private static final String INIT = "init";
-  private static final String LIST = "list";
-  private static final String ORACLE = "oracle";
-  private static final String REMOVE = "remove";
-  private static final String SCAN = "scan";
-  private static final String STATUS = "status";
-  private static final String WAIT = "wait";
-  private static final String WORKER = "worker";
-
   public static void main(String[] args) {
     FluoConfig fluoConfig = new FluoConfig();
     FluoExec fluoExec = new FluoExec();
@@ -47,11 +35,10 @@ public class FluoProgram {
     FluoStatus fluoStatus = new FluoStatus();
     FluoWait fluoWait = new FluoWait();
     FluoWorker fluoWorker = new FluoWorker();
-    JCommander jcommand = JCommander.newBuilder().addCommand(CONFIG, fluoConfig)
-        .addCommand(EXEC, fluoExec).addCommand(GET_JARS, fluoGetJars).addCommand(INIT, fluoInit)
-        .addCommand(LIST, fluoList).addCommand(ORACLE, fluoOracle).addCommand(REMOVE, fluoRemove)
-        .addCommand(SCAN, fluoScan).addCommand(STATUS, fluoStatus).addCommand(WAIT, fluoWait)
-        .addCommand(WORKER, fluoWorker).build();
+    JCommander jcommand = JCommander.newBuilder().addCommand(fluoConfig).addCommand(fluoExec)
+        .addCommand(fluoGetJars).addCommand(fluoInit).addCommand(fluoList).addCommand(fluoOracle)
+        .addCommand(fluoRemove).addCommand(fluoScan).addCommand(fluoStatus).addCommand(fluoWait)
+        .addCommand(fluoWorker).build();
 
     try {
       jcommand.parse(args);

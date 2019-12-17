@@ -22,7 +22,7 @@ import org.apache.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Parameters(commandDescription = "Starts Fluo Oracle process for <app>")
+@Parameters(commandNames = "oracle", commandDescription = "Starts Fluo Oracle process for <app>")
 public class FluoOracle extends AppCommand {
 
   @Override

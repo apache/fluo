@@ -28,7 +28,8 @@ import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 
-@Parameters(commandDescription = "Initializes Fluo application for <app> using <appProps>")
+@Parameters(commandNames = "init",
+    commandDescription = "Initializes Fluo application for <app> using <appProps>")
 public class FluoInit extends AppCommand {
 
   @Parameter(names = "-p", required = true, description = "Path to application properties file")

@@ -24,7 +24,8 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.CuratorUtil;
 
-@Parameters(commandDescription = "Lists all Fluo applications in Fluo instance")
+@Parameters(commandNames = "list",
+    commandDescription = "Lists all Fluo applications in Fluo instance")
 public class FluoList extends ConfigCommand {
 
   @Override

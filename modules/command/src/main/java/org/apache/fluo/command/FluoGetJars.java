@@ -31,7 +31,8 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Parameters(commandDescription = "Copies <app> jars from DFS to local <dir>")
+@Parameters(commandNames = "get-jars",
+    commandDescription = "Copies <app> jars from DFS to local <dir>")
 public class FluoGetJars extends AppCommand {
 
   private static final Logger log = LoggerFactory.getLogger(FluoGetJars.class);

@@ -34,7 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-@Parameters(commandDescription = "Waits until all notifications are processed for <app>")
+@Parameters(commandNames = "wait",
+    commandDescription = "Waits until all notifications are processed for <app>")
 public class FluoWait extends AppCommand {
 
   private static final Logger log = LoggerFactory.getLogger(FluoWait.class);
