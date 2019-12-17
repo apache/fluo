@@ -62,15 +62,21 @@ public class FluoList extends ConfigCommand {
   private boolean checkCuratorExists(CuratorFramework curator) {
     try {
       return curator.checkExists().forPath("/") != null;
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException("Error checking if curator exists", e);
+      //throwing RuntimeException so stack trace is printed on command line
+      throw new RuntimeException("Error getting curator children", e);
     }
   }
 
   private List<String> getCuratorChildren(CuratorFramework curator) {
     try {
       return curator.getChildren().forPath("/");
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
+      //throwing RuntimeException so stack trace is printed on command line
       throw new RuntimeException("Error getting curator children", e);
     }
   }
