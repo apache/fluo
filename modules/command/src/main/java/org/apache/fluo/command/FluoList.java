@@ -65,7 +65,7 @@ public class FluoList extends ConfigCommand {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      //throwing RuntimeException so stack trace is printed on command line
+      // throwing RuntimeException so stack trace is printed on command line
       throw new RuntimeException("Error getting curator children", e);
     }
   }
@@ -76,7 +76,7 @@ public class FluoList extends ConfigCommand {
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      //throwing RuntimeException so stack trace is printed on command line
+      // throwing RuntimeException so stack trace is printed on command line
       throw new RuntimeException("Error getting curator children", e);
     }
   }
