@@ -15,6 +15,8 @@
 
 package org.apache.fluo.command;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import com.beust.jcommander.JCommander;
@@ -24,21 +26,20 @@ import com.google.common.collect.Iterables;
 public class FluoProgram {
 
   public static void main(String[] args) {
-    FluoConfig fluoConfig = new FluoConfig();
-    FluoExec fluoExec = new FluoExec();
-    FluoGetJars fluoGetJars = new FluoGetJars();
-    FluoInit fluoInit = new FluoInit();
-    FluoList fluoList = new FluoList();
-    FluoOracle fluoOracle = new FluoOracle();
-    FluoRemove fluoRemove = new FluoRemove();
-    FluoScan fluoScan = new FluoScan();
-    FluoStatus fluoStatus = new FluoStatus();
-    FluoWait fluoWait = new FluoWait();
-    FluoWorker fluoWorker = new FluoWorker();
-    JCommander jcommand = JCommander.newBuilder().addCommand(fluoConfig).addCommand(fluoExec)
-        .addCommand(fluoGetJars).addCommand(fluoInit).addCommand(fluoList).addCommand(fluoOracle)
-        .addCommand(fluoRemove).addCommand(fluoScan).addCommand(fluoStatus).addCommand(fluoWait)
-        .addCommand(fluoWorker).build();
+    List<FluoCommand> fluoCommands = Arrays.asList(new FluoConfig(), new FluoExec(),
+        new FluoGetJars(), new FluoInit(), new FluoList(), new FluoOracle(), new FluoRemove(),
+        new FluoScan(), new FluoStatus(), new FluoWait(), new FluoWorker());
+    try {
+      runFluoCommand(fluoCommands, args);
+    } catch (FluoCommandException | ParameterException e) {
+      System.exit(1);
+    }
+  }
+
+  public static void runFluoCommand(List<FluoCommand> fluoCommands, String[] args) {
+    JCommander.Builder jCommanderBuilder = JCommander.newBuilder();
+    fluoCommands.forEach(jCommanderBuilder::addCommand);
+    JCommander jcommand = jCommanderBuilder.build();
 
     try {
       jcommand.parse(args);
@@ -49,8 +50,7 @@ public class FluoProgram {
           Optional.ofNullable(jcommand.findCommandByAlias(commandName)).orElse(jcommand);
       parsedJCommandOrProgram.setProgramName(String.format("fluo %s", commandName));
       parsedJCommandOrProgram.usage();
-      System.exit(1);
-      return;
+      throw e;
     }
 
     String parsedCommandType = jcommand.getParsedCommand();
@@ -69,7 +69,7 @@ public class FluoProgram {
       parsedFluoCommand.execute();
     } catch (FluoCommandException e) {
       System.err.println(String.format("%s failed - %s", programName, e.getMessage()));
-      System.exit(1);
+      throw e;
     }
   }
 }

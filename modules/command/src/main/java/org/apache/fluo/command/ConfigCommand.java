@@ -36,10 +36,6 @@ public abstract class ConfigCommand extends BaseCommand {
       description = "Override configuration set in properties file. Expected format: -o <key>=<value>")
   private List<String> properties = new ArrayList<>();
 
-  List<String> getProperties() {
-    return properties;
-  }
-
   private void overrideFluoConfig(FluoConfiguration config) {
     for (String prop : getProperties()) {
       String[] propArgs = prop.split("=", 2);
@@ -61,5 +57,13 @@ public abstract class ConfigCommand extends BaseCommand {
     FluoConfiguration config = CommandUtil.resolveFluoConfig();
     overrideFluoConfig(config);
     return config;
+  }
+
+  public List<String> getProperties() {
+    return properties;
+  }
+
+  public void setProperties(List<String> properties) {
+    this.properties = properties;
   }
 }

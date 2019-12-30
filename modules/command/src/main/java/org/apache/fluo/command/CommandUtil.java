@@ -23,6 +23,8 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 
 public class CommandUtil {
 
+  public static final String FLUO_CONN_PROPS = "fluo.conn.props";
+
   public static void verifyAppInitialized(FluoConfiguration config) {
     if (!FluoAdminImpl.isInitialized(config)) {
       throw new FluoCommandException(
@@ -42,7 +44,7 @@ public class CommandUtil {
   }
 
   public static FluoConfiguration resolveFluoConfig() {
-    String connPropsPath = System.getProperty("fluo.conn.props");
+    String connPropsPath = System.getProperty(FLUO_CONN_PROPS);
     if (connPropsPath == null) {
       return new FluoConfiguration();
     } else {
