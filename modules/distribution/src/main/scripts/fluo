@@ -94,9 +94,6 @@ function verify_app {
     echo -e "The application name (set by <app>) cannot be an empty string!\n"
     print_usage
   fi
-  if [[ $1 = *"-h"* ]]; then
-    print_usage
-  fi
 }
 
 function check_hadoop {
@@ -113,13 +110,14 @@ function check_hadoop {
 function setup_service {
   if [[ "$@" =~ ^.*-a\ *([^\ ]*).*$ ]]; then
     app=${BASH_REMATCH[1]}
+
     verify_app "$app"
     check_conn_props
     # create a temp dir to fetch application jars to
     app_lib=$(mktemp -d "$FLUO_TMP"/fluo-"$app"-XXXXXXXXX) || die "fatal: unable to allocate a temporary directory"
     # schedule removal of app_lib tmp dir when this script exits
     trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
-    $JAVA org.apache.fluo.command.FluoGetJars -d "$app_lib" "$@"
+    $JAVA org.apache.fluo.command.FluoProgram get-jars -d "$app_lib" "$@"
     export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
   else
     echo "Application name must be set!"
@@ -131,30 +129,30 @@ function setup_service {
 case "$1" in
 config)
   check_conn_props
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 get-jars)
   check_conn_props
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 init)
   if [[ $2 = *"-h"* ]]; then
     $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
-  init_dir=$($JAVA org.apache.fluo.command.FluoProgram "${@:1}" --retrieveProperty fluo.observer.init.dir)
+  init_dir=$($JAVA org.apache.fluo.command.FluoProgram "$@" --retrieveProperty fluo.observer.init.dir)
   if [ -d "$init_dir" ]; then
     echo "Adding $init_dir/* to CLASSPATH"
     export CLASSPATH="$init_dir/*:$CLASSPATH"
   fi
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 remove)
   if [[ $2 = *"-h"* ]]; then
     $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
   fi
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 oracle)
   if [[ $2 = *"-h"* ]]; then
@@ -162,7 +160,7 @@ oracle)
     exit 0
   fi
   setup_service "${@:2}"
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 worker)
   if [[ $2 = *"-h"* ]]; then
@@ -170,11 +168,11 @@ worker)
     exit 0
   fi
   setup_service "${@:2}"
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 scan)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+    $JAVA org.apache.fluo.command.FluoProgram "$@"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" "$@"
@@ -185,7 +183,7 @@ ps)
   ;;
 list)
   if [ -f "$FLUO_CONN_PROPS" ]; then
-    $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+    $JAVA org.apache.fluo.command.FluoProgram "$@"
   else
     check_hadoop
     java org.apache.fluo.cluster.command.FluoCommand "$basedir" "$HADOOP_PREFIX" list app "${@:2}"
@@ -195,6 +193,10 @@ classpath)
   echo "$CLASSPATH"
   ;;
 exec)
+  if [[ $2 = *"-h"* ]]; then
+    $JAVA org.apache.fluo.command.FluoProgram $1 -h
+    exit 0
+  fi
   app=$2
   verify_app "$app"
   check_conn_props
@@ -204,16 +206,16 @@ exec)
   trap "rm -rf '""$app_lib""'" EXIT HUP INT QUIT TERM
   $JAVA org.apache.fluo.command.FluoProgram get-jars -d "$app_lib" -a "$app"
   export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 status)
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 version)
   echo "$FLUO_VERSION"
   ;;
 wait)
-  $JAVA org.apache.fluo.command.FluoProgram "${@:1}"
+  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 *)
   print_usage
