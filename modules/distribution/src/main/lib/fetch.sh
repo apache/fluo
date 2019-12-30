@@ -55,7 +55,7 @@ ahz)
 extra)
   echo "Fetching extra Fluo dependencies"
   download aopalliance:aopalliance:jar:1.0
-  download com.beust:jcommander:jar:1.72
+  download com.beust:jcommander:jar:1.78
   download com.google.code.gson:gson:jar:2.8.5
   download com.google.guava:guava:jar:27.0-jre
   download com.google.inject:guice:jar:4.2.2

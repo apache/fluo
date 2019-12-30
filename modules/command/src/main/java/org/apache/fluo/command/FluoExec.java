@@ -17,14 +17,12 @@ package org.apache.fluo.command;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Provider;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.SubParameter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.apache.fluo.api.config.FluoConfiguration;
