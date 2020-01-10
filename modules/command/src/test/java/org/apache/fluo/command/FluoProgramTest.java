@@ -21,12 +21,12 @@ import java.util.Collections;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.apache.commons.io.output.NullOutputStream;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class FluoProgramTest {
   @Parameters(commandNames = "test")
@@ -56,14 +56,24 @@ public class FluoProgramTest {
   }
 
   private MockFluoCommand mockFluoCommand;
+  private static PrintStream outPS;
+  private static PrintStream errPS;
 
   @BeforeClass
   public static void disablePrinting() {
+    outPS = System.out;
+    errPS = System.err;
     // This will hide usage and error logs when running tests
     try (PrintStream ps = new PrintStream(new NullOutputStream())) {
       System.setOut(ps);
       System.setErr(ps);
     }
+  }
+
+  @AfterClass
+  public static void restorePrinting() {
+    System.setOut(outPS);
+    System.setErr(errPS);
   }
 
   @Before

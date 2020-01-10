@@ -16,6 +16,7 @@
 package org.apache.fluo.command;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class ConfigCommandTest {
   }
 
   @Test
-  public void testGetConfig() {
+  public void testGetConfigWithOneOverriddenProp() {
     int newZookeeperTimeout = 100;
     List<String> overrideConfig = Collections.singletonList(
         FluoConfiguration.CONNECTION_ZOOKEEPER_TIMEOUT_PROP + "=" + newZookeeperTimeout);
@@ -61,6 +62,22 @@ public class ConfigCommandTest {
     FluoConfiguration fluoConfiguration = configCommand.getConfig();
 
     assertEquals(newZookeeperTimeout, fluoConfiguration.getZookeeperTimeout());
+    assertEquals("app-name", fluoConfiguration.getApplicationName());
+  }
+
+  @Test
+  public void testGetConfigWithTwoOverriddenProp() {
+    int newZookeeperTimeout = 100;
+    int loaderQueueSize = 256;
+    List<String> overrideConfig = Arrays.asList(
+        FluoConfiguration.CONNECTION_ZOOKEEPER_TIMEOUT_PROP + "=" + newZookeeperTimeout,
+        FluoConfiguration.LOADER_QUEUE_SIZE_PROP + "=" + "256");
+    configCommand.setProperties(overrideConfig);
+
+    FluoConfiguration fluoConfiguration = configCommand.getConfig();
+
+    assertEquals(newZookeeperTimeout, fluoConfiguration.getZookeeperTimeout());
+    assertEquals(loaderQueueSize, fluoConfiguration.getLoaderQueueSize());
     assertEquals("app-name", fluoConfiguration.getApplicationName());
   }
 
