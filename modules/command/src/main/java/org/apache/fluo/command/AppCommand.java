@@ -16,6 +16,7 @@
 package org.apache.fluo.command;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.fluo.api.config.FluoConfiguration;
 
 abstract class AppCommand extends ConfigCommand {
@@ -34,6 +35,7 @@ abstract class AppCommand extends ConfigCommand {
     return applicationName;
   }
 
+  @VisibleForTesting
   void setApplicationName(String applicationName) {
     this.applicationName = applicationName;
   }

@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.IParameterSplitter;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.fluo.api.config.FluoConfiguration;
 
 public abstract class ConfigCommand extends BaseCommand {
@@ -63,7 +64,8 @@ public abstract class ConfigCommand extends BaseCommand {
     return properties;
   }
 
-  public void setProperties(List<String> properties) {
+  @VisibleForTesting
+  void setProperties(List<String> properties) {
     this.properties = properties;
   }
 }
