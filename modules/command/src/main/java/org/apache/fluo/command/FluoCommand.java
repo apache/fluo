@@ -15,24 +15,9 @@
 
 package org.apache.fluo.command;
 
-import com.beust.jcommander.Parameters;
-import org.apache.fluo.api.client.FluoFactory;
-import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.core.util.UtilWaitThread;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public interface FluoCommand {
 
-@Parameters(commandNames = "oracle", commandDescription = "Starts Fluo Oracle process for <app>")
-public class FluoOracle extends AppCommand {
+  void execute() throws FluoCommandException;
 
-  @Override
-  public void execute() throws FluoCommandException {
-    FluoConfiguration config = getConfig();
-    CommandUtil.verifyAppInitialized(config);
-    org.apache.fluo.api.service.FluoOracle oracle = FluoFactory.newOracle(config);
-    oracle.start();
-    while (true) {
-      UtilWaitThread.sleep(10000);
-    }
-  }
+  boolean isHelp();
 }

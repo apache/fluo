@@ -15,32 +15,25 @@
 
 package org.apache.fluo.command;
 
+import com.beust.jcommander.Parameters;
 import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FluoWorker {
+@Parameters(commandNames = "worker", commandDescription = "Starts Fluo Worker process for <app>")
+public class FluoWorker extends AppCommand {
 
-  private static final Logger log = LoggerFactory.getLogger(FluoWorker.class);
-
-  public static void main(String[] args) {
-
-    CommonOpts opts = CommonOpts.parse("fluo worker", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
     CommandUtil.verifyAppInitialized(config);
 
-    try {
-      org.apache.fluo.api.service.FluoWorker worker = FluoFactory.newWorker(config);
-      worker.start();
-      while (true) {
-        UtilWaitThread.sleep(10000);
-      }
-    } catch (Exception e) {
-      log.error("Exception running FluoWorker: ", e);
+    org.apache.fluo.api.service.FluoWorker worker = FluoFactory.newWorker(config);
+    worker.start();
+    while (true) {
+      UtilWaitThread.sleep(10000);
     }
   }
 }

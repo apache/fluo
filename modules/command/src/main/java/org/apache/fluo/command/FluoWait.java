@@ -18,6 +18,7 @@ package org.apache.fluo.command;
 import java.util.Collections;
 import java.util.List;
 
+import com.beust.jcommander.Parameters;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.Scanner;
@@ -33,7 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-public class FluoWait {
+@Parameters(commandNames = "wait",
+    commandDescription = "Waits until all notifications are processed for <app>")
+public class FluoWait extends AppCommand {
 
   private static final Logger log = LoggerFactory.getLogger(FluoWait.class);
   private static final long MIN_SLEEP_MS = 250;
@@ -109,17 +112,17 @@ public class FluoWait {
           break;
         }
       }
-    } catch (Exception e) {
-      log.error("An exception was thrown -", e);
-      System.exit(-1);
+    } catch (AccumuloSecurityException | AccumuloException e) {
+      throw new FluoCommandException(String.format("Error getting table ranges: ", e.getMessage()),
+          e);
+    } catch (TableNotFoundException e) {
+      throw new FluoCommandException(String.format("Table %s not found", e.getTableName()), e);
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    CommonOpts opts = CommonOpts.parse("fluo wait", args);
-    FluoConfiguration config = CommandUtil.resolveFluoConfig();
-    config.setApplicationName(opts.getApplicationName());
-    opts.overrideFluoConfig(config);
+  @Override
+  public void execute() throws FluoCommandException {
+    FluoConfiguration config = getConfig();
     CommandUtil.verifyAppRunning(config);
     config = FluoAdminImpl.mergeZookeeperConfig(config);
     waitUntilFinished(config);

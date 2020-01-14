@@ -16,19 +16,27 @@
 package org.apache.fluo.command;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.fluo.api.config.FluoConfiguration;
 
-class CommonOpts extends ConfigOpts {
+abstract class AppCommand extends ConfigCommand {
 
   @Parameter(names = "-a", required = true, description = "Fluo application name")
   private String applicationName;
+
+  @Override
+  FluoConfiguration getConfig() {
+    FluoConfiguration config = super.getConfig();
+    config.setApplicationName(applicationName);
+    return config;
+  }
 
   String getApplicationName() {
     return applicationName;
   }
 
-  public static CommonOpts parse(String programName, String[] args) {
-    CommonOpts opts = new CommonOpts();
-    parse(programName, opts, args);
-    return opts;
+  @VisibleForTesting
+  void setApplicationName(String applicationName) {
+    this.applicationName = applicationName;
   }
 }

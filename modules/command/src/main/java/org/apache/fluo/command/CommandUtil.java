@@ -23,11 +23,13 @@ import org.apache.fluo.core.client.FluoAdminImpl;
 
 public class CommandUtil {
 
+  public static final String FLUO_CONN_PROPS = "fluo.conn.props";
+
   public static void verifyAppInitialized(FluoConfiguration config) {
     if (!FluoAdminImpl.isInitialized(config)) {
-      System.out.println("A Fluo '" + config.getApplicationName() + "' application has not "
-          + "been initialized yet in Zookeeper at " + config.getAppZookeepers());
-      System.exit(-1);
+      throw new FluoCommandException(
+          "A Fluo '" + config.getApplicationName() + "' application has not "
+              + "been initialized yet in Zookeeper at " + config.getAppZookeepers());
     }
   }
 
@@ -35,15 +37,14 @@ public class CommandUtil {
     verifyAppInitialized(config);
     try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
       if (!admin.applicationRunning()) {
-        System.out.println("A Fluo '" + config.getApplicationName()
+        throw new FluoCommandException("A Fluo '" + config.getApplicationName()
             + "' application is initialized but is not running!");
-        System.exit(-1);
       }
     }
   }
 
   public static FluoConfiguration resolveFluoConfig() {
-    String connPropsPath = System.getProperty("fluo.conn.props");
+    String connPropsPath = System.getProperty(FLUO_CONN_PROPS);
     if (connPropsPath == null) {
       return new FluoConfiguration();
     } else {

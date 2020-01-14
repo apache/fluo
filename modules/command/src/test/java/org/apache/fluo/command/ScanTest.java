@@ -30,10 +30,10 @@ import org.junit.Test;
 public class ScanTest {
 
   private SnapshotScanner.Opts parseArgs(String args) {
-    FluoScan.ScanOptions options = new FluoScan.ScanOptions();
-    JCommander jcommand = new JCommander(options);
+    FluoScan scan = new FluoScan();
+    JCommander jcommand = new JCommander(scan);
     jcommand.parse(args.split(" "));
-    ScanUtil.ScanOpts opts = options.getScanOpts();
+    ScanUtil.ScanOpts opts = scan.getScanOpts();
     return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts), false);
   }
 
