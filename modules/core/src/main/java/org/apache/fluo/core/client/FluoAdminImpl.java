@@ -516,6 +516,22 @@ public class FluoAdminImpl implements FluoAdmin {
     return oracleExists(getAppCurator());
   }
 
+  public static int numOracles(CuratorFramework curator) {
+    int numOracles = 0;
+    if (oracleExists(curator)) {
+      try {
+        numOracles += curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).size();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return numOracles;
+  }
+
+  public int numOracles() {
+    return numOracles(getAppCurator());
+  }
+
   public static int numWorkers(CuratorFramework curator) {
     int numWorkers = 0;
     try {

@@ -265,4 +265,21 @@ public class FluoAdminImplIT extends ITBaseImpl {
     env2.close();
 
   }
+
+  @Test
+  public void testNumOracles() throws Exception {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      Assert.assertEquals(1, admin.numOracles());
+
+      OracleServer oserver2 = new OracleServer(env);
+      oserver2.start();
+      Assert.assertEquals(2, admin.numOracles());
+
+      oserver2.stop();
+      Assert.assertEquals(1, admin.numOracles());
+
+      oserver.stop();
+      Assert.assertEquals(0, admin.numOracles());
+    }
+  }
 }
