@@ -39,6 +39,7 @@ import org.apache.accumulo.core.client.admin.NewTableConfiguration;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.fluo.accumulo.iterators.GarbageCollectionIterator;
 import org.apache.fluo.accumulo.iterators.NotificationIterator;
 import org.apache.fluo.accumulo.summarizer.FluoSummarizer;
@@ -517,15 +518,16 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public static int numOracles(CuratorFramework curator) {
-    int numOracles = 0;
     if (oracleExists(curator)) {
       try {
-        numOracles += curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).size();
+        LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
+        return leaderLatch.getParticipants().size();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
+    } else {
+      return 0;
     }
-    return numOracles;
   }
 
   public int numOracles() {
