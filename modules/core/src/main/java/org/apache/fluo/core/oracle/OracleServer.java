@@ -466,4 +466,9 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
       log.warn("Oracle leadership watcher has been interrupted unexpectedly");
     }
   }
+
+  @VisibleForTesting
+  public void awaitLeaderElection(long timeout, TimeUnit timeUnit) throws InterruptedException {
+    leaderLatch.await(timeout, timeUnit);
+  }
 }
