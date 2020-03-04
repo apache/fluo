@@ -18,6 +18,7 @@ package org.apache.fluo.integration.client;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.AccumuloClient;
@@ -264,5 +265,25 @@ public class FluoAdminImplIT extends ITBaseImpl {
     oserver2.stop();
     env2.close();
 
+  }
+
+  @Test
+  public void testNumOracles() throws Exception {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      Assert.assertEquals(1, admin.numOracles());
+
+      OracleServer oserver2 = new OracleServer(env);
+      oserver2.start();
+      oserver2.awaitLeaderElection(3, TimeUnit.SECONDS);
+      Assert.assertEquals(2, admin.numOracles());
+
+      oserver2.stop();
+      oserver2.awaitLeaderElection(3, TimeUnit.SECONDS);
+      Assert.assertEquals(1, admin.numOracles());
+
+      oserver.stop();
+      oserver.awaitLeaderElection(3, TimeUnit.SECONDS);
+      Assert.assertEquals(0, admin.numOracles());
+    }
   }
 }

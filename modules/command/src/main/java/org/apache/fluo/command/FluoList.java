@@ -51,8 +51,8 @@ public class FluoList extends ConfigCommand {
 
       System.out.println("Fluo instance (" + config.getInstanceZookeepers() + ") contains "
           + children.size() + " application(s)\n");
-      System.out.println("Application     Status     # Workers");
-      System.out.println("-----------     ------     ---------");
+      System.out.println("Application     Status     # Workers     # Oracles");
+      System.out.println("-----------     ------     ---------     ---------");
 
       for (String path : children) {
         listApp(config, path);
@@ -91,7 +91,8 @@ public class FluoList extends ConfigCommand {
         state = "RUNNING";
       }
       int numWorkers = admin.numWorkers();
-      System.out.format("%-15s %-11s %4d\n", path, state, numWorkers);
+      int numOracles = admin.numOracles();
+      System.out.format("%-15s %-11s %4d %13d\n", path, state, numWorkers, numOracles);
     }
   }
 }
