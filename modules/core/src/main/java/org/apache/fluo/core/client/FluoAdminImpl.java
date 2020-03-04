@@ -505,30 +505,28 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public static boolean oracleExists(CuratorFramework curator) {
-    try {
-      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
-          && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return numOracles(curator) > 0;
   }
 
   public boolean oracleExists() {
     return oracleExists(getAppCurator());
   }
 
-  public int numOracles() {
-    CuratorFramework curator = getAppCurator();
-    if (oracleExists(curator)) {
-      try {
+  public static int numOracles(CuratorFramework curator) {
+    int numOracles = 0;
+    try {
+      if (curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null) {
         LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
-        return leaderLatch.getParticipants().size();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+        numOracles = leaderLatch.getParticipants().size();
       }
-    } else {
-      return 0;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
+    return numOracles;
+  }
+
+  public int numOracles() {
+    return numOracles(getAppCurator());
   }
 
   public static int numWorkers(CuratorFramework curator) {

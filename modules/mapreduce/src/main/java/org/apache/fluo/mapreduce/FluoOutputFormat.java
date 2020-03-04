@@ -43,8 +43,7 @@ public class FluoOutputFormat extends OutputFormat<Loader, NullWritable> {
   private static String PROPS_CONF_KEY = FluoOutputFormat.class.getName() + ".props";
 
   @Override
-  public void checkOutputSpecs(JobContext arg0) throws IOException, InterruptedException {
-  }
+  public void checkOutputSpecs(JobContext arg0) throws IOException, InterruptedException {}
 
   @Override
   public OutputCommitter getOutputCommitter(TaskAttemptContext arg0)
