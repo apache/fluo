@@ -511,7 +511,7 @@ public class FluoAdminImpl implements FluoAdmin {
     return oracleExists(getAppCurator());
   }
 
-  public static int numOracles(CuratorFramework curator) {
+  private static int numOracles(CuratorFramework curator) {
     try {
       LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
       return leaderLatch.getParticipants().size();
