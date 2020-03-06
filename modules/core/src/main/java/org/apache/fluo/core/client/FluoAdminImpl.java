@@ -335,7 +335,6 @@ public class FluoAdminImpl implements FluoAdmin {
       CuratorFramework curator = getAppCurator();
       ObserverUtil.initialize(curator, config);
 
-
       sharedProps.store(baos, "Shared java props");
 
       CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(),
@@ -513,16 +512,12 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public static int numOracles(CuratorFramework curator) {
-    int numOracles = 0;
     try {
-      if (curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null) {
-        LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
-        numOracles = leaderLatch.getParticipants().size();
-      }
+      LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
+      return leaderLatch.getParticipants().size();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return numOracles;
   }
 
   public int numOracles() {
