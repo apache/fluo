@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.fluo.accumulo.util.ColumnConstants;
+import org.apache.fluo.accumulo.util.ZookeeperPath;
 import org.apache.fluo.accumulo.util.ZookeeperUtil;
 import org.apache.fluo.api.client.FluoAdmin;
 import org.apache.fluo.api.client.FluoAdmin.AlreadyInitializedException;
@@ -49,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -284,6 +287,31 @@ public class FluoAdminImplIT extends ITBaseImpl {
       oserver.stop();
       oserver.awaitLeaderElection(3, TimeUnit.SECONDS);
       Assert.assertEquals(0, admin.numOracles());
+    }
+  }
+
+  @Test
+  public void testNumOraclesWithMissingOraclePath() throws Exception {
+    oserver.stop();
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config);
+        FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      curator.start();
+      oserver.awaitLeaderElection(3, TimeUnit.SECONDS);
+      curator.delete().forPath(ZookeeperPath.ORACLE_SERVER);
+
+      assertEquals(0, admin.numOracles());
+    }
+  }
+
+  @Test
+  public void testOracleExists() throws Exception {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      assertTrue(admin.oracleExists());
+
+      oserver.stop();
+      oserver.awaitLeaderElection(3, TimeUnit.SECONDS);
+
+      assertFalse(admin.oracleExists());
     }
   }
 }

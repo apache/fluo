@@ -335,7 +335,6 @@ public class FluoAdminImpl implements FluoAdmin {
       CuratorFramework curator = getAppCurator();
       ObserverUtil.initialize(curator, config);
 
-
       sharedProps.store(baos, "Shared java props");
 
       CuratorUtil.putData(curator, ZookeeperPath.CONFIG_SHARED, baos.toByteArray(),
@@ -505,30 +504,24 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   public static boolean oracleExists(CuratorFramework curator) {
-    try {
-      return curator.checkExists().forPath(ZookeeperPath.ORACLE_SERVER) != null
-          && !curator.getChildren().forPath(ZookeeperPath.ORACLE_SERVER).isEmpty();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return numOracles(curator) > 0;
   }
 
   public boolean oracleExists() {
     return oracleExists(getAppCurator());
   }
 
-  public int numOracles() {
-    CuratorFramework curator = getAppCurator();
-    if (oracleExists(curator)) {
-      try {
-        LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
-        return leaderLatch.getParticipants().size();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    } else {
-      return 0;
+  private static int numOracles(CuratorFramework curator) {
+    try {
+      LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
+      return leaderLatch.getParticipants().size();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  public int numOracles() {
+    return numOracles(getAppCurator());
   }
 
   public static int numWorkers(CuratorFramework curator) {
