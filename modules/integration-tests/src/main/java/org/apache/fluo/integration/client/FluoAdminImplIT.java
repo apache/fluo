@@ -37,12 +37,14 @@ import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.exceptions.FluoException;
+import org.apache.fluo.api.service.FluoWorker;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.client.FluoClientImpl;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.oracle.OracleServer;
 import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.worker.FluoWorkerImpl;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.hadoop.io.Text;
 import org.junit.Assert;
@@ -312,6 +314,40 @@ public class FluoAdminImplIT extends ITBaseImpl {
       oserver.awaitLeaderElection(3, TimeUnit.SECONDS);
 
       assertFalse(admin.oracleExists());
+    }
+  }
+
+  @Test
+  public void testNumWorkers() {
+    try (FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      assertEquals(0, admin.numWorkers());
+
+      FluoWorker fluoWorker = new FluoWorkerImpl(config);
+      fluoWorker.start();
+      assertEquals(1, admin.numWorkers());
+
+      FluoWorker fluoWorker2 = new FluoWorkerImpl(config);
+      fluoWorker2.start();
+      assertEquals(2, admin.numWorkers());
+
+      fluoWorker2.stop();
+      assertEquals(1, admin.numWorkers());
+
+      fluoWorker.stop();
+      assertEquals(0, admin.numWorkers());
+    }
+  }
+
+
+  @Test
+  public void testNumWorkersWithMissingWorkerPath() throws Exception {
+    try (CuratorFramework curator = CuratorUtil.newAppCurator(config);
+        FluoAdminImpl admin = new FluoAdminImpl(config)) {
+      curator.start();
+      if (curator.checkExists().forPath(ZookeeperPath.FINDERS) != null) {
+        curator.delete().forPath(ZookeeperPath.FINDERS);
+      }
+      assertEquals(0, admin.numWorkers());
     }
   }
 }

@@ -527,13 +527,13 @@ public class FluoAdminImpl implements FluoAdmin {
   public static int numWorkers(CuratorFramework curator) {
     int numWorkers = 0;
     try {
-      if (curator.checkExists().forPath(ZookeeperPath.FINDERS) != null) {
-        for (String path : curator.getChildren().forPath(ZookeeperPath.FINDERS)) {
-          if (path.startsWith(PartitionManager.ZK_FINDER_PREFIX)) {
-            numWorkers++;
-          }
+      for (String path : curator.getChildren().forPath(ZookeeperPath.FINDERS)) {
+        if (path.startsWith(PartitionManager.ZK_FINDER_PREFIX)) {
+          numWorkers++;
         }
       }
+    } catch (KeeperException.NoNodeException e) {
+      return 0;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
