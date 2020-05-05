@@ -98,7 +98,7 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
    *
    * @param i index into sequence
    * @return byte
-   * @throws IllegalArgumentException if i is out of range
+   * @throws IndexOutOfBoundsException if i is out of range
    */
   public byte byteAt(int i) {
 
