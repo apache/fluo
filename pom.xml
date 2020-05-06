@@ -62,7 +62,6 @@
     <hadoop.version>3.1.1</hadoop.version>
     <releaseProfiles>fluo-release</releaseProfiles>
     <slf4j.version>1.7.12</slf4j.version>
-    <spotbugs.version>3.1.12</spotbugs.version>
     <thrift.version>0.12.0</thrift.version>
     <zookeeper.version>3.4.14</zookeeper.version>
   </properties>
@@ -76,7 +75,7 @@
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>${spotbugs.version}</version>
+        <version>4.0.2</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.gson</groupId>
@@ -244,9 +243,14 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.0.0-M3</version>
+        </plugin>
+        <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>${spotbugs.version}.1</version>
+          <version>4.0.0</version>
           <configuration>
             <xmlOutput>true</xmlOutput>
             <effort>Max</effort>
