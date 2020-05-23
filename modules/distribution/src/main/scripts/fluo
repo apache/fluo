@@ -127,11 +127,7 @@ function setup_service {
 }
 
 case "$1" in
-config)
-  check_conn_props
-  $JAVA org.apache.fluo.command.FluoProgram "$@"
-  ;;
-get-jars)
+config|get-jars)
   check_conn_props
   $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
@@ -154,15 +150,7 @@ remove)
   fi
   $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
-oracle)
-  if [[ $2 = *"-h"* ]]; then
-    $JAVA org.apache.fluo.command.FluoProgram $1 -h
-    exit 0
-  fi
-  setup_service "${@:2}"
-  $JAVA org.apache.fluo.command.FluoProgram "$@"
-  ;;
-worker)
+oracle|worker)
   if [[ $2 = *"-h"* ]]; then
     $JAVA org.apache.fluo.command.FluoProgram $1 -h
     exit 0
@@ -208,14 +196,11 @@ exec)
   export CLASSPATH="$conf:$app_lib/*:$CLASSPATH"
   $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
-status)
+status|wait)
   $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 version)
   echo "$FLUO_VERSION"
-  ;;
-wait)
-  $JAVA org.apache.fluo.command.FluoProgram "$@"
   ;;
 *)
   print_usage
