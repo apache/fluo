@@ -75,6 +75,7 @@ import org.apache.fluo.core.async.AsyncTransaction;
 import org.apache.fluo.core.async.SyncCommitObserver;
 import org.apache.fluo.core.exceptions.AlreadyAcknowledgedException;
 import org.apache.fluo.core.exceptions.StaleScanException;
+import org.apache.fluo.core.impl.AsyncReader;
 import org.apache.fluo.core.impl.scanner.ScannerBuilderImpl;
 import org.apache.fluo.core.oracle.Stamp;
 import org.apache.fluo.core.util.ByteUtil;
@@ -138,6 +139,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private TransactorNode tnode = null;
   private TxStatus status = TxStatus.OPEN;
   private boolean commitAttempted = false;
+  private AsyncReader asyncReader = null;
+
 
   public TransactionImpl(Environment env, Notification trigger, long startTs) {
     Objects.requireNonNull(env, "environment cannot be null");
@@ -295,6 +298,33 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
 
     return ret;
+  }
+
+  @Override
+  public CompletableFuture<Bytes> getAsync(Bytes row, Column column) {
+    return getAsyncReader().get(row, column);
+  }
+
+  @Override
+  public CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
+    return getAsyncReader().get(row, column, defaultValue);
+  }
+
+  @Override
+  public CompletableFuture<String> getsAsync(String row, Column column) {
+    return getAsyncReader().gets(row, column);
+  }
+
+  @Override
+  public CompletableFuture<String> getsAsync(String row, Column column, String defaultValue) {
+    return getAsyncReader().gets(row, column, defaultValue);
+  }
+
+  private AsyncReader getAsyncReader() {
+    if (asyncReader == null) {
+      asyncReader = new AsyncReader(this);
+    }
+    return asyncReader;
   }
 
   @Override
@@ -763,6 +793,10 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   private synchronized void close(boolean checkForStaleScan) {
+    if (asyncReader != null) {
+      asyncReader.close();
+    }
+
     if (status != TxStatus.CLOSED) {
       status = TxStatus.CLOSED;
 
