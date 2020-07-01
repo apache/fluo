@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -18,6 +18,7 @@ package org.apache.fluo.api.client;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
 import org.apache.fluo.api.data.Bytes;
@@ -42,7 +43,7 @@ public interface SnapshotBase {
   /**
    * Retrieves the value (in {@link Bytes}) stored at a given row and {@link Column}. Returns the
    * passed in defaultValue if does not exist.
-   * 
+   *
    * @param defaultValue this will be returned if row+columns does not exists
    */
   Bytes get(Bytes row, Column column, Bytes defaultValue);
@@ -82,14 +83,14 @@ public interface SnapshotBase {
   /**
    * This method is the starting point for constructing a scanner. Scanners can be constructed over
    * a {@link Span} and/or with a subset of columns. Below is simple example of building a scanner.
-   * 
+   *
    * <pre>
    * <code>
    *   Transaction tx = ...;
    *   Span span = Span.exact("row4");
    *   Column col1 = new Column("fam1","qual1");
    *   Column col2 = new Column("fam1","qual2");
-   * 
+   *
    *   //create a scanner over row4 fetching columns fam1:qual1 and fam1:qual2
    *   CellScanner cs = tx.scanner().over(span).fetch(col1,col2).build();
    *   for(RowColumnValue rcv : cs) {
@@ -166,4 +167,40 @@ public interface SnapshotBase {
    * @return transactions start timestamp allocated from Oracle.
    */
   long getStartTimestamp();
+
+  /**
+   * Asynchronous get, may retrieve the value in the background and return immediately.
+   *
+   * @since 2.0.0
+   */
+  default CompletableFuture<String> getsAsync(String row, Column column) {
+    return CompletableFuture.completedFuture(gets(row, column));
+  }
+
+  /**
+   * Asynchronous get, may retrieve the value in the background and return immediately.
+   *
+   * @since 2.0.0
+   */
+  default CompletableFuture<String> getsAsync(String row, Column column, String defaultValue) {
+    return CompletableFuture.completedFuture(gets(row, column, defaultValue));
+  }
+
+  /**
+   * Asynchronous get, may retrieve the value in the background and return immediately.
+   *
+   * @since 2.0.0
+   */
+  default CompletableFuture<Bytes> getAsync(Bytes row, Column column) {
+    return CompletableFuture.completedFuture(get(row, column));
+  }
+
+  /**
+   * Asynchronous get, may retrieve the value in the background and return immediately.
+   *
+   * @since 2.0.0
+   */
+  default CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
+    return CompletableFuture.completedFuture(get(row, column, defaultValue));
+  }
 }
