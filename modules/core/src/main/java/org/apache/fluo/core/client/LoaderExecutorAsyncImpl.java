@@ -15,6 +15,7 @@
 
 package org.apache.fluo.core.client;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
@@ -61,6 +62,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     Loader loader;
     private AtomicBoolean done = new AtomicBoolean(false);
     private String identity;
+    private CompletableFuture<Void> future;
 
     private void close() {
       txi = null;
@@ -81,15 +83,28 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
 
 
+    public LoaderCommitObserver(String alias, Loader loader2, CompletableFuture<Void> future) {
+      this(alias, loader2);
+      this.future = future;
+    }
+
+
     @Override
     public void committed() {
       close();
+      if (future != null) {
+        future.complete(null);
+      }
     }
 
     @Override
     public void failed(Throwable t) {
       close();
-      setException(t);
+      if (future == null) {
+        setException(t);
+      } else {
+        future.completeExceptionally(t);
+      }
     }
 
     @Override
@@ -131,7 +146,11 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
         loader.load(txi, context);
         env.getSharedResources().getCommitManager().beginCommit(txi, identity, this);
       } catch (Exception e) {
-        setException(e);
+        if (future == null) {
+          setException(e);
+        } else {
+          future.completeExceptionally(e);
+        }
         close();
         LoggerFactory.getLogger(LoaderCommitObserver.class).debug(e.getMessage(), e);
       }
@@ -211,6 +230,37 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
       commiting.decrement();
       throw rje;
     }
+  }
+
+  @Override
+  public CompletableFuture<Void> submit(Loader loader) {
+    return submit(loader.getClass().getSimpleName(), loader);
+  }
+
+  @Override
+  public CompletableFuture<Void> submit(String alias, Loader loader) {
+    CompletableFuture<Void> future = new CompletableFuture<Void>();
+
+    try {
+      while (!semaphore.tryAcquire(50, TimeUnit.MILLISECONDS)) {
+        if (closed.get()) {
+          throw new IllegalStateException("LoaderExecutor is closed");
+        }
+      }
+    } catch (InterruptedException e1) {
+      throw new RuntimeException(e1);
+    }
+
+    try {
+      commiting.increment();
+      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver(alias, loader, future)));
+    } catch (RejectedExecutionException rje) {
+      semaphore.release();
+      commiting.decrement();
+      throw rje;
+    }
+
+    return future;
   }
 
   @Override
