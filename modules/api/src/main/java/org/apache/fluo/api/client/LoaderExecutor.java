@@ -48,7 +48,7 @@ public interface LoaderExecutor extends AutoCloseable {
 
   /**
    * Same as {@link #execute(Loader)} except it returns a future that completes upon successful
-   * commit. If an exception is thrown in the loader, it will be relayed through the future.
+   * commit and if an exception is thrown in the loader, it will be relayed through the future.
    *
    * @since 2.0.0
    */
@@ -67,9 +67,9 @@ public interface LoaderExecutor extends AutoCloseable {
    * Waits for all queued and running Loader task to complete, then cleans up resources.
    *
    * <p>
-   * If an loader executed via {@link #execute(Loader)} or {@link #execute(String, Loader)} threw an
+   * If a loader executed via {@link #execute(Loader)} or {@link #execute(String, Loader)} threw an
    * exception then this method will throw an exception. Exceptions thrown by loaders executed using
-   * {@link #submit(Loader)} or {@link #submit(String, Loader)} will not cause this method to throw
+   * {@link #submit(Loader)} or {@link #submit(String, Loader)} will never cause this method to throw
    * an exception.
    */
   @Override
