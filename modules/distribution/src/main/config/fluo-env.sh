@@ -42,6 +42,12 @@ JAVA_OPTS=("${FLUO_JAVA_OPTS[@]}" "-Dlog4j.configuration=file:${FLUO_LOG4J_CONFI
 
 export JAVA_OPTS
 
+## Add Hadoop native libraries to shared library paths given operating system
+case "$(uname)" in
+  Darwin) export DYLD_LIBRARY_PATH="${HADOOP_HOME}/lib/native:${DYLD_LIBRARY_PATH}" ;;
+  *)      export LD_LIBRARY_PATH="${HADOOP_HOME}/lib/native:${LD_LIBRARY_PATH}" ;;
+esac
+
 ##########################
 # Build CLASSPATH variable
 ##########################
@@ -51,7 +57,7 @@ export JAVA_OPTS
 # ways to setup the classpath with these jars.  Go to the end of the file for
 # more info.
 
-addToClasspath() 
+addToClasspath()
 {
   local dir=$1
   local filterRegex=$2
@@ -78,6 +84,11 @@ setupClasspathFromSystem()
 
   CLASSPATH="$lib/*"
   CLASSPATH="$CLASSPATH:$lib/log4j/*"
+
+  # Include Hadoop conf folder in classpath. This allows the Hadoop client calls
+  # inside Fluo to cleanly resolve and load hdfs-site.xml, which in turn allows
+  # the usage of a Highly Available (HA) HDFS for the Fluo dfsRoot.
+  CLASSPATH="$CLASSPATH:$HADOOP_HOME/etc/hadoop"
 
   #any jars matching this pattern is excluded from classpath
   EXCLUDE_RE="(.*log4j.*)|(.*asm.*)|(.*guava.*)|(.*gson.*)|(.*hadoop-client-minicluster.*)"
