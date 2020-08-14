@@ -38,10 +38,10 @@ for news and general information.
 [Apache Accumulo]: https://accumulo.apache.org
 [Percolator]: https://research.google.com/pubs/pub36726.html
 [fluo-docs]: https://fluo.apache.org/docs/
-[ti]: https://travis-ci.org/apache/fluo.svg?branch=master
+[ti]: https://travis-ci.org/apache/fluo.svg?branch=main
 [tl]: https://travis-ci.org/apache/fluo
 [li]: http://img.shields.io/badge/license-ASL-blue.svg
-[ll]: https://github.com/apache/fluo/blob/master/LICENSE
+[ll]: https://github.com/apache/fluo/blob/main/LICENSE
 [mi]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/badge.svg
 [ml]: https://maven-badges.herokuapp.com/maven-central/org.apache.fluo/fluo-api/
 [ji]: https://www.javadoc.io/badge/org.apache.fluo/fluo-api.svg
