@@ -52,6 +52,10 @@
     <system>GitHub</system>
     <url>https://github.com/apache/fluo/issues</url>
   </issueManagement>
+  <ciManagement>
+    <system>GitHub Actions</system>
+    <url>https://github.com/apache/fluo/actions</url>
+  </ciManagement>
   <properties>
     <accumulo.version>2.0.0</accumulo.version>
     <curator.version>4.0.1</curator.version>
