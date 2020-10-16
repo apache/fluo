@@ -88,7 +88,7 @@ public class FluoFormatter {
       return sb.toString();
     } else {
       long ts = key.getTimestamp();
-      String type = "";
+      String type;
       ColumnType colType = ColumnType.from(ts);
 
       switch (colType) {

@@ -28,6 +28,5 @@ public class VisibilityCacheTest {
   public void testVisibilityCacheConstructor() {
     VisibilityCache cache = new VisibilityCache(new FluoConfiguration());
     Assert.assertNotNull("VisibilityCache failed to instantiate.", cache);
-    cache = null;
   }
 }

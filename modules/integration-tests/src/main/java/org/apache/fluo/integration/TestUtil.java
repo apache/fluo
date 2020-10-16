@@ -27,14 +27,14 @@ public class TestUtil {
   private static final Bytes ZERO = Bytes.of("0");
 
   public static void increment(TransactionBase tx, Bytes row, Column col, int val) {
-    int prev = 0;
+    int prev;
     String prevStr = tx.get(row, col, ZERO).toString();
     prev = Integer.parseInt(prevStr);
     tx.set(row, col, Bytes.of(prev + val + ""));
   }
 
   public static void increment(TransactionBase tx, String row, Column col, int val) {
-    int prev = 0;
+    int prev;
     String prevStr = tx.gets(row, col, "0");
     prev = Integer.parseInt(prevStr);
     tx.set(row, col, prev + val + "");
