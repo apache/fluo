@@ -33,9 +33,8 @@ public class TestUtil {
   }
 
   public static void increment(TransactionBase tx, String row, Column col, int val) {
-    int prev;
     String prevStr = tx.gets(row, col, "0");
-    prev = Integer.parseInt(prevStr);
+    int prev = Integer.parseInt(prevStr);
     tx.set(row, col, prev + val + "");
   }
 
