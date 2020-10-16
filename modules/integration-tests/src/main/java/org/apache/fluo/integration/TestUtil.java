@@ -27,17 +27,13 @@ public class TestUtil {
   private static final Bytes ZERO = Bytes.of("0");
 
   public static void increment(TransactionBase tx, Bytes row, Column col, int val) {
-    int prev = 0;
     String prevStr = tx.get(row, col, ZERO).toString();
-    prev = Integer.parseInt(prevStr);
-    tx.set(row, col, Bytes.of(prev + val + ""));
+    tx.set(row, col, Bytes.of(Integer.toString(Integer.parseInt(prevStr) + val)));
   }
 
   public static void increment(TransactionBase tx, String row, Column col, int val) {
-    int prev = 0;
     String prevStr = tx.gets(row, col, "0");
-    prev = Integer.parseInt(prevStr);
-    tx.set(row, col, prev + val + "");
+    tx.set(row, col, Integer.toString(Integer.parseInt(prevStr) + val));
   }
 
   public static int getOrDefault(SnapshotBase snap, String row, Column col, int defaultVal) {
