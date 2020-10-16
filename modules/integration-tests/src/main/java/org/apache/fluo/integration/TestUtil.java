@@ -28,14 +28,12 @@ public class TestUtil {
 
   public static void increment(TransactionBase tx, Bytes row, Column col, int val) {
     String prevStr = tx.get(row, col, ZERO).toString();
-    int prev = Integer.parseInt(prevStr);
-    tx.set(row, col, Bytes.of(prev + val + ""));
+    tx.set(row, col, Bytes.of(prevStr + val));
   }
 
   public static void increment(TransactionBase tx, String row, Column col, int val) {
     String prevStr = tx.gets(row, col, "0");
-    int prev = Integer.parseInt(prevStr);
-    tx.set(row, col, prev + val + "");
+    tx.set(row, col, prevStr + val);
   }
 
   public static int getOrDefault(SnapshotBase snap, String row, Column col, int defaultVal) {
