@@ -69,8 +69,8 @@ public interface LoaderExecutor extends AutoCloseable {
    * <p>
    * If a loader executed via {@link #execute(Loader)} or {@link #execute(String, Loader)} threw an
    * exception then this method will throw an exception. Exceptions thrown by loaders executed using
-   * {@link #submit(Loader)} or {@link #submit(String, Loader)} will never cause this method to throw
-   * an exception.
+   * {@link #submit(Loader)} or {@link #submit(String, Loader)} will never cause this method to
+   * throw an exception.
    */
   @Override
   void close();
