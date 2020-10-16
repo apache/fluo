@@ -33,7 +33,7 @@ public class TestUtil {
 
   public static void increment(TransactionBase tx, String row, Column col, int val) {
     String prevStr = tx.gets(row, col, "0");
-    tx.set(row, col, String.valueOf(Integer.parseInt(prevStr) + val));
+    tx.set(row, col, Integer.toString(Integer.parseInt(prevStr) + val));
   }
 
   public static int getOrDefault(SnapshotBase snap, String row, Column col, int defaultVal) {
