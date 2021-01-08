@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -74,7 +74,9 @@ public class TimestampTrackerIT extends ITBaseImpl {
   public void testTrackingWithZkUpdate() throws Exception {
     TimestampTracker tracker = new TimestampTracker(env, new TransactorID(env), 5);
     final long ts1 = tracker.allocateTimestamp().getTxTimestamp();
-    Thread.sleep(15);
+    while (!zkNodeExists(tracker) || tracker.getZookeeperTimestamp() != zkNodeValue(tracker)) {
+      Thread.sleep(5);
+    }
     Assert.assertNotNull(ts1);
     Assert.assertTrue(zkNodeExists(tracker));
     Assert.assertNotNull(zkNodeValue(tracker));
@@ -85,10 +87,15 @@ public class TimestampTrackerIT extends ITBaseImpl {
     Thread.sleep(15);
     tracker.removeTimestamp(ts1);
     Thread.sleep(15);
+    while (ts2 != zkNodeValue(tracker)) {
+      Thread.sleep(5);
+    }
     Assert.assertEquals(ts2, tracker.getOldestActiveTimestamp());
     Assert.assertEquals(ts2, zkNodeValue(tracker));
     tracker.removeTimestamp(ts2);
-    Thread.sleep(15);
+    while (zkNodeExists(tracker)) {
+      Thread.sleep(5);
+    }
     Assert.assertTrue(tracker.isEmpty());
     Assert.assertFalse(zkNodeExists(tracker));
     tracker.close();
@@ -105,13 +112,19 @@ public class TimestampTrackerIT extends ITBaseImpl {
     final long ts2 = tr2.allocateTimestamp().getTxTimestamp();
     TimestampTracker tr3 = new TimestampTracker(env, new TransactorID(env), 5);
     final long ts3 = tr3.allocateTimestamp().getTxTimestamp();
-    Thread.sleep(15);
+    while (ts1 != getOldestTs()) {
+      Thread.sleep(5);
+    }
     Assert.assertEquals(ts1, getOldestTs());
     tr1.removeTimestamp(ts1);
-    Thread.sleep(15);
+    while (ts2 != getOldestTs()) {
+      Thread.sleep(5);
+    }
     Assert.assertEquals(ts2, getOldestTs());
     tr2.removeTimestamp(ts2);
-    Thread.sleep(15);
+    while (ts3 != getOldestTs()) {
+      Thread.sleep(5);
+    }
     Assert.assertEquals(ts3, getOldestTs());
     tr3.removeTimestamp(ts3);
     tr1.close();
@@ -132,10 +145,14 @@ public class TimestampTrackerIT extends ITBaseImpl {
     long oldestTs = Long.MAX_VALUE;
 
     for (String child : children) {
-      Long ts = LongUtil.fromByteArray(
-          curator.getData().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
-      if (ts < oldestTs) {
-        oldestTs = ts;
+      try {
+        Long ts = LongUtil.fromByteArray(
+            curator.getData().forPath(ZookeeperPath.TRANSACTOR_TIMESTAMPS + "/" + child));
+        if (ts < oldestTs) {
+          oldestTs = ts;
+        }
+      } catch (NoNodeException nne) {
+        continue;
       }
     }
 
