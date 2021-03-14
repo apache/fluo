@@ -62,7 +62,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     Loader loader;
     private AtomicBoolean done = new AtomicBoolean(false);
     private String identity;
-    private CompletableFuture<Void> future;
+    private CompletableFuture<Loader> future;
 
     private void close() {
       txi = null;
@@ -83,7 +83,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
 
 
-    public LoaderCommitObserver(String alias, Loader loader2, CompletableFuture<Void> future) {
+    public LoaderCommitObserver(String alias, Loader loader2, CompletableFuture<Loader> future) {
       this(alias, loader2);
       this.future = future;
     }
@@ -93,7 +93,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     public void committed() {
       close();
       if (future != null) {
-        future.complete(null);
+        future.complete(loader);
       }
     }
 
@@ -233,13 +233,13 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
   }
 
   @Override
-  public CompletableFuture<Void> submit(Loader loader) {
+  public CompletableFuture<Loader> submit(Loader loader) {
     return submit(loader.getClass().getSimpleName(), loader);
   }
 
   @Override
-  public CompletableFuture<Void> submit(String alias, Loader loader) {
-    CompletableFuture<Void> future = new CompletableFuture<Void>();
+  public CompletableFuture<Loader> submit(String alias, Loader loader) {
+    CompletableFuture<Loader> future = new CompletableFuture<Loader>();
 
     try {
       while (!semaphore.tryAcquire(50, TimeUnit.MILLISECONDS)) {
