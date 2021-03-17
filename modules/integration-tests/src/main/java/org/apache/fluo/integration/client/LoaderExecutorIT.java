@@ -145,12 +145,16 @@ public class LoaderExecutorIT extends ITBaseMini {
 
     LoaderExecutor le = client.newLoaderExecutor();
     // Each time the CounterLoader is executed, it increments a counter and makes that value
-    // available
-    // in the returned Future
-    CompletableFuture<Loader> future = le.submit(new CounterLoader());
-    Assert.assertEquals(((CounterLoader) future.get()).getNewValue().longValue(), 1);
+    // available in the returned Future
+    CompletableFuture<CounterLoader> future = le.submit(new CounterLoader());
+    Assert.assertEquals(future.get().getNewValue().longValue(), 1);
 
-    future = le.submit(new CounterLoader());
-    Assert.assertEquals(((CounterLoader) future.get()).getNewValue().longValue(), 2);
+    // test with an alias parameter
+    future = le.submit("alias", new CounterLoader());
+    Assert.assertEquals(future.get().getNewValue().longValue(), 2);
+
+    // verify the Future can take on the Loader interface type
+    CompletableFuture<Loader> future2 = le.submit(new CounterLoader());
+    Assert.assertEquals(((CounterLoader) future2.get()).getNewValue().longValue(), 3);
   }
 }

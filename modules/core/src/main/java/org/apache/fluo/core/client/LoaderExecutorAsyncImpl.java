@@ -56,13 +56,13 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
   }
 
-  class LoaderCommitObserver implements AsyncCommitObserver, Runnable {
+  class LoaderCommitObserver<T extends Loader> implements AsyncCommitObserver, Runnable {
 
     AsyncTransaction txi;
-    Loader loader;
+    T loader;
     private AtomicBoolean done = new AtomicBoolean(false);
     private String identity;
-    private CompletableFuture<Loader> future;
+    private CompletableFuture<T> future;
 
     private void close() {
       txi = null;
@@ -77,13 +77,13 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
     }
 
 
-    public LoaderCommitObserver(String alias, Loader loader2) {
+    public LoaderCommitObserver(String alias, T loader2) {
       this.identity = alias;
       this.loader = loader2;
     }
 
 
-    public LoaderCommitObserver(String alias, Loader loader2, CompletableFuture<Loader> future) {
+    public LoaderCommitObserver(String alias, T loader2, CompletableFuture<T> future) {
       this(alias, loader2);
       this.future = future;
     }
@@ -233,13 +233,13 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
   }
 
   @Override
-  public CompletableFuture<Loader> submit(Loader loader) {
+  public <T extends Loader> CompletableFuture<T> submit(T loader) {
     return submit(loader.getClass().getSimpleName(), loader);
   }
 
   @Override
-  public CompletableFuture<Loader> submit(String alias, Loader loader) {
-    CompletableFuture<Loader> future = new CompletableFuture<Loader>();
+  public <T extends Loader> CompletableFuture<T> submit(String alias, T loader) {
+    CompletableFuture<T> future = new CompletableFuture<T>();
 
     try {
       while (!semaphore.tryAcquire(50, TimeUnit.MILLISECONDS)) {
