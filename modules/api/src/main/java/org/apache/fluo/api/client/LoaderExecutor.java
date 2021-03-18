@@ -49,7 +49,7 @@ public interface LoaderExecutor extends AutoCloseable {
   /**
    * Same as {@link #execute(Loader)} except it returns a future that completes upon successful
    * commit and if an exception is thrown in the loader, it will be relayed through the future. The
-   * result of the future is the Loader that was successfully executed.
+   * result of the future is the Loader that was successfully executed. If storing any information in the loader object, keep in mind that loaders may execute multiple times in the case of commit collisions. If a loader executes multiple times, it may see different data on subsequent executions.
    *
    * @since 2.0.0
    */
