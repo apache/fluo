@@ -20,7 +20,7 @@
   <version>a</version>
 
   <properties>
-    <accumulo.version>2.0.0</accumulo.version>
+    <accumulo.version>2.0.1</accumulo.version>
     <hadoop.version>3.1.1</hadoop.version>
     <zookeeper.version>3.4.14</zookeeper.version>
   </properties>
