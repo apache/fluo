@@ -25,6 +25,10 @@
   <name>Apache Fluo MapReduce Utilities</name>
   <description>This module provides utility code for MapReduce jobs that read from or write to a
     Apache Fluo table.</description>
+  <properties>
+    <!-- accumulo2-maven-plugin requires the accumulo version of thrift -->
+    <thrift.version>0.12.0</thrift.version>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>org.apache.accumulo</groupId>
