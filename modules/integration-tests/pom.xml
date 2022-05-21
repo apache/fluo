@@ -24,6 +24,10 @@
   <artifactId>fluo-integration-tests</artifactId>
   <name>Apache Fluo Integration Tests</name>
   <description>This module contains Apache Fluo integration tests</description>
+  <properties>
+    <!-- accumulo2-maven-plugin requires the accumulo version of thrift -->
+    <thrift.version>0.12.0</thrift.version>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
