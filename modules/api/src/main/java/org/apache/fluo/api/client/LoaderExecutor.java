@@ -48,11 +48,15 @@ public interface LoaderExecutor extends AutoCloseable {
 
   /**
    * Same as {@link #execute(Loader)} except it returns a future that completes upon successful
-   * commit and if an exception is thrown in the loader, it will be relayed through the future.
+   * commit and if an exception is thrown in the loader, it will be relayed through the future. The
+   * result of the future is the Loader that was successfully executed. If storing any information
+   * in the loader object, keep in mind that loaders may execute multiple times in the case of
+   * commit collisions. If a loader executes multiple times, it may see different data on subsequent
+   * executions.
    *
    * @since 2.0.0
    */
-  CompletableFuture<Void> submit(Loader loader);
+  <T extends Loader> CompletableFuture<T> submit(T loader);
 
 
   /**
@@ -61,7 +65,7 @@ public interface LoaderExecutor extends AutoCloseable {
    * @param identity see {@link #execute(String, Loader)} for a description of this parameter
    * @since 2.0.0
    */
-  CompletableFuture<Void> submit(String identity, Loader loader);
+  <T extends Loader> CompletableFuture<T> submit(String identity, T loader);
 
   /**
    * Waits for all queued and running Loader task to complete, then cleans up resources.

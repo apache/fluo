@@ -47,6 +47,32 @@ public class LoaderExecutorIT extends ITBaseMini {
 
   }
 
+  public static class CounterLoader implements Loader {
+
+    private Long newValue;
+
+    @Override
+    public void load(TransactionBase tx, Context context) throws Exception {
+
+      // Increment a counter in Fluo
+      String row = "r";
+      Column column = new Column("f", "q");
+      String currentStringValue = tx.gets(row, column);
+      if (currentStringValue != null) {
+        Long currentValue = Long.parseLong(currentStringValue);
+        newValue = currentValue + 1;
+      } else {
+        newValue = 1L;
+      }
+
+      tx.set(row, column, newValue.toString());
+    }
+
+    public Long getNewValue() {
+      return newValue;
+    }
+  }
+
   @Test
   public void testLoaderFailure() {
     LoaderExecutor le = client.newLoaderExecutor();
@@ -65,7 +91,7 @@ public class LoaderExecutorIT extends ITBaseMini {
 
     LoaderExecutor le = client.newLoaderExecutor();
 
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    List<CompletableFuture<Loader>> futures = new ArrayList<>();
 
     futures.add(le.submit("test", (tx, ctx) -> {
       tx.set("1234", new Column("last", "date"), "20060101");
@@ -112,5 +138,23 @@ public class LoaderExecutorIT extends ITBaseMini {
     } catch (ExecutionException e) {
       // expected from future
     }
+  }
+
+  @Test
+  public void testSubmitResult() throws Exception {
+
+    LoaderExecutor le = client.newLoaderExecutor();
+    // Each time the CounterLoader is executed, it increments a counter and makes that value
+    // available in the returned Future
+    CompletableFuture<CounterLoader> future = le.submit(new CounterLoader());
+    Assert.assertEquals(future.get().getNewValue().longValue(), 1);
+
+    // test with an alias parameter
+    future = le.submit("alias", new CounterLoader());
+    Assert.assertEquals(future.get().getNewValue().longValue(), 2);
+
+    // verify the Future can take on the Loader interface type
+    CompletableFuture<Loader> future2 = le.submit(new CounterLoader());
+    Assert.assertEquals(((CounterLoader) future2.get()).getNewValue().longValue(), 3);
   }
 }
