@@ -57,7 +57,7 @@
     <url>https://github.com/apache/fluo/actions</url>
   </ciManagement>
   <properties>
-    <accumulo.version>2.0.0</accumulo.version>
+    <accumulo.version>2.0.1</accumulo.version>
     <curator.version>4.0.1</curator.version>
     <dropwizard.version>0.8.1</dropwizard.version>
     <extraReleaseArguments>-P thrift</extraReleaseArguments>
