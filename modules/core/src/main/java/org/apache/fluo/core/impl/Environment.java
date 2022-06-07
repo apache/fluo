@@ -18,10 +18,14 @@ package org.apache.fluo.core.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -100,6 +104,13 @@ public class Environment implements AutoCloseable {
     if (!client.instanceOperations().getInstanceId().canonical().equals(accumuloInstanceID)) {
       throw new IllegalArgumentException("unexpected accumulo instance id "
           + client.instanceOperations().getInstanceId() + " != " + accumuloInstanceID);
+    }
+
+    String[] auths = config.getAccumuloAuthorizations();
+    if (auths.length == 0) {
+      this.auths = new Authorizations();
+    } else {
+      this.auths = new Authorizations(auths);
     }
 
     try {

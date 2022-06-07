@@ -33,6 +33,7 @@ import org.apache.accumulo.core.data.ByteSequence;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
@@ -56,9 +57,11 @@ public class ParallelSnapshotScanner {
   private Map<Bytes, Set<Column>> readLocksSeen;
   private Consumer<Entry<Key, Value>> writeLocksSeen;
 
+  private Authorizations authorizations;
+
   ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
       long startTs, TxStats stats, Map<Bytes, Set<Column>> readLocksSeen,
-      Consumer<Entry<Key, Value>> writeLocksSeen) {
+      Consumer<Entry<Key, Value>> writeLocksSeen, Authorizations authorizations) {
     this.rows = rows;
     this.columns = columns;
     this.env = env;
@@ -68,19 +71,33 @@ public class ParallelSnapshotScanner {
     this.columnConverter = new CachedColumnConverter(columns);
     this.readLocksSeen = readLocksSeen;
     this.writeLocksSeen = writeLocksSeen;
+    this.authorizations = authorizations;
+  }
+
+  ParallelSnapshotScanner(Collection<Bytes> rows, Set<Column> columns, Environment env,
+      long startTs, TxStats stats, Map<Bytes, Set<Column>> readLocksSeen,
+      Consumer<Entry<Key, Value>> writeLocksSeen) {
+    this(rows, columns, env, startTs, stats, readLocksSeen, writeLocksSeen,
+        env.getAuthorizations());
   }
 
   ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats,
       Map<Bytes, Set<Column>> readLocksSeen, Consumer<Entry<Key, Value>> writeLocksSeen) {
+    this(cells, env, startTs, stats, readLocksSeen, writeLocksSeen, env.getAuthorizations());
+  }
+
+  ParallelSnapshotScanner(Collection<RowColumn> cells, Environment env, long startTs, TxStats stats,
+      Map<Bytes, Set<Column>> readLocksSeen, Consumer<Entry<Key, Value>> writeLocksSeen,
+      Authorizations authorizations) {
     for (RowColumn rc : cells) {
       byte[] r = rc.getRow().toArray();
       byte[] cf = rc.getColumn().getFamily().toArray();
       byte[] cq = rc.getColumn().getQualifier().toArray();
-      byte[] cv = rc.getColumn().getVisibility().toArray();
+      byte[] cv = new byte[0];
+      byte[] cv2 = new byte[] {(byte) 0xff};
 
       Key start = new Key(r, cf, cq, cv, Long.MAX_VALUE, false, false);
-      Key end = new Key(start);
-      end.setTimestamp(Long.MIN_VALUE);
+      Key end = new Key(r, cf, cq, cv2, Long.MIN_VALUE, false, false);
 
       rangesToScan.add(new Range(start, true, end, true));
     }
@@ -92,6 +109,7 @@ public class ParallelSnapshotScanner {
     this.columnConverter = ColumnUtil::convert;
     this.readLocksSeen = readLocksSeen;
     this.writeLocksSeen = writeLocksSeen;
+    this.authorizations = authorizations;
   }
 
   private BatchScanner setupBatchScanner() {
@@ -100,8 +118,7 @@ public class ParallelSnapshotScanner {
     try {
       // TODO hardcoded number of threads!
       // one thread is probably good.. going for throughput
-      scanner =
-          env.getAccumuloClient().createBatchScanner(env.getTable(), env.getAuthorizations(), 1);
+      scanner = env.getAccumuloClient().createBatchScanner(env.getTable(), this.authorizations, 1);
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
     }

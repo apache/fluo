@@ -29,6 +29,7 @@ import org.apache.accumulo.core.client.ScannerBase;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.iterators.SnapshotIterator;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.api.data.Column;
@@ -51,10 +52,14 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     private final Collection<Column> columns;
     private final boolean showReadLocks;
 
-    public Opts(Span span, Collection<Column> columns, boolean showReadLocks) {
+    private final Authorizations scanTimeAuthz;
+
+    public Opts(Span span, Collection<Column> columns, boolean showReadLocks,
+        Authorizations scanTimeAuthz) {
       this.span = span;
       this.columns = ImmutableSet.copyOf(columns);
       this.showReadLocks = showReadLocks;
+      this.scanTimeAuthz = scanTimeAuthz;
     }
 
     public Span getSpan() {
@@ -111,7 +116,9 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     private void setUpIterator() {
       Scanner scanner;
       try {
-        scanner = env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
+        scanner = env.getAccumuloClient().createScanner(env.getTable(),
+            snapIterConfig.scanTimeAuthz == null ? env.getAuthorizations()
+                : snapIterConfig.scanTimeAuthz);
       } catch (TableNotFoundException e) {
         throw new RuntimeException(e);
       }
@@ -145,7 +152,8 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     }
 
     private void resetScanner(Span span) {
-      snapIterConfig = new Opts(span, snapIterConfig.columns, snapIterConfig.showReadLocks);
+      snapIterConfig = new Opts(span, snapIterConfig.columns, snapIterConfig.showReadLocks,
+          snapIterConfig.scanTimeAuthz);
       setUpIterator();
     }
 

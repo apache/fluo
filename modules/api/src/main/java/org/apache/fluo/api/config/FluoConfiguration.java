@@ -151,6 +151,9 @@ public class FluoConfiguration extends SimpleConfiguration {
    * @since 1.2.0
    */
   public static final String ACCUMULO_USER_PROP = ACCUMULO_PREFIX + ".user";
+
+  public static final String ACCUMULO_AUTH_PROP = ACCUMULO_PREFIX + ".auths";
+
   /**
    * @since 1.2.0
    */
@@ -486,6 +489,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     return getDepNonEmptyString(ACCUMULO_USER_PROP, CLIENT_ACCUMULO_USER_PROP);
   }
 
+
   /**
    * Sets the Apache Accumulo password property {@value #ACCUMULO_PASSWORD_PROP}
    *
@@ -508,6 +512,19 @@ public class FluoConfiguration extends SimpleConfiguration {
       return verifyNotNull(CLIENT_ACCUMULO_PASSWORD_PROP, getString(CLIENT_ACCUMULO_PASSWORD_PROP));
     }
     throw new NoSuchElementException(ACCUMULO_PASSWORD_PROP + " is not set!");
+  }
+
+  public FluoConfiguration setAccumuloAuthorizations(String... auths) {
+    setProperties(ACCUMULO_AUTH_PROP, auths);
+    return this;
+  }
+
+  public String[] getAccumuloAuthorizations() {
+    if (containsKey(ACCUMULO_AUTH_PROP)) {
+      return this.getProperties(ACCUMULO_AUTH_PROP);
+    } else {
+      return new String[0];
+    }
   }
 
   /**

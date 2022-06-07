@@ -15,15 +15,25 @@
 
 package org.apache.fluo.integration.client;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.accumulo.core.client.AccumuloClient;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.FluoFactory;
+import org.apache.fluo.api.client.Snapshot;
+import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
+import org.apache.fluo.api.data.Bytes;
+import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.core.client.FluoClientImpl;
+import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -31,6 +41,15 @@ import org.junit.rules.Timeout;
 public class FluoClientIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
+
+
+  @Before
+  public void setupAuthorizations() throws Throwable {
+    try (AccumuloClient accumulo = AccumuloUtil.getClient(config)) {
+      accumulo.securityOperations().changeUserAuthorizations(config.getAccumuloUser(),
+          new Authorizations("PRIVATE", "PUBLIC"));
+    }
+  }
 
   @Test
   public void testBasic() {
@@ -82,5 +101,15 @@ public class FluoClientIT extends ITBaseImpl {
 
     Logger.getLogger(FluoClientImpl.class).setLevel(clientLevel);
     Logger.getLogger(FluoFactory.class).setLevel(factoryLevel);
+  }
+
+  @Test(expected = CommitException.class)
+  public void testWriteWithDefaultAuths() throws Throwable {
+    Column labeledColumn = new Column("data", "private_column", "PRIVATE");
+    try (FluoClient client = FluoFactory.newClient(config);
+        Transaction txn = client.newTransaction()) {
+      txn.set("bill", labeledColumn, "a value");
+      txn.commit();
+    }
   }
 }

@@ -15,6 +15,8 @@
 
 package org.apache.fluo.api.client;
 
+import java.util.Collection;
+
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.metrics.MetricsReporter;

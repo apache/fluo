@@ -50,6 +50,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.iterators.PrewriteIterator;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ColumnType;
@@ -140,11 +141,14 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   private boolean commitAttempted = false;
   private AsyncReader asyncReader = null;
 
+  private Authorizations scanTimeAuthz;
 
-  public TransactionImpl(Environment env, Notification trigger, long startTs) {
+  public TransactionImpl(Environment env, Notification trigger, long startTs,
+      Authorizations scanTimeAuthz) {
     Objects.requireNonNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
+    this.scanTimeAuthz = scanTimeAuthz;
     this.stats = new TxStats(env);
     this.startTs = startTs;
     this.observedColumns = env.getConfiguredObservers().getObservedColumns(STRONG);
@@ -164,15 +168,19 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   public TransactionImpl(Environment env, Notification trigger) {
-    this(env, trigger, allocateTimestamp(env).getTxTimestamp());
+    this(env, trigger, allocateTimestamp(env).getTxTimestamp(), env.getAuthorizations());
   }
 
   public TransactionImpl(Environment env) {
-    this(env, null, allocateTimestamp(env).getTxTimestamp());
+    this(env, null, allocateTimestamp(env).getTxTimestamp(), env.getAuthorizations());
   }
 
   public TransactionImpl(Environment env, long startTs) {
-    this(env, null, startTs);
+    this(env, null, startTs, env.getAuthorizations());
+  }
+
+  public TransactionImpl(Environment env, Authorizations scanTimeAuthz) {
+    this(env, null, allocateTimestamp(env).getTxTimestamp(), scanTimeAuthz);
   }
 
   private static Stamp allocateTimestamp(Environment env) {
@@ -204,7 +212,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     ParallelSnapshotScanner pss =
         new ParallelSnapshotScanner(rows, columns, env, startTs, stats, readLocksSeen, kve -> {
-        });
+        }, this.scanTimeAuthz);
 
     Map<Bytes, Map<Column, Bytes>> ret = pss.scan();
 
@@ -246,9 +254,9 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           cols.add(column);
         }
       }
-      opts = new SnapshotScanner.Opts(Span.exact(row), columns, true);
+      opts = new SnapshotScanner.Opts(Span.exact(row), columns, true, this.scanTimeAuthz);
     } else {
-      opts = new SnapshotScanner.Opts(Span.exact(row), columns, true);
+      opts = new SnapshotScanner.Opts(Span.exact(row), columns, true, this.scanTimeAuthz);
     }
 
     Map<Column, Bytes> ret = new HashMap<>();
@@ -283,8 +291,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       return Collections.emptyMap();
     }
 
-    ParallelSnapshotScanner pss =
-        new ParallelSnapshotScanner(rowColumns, env, startTs, stats, readLocksSeen, writeLocksSeen);
+    ParallelSnapshotScanner pss = new ParallelSnapshotScanner(rowColumns, env, startTs, stats,
+        readLocksSeen, writeLocksSeen, this.scanTimeAuthz);
 
     Map<Bytes, Map<Column, Bytes>> scan = pss.scan();
     Map<RowColumn, Bytes> ret = new HashMap<>();
@@ -329,7 +337,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   @Override
   public ScannerBuilder scanner() {
     checkIfOpen();
-    return new ScannerBuilderImpl(this);
+    return new ScannerBuilderImpl(this, this.scanTimeAuthz);
   }
 
   private void updateColumnsRead(Bytes row, Set<Column> columns) {
@@ -1386,6 +1394,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public Collection<Mutation> createMutations(CommitData cd) {
+
       long commitTs = getStats().getCommitTs();
       ArrayList<Mutation> mutations = new ArrayList<>(updates.size() + 1);
       for (Entry<Bytes, Map<Column, Bytes>> rowUpdates : updates.entrySet()) {
@@ -1570,6 +1579,25 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
   }
 
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
-    return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns, false), startTs, stats);
+    return newSnapshotScanner(span, columns, env.getAuthorizations());
+  }
+
+  public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns,
+      Authorizations scanTimeAuthz) {
+    return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns, false, scanTimeAuthz),
+        startTs, stats);
+  }
+
+  public Snapshot useScanTimeAuthorizations(Collection<String> labels) {
+    Objects.requireNonNull(labels, "Authorization tokens must not be null!");
+    String[] requestedAuthz = Iterables.toArray(labels, String.class);
+    if (requestedAuthz != null) {
+      if (requestedAuthz.length == 0) {
+        this.scanTimeAuthz = Authorizations.EMPTY;
+      } else {
+        this.scanTimeAuthz = new Authorizations(requestedAuthz);
+      }
+    }
+    return this;
   }
 }
