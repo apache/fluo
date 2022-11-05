@@ -51,6 +51,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 
@@ -147,17 +148,21 @@ public class LogIT extends ITBaseMini {
 
   @Test
   public void testCollisionLogging() throws Exception {
+
     Logger logger = Logger.getLogger("fluo.tx.collisions");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender = new WriterAppender(new PatternLayout("%p, %m%n"), writer);
 
     Level level = logger.getLevel();
+
     boolean additivity = logger.getAdditivity();
+
     try {
-      logger.setLevel(Level.TRACE);
-      logger.setAdditivity(false);
+      // set appender first, it seems to reset the log level when setting it
       logger.addAppender(appender);
+      logger.setAdditivity(false);
+      logger.setLevel(Level.TRACE);
 
       try (LoaderExecutor le = client.newLoaderExecutor()) {
         for (int i = 0; i < 20; i++) {
@@ -174,6 +179,7 @@ public class LogIT extends ITBaseMini {
     }
 
     String logMsgs = writer.toString();
+
     logMsgs = logMsgs.replace('\n', ' ');
 
     Assert.assertFalse(logMsgs.contains("TriggerLoader"));
@@ -187,6 +193,7 @@ public class LogIT extends ITBaseMini {
     pattern = ".*txid: (\\d+) trigger: \\d+ stat count  \\d+";
     pattern += ".*txid: \\1 class: org.apache.fluo.integration.log.LogIT\\$TestObserver";
     pattern += ".*txid: \\1 collisions: \\Q[all=[stat count ]]\\E.*";
+
     Assert.assertTrue(logMsgs.matches(pattern));
   }
 
@@ -201,9 +208,9 @@ public class LogIT extends ITBaseMini {
     boolean additivity = logger.getAdditivity();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
 
       try (LoaderExecutor le = client.newLoaderExecutor()) {
         for (int i = 0; i < 20; i++) {
@@ -251,9 +258,9 @@ public class LogIT extends ITBaseMini {
     boolean additivity = logger.getAdditivity();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
 
       try (LoaderExecutor le = client.newLoaderExecutor()) {
         le.execute(new SimpleLoader());
@@ -343,9 +350,9 @@ public class LogIT extends ITBaseMini {
     boolean additivity = logger.getAdditivity();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
 
       try (Snapshot snap = client.newSnapshot()) {
         Map<RowColumn, String> ret1 =
@@ -413,9 +420,9 @@ public class LogIT extends ITBaseMini {
     boolean additivity = logger.getAdditivity();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
 
       try (LoaderExecutor le = client.newLoaderExecutor()) {
         le.execute(new BinaryLoader1());
@@ -497,6 +504,7 @@ public class LogIT extends ITBaseMini {
     }
 
     Logger logger = Logger.getLogger("fluo.tx");
+    Logger scanLogger = Logger.getLogger("fluo.tx.scan");
 
     StringWriter writer = new StringWriter();
     WriterAppender appender =
@@ -504,11 +512,13 @@ public class LogIT extends ITBaseMini {
 
     Level level = logger.getLevel();
     boolean additivity = logger.getAdditivity();
+    Level scanLevel = scanLogger.getLevel();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
+      scanLogger.setLevel(Level.TRACE);
 
       try (Snapshot snap = client.newSnapshot()) {
         RowColumnValue rcv1 = new RowColumnValue("r1", c1, "v1");
@@ -547,6 +557,7 @@ public class LogIT extends ITBaseMini {
       logger.removeAppender(appender);
       logger.setAdditivity(additivity);
       logger.setLevel(level);
+      scanLogger.setLevel(scanLevel);
     }
 
     String pattern = "";
@@ -618,9 +629,9 @@ public class LogIT extends ITBaseMini {
     boolean additivity = logger.getAdditivity();
 
     try {
+      logger.addAppender(appender);
       logger.setLevel(Level.TRACE);
       logger.setAdditivity(false);
-      logger.addAppender(appender);
 
       try (Transaction tx = client.newTransaction()) {
         Assert.assertEquals("v1", tx.withReadLock().gets("r1", c1));

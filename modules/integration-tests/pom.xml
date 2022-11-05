@@ -26,7 +26,7 @@
   <description>This module contains Apache Fluo integration tests</description>
   <properties>
     <!-- accumulo2-maven-plugin requires the accumulo version of thrift -->
-    <thrift.version>0.12.0</thrift.version>
+    <thrift.version>0.17.0</thrift.version>
   </properties>
   <dependencies>
     <dependency>
@@ -77,6 +77,15 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client-api</artifactId>
     </dependency>
+    <!--LogIT uses log4j V1 APIs to gather log statemtents to veify their correctness. So here we are loading the log4j V2 api shim for V1.  -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
@@ -84,10 +93,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
     </dependency>
   </dependencies>
   <build>

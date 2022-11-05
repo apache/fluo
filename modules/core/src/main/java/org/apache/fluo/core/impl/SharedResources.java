@@ -173,6 +173,10 @@ public class SharedResources implements AutoCloseable {
 
   @Override
   public synchronized void close() {
+    if (isClosed) {
+      return;
+    }
+
     isClosed = true;
 
     if (commitManager != null) {
