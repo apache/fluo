@@ -26,8 +26,6 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.core.client.FluoAdminImpl;
 import org.apache.fluo.core.util.ScanUtil;
 import org.apache.fluo.core.util.ScanUtil.ScanFlags;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 @Parameters(commandNames = "scan", commandDescription = "Prints snapshot of data in Fluo <app>")
 public class FluoScan extends AppCommand {
@@ -91,8 +89,8 @@ public class FluoScan extends AppCommand {
 
   @Override
   public void execute() throws FluoCommandException {
-    Logger.getRootLogger().setLevel(Level.ERROR);
-    Logger.getLogger("org.apache.fluo").setLevel(Level.ERROR);
+    // Logger.getRootLogger().setLevel(Level.ERROR);
+    // Logger.getLogger("org.apache.fluo").setLevel(Level.ERROR);
 
     checkScanOptions();
     FluoConfiguration config = getConfig();
