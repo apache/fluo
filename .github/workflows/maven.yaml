@@ -48,7 +48,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -B -V -e -ntp "-Dstyle.color=always" verify javadoc:jar
+      run: mvn -B -V -e -ntp "-Dstyle.color=always" verify javadoc:jar -DskipITs
       env:
         MAVEN_OPTS: -Djansi.force=true
     - name: Upload unit test results
