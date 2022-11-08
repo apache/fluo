@@ -34,8 +34,6 @@ export FLUO_TMP="${FLUO_TMP:-/tmp}"
 # Build JAVA_OPTS variable used by all Fluo commands
 ####################################################
 
-## Fluo log4j configuration
-export FLUO_LOG4J_CONFIG="${FLUO_LOG4J_CONFIG:-${conf}/log4j.properties}"
 ## Java options along with FLUO_JAVA_OPTS for Fluo command
 JAVA_OPTS=("${FLUO_JAVA_OPTS[@]}")
 
