@@ -55,26 +55,27 @@ ahz)
 extra)
   echo "Fetching extra Fluo dependencies"
   download aopalliance:aopalliance:jar:1.0
-  download com.beust:jcommander:jar:1.78
-  download com.google.code.gson:gson:jar:2.8.5
-  download com.google.guava:guava:jar:27.0-jre
-  download com.google.inject:guice:jar:4.2.2
-  download org.apache.commons:commons-collections4:jar:4.2
-  download org.apache.commons:commons-configuration2:jar:2.5
-  download commons-io:commons-io:jar:2.6
-  download io.dropwizard.metrics:metrics-core:jar:3.1.1
-  download io.dropwizard.metrics:metrics-graphite:jar:3.1.1
+  download com.beust:jcommander:jar:1.82
+  download com.google.code.gson:gson:jar:2.9.1
+  download com.google.guava:guava:jar:31.1-jre
+  download com.google.inject:guice:jar:4.2.3
+  download org.apache.commons:commons-collections4:jar:4.4
+  download org.apache.commons:commons-configuration2:jar:2.8.0
+  download commons-io:commons-io:jar:2.11.0
+  download io.dropwizard.metrics:metrics-core:jar:3.2.6
+  download io.dropwizard.metrics:metrics-graphite:jar:3.2.6
   download javax.inject:javax.inject:jar:1
-  download org.apache.curator:curator-client:jar:4.0.1
-  download org.apache.curator:curator-framework:jar:4.0.1
-  download org.apache.curator:curator-recipes:jar:4.0.1
+  download org.apache.curator:curator-client:jar:4.3.0
+  download org.apache.curator:curator-framework:jar:4.3.0
+  download org.apache.curator:curator-recipes:jar:4.3.0
   download org.hdrhistogram:HdrHistogram:jar:2.1.10
   download org.mpierce.metrics.reservoir:hdrhistogram-metrics-reservoir:jar:1.1.0
-  download org.slf4j:jcl-over-slf4j:jar:1.7.2
-  download org.slf4j:slf4j-api:jar:1.7.12
+  download org.slf4j:jcl-over-slf4j:jar:2.0.3
+  download org.slf4j:slf4j-api:jar:2.0.3
 
-  download log4j:log4j:jar:1.2.17 ./log4j
-  download org.slf4j:slf4j-log4j12:jar:1.7.12 ./log4j
+  download org.apache.logging.log4j:log4j-api:jar:2.19.0 ./log4j
+  download org.apache.logging.log4j:log4j-core:jar:2.19.0 ./log4j
+  download org.apache.logging.log4j:log4j-slf4j2-impl:jar:2.19.0 ./log4j
 
   echo -e "Done!\n"
   echo "NOTE - The dependencies downloaded have been tested with some versions of Hadoop, Zookeeper, and Accumulo."
