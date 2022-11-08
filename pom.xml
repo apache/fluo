@@ -392,7 +392,6 @@
               <failOnWarning>true</failOnWarning>
               <ignoredDependencies>
                 <ignoredDependency>org.apache.logging.log4j:*</ignoredDependency>
-                <ignoredDependency>org.slf4j:slf4j-log4j12:jar:${slf4j.version}</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
