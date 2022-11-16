@@ -15,6 +15,9 @@
 
 package org.apache.fluo.api.data;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -73,6 +76,33 @@ public class ColumnTest {
     Assert.assertEquals(Bytes.of("cq3"), col.getQualifier());
     Assert.assertEquals(Bytes.of("cv3"), col.getVisibility());
     Assert.assertEquals(new Column("cf3", "cq3", "cv3"), col);
+
+    // an empty string should always be considered as set, try diff combos of empty and non empty
+    // strings.
+    for (String fam : Arrays.asList("", "f")) {
+      for (String qual : Arrays.asList("", "q")) {
+        for (String vis : Arrays.asList("", "v")) {
+          col = new Column(fam, qual, vis);
+          Assert.assertTrue(col.isFamilySet());
+          Assert.assertTrue(col.isQualifierSet());
+          Assert.assertTrue(col.isVisibilitySet());
+          Assert.assertEquals(Bytes.of(fam), col.getFamily());
+          Assert.assertEquals(Bytes.of(qual), col.getQualifier());
+          Assert.assertEquals(Bytes.of(vis), col.getVisibility());
+          Assert.assertEquals(new Column(fam, qual, vis), col);
+        }
+      }
+    }
+
+    col = new Column("", "", "");
+    Assert.assertTrue(col.isFamilySet());
+    Assert.assertTrue(col.isQualifierSet());
+    Assert.assertTrue(col.isVisibilitySet());
+    Assert.assertEquals(Bytes.of(""), col.getFamily());
+    Assert.assertEquals(Bytes.of(""), col.getQualifier());
+    Assert.assertEquals(Bytes.of(""), col.getVisibility());
+    Assert.assertEquals(new Column("", "", ""), col);
+
   }
 
   @Test

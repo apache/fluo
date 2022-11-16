@@ -20,10 +20,12 @@ import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.admin.CompactionConfig;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.LongUtil;
@@ -32,6 +34,7 @@ import org.apache.fluo.accumulo.values.DelLockValue;
 import org.apache.fluo.api.client.TransactionBase;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
+import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.exceptions.FluoException;
 import org.apache.fluo.api.observer.Observer;
@@ -652,4 +655,40 @@ public class FailureIT extends ITBaseImpl {
     return sawExpected;
   }
 
+  /*
+   * There was a bug where a locked column with an empty family could not be recovered.
+   */
+  @Test
+  public void testRecoverEmptyColumn() {
+    Column ecol = new Column("", "bal");
+
+    TestTransaction tx1 = new TestTransaction(env);
+
+    tx1.set("bob", ecol, "10");
+    tx1.set("joe", ecol, "20");
+    tx1.set("jill", ecol, "60");
+
+    tx1.done();
+
+    // partially commit a transaction, leaving the row 'joe' with a lock.
+    TestTransaction tx2 = new TestTransaction(env);
+    TestUtil.increment(tx2, "bob", ecol, 5);
+    TestUtil.increment(tx2, "joe", ecol, -5);
+
+    CommitData cd = tx2.createCommitData();
+    RowColumn primary = new RowColumn("bob", ecol);
+    Assert.assertTrue(tx2.preCommit(cd, primary));
+    Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
+    tx2.commitPrimaryColumn(cd, commitTs);
+    tx2.close();
+
+    // this transaction should roll forward the above transaction
+    TestTransaction tx3 = new TestTransaction(env);
+    Assert.assertEquals("15", tx3.gets("bob", ecol));
+    Assert.assertEquals("15", tx3.gets("joe", ecol));
+    Assert.assertEquals("60", tx3.gets("jill", ecol));
+    tx3.close();
+
+
+  }
 }
