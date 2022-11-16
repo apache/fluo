@@ -28,11 +28,15 @@ import java.util.Objects;
 public final class Column implements Comparable<Column>, Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final Bytes UNSET = Bytes.of(new byte[0]);
 
-  private Bytes family = UNSET;
-  private Bytes qualifier = UNSET;
-  private Bytes visibility = UNSET;
+  private final Bytes family;
+  private final Bytes qualifier;
+  private final Bytes visibility;
+
+  private final boolean isFamilySet;
+  private final boolean isQualifierSet;
+  private final boolean isVisibilitySet;
+
   private int hashCode = 0;
 
   public static final Column EMPTY = new Column();
@@ -40,7 +44,14 @@ public final class Column implements Comparable<Column>, Serializable {
   /**
    * Creates an empty Column where family, qualifier and visibility are not set
    */
-  public Column() {}
+  public Column() {
+    this.family = Bytes.EMPTY;
+    this.isFamilySet = false;
+    this.qualifier = Bytes.EMPTY;
+    this.isQualifierSet = false;
+    this.visibility = Bytes.EMPTY;
+    this.isVisibilitySet = false;
+  }
 
   /**
    * Creates Column with only a family.
@@ -48,6 +59,11 @@ public final class Column implements Comparable<Column>, Serializable {
   public Column(Bytes family) {
     Objects.requireNonNull(family, "Family must not be null");
     this.family = family;
+    this.isFamilySet = true;
+    this.qualifier = Bytes.EMPTY;
+    this.isQualifierSet = false;
+    this.visibility = Bytes.EMPTY;
+    this.isVisibilitySet = false;
   }
 
   /**
@@ -64,7 +80,11 @@ public final class Column implements Comparable<Column>, Serializable {
     Objects.requireNonNull(family, "Family must not be null");
     Objects.requireNonNull(qualifier, "Qualifier must not be null");
     this.family = family;
+    this.isFamilySet = true;
     this.qualifier = qualifier;
+    this.isQualifierSet = true;
+    this.visibility = Bytes.EMPTY;
+    this.isVisibilitySet = false;
   }
 
   /**
@@ -82,8 +102,11 @@ public final class Column implements Comparable<Column>, Serializable {
     Objects.requireNonNull(qualifier, "Qualifier must not be null");
     Objects.requireNonNull(visibility, "Visibility must not be null");
     this.family = family;
+    this.isFamilySet = true;
     this.qualifier = qualifier;
+    this.isQualifierSet = true;
     this.visibility = visibility;
+    this.isVisibilitySet = true;
   }
 
   /**
@@ -98,16 +121,13 @@ public final class Column implements Comparable<Column>, Serializable {
    * Returns true if family is set
    */
   public boolean isFamilySet() {
-    return family != UNSET;
+    return isFamilySet;
   }
 
   /**
    * Retrieves Column Family (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getFamily() {
-    if (!isFamilySet()) {
-      return Bytes.EMPTY;
-    }
     return family;
   }
 
@@ -122,16 +142,13 @@ public final class Column implements Comparable<Column>, Serializable {
    * Returns true if qualifier is set
    */
   public boolean isQualifierSet() {
-    return qualifier != UNSET;
+    return isQualifierSet;
   }
 
   /**
    * Retrieves Column Qualifier (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getQualifier() {
-    if (!isQualifierSet()) {
-      return Bytes.EMPTY;
-    }
     return qualifier;
   }
 
@@ -146,16 +163,13 @@ public final class Column implements Comparable<Column>, Serializable {
    * Returns true if visibility is set.
    */
   public boolean isVisibilitySet() {
-    return visibility != UNSET;
+    return isVisibilitySet;
   }
 
   /**
    * Retrieves Column Visibility (in Bytes). Returns Bytes.EMPTY if not set.
    */
   public Bytes getVisibility() {
-    if (!isVisibilitySet()) {
-      return Bytes.EMPTY;
-    }
     return visibility;
   }
 
