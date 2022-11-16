@@ -93,16 +93,6 @@ public class ColumnTest {
         }
       }
     }
-
-    col = new Column("", "", "");
-    Assert.assertTrue(col.isFamilySet());
-    Assert.assertTrue(col.isQualifierSet());
-    Assert.assertTrue(col.isVisibilitySet());
-    Assert.assertEquals(Bytes.of(""), col.getFamily());
-    Assert.assertEquals(Bytes.of(""), col.getQualifier());
-    Assert.assertEquals(Bytes.of(""), col.getVisibility());
-    Assert.assertEquals(new Column("", "", ""), col);
-
   }
 
   @Test
