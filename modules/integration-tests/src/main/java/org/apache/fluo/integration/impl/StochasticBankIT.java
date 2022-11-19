@@ -19,6 +19,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -252,7 +253,7 @@ public class StochasticBankIT extends ITBaseImpl {
     log.debug("start times : " + lastTx.getStartTs() + " " + tx.getStartTs());
     log.debug("sum1 : %,d  sum2 : %,d  diff : %,d\n", sum1, sum2, sum2 - sum1);
 
-    File tmpFile = File.createTempFile("sb_dump", ".txt");
+    File tmpFile = Files.createTempFile("sb_dump", ".txt").toFile();
     Writer fw = new BufferedWriter(new FileWriter(tmpFile));
 
     Scanner scanner =
