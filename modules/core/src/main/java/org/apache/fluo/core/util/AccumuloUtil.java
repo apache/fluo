@@ -15,6 +15,8 @@
 
 package org.apache.fluo.core.util;
 
+import java.util.Properties;
+
 import org.apache.accumulo.core.client.Accumulo;
 import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.fluo.api.config.FluoConfiguration;
@@ -30,6 +32,12 @@ public class AccumuloUtil {
    */
   public static AccumuloClient getClient(FluoConfiguration config) {
     return Accumulo.newClient().to(config.getAccumuloInstance(), config.getAccumuloZookeepers())
+        .as(config.getAccumuloUser(), config.getAccumuloPassword()).build();
+  }
+
+  public static Properties getClientProps(FluoConfiguration config) {
+    return Accumulo.newClientProperties()
+        .to(config.getAccumuloInstance(), config.getAccumuloZookeepers())
         .as(config.getAccumuloUser(), config.getAccumuloPassword()).build();
   }
 }

@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.hadoop.mapreduce.AccumuloFileOutputFormat;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
@@ -96,7 +96,7 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     Assert.assertTrue(job.waitForCompletion(false));
 
     // bulk import rfiles
-    aClient.tableOperations().importDirectory(table, outDir.toString(), failDir.toString(), false);
+    aClient.tableOperations().importDirectory(outDir.toString()).to(table).threads(3).load();
 
     // read and update data using transactions
     TestTransaction tx1 = new TestTransaction(env);

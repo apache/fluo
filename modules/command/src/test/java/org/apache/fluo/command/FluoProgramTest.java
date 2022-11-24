@@ -64,7 +64,7 @@ public class FluoProgramTest {
     outPS = System.out;
     errPS = System.err;
     // This will hide usage and error logs when running tests
-    try (PrintStream ps = new PrintStream(new NullOutputStream())) {
+    try (PrintStream ps = new PrintStream(NullOutputStream.NULL_OUTPUT_STREAM)) {
       System.setOut(ps);
       System.setErr(ps);
     }

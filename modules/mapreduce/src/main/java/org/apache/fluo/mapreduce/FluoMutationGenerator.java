@@ -18,8 +18,8 @@ package org.apache.fluo.mapreduce;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.hadoop.mapreduce.AccumuloOutputFormat;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
