@@ -23,9 +23,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
-import org.apache.accumulo.core.client.mapreduce.RangeInputSplit;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.hadoop.mapreduce.AccumuloInputFormat;
+import org.apache.accumulo.hadoopImpl.mapreduce.RangeInputSplit;
 import org.apache.fluo.api.client.scanner.ColumnScanner;
 import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.config.SimpleConfiguration;
@@ -35,6 +35,7 @@ import org.apache.fluo.api.data.ColumnValue;
 import org.apache.fluo.api.data.Span;
 import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.TransactionImpl;
+import org.apache.fluo.core.util.AccumuloUtil;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -155,12 +156,8 @@ public class FluoRowInputFormat extends InputFormat<Bytes, Iterator<ColumnValue>
         conf.getConfiguration().set(PROPS_CONF_KEY,
             new String(baos.toByteArray(), StandardCharsets.UTF_8));
 
-        AccumuloInputFormat.setZooKeeperInstance(conf, fconfig.getAccumuloInstance(),
-            fconfig.getAccumuloZookeepers());
-        AccumuloInputFormat.setConnectorInfo(conf, fconfig.getAccumuloUser(),
-            new PasswordToken(fconfig.getAccumuloPassword()));
-        AccumuloInputFormat.setInputTableName(conf, env.getTable());
-        AccumuloInputFormat.setScanAuthorizations(conf, env.getAuthorizations());
+        AccumuloInputFormat.configure().clientProperties(AccumuloUtil.getClientProps(fconfig))
+            .table(env.getTable()).auths(env.getAuthorizations()).store(conf);
       }
     } catch (Exception e) {
       throw new RuntimeException(e);

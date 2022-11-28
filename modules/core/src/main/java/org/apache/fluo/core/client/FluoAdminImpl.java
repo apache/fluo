@@ -282,7 +282,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
     final String accumuloInstanceName =
         client.properties().getProperty(AccumuloProps.CLIENT_INSTANCE_NAME);
-    final String accumuloInstanceID = client.instanceOperations().getInstanceID();
+    final String accumuloInstanceID = client.instanceOperations().getInstanceId().canonical();
     final String fluoApplicationID = UUID.randomUUID().toString();
 
     // Create node specified by chroot suffix of Zookeeper connection string (if it doesn't exist)

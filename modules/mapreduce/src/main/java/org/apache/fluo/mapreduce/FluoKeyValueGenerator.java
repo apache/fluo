@@ -19,9 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.summary.SummarizerConfiguration;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.hadoop.mapreduce.AccumuloFileOutputFormat;
 import org.apache.fluo.accumulo.summarizer.FluoSummarizer;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.values.WriteValue;
