@@ -23,7 +23,6 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 
 /**
@@ -36,9 +35,6 @@ public class TransactorIT extends ITBaseImpl {
   public static final Long id1 = Long.valueOf(2);
   public static final Long id2 = Long.valueOf(3);
   public static final long NUM_OPEN_TIMEOUT_MS = 1000;
-
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
 
   @Test
   public void testTransactorAndCache() throws Exception {
@@ -111,9 +107,7 @@ public class TransactorIT extends ITBaseImpl {
     assertNumOpen(0);
     Assert.assertFalse(checkExists(t1));
 
-    // Test for exception to be called
-    exception.expect(IllegalStateException.class);
-    t1.getTransactorID().getLongID();
+    Assert.assertThrows(IllegalStateException.class, () -> t1.getTransactorID().getLongID());
   }
 
   @Test(timeout = 30000)
