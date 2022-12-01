@@ -107,7 +107,7 @@ public class TransactorIT extends ITBaseImpl {
     assertNumOpen(0);
     Assert.assertFalse(checkExists(t1));
 
-    Assert.assertThrows(IllegalStateException.class, () -> t1.getTransactorID().getLongID());
+    Assert.assertThrows(IllegalStateException.class, () -> t1.getTransactorID());
   }
 
   @Test(timeout = 30000)
