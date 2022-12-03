@@ -53,7 +53,6 @@ import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
@@ -62,8 +61,6 @@ import static org.apache.fluo.integration.BankUtil.BALANCE;
 public class FailureIT extends ITBaseImpl {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
 
   public static class NullObserver implements Observer {
     @Override
@@ -132,8 +129,7 @@ public class FailureIT extends ITBaseImpl {
 
     if (killTransactor) {
       Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
-      exception.expect(FluoException.class);
-      tx2.commitPrimaryColumn(cd, commitTs);
+      Assert.assertThrows(FluoException.class, () -> tx2.commitPrimaryColumn(cd, commitTs));
     } else {
       Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
@@ -322,9 +318,7 @@ public class FailureIT extends ITBaseImpl {
     Stamp commitTs = env.getSharedResources().getOracleClient().getStamp();
 
     if (killTransactor) {
-      // test for exception
-      exception.expect(FluoException.class);
-      tx2.commitPrimaryColumn(cd, commitTs);
+      Assert.assertThrows(FluoException.class, () -> tx2.commitPrimaryColumn(cd, commitTs));
     } else {
       Assert.assertFalse(tx2.commitPrimaryColumn(cd, commitTs));
       t1.close();
