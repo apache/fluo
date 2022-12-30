@@ -1580,10 +1580,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     });
   }
 
-  public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns) {
-    return newSnapshotScanner(span, columns, env.getAuthorizations());
-  }
-
   public SnapshotScanner newSnapshotScanner(Span span, Collection<Column> columns,
       Authorizations scanTimeAuthz) {
     return new SnapshotScanner(env, new SnapshotScanner.Opts(span, columns, false, scanTimeAuthz),
