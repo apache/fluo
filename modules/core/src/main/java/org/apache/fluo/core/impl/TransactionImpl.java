@@ -15,6 +15,7 @@
 
 package org.apache.fluo.core.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -148,7 +150,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     Objects.requireNonNull(env, "environment cannot be null");
     Preconditions.checkArgument(startTs >= 0, "startTs cannot be negative");
     this.env = env;
-    this.scanTimeAuthz = scanTimeAuthz;
+    this.scanTimeAuthz = Objects.requireNonNull(scanTimeAuthz);
     this.stats = new TxStats(env);
     this.startTs = startTs;
     this.observedColumns = env.getConfiguredObservers().getObservedColumns(STRONG);
@@ -1588,7 +1590,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         startTs, stats);
   }
 
-  public Snapshot useScanTimeAuthorizations(Collection<String> labels) {
+  @Override
+  public void setScanTimeAuthorizations(Collection<String> labels) {
     Objects.requireNonNull(labels, "Authorization tokens must not be null!");
     String[] requestedAuthz = Iterables.toArray(labels, String.class);
     if (requestedAuthz != null) {
@@ -1598,6 +1601,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         this.scanTimeAuthz = new Authorizations(requestedAuthz);
       }
     }
-    return this;
+  }
+
+  @Override
+  public Collection<String> getScanTimeAuthorizations() {
+    return this.scanTimeAuthz.getAuthorizations().stream()
+        .map(auth -> new String(auth, StandardCharsets.UTF_8)).collect(Collectors.toSet());
   }
 }

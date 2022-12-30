@@ -243,6 +243,9 @@ public class SimpleConfiguration implements Serializable {
     internalConfig.setProperty(key, value);
   }
 
+  /**
+   * @since 2.0.0
+   */
   public void setProperties(String key, String... values) {
     if (values == null) {
       values = new String[0];
@@ -254,6 +257,9 @@ public class SimpleConfiguration implements Serializable {
     internalConfig.setProperty(key, values);
   }
 
+  /**
+   * @since 2.0.0
+   */
   public String[] getProperties(String key) {
     // TODO fix cast class; use Properties?
     ArrayList<String> values = (ArrayList<String>) internalConfig.getProperty(key);

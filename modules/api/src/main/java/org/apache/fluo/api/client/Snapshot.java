@@ -31,8 +31,4 @@ public interface Snapshot extends SnapshotBase, AutoCloseable {
    */
   @Override
   void close();
-
-  default Snapshot useScanTimeAuthorizations(Collection<String> authz) {
-    return this;
-  }
 }
