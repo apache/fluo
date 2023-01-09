@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.FluoClient;
@@ -87,6 +88,7 @@ public class FluoClientAuthorizationsIT extends ITBaseImpl {
   @Test
   public void testBasicRead() {
     try (Snapshot snapshot = client.newSnapshot()) {
+      assertEquals(ImmutableSet.of("PUBLIC", "PRIVATE"), snapshot.getScanTimeAuthorizations());
       Map<Column, String> bill = snapshot.gets("bill");
       assertTrue(bill.containsKey(name));
       assertTrue(bill.containsKey(ssn));
@@ -100,8 +102,9 @@ public class FluoClientAuthorizationsIT extends ITBaseImpl {
 
   @Test
   public void testPublicRead() {
-    try (Snapshot snapshot =
-        client.newSnapshot().useScanTimeAuthorizations(ImmutableList.of("PUBLIC"))) {
+    try (Snapshot snapshot = client.newSnapshot()) {
+      snapshot.setScanTimeAuthorizations(ImmutableList.of("PUBLIC"));
+      assertEquals(ImmutableSet.of("PUBLIC"), snapshot.getScanTimeAuthorizations());
       Map<Column, String> bill = snapshot.gets("bill");
       assertTrue(bill.containsKey(name));
       assertTrue(bill.containsKey(id));
@@ -111,8 +114,9 @@ public class FluoClientAuthorizationsIT extends ITBaseImpl {
 
   @Test
   public void testPrivateRead() {
-    try (Snapshot snapshot =
-        client.newSnapshot().useScanTimeAuthorizations(ImmutableList.of("PRIVATE"))) {
+    try (Snapshot snapshot = client.newSnapshot()) {
+      snapshot.setScanTimeAuthorizations(ImmutableList.of("PRIVATE"));
+      assertEquals(ImmutableSet.of("PRIVATE"), snapshot.getScanTimeAuthorizations());
       Map<Column, String> bill = snapshot.gets("bill");
       assertTrue(bill.containsKey(ssn));
       assertTrue(bill.containsKey(id));
@@ -126,8 +130,9 @@ public class FluoClientAuthorizationsIT extends ITBaseImpl {
   // unlabeled"
   @Test
   public void testScanningWithNoAuths() {
-    try (Snapshot snapshot =
-        client.newSnapshot().useScanTimeAuthorizations(Collections.emptySet())) {
+    try (Snapshot snapshot = client.newSnapshot()) {
+      snapshot.setScanTimeAuthorizations(Collections.emptySet());
+      assertEquals(Collections.emptySet(), snapshot.getScanTimeAuthorizations());
       Map<Column, String> bill = snapshot.gets("bill");
       assertFalse(bill.containsKey(name));
       assertFalse(bill.containsKey(ssn));
@@ -136,6 +141,22 @@ public class FluoClientAuthorizationsIT extends ITBaseImpl {
       assertFalse(bob.containsKey(name));
       assertFalse(bob.containsKey(ssn));
       assertTrue(bob.containsKey(id));
+    }
+
+    // create a client with config that does not have any auths set. This test the defaults when
+    // nothing was set for the client or snapshot.
+    try (FluoClient fc = FluoFactory.newClient(new FluoConfiguration(config))) {
+      try (Snapshot snapshot = fc.newSnapshot()) {
+        assertEquals(Collections.emptySet(), snapshot.getScanTimeAuthorizations());
+        Map<Column, String> bill = snapshot.gets("bill");
+        assertFalse(bill.containsKey(name));
+        assertFalse(bill.containsKey(ssn));
+        assertTrue(bill.containsKey(id));
+        Map<Column, String> bob = snapshot.gets("bob");
+        assertFalse(bob.containsKey(name));
+        assertFalse(bob.containsKey(ssn));
+        assertTrue(bob.containsKey(id));
+      }
     }
   }
 

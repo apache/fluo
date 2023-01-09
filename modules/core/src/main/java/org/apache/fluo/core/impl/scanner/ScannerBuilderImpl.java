@@ -97,7 +97,7 @@ public class ScannerBuilderImpl implements ScannerBuilder {
   @Override
   public RowScannerBuilder byRow() {
     return () -> {
-      SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns);
+      SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns, scanTimeAuthz);
       return new RowScannerImpl(snapScanner, columns);
     };
   }

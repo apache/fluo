@@ -203,4 +203,24 @@ public interface SnapshotBase {
   default CompletableFuture<Bytes> getAsync(Bytes row, Column column, Bytes defaultValue) {
     return CompletableFuture.completedFuture(get(row, column, defaultValue));
   }
+
+  /**
+   * All reads done using this snapshot after this call will use the passed in authorizations to
+   * filter data.
+   *
+   * @since 2.0.0
+   */
+  default void setScanTimeAuthorizations(Collection<String> authorizations) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Returns the set of scan time authorization that are currently in use for filtering data. The
+   * empty set indicates no filtering is being done using scan time authorizations.
+   *
+   * @since 2.0.0
+   */
+  default Collection<String> getScanTimeAuthorizations() {
+    throw new UnsupportedOperationException();
+  }
 }
