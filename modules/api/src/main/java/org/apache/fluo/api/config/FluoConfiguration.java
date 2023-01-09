@@ -514,6 +514,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     throw new NoSuchElementException(ACCUMULO_PASSWORD_PROP + " is not set!");
   }
 
+  /**
+   * @since 2.0.0
+   */
   public FluoConfiguration setAccumuloAuthorizations(String... auths) {
     setProperties(ACCUMULO_AUTH_PROP, auths);
     return this;
