@@ -519,6 +519,9 @@ public class FluoConfiguration extends SimpleConfiguration {
     return this;
   }
 
+    /**
+   * @since 2.0.0
+   */
   public String[] getAccumuloAuthorizations() {
     if (containsKey(ACCUMULO_AUTH_PROP)) {
       return this.getProperties(ACCUMULO_AUTH_PROP);
