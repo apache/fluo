@@ -247,12 +247,12 @@ public class SimpleConfiguration implements Serializable {
    * @since 2.0.0
    */
   public void setProperties(String key, String... values) {
-    if (values == null) {
-      values = new String[0];
-    } else {
-      // don't let callers modify the array underneath of us
-      String[] copy = new String[values.length];
-      System.arraycopy(values, 0, copy, 0, copy.length);
+    Objects.requireNonNull(values, "Values for key `" + key + "` must be non-null.");
+    // don't let callers modify the array underneath of us
+    String[] copy = new String[values.length];
+    System.arraycopy(values, 0, copy, 0, copy.length);
+    for (String value : copy) {
+      Objects.requireNonNull(value,"Encountered null value for key `" + key + "`.");
     }
     internalConfig.setProperty(key, values);
   }
