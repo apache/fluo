@@ -252,7 +252,7 @@ public class SimpleConfiguration implements Serializable {
     String[] copy = new String[values.length];
     System.arraycopy(values, 0, copy, 0, copy.length);
     for (String value : copy) {
-      Objects.requireNonNull(value,"Encountered null value for key `" + key + "`.");
+      Objects.requireNonNull(value, "Encountered null value for key `" + key + "`.");
     }
     internalConfig.setProperty(key, values);
   }

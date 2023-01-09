@@ -522,7 +522,7 @@ public class FluoConfiguration extends SimpleConfiguration {
     return this;
   }
 
-    /**
+  /**
    * @since 2.0.0
    */
   public String[] getAccumuloAuthorizations() {
