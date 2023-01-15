@@ -16,6 +16,7 @@
 package org.apache.fluo.command;
 
 import com.beust.jcommander.JCommander;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumn;
 import org.apache.fluo.api.data.Span;
@@ -34,7 +35,8 @@ public class ScanTest {
     JCommander jcommand = new JCommander(scan);
     jcommand.parse(args.split(" "));
     ScanUtil.ScanOpts opts = scan.getScanOpts();
-    return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts), false);
+    return new SnapshotScanner.Opts(ScanUtil.getSpan(opts), ScanUtil.getColumns(opts), false,
+        Authorizations.EMPTY);
   }
 
   @Test

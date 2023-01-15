@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.scanner.CellScanner;
 import org.apache.fluo.api.client.scanner.RowScannerBuilder;
 import org.apache.fluo.api.client.scanner.ScannerBuilder;
@@ -37,8 +38,15 @@ public class ScannerBuilderImpl implements ScannerBuilder {
   private Span span = EMPTY_SPAN;
   private Collection<Column> columns = Collections.emptyList();
 
+  private Authorizations scanTimeAuthz = Authorizations.EMPTY;
+
   public ScannerBuilderImpl(TransactionImpl tx) {
     this.tx = tx;
+  }
+
+  public ScannerBuilderImpl(TransactionImpl tx, Authorizations scanTimeAuthz) {
+    this.tx = tx;
+    this.scanTimeAuthz = scanTimeAuthz;
   }
 
   @Override
@@ -70,16 +78,26 @@ public class ScannerBuilderImpl implements ScannerBuilder {
     return this;
   }
 
+  public ScannerBuilder withLabels(Collection<String> authLables) {
+    Objects.requireNonNull(authLables);
+    if (authLables.isEmpty()) {
+      this.scanTimeAuthz = Authorizations.EMPTY;
+    } else {
+      this.scanTimeAuthz = new Authorizations(authLables.toArray(new String[authLables.size()]));
+    }
+    return this;
+  }
+
   @Override
   public CellScanner build() {
-    SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns);
+    SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns, scanTimeAuthz);
     return new CellScannerImpl(snapScanner, columns);
   }
 
   @Override
   public RowScannerBuilder byRow() {
     return () -> {
-      SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns);
+      SnapshotScanner snapScanner = tx.newSnapshotScanner(span, columns, scanTimeAuthz);
       return new RowScannerImpl(snapScanner, columns);
     };
   }

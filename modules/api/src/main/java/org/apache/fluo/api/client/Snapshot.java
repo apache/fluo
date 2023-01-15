@@ -15,6 +15,8 @@
 
 package org.apache.fluo.api.client;
 
+import java.util.Collection;
+
 /**
  * Allows users to read from a Fluo table at a certain point in time. Snapshot extends
  * {@link SnapshotBase} to include a {@link #close} method which must be called when you are

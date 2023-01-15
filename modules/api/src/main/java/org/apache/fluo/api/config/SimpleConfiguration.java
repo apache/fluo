@@ -30,6 +30,7 @@ import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -240,6 +241,33 @@ public class SimpleConfiguration implements Serializable {
 
   public void setProperty(String key, String value) {
     internalConfig.setProperty(key, value);
+  }
+
+  /**
+   * @since 2.0.0
+   */
+  public void setProperties(String key, String... values) {
+    Objects.requireNonNull(values, "Values for key `" + key + "` must be non-null.");
+    // don't let callers modify the array underneath of us
+    String[] copy = new String[values.length];
+    System.arraycopy(values, 0, copy, 0, copy.length);
+    for (String value : copy) {
+      Objects.requireNonNull(value, "Encountered null value for key `" + key + "`.");
+    }
+    internalConfig.setProperty(key, values);
+  }
+
+  /**
+   * @since 2.0.0
+   */
+  public String[] getProperties(String key) {
+    // TODO fix cast class; use Properties?
+    ArrayList<String> values = (ArrayList<String>) internalConfig.getProperty(key);
+    if (values == null) {
+      return new String[0];
+    } else {
+      return values.toArray(new String[values.size()]);
+    }
   }
 
   /**
