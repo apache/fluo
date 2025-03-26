@@ -20,12 +20,10 @@ import java.util.Map.Entry;
 
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.admin.CompactionConfig;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.ColumnConstants;
 import org.apache.fluo.accumulo.util.ColumnType;
 import org.apache.fluo.accumulo.util.LongUtil;
@@ -682,7 +680,6 @@ public class FailureIT extends ITBaseImpl {
     Assert.assertEquals("15", tx3.gets("joe", ecol));
     Assert.assertEquals("60", tx3.gets("jill", ecol));
     tx3.close();
-
 
   }
 }

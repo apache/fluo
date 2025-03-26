@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -126,7 +125,6 @@ public class ReadLockIT extends ITBaseImpl {
       setAlias(tx, "node3", "alice");
       tx.commit();
     }
-
 
     TestTransaction tx1 = new TestTransaction(env);
     setAlias(tx1, "node2", "jojo");
@@ -321,7 +319,7 @@ public class ReadLockIT extends ITBaseImpl {
     Set<String> actualEdges = getDerivedEdges();
 
     if (!expectedEdges.equals(actualEdges)) {
-      Path dumpFile = Paths.get("target/ReadLockIT.txt");
+      Path dumpFile = Path.of("target/ReadLockIT.txt");
 
       try (BufferedWriter writer = Files.newBufferedWriter(dumpFile)) {
 
@@ -333,7 +331,6 @@ public class ReadLockIT extends ITBaseImpl {
             throw new UncheckedIOException(e);
           }
         };
-
 
         writer.append("Alias changes : \n");
         Maps.difference(nodes, nodes2).entriesDiffering()
@@ -368,7 +365,6 @@ public class ReadLockIT extends ITBaseImpl {
     try (Transaction tx = client.newTransaction()) {
       setAlias(tx, "node1", "bob");
       setAlias(tx, "node2", "joe");
-
 
       tx.commit();
     }
@@ -409,7 +405,6 @@ public class ReadLockIT extends ITBaseImpl {
       txi.set("test2", c2, "60");
       txi.commit();
     }
-
 
     List<Consumer<TransactionBase>> writeLockOperations = ImmutableList.of(txw -> {
       txw.set("test1", c1, "47");

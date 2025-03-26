@@ -17,10 +17,10 @@ package org.apache.fluo.api.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -175,9 +175,9 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingDistPropsFile() {
-    File connectionProps = new File("../distribution/src/main/config/fluo-conn.properties");
+    var connectionProps = Path.of("../distribution/src/main/config/fluo-conn.properties").toFile();
     Assert.assertTrue(connectionProps.exists());
-    File applicationProps = new File("../distribution/src/main/config/fluo-app.properties");
+    var applicationProps = Path.of("../distribution/src/main/config/fluo-app.properties").toFile();
     Assert.assertTrue(applicationProps.exists());
 
     FluoConfiguration config = new FluoConfiguration(connectionProps);
@@ -211,7 +211,7 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingOldTestPropsFile() {
-    File propsFile = new File("src/test/resources/fluo.properties");
+    var propsFile = Path.of("src/test/resources/fluo.properties").toFile();
     Assert.assertTrue(propsFile.exists());
 
     FluoConfiguration config = new FluoConfiguration(propsFile);
@@ -233,7 +233,7 @@ public class FluoConfigurationTest {
 
   @Test
   public void testLoadingTestPropsFile() {
-    File applicationProps = new File("src/test/resources/fluo-app.properties");
+    var applicationProps = Path.of("src/test/resources/fluo-app.properties").toFile();
     Assert.assertTrue(applicationProps.exists());
 
     FluoConfiguration config = new FluoConfiguration(applicationProps);
@@ -251,7 +251,7 @@ public class FluoConfigurationTest {
     Assert.assertEquals(30000, config.getZookeeperTimeout());
     Assert.assertEquals(-1, config.getConnectionRetryTimeout());
 
-    File connectionProps = new File("src/test/resources/fluo-conn.properties");
+    var connectionProps = Path.of("src/test/resources/fluo-conn.properties").toFile();
     Assert.assertTrue(applicationProps.exists());
     config.load(connectionProps);
     Assert.assertEquals("localhost/test-fluo", config.getInstanceZookeepers());

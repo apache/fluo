@@ -49,7 +49,7 @@ import org.apache.fluo.core.util.ByteUtil;
 import org.apache.fluo.core.util.SpanUtil;
 import org.apache.hadoop.io.Text;
 
-public class TestTransaction extends AbstractTransactionBase implements TransactionBase {
+public final class TestTransaction extends AbstractTransactionBase implements TransactionBase {
 
   private TransactionImpl tx;
   private Environment env;

@@ -15,7 +15,6 @@
 
 package org.apache.fluo.command;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,7 +56,7 @@ public class FluoGetJars extends AppCommand {
 
     if (config.getObserverJarsUrl().startsWith("hdfs://")) {
       try (FileSystem fs = FileSystem.get(new URI(config.getDfsRoot()), new Configuration())) {
-        File downloadPathFile = new File(getDownloadPath());
+        var downloadPathFile = java.nio.file.Path.of(getDownloadPath()).toFile();
         if (downloadPathFile.exists()) {
           FileUtils.deleteDirectory(downloadPathFile);
         }

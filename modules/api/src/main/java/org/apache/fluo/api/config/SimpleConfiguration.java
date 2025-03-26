@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -177,7 +177,7 @@ public class SimpleConfiguration implements Serializable {
 
   /**
    * Loads configuration from InputStream. Later loads have lower priority.
-   * 
+   *
    * @param in InputStream to load from
    * @since 1.2.0
    */
@@ -193,7 +193,7 @@ public class SimpleConfiguration implements Serializable {
 
   /**
    * Loads configuration from File. Later loads have lower priority.
-   * 
+   *
    * @param file File to load from
    * @since 1.2.0
    */
@@ -262,6 +262,7 @@ public class SimpleConfiguration implements Serializable {
    */
   public String[] getProperties(String key) {
     // TODO fix cast class; use Properties?
+    @SuppressWarnings("unchecked")
     ArrayList<String> values = (ArrayList<String>) internalConfig.getProperty(key);
     if (values == null) {
       return new String[0];
@@ -283,7 +284,7 @@ public class SimpleConfiguration implements Serializable {
    * @param fallback SimpleConfiguration to join together
    * @return a new simple configuration that contains all of the current properties from this plus
    *         the properties from fallback that are not present in this.
-   * 
+   *
    * @since 1.2.0
    */
   public SimpleConfiguration orElse(SimpleConfiguration fallback) {
@@ -374,7 +375,7 @@ public class SimpleConfiguration implements Serializable {
         result.write(buffer, 0, length);
       }
 
-      return result.toString(UTF_8.name());
+      return result.toString(UTF_8);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -397,4 +398,11 @@ public class SimpleConfiguration implements Serializable {
 
     return new StringReader(propsData);
   }
+
+  // CHECKSTYLE:OFF: NoFinalizer
+  @Override
+  public final void finalize() {
+    // prevent CT_CONSTRUCTOR_THROW spotbugs warning about finalizer attacks
+  }
+  // CHECKSTYLE:ON: NoFinalizer
 }

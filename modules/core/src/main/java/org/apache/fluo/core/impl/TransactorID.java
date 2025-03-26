@@ -28,7 +28,7 @@ import org.apache.fluo.accumulo.util.ZookeeperPath;
  * Identifier allocated from Zookeeper that uniquely identifies a transactor. A transactor is any
  * client the performs transactions in Fluo
  */
-public class TransactorID {
+public final class TransactorID {
 
   private final Long id;
 

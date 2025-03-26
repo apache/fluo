@@ -15,14 +15,11 @@
 
 package org.apache.fluo.core.client;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.api.client.FluoClient;
 import org.apache.fluo.api.client.LoaderExecutor;
 import org.apache.fluo.api.client.Snapshot;
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of Fluo Client
  */
-public class FluoClientImpl implements FluoClient {
+public final class FluoClientImpl implements FluoClient {
 
   private static final Logger log = LoggerFactory.getLogger(FluoClientImpl.class);
   private static final AtomicInteger reporterCounter = new AtomicInteger(1);

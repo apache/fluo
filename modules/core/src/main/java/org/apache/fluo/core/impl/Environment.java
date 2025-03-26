@@ -18,14 +18,10 @@ package org.apache.fluo.core.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -170,7 +166,6 @@ public class Environment implements AutoCloseable {
     }
   }
 
-
   public void setAuthorizations(Authorizations auths) {
     this.auths = auths;
 
@@ -265,4 +260,12 @@ public class Environment implements AutoCloseable {
     resources.close();
     client.close();
   }
+
+  // CHECKSTYLE:OFF: NoFinalizer
+  @Override
+  public final void finalize() {
+    // prevent CT_CONSTRUCTOR_THROW spotbugs warning about finalizer attacks
+  }
+  // CHECKSTYLE:ON: NoFinalizer
+
 }

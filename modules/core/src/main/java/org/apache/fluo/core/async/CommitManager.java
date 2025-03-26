@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * of the queue does not have to.
  */
 
-public class CommitManager {
+public final class CommitManager {
 
   private Limit memoryLimit;
   private AtomicInteger commitingTransactions;

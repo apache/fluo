@@ -27,7 +27,7 @@ import static org.apache.fluo.accumulo.format.FluoFormatter.encNonAscii;
 /**
  *
  */
-public class LockValue {
+public final class LockValue {
 
   private final Bytes prow;
   private final Column pcol;

@@ -23,16 +23,16 @@ import com.google.common.base.Preconditions;
  *
  */
 public class Limit {
-  int permits;
+  int numPermits;
   int leased = 0;
 
-  public Limit(int permits) {
-    this.permits = permits;
+  public Limit(int numPermits) {
+    this.numPermits = numPermits;
   }
 
   public synchronized void acquire(int num) {
     Preconditions.checkArgument(num >= 0, "num < 0 : %s", num);
-    while (leased >= permits) {
+    while (leased >= numPermits) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -41,7 +41,7 @@ public class Limit {
     }
 
     leased += num;
-    if (leased < permits) {
+    if (leased < numPermits) {
       notify();
     }
   }
@@ -50,7 +50,7 @@ public class Limit {
   public synchronized void release(int num) {
     Preconditions.checkArgument(num <= leased, "relasing more than leased %s > %s", num, leased);
     leased -= num;
-    if (leased < permits) {
+    if (leased < numPermits) {
       notify();
     }
   }

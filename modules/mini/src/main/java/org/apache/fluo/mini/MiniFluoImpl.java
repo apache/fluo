@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -16,6 +16,7 @@
 package org.apache.fluo.mini;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of MiniFluo
  */
-public class MiniFluoImpl implements MiniFluo {
+public final class MiniFluoImpl implements MiniFluo {
 
   private static final Logger log = LoggerFactory.getLogger(MiniFluoImpl.class);
 
@@ -106,7 +107,7 @@ public class MiniFluoImpl implements MiniFluo {
   private void startMiniAccumulo() {
     try {
       // start mini accumulo cluster
-      MiniAccumuloConfig cfg = new MiniAccumuloConfig(new File(config.getMiniDataDir()), PASSWORD);
+      var cfg = new MiniAccumuloConfig(Path.of(config.getMiniDataDir()).toFile(), PASSWORD);
       cluster = new MiniAccumuloCluster(cfg);
       cluster.start();
 
@@ -131,7 +132,7 @@ public class MiniFluoImpl implements MiniFluo {
         admin.initialize(opts);
       }
 
-      File miniProps = new File(clientPropsPath(config));
+      File miniProps = Path.of(clientPropsPath(config)).toFile();
       config.getClientConfiguration().save(miniProps);
 
       log.debug("Wrote MiniFluo client properties to {}", miniProps.getAbsolutePath());

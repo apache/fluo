@@ -48,6 +48,7 @@ import org.apache.fluo.core.impl.Environment;
 import org.apache.fluo.core.impl.FluoConfigurationImpl;
 import org.apache.fluo.core.impl.Notification;
 import org.apache.fluo.core.util.ByteUtil;
+import org.apache.fluo.core.util.DeprecationUtil;
 import org.apache.fluo.core.util.FluoThreadFactory;
 import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * notifications. This limitation is important for scaling, even if there are 1,000 workers there
  * will never be more than 7 to 13 workers scanning a portion of the table.
  */
-public class PartitionManager {
+public final class PartitionManager {
 
   private static final Logger log = LoggerFactory.getLogger(PartitionManager.class);
 
@@ -285,7 +286,7 @@ public class PartitionManager {
       myESNode.waitForInitialCreate(1, TimeUnit.MINUTES);
 
       childrenCache = new PathChildrenCache(curator, ZookeeperPath.FINDERS, true);
-      childrenCache.getListenable().addListener(new FindersListener());
+      DeprecationUtil.addListener(childrenCache.getListenable(), new FindersListener());
       childrenCache.start(StartMode.BUILD_INITIAL_CACHE);
 
       schedExecutor = Executors.newScheduledThreadPool(1,

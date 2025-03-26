@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.hadoop.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.hadoopImpl.mapreduce.RangeInputSplit;
 import org.apache.fluo.api.client.scanner.ColumnScanner;

@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -28,7 +29,6 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.mapreduce.FluoKeyValue;
 import org.apache.fluo.mapreduce.FluoKeyValueGenerator;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
@@ -62,20 +62,20 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
 
   @Rule
   public TemporaryFolder tempFolder =
-      new TemporaryFolder(new File(System.getProperty("user.dir") + "/target"));
+      new TemporaryFolder(Path.of(System.getProperty("user.dir"), "target").toFile());
 
   @Test
   public void testImportFile() throws Exception {
 
-    File inDir = new File(tempFolder.getRoot(), "in");
+    File inDir = tempFolder.getRoot().toPath().resolve("in").toFile();
     Assert.assertTrue(inDir.mkdir());
-    File outDir = new File(tempFolder.getRoot(), "out");
-    File failDir = new File(tempFolder.getRoot(), "fail");
+    File outDir = tempFolder.getRoot().toPath().resolve("out").toFile();
+    File failDir = tempFolder.getRoot().toPath().resolve("fail").toFile();
     Assert.assertTrue(failDir.mkdir());
 
     // generate some data for map reduce to read
     PrintWriter writer =
-        new PrintWriter(new File(inDir, "file1.txt"), StandardCharsets.UTF_8.name());
+        new PrintWriter(inDir.toPath().resolve("file1.txt").toFile(), StandardCharsets.UTF_8);
     writer.println("a,b,c,1");
     writer.println("d,b,c,2");
     writer.println("foo,moo,moo,90");
@@ -90,7 +90,7 @@ public class FluoFileOutputFormatIT extends ITBaseImpl {
     job.setInputFormatClass(TextInputFormat.class);
     FileInputFormat.setInputPaths(job, inDir.toURI().toString());
     job.setOutputFormatClass(AccumuloFileOutputFormat.class);
-    AccumuloFileOutputFormat.setOutputPath(job, new Path(outDir.toURI()));
+    AccumuloFileOutputFormat.setOutputPath(job, new org.apache.hadoop.fs.Path(outDir.toURI()));
     job.setMapperClass(TestMapper.class);
     job.setNumReduceTasks(0);
     Assert.assertTrue(job.waitForCompletion(false));

@@ -16,9 +16,9 @@
 package org.apache.fluo.command;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.beust.jcommander.Parameter;
@@ -98,7 +98,7 @@ public class FluoInit extends AppCommand {
 
   @Override
   public void execute() throws FluoCommandException {
-    File applicationPropsFile = new File(getAppPropsPath());
+    var applicationPropsFile = Path.of(getAppPropsPath()).toFile();
     Preconditions.checkArgument(applicationPropsFile.exists(),
         getAppPropsPath() + " does not exist");
 

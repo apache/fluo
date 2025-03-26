@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides cache of all Fluo transactors. Used by clients to determine if transactor is running.
  */
-public class TransactorCache implements AutoCloseable {
+public final class TransactorCache implements AutoCloseable {
 
   public enum TcStatus {
     OPEN, CLOSED

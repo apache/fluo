@@ -42,6 +42,7 @@ import org.apache.fluo.core.metrics.MetricsUtil;
 import org.apache.fluo.core.thrift.OracleService;
 import org.apache.fluo.core.thrift.Stamps;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.util.DeprecationUtil;
 import org.apache.fluo.core.util.UtilWaitThread;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -108,7 +109,7 @@ public class OracleClient implements AutoCloseable {
 
           pathChildrenCache =
               new PathChildrenCache(curatorFramework, ZookeeperPath.ORACLE_SERVER, true);
-          pathChildrenCache.getListenable().addListener(this);
+          DeprecationUtil.addListener(pathChildrenCache.getListenable(), this);
           pathChildrenCache.start();
 
           connect();

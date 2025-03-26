@@ -24,7 +24,7 @@ import org.apache.fluo.api.data.Column;
 
 import static org.apache.fluo.accumulo.format.FluoFormatter.encNonAscii;
 
-public class ReadLockValue {
+public final class ReadLockValue {
   private final Bytes prow;
   private final Column pcol;
   private final Long transactor;

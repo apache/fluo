@@ -91,7 +91,6 @@
       <plugin>
         <groupId>net.revelc.code</groupId>
         <artifactId>apilyzer-maven-plugin</artifactId>
-        <version>1.0.1</version>
         <executions>
           <execution>
             <id>apilyzer</id>

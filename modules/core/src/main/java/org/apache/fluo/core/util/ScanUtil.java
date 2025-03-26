@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.google.common.collect.Iterables;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -105,7 +104,6 @@ public class ScanUtil {
     return columns;
   }
 
-
   private static Function<Bytes, String> getEncoder(ScanOpts options) {
     if (options.hexEncNonAscii) {
       return Hex::encNonAscii;
@@ -113,7 +111,6 @@ public class ScanUtil {
       return Bytes::toString;
     }
   }
-
 
   private static void scan(ScanOpts options, PrintStream out, CellScanner cellScanner) {
     Function<Bytes, String> encoder = getEncoder(options);
@@ -219,9 +216,7 @@ public class ScanUtil {
         }
       }
 
-      for (String entry : Iterables.transform(scanner, FluoFormatter::toString)) {
-        out.println(entry);
-      }
+      scanner.stream().map(FluoFormatter::toString).forEach(out::println);
       out.flush();
     } catch (Exception e) {
       throw new RuntimeException(e);

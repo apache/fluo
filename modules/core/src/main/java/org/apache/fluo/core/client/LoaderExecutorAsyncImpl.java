@@ -38,7 +38,7 @@ import org.apache.fluo.core.util.Counter;
 import org.apache.fluo.core.util.FluoExecutors;
 import org.slf4j.LoggerFactory;
 
-public class LoaderExecutorAsyncImpl implements LoaderExecutor {
+public final class LoaderExecutorAsyncImpl implements LoaderExecutor {
   private final ExecutorService executor;
   private final Semaphore semaphore;
   private final int semaphoreSize;
@@ -159,9 +159,9 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
   private class QueueReleaseRunnable implements Runnable {
 
-    LoaderCommitObserver loaderTask;
+    LoaderCommitObserver<?> loaderTask;
 
-    QueueReleaseRunnable(LoaderCommitObserver loaderTask) {
+    QueueReleaseRunnable(LoaderCommitObserver<?> loaderTask) {
       this.loaderTask = loaderTask;
     }
 
@@ -224,7 +224,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
     try {
       commiting.increment();
-      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver(alias, loader)));
+      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver<>(alias, loader)));
     } catch (RejectedExecutionException rje) {
       semaphore.release();
       commiting.decrement();
@@ -253,7 +253,7 @@ public class LoaderExecutorAsyncImpl implements LoaderExecutor {
 
     try {
       commiting.increment();
-      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver(alias, loader, future)));
+      executor.execute(new QueueReleaseRunnable(new LoaderCommitObserver<>(alias, loader, future)));
     } catch (RejectedExecutionException rje) {
       semaphore.release();
       commiting.decrement();

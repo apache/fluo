@@ -43,13 +43,13 @@ public class AsyncConditionalWriter {
     this.cw = cw;
     int numThreads = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_THREADS,
         FluoConfigurationImpl.ASYNC_CW_THREADS_DEFAULT);
-    int permits = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
+    int numPermits = env.getConfiguration().getInt(FluoConfigurationImpl.ASYNC_CW_LIMIT,
         FluoConfigurationImpl.ASYNC_CW_LIMIT_DEFAULT);
     this.es = FluoExecutors.newFixedThreadPool(numThreads, "asyncCw");
     // the conditional writer currently has not memory limits... give it too much and it blows out
     // memory.. need to fix this in conditional writer
     // for now this needs to be memory based
-    this.semaphore = new Limit(permits);
+    this.semaphore = new Limit(numPermits);
   }
 
   public CompletableFuture<Iterator<Result>> apply(Collection<ConditionalMutation> input) {

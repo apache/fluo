@@ -15,8 +15,9 @@
 
 package org.apache.fluo.integration;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -49,7 +50,7 @@ public class ITBase {
   protected static String instanceName;
   protected static AccumuloClient aClient;
   private static MiniAccumuloCluster cluster;
-  private static boolean startedCluster = false;
+  private static AtomicBoolean startedCluster = new AtomicBoolean(false);
 
   protected static FluoConfiguration config;
   protected static FluoClient client;
@@ -73,7 +74,7 @@ public class ITBase {
   @BeforeClass
   public static void setUpAccumulo() throws Exception {
     instanceName = System.getProperty(IT_INSTANCE_NAME_PROP, "it-instance-default");
-    File instanceDir = new File("target/accumulo2-maven-plugin/" + instanceName);
+    var instanceDir = Path.of("target/accumulo2-maven-plugin/" + instanceName).toFile();
     boolean instanceClear =
         System.getProperty(IT_INSTANCE_CLEAR_PROP, "true").equalsIgnoreCase("true");
     if (instanceDir.exists() && instanceClear) {
@@ -84,7 +85,7 @@ public class ITBase {
       cfg.setInstanceName(instanceName);
       cluster = new MiniAccumuloCluster(cfg);
       cluster.start();
-      startedCluster = true;
+      startedCluster.set(true);
     }
     Properties props = MiniAccumuloCluster.getClientProperties(instanceDir);
     aClient = Accumulo.newClient().from(props).build();
@@ -131,7 +132,7 @@ public class ITBase {
       aClient.close();
     }
 
-    if (startedCluster) {
+    if (startedCluster.get()) {
       cluster.stop();
     }
   }

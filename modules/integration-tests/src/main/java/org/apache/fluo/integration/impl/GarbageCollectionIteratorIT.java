@@ -60,7 +60,6 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     }
   }
 
-
   public void testVerifyAfterGC() throws Exception {
 
     final TestTransaction tx1 = new TestTransaction(env);
@@ -92,7 +91,6 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     tx3.done();
     tx2.done();
   }
-
 
   public void testDeletedDataIsDropped() throws Exception {
 
@@ -131,7 +129,6 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
 
     tx4.done();
   }
-
 
   public void testRolledBackDataIsDropped() throws Exception {
 
@@ -215,7 +212,6 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
       String newAltId = (13 * (i + 1)) + "";
       String currAltId = tx2.gets(row, altIdCol);
 
-
       tx2.set(row, altIdCol, newAltId);
 
       String count = tx2.gets("a:" + currAltId, new Column("count", row));
@@ -254,22 +250,14 @@ public class GarbageCollectionIteratorIT extends ITBaseImpl {
     waitForGcTime(tx3.getStartTimestamp());
     aClient.tableOperations().compact(table, null, null, true, true);
 
-
     // all read locks older than GC time should be dropped
     Assert.assertEquals(0, countInTable("-DEL_RLOCK"));
     Assert.assertEquals(0, countInTable("-RLOCK"));
   }
 
-  private int countInTable(String str) throws TableNotFoundException {
-    int count = 0;
-    Scanner scanner = aClient.createScanner(table, Authorizations.EMPTY);
-    for (String e : Iterables.transform(scanner, FluoFormatter::toString)) {
-      if (e.contains(str)) {
-        count++;
-      }
-    }
-
-    return count;
+  private long countInTable(String str) throws TableNotFoundException {
+    return aClient.createScanner(table, Authorizations.EMPTY).stream().map(FluoFormatter::toString)
+        .filter(s -> s.contains(str)).count();
   }
 
   @Test

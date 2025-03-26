@@ -17,7 +17,6 @@ package org.apache.fluo.integration.accumulo;
 
 import java.util.Collections;
 
-import com.google.common.collect.Iterables;
 import org.apache.accumulo.core.client.BatchWriter;
 import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.IteratorSetting;
@@ -25,6 +24,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.NewTableConfiguration;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.curator.shaded.com.google.common.collect.MoreCollectors;
 import org.apache.fluo.accumulo.util.AccumuloProps;
 import org.apache.fluo.integration.ITBase;
 import org.junit.Assert;
@@ -62,7 +62,8 @@ public class TimeskippingIT extends ITBase {
     Scanner scanner = aClient.createScanner("ttsi", Authorizations.EMPTY);
     scanner.addScanIterator(new IteratorSetting(10, Skip100StampsIterator.class));
 
-    Assert.assertEquals("999", Iterables.getOnlyElement(scanner).getValue().toString());
+    Assert.assertEquals("999",
+        scanner.stream().collect(MoreCollectors.onlyElement()).getValue().toString());
     long t3 = System.currentTimeMillis();
 
     if (t3 - t2 > 3000) {
@@ -72,7 +73,8 @@ public class TimeskippingIT extends ITBase {
     aClient.tableOperations().flush("ttsi", null, null, true);
 
     long t4 = System.currentTimeMillis();
-    Assert.assertEquals("999", Iterables.getOnlyElement(scanner).getValue().toString());
+    Assert.assertEquals("999",
+        scanner.stream().collect(MoreCollectors.onlyElement()).getValue().toString());
     long t5 = System.currentTimeMillis();
 
     if (t5 - t4 > 3000) {

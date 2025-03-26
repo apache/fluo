@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.fluo.accumulo.format.FluoFormatter;
@@ -346,16 +344,9 @@ public class ReadLockFailureIT extends ITBaseImpl {
     testWriteWoRead(true, true);
   }
 
-  private int countInTable(String str) throws TableNotFoundException {
-    int count = 0;
-    Scanner scanner = aClient.createScanner(table, Authorizations.EMPTY);
-    for (String e : Iterables.transform(scanner, FluoFormatter::toString)) {
-      if (e.contains(str)) {
-        count++;
-      }
-    }
-
-    return count;
+  private long countInTable(String str) throws TableNotFoundException {
+    return aClient.createScanner(table, Authorizations.EMPTY).stream().map(FluoFormatter::toString)
+        .filter(s -> s.contains(str)).count();
   }
 
   @Test

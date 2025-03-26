@@ -13,26 +13,19 @@
  * the License.
  */
 
-package org.apache.fluo.accumulo.util;
+package org.apache.fluo.core.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+public class DeprecationUtil {
 
-/**
- * Tests LongUtil class
- */
-public class LongUtilTest {
+  @SuppressWarnings("deprecation")
+  public static <T> void addListener(
+      org.apache.curator.framework.listen.ListenerContainer<T> container, T listener) {
+    container.addListener(listener);
+  }
 
-  @Test
-  public void testAll() {
-    Long longVal = Long.parseLong("34886");
-    String radixStr = LongUtil.toMaxRadixString(longVal);
-    Assert.assertEquals("qx2", radixStr);
-    Assert.assertEquals(longVal, LongUtil.fromMaxRadixString(radixStr));
-    Assert.assertEquals(longVal,
-        LongUtil.fromMaxRadixByteArray(LongUtil.toMaxRadixByteArray(longVal)));
-
-    longVal = Long.parseLong("63832");
-    Assert.assertEquals(longVal, LongUtil.fromByteArray(LongUtil.toByteArray(longVal)));
+  @SuppressWarnings("deprecation")
+  public static <T> void removeListener(
+      org.apache.curator.framework.listen.ListenerContainer<T> container, T listener) {
+    container.removeListener(listener);
   }
 }

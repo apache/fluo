@@ -30,9 +30,21 @@ import org.apache.fluo.api.data.Column;
 import org.apache.fluo.core.util.ColumnUtil;
 
 public class TxInfo {
-  public TxStatus status = null;
-  public long commitTs = -1;
-  public byte[] lockValue = null;
+  private TxStatus status = null;
+  private long commitTs = -1;
+  private byte[] lockValue = null;
+
+  public TxStatus getStatus() {
+    return status;
+  }
+
+  public long getCommitTs() {
+    return commitTs;
+  }
+
+  public byte[] getLockValue() {
+    return lockValue;
+  }
 
   /**
    * determine the what state a transaction is in by inspecting the primary column

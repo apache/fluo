@@ -21,7 +21,7 @@ import java.util.Optional;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.MoreCollectors;
 
 public class FluoProgram {
 
@@ -58,7 +58,7 @@ public class FluoProgram {
     String programName = String.format("fluo %s", parsedCommandType);
     parsedJCommand.setProgramName(programName);
     FluoCommand parsedFluoCommand =
-        (FluoCommand) Iterables.getOnlyElement(parsedJCommand.getObjects());
+        (FluoCommand) parsedJCommand.getObjects().stream().collect(MoreCollectors.onlyElement());
 
     if (parsedFluoCommand.isHelp()) {
       parsedJCommand.usage();

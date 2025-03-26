@@ -19,9 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
-import com.google.common.collect.Iterables;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.Observer;
 import org.apache.fluo.core.impl.Environment;
@@ -60,17 +59,18 @@ class ObserversV1 implements Observers {
     this.weakObservers = weakObservers;
     this.aliases = new HashMap<>();
 
-    for (Entry<Column, org.apache.fluo.api.config.ObserverSpecification> e : Iterables
-        .concat(strongObservers.entrySet(), weakObservers.entrySet())) {
-      org.apache.fluo.api.config.ObserverSpecification observerConfig = e.getValue();
-      try {
-        String alias =
-            Class.forName(observerConfig.getClassName()).asSubclass(Observer.class).getSimpleName();
-        aliases.put(e.getKey(), alias);
-      } catch (ClassNotFoundException e1) {
-        throw new RuntimeException(e1);
-      }
-    }
+    BiConsumer<Column, org.apache.fluo.api.config.ObserverSpecification> consumer =
+        (key, observerConfig) -> {
+          try {
+            var alias = Class.forName(observerConfig.getClassName()).asSubclass(Observer.class)
+                .getSimpleName();
+            aliases.put(key, alias);
+          } catch (ClassNotFoundException e1) {
+            throw new RuntimeException(e1);
+          }
+        };
+    strongObservers.forEach(consumer);
+    weakObservers.forEach(consumer);
   }
 
   @Override

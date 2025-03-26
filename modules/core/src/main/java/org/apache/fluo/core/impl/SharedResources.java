@@ -38,7 +38,7 @@ import org.apache.fluo.core.util.FluoExecutors;
 /**
  * Shared Fluo resources that must be closed
  */
-public class SharedResources implements AutoCloseable {
+public final class SharedResources implements AutoCloseable {
 
   private final Environment env;
   private final BatchWriter bw;

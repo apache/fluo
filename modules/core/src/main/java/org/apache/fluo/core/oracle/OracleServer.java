@@ -45,6 +45,7 @@ import org.apache.fluo.core.metrics.MetricsUtil;
 import org.apache.fluo.core.thrift.OracleService;
 import org.apache.fluo.core.thrift.Stamps;
 import org.apache.fluo.core.util.CuratorUtil;
+import org.apache.fluo.core.util.DeprecationUtil;
 import org.apache.fluo.core.util.FluoThreadFactory;
 import org.apache.fluo.core.util.Halt;
 import org.apache.fluo.core.util.HostUtil;
@@ -91,7 +92,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
   private volatile long currentTs = 0;
   private volatile long maxTs = 0;
   private volatile boolean started = false;
-  private int port = 0;
+  private volatile int port = 0;
 
   private LeaderLatch leaderLatch;
   private ExecutorService execService;
@@ -345,7 +346,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
     leaderLatch.start();
 
     pathChildrenCache = new PathChildrenCache(curatorFramework, oraclePath, true);
-    pathChildrenCache.getListenable().addListener(this);
+    DeprecationUtil.addListener(pathChildrenCache.getListenable(), this);
     pathChildrenCache.start();
 
     while (!cnxnListener.isConnected()) {
@@ -410,7 +411,7 @@ public class OracleServer implements OracleService.Iface, PathChildrenCacheListe
 
       currentLeader = null;
       if (curatorFramework.getState().equals(CuratorFrameworkState.STARTED)) {
-        pathChildrenCache.getListenable().removeListener(this);
+        DeprecationUtil.removeListener(pathChildrenCache.getListenable(), this);
         pathChildrenCache.close();
         leaderLatch.close();
 

@@ -15,9 +15,9 @@
 
 package org.apache.fluo.integration.impl;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -27,11 +27,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.Iterables;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.fluo.accumulo.format.FluoFormatter;
 import org.apache.fluo.accumulo.util.AccumuloProps;
@@ -79,7 +78,7 @@ public class StochasticBankIT extends ITBaseImpl {
 
     populate(env, numAccounts);
 
-    Random rand = new Random();
+    Random rand = ThreadLocalRandom.current();
     Environment tenv = env;
 
     if (rand.nextBoolean()) {
@@ -123,9 +122,9 @@ public class StochasticBankIT extends ITBaseImpl {
 
     ArrayList<Thread> threads = new ArrayList<>();
 
+    Random rand = ThreadLocalRandom.current();
     for (int i = 0; i < numThreads; i++) {
       Runnable task = new Runnable() {
-        Random rand = new Random();
 
         @Override
         public void run() {
@@ -254,18 +253,17 @@ public class StochasticBankIT extends ITBaseImpl {
     log.debug("sum1 : %,d  sum2 : %,d  diff : %,d\n", sum1, sum2, sum2 - sum1);
 
     File tmpFile = Files.createTempFile("sb_dump", ".txt").toFile();
-    Writer fw = new BufferedWriter(new FileWriter(tmpFile));
-
-    Scanner scanner =
-        env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations());
-
-    for (String cell : Iterables.transform(scanner, FluoFormatter::toString)) {
-      fw.append(cell);
-      fw.append("\n");
+    try (Writer fw = Files.newBufferedWriter(tmpFile.toPath())) {
+      env.getAccumuloClient().createScanner(env.getTable(), env.getAuthorizations()).stream()
+          .map(FluoFormatter::toString).forEach(cell -> {
+            try {
+              fw.append(cell);
+              fw.append("\n");
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
     }
-
-    fw.close();
-
     log.debug("Dumped table : " + tmpFile);
   }
 

@@ -27,17 +27,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Spliterators;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.ConditionalWriter;
 import org.apache.accumulo.core.client.ConditionalWriter.Result;
@@ -887,7 +890,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       return next;
     }
 
-
     CompletableFuture<Void> compose(CommitData cd) {
       return getMainOp(cd).thenComposeAsync(successful -> {
         if (successful) {
@@ -957,7 +959,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       }, ace);
     }
 
-
   }
 
   class LockPrimaryStep extends ConditionalStep {
@@ -978,7 +979,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       while (mutationStatus == Status.UNKNOWN) {
         TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
 
-        switch (txInfo.status) {
+        switch (txInfo.getStatus()) {
           case LOCKED:
             return Collections
                 .singleton(
@@ -1001,7 +1002,7 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
           case COMMITTED:
           default:
             throw new IllegalStateException(
-                "unexpected tx state " + txInfo.status + " " + cd.prow + " " + cd.pcol);
+                "unexpected tx state " + txInfo.getStatus() + " " + cd.prow + " " + cd.pcol);
 
         }
       }
@@ -1012,7 +1013,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     @Override
     public boolean processResults(CommitData cd, Iterator<Result> results) throws Exception {
-      Result result = Iterators.getOnlyElement(results);
+      Result result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(results, 0), false)
+          .collect(MoreCollectors.onlyElement());
       return result.getStatus() == Status.ACCEPTED;
     }
 
@@ -1020,7 +1022,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     CompletableFuture<Void> getFailureOp(CommitData cd) {
       // TODO can this be simplified by pushing some code to the superclass?
       return CompletableFuture.supplyAsync(() -> {
-        final ConditionalMutation pcm = Iterables.getOnlyElement(createMutations(cd));
+        final ConditionalMutation pcm =
+            createMutations(cd).stream().collect(MoreCollectors.onlyElement());
 
         cd.addPrimaryToRejected();
         getStats().setRejected(cd.getRejected());
@@ -1048,7 +1051,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     public AsyncConditionalWriter getACW(CommitData cd) {
       return cd.bacw;
     }
-
 
     @Override
     public Collection<ConditionalMutation> createMutations(CommitData cd) {
@@ -1128,8 +1130,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
     }
   }
 
-
-
   private CompletableFuture<Void> rollbackLocks(CommitData cd) {
     CommitStep firstStep = new RollbackOtherLocks();
     firstStep.andThen(new RollbackPrimaryLock());
@@ -1138,7 +1138,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         .thenRun(() -> cd.commitObserver.commitFailed(cd.getShortCollisionMessage()));
 
   }
-
 
   class RollbackOtherLocks extends BatchWriterStep {
 
@@ -1331,7 +1330,8 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
       // the code for handing this is synchronous and needs to be handled in another thread pool
       // TODO - how do we do the above without return a CF?
       long commitTs = getStats().getCommitTs();
-      Result result = Iterators.getOnlyElement(results);
+      Result result = StreamSupport.stream(Spliterators.spliteratorUnknownSize(results, 0), false)
+          .collect(MoreCollectors.onlyElement());
       Status ms = result.getStatus();
 
       while (ms == Status.UNKNOWN) {
@@ -1339,11 +1339,11 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
         // TODO async
         TxInfo txInfo = TxInfo.getTransactionInfo(env, cd.prow, cd.pcol, startTs);
 
-        switch (txInfo.status) {
+        switch (txInfo.getStatus()) {
           case COMMITTED:
-            if (txInfo.commitTs != commitTs) {
+            if (txInfo.getCommitTs() != commitTs) {
               throw new IllegalStateException(
-                  cd.prow + " " + cd.pcol + " " + txInfo.commitTs + "!=" + commitTs);
+                  cd.prow + " " + cd.pcol + " " + txInfo.getCommitTs() + "!=" + commitTs);
             }
             ms = Status.ACCEPTED;
             break;
@@ -1390,7 +1390,6 @@ public class TransactionImpl extends AbstractTransactionBase implements AsyncTra
 
     return true;
   }
-
 
   class DeleteLocksStep extends BatchWriterStep {
 

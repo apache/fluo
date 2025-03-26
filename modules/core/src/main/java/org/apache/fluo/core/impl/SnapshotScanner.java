@@ -102,7 +102,7 @@ public class SnapshotScanner implements Iterable<Entry<Key, Value>> {
     scanner.addScanIterator(iterConf);
   }
 
-  private class SnapIter implements Iterator<Entry<Key, Value>> {
+  private final class SnapIter implements Iterator<Entry<Key, Value>> {
 
     private Iterator<Entry<Key, Value>> iterator;
     private Entry<Key, Value> next;

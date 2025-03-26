@@ -38,7 +38,7 @@ import org.apache.fluo.accumulo.values.WriteValue;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 
-public class TestData {
+public final class TestData {
   TreeMap<Key, Value> data = new TreeMap<>();
   Counter counter = new Counter();
 

@@ -17,11 +17,9 @@ package org.apache.fluo.core.client;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -65,6 +63,8 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Fluo Admin Implementation
@@ -395,8 +395,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
     StringBuilder classpath = new StringBuilder();
     for (String jarPath : jars.split(",")) {
-      File jarFile = new File(jarPath);
-      String jarName = jarFile.getName();
+      String jarName = requireNonNull(java.nio.file.Path.of(jarPath).getFileName()).toString();
       try {
         fs.copyFromLocalFile(new Path(jarPath), new Path(dfsDestDir));
       } catch (IOException e) {
@@ -486,7 +485,7 @@ public class FluoAdminImpl implements FluoAdmin {
 
     StringBuilder jars = new StringBuilder();
     for (String path : paths) {
-      java.nio.file.Path name = Paths.get(path).getFileName();
+      var name = java.nio.file.Path.of(path).getFileName();
       if (name != null) {
         String jarName = name.toString();
         if (pattern.matcher(jarName).matches()) {
@@ -512,8 +511,7 @@ public class FluoAdminImpl implements FluoAdmin {
   }
 
   private static int numOracles(CuratorFramework curator) {
-    try {
-      LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER);
+    try (LeaderLatch leaderLatch = new LeaderLatch(curator, ZookeeperPath.ORACLE_SERVER)) {
       return leaderLatch.getParticipants().size();
     } catch (Exception e) {
       throw new RuntimeException(e);

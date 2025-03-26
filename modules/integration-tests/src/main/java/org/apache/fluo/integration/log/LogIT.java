@@ -51,7 +51,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.slf4j.LoggerFactory;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.WEAK;
 

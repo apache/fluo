@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -81,13 +81,13 @@ public class ObserverStoreV2 implements ObserverStore {
   static ObserverProvider newObserverProvider(String obsProviderClass) {
     ObserverProvider observerProvider;
     try {
-      observerProvider =
-          Class.forName(obsProviderClass).asSubclass(ObserverProvider.class).newInstance();
+      observerProvider = Class.forName(obsProviderClass).asSubclass(ObserverProvider.class)
+          .getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException e1) {
       throw new FluoException("ObserverProvider class '" + obsProviderClass + "' was not "
           + "found.  Check for class name misspellings or failure to include "
           + "the observer provider jar.", e1);
-    } catch (InstantiationException | IllegalAccessException e2) {
+    } catch (ReflectiveOperationException e2) {
       throw new FluoException(
           "ObserverProvider class '" + obsProviderClass + "' could not be created.", e2);
     }

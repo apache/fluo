@@ -179,13 +179,13 @@ public class LockResolver {
     Set<Entry<PrimaryRowColumn, List<LockInfo>>> es = groupedLocks.entrySet();
     for (Entry<PrimaryRowColumn, List<LockInfo>> group : es) {
       TxInfo txInfo = txiCache.getTransactionInfo(group.getKey());
-      switch (txInfo.status) {
+      switch (txInfo.getStatus()) {
         case COMMITTED:
-          commitColumns(env, group.getKey(), group.getValue(), txInfo.commitTs, mutations);
+          commitColumns(env, group.getKey(), group.getValue(), txInfo.getCommitTs(), mutations);
           numResolved += group.getValue().size();
           break;
         case LOCKED:
-          if (rollbackPrimary(env, startTs, group.getKey(), txInfo.lockValue)) {
+          if (rollbackPrimary(env, startTs, group.getKey(), txInfo.getLockValue())) {
             rollback(env, startTs, group.getKey(), group.getValue(), mutations);
             numResolved += group.getValue().size();
           }
@@ -198,7 +198,7 @@ public class LockResolver {
         case UNKNOWN:
         default:
           throw new IllegalStateException(
-              "can not abort : " + group.getKey() + " (" + txInfo.status + ")");
+              "can not abort : " + group.getKey() + " (" + txInfo.getStatus() + ")");
       }
     }
 
@@ -316,7 +316,6 @@ public class LockResolver {
         ranges.add(new Range(start, true, end, false));
       }
     }
-
 
     try (BatchScanner bscanner =
         env.getAccumuloClient().createBatchScanner(env.getTable(), env.getAuthorizations(), 1)) {

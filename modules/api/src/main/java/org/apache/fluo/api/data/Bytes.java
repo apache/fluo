@@ -512,7 +512,6 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
         return append((String) cs);
       }
 
-
       ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(cs));
 
       int length = bb.remaining();
@@ -582,7 +581,9 @@ public final class Bytes implements Comparable<Bytes>, Serializable {
      */
     public BytesBuilder append(InputStream in, int length) throws IOException {
       ensureCapacity(len + length);
-      new DataInputStream(in).readFully(ba, len, length);
+      // create an anonymous subclass of DataInputStream to avoid unclosed resource warnings
+      // we don't close it because we don't want to close the provided InputStream it is wrapping
+      new DataInputStream(in) {}.readFully(ba, len, length);
       len += length;
       return this;
     }
