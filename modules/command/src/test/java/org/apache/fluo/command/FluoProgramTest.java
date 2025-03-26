@@ -26,7 +26,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class FluoProgramTest {
   @Parameters(commandNames = "test")
@@ -64,7 +65,7 @@ public class FluoProgramTest {
     outPS = System.out;
     errPS = System.err;
     // This will hide usage and error logs when running tests
-    try (PrintStream ps = new PrintStream(NullOutputStream.NULL_OUTPUT_STREAM)) {
+    try (PrintStream ps = new PrintStream(NullOutputStream.INSTANCE)) {
       System.setOut(ps);
       System.setErr(ps);
     }
